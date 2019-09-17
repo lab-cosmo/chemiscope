@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>TypeScript Test Setup</title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+	<body>
+
+		<h1 style="text-align: center;">Sketchmap vizualization</h1>
+		<div class="container" style="width:80%; margin:auto;">
+			<div id="sv-1"></div>
+			<div id="sv-2"></div>
+		</div>
+
+	</body>
+	<script type="text/javascript" src="/sketchviz.min.js"></script>
+
+	<script defer type="text/javascript">
+		fetch("examples/Pyrole.json")
+			.then(response => response.json())
+			.then(json => {
+				const data = {
+					x: json.CV1,
+					y: json.CV2,
+					color: json.Energy,
+				};
+				const viz = new Sketchviz.Sketchviz(name="Pyrole", data, {});
+				viz.setup(document.getElementById('sv-1'));
+			})
+			.catch(e => console.log(e));
+
+		fetch("examples/Arginine-Dipeptide.json")
+			.then(response => response.json())
+			.then(json => {
+				const data = {
+					x: json.CV1,
+					y: json.CV2,
+					color: json.Energy,
+				};
+				const viz = new Sketchviz.Sketchviz(name="Arginine-Dipeptide", data, {});
+				viz.setup(document.getElementById('sv-2'));
+			})
+			.catch(e => console.log(e));
+	</script>
+</html>

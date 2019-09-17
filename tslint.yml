@@ -1,0 +1,5 @@
+extends: "tslint:recommended"
+rules:
+    no-console: false
+    interface-name: false
+    object-literal-sort-keys: false
