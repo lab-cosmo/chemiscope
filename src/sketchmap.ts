@@ -74,7 +74,7 @@ export class Sketchmap {
         this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
         this._root.appendChild(this._plot);
 
-        this._plot.setAttribute("style", "width: 600px; height: 600px;");
+        this._plot.setAttribute("style", "width: 500px; height: 500px;");
 
         const fullData = {...this._data,
             hoverinfo: "none",

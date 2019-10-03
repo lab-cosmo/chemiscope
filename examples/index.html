@@ -8,50 +8,49 @@
 	</head>
 	<body>
 		<h1 style="text-align: center;">Sketchmap vizualization</h1>
-		<div class="container" style="width:80%; margin:auto;">
-			<div id="sv-1" style="display: flex;"></div>
-			<div id="sv-2" style="display: flex;"></div>
+
+		<div style="width:50%; margin:auto; margin-bottom:40px; text-align: center;">
+			<span>Please select a system:</span>
+			<select onchange="load_system()" style="width:200px" id="system">
+				<option>Pyrole</option>
+				<option>Arginine-Dipeptide</option>
+			</select>
 		</div>
-	<script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
+
+		<div class="container" style="width:80%; margin:auto;">
+			<div id="sketchviz" style="display: flex; flex-wrap: wrap;"></div>
+		</div>
+
 	<script type="text/javascript" src="/sketchviz.min.js"></script>
+	<script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
+	<script type="text/javascript">
 
-	<script>
-	document.addEventListener("DOMContentLoaded", () => {
-		// fetch("Pyrole.json")
-		// 	.then(response => response.json())
-		// 	.then(json => {
-		// 		const data = {
-		// 			x: json.sketchmap.CV1,
-		// 			y: json.sketchmap.CV2,
-		// 			color: json.sketchmap.Energy,
-		// 		};
-		// 		const map = new Sketchviz.Sketchmap(name="Pyrole", data);
-		// 		map.setup(document.getElementById('sv-1'));
-		//
-		// 		const view = new Sketchviz.JSmolViewer(name="Pyrole", json.structures);
-		// 		view.setup(document.getElementById('sv-1'));
-		//
-		// 		map.onClick((i) => view.showStructure(i));
-		// 	})
-		// 	.catch(e => console.log(e));
+		function load_system() {
+			const root = document.getElementById('sketchviz');
+			root.innerHTML = "";
 
-		fetch("Arginine-Dipeptide.json")
-			.then(response => response.json())
-			.then(json => {
-				const data = {
-					x: json.sketchmap.CV1,
-					y: json.sketchmap.CV2,
-					color: json.sketchmap.Energy,
-				};
-				const map = new Sketchviz.Sketchmap(name="Arginine-Dipeptide", data);
-				map.setup(document.getElementById('sv-2'));
+			const system = document.getElementById("system").value;
+			fetch(`${system}.json`)
+				.then(response => response.json())
+				.then(json => {
+					const data = {
+						x: json.sketchmap.CV1,
+						y: json.sketchmap.CV2,
+						color: json.sketchmap.Energy,
+					};
+					const map = new Sketchviz.Sketchmap(name=system, data);
+					map.setup(root);
 
-				const view = new Sketchviz.JSmolViewer(name="Arginine-Dipeptide", json.structures);
-				view.setup(document.getElementById('sv-2'));
+					const view = new Sketchviz.JSmolViewer(name=system, json.structures);
+					view.setup(root);
 
-				map.onClick((i) => view.showStructure(i));
-			})
-			.catch(e => console.log(e));
-	});
+					map.onClick((i) => view.showStructure(i));
+				})
+				.catch(e => console.log(e));
+		}
+
+		document.addEventListener("DOMContentLoaded", () => {
+			load_system();
+		});
 	</script>
 </html>

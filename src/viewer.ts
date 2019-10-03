@@ -14,9 +14,11 @@ interface Structure {
 export class JSmolViewer {
     private static _JSMOL_INFO = {
         use: "HTML5",
-        width: 600,
-        height: 600,
+        width: 500,
+        height: 500,
         script: "set antialiasdisplay; set frank off",
+        disableInitialConsole: true,
+        disableJ2SLoadMonitor: true,
     };
 
     private _name: string;
