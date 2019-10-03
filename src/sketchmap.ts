@@ -61,6 +61,7 @@ export class Sketchmap {
 
         const title = document.createElement("h3");
         title.innerHTML = this._name;
+        title.style.flexBasis = "100%";
         this._root.appendChild(title);
 
         this._createPlot();

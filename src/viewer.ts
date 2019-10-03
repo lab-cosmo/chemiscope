@@ -23,7 +23,10 @@ export class JSmolViewer {
 
     private _name: string;
     private _structures: Structure[];
+    private _index: number;
     private _root: HTMLElement;
+    private _slider: HTMLInputElement;
+    private _slider_label: HTMLElement;
     private _applet: any;
     private _Jmol: any;
 
@@ -39,8 +42,45 @@ export class JSmolViewer {
     public setup(root: HTMLElement, j2sPath: string) {
         this._root = root;
 
+        const container = document.createElement("div");
+        container.className = "sketchviz-viewer";
+        this._root.appendChild(container);
+
+        this._slider_label = document.createElement("span");
+        this._slider_label.innerHTML = "Select an environment:"
+        this._slider_label.style.width = "200px";
+        this._slider_label.style.display = "inline-block";
+        this._slider_label.style.margin = "20px";
+        container.appendChild(this._slider_label);
+
+        this._slider = document.createElement("input") as HTMLInputElement;
+        this._slider.type = "range";
+        this._slider.style.width = "300px";
+        container.appendChild(this._slider);
+
+        this._slider.oninput = () => {
+            const i = this._slider.value;
+            this._slider_label.innerHTML = `Selected environment: ${i}`;
+
+            // Default style
+            this.script("select all;")
+                this.script("wireframe 0.1; spacefill off; dots off;")
+                this.script("color atoms translucent cpk;")
+
+            // Style for the atoms in the environment (approximated as a 3.5A
+            // cutoff)
+            this.script(`select within(4, atomno = ${i});`)
+                this.script("wireframe 0.13; spacefill 20%; dots off;")
+                this.script("color atoms cpk;")
+
+            // Style for the central atom
+            this.script(`select atomno = ${i};`)
+                this.script("wireframe off; spacefill 20%; dots 0.4;")
+                this.script("color atoms green;")
+        }
+
         const div = document.createElement("div");
-        this._root.appendChild(div);
+        container.appendChild(div);
 
         this._applet = this._Jmol.getApplet(this._name + "-JmolApplet", {
             ...JSmolViewer._JSMOL_INFO,
@@ -59,10 +99,18 @@ export class JSmolViewer {
     public showStructure(index: number) {
         if (index > this._structures.length) {
             console.warn(`invalid index in showStructure: got ${index}, max index is ${this._structures.length}`);
+            return;
         }
+
+        this._index = index;
         // TODO: does load remove the previous structures?
-        this.script(`load inline '${JSON.stringify(this._structures[index])}'`);
+        this.script(`load inline '${JSON.stringify(this._structures[this._index])}'`);
         this.script("spin on");
+
+        this._slider_label.innerHTML = "Select an environment:"
+        this._slider.min = "0";
+        this._slider.max = `${this._structures[this._index].mol.a.length}`;
+        this._slider.value = "0";
     }
 
     public script(commands: string) {
