@@ -2,46 +2,56 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>TypeScript Test Setup</title>
+		<title>Sketchviz</title>
 		<meta name="description" content="">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 	<body>
-
 		<h1 style="text-align: center;">Sketchmap vizualization</h1>
 		<div class="container" style="width:80%; margin:auto;">
-			<div id="sv-1"></div>
-			<div id="sv-2"></div>
+			<div id="sv-1" style="display: flex;"></div>
+			<div id="sv-2" style="display: flex;"></div>
 		</div>
-
-	</body>
+	<script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
 	<script type="text/javascript" src="/sketchviz.min.js"></script>
 
-	<script defer type="text/javascript">
-		fetch("examples/Pyrole.json")
-			.then(response => response.json())
-			.then(json => {
-				const data = {
-					x: json.CV1,
-					y: json.CV2,
-					color: json.Energy,
-				};
-				const viz = new Sketchviz.Sketchviz(name="Pyrole", data, {});
-				viz.setup(document.getElementById('sv-1'));
-			})
-			.catch(e => console.log(e));
+	<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		// fetch("Pyrole.json")
+		// 	.then(response => response.json())
+		// 	.then(json => {
+		// 		const data = {
+		// 			x: json.sketchmap.CV1,
+		// 			y: json.sketchmap.CV2,
+		// 			color: json.sketchmap.Energy,
+		// 		};
+		// 		const map = new Sketchviz.Sketchmap(name="Pyrole", data);
+		// 		map.setup(document.getElementById('sv-1'));
+		//
+		// 		const view = new Sketchviz.JSmolViewer(name="Pyrole", json.structures);
+		// 		view.setup(document.getElementById('sv-1'));
+		//
+		// 		map.onClick((i) => view.showStructure(i));
+		// 	})
+		// 	.catch(e => console.log(e));
 
-		fetch("examples/Arginine-Dipeptide.json")
+		fetch("Arginine-Dipeptide.json")
 			.then(response => response.json())
 			.then(json => {
 				const data = {
-					x: json.CV1,
-					y: json.CV2,
-					color: json.Energy,
+					x: json.sketchmap.CV1,
+					y: json.sketchmap.CV2,
+					color: json.sketchmap.Energy,
 				};
-				const viz = new Sketchviz.Sketchviz(name="Arginine-Dipeptide", data, {});
-				viz.setup(document.getElementById('sv-2'));
+				const map = new Sketchviz.Sketchmap(name="Arginine-Dipeptide", data);
+				map.setup(document.getElementById('sv-2'));
+
+				const view = new Sketchviz.JSmolViewer(name="Arginine-Dipeptide", json.structures);
+				view.setup(document.getElementById('sv-2'));
+
+				map.onClick((i) => view.showStructure(i));
 			})
 			.catch(e => console.log(e));
+	});
 	</script>
 </html>

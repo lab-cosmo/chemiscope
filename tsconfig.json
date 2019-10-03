@@ -5,7 +5,7 @@
     "target": "es5",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "noImplicitThis": true,
     "strictNullChecks": true,
     "lib": [

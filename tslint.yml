@@ -3,3 +3,6 @@ rules:
     no-console: false
     interface-name: false
     object-literal-sort-keys: false
+    object-literal-shorthand: false
+    variable-name: false
+    no-string-literal: false
