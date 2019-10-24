@@ -9,48 +9,38 @@
 	<body>
 		<h1 style="text-align: center;">Sketchmap vizualization</h1>
 
-		<div style="width:50%; margin:auto; margin-bottom:40px; text-align: center;">
-			<span>Please select a system:</span>
-			<select onchange="load_system()" style="width:200px" id="system">
-				<option>Pyrole</option>
-				<option>Arginine-Dipeptide</option>
-			</select>
-		</div>
-
-		<div class="container" style="width:80%; margin:auto;">
-			<div id="sketchviz" style="display: flex; flex-wrap: wrap;"></div>
+		<div style="width:80%; margin:auto;">
+			<div id="sketchviz"></div>
 		</div>
 
 	<script type="text/javascript" src="sketchviz.min.js"></script>
 	<script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
-	<script type="text/javascript">
-		function load_system() {
-			const root = document.getElementById('sketchviz');
-			root.innerHTML = "";
+	<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		fetch("Arginine-Dipeptide.json")
+			.then(response => response.json())
+			.then(json => {
+				const data = {
+					x: json.sketchmap.CV1,
+					y: json.sketchmap.CV2,
+					color_by: {
+						Energy: json.sketchmap.Energy,
+						Phi: json.sketchmap.Phi,
+						Psi: json.sketchmap.Psi,
+						W1: json.sketchmap.W1,
+						W2: json.sketchmap.W2,
+					}
+				};
+				const map = new Sketchviz.Sketchmap(name="Arginine-Dipeptide", data);
+				map.setup(document.getElementById('sketchviz'));
 
-			const system = document.getElementById("system").value;
-			fetch(`${system}.json`)
-				.then(response => response.json())
-				.then(json => {
-					const data = {
-						x: json.sketchmap.CV1,
-						y: json.sketchmap.CV2,
-						color: json.sketchmap.Energy,
-					};
-					const map = new Sketchviz.Sketchmap(name=system, data);
-					map.setup(root);
+				const view = new Sketchviz.JSmolViewer(name="Arginine-Dipeptide", json.structures);
+				view.setup(document.getElementById('sketchviz'));
 
-					const view = new Sketchviz.JSmolViewer(name=system, json.structures);
-					view.setup(root);
-
-					map.onClick((i) => view.showStructure(i));
-				})
-				.catch(e => console.log(e));
-		}
-
-		document.addEventListener("DOMContentLoaded", () => {
-			load_system();
-		});
+				map.onClick((i) => view.showStructure(i));
+			})
+			.catch(e => console.log(e));
+	});
 	</script>
 
 </html>

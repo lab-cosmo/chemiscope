@@ -5,64 +5,72 @@ import {Inferno} from "./colorscales";
 interface SketchmapData {
     x: number[];
     y: number[];
-    color: number[];
+    color_by: {
+        [s: string]: number[];
+    }
 }
 
+const DEFAULT_LAYOUT = {
+    hovermode: "closest",
+    showlegend: false,
+};
+
+const DEFAULT_CONFIG = {
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: [
+        "hoverClosestCartesian",
+        "hoverCompareCartesian",
+        "toggleSpikelines",
+    ],
+};
+
 export class Sketchmap {
-    private static LAYOUT = {
-        hovermode: "closest",
-        showlegend: false,
-    };
-
-    private static CONFIG = {
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: [
-            "hoverClosestCartesian",
-            "hoverCompareCartesian",
-            "toggleSpikelines",
-        ],
-    };
-
-    private static _create_markers(colors: number[]) {
-        const rgbaColorscale: Array<[number, string]> = Inferno.map((c) => {
-            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.75)`];
-        });
-        const rgbColorscale: Array<[number, string]> = Inferno.map((c) => {
-            return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
-        });
-
-        return {
-            color: colors,
-            colorscale: rgbaColorscale,
-            line: {
-                color: colors,
-                colorscale: rgbColorscale,
-                width: 1.5,
-            },
-            size: 10,
-        };
-    }
-
     private _name: string;
     private _data: SketchmapData;
     private _root: HTMLElement;
     private _plot: PlotlyHTMLElement;
     private _clicked_cb: (index: number) => void;
+    private _color_names: string[];
 
     constructor(name: string, data: SketchmapData) {
         this._name = name;
         this._data = data;
         this._clicked_cb = (_) => { return; };
+        this._color_names = [];
+
+        for (name in this._data.color_by) {
+            this._color_names.push(name);
+        }
     }
 
     public setup(root: HTMLElement) {
         this._root = root;
+        this._root.style.display = 'flex';
+        this._root.style.flexWrap = 'wrap';
 
-        const title = document.createElement("h3");
-        title.innerHTML = this._name;
-        title.style.flexBasis = "100%";
-        this._root.appendChild(title);
+        const div = document.createElement("div");
+        root.appendChild(div)
+        div.insertAdjacentHTML('afterbegin', `<h3 style="flex-basis: 100%;">${this._name}</h3>`);
+
+        const colors = document.createElement("select") as HTMLSelectElement;
+        div.appendChild(colors);
+        for (let i = 0; i < this._color_names.length; i++) {
+            const option = document.createElement("option") as HTMLOptionElement;
+            option.value = this._color_names[i];
+            option.text = this._color_names[i];
+            colors.appendChild(option);
+        }
+
+        colors.onchange = () => {
+            const color = this._data.color_by[colors.value];
+            Plotly.restyle(this._plot, {
+                'marker.color': [color],
+                'marker.line': {
+                    color: [color]
+                },
+            }, 0);
+        }
 
         this._createPlot();
     }
@@ -79,7 +87,7 @@ export class Sketchmap {
 
         const fullData = {...this._data,
             hoverinfo: "none",
-            marker: Sketchmap._create_markers(this._data.color),
+            marker: this._create_markers(),
             mode: "markers",
             type: "scattergl",
         };
@@ -104,10 +112,31 @@ export class Sketchmap {
 
         Plotly.newPlot(
             this._plot, [fullData as Data, clicked as Data],
-            Sketchmap.LAYOUT as Layout,
-            Sketchmap.CONFIG as Config,
+            DEFAULT_LAYOUT as Layout,
+            DEFAULT_CONFIG as Config,
         );
         this._plot.on("plotly_click", (event) => this._on_plotly_click(event));
+    }
+
+    private _create_markers() {
+        const rgbaColorscale: Array<[number, string]> = Inferno.map((c) => {
+            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.75)`];
+        });
+        const rgbColorscale: Array<[number, string]> = Inferno.map((c) => {
+            return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
+        });
+
+        const color = this._data.color_by[this._color_names[0]];
+        return {
+            color: color,
+            colorscale: rgbaColorscale,
+            line: {
+                color: color,
+                colorscale: rgbColorscale,
+                width: 1.5,
+            },
+            size: 10,
+        };
     }
 
     private _on_plotly_click(data: Plotly.PlotMouseEvent) {
