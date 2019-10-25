@@ -9,6 +9,7 @@ interface Structure {
     mol: {
         a: Atom[],
     };
+    cell: number[][],
 }
 
 export class JSmolViewer {
@@ -16,7 +17,7 @@ export class JSmolViewer {
         use: "HTML5",
         width: 500,
         height: 500,
-        script: "set antialiasdisplay; set frank off",
+        script: "set antialiasdisplay; set frank off; set perspectiveDepth off",
         disableInitialConsole: true,
         disableJ2SLoadMonitor: true,
     };
@@ -104,7 +105,12 @@ export class JSmolViewer {
 
         this._index = index;
         // TODO: does load remove the previous structures?
-        this.script(`load inline '${JSON.stringify(this._structures[this._index])}'`);
+        this.script(`load inline '${JSON.stringify(this._structures[this._index])}';`);
+        const [a, b, c] = this._structures[this._index].cell;
+        const a_str = `{${a[0]} ${a[1]} ${a[2]}}`;
+        const b_str = `{${b[0]} ${b[1]} ${b[2]}}`;
+        const c_str = `{${c[0]} ${c[1]} ${c[2]}}`;
+        this.script(`unitcell [{0 0 0} ${a_str} ${b_str} ${c_str}];`);
 
         this._slider_label.innerHTML = "Select an environment:"
         this._slider.min = "0";

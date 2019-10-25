@@ -1,46 +1,51 @@
 <!DOCTYPE html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<title>Sketchviz</title>
-		<meta name="description" content="">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-	</head>
-	<body>
-		<h1 style="text-align: center;">Sketchmap vizualization</h1>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Sketchviz</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h1 style="text-align: center;">Sketchmap vizualization</h1>
 
-		<div style="width:80%; margin:auto;">
-			<div id="sketchviz"></div>
-		</div>
+        <div style="width:80%; margin:auto;">
+            <div id="sketchviz"></div>
+        </div>
 
-	<script type="text/javascript" src="sketchviz.min.js"></script>
-	<script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
-	<script>
-	document.addEventListener("DOMContentLoaded", () => {
-		fetch("Arginine-Dipeptide.json")
-			.then(response => response.json())
-			.then(json => {
+    <script type="text/javascript" src="sketchviz.min.js"></script>
+    <script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
+    <script>
+	function loadData(name) {
+		fetch(`${name}.json`)
+            .then(response => response.json())
+            .then(json => {
 				const data = {
 					x: json.sketchmap.CV1,
-					y: json.sketchmap.CV2,
-					color_by: {
-						Energy: json.sketchmap.Energy,
-						Phi: json.sketchmap.Phi,
-						Psi: json.sketchmap.Psi,
-						W1: json.sketchmap.W1,
-						W2: json.sketchmap.W2,
+                    y: json.sketchmap.CV2,
+                    color_by: {}
+				}
+				for (key in json.sketchmap) {
+					if (key === 'CV1' || key === 'CV2') {
+						continue;
 					}
-				};
-				const map = new Sketchviz.Sketchmap(name="Arginine-Dipeptide", data);
-				map.setup(document.getElementById('sketchviz'));
+					data.color_by[key] = json.sketchmap[key]
+				}
 
-				const view = new Sketchviz.JSmolViewer(name="Arginine-Dipeptide", json.structures);
-				view.setup(document.getElementById('sketchviz'));
+                const map = new Sketchviz.Sketchmap(name, data);
+                map.setup(document.getElementById('sketchviz'));
 
-				map.onClick((i) => view.showStructure(i));
-			})
-			.catch(e => console.log(e));
-	});
-	</script>
+                const view = new Sketchviz.JSmolViewer(name, json.structures);
+                view.setup(document.getElementById('sketchviz'));
 
+                map.onClick((i) => view.showStructure(i));
+            })
+            .catch(e => console.log(e));
+	}
+    document.addEventListener("DOMContentLoaded", () => {
+		loadData('Arginine-Dipeptide');
+		// loadData('Pyrole');
+		// loadData('Qm7b');
+    });
+    </script>
 </html>
