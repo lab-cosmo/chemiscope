@@ -13,6 +13,12 @@ interface SketchmapData {
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
     showlegend: false,
+    xaxis: {
+        zeroline:false,
+    },
+    yaxis: {
+        zeroline:false,
+    },
 };
 
 const DEFAULT_CONFIG = {
@@ -65,6 +71,8 @@ export class Sketchmap {
         colors.onchange = () => {
             const color = this._data.color_by[colors.value];
             Plotly.restyle(this._plot, {
+                'hovertemplate': colors.value + ": %{marker.color:.2f} <extra></extra>",
+                'marker.showscale': true,
                 'marker.color': [color],
                 'marker.line': {
                     color: [color]
@@ -86,7 +94,7 @@ export class Sketchmap {
         this._plot.setAttribute("style", "width: 500px; height: 500px;");
 
         const fullData = {...this._data,
-            hoverinfo: "none",
+            hovertemplate: this._color_names[0] + ": %{marker.color:.2f} <extra></extra>",
             marker: this._create_markers(),
             mode: "markers",
             type: "scattergl",
@@ -136,14 +144,18 @@ export class Sketchmap {
                 width: 1.5,
             },
             size: 10,
+            showscale: true,
+            colorbar: {
+                thickness: 20,
+            }
         };
     }
 
-    private _on_plotly_click(data: Plotly.PlotMouseEvent) {
+    private _on_plotly_click(event: Plotly.PlotMouseEvent) {
         Plotly.restyle(this._plot, {
-            x: [[data.points[0].x]],
-            y: [[data.points[0].y]],
+            x: [[event.points[0].x]],
+            y: [[event.points[0].y]],
         }, 1);
-        this._clicked_cb(data.points[0].pointNumber);
+        this._clicked_cb(event.points[0].pointNumber);
     }
 }

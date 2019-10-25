@@ -60,7 +60,7 @@ export class JSmolViewer {
 
         this._slider.oninput = () => {
             const i = this._slider.value;
-            this._slider_label.innerHTML = `Selected environment: ${i}`;
+            this._slider_label.innerHTML = `Environment ${i}`;
 
             // Default style
             this.script("select all;")
@@ -69,7 +69,7 @@ export class JSmolViewer {
 
             // Style for the atoms in the environment (approximated as a 3.5A
             // cutoff)
-            this.script(`select within(4, atomno = ${i});`)
+            this.script(`select within(3.5, atomno = ${i});`)
                 this.script("wireframe 0.13; spacefill 20%; dots off;")
                 this.script("color atoms cpk;")
 
@@ -105,7 +105,6 @@ export class JSmolViewer {
         this._index = index;
         // TODO: does load remove the previous structures?
         this.script(`load inline '${JSON.stringify(this._structures[this._index])}'`);
-        this.script("spin on");
 
         this._slider_label.innerHTML = "Select an environment:"
         this._slider.min = "0";
