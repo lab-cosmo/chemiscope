@@ -1,16 +1,11 @@
 {
-  "compilerOptions": {
-    "sourceMap": true,
-    "module": "commonjs",
-    "target": "es5",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": false,
-    "noImplicitThis": true,
-    "strictNullChecks": true,
-    "lib": [
-      "dom",
-      "es6"
-    ]
-  },
+    "compilerOptions": {
+        "strict": true,
+        "target": "es5",
+        "esModuleInterop": true,
+        "lib": [
+            "dom",
+            "es5"
+        ]
+    }
 }

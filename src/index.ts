@@ -1,7 +1,7 @@
 import {Sketchmap} from "./sketchmap";
-import {JSmolViewer} from "./viewer";
+import {Viewer} from "./viewer";
 
 export {
     Sketchmap,
-    JSmolViewer,
+    Viewer,
 };

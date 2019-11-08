@@ -9,8 +9,9 @@
     <body>
         <h1 style="text-align: center;">Sketchmap vizualization</h1>
 
-        <div style="width:80%; margin:auto;">
-            <div id="sketchviz"></div>
+        <div style="width:80%; margin:auto; display: flex;">
+            <div id="sketchmap" style="width: 70%;"></div>
+            <div id="viewer" style="width: 30%;"></div>
         </div>
 
     <script type="text/javascript" src="sketchviz.min.js"></script>
@@ -33,10 +34,9 @@
 				}
 
                 const map = new Sketchviz.Sketchmap(name, data);
-                map.setup(document.getElementById('sketchviz'));
+                map.setup(document.getElementById('sketchmap'));
 
-                const view = new Sketchviz.JSmolViewer(name, json.structures);
-                view.setup(document.getElementById('sketchviz'));
+                const view = new Sketchviz.Viewer('viewer', 'j2s', json.structures);
 
                 map.onClick((i) => view.showStructure(i));
             })

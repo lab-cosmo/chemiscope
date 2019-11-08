@@ -34,8 +34,8 @@ const DEFAULT_CONFIG = {
 export class Sketchmap {
     private _name: string;
     private _data: SketchmapData;
-    private _root: HTMLElement;
-    private _plot: PlotlyHTMLElement;
+    private _root!: HTMLElement;
+    private _plot!: PlotlyHTMLElement;
     private _clicked_cb: (index: number) => void;
     private _color_names: string[];
 
@@ -52,12 +52,10 @@ export class Sketchmap {
 
     public setup(root: HTMLElement) {
         this._root = root;
-        this._root.style.display = 'flex';
-        this._root.style.flexWrap = 'wrap';
 
         const div = document.createElement("div");
         root.appendChild(div)
-        div.insertAdjacentHTML('afterbegin', `<h3 style="flex-basis: 100%;">${this._name}</h3>`);
+        div.insertAdjacentHTML('afterbegin', `<h3>${this._name}</h3>`);
 
         const colors = document.createElement("select") as HTMLSelectElement;
         div.appendChild(colors);

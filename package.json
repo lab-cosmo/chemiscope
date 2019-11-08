@@ -22,6 +22,7 @@
     "webpack-dev-server": "^3.9.0"
   },
   "dependencies": {
+    "materials-cloud-viewer": "^0.1.0",
     "plotly.js": "^1.51.0"
   }
 }
