@@ -19,6 +19,12 @@ const DEFAULT_LAYOUT = {
     yaxis: {
         zeroline:false,
     },
+    margin: {
+        l: 50,
+        t: 50,
+        r: 50,
+        b: 20,
+    }
 };
 
 const DEFAULT_CONFIG = {
@@ -59,7 +65,6 @@ export class Sketchmap {
 
         const div = document.createElement("div");
         root.appendChild(div)
-        div.insertAdjacentHTML('afterbegin', `<h3>${this._name}</h3>`);
 
         const colors = document.createElement("select") as HTMLSelectElement;
         div.appendChild(colors);
@@ -91,9 +96,10 @@ export class Sketchmap {
 
     private _createPlot() {
         this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
+        this._plot.style.width = "100%";
+        this._plot.style.height = "100%";
+        this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
-
-        this._plot.setAttribute("style", "width: 500px; height: 500px;");
 
         const fullData = {...this._data,
             hovertemplate: this._color_names[0] + ": %{marker.color:.2f} <extra></extra>",
@@ -120,9 +126,19 @@ export class Sketchmap {
             hoverinfo: "none",
         };
 
+        const layout = {
+            ...DEFAULT_LAYOUT,
+            title: {
+                text: this._name,
+                font: {
+                    size: 25,
+                },
+            },
+        }
+
         Plotly.newPlot(
             this._plot, [fullData as Data, clicked as Data],
-            DEFAULT_LAYOUT as Layout,
+            layout as Layout,
             DEFAULT_CONFIG as Config,
         );
         this._plot.on("plotly_click", (event) => this._on_plotly_click(event));

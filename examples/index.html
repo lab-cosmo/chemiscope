@@ -19,10 +19,19 @@
     </head>
 
     <body>
-        <h1 style="text-align: center;">Sketchmap vizualization</h1>
-        <div style="width:80%; margin:auto; display: flex;">
-            <div id="sketchmap" style="width: 70%;"></div>
-            <div id="viewer" style="width: 30%;"></div>
+        <header style="padding: 1em 0;">
+            <h1 style="text-align: center">Sketchmap vizualization</h1>
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-7">
+                    <div id=skviz-map style="height: 100%"></div>
+                </div>
+
+                <div class="col-xl-5">
+                    <div id=skviz-viewer style="height: 70%"></div>
+                </div>
+            </div>
         </div>
     </body>
 
@@ -44,9 +53,9 @@
         			}
 
                     const map = new Sketchviz.Sketchmap(name, data);
-                    map.setup(document.getElementById('sketchmap'));
+                    map.setup(document.getElementById('skviz-map'));
 
-                    const view = new Sketchviz.Viewer('viewer', 'jsmol/j2s', json.structures);
+                    const view = new Sketchviz.Viewer('skviz-viewer', 'jsmol/j2s', json.structures);
 
                     map.onClick((i) => view.showStructure(i));
                 })
