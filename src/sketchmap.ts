@@ -24,10 +24,14 @@ const DEFAULT_LAYOUT = {
 const DEFAULT_CONFIG = {
     displayModeBar: true,
     displaylogo: false,
+    scrollZoom: true,
     modeBarButtonsToRemove: [
         "hoverClosestCartesian",
         "hoverCompareCartesian",
         "toggleSpikelines",
+        "resetScale2d",
+        "select2d",
+        "lasso2d",
     ],
 };
 
@@ -106,10 +110,10 @@ export class Sketchmap {
             type: "scattergl",
             mode: "markers",
             marker: {
-                color: "blue",
+                color: "cyan",
                 line: {
                     color: "black",
-                    width: 1.5,
+                    width: 0.5,
                 },
                 size: 18,
             },
