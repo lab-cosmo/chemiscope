@@ -1,51 +1,62 @@
 <!DOCTYPE html>
+<html lang="en" dir="ltr">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Sketchviz</title>
-        <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Sketchviz</title>
+
+        <!-- bootstrap -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <!-- JSmol -->
+        <script type="text/javascript" src="jsmol/JSmol.min.nojq.js"></script>
+
+        <script defer type="text/javascript" src="sketchviz.min.js"></script>
     </head>
+
     <body>
         <h1 style="text-align: center;">Sketchmap vizualization</h1>
-
         <div style="width:80%; margin:auto; display: flex;">
             <div id="sketchmap" style="width: 70%;"></div>
             <div id="viewer" style="width: 30%;"></div>
         </div>
+    </body>
 
-    <script type="text/javascript" src="sketchviz.min.js"></script>
-    <script type="text/javascript" src="JSmol-14.29.53.min.js"></script>
     <script>
-	function loadData(name) {
-		fetch(`${name}.json`)
-            .then(response => response.json())
-            .then(json => {
-				const data = {
-					x: json.sketchmap.CV1,
-                    y: json.sketchmap.CV2,
-                    color_by: {}
-				}
-				for (key in json.sketchmap) {
-					if (key === 'CV1' || key === 'CV2') {
-						continue;
-					}
-					data.color_by[key] = json.sketchmap[key]
-				}
+        function loadData(name) {
+        	fetch(`${name}.json`)
+                .then(response => response.json())
+                .then(json => {
+        			const data = {
+        				x: json.sketchmap.CV1,
+                        y: json.sketchmap.CV2,
+                        color_by: {}
+        			}
+        			for (key in json.sketchmap) {
+        				if (key === 'CV1' || key === 'CV2') {
+        					continue;
+        				}
+        				data.color_by[key] = json.sketchmap[key]
+        			}
 
-                const map = new Sketchviz.Sketchmap(name, data);
-                map.setup(document.getElementById('sketchmap'));
+                    const map = new Sketchviz.Sketchmap(name, data);
+                    map.setup(document.getElementById('sketchmap'));
 
-                const view = new Sketchviz.Viewer('viewer', 'j2s', json.structures);
+                    const view = new Sketchviz.Viewer('viewer', 'jsmol/j2s', json.structures);
 
-                map.onClick((i) => view.showStructure(i));
-            })
-            .catch(e => console.log(e));
-	}
-    document.addEventListener("DOMContentLoaded", () => {
-		loadData('Arginine-Dipeptide');
-		// loadData('Pyrole');
-		// loadData('Qm7b');
-    });
+                    map.onClick((i) => view.showStructure(i));
+                })
+                .catch(e => console.log(e));
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+        	loadData('Arginine-Dipeptide');
+        	// loadData('Pyrole');
+        	// loadData('Qm7b');
+        });
     </script>
 </html>
