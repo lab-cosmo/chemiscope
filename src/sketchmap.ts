@@ -2,12 +2,13 @@ import * as Plotly from "plotly.js";
 import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
 import {Inferno} from "./colorscales";
 
-interface SketchmapData {
-    x: number[];
-    y: number[];
-    color_by: {
-        [s: string]: number[];
-    }
+interface MapData {
+    [key: string]: number[] | string[];
+}
+
+interface MapInput {
+    name: string;
+    data: MapData;
 }
 
 const DEFAULT_LAYOUT = {
@@ -42,56 +43,93 @@ const DEFAULT_CONFIG = {
 };
 
 export class Sketchmap {
-    private _name: string;
-    private _data: SketchmapData;
-    private _root!: HTMLElement;
+    /// HTML root holding the full plot
+    private _root: HTMLElement;
+    /// Plotly plot
     private _plot!: PlotlyHTMLElement;
+    /// The dataset name
+    private _name: string;
+    /// All known properties
+    private _data: {
+        numeric: {
+            [key: string]: number[]
+        };
+        strings: {
+            [key: string]: string[]
+        };
+    };
+    /// Storing the callback for when the plot is clicked
     private _clicked_cb: (index: number) => void;
-    private _color_names: string[];
-
-    constructor(name: string, data: SketchmapData) {
-        this._name = name;
-        this._data = data;
-        this._clicked_cb = (_) => { return; };
-        this._color_names = [];
-
-        for (name in this._data.color_by) {
-            this._color_names.push(name);
-        }
+    /// Currently displayed data, in this._data
+    private _current!: {
+        x: string,
+        y: string,
+        color?: string,
     }
 
-    public setup(root: HTMLElement) {
+    constructor(id: string, data: MapInput) {
+        this._name = data.name;
+        this._clicked_cb = (_) => { return; };
+        this._data = {
+            numeric: {},
+            strings: {},
+        };
+
+        const root = document.getElementById(id);
+        if (root === null) {
+            throw Error(`could not find HTML element #${id}`)
+        }
         this._root = root;
 
-        const div = document.createElement("div");
-        root.appendChild(div)
-
-        const colors = document.createElement("select") as HTMLSelectElement;
-        div.appendChild(colors);
-        for (let i = 0; i < this._color_names.length; i++) {
-            const option = document.createElement("option") as HTMLOptionElement;
-            option.value = this._color_names[i];
-            option.text = this._color_names[i];
-            colors.appendChild(option);
-        }
-
-        colors.onchange = () => {
-            const color = this._data.color_by[colors.value];
-            Plotly.restyle(this._plot, {
-                'hovertemplate': colors.value + ": %{marker.color:.2f} <extra></extra>",
-                'marker.showscale': true,
-                'marker.color': [color],
-                'marker.line': {
-                    color: [color]
-                },
-            }, 0);
-        }
+        this._extractProperties(data.data);
 
         this._createPlot();
     }
 
     public onClick(callback: (index: number) => void) {
         this._clicked_cb = callback;
+    }
+
+    private _extractProperties(data: MapData) {
+        // check that all properties have the same size
+        let size = -1;
+        for (const key in data) {
+            if (size === -1) {
+                size = data[key].length;
+            }
+
+            if (data[key].length !== size) {
+                throw Error("not all properties have the same size")
+            }
+        }
+
+        if (size === 0) {
+            return;
+        }
+
+        for (const key in data) {
+            const prop_type = typeof(data[key][0]);
+            if (prop_type === "number") {
+                this._data.numeric[key] = data[key] as number[];
+            } else if (prop_type === "string") {
+                this._data.strings[key] = data[key] as string[];
+            } else {
+                throw Error(`unexpected property type '${prop_type}'`);
+            }
+        }
+
+        const num_prop_names = Object.keys(this._data.numeric);
+        if (num_prop_names.length < 2) {
+            throw Error("Sketchmap needs at least two numeric properties to plot")
+        }
+
+        this._current = {
+            x: num_prop_names[0],
+            y: num_prop_names[1],
+        }
+        if (num_prop_names.length > 2) {
+            this._current.color = num_prop_names[2]
+        }
     }
 
     private _createPlot() {
@@ -101,8 +139,10 @@ export class Sketchmap {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
-        const fullData = {...this._data,
-            hovertemplate: this._color_names[0] + ": %{marker.color:.2f} <extra></extra>",
+        const fullData = {
+            x: this._data.numeric[this._current.x],
+            y: this._data.numeric[this._current.y],
+            // hovertemplate: this._color_names[0] + ": %{marker.color:.2f} <extra></extra>",
             marker: this._create_markers(),
             mode: "markers",
             type: "scattergl",
@@ -111,8 +151,8 @@ export class Sketchmap {
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling
         const clicked = {
-            x: [this._data.x[0]],
-            y: [this._data.y[0]],
+            x: [fullData.x[0]],
+            y: [fullData.y[0]],
             type: "scattergl",
             mode: "markers",
             marker: {
@@ -152,7 +192,7 @@ export class Sketchmap {
             return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
         });
 
-        const color = this._data.color_by[this._color_names[0]];
+        const color = this._current.color === undefined ? 0.5 : this._data.numeric[this._current.color];
         return {
             color: color,
             colorscale: rgbaColorscale,
