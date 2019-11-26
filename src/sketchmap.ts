@@ -1,6 +1,10 @@
 import * as Plotly from "plotly.js";
 import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
 import {Inferno} from "./colorscales";
+import {make_draggable} from "./draggable";
+
+require('./static/sketchviz.css');
+const HTML_SETTINGS = require("./static/settings.html");
 
 interface MapData {
     [key: string]: number[] | string[];
@@ -44,6 +48,14 @@ const DEFAULT_CONFIG = {
     ],
 };
 
+function getByID<HTMLType>(id: string): HTMLType {
+    const e = document.getElementById(id);
+    if (e === null) {
+        throw Error(`unable to get element with id ${id}`);
+    }
+    return e as unknown as HTMLType;
+}
+
 export class Sketchmap {
     /// HTML root holding the full plot
     private _root: HTMLElement;
@@ -62,6 +74,8 @@ export class Sketchmap {
     };
     /// Storing the callback for when the plot is clicked
     private _clicked_cb: (index: number) => void;
+    /// Index of the currently selected point
+    private _selected: number;
     /// Currently displayed data, in this._data
     private _current!: {
         x: string,
@@ -72,6 +86,7 @@ export class Sketchmap {
     constructor(id: string, data: MapInput) {
         this._name = data.name;
         this._clicked_cb = (_) => { return; };
+        this._selected = 0;
         this._data = {
             numeric: {},
             strings: {},
@@ -82,9 +97,10 @@ export class Sketchmap {
             throw Error(`could not find HTML element #${id}`)
         }
         this._root = root;
+        this._root.classList.add('skv-root');
 
         this._extractProperties(data.data);
-
+        this._setupSettings();
         this._createPlot();
     }
 
@@ -134,6 +150,92 @@ export class Sketchmap {
         }
     }
 
+    private _setupSettings() {
+        // use HTML5 template to generate a DOM object from an HTML string
+        const template = document.createElement('template');
+        template.innerHTML = `<button
+            href="#skv-settings"
+            class="btn btn-light btn-sm skv-open-settings"
+            data-toggle="modal">
+                <div class="skv-hamburger"><div></div><div></div><div></div></div>
+            </button>`;
+        this._root.append(template.content.firstChild!);
+
+        // replace id to ensure they are unique even if we have mulitple viewers
+        // on a single page
+        template.innerHTML = HTML_SETTINGS;
+        const modal = template.content.firstChild!;
+        document.body.appendChild(modal);
+
+        const modalDialog = modal.childNodes[1]! as HTMLElement
+        if (!modalDialog.classList.contains('modal-dialog')) {
+            throw Error("internal error: missing modal-dialog class")
+        }
+        // make the settings modal draggable
+        make_draggable(modalDialog, ".modal-header");
+
+        // Setup the map options
+        const xAxis = getByID<HTMLSelectElement>('skv-x');
+        for (const key in this._data.numeric) {
+            xAxis.options.add(new Option(key, key));
+        }
+        xAxis.selectedIndex = 0;
+        xAxis.onchange = () => {
+            this._current.x = xAxis.value;
+            const data = {
+                x: [
+                    this._data.numeric[xAxis.value],
+                    [this._data.numeric[xAxis.value][this._selected]]
+                ]
+            }
+            Plotly.restyle(this._plot, data).catch(e => console.error(e));
+            Plotly.relayout(this._plot, {
+                'xaxis.title': xAxis.value
+            } as unknown as Layout).catch(e => console.error(e));
+        }
+
+        const yAxis = getByID<HTMLSelectElement>('skv-y');
+        for (const key in this._data.numeric) {
+            yAxis.options.add(new Option(key, key));
+        }
+        yAxis.selectedIndex = 1;
+        yAxis.onchange = () => {
+            this._current.y = yAxis.value;
+            const data = {
+                y: [
+                    this._data.numeric[yAxis.value],
+                    [this._data.numeric[yAxis.value][this._selected]]
+                ]
+            }
+            Plotly.restyle(this._plot, data).catch(e => console.error(e));
+            Plotly.relayout(this._plot, {
+                'yaxis.title': yAxis.value
+            } as unknown as Layout).catch(e => console.error(e));
+        }
+
+        const color = getByID<HTMLSelectElement>('skv-color');
+        for (const key in this._data.numeric) {
+            color.options.add(new Option(key, key));
+        }
+        if (this._current.color !== undefined) {
+            color.selectedIndex = 2;
+        }
+        color.onchange = () => {
+            this._current.color = color.value;
+            const data = {
+                'marker.color': [this._data.numeric[color.value]],
+                'marker.line.color': [this._data.numeric[color.value]],
+                'marker.colorbar.title': color.value,
+            };
+            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
+        }
+
+        const size = getByID<HTMLSelectElement>('skv-size');
+        for (const key in this._data.numeric) {
+            size.options.add(new Option(key, key));
+        }
+    }
+
     private _createPlot() {
         this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
         this._plot.style.width = "100%";
@@ -156,8 +258,8 @@ export class Sketchmap {
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling
         const clicked = {
-            x: [fullData.x[0]],
-            y: [fullData.y[0]],
+            x: [fullData.x[this._selected]],
+            y: [fullData.y[this._selected]],
             type: "scattergl",
             mode: "markers",
             marker: {
@@ -182,14 +284,14 @@ export class Sketchmap {
         };
 
         layout.xaxis.title = this._current.x;
-        layout.yaxis.title = this._current.x;
+        layout.yaxis.title = this._current.y;
 
         Plotly.newPlot(
             this._plot, [fullData as Data, clicked as Data],
             layout as Layout,
             DEFAULT_CONFIG as Config,
-        );
-        this._plot.on("plotly_click", (event) => this._on_plotly_click(event));
+        ).catch(e => console.error(e));
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this._plotClicked(event.points[0].pointNumber));
     }
 
     private _create_markers() {
@@ -218,11 +320,12 @@ export class Sketchmap {
         };
     }
 
-    private _on_plotly_click(event: Plotly.PlotMouseEvent) {
+    private _plotClicked(i: number) {
+        this._selected = i;
         Plotly.restyle(this._plot, {
-            x: [[event.points[0].x]],
-            y: [[event.points[0].y]],
+            x: [[this._data.numeric[this._current.x][this._selected]]],
+            y: [[this._data.numeric[this._current.y][this._selected]]],
         }, 1);
-        this._clicked_cb(event.points[0].pointNumber);
+        this._clicked_cb(i);
     }
 }

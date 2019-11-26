@@ -1,0 +1,35 @@
+.skv-root {
+    position: relative;
+}
+
+.skv-open-settings {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 10;
+}
+
+.skv-options {
+    font-weight: bold;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+}
+
+.skv-options label {
+    width: 5em;
+}
+
+.skv-modal-header {
+    cursor: grab;
+}
+
+.skv-hamburger div {
+    width: 1.1em;
+    height: 0.4ex;
+    background-color: black;
+    margin: 0.4ex 0;
+}
