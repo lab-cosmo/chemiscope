@@ -23,6 +23,18 @@
             <h1 style="text-align: center">Sketchmap vizualization</h1>
         </header>
         <div class="container">
+            <div class="input-group input-group-bg" style="margin: auto">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for=skv-shape>Select a system</label>
+                </div>
+                <select id=select-system class="custom-select">
+                    <option value="Arginine-Dipeptide" selected>Arginine-Dipeptide</option>
+                    <option value="Pyrole" selected>Pyrole</option>
+                    <option value="Qm7b" selected>Qm7b</option>
+                </select>
+            </div>
+
+            <div style="height: 2em"></div>
             <div class="row">
                 <div class="col-xl-7">
                     <div id=skviz-map style="height: 100%"></div>
@@ -51,10 +63,17 @@
                 .catch(e => console.log(e));
         }
 
+        const system = document.getElementById('select-system');
+        system.onchange = () => {
+            // we have to reload since jsmol & plotly do not interact nicely
+            // with WebGL state. jsmol using .caller all over the place and
+            // thus throwing exceptions with plotly 'use strict' do not help
+            // either
+            window.location.reload(false);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
-        	// loadData('Arginine-Dipeptide');
-        	// loadData('Pyrole');
-        	loadData('Qm7b');
+        	loadData(system.value);
         });
     </script>
 </html>
