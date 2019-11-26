@@ -73,7 +73,7 @@ export class Sketchmap {
         };
     };
     /// Storing the callback for when the plot is clicked
-    private _clicked_cb: (index: number) => void;
+    private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
     private _selected: number;
     /// Currently displayed data, in this._data
@@ -85,7 +85,7 @@ export class Sketchmap {
 
     constructor(id: string, data: MapInput) {
         this._name = data.name;
-        this._clicked_cb = (_) => { return; };
+        this._selectedCallback = (_) => { return; };
         this._selected = 0;
         this._data = {
             numeric: {},
@@ -104,8 +104,20 @@ export class Sketchmap {
         this._createPlot();
     }
 
-    public onClick(callback: (index: number) => void) {
-        this._clicked_cb = callback;
+    /// Register a callback to be called when the selected envirronement is
+    /// updated
+    public onSelectedUpdate(callback: (index: number) => void) {
+        this._selectedCallback = callback;
+    }
+
+    /// Change the selected environement to the one with the given `index`
+    public select(index: number) {
+        this._selected = index;
+        Plotly.restyle(this._plot, {
+            x: [[this._data.numeric[this._current.x][this._selected]]],
+            y: [[this._data.numeric[this._current.y][this._selected]]],
+        }, 1);
+        this._selectedCallback(this._selected);
     }
 
     private _extractProperties(data: MapData) {
@@ -291,7 +303,7 @@ export class Sketchmap {
             layout as Layout,
             DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
-        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this._plotClicked(event.points[0].pointNumber));
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
     }
 
     private _create_markers() {
@@ -318,14 +330,5 @@ export class Sketchmap {
                 thickness: 20,
             }
         };
-    }
-
-    private _plotClicked(i: number) {
-        this._selected = i;
-        Plotly.restyle(this._plot, {
-            x: [[this._data.numeric[this._current.x][this._selected]]],
-            y: [[this._data.numeric[this._current.y][this._selected]]],
-        }, 1);
-        this._clicked_cb(i);
     }
 }

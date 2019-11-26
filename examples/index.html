@@ -46,7 +46,7 @@
                     });
                     const view = new Sketchviz.Viewer('skviz-viewer', 'jsmol/j2s', json.structures);
 
-                    map.onClick((i) => view.showStructure(i));
+                    map.onSelectedUpdate((i) => view.showStructure(i));
                 })
                 .catch(e => console.log(e));
         }
