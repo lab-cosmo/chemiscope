@@ -1,24 +1,10 @@
 import JSmolViewer from 'materials-cloud-viewer';
 
-interface Atom {
-    l: string;
-    x: number;
-    y: number;
-    z: number;
-}
-
-interface Structure {
-    mol: {
-        a: Atom[],
-    };
-    cell: number[][],
-}
-
 export class Viewer {
-    private _structures: Structure[];
+    private _structures: string[];
     private _viewer: JSmolViewer;
 
-    constructor(id: string, j2sPath: string, structures: Structure[]) {
+    constructor(id: string, j2sPath: string, structures: string[]) {
         this._viewer = new JSmolViewer(id, j2sPath);
         this._structures = structures;
 
@@ -31,12 +17,6 @@ export class Viewer {
             return;
         }
 
-        // TODO: does load remove the previous structures?
-        this._viewer.load(`inline '${JSON.stringify(this._structures[index])}'`);
-        const [a, b, c] = this._structures[index].cell;
-        const a_str = `{${a[0]} ${a[1]} ${a[2]}}`;
-        const b_str = `{${b[0]} ${b[1]} ${b[2]}}`;
-        const c_str = `{${c[0]} ${c[1]} ${c[2]}}`;
-        this._viewer.script(`unitcell [{0 0 0} ${a_str} ${b_str} ${c_str}];`);
+        this._viewer.load(`inline '${this._structures[index]}'`);
     }
 }
