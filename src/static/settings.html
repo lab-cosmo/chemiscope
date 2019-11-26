@@ -7,55 +7,62 @@
             </div>
             <div class="modal-body">
                 <div class="skv-options">
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="x-axis">x axis:</label>
+                            <label class="input-group-text" for=skv-x>x axis:</label>
                         </div>
                         <select id=skv-x class="custom-select">
                         </select>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="y-axis">y axis:</label>
+                            <label class="input-group-text" for=skv-y>y axis:</label>
                         </div>
                         <select id=skv-y class="custom-select">
                         </select>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="color-by">color:</label>
+                            <label class="input-group-text" for=skv-color>color:</label>
                         </div>
                         <select id=skv-color class="custom-select">
                         </select>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="size-by">size:</label>
+                            <label class="input-group-text" for=skv-marker>marker:</label>
+                        </div>
+                        <select id=skv-marker class="custom-select">
+                            <option value="auto" selected>auto</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for=skv-size>size:</label>
                         </div>
                         <select id=skv-size class="custom-select">
                             <option value="auto" selected>auto</option>
                         </select>
                     </div>
 
-                    <!-- <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="markers">markers:</label>
+                            <label class="input-group-text" for=skv-size-factor>size factor:</label>
                         </div>
-                        <select id=skv-markers class="custom-select">
-                            <option value="auto" selected>auto</option>
-                        </select>
+                        <input type="range" min=1 max=50 step=1 value=25 class="form-control custom-range" id=skv-size-factor>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="palette">palette:</label>
+                            <label class="input-group-text" for=skv-palette>palette:</label>
                         </div>
                         <select id=skv-palette class="custom-select">
                         </select>
-                    </div> -->
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import * as Plotly from "plotly.js";
 import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
-import {Inferno} from "./colorscales";
+import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
 require('./static/sketchviz.css');
@@ -187,44 +187,48 @@ export class Sketchmap {
         make_draggable(modalDialog, ".modal-header");
 
         // Setup the map options
-        const xAxis = getByID<HTMLSelectElement>('skv-x');
+
+        // data used as x values
+        const xValues = getByID<HTMLSelectElement>('skv-x');
         for (const key in this._data.numeric) {
-            xAxis.options.add(new Option(key, key));
+            xValues.options.add(new Option(key, key));
         }
-        xAxis.selectedIndex = 0;
-        xAxis.onchange = () => {
-            this._current.x = xAxis.value;
+        xValues.selectedIndex = 0;
+        xValues.onchange = () => {
+            this._current.x = xValues.value;
             const data = {
                 x: [
-                    this._data.numeric[xAxis.value],
-                    [this._data.numeric[xAxis.value][this._selected]]
+                    this._data.numeric[xValues.value],
+                    [this._data.numeric[xValues.value][this._selected]]
                 ]
             }
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
-                'xaxis.title': xAxis.value
+                'xaxis.title': xValues.value
             } as unknown as Layout).catch(e => console.error(e));
         }
 
-        const yAxis = getByID<HTMLSelectElement>('skv-y');
+        // data used as y values
+        const yValues = getByID<HTMLSelectElement>('skv-y');
         for (const key in this._data.numeric) {
-            yAxis.options.add(new Option(key, key));
+            yValues.options.add(new Option(key, key));
         }
-        yAxis.selectedIndex = 1;
-        yAxis.onchange = () => {
-            this._current.y = yAxis.value;
+        yValues.selectedIndex = 1;
+        yValues.onchange = () => {
+            this._current.y = yValues.value;
             const data = {
                 y: [
-                    this._data.numeric[yAxis.value],
-                    [this._data.numeric[yAxis.value][this._selected]]
+                    this._data.numeric[yValues.value],
+                    [this._data.numeric[yValues.value][this._selected]]
                 ]
             }
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
-                'yaxis.title': yAxis.value
+                'yaxis.title': yValues.value
             } as unknown as Layout).catch(e => console.error(e));
         }
 
+        // marker color
         const color = getByID<HTMLSelectElement>('skv-color');
         for (const key in this._data.numeric) {
             color.options.add(new Option(key, key));
@@ -242,9 +246,25 @@ export class Sketchmap {
             Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
         }
 
+        // marker size
         const size = getByID<HTMLSelectElement>('skv-size');
         for (const key in this._data.numeric) {
             size.options.add(new Option(key, key));
+        }
+
+        // color palette
+        const palette = getByID<HTMLSelectElement>('skv-palette');
+        for (const key in COLOR_MAPS) {
+            palette.options.add(new Option(key, key));
+        }
+        palette.value = 'inferno';
+
+        palette.onchange = () => {
+            const data = {
+                'marker.colorscale': [COLOR_MAPS[palette.value].rgba],
+                'marker.line.colorscale': [COLOR_MAPS[palette.value].rgb],
+            };
+            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
         }
     }
 
@@ -258,11 +278,26 @@ export class Sketchmap {
         const hovertemplate = (this._current.color === undefined) ? "" :
             this._current.color + ": %{marker.color:.2f} <extra></extra>";
 
+        const color = (this._current.color === undefined) ? 0.5 : this._data.numeric[this._current.color];
         const fullData = {
             x: this._data.numeric[this._current.x],
             y: this._data.numeric[this._current.y],
             hovertemplate: hovertemplate,
-            marker: this._create_markers(),
+            marker: {
+                color: color,
+                colorscale: COLOR_MAPS.inferno.rgba,
+                line: {
+                    color: color,
+                    colorscale: COLOR_MAPS.inferno.rgb,
+                    width: 1.5,
+                },
+                size: 10,
+                showscale: true,
+                colorbar: {
+                    title: this._current.color ?? "",
+                    thickness: 20,
+                }
+            },
             mode: "markers",
             type: "scattergl",
         };
@@ -304,31 +339,5 @@ export class Sketchmap {
             DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
         this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
-    }
-
-    private _create_markers() {
-        const rgbaColorscale: Array<[number, string]> = Inferno.map((c) => {
-            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.75)`];
-        });
-        const rgbColorscale: Array<[number, string]> = Inferno.map((c) => {
-            return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
-        });
-
-        const color = (this._current.color === undefined) ? 0.5 : this._data.numeric[this._current.color];
-        return {
-            color: color,
-            colorscale: rgbaColorscale,
-            line: {
-                color: color,
-                colorscale: rgbColorscale,
-                width: 1.5,
-            },
-            size: 10,
-            showscale: true,
-            colorbar: {
-                title: this._current.color ?? "",
-                thickness: 20,
-            }
-        };
     }
 }
