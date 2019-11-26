@@ -15,16 +15,18 @@ const DEFAULT_LAYOUT = {
     hovermode: "closest",
     showlegend: false,
     xaxis: {
-        zeroline:false,
+        title: "",
+        zeroline: false,
     },
     yaxis: {
-        zeroline:false,
+        title: "",
+        zeroline: false,
     },
     margin: {
         l: 50,
         t: 50,
         r: 50,
-        b: 20,
+        b: 50,
     }
 };
 
@@ -139,10 +141,13 @@ export class Sketchmap {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
+        const hovertemplate = (this._current.color === undefined) ? "" :
+            this._current.color + ": %{marker.color:.2f} <extra></extra>";
+
         const fullData = {
             x: this._data.numeric[this._current.x],
             y: this._data.numeric[this._current.y],
-            // hovertemplate: this._color_names[0] + ": %{marker.color:.2f} <extra></extra>",
+            hovertemplate: hovertemplate,
             marker: this._create_markers(),
             mode: "markers",
             type: "scattergl",
@@ -174,7 +179,10 @@ export class Sketchmap {
                     size: 25,
                 },
             },
-        }
+        };
+
+        layout.xaxis.title = this._current.x;
+        layout.yaxis.title = this._current.x;
 
         Plotly.newPlot(
             this._plot, [fullData as Data, clicked as Data],
@@ -192,7 +200,7 @@ export class Sketchmap {
             return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
         });
 
-        const color = this._current.color === undefined ? 0.5 : this._data.numeric[this._current.color];
+        const color = (this._current.color === undefined) ? 0.5 : this._data.numeric[this._current.color];
         return {
             color: color,
             colorscale: rgbaColorscale,
@@ -204,6 +212,7 @@ export class Sketchmap {
             size: 10,
             showscale: true,
             colorbar: {
+                title: this._current.color ?? "",
                 thickness: 20,
             }
         };
