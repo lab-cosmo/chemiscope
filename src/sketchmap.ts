@@ -186,9 +186,8 @@ export class Sketchmap {
         // make the settings modal draggable
         make_draggable(modalDialog, ".modal-header");
 
-        // Setup the map options
-
-        // data used as x values
+        // ============== Setup the map options ==============
+        // ======= data used as x values
         const xValues = getByID<HTMLSelectElement>('skv-x');
         for (const key in this._data.numeric) {
             xValues.options.add(new Option(key, key));
@@ -208,7 +207,7 @@ export class Sketchmap {
             } as unknown as Layout).catch(e => console.error(e));
         }
 
-        // data used as y values
+        // ======= data used as y values
         const yValues = getByID<HTMLSelectElement>('skv-y');
         for (const key in this._data.numeric) {
             yValues.options.add(new Option(key, key));
@@ -228,7 +227,7 @@ export class Sketchmap {
             } as unknown as Layout).catch(e => console.error(e));
         }
 
-        // marker color
+        // ======= marker color
         const color = getByID<HTMLSelectElement>('skv-color');
         for (const key in this._data.numeric) {
             color.options.add(new Option(key, key));
@@ -246,13 +245,54 @@ export class Sketchmap {
             Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
         }
 
-        // marker size
+        // ======= marker shapes
+        const shape = getByID<HTMLSelectElement>('skv-shape');
+        // TODO
+
+        // ======= marker size
         const size = getByID<HTMLSelectElement>('skv-size');
+        const sizeFactor = getByID<HTMLInputElement>('skv-size-factor');
         for (const key in this._data.numeric) {
             size.options.add(new Option(key, key));
         }
 
-        // color palette
+        const changeSize = () => {
+            // Transform the linear value from the slider into a logarithmic scale
+            const logSlider = (value: number) => {
+                const min_slider = parseInt(sizeFactor.min);
+                const max_slider = parseInt(sizeFactor.max);
+
+                const min_value = Math.log(1.0 / 6.0);
+                const max_value = Math.log(6.0);
+
+                const factor = (max_value - min_value) / (max_slider - min_slider);
+                return Math.exp(min_value + factor * (value - min_slider));
+            }
+
+            const factor = logSlider(parseInt(sizeFactor.value));
+            let markerSize;
+
+            if (size.value === "default") {
+                markerSize = 10 * factor;
+            } else {
+                const sizes = this._data.numeric[size.value];
+                const min = Math.min.apply(Math, sizes);
+                const max = Math.max.apply(Math, sizes);
+                markerSize = sizes.map((v) => {
+                    const scaled = (v - min) / (max - min);
+                    return 10 * factor * (scaled + 0.05);
+                })
+            }
+
+            const data = {
+                'marker.size': [markerSize],
+            };
+            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
+        }
+        size.onchange = changeSize;
+        sizeFactor.onchange = changeSize;
+
+        // ======= color palette
         const palette = getByID<HTMLSelectElement>('skv-palette');
         for (const key in COLOR_MAPS) {
             palette.options.add(new Option(key, key));
