@@ -84,7 +84,7 @@ export class Sketchmap {
             throw Error(`could not find HTML element #${id}`)
         }
         this._root = root;
-        this._root.classList.add('skv-root');
+        this._root.style.position = 'relative';
 
         this._data = new MapData(properties);
 
@@ -333,7 +333,7 @@ export class Sketchmap {
             y: [fullData.y[this._selected]],
             mode: "markers",
             marker: {
-                color: "cyan",
+                color: "#007bff",
                 line: {
                     color: "black",
                     width: 0.5,

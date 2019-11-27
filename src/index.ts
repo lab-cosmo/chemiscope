@@ -1,5 +1,6 @@
 import {Sketchmap} from "./sketchmap";
 import {Viewer} from "./viewer";
+import {EnvironementSlider} from './slider';
 
 require('./static/sketchviz.css');
 
@@ -12,6 +13,7 @@ interface SketchvizInput {
     mapId: string;
     viewerId: string;
     j2sPath: string;
+    sliderID: string;
 }
 
 function checkInput(o: any): void {
@@ -45,13 +47,24 @@ function checkInput(o: any): void {
     if (!('j2sPath' in o && typeof o['j2sPath'] === 'string')) {
         throw Error("missing 'j2sPath' in Sketchviz.input");
     }
+
+    if (!('sliderID' in o && typeof o['sliderID'] === 'string')) {
+        throw Error("missing 'sliderID' in Sketchviz.input");
+    }
 }
 
 function setup(input: SketchvizInput) {
     checkInput(input);
+    // TODO Check that properties and structures have the same size
+
     const map = new Sketchmap(input.mapId, input.name, input.properties);
     const viewer = new Viewer(input.viewerId, input.j2sPath, input.structures);
-    map.onSelectedUpdate((i) => viewer.showStructure(i));
+    const slider = new EnvironementSlider(input.sliderID, input.structures.length - 1);
+    map.onSelectedUpdate((i) => {
+        slider.changed(i);
+        viewer.showStructure(i);
+    });
+    slider.onChange((i) => map.select(i));
 }
 
 export {
