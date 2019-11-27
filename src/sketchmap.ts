@@ -1,19 +1,13 @@
 import * as Plotly from "plotly.js";
 import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
+
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
+import {MapInput, MapInputData, MapData} from "./map_data"
+
 require('./static/sketchviz.css');
 const HTML_SETTINGS = require("./static/settings.html");
-
-interface MapData {
-    [key: string]: number[] | string[];
-}
-
-interface MapInput {
-    name: string;
-    data: MapData;
-}
 
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
@@ -64,14 +58,7 @@ export class Sketchmap {
     /// The dataset name
     private _name: string;
     /// All known properties
-    private _data: {
-        numeric: {
-            [key: string]: number[]
-        };
-        strings: {
-            [key: string]: string[]
-        };
-    };
+    private _data: MapData
     /// Storing the callback for when the plot is clicked
     private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
@@ -87,10 +74,6 @@ export class Sketchmap {
         this._name = data.name;
         this._selectedCallback = (_) => { return; };
         this._selected = 0;
-        this._data = {
-            numeric: {},
-            strings: {},
-        };
 
         const root = document.getElementById(id);
         if (root === null) {
@@ -99,7 +82,18 @@ export class Sketchmap {
         this._root = root;
         this._root.classList.add('skv-root');
 
-        this._extractProperties(data.data);
+        this._data = new MapData(data.data);
+
+        const prop_names = Object.keys(this._data);
+        if (prop_names.length < 2) {
+            throw Error("Sketchmap needs at least two properties to plot")
+        }
+        this._current = {
+            x: prop_names[0],
+            y: prop_names[1],
+            color: (prop_names.length > 2) ? prop_names[2] : "",
+        }
+
         this._setupSettings();
         this._createPlot();
     }
@@ -114,51 +108,10 @@ export class Sketchmap {
     public select(index: number) {
         this._selected = index;
         Plotly.restyle(this._plot, {
-            x: [[this._data.numeric[this._current.x][this._selected]]],
-            y: [[this._data.numeric[this._current.y][this._selected]]],
+            x: [[this._data[this._current.x].values[this._selected]]],
+            y: [[this._data[this._current.y].values[this._selected]]],
         }, 1);
         this._selectedCallback(this._selected);
-    }
-
-    private _extractProperties(data: MapData) {
-        // check that all properties have the same size
-        let size = -1;
-        for (const key in data) {
-            if (size === -1) {
-                size = data[key].length;
-            }
-
-            if (data[key].length !== size) {
-                throw Error("not all properties have the same size")
-            }
-        }
-
-        if (size === 0) {
-            return;
-        }
-
-        for (const key in data) {
-            const prop_type = typeof(data[key][0]);
-            if (prop_type === "number") {
-                this._data.numeric[key] = data[key] as number[];
-            } else if (prop_type === "string") {
-                this._data.strings[key] = data[key] as string[];
-            } else {
-                throw Error(`unexpected property type '${prop_type}'`);
-            }
-        }
-
-        const num_prop_names = Object.keys(this._data.numeric);
-        if (num_prop_names.length < 2) {
-            throw Error("Sketchmap needs at least two numeric properties to plot")
-        }
-
-        const color = (num_prop_names.length > 2) ? num_prop_names[2] : "";
-        this._current = {
-            x: num_prop_names[0],
-            y: num_prop_names[1],
-            color: color,
-        }
     }
 
     private _setupSettings() {
@@ -188,17 +141,15 @@ export class Sketchmap {
         // ============== Setup the map options ==============
         // ======= data used as x values
         const xValues = getByID<HTMLSelectElement>('skv-x');
-        for (const key in this._data.numeric) {
+        for (const key in this._data) {
             xValues.options.add(new Option(key, key));
         }
         xValues.selectedIndex = 0;
         xValues.onchange = () => {
             this._current.x = xValues.value;
+            const values = this._data[xValues.value].values;
             const data = {
-                x: [
-                    this._data.numeric[xValues.value],
-                    [this._data.numeric[xValues.value][this._selected]]
-                ]
+                x: [values, [values[this._selected]]]
             }
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
@@ -208,17 +159,15 @@ export class Sketchmap {
 
         // ======= data used as y values
         const yValues = getByID<HTMLSelectElement>('skv-y');
-        for (const key in this._data.numeric) {
+        for (const key in this._data) {
             yValues.options.add(new Option(key, key));
         }
         yValues.selectedIndex = 1;
         yValues.onchange = () => {
             this._current.y = yValues.value;
+            const values = this._data[yValues.value].values;
             const data = {
-                y: [
-                    this._data.numeric[yValues.value],
-                    [this._data.numeric[yValues.value][this._selected]]
-                ]
+                y: [values, [values[this._selected]]]
             }
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
@@ -228,19 +177,20 @@ export class Sketchmap {
 
         // ======= marker color
         const color = getByID<HTMLSelectElement>('skv-color');
-        for (const key in this._data.numeric) {
+        for (const key in this._data) {
             color.options.add(new Option(key, key));
         }
         if (this._current.color !== "") {
-            color.selectedIndex = 2;
+            // 2 + 1 since the first item is 'none'
+            color.selectedIndex = 3;
         }
         color.onchange = () => {
             this._current.color = color.value;
-            const colors = (this._current.color === "") ? 0.5 : this._data.numeric[this._current.color];
+            const values = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
             const data = {
                 hovertemplate: this._hovertemplate(),
-                'marker.color': [colors],
-                'marker.line.color': [colors],
+                'marker.color': [values],
+                'marker.line.color': [values],
                 'marker.colorbar.title': this._current.color,
             };
             Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
@@ -268,7 +218,7 @@ export class Sketchmap {
         // ======= marker size
         const size = getByID<HTMLSelectElement>('skv-size');
         const sizeFactor = getByID<HTMLInputElement>('skv-size-factor');
-        for (const key in this._data.numeric) {
+        for (const key in this._data) {
             size.options.add(new Option(key, key));
         }
 
@@ -291,10 +241,10 @@ export class Sketchmap {
             if (size.value === "") {
                 markerSize = 10 * factor;
             } else {
-                const sizes = this._data.numeric[size.value];
-                const min = Math.min.apply(Math, sizes);
-                const max = Math.max.apply(Math, sizes);
-                markerSize = sizes.map((v) => {
+                const values = this._data[size.value].values;
+                const min = Math.min.apply(Math, values);
+                const max = Math.max.apply(Math, values);
+                markerSize = values.map((v) => {
                     const scaled = (v - min) / (max - min);
                     return 10 * factor * (scaled + 0.05);
                 })
@@ -316,10 +266,10 @@ export class Sketchmap {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
-        const color = (this._current.color === "") ? 0.5 : this._data.numeric[this._current.color];
+        const color = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
         const fullData = {
-            x: this._data.numeric[this._current.x],
-            y: this._data.numeric[this._current.y],
+            x: this._data[this._current.x].values,
+            y: this._data[this._current.y].values,
             hovertemplate: this._hovertemplate(),
             marker: {
                 color: color,
