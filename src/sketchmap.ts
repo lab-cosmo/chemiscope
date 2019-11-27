@@ -4,7 +4,7 @@ import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
-import {MapInput, MapInputData, MapData} from "./map_data"
+import {MapInput, MapData} from "./map_data"
 
 require('./static/sketchviz.css');
 const HTML_SETTINGS = require("./static/settings.html");
@@ -63,11 +63,16 @@ export class Sketchmap {
     private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
     private _selected: number;
-    /// Currently displayed data, in this._data
-    private _current!: {
+    /// Currently displayed data
+    private _current: {
+        /// Name of the properties in `this._data` used for x values
         x: string,
+        /// Name of the properties in `this._data` used for y values
         y: string,
+        /// Name of the properties in `this._data` used for color values
         color: string,
+        /// Symbol used for all marker / every marker
+        symbols: number | number[],
     }
 
     constructor(id: string, data: MapInput) {
@@ -92,6 +97,7 @@ export class Sketchmap {
             x: prop_names[0],
             y: prop_names[1],
             color: (prop_names.length > 2) ? prop_names[2] : "",
+            symbols: 0
         }
 
         this._setupSettings();
@@ -107,10 +113,19 @@ export class Sketchmap {
     /// Change the selected environement to the one with the given `index`
     public select(index: number) {
         this._selected = index;
+
+        let symbol;
+        if (typeof(this._current.symbols) === "number") {
+            symbol = this._current.symbols;
+        } else {
+            symbol = this._current.symbols[this._selected];
+        }
+
         Plotly.restyle(this._plot, {
             x: [[this._data[this._current.x].values[this._selected]]],
             y: [[this._data[this._current.y].values[this._selected]]],
-        }, 1);
+            "marker.symbol": [symbol],
+        } as unknown as Data, 1);
         this._selectedCallback(this._selected);
     }
 
@@ -211,9 +226,29 @@ export class Sketchmap {
             Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
         }
 
-        // ======= marker shapes
-        const shape = getByID<HTMLSelectElement>('skv-shape');
-        // TODO
+        // ======= marker symbols
+        const symbol = getByID<HTMLSelectElement>('skv-symbol');
+        for (const key in this._data) {
+            if (this._data[key].string !== undefined) {
+                symbol.options.add(new Option(key, key));
+            }
+        }
+
+        symbol.onchange = () => {
+            let selected;
+            if (symbol.value !== "") {
+                this._current.symbols = this._data[symbol.value].values;
+                selected = this._current.symbols[this._selected];
+            } else {
+                // reset default
+                this._current.symbols = 0;
+                selected = 0;
+            }
+            const data = {
+                'marker.symbol': [this._current.symbols, selected],
+            };
+            Plotly.restyle(this._plot, data as unknown as Data).catch(e => console.error(e));
+        }
 
         // ======= marker size
         const size = getByID<HTMLSelectElement>('skv-size');
@@ -280,6 +315,7 @@ export class Sketchmap {
                     width: 1.5,
                 },
                 size: 10,
+                symbol: this._current.symbols,
                 showscale: true,
                 colorbar: {
                     title: this._current.color,
@@ -292,7 +328,7 @@ export class Sketchmap {
 
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling
-        const clicked = {
+        const selected = {
             x: [fullData.x[this._selected]],
             y: [fullData.y[this._selected]],
             type: "scattergl",
@@ -303,7 +339,8 @@ export class Sketchmap {
                     color: "black",
                     width: 0.5,
                 },
-                size: 18,
+                size: 20,
+                symbol: this._current.symbols,
             },
             hoverinfo: "none",
         };
@@ -322,7 +359,7 @@ export class Sketchmap {
         layout.yaxis.title = this._current.y;
 
         Plotly.newPlot(
-            this._plot, [fullData as Data, clicked as Data],
+            this._plot, [fullData as unknown as Data, selected as unknown as Data],
             layout as Layout,
             DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
