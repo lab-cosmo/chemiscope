@@ -6,7 +6,6 @@ import {make_draggable} from "./draggable";
 
 import {MapInput, MapData} from "./map_data"
 
-require('./static/sketchviz.css');
 const HTML_SETTINGS = require("./static/settings.html");
 
 const DEFAULT_LAYOUT = {
@@ -75,8 +74,8 @@ export class Sketchmap {
         symbols: number | number[],
     }
 
-    constructor(id: string, data: MapInput) {
-        this._name = data.name;
+    constructor(id: string, name: string, properties: MapInput) {
+        this._name = name;
         this._selectedCallback = (_) => { return; };
         this._selected = 0;
 
@@ -87,7 +86,7 @@ export class Sketchmap {
         this._root = root;
         this._root.classList.add('skv-root');
 
-        this._data = new MapData(data.data);
+        this._data = new MapData(properties);
 
         const prop_names = Object.keys(this._data);
         if (prop_names.length < 2) {

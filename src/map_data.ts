@@ -1,10 +1,5 @@
-export interface MapInputData {
-    [key: string]: number[] | string[];
-}
-
 export interface MapInput {
-    name: string;
-    data: MapInputData;
+    [key: string]: number[] | string[];
 }
 
 /// A simple string => number association, giving a single id to each string
@@ -47,7 +42,7 @@ export class MapData {
         string?: StringInterner;
     };
 
-    constructor(data: MapInputData) {
+    constructor(data: MapInput) {
         // check that all properties have the same size
         let size = -1;
         for (const key in data) {

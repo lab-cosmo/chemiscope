@@ -41,28 +41,14 @@
                 </div>
 
                 <div class="col-xl-5">
-                    <div id=skviz-viewer style="height: 70%"></div>
+                    <div id=skviz-viewer style="height: 60%"></div>
+                    <div id=skviz-slider></div>
                 </div>
             </div>
         </div>
     </body>
 
     <script>
-        function loadData(name) {
-        	fetch(`${name}.json`)
-                .then(response => response.json())
-                .then(json => {
-                    const map = new Sketchviz.Sketchmap('skviz-map', {
-                        name: name,
-                        data: json.sketchmap,
-                    });
-                    const view = new Sketchviz.Viewer('skviz-viewer', 'jsmol/j2s', json.structures);
-
-                    map.onSelectedUpdate((i) => view.showStructure(i));
-                })
-                .catch(e => console.log(e));
-        }
-
         const system = document.getElementById('select-system');
         system.onchange = () => {
             // we have to reload since jsmol & plotly do not interact nicely
@@ -73,7 +59,20 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-        	loadData(system.value);
+            const name = system.value;
+            fetch(`${name}.json`)
+                .then(response => response.json())
+                .then(json => {
+                    Sketchviz.setup({
+                        name: name,
+                        properties: json.sketchmap,
+                        structures: json.structures,
+                        mapId: 'skviz-map',
+                        viewerId: 'skviz-viewer',
+                        j2sPath: 'jsmol/j2s',
+                    })
+                })
+                .catch(e => console.error(e));
         });
     </script>
 </html>
