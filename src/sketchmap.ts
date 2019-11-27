@@ -125,7 +125,7 @@ export class Sketchmap {
             x: [[this._data[this._current.x].values[this._selected]]],
             y: [[this._data[this._current.y].values[this._selected]]],
             "marker.symbol": [symbol],
-        } as unknown as Data, 1);
+        }, 1);
         this._selectedCallback(this._selected);
     }
 
@@ -169,7 +169,7 @@ export class Sketchmap {
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
                 'xaxis.title': xValues.value
-            } as unknown as Layout).catch(e => console.error(e));
+            }).catch(e => console.error(e));
         }
 
         // ======= data used as y values
@@ -187,7 +187,7 @@ export class Sketchmap {
             Plotly.restyle(this._plot, data).catch(e => console.error(e));
             Plotly.relayout(this._plot, {
                 'yaxis.title': yValues.value
-            } as unknown as Layout).catch(e => console.error(e));
+            }).catch(e => console.error(e));
         }
 
         // ======= marker color
@@ -201,14 +201,14 @@ export class Sketchmap {
         }
         color.onchange = () => {
             this._current.color = color.value;
-            const values = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
+            const values = (this._current.color === "") ? [0.5] : [this._data[this._current.color].values];
             const data = {
                 hovertemplate: this._hovertemplate(),
-                'marker.color': [values],
-                'marker.line.color': [values],
+                'marker.color': values,
+                'marker.line.color': values,
                 'marker.colorbar.title': this._current.color,
             };
-            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
         }
 
         // ======= color palette
@@ -223,7 +223,7 @@ export class Sketchmap {
                 'marker.colorscale': [COLOR_MAPS[palette.value].rgba],
                 'marker.line.colorscale': [COLOR_MAPS[palette.value].rgb],
             };
-            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
         }
 
         // ======= marker symbols
@@ -247,7 +247,7 @@ export class Sketchmap {
             const data = {
                 'marker.symbol': [this._current.symbols, selected],
             };
-            Plotly.restyle(this._plot, data as unknown as Data).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data).catch(e => console.error(e));
         }
 
         // ======= marker size
@@ -274,21 +274,21 @@ export class Sketchmap {
             let markerSize;
 
             if (size.value === "") {
-                markerSize = 10 * factor;
+                markerSize = [10 * factor];
             } else {
                 const values = this._data[size.value].values;
                 const min = Math.min.apply(Math, values);
                 const max = Math.max.apply(Math, values);
-                markerSize = values.map((v) => {
+                markerSize = [values.map((v) => {
                     const scaled = (v - min) / (max - min);
                     return 10 * factor * (scaled + 0.05);
-                })
+                })]
             }
 
             const data = {
-                'marker.size': [markerSize],
+                'marker.size': markerSize,
             };
-            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
         }
         size.onchange = changeSize;
         sizeFactor.onchange = changeSize;
@@ -303,9 +303,11 @@ export class Sketchmap {
 
         const color = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
         const fullData = {
+            type: "scattergl",
             x: this._data[this._current.x].values,
             y: this._data[this._current.y].values,
             hovertemplate: this._hovertemplate(),
+            mode: "markers",
             marker: {
                 color: color,
                 colorscale: COLOR_MAPS.inferno.rgba,
@@ -322,16 +324,14 @@ export class Sketchmap {
                     thickness: 20,
                 }
             },
-            mode: "markers",
-            type: "scattergl",
         };
 
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling
         const selected = {
+            type: "scattergl",
             x: [fullData.x[this._selected]],
             y: [fullData.y[this._selected]],
-            type: "scattergl",
             mode: "markers",
             marker: {
                 color: "cyan",
@@ -359,7 +359,7 @@ export class Sketchmap {
         layout.yaxis.title = this._current.y;
 
         Plotly.newPlot(
-            this._plot, [fullData as unknown as Data, selected as unknown as Data],
+            this._plot, [fullData as Data, selected as Data],
             layout as Layout,
             DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
