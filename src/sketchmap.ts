@@ -80,7 +80,7 @@ export class Sketchmap {
     private _current!: {
         x: string,
         y: string,
-        color?: string,
+        color: string,
     }
 
     constructor(id: string, data: MapInput) {
@@ -153,12 +153,11 @@ export class Sketchmap {
             throw Error("Sketchmap needs at least two numeric properties to plot")
         }
 
+        const color = (num_prop_names.length > 2) ? num_prop_names[2] : "";
         this._current = {
             x: num_prop_names[0],
             y: num_prop_names[1],
-        }
-        if (num_prop_names.length > 2) {
-            this._current.color = num_prop_names[2]
+            color: color,
         }
     }
 
@@ -232,17 +231,34 @@ export class Sketchmap {
         for (const key in this._data.numeric) {
             color.options.add(new Option(key, key));
         }
-        if (this._current.color !== undefined) {
+        if (this._current.color !== "") {
             color.selectedIndex = 2;
         }
         color.onchange = () => {
             this._current.color = color.value;
+            const colors = (this._current.color === "") ? 0.5 : this._data.numeric[this._current.color];
             const data = {
-                'marker.color': [this._data.numeric[color.value]],
-                'marker.line.color': [this._data.numeric[color.value]],
-                'marker.colorbar.title': color.value,
+                hovertemplate: this._hovertemplate(),
+                'marker.color': [colors],
+                'marker.line.color': [colors],
+                'marker.colorbar.title': this._current.color,
             };
-            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
+        }
+
+        // ======= color palette
+        const palette = getByID<HTMLSelectElement>('skv-palette');
+        for (const key in COLOR_MAPS) {
+            palette.options.add(new Option(key, key));
+        }
+        palette.value = 'inferno';
+
+        palette.onchange = () => {
+            const data = {
+                'marker.colorscale': [COLOR_MAPS[palette.value].rgba],
+                'marker.line.colorscale': [COLOR_MAPS[palette.value].rgb],
+            };
+            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
         }
 
         // ======= marker shapes
@@ -272,7 +288,7 @@ export class Sketchmap {
             const factor = logSlider(parseInt(sizeFactor.value));
             let markerSize;
 
-            if (size.value === "default") {
+            if (size.value === "") {
                 markerSize = 10 * factor;
             } else {
                 const sizes = this._data.numeric[size.value];
@@ -291,21 +307,6 @@ export class Sketchmap {
         }
         size.onchange = changeSize;
         sizeFactor.onchange = changeSize;
-
-        // ======= color palette
-        const palette = getByID<HTMLSelectElement>('skv-palette');
-        for (const key in COLOR_MAPS) {
-            palette.options.add(new Option(key, key));
-        }
-        palette.value = 'inferno';
-
-        palette.onchange = () => {
-            const data = {
-                'marker.colorscale': [COLOR_MAPS[palette.value].rgba],
-                'marker.line.colorscale': [COLOR_MAPS[palette.value].rgb],
-            };
-            Plotly.restyle(this._plot, data as unknown as Data, 0).catch(e => console.error(e));
-        }
     }
 
     private _createPlot() {
@@ -315,14 +316,11 @@ export class Sketchmap {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
-        const hovertemplate = (this._current.color === undefined) ? "" :
-            this._current.color + ": %{marker.color:.2f} <extra></extra>";
-
-        const color = (this._current.color === undefined) ? 0.5 : this._data.numeric[this._current.color];
+        const color = (this._current.color === "") ? 0.5 : this._data.numeric[this._current.color];
         const fullData = {
             x: this._data.numeric[this._current.x],
             y: this._data.numeric[this._current.y],
-            hovertemplate: hovertemplate,
+            hovertemplate: this._hovertemplate(),
             marker: {
                 color: color,
                 colorscale: COLOR_MAPS.inferno.rgba,
@@ -334,7 +332,7 @@ export class Sketchmap {
                 size: 10,
                 showscale: true,
                 colorbar: {
-                    title: this._current.color ?? "",
+                    title: this._current.color,
                     thickness: 20,
                 }
             },
@@ -379,5 +377,14 @@ export class Sketchmap {
             DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
         this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
+    }
+
+    /// Get the plotly hovertemplate depending on `this._current.color`
+    private _hovertemplate(): string {
+        if (this._current.color !== "") {
+            return this._current.color + ": %{marker.color:.2f}<extra></extra>";
+        } else {
+            return "%{x:.2f}, %{y:.2f}<extra></extra>";
+        }
     }
 }
