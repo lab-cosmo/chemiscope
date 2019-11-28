@@ -25,15 +25,23 @@ function checkInput(o: any): void {
         throw Error("missing 'properties' in Sketchviz.input");
     }
     for (const key in o['properties']) {
-        if (typeof o['properties'][key] !== 'object' ||
+        if (o['properties'][key].length === undefined ||
             !(typeof o['properties'][key][0] === 'string' ||
               typeof o['properties'][key][0] === 'number')) {
                   throw Error("wrong type for 'properties' in Sketchviz.input");
               }
     }
 
-    if (!('structures' in o && typeof o['structures'] === 'object' && typeof o['structures'][0] === 'string')) {
+    if (!('structures' in o && o['structures'].length !== undefined && typeof o['structures'][0] === 'string')) {
         throw Error("missing 'structures' in Sketchviz.input");
+    }
+
+    // Check that properties and structures have the same size
+    const size = o['structures'].length;
+    for (const key in o['properties']) {
+        if (o['properties'][key].length !== size) {
+            throw Error("properties and structures don't have the same size")
+        }
     }
 
     if (!('mapId' in o && typeof o['mapId'] === 'string')) {
@@ -55,7 +63,6 @@ function checkInput(o: any): void {
 
 function setup(input: SketchvizInput) {
     checkInput(input);
-    // TODO Check that properties and structures have the same size
 
     const map = new Sketchmap(input.mapId, input.name, input.properties);
     const viewer = new Viewer(input.viewerId, input.j2sPath, input.structures);

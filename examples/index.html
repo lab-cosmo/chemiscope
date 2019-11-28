@@ -64,9 +64,7 @@
                 .then(response => response.json())
                 .then(json => {
                     Sketchviz.setup({
-                        name: name,
-                        properties: json.sketchmap,
-                        structures: json.structures,
+                        ...json,
                         mapId: 'skviz-map',
                         viewerId: 'skviz-viewer',
                         j2sPath: 'jsmol/j2s',
