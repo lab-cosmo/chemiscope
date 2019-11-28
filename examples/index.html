@@ -25,13 +25,22 @@
         <div class="container">
             <div class="input-group input-group-bg" style="margin: auto">
                 <div class="input-group-prepend">
-                    <label class="input-group-text" for=skv-shape>Select a system</label>
+                    <label class="input-group-text" for=skv-shape>Pick an example</label>
                 </div>
-                <select id=select-system class="custom-select">
-                    <option value="Arginine-Dipeptide" selected>Arginine-Dipeptide</option>
-                    <option value="Pyrole" selected>Pyrole</option>
-                    <option value="Qm7b" selected>Qm7b</option>
+                <select id=example class="custom-select">
+                    <option value="Arginine-Dipeptide">Arginine-Dipeptide</option>
+                    <option value="Pyrole">Pyrole</option>
+                    <option value="Qm7b">Qm7b</option>
                 </select>
+
+                <span style="width: 2em;"></span>
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for=skv-shape>Or upload a file</label>
+                </div>
+                <input id=upload type="file" class="form-control" />
+
+                <span style="width: 2em;"></span>
+                <button style="width: 12em;" type="button" class="btn btn-primary" id=load>Go!</button>
             </div>
 
             <div style="height: 2em"></div>
@@ -50,30 +59,63 @@
     </body>
 
     <script>
-        const system = document.getElementById('select-system');
-        system.onchange = () => {
-            // we have to reload since jsmol & plotly do not interact nicely
-            // with WebGL state. jsmol using .caller all over the place and
-            // thus throwing exceptions with plotly 'use strict' do not help
-            // either
-            window.location.reload(false);
+        // This code is all over the place, reloading the page dynamically to
+        // reset webGL checks and make everything work.
+        //
+        // The issue is that jsmol is using .caller all over the place and
+        // throwing 'TypeError: access to strict mode caller function is
+        // censored' exceptions when finding plotly 'use strict' functions
+        // somehow???
+        //
+        // Reloading the page make it work, relying on the browser to pre-fill
+        // the input elements to keep state around =/
+
+        let loaded = false;
+        const example = document.getElementById('example');
+        const upload = document.getElementById('upload');
+        const load = document.getElementById('load');
+
+        function loadData() {
+            if (upload.value !== "") {
+                console.log(`loading user file ${upload.files[0].name}`);
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const json = JSON.parse(reader.result);
+                    setupSketchviz(json);
+                }
+                reader.readAsText(upload.files[0]);
+            } else {
+                console.log(`loading example file ${example.value}.json`);
+                fetch(`${example.value}.json`)
+                    .then(response => response.json())
+                    .then(json => setupSketchviz(json))
+                    .catch(e => console.error(e));
+            }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const name = system.value;
-            fetch(`${name}.json`)
-                .then(response => response.json())
-                .then(json => {
-                    Sketchviz.setup({
-                        ...json,
-                        mapId: 'skviz-map',
-                        viewerId: 'skviz-viewer',
-                        j2sPath: 'jsmol/j2s',
-                        sliderID: 'skviz-slider',
-                        propertiesID: 'skviz-properties',
-                    })
-                })
-                .catch(e => console.error(e));
-        });
+        function setupSketchviz(json) {
+            if (loaded) {
+                // reload the page to reset WebGL checks
+                window.location.reload(false);
+                return;
+            }
+            loaded = true;
+            upload.value = ""
+            Sketchviz.setup({
+                ...json,
+                mapId: 'skviz-map',
+                viewerId: 'skviz-viewer',
+                j2sPath: 'jsmol/j2s',
+                sliderID: 'skviz-slider',
+                propertiesID: 'skviz-properties',
+            })
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            load.onclick = loadData;
+            if (!loaded) {
+                loadData()
+            }
+        })
     </script>
 </html>
