@@ -11,10 +11,13 @@ export class EnvironementSlider {
         this._root = root;
         this._onchange = () => {}
 
+        // TODO: Change to environnement when needed
+        const centerType = 'structure';
+
         this._root.innerHTML = `
         <div class="input-group input-group-sm">
             <div class="input-group-prepend">
-                <label class="input-group-text">Environment</label>
+                <label class="input-group-text">${centerType}</label>
                 <span class="input-group-text"><div class="skv-play-button"></div></span>
             </div>
             <input class="form-control custom-range" type='range' min=0 value=0 step=1></input>

@@ -37,12 +37,13 @@
             <div style="height: 2em"></div>
             <div class="row">
                 <div class="col-xl-7">
-                    <div id=skviz-map style="height: 100%"></div>
+                    <div id=skviz-map style="height: 600px"></div>
                 </div>
 
                 <div class="col-xl-5">
-                    <div id=skviz-viewer style="height: 60%"></div>
-                    <div id=skviz-slider></div>
+                    <div id=skviz-viewer style="height: 350px"></div>
+                    <div id=skviz-slider style="height: 30px"></div>
+                    <div id=skviz-properties style="height: 190px"></div>
                 </div>
             </div>
         </div>
@@ -69,6 +70,7 @@
                         viewerId: 'skviz-viewer',
                         j2sPath: 'jsmol/j2s',
                         sliderID: 'skviz-slider',
+                        propertiesID: 'skviz-properties',
                     })
                 })
                 .catch(e => console.error(e));

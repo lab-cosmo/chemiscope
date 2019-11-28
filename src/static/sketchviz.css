@@ -54,3 +54,12 @@
 .skv-play-button:hover {
     border-color: transparent transparent transparent #404040;
 }
+
+.skv-properties {
+    height: 100%;
+    overflow-y: scroll;
+    width: 80%;
+    margin: auto;
+    margin-top: 20px;
+    min-width: 400px;
+}
