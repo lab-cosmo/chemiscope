@@ -1,5 +1,5 @@
-import * as Plotly from "plotly.js";
-import {Config, Data, Layout, PlotlyHTMLElement} from "plotly.js";
+import * as Plotly from "./lib/plotly-scatter";
+import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
 
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
