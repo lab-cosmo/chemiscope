@@ -46,7 +46,7 @@
             <div style="height: 2em"></div>
             <div class="row">
                 <div class="col-xl-7">
-                    <div id=skviz-map style="height: 600px"></div>
+                    <div id=skviz-plot style="height: 600px"></div>
                 </div>
 
                 <div class="col-xl-5">
@@ -59,18 +59,6 @@
     </body>
 
     <script>
-        // This code is all over the place, reloading the page dynamically to
-        // reset webGL checks and make everything work.
-        //
-        // The issue is that jsmol is using .caller all over the place and
-        // throwing 'TypeError: access to strict mode caller function is
-        // censored' exceptions when finding plotly 'use strict' functions
-        // somehow???
-        //
-        // Reloading the page make it work, relying on the browser to pre-fill
-        // the input elements to keep state around =/
-
-        let loaded = false;
         let vizualizer = undefined;
         const example = document.getElementById('example');
         const upload = document.getElementById('upload');
@@ -95,28 +83,24 @@
         }
 
         function setupSketchviz(json) {
-            if (loaded) {
-                // reload the page to reset WebGL checks
-                window.location.reload(false);
-                return;
-            }
-            loaded = true;
             upload.value = ""
-            vizualizer = new Sketchviz.Vizualizer({
-                ...json,
-                mapId: 'skviz-map',
-                viewerId: 'skviz-viewer',
-                j2sPath: 'jsmol/j2s',
-                sliderID: 'skviz-slider',
-                propertiesID: 'skviz-properties',
-            })
+            if (vizualizer !== undefined) {
+                vizualizer.changeDataset(json)
+            } else {
+                vizualizer = new Sketchviz.Vizualizer({
+                    ...json,
+                    plotId: 'skviz-plot',
+                    viewerId: 'skviz-viewer',
+                    j2sPath: 'jsmol/j2s',
+                    sliderId: 'skviz-slider',
+                    propertiesId: 'skviz-properties',
+                })
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             load.onclick = loadData;
-            if (!loaded) {
-                loadData()
-            }
+            loadData()
         })
     </script>
 </html>

@@ -63,4 +63,9 @@ export class EnvironementSlider {
     public changed(index: number) {
         this._slider.value = index.toString();
     }
+
+    public changeDataset(max: number) {
+        this._slider.max = max.toString();
+        this._slider.value = "0";
+    }
 }

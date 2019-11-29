@@ -11,6 +11,11 @@ export class StructureViewer {
         this.showStructure(0);
     }
 
+    public changeDataset(structures: string[]) {
+        this._structures = structures;
+        this.showStructure(0);
+    }
+
     public showStructure(index: number) {
         if (index > this._structures.length) {
             console.warn(`invalid index in showStructure: got ${index}, max index is ${this._structures.length}`);

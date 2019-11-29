@@ -63,7 +63,7 @@ export class ScatterPlot {
     /// Index of the currently selected point
     private _selected: number;
     /// Currently displayed data
-    private _current: {
+    private _current!: {
         /// Name of the properties in `this._data` used for x values
         x: string,
         /// Name of the properties in `this._data` used for y values
@@ -87,20 +87,13 @@ export class ScatterPlot {
         this._root.style.position = 'relative';
 
         this._data = new MapData(properties);
+        this._setupDefaults();
 
-        const prop_names = Object.keys(this._data);
-        if (prop_names.length < 2) {
-            throw Error("Sketchmap needs at least two properties to plot")
-        }
-        this._current = {
-            x: prop_names[0],
-            y: prop_names[1],
-            color: (prop_names.length > 2) ? prop_names[2] : "",
-            symbols: 0
-        }
-
+        this._createSettings();
         this._setupSettings();
+
         this._createPlot();
+        this._setupPlot();
     }
 
     /// Register a callback to be called when the selected envirronement is
@@ -128,7 +121,31 @@ export class ScatterPlot {
         this._selectedCallback(this._selected);
     }
 
-    private _setupSettings() {
+    /// Change the current dataset to the provided one, without re-creating the
+    /// plot
+    public changeDataset(name: string, properties: MapInput) {
+        this._name = name;
+        this._selected = 0;
+        this._data = new MapData(properties);
+        this._setupDefaults();
+        this._setupSettings();
+        this._setupPlot();
+    }
+
+    private _setupDefaults() {
+        const prop_names = Object.keys(this._data);
+        if (prop_names.length < 2) {
+            throw Error("Sketchmap needs at least two properties to plot")
+        }
+        this._current = {
+            x: prop_names[0],
+            y: prop_names[1],
+            color: (prop_names.length > 2) ? prop_names[2] : "",
+            symbols: 0
+        }
+    }
+
+    private _createSettings() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button
@@ -151,10 +168,13 @@ export class ScatterPlot {
         }
         // make the settings modal draggable
         make_draggable(modalDialog, ".modal-header");
+    }
 
+    private _setupSettings() {
         // ============== Setup the map options ==============
         // ======= data used as x values
         const xValues = getByID<HTMLSelectElement>('skv-x');
+        xValues.options.length = 0;
         for (const key in this._data) {
             xValues.options.add(new Option(key, key));
         }
@@ -173,6 +193,7 @@ export class ScatterPlot {
 
         // ======= data used as y values
         const yValues = getByID<HTMLSelectElement>('skv-y');
+        yValues.options.length = 0;
         for (const key in this._data) {
             yValues.options.add(new Option(key, key));
         }
@@ -191,6 +212,7 @@ export class ScatterPlot {
 
         // ======= marker color
         const color = getByID<HTMLSelectElement>('skv-color');
+        color.options.length = 1;
         for (const key in this._data) {
             color.options.add(new Option(key, key));
         }
@@ -212,6 +234,7 @@ export class ScatterPlot {
 
         // ======= color palette
         const palette = getByID<HTMLSelectElement>('skv-palette');
+        palette.options.length = 0;
         for (const key in COLOR_MAPS) {
             palette.options.add(new Option(key, key));
         }
@@ -227,6 +250,7 @@ export class ScatterPlot {
 
         // ======= marker symbols
         const symbol = getByID<HTMLSelectElement>('skv-symbol');
+        symbol.options.length = 1;
         for (const key in this._data) {
             if (this._data[key].string !== undefined) {
                 symbol.options.add(new Option(key, key));
@@ -251,7 +275,9 @@ export class ScatterPlot {
 
         // ======= marker size
         const size = getByID<HTMLSelectElement>('skv-size');
+        size.options.length = 1;
         const sizeFactor = getByID<HTMLInputElement>('skv-size-factor');
+        sizeFactor.value = "25";
         for (const key in this._data) {
             size.options.add(new Option(key, key));
         }
@@ -300,6 +326,14 @@ export class ScatterPlot {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
+        // create an empty plot, and fill it in _setupPlot
+        Plotly.newPlot(this._plot, [{}, {}], {}, DEFAULT_CONFIG as Config)
+            .catch(e => console.error(e));
+
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
+    }
+
+    private _setupPlot() {
         const color = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
         const fullData = {
             type: "scattergl",
@@ -357,10 +391,9 @@ export class ScatterPlot {
         layout.xaxis.title = this._current.x;
         layout.yaxis.title = this._current.y;
 
-        Plotly.newPlot(
+        Plotly.react(
             this._plot, [fullData as Data, selected as Data],
             layout as Layout,
-            DEFAULT_CONFIG as Config,
         ).catch(e => console.error(e));
         this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
     }
