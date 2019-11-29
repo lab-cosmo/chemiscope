@@ -395,7 +395,7 @@ export class ScatterPlot {
                 line: {
                     color: color,
                     colorscale: COLOR_MAPS.inferno.rgb,
-                    width: 1.5,
+                    width: 1,
                 },
                 size: 10,
                 symbol: this._current.symbols,

@@ -11,7 +11,7 @@ interface PlotlyColorMap {
 function rgb_to_plotly(colormap: RGBColorMap): PlotlyColorMap {
     return {
         rgba: colormap.map((c) => {
-            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.75)`];
+            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.5)`];
         }),
         rgb: colormap.map((c) => {
             return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`];
