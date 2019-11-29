@@ -49,7 +49,7 @@ function getByID<HTMLType>(id: string): HTMLType {
     return e as unknown as HTMLType;
 }
 
-export class Sketchmap {
+export class ScatterPlot {
     /// HTML root holding the full plot
     private _root: HTMLElement;
     /// Plotly plot

@@ -71,6 +71,7 @@
         // the input elements to keep state around =/
 
         let loaded = false;
+        let vizualizer = undefined;
         const example = document.getElementById('example');
         const upload = document.getElementById('upload');
         const load = document.getElementById('load');
@@ -101,7 +102,7 @@
             }
             loaded = true;
             upload.value = ""
-            Sketchviz.setup({
+            vizualizer = new Sketchviz.Vizualizer({
                 ...json,
                 mapId: 'skviz-map',
                 viewerId: 'skviz-viewer',

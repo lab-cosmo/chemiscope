@@ -1,6 +1,6 @@
 import JSmolViewer from 'materials-cloud-viewer';
 
-export class Viewer {
+export class StructureViewer {
     private _structures: string[];
     private _viewer: JSmolViewer;
 

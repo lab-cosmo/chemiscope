@@ -1,5 +1,5 @@
-import {Sketchmap} from "./sketchmap";
-import {Viewer} from "./viewer";
+import {ScatterPlot} from "./plot";
+import {StructureViewer} from "./viewer";
 import {EnvironementSlider} from './slider';
 import {PropertiesTable} from './properties';
 
@@ -67,25 +67,33 @@ function checkInput(o: any): void {
     }
 }
 
-function setup(input: SketchvizInput) {
-    checkInput(input);
 
-    const map = new Sketchmap(input.mapId, input.name, input.properties);
-    const viewer = new Viewer(input.viewerId, input.j2sPath, input.structures);
-    const slider = new EnvironementSlider(input.sliderID, input.structures.length - 1);
-    const propTable = new PropertiesTable(input.propertiesID, input.properties);
-    map.onSelectedUpdate((i) => {
-        slider.changed(i);
-        viewer.showStructure(i);
-        propTable.display(i);
-    });
-    slider.onChange((i) => map.select(i));
+class Vizualizer {
+    private _viewer: StructureViewer;
+    private _plot: ScatterPlot;
+    private _slider: EnvironementSlider;
+    private _table: PropertiesTable;
+
+    constructor(input: SketchvizInput) {
+        checkInput(input);
+
+        this._plot = new ScatterPlot(input.mapId, input.name, input.properties);
+        this._viewer = new StructureViewer(input.viewerId, input.j2sPath, input.structures);
+        this._slider = new EnvironementSlider(input.sliderID, input.structures.length - 1);
+        this._table = new PropertiesTable(input.propertiesID, input.properties);
+        this._plot.onSelectedUpdate((i) => {
+            this._slider.changed(i);
+            this._viewer.showStructure(i);
+            this._table.display(i);
+        });
+        this._slider.onChange((i) => this._plot.select(i));
+    }
 }
 
 export {
-    setup,
-    Sketchmap,
-    Viewer,
+    StructureViewer,
+    ScatterPlot,
     EnvironementSlider,
     PropertiesTable,
+    Vizualizer,
 };
