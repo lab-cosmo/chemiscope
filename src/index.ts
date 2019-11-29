@@ -76,10 +76,10 @@ function checkInput(o: any) {
 
 
 class Vizualizer {
-    private _viewer: StructureViewer;
-    private _plot: ScatterPlot;
-    private _slider: EnvironementSlider;
-    private _table: PropertiesTable;
+    public viewer: StructureViewer;
+    public plot: ScatterPlot;
+    public slider: EnvironementSlider;
+    public table: PropertiesTable;
     private _ids: {
         plot: string;
         viewer: string;
@@ -97,25 +97,25 @@ class Vizualizer {
             table: input.propertiesId,
         }
 
-        this._plot = new ScatterPlot(input.plotId, input.name, input.properties);
-        this._viewer = new StructureViewer(input.viewerId, input.j2sPath, input.structures);
-        this._slider = new EnvironementSlider(input.sliderId, input.structures.length - 1);
-        this._table = new PropertiesTable(input.propertiesId, input.properties);
-        this._plot.onSelectedUpdate((i) => {
-            this._slider.changed(i);
-            this._viewer.showStructure(i);
-            this._table.display(i);
+        this.plot = new ScatterPlot(input.plotId, input.name, input.properties);
+        this.viewer = new StructureViewer(input.viewerId, input.j2sPath, input.structures);
+        this.slider = new EnvironementSlider(input.sliderId, input.structures.length - 1);
+        this.table = new PropertiesTable(input.propertiesId, input.properties);
+        this.plot.onSelectedUpdate((i) => {
+            this.slider.changed(i);
+            this.viewer.showStructure(i);
+            this.table.display(i);
         });
-        this._slider.onChange((i) => this._plot.select(i));
+        this.slider.onChange((i) => this.plot.select(i));
     }
 
     public changeDataset(data: VizualizerData) {
         checkData(data);
 
-        this._plot.changeDataset(data.name, data.properties);
-        this._viewer.changeDataset(data.structures);
-        this._slider.changeDataset(data.structures.length - 1);
-        this._table = new PropertiesTable(this._ids.table, data.properties);
+        this.plot.changeDataset(data.name, data.properties);
+        this.viewer.changeDataset(data.structures);
+        this.slider.changeDataset(data.structures.length - 1);
+        this.table = new PropertiesTable(this._ids.table, data.properties);
     }
 }
 

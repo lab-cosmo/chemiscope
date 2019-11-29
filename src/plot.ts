@@ -73,6 +73,11 @@ export class ScatterPlot {
         /// Symbol used for all marker / every marker
         symbols: number | number[],
     }
+    /// callback to get the initial positioning of the settings modal. The
+    /// callback gets the current placement of the settings as a DOMRect, and
+    /// should return top and left positions in pixels, used with
+    /// `position: fixed`
+    private _settingsPlacement!: (rect: DOMRect) => {top: number, left: number};
 
     constructor(id: string, name: string, properties: MapInput) {
         this._name = name;
@@ -132,6 +137,16 @@ export class ScatterPlot {
         this._setupPlot();
     }
 
+    /// Use the given callback to compute the placement of the settings modal.
+    ///
+    /// The callback gets the current placement of the settings as a DOMRect,
+    /// and should return top and left positions in pixels, used with `position:
+    /// fixed`. The callback is called once, the first time the settings are
+    /// opened.
+    public computeSettingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
+        this._settingsPlacement = callback;
+    }
+
     private _setupDefaults() {
         const prop_names = Object.keys(this._data);
         if (prop_names.length < 2) {
@@ -154,7 +169,8 @@ export class ScatterPlot {
             data-toggle="modal">
                 <div class="skv-hamburger"><div></div><div></div><div></div></div>
             </button>`;
-        this._root.append(template.content.firstChild!);
+        const openSettings = template.content.firstChild!;
+        this._root.append(openSettings);
 
         // replace id to ensure they are unique even if we have mulitple viewers
         // on a single page
@@ -168,6 +184,38 @@ export class ScatterPlot {
         }
         // make the settings modal draggable
         make_draggable(modalDialog, ".modal-header");
+
+        // Position modal near the actual viewer
+        openSettings.addEventListener('click', () => {
+            // only set style once, on first open, and keep previous position
+            // on next open to keep the 'draged-to' position
+            if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
+                modalDialog.setAttribute('data-initial-modal-positions-set', "true");
+
+                // display: block to ensure modalDialog.offsetWidth is non-zero
+                (modalDialog.parentNode as HTMLElement).style.display = 'block';
+
+                const {top, left} = this._settingsPlacement(modalDialog.getBoundingClientRect());
+
+                // set width first, since setting position can influence it
+                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
+                // unset margins when using position: fixed
+                modalDialog.style.margin = '0';
+                modalDialog.style.position = 'fixed';
+                modalDialog.style.top = `${top}px`;
+                modalDialog.style.left = `${left}px`;
+            }
+        })
+
+        // By default, position the modal for settings on top of the plot,
+        // centered horizontally
+        this._settingsPlacement = (rect: DOMRect) => {
+            const rootRect = this._root.getBoundingClientRect();
+            return {
+                top: rootRect.top + 20,
+                left: rootRect.left + rootRect.width / 2 - rect.width / 2,
+            }
+        }
     }
 
     private _setupSettings() {

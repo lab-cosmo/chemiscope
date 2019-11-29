@@ -24,4 +24,8 @@ export class StructureViewer {
 
         this._viewer.load(`inline '${this._structures[index]}'`);
     }
+
+    public computeSettingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
+        this._viewer.computeSettingsPlacement(callback)
+    }
 }

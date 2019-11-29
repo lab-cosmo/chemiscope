@@ -95,6 +95,24 @@
                     sliderId: 'skviz-slider',
                     propertiesId: 'skviz-properties',
                 })
+
+                vizualizer.viewer.computeSettingsPlacement((rect) => {
+                    const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+
+                    return {
+                        top: viewerRect.top,
+                        left: viewerRect.left - rect.width - 25,
+                    };
+                })
+
+                vizualizer.plot.computeSettingsPlacement((rect) => {
+                    const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+
+                    return {
+                        top: viewerRect.top,
+                        left: viewerRect.left + viewerRect.width + 25,
+                    };
+                })
             }
         }
 
