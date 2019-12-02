@@ -11,6 +11,12 @@ const HTML_SETTINGS = require("./static/settings.html");
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
     showlegend: false,
+    title: {
+        text: "",
+        font: {
+            size: 25,
+        },
+    },
     xaxis: {
         title: "",
         zeroline: false,
@@ -68,10 +74,17 @@ export class ScatterPlot {
         x: string,
         /// Name of the properties in `this._data` used for y values
         y: string,
-        /// Name of the properties in `this._data` used for color values
-        color: string,
-        /// Symbol used for all marker / every marker
-        symbols: number | number[],
+        /// Name of the colorscale to use
+        colorscale: string,
+        /// Name of the properties in `this._data` used for color values,
+        /// `undefined` when using the default colors
+        color?: string,
+        /// Name of the properties in `this._data` used for size values,
+        /// `undefined` when using the default sizes
+        size?: string,
+        /// Name of the properties in `this._data` used for symbols values,
+        /// `undefined` when using the default symbols
+        symbols?: string,
     }
     /// callback to get the initial positioning of the settings modal. The
     /// callback gets the current placement of the settings as a DOMRect, and
@@ -111,17 +124,10 @@ export class ScatterPlot {
     public select(index: number) {
         this._selected = index;
 
-        let symbol;
-        if (typeof(this._current.symbols) === "number") {
-            symbol = this._current.symbols;
-        } else {
-            symbol = this._current.symbols[this._selected];
-        }
-
         Plotly.restyle(this._plot, {
-            x: [[this._data[this._current.x].values[this._selected]]],
-            y: [[this._data[this._current.y].values[this._selected]]],
-            "marker.symbol": [symbol],
+            x: this._xValues(1),
+            y: this._yValues(1),
+            "marker.symbol": this._symbols(1),
         }, 1);
         this._selectedCallback(this._selected);
     }
@@ -155,8 +161,10 @@ export class ScatterPlot {
         this._current = {
             x: prop_names[0],
             y: prop_names[1],
-            color: (prop_names.length > 2) ? prop_names[2] : "",
-            symbols: 0
+            colorscale: 'inferno',
+        }
+        if (prop_names.length > 2) {
+            this._current.color = prop_names[2];
         }
     }
 
@@ -221,150 +229,135 @@ export class ScatterPlot {
     private _setupSettings() {
         // ============== Setup the map options ==============
         // ======= data used as x values
-        const xValues = getByID<HTMLSelectElement>('skv-x');
-        xValues.options.length = 0;
+        const selectX = getByID<HTMLSelectElement>('skv-x');
+        selectX.options.length = 0;
         for (const key in this._data) {
-            xValues.options.add(new Option(key, key));
+            selectX.options.add(new Option(key, key));
         }
-        xValues.selectedIndex = 0;
-        xValues.onchange = () => {
-            this._current.x = xValues.value;
-            const values = this._data[xValues.value].values;
-            const data = {
-                x: [values, [values[this._selected]]]
-            }
-            Plotly.restyle(this._plot, data).catch(e => console.error(e));
-            Plotly.relayout(this._plot, {
-                'xaxis.title': xValues.value
-            }).catch(e => console.error(e));
+        selectX.selectedIndex = 0;
+
+        selectX.onchange = () => {
+            this._current.x = selectX.value;
+            Plotly.restyle(this._plot, { x: this._xValues() })
+                .catch(e => console.error(e));
+            Plotly.relayout(this._plot, {'xaxis.title': this._current.x })
+                .catch(e => console.error(e));
         }
 
         // ======= data used as y values
-        const yValues = getByID<HTMLSelectElement>('skv-y');
-        yValues.options.length = 0;
+        const selectY = getByID<HTMLSelectElement>('skv-y');
+        selectY.options.length = 0;
         for (const key in this._data) {
-            yValues.options.add(new Option(key, key));
+            selectY.options.add(new Option(key, key));
         }
-        yValues.selectedIndex = 1;
-        yValues.onchange = () => {
-            this._current.y = yValues.value;
-            const values = this._data[yValues.value].values;
-            const data = {
-                y: [values, [values[this._selected]]]
-            }
-            Plotly.restyle(this._plot, data).catch(e => console.error(e));
-            Plotly.relayout(this._plot, {
-                'yaxis.title': yValues.value
-            }).catch(e => console.error(e));
+        selectY.selectedIndex = 1;
+
+        selectY.onchange = () => {
+            this._current.y = selectY.value;
+            Plotly.restyle(this._plot, { y: this._yValues() })
+                .catch(e => console.error(e));
+            Plotly.relayout(this._plot, {'yaxis.title': this._current.y })
+                .catch(e => console.error(e));
         }
 
         // ======= marker color
-        const color = getByID<HTMLSelectElement>('skv-color');
-        color.options.length = 1;
+        const selectColor = getByID<HTMLSelectElement>('skv-color');
+        selectColor.options.length = 1;
         for (const key in this._data) {
-            color.options.add(new Option(key, key));
+            selectColor.options.add(new Option(key, key));
         }
-        if (this._current.color !== "") {
-            // 2 + 1 since the first item is 'none'
-            color.selectedIndex = 3;
+        if (this._current.color !== undefined) {
+            // index 0 is 'none', 1 is the x values, 2 the y values, use 3 for
+            // colors
+            selectColor.selectedIndex = 3;
         }
-        color.onchange = () => {
-            this._current.color = color.value;
-            const values = (this._current.color === "") ? [0.5] : [this._data[this._current.color].values];
+
+        selectColor.onchange = () => {
+            if (selectColor.value !== "") {
+                this._current.color = selectColor.value;
+            } else {
+                this._current.color = undefined;
+            }
+
+            const colors = this._colors(0);
             const data = {
                 hovertemplate: this._hovertemplate(),
-                'marker.color': values,
-                'marker.line.color': values,
+                'marker.color': colors,
+                'marker.line.color': colors,
                 'marker.colorbar.title': this._current.color,
             };
-            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
+
+            Plotly.restyle(this._plot, data as Data, 0)
+                .catch(e => console.error(e));
         }
 
         // ======= color palette
-        const palette = getByID<HTMLSelectElement>('skv-palette');
-        palette.options.length = 0;
+        const selectPalette = getByID<HTMLSelectElement>('skv-palette');
+        selectPalette.options.length = 0;
         for (const key in COLOR_MAPS) {
-            palette.options.add(new Option(key, key));
+            selectPalette.options.add(new Option(key, key));
         }
-        palette.value = 'inferno';
+        selectPalette.value = this._current.colorscale;
 
-        palette.onchange = () => {
+        selectPalette.onchange = () => {
+            this._current.colorscale = selectPalette.value;
+
             const data = {
-                'marker.colorscale': [COLOR_MAPS[palette.value].rgba],
-                'marker.line.colorscale': [COLOR_MAPS[palette.value].rgb],
+                'marker.colorscale': this._colorScale(0)[0],
+                'marker.line.colorscale': this._lineColorScale(0)[0],
             };
-            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data, 0)
+                .catch(e => console.error(e));
         }
 
         // ======= marker symbols
-        const symbol = getByID<HTMLSelectElement>('skv-symbol');
-        symbol.options.length = 1;
+        const selectSymbol = getByID<HTMLSelectElement>('skv-symbol');
+        selectSymbol.options.length = 1;
         for (const key in this._data) {
             if (this._data[key].string !== undefined) {
-                symbol.options.add(new Option(key, key));
+                selectSymbol.options.add(new Option(key, key));
             }
         }
 
-        symbol.onchange = () => {
-            let selected;
-            if (symbol.value !== "") {
-                this._current.symbols = this._data[symbol.value].values;
-                selected = this._current.symbols[this._selected];
+        selectSymbol.onchange = () => {
+            if (selectSymbol.value !== "") {
+                this._current.symbols = selectSymbol.value;
             } else {
-                // reset default
-                this._current.symbols = 0;
-                selected = 0;
+                this._current.symbols = undefined;
             }
-            const data = {
-                'marker.symbol': [this._current.symbols, selected],
-            };
-            Plotly.restyle(this._plot, data).catch(e => console.error(e));
+
+            Plotly.restyle(this._plot, { 'marker.symbol': this._symbols() })
+                .catch(e => console.error(e));
         }
 
         // ======= marker size
-        const size = getByID<HTMLSelectElement>('skv-size');
-        size.options.length = 1;
+        const selectSize = getByID<HTMLSelectElement>('skv-size');
+        selectSize.options.length = 1;
+        for (const key in this._data) {
+            selectSize.options.add(new Option(key, key));
+        }
+        selectSize.selectedIndex = 0;
+
         const sizeFactor = getByID<HTMLInputElement>('skv-size-factor');
         sizeFactor.value = "25";
-        for (const key in this._data) {
-            size.options.add(new Option(key, key));
-        }
 
-        const changeSize = () => {
-            // Transform the linear value from the slider into a logarithmic scale
-            const logSlider = (value: number) => {
-                const min_slider = parseInt(sizeFactor.min);
-                const max_slider = parseInt(sizeFactor.max);
-
-                const min_value = Math.log(1.0 / 6.0);
-                const max_value = Math.log(6.0);
-
-                const factor = (max_value - min_value) / (max_slider - min_slider);
-                return Math.exp(min_value + factor * (value - min_slider));
-            }
-
-            const factor = logSlider(parseInt(sizeFactor.value));
-            let markerSize;
-
-            if (size.value === "") {
-                markerSize = [10 * factor];
+        selectSize.onchange = () => {
+            if (selectSize.value != "") {
+                this._current.size = selectSize.value;
             } else {
-                const values = this._data[size.value].values;
-                const min = Math.min.apply(Math, values);
-                const max = Math.max.apply(Math, values);
-                markerSize = [values.map((v) => {
-                    const scaled = (v - min) / (max - min);
-                    return 10 * factor * (scaled + 0.05);
-                })]
+                this._current.size = undefined;
             }
 
-            const data = {
-                'marker.size': markerSize,
-            };
-            Plotly.restyle(this._plot, data, 0).catch(e => console.error(e));
-        }
-        size.onchange = changeSize;
-        sizeFactor.onchange = changeSize;
+            const factor = parseInt(sizeFactor.value);
+            Plotly.restyle(this._plot, { 'marker.size': this._sizes(factor, 0) } as Data, 0)
+                .catch(e => console.error(e));
+        };
+
+        sizeFactor.onchange = () => {
+            const factor = parseInt(sizeFactor.value);
+            Plotly.restyle(this._plot, { 'marker.size': this._sizes(factor, 0) } as Data, 0)
+                .catch(e => console.error(e));
+        };
     }
 
     private _createPlot() {
@@ -374,36 +367,19 @@ export class ScatterPlot {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
-        // create an empty plot, and fill it in _setupPlot
-        Plotly.newPlot(this._plot, [{}, {}], {}, DEFAULT_CONFIG as Config)
-            .catch(e => console.error(e));
-
-        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
-    }
-
-    private _setupPlot() {
-        const color = (this._current.color === "") ? 0.5 : this._data[this._current.color].values;
-        const fullData = {
+        // The main trace, containing default data
+        const main = {
             type: "scattergl",
-            x: this._data[this._current.x].values,
-            y: this._data[this._current.y].values,
             hovertemplate: this._hovertemplate(),
             mode: "markers",
             marker: {
-                color: color,
-                colorscale: COLOR_MAPS.inferno.rgba,
-                line: {
-                    color: color,
-                    colorscale: COLOR_MAPS.inferno.rgb,
-                    width: 1,
-                },
-                size: 10,
-                symbol: this._current.symbols,
+                colorscale: this._colorScale(0)[0],
+                line: this._markersLines(0)[0],
                 showscale: true,
                 colorbar: {
                     title: this._current.color,
                     thickness: 20,
-                }
+                },
             },
         };
 
@@ -411,47 +387,174 @@ export class ScatterPlot {
         // display it on top of the main plot with different styling
         const selected = {
             type: "scattergl",
-            x: [fullData.x[this._selected]],
-            y: [fullData.y[this._selected]],
+            hoverinfo: "none",
             mode: "markers",
             marker: {
-                color: "#007bff",
-                line: {
-                    color: "black",
-                    width: 0.5,
-                },
-                size: 20,
-                symbol: this._current.symbols,
+                line: this._markersLines(1)[0],
             },
-            hoverinfo: "none",
         };
+
+        // create an empty plot, and fill it in _setupPlot
+        Plotly.newPlot(this._plot,
+            [main as Data, selected as Data],
+            DEFAULT_LAYOUT as Layout,
+            DEFAULT_CONFIG as Config
+        ).catch(e => console.error(e));
+
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
+    }
+
+    private _setupPlot() {
+        const data = {
+            x: this._xValues(),
+            y: this._yValues(),
+            'marker.color': this._colors(),
+            'marker.line.color': this._lineColors(),
+            // default value for the size factor is 25
+            'marker.size': this._sizes(25),
+            'marker.symbol': this._symbols(),
+        };
+        Plotly.restyle(this._plot, data as Data)
+            .catch(e => console.error(e));
 
         const layout = {
-            ...DEFAULT_LAYOUT,
-            title: {
-                text: this._name,
-                font: {
-                    size: 25,
-                },
-            },
+            'title.text': this._name,
+            'xaxis.title': this._current.x,
+            'yaxis.title': this._current.y,
         };
-
-        layout.xaxis.title = this._current.x;
-        layout.yaxis.title = this._current.y;
-
-        Plotly.react(
-            this._plot, [fullData as Data, selected as Data],
-            layout as Layout,
-        ).catch(e => console.error(e));
-        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
+        Plotly.relayout(this._plot, layout)
+            .catch(e => console.error(e));
     }
 
     /// Get the plotly hovertemplate depending on `this._current.color`
     private _hovertemplate(): string {
-        if (this._current.color !== "") {
+        if (this._current.color !== undefined) {
             return this._current.color + ": %{marker.color:.2f}<extra></extra>";
         } else {
             return "%{x:.2f}, %{y:.2f}<extra></extra>";
+        }
+    }
+
+    /// Get the values to use for the x axis with the given plotly `trace`
+    private _xValues(trace?: number): Array<number[]> {
+        const values = this._data[this._current.x].values;
+        return this._selectTrace(values, [values[this._selected]], trace);
+    }
+
+    /// Get the values to use for the y axis with the given plotly `trace`
+    private _yValues(trace?: number): Array<number[]> {
+        const values = this._data[this._current.y].values;
+        return this._selectTrace(values, [values[this._selected]], trace);
+    }
+
+    /// Get the color values to use with the given plotly `trace`
+    private _colors(trace?: number): Array<string | number | number[]> {
+        let values;
+        if (this._current.color !== undefined) {
+            values = this._data[this._current.color].values;
+        } else {
+            values = 0.5;
+        }
+
+        return this._selectTrace<string | number | number[]>(values, "#007bff", trace);
+    }
+
+    /// Get the line color values to use with the given plotly `trace`
+    private _lineColors(trace?: number): Array<string | number | number[]> {
+        let values;
+        if (this._current.color !== undefined) {
+            values = this._data[this._current.color].values;
+        } else {
+            values = 0.5;
+        }
+
+        return this._selectTrace<string | number | number[]>(values, "black", trace);
+    }
+
+    /// Get the colorscale to use for markers in the main plotly trace
+    private _colorScale(trace: number): Array<undefined | Plotly.ColorScale> {
+        const colormap = COLOR_MAPS[this._current.colorscale].rgba;
+        return this._selectTrace(colormap, undefined, trace);
+    }
+
+    /// Get the colorscale to use for markers lines in the main plotly trace
+    private _lineColorScale(trace: number): Array<undefined | Plotly.ColorScale> {
+        const colormap = COLOR_MAPS[this._current.colorscale].rgb;
+        return this._selectTrace(colormap, undefined, trace);
+    }
+
+    /// Get the size values to use with the given plotly `trace`
+    private _sizes(sizeSlider: number, trace?: number): Array<number | number[]> {
+        // Transform the linear value from the slider into a logarithmic scale
+        const logSlider = (value: number) => {
+            const min_slider = 1;
+            const max_slider = 50;
+
+            const min_value = Math.log(1.0 / 6.0);
+            const max_value = Math.log(6.0);
+
+            const factor = (max_value - min_value) / (max_slider - min_slider);
+            return Math.exp(min_value + factor * (value - min_slider));
+        }
+
+        const factor = logSlider(sizeSlider);
+        let values;
+        if (this._current.size === undefined) {
+            values = 10 * factor;
+        } else {
+            const sizes = this._data[this._current.size].values;
+            const min = Math.min.apply(Math, sizes);
+            const max = Math.max.apply(Math, sizes);
+            // normalize inside [0, 10 * factor]
+            values = sizes.map((v) => {
+                const scaled = (v - min) / (max - min);
+                return 10 * factor * (scaled + 0.05);
+            })
+        }
+
+        return this._selectTrace(values, 20, trace);
+    }
+
+    /// Get the symbol values to use with the given plotly `trace`
+    private _symbols(trace?: number): Array<number | number[]> {
+        let main;
+        let selected;
+        if (this._current.symbols !== undefined) {
+            main = this._data[this._current.symbols].values;
+            selected = main[this._selected];
+        } else {
+            main = 0;
+            selected = 0;
+        }
+
+        return this._selectTrace(main, selected, trace);
+    }
+
+    /// Get the marker lines description to use with the given plotly `trace`
+    private _markersLines(trace?: number): Array<Partial<Plotly.ScatterMarkerLine>> {
+        const main = {
+            color: this._lineColors(0)[0],
+            colorscale: this._lineColorScale(0)[0],
+            width: 1,
+        };
+
+        const selected = {
+            color: this._lineColors(1)[0],
+            width: 0.5,
+        };
+
+        return this._selectTrace(main, selected, trace);
+    }
+
+    private _selectTrace<T>(main: T, selected: T, trace?: number): Array<T> {
+        if (trace === 0) {
+            return [main];
+        } else if (trace === 1) {
+            return [selected]
+        } else if (trace === undefined) {
+            return [main, selected]
+        } else {
+            throw Error("internal error: invalid trace number")
         }
     }
 }
