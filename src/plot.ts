@@ -266,7 +266,7 @@ export class ScatterPlot {
         for (const key in this._data) {
             selectColor.options.add(new Option(key, key));
         }
-        if (this._current.color !== undefined) {
+        if (this._hasColors()) {
             // index 0 is 'none', 1 is the x values, 2 the y values, use 3 for
             // colors
             selectColor.selectedIndex = 3;
@@ -428,7 +428,7 @@ export class ScatterPlot {
 
     /// Get the plotly hovertemplate depending on `this._current.color`
     private _hovertemplate(): string {
-        if (this._current.color !== undefined) {
+        if (this._hasColors()) {
             return this._current.color + ": %{marker.color:.2f}<extra></extra>";
         } else {
             return "%{x:.2f}, %{y:.2f}<extra></extra>";
@@ -450,8 +450,8 @@ export class ScatterPlot {
     /// Get the color values to use with the given plotly `trace`
     private _colors(trace?: number): Array<string | number | number[]> {
         let values;
-        if (this._current.color !== undefined) {
-            values = this._data[this._current.color].values;
+        if (this._hasColors()) {
+            values = this._data[this._current.color!].values;
         } else {
             values = 0.5;
         }
@@ -462,8 +462,8 @@ export class ScatterPlot {
     /// Get the line color values to use with the given plotly `trace`
     private _lineColors(trace?: number): Array<string | number | number[]> {
         let values;
-        if (this._current.color !== undefined) {
-            values = this._data[this._current.color].values;
+        if (this._hasColors()) {
+            values = this._data[this._current.color!].values;
         } else {
             values = 0.5;
         }
@@ -472,19 +472,19 @@ export class ScatterPlot {
     }
 
     /// Get the colorscale to use for markers in the main plotly trace
-    private _colorScale(trace: number): Array<undefined | Plotly.ColorScale> {
-        const colormap = COLOR_MAPS[this._current.colorscale].rgba;
-        return this._selectTrace(colormap, undefined, trace);
+    private _colorScale(trace?: number): Array<undefined | Plotly.ColorScale> {
+        let colormap = COLOR_MAPS[this._current.colorscale];
+        return this._selectTrace(colormap.rgba, undefined, trace);
     }
 
     /// Get the colorscale to use for markers lines in the main plotly trace
-    private _lineColorScale(trace: number): Array<undefined | Plotly.ColorScale> {
+    private _lineColorScale(trace?: number): Array<undefined | Plotly.ColorScale> {
         const colormap = COLOR_MAPS[this._current.colorscale].rgb;
         return this._selectTrace(colormap, undefined, trace);
     }
 
     /// Get the size values to use with the given plotly `trace`
-    private _sizes(sizeSlider: number, trace?: number): Array<number | number[]> {
+    private _sizes(sizeSliderValue: number, trace?: number): Array<number | number[]> {
         // Transform the linear value from the slider into a logarithmic scale
         const logSlider = (value: number) => {
             const min_slider = 1;
@@ -497,7 +497,7 @@ export class ScatterPlot {
             return Math.exp(min_value + factor * (value - min_slider));
         }
 
-        const factor = logSlider(sizeSlider);
+        const factor = logSlider(sizeSliderValue);
         let values;
         if (this._current.size === undefined) {
             values = 10 * factor;
@@ -556,5 +556,9 @@ export class ScatterPlot {
         } else {
             throw Error("internal error: invalid trace number")
         }
+    }
+
+    private _hasColors(): boolean {
+        return this._current.color !== undefined;
     }
 }
