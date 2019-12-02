@@ -303,10 +303,10 @@ export class ScatterPlot {
             this._current.colorscale = selectPalette.value;
 
             const data = {
-                'marker.colorscale': this._colorScale(0)[0],
-                'marker.line.colorscale': this._lineColorScale(0)[0],
+                'marker.colorscale': this._colorScale(0),
+                'marker.line.colorscale': this._lineColorScale(0),
             };
-            Plotly.restyle(this._plot, data, 0)
+            Plotly.restyle(this._plot, data as Data, 0)
                 .catch(e => console.error(e));
         }
 
@@ -339,7 +339,7 @@ export class ScatterPlot {
         selectSize.selectedIndex = 0;
 
         const sizeFactor = getByID<HTMLInputElement>('skv-size-factor');
-        sizeFactor.value = "25";
+        sizeFactor.value = "75";
 
         selectSize.onchange = () => {
             if (selectSize.value != "") {
@@ -410,8 +410,8 @@ export class ScatterPlot {
             y: this._yValues(),
             'marker.color': this._colors(),
             'marker.line.color': this._lineColors(),
-            // default value for the size factor is 25
-            'marker.size': this._sizes(25),
+            // default value for the size factor is 75
+            'marker.size': this._sizes(75),
             'marker.symbol': this._symbols(),
         };
         Plotly.restyle(this._plot, data as Data)
@@ -488,10 +488,10 @@ export class ScatterPlot {
         // Transform the linear value from the slider into a logarithmic scale
         const logSlider = (value: number) => {
             const min_slider = 1;
-            const max_slider = 50;
+            const max_slider = 100;
 
             const min_value = Math.log(1.0 / 6.0);
-            const max_value = Math.log(6.0);
+            const max_value = Math.log(2.0);
 
             const factor = (max_value - min_value) / (max_slider - min_slider);
             return Math.exp(min_value + factor * (value - min_slider));
@@ -508,7 +508,7 @@ export class ScatterPlot {
             // normalize inside [0, 10 * factor]
             values = sizes.map((v) => {
                 const scaled = (v - min) / (max - min);
-                return 10 * factor * (scaled + 0.05);
+                return 20 * factor * (scaled + 0.05);
             })
         }
 
