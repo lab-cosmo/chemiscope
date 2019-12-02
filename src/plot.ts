@@ -13,6 +13,8 @@ const DEFAULT_LAYOUT = {
     showlegend: false,
     title: {
         text: "",
+        y: 0.982,
+        x: 0.08,
         font: {
             size: 25,
         },
@@ -41,9 +43,14 @@ const DEFAULT_CONFIG = {
         "hoverClosestCartesian",
         "hoverCompareCartesian",
         "toggleSpikelines",
-        "resetScale2d",
+        "autoScale2d",
+        "zoomIn2d",
+        "zoomOut2d",
         "select2d",
         "lasso2d",
+        "hoverClosest3d",
+        "tableRotation",
+        "resetCameraLastSave3d",
     ],
 };
 
