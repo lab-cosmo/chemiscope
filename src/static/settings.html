@@ -24,6 +24,24 @@
                     </div>
 
                     <div class="input-group input-group-sm">
+                        <div class="form-check form-check-inline" style="display: grid; grid-template-columns: 1fr 5fr 1fr 5fr;">
+                            <input class="form-check-input" type="radio" name=skv-plot-dims id=skv-2d-plot checked>
+                            <label class="form-check-label" for=skv-2d-plot>2D map</label>
+
+                            <input class="form-check-input" type="radio" name=skv-plot-dims id=skv-3d-plot>
+                            <label class="form-check-label" for=skv-3d-plot>3D map</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for=skv-z>z axis:</label>
+                        </div>
+                        <select id=skv-z class="custom-select" disabled>
+                        </select>
+                    </div>
+
+                    <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
                             <label class="input-group-text" for=skv-color>color:</label>
                         </div>

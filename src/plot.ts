@@ -68,12 +68,17 @@ export class ScatterPlot {
     private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
     private _selected: number;
+    /// Are we showing a 2D or 3D plot
+    private _is3D: boolean;
     /// Currently displayed data
     private _current!: {
         /// Name of the properties in `this._data` used for x values
         x: string,
         /// Name of the properties in `this._data` used for y values
         y: string,
+        /// Name of the properties in `this._data` used for z values,
+        /// `undefined` for 2D plots
+        z?: string,
         /// Name of the colorscale to use
         colorscale: string,
         /// Name of the properties in `this._data` used for color values,
@@ -96,6 +101,7 @@ export class ScatterPlot {
         this._name = name;
         this._selectedCallback = (_) => { return; };
         this._selected = 0;
+        this._is3D = false;
 
         const root = document.getElementById(id);
         if (root === null) {
@@ -122,13 +128,19 @@ export class ScatterPlot {
 
     /// Change the selected environement to the one with the given `index`
     public select(index: number) {
+        if (index === this._selected) {
+            // HACK: Calling Plotly.restyle fires the plotly_click event
+            // again for 3d plots, ignore it
+            return;
+        }
         this._selected = index;
 
         Plotly.restyle(this._plot, {
             x: this._xValues(1),
             y: this._yValues(1),
+            z: this._zValues(1),
             "marker.symbol": this._symbols(1),
-        }, 1);
+        } as Data, 1);
         this._selectedCallback(this._selected);
     }
 
@@ -138,6 +150,7 @@ export class ScatterPlot {
         this._name = name;
         this._selected = 0;
         this._data = new MapData(properties);
+        this._current.z = undefined;
         this._setupDefaults();
         this._setupSettings();
         this._setupPlot();
@@ -165,6 +178,9 @@ export class ScatterPlot {
         }
         if (prop_names.length > 2) {
             this._current.color = prop_names[2];
+            this._current.z = prop_names[2];
+        } else {
+            this._current.z = prop_names[0];
         }
     }
 
@@ -240,8 +256,10 @@ export class ScatterPlot {
             this._current.x = selectX.value;
             Plotly.restyle(this._plot, { x: this._xValues() })
                 .catch(e => console.error(e));
-            Plotly.relayout(this._plot, {'xaxis.title': this._current.x })
-                .catch(e => console.error(e));
+            Plotly.relayout(this._plot, {
+                'xaxis.title': this._current.x,
+                'scene.xaxis.title': this._current.x,
+            } as unknown as Layout).catch(e => console.error(e));
         }
 
         // ======= data used as y values
@@ -256,8 +274,27 @@ export class ScatterPlot {
             this._current.y = selectY.value;
             Plotly.restyle(this._plot, { y: this._yValues() })
                 .catch(e => console.error(e));
-            Plotly.relayout(this._plot, {'yaxis.title': this._current.y })
+            Plotly.relayout(this._plot, {
+                'yaxis.title': this._current.y,
+                'scene.yaxis.title': this._current.y,
+            } as unknown as Layout).catch(e => console.error(e));
+        }
+
+        // ======= data used as z values
+        const selectZ = getByID<HTMLSelectElement>('skv-z');
+        selectZ.options.length = 0;
+        for (const key in this._data) {
+            selectZ.options.add(new Option(key, key));
+        }
+        selectZ.selectedIndex = selectZ.options.length >= 2 ? 2 : 0;
+
+        selectZ.onchange = () => {
+            this._current.z = selectZ.value;
+            Plotly.restyle(this._plot, { z: this._zValues() } as Data)
                 .catch(e => console.error(e));
+            Plotly.relayout(this._plot, {
+                'scene.zaxis.title': this._current.z,
+            } as unknown as Layout).catch(e => console.error(e));
         }
 
         // ======= marker color
@@ -357,6 +394,53 @@ export class ScatterPlot {
             const factor = parseInt(sizeFactor.value);
             Plotly.restyle(this._plot, { 'marker.size': this._sizes(factor, 0) } as Data, 0)
                 .catch(e => console.error(e));
+        }
+
+        // ======= select between 2D and 3D plots
+        const plot2D = getByID<HTMLInputElement>('skv-2d-plot');
+        plot2D.onchange = () => {
+            selectSymbol.disabled = false;
+            if (selectSymbol.value !== "") {
+                this._current.symbols = selectSymbol.value;
+            }
+
+            selectZ.disabled = true;
+            this._is3D = false;
+            const factor = parseInt(sizeFactor.value);
+            const data = {
+                type: 'scattergl',
+                z: this._zValues(),
+                // size and symbols change from 2D to 3D
+                'marker.size': this._sizes(factor),
+                'marker.symbol': this._symbols(),
+                // Use RGBA colorscale for opacity in 2D mode
+                'marker.colorscale': this._colorScale(),
+                'marker.line.size': [1, 1],
+            }
+            Plotly.restyle(this._plot, data as Data).catch(e => console.error(e));
+        };
+
+        const plot3D = getByID<HTMLInputElement>('skv-3d-plot');
+        plot3D.onchange = () => {
+            // Can not use symbols with 3D plots, why?
+            selectSymbol.disabled = true;
+            this._current.symbols = undefined;
+
+            selectZ.disabled = false;
+            this._is3D = true;
+            const factor = parseInt(sizeFactor.value);
+            const data = {
+                type: 'scatter3d',
+                z: this._zValues(),
+                // size and symbols change from 2D to 3D
+                'marker.size': this._sizes(factor),
+                'marker.symbol': this._symbols(),
+                // Do not use opacity in 3D mode, since it renders horribly
+                'marker.colorscale': this._colorScale(),
+                'marker.line.size': [0, 1],
+            }
+
+            Plotly.restyle(this._plot, data as Data).catch(e => console.error(e));
         };
     }
 
@@ -374,8 +458,15 @@ export class ScatterPlot {
             mode: "markers",
             marker: {
                 colorscale: this._colorScale(0)[0],
-                line: this._markersLines(0)[0],
+                line: {
+                    color: this._lineColors(0)[0],
+                    colorscale: this._lineColorScale(0)[0],
+                    width: 1,
+                },
                 showscale: true,
+                // prevent plolty from messing with opacity when doing bubble
+                // style charts (different sizes for each point)
+                opacity: 1,
                 colorbar: {
                     title: this._current.color,
                     thickness: 20,
@@ -390,7 +481,10 @@ export class ScatterPlot {
             hoverinfo: "none",
             mode: "markers",
             marker: {
-                line: this._markersLines(1)[0],
+                line: {
+                    color: this._lineColors(1)[0],
+                    width: 0.5,
+                },
             },
         };
 
@@ -421,6 +515,9 @@ export class ScatterPlot {
             'title.text': this._name,
             'xaxis.title': this._current.x,
             'yaxis.title': this._current.y,
+            'scene.xaxis.title': this._current.x,
+            'scene.yaxis.title': this._current.y,
+            'scene.zaxis.title': this._current.z,
         };
         Plotly.relayout(this._plot, layout)
             .catch(e => console.error(e));
@@ -444,6 +541,16 @@ export class ScatterPlot {
     /// Get the values to use for the y axis with the given plotly `trace`
     private _yValues(trace?: number): Array<number[]> {
         const values = this._data[this._current.y].values;
+        return this._selectTrace(values, [values[this._selected]], trace);
+    }
+
+    /// Get the values to use for the z axis with the given plotly `trace`
+    private _zValues(trace?: number): Array<undefined | number[]> {
+        if (!this._is3D) {
+            return this._selectTrace(undefined, undefined, trace);
+        }
+
+        const values = this._data[this._current.z!].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
@@ -474,13 +581,21 @@ export class ScatterPlot {
     /// Get the colorscale to use for markers in the main plotly trace
     private _colorScale(trace?: number): Array<undefined | Plotly.ColorScale> {
         let colormap = COLOR_MAPS[this._current.colorscale];
-        return this._selectTrace(colormap.rgba, undefined, trace);
+        if (this._is3D) {
+            return this._selectTrace(colormap.rgb, undefined, trace);
+        } else {
+            return this._selectTrace(colormap.rgba, undefined, trace);
+        }
     }
 
     /// Get the colorscale to use for markers lines in the main plotly trace
     private _lineColorScale(trace?: number): Array<undefined | Plotly.ColorScale> {
-        const colormap = COLOR_MAPS[this._current.colorscale].rgb;
-        return this._selectTrace(colormap, undefined, trace);
+        if (this._is3D) {
+            return this._selectTrace(undefined, undefined, trace);
+        } else {
+            const colormap = COLOR_MAPS[this._current.colorscale].rgb;
+            return this._selectTrace(colormap, undefined, trace);
+        }
     }
 
     /// Get the size values to use with the given plotly `trace`
@@ -498,21 +613,23 @@ export class ScatterPlot {
         }
 
         const factor = logSlider(sizeSliderValue);
+        const defaultSize = this._is3D ? 3 : 10;
         let values;
         if (this._current.size === undefined) {
-            values = 10 * factor;
+            values = defaultSize * factor;
         } else {
             const sizes = this._data[this._current.size].values;
             const min = Math.min.apply(Math, sizes);
             const max = Math.max.apply(Math, sizes);
+            const defaultSize = this._is3D ? 8 : 20;
             // normalize inside [0, 10 * factor]
             values = sizes.map((v) => {
                 const scaled = (v - min) / (max - min);
-                return 20 * factor * (scaled + 0.05);
+                return defaultSize * factor * (scaled + 0.05);
             })
         }
 
-        return this._selectTrace(values, 20, trace);
+        return this._selectTrace(values, 2 * defaultSize, trace);
     }
 
     /// Get the symbol values to use with the given plotly `trace`
@@ -526,22 +643,6 @@ export class ScatterPlot {
             main = 0;
             selected = 0;
         }
-
-        return this._selectTrace(main, selected, trace);
-    }
-
-    /// Get the marker lines description to use with the given plotly `trace`
-    private _markersLines(trace?: number): Array<Partial<Plotly.ScatterMarkerLine>> {
-        const main = {
-            color: this._lineColors(0)[0],
-            colorscale: this._lineColorScale(0)[0],
-            width: 1,
-        };
-
-        const selected = {
-            color: this._lineColors(1)[0],
-            width: 0.5,
-        };
 
         return this._selectTrace(main, selected, trace);
     }
