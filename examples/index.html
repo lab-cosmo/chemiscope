@@ -84,36 +84,44 @@
         }
 
         function setupSketchviz(json) {
-            upload.value = ""
-            if (vizualizer !== undefined) {
-                vizualizer.changeDataset(json)
-            } else {
-                vizualizer = new Sketchviz.Vizualizer({
-                    ...json,
-                    plotId: 'skviz-plot',
-                    viewerId: 'skviz-viewer',
-                    j2sPath: 'jsmol/j2s',
-                    sliderId: 'skviz-slider',
-                    propertiesId: 'skviz-properties',
-                })
+            try {
+                upload.value = ""
+                if (vizualizer !== undefined) {
+                    vizualizer.changeDataset(json)
+                } else {
+                    vizualizer = new Sketchviz.Vizualizer({
+                        ...json,
+                        plotId: 'skviz-plot',
+                        viewerId: 'skviz-viewer',
+                        j2sPath: 'jsmol/j2s',
+                        sliderId: 'skviz-slider',
+                        propertiesId: 'skviz-properties',
+                    })
 
-                vizualizer.viewer.computeSettingsPlacement((rect) => {
-                    const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+                    vizualizer.viewer.computeSettingsPlacement((rect) => {
+                        const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
 
-                    return {
-                        top: viewerRect.top,
-                        left: viewerRect.left - rect.width - 25,
-                    };
-                })
+                        return {
+                            top: viewerRect.top,
+                            left: viewerRect.left - rect.width - 25,
+                        };
+                    })
 
-                vizualizer.plot.computeSettingsPlacement((rect) => {
-                    const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+                    vizualizer.plot.computeSettingsPlacement((rect) => {
+                        const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
 
-                    return {
-                        top: viewerRect.top,
-                        left: viewerRect.left + viewerRect.width + 25,
-                    };
-                })
+                        return {
+                            top: viewerRect.top,
+                            left: viewerRect.left + viewerRect.width + 25,
+                        };
+                    })
+                }
+            } catch(e) {
+                console.error(e);
+                document.getElementById('skviz-viewer').innerHTML = `
+                    <p style="color: red;">${e}</p>
+                    <p>${e.stack}</p>
+                `;
             }
         }
 

@@ -1,21 +1,36 @@
-import {MapInput} from './map_data'
+import {Property} from './dataset'
 
 /// A table to display the properties of the current selected structure/environement
 export class PropertiesTable {
     private _root: HTMLElement;
-    private _data: MapInput;
     private _header: HTMLTableHeaderCellElement;
     private _cells: {
         [name: string]: HTMLTableDataCellElement
     }
 
-    constructor(id: string, data: MapInput) {
+    private _structureProperties: {
+        [name: string]: number[] | string[]
+    }
+    private _atomProperties: {
+        [name: string]: number[] | string[]
+    }
+
+    constructor(id: string, properties: {[name: string]: Property}) {
         const root = document.getElementById(id);
         if (root === null) {
             throw Error(`could not find HTML element #${id}`)
         }
         this._root = root;
-        this._data = data;
+
+        this._structureProperties = {}
+        this._atomProperties = {}
+        for (const name in properties) {
+            if (properties[name].target === 'structure') {
+                this._structureProperties[name] = properties[name].values
+            } else if (properties[name].target === 'atom') {
+                this._atomProperties[name] = properties[name].values
+            }
+        }
 
         this._root.innerHTML = `
         <div class="skv-properties">
@@ -28,7 +43,7 @@ export class PropertiesTable {
 
         this._cells = {};
         const tbody = this._root.querySelector('tbody')!;
-        for (const name in this._data) {
+        for (const name in this._structureProperties) {
             const tr = document.createElement('tr');
 
             const tc = document.createElement('td');
@@ -40,6 +55,7 @@ export class PropertiesTable {
 
             tbody.appendChild(tr);
         }
+        // TODO: handle atom properties
 
         this.display(0);
     }
@@ -48,8 +64,8 @@ export class PropertiesTable {
         const centerType = 'structure';
         this._header.innerText = `Properties for ${centerType} ${index}`;
 
-        for (const name in this._data) {
-            this._cells[name].innerText = this._data[name][index].toString()
+        for (const name in this._structureProperties) {
+            this._cells[name].innerText = this._structureProperties[name][index].toString()
         }
     }
 }

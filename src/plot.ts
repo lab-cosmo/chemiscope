@@ -4,7 +4,8 @@ import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
-import {MapInput, MapData} from "./map_data"
+import {Property} from "./dataset"
+import {PlotProperties, NumericProperty} from "./plot_properties"
 
 const HTML_SETTINGS = require("./static/settings.html");
 
@@ -70,31 +71,33 @@ export class ScatterPlot {
     /// The dataset name
     private _name: string;
     /// All known properties
-    private _data: MapData
+    private _allProperties: PlotProperties;
     /// Storing the callback for when the plot is clicked
     private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
     private _selected: number;
     /// Are we showing a 2D or 3D plot
     private _is3D: boolean;
+    /// Current mode: displaying structure or atomic properties
+    private _mode: 'structure' | 'atom';
     /// Currently displayed data
     private _current!: {
-        /// Name of the properties in `this._data` used for x values
+        /// Name of the properties in `this._properties()` used for x values
         x: string,
-        /// Name of the properties in `this._data` used for y values
+        /// Name of the properties in `this._properties()` used for y values
         y: string,
-        /// Name of the properties in `this._data` used for z values,
+        /// Name of the properties in `this._properties()` used for z values,
         /// `undefined` for 2D plots
         z?: string,
         /// Name of the colorscale to use
         colorscale: string,
-        /// Name of the properties in `this._data` used for color values,
+        /// Name of the properties in `this._properties()` used for color values,
         /// `undefined` when using the default colors
         color?: string,
-        /// Name of the properties in `this._data` used for size values,
+        /// Name of the properties in `this._properties()` used for size values,
         /// `undefined` when using the default sizes
         size?: string,
-        /// Name of the properties in `this._data` used for symbols values,
+        /// Name of the properties in `this._properties()` used for symbols values,
         /// `undefined` when using the default symbols
         symbols?: string,
     }
@@ -104,11 +107,12 @@ export class ScatterPlot {
     /// `position: fixed`
     private _settingsPlacement!: (rect: DOMRect) => {top: number, left: number};
 
-    constructor(id: string, name: string, properties: MapInput) {
+    constructor(id: string, name: string, properties: {[name: string]: Property}) {
         this._name = name;
         this._selectedCallback = (_) => { return; };
         this._selected = 0;
         this._is3D = false;
+        this._mode = 'structure';
 
         const root = document.getElementById(id);
         if (root === null) {
@@ -117,7 +121,7 @@ export class ScatterPlot {
         this._root = root;
         this._root.style.position = 'relative';
 
-        this._data = new MapData(properties);
+        this._allProperties = new PlotProperties(properties);
         this._setupDefaults();
 
         this._createSettings();
@@ -153,10 +157,10 @@ export class ScatterPlot {
 
     /// Change the current dataset to the provided one, without re-creating the
     /// plot
-    public changeDataset(name: string, properties: MapInput) {
+    public changeDataset(name: string, properties: {[name: string]: Property}) {
         this._name = name;
         this._selected = 0;
-        this._data = new MapData(properties);
+        this._allProperties = new PlotProperties(properties);
         this._current.z = undefined;
         this._setupDefaults();
         this._setupSettings();
@@ -174,7 +178,7 @@ export class ScatterPlot {
     }
 
     private _setupDefaults() {
-        const prop_names = Object.keys(this._data);
+        const prop_names = Object.keys(this._properties());
         if (prop_names.length < 2) {
             throw Error("Sketchmap needs at least two properties to plot")
         }
@@ -254,7 +258,7 @@ export class ScatterPlot {
         // ======= data used as x values
         const selectX = getByID<HTMLSelectElement>('skv-x');
         selectX.options.length = 0;
-        for (const key in this._data) {
+        for (const key in this._properties()) {
             selectX.options.add(new Option(key, key));
         }
         selectX.selectedIndex = 0;
@@ -272,7 +276,7 @@ export class ScatterPlot {
         // ======= data used as y values
         const selectY = getByID<HTMLSelectElement>('skv-y');
         selectY.options.length = 0;
-        for (const key in this._data) {
+        for (const key in this._properties()) {
             selectY.options.add(new Option(key, key));
         }
         selectY.selectedIndex = 1;
@@ -290,7 +294,7 @@ export class ScatterPlot {
         // ======= data used as z values
         const selectZ = getByID<HTMLSelectElement>('skv-z');
         selectZ.options.length = 0;
-        for (const key in this._data) {
+        for (const key in this._properties()) {
             selectZ.options.add(new Option(key, key));
         }
         selectZ.selectedIndex = selectZ.options.length >= 2 ? 2 : 0;
@@ -307,7 +311,7 @@ export class ScatterPlot {
         // ======= marker color
         const selectColor = getByID<HTMLSelectElement>('skv-color');
         selectColor.options.length = 1;
-        for (const key in this._data) {
+        for (const key in this._properties()) {
             selectColor.options.add(new Option(key, key));
         }
         if (this._hasColors()) {
@@ -357,8 +361,8 @@ export class ScatterPlot {
         // ======= marker symbols
         const selectSymbol = getByID<HTMLSelectElement>('skv-symbol');
         selectSymbol.options.length = 1;
-        for (const key in this._data) {
-            if (this._data[key].string !== undefined) {
+        for (const key in this._properties()) {
+            if (this._properties()[key].string !== undefined) {
                 selectSymbol.options.add(new Option(key, key));
             }
         }
@@ -377,7 +381,7 @@ export class ScatterPlot {
         // ======= marker size
         const selectSize = getByID<HTMLSelectElement>('skv-size');
         selectSize.options.length = 1;
-        for (const key in this._data) {
+        for (const key in this._properties()) {
             selectSize.options.add(new Option(key, key));
         }
         selectSize.selectedIndex = 0;
@@ -530,6 +534,10 @@ export class ScatterPlot {
             .catch(e => console.error(e));
     }
 
+    private _properties(): {[name: string]: NumericProperty} {
+        return this._allProperties[this._mode]
+    }
+
     /// Get the plotly hovertemplate depending on `this._current.color`
     private _hovertemplate(): string {
         if (this._hasColors()) {
@@ -541,13 +549,13 @@ export class ScatterPlot {
 
     /// Get the values to use for the x axis with the given plotly `trace`
     private _xValues(trace?: number): Array<number[]> {
-        const values = this._data[this._current.x].values;
+        const values = this._properties()[this._current.x].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
     /// Get the values to use for the y axis with the given plotly `trace`
     private _yValues(trace?: number): Array<number[]> {
-        const values = this._data[this._current.y].values;
+        const values = this._properties()[this._current.y].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
@@ -557,7 +565,7 @@ export class ScatterPlot {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._data[this._current.z!].values;
+        const values = this._properties()[this._current.z!].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
@@ -565,7 +573,7 @@ export class ScatterPlot {
     private _colors(trace?: number): Array<string | number | number[]> {
         let values;
         if (this._hasColors()) {
-            values = this._data[this._current.color!].values;
+            values = this._properties()[this._current.color!].values;
         } else {
             values = 0.5;
         }
@@ -577,7 +585,7 @@ export class ScatterPlot {
     private _lineColors(trace?: number): Array<string | number | number[]> {
         let values;
         if (this._hasColors()) {
-            values = this._data[this._current.color!].values;
+            values = this._properties()[this._current.color!].values;
         } else {
             values = 0.5;
         }
@@ -625,7 +633,7 @@ export class ScatterPlot {
         if (this._current.size === undefined) {
             values = defaultSize * factor;
         } else {
-            const sizes = this._data[this._current.size].values;
+            const sizes = this._properties()[this._current.size].values;
             const min = Math.min.apply(Math, sizes);
             const max = Math.max.apply(Math, sizes);
             const defaultSize = this._is3D ? 8 : 20;
@@ -644,7 +652,7 @@ export class ScatterPlot {
         let main;
         let selected;
         if (this._current.symbols !== undefined) {
-            main = this._data[this._current.symbols].values;
+            main = this._properties()[this._current.symbols].values;
             selected = main[this._selected];
         } else {
             main = 0;

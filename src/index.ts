@@ -3,46 +3,11 @@ import {StructureViewer} from "./viewer";
 import {EnvironementSlider} from './slider';
 import {PropertiesTable} from './properties';
 
+import {Dataset, checkDataset} from './dataset';
+
 require('./static/sketchviz.css');
 
-interface VizualizerData {
-    name: string;
-    properties: {
-        [name: string]: string[] | number[];
-    };
-    structures: string[];
-}
-
-function checkData(o: any) {
-    if (!('name' in o && typeof o['name'] === 'string')) {
-        throw Error("missing 'name' in Sketchviz.input");
-    }
-
-    if (!('properties' in o && typeof o['properties'] === 'object')) {
-        throw Error("missing 'properties' in Sketchviz.input");
-    }
-    for (const key in o['properties']) {
-        if (o['properties'][key].length === undefined ||
-            !(typeof o['properties'][key][0] === 'string' ||
-              typeof o['properties'][key][0] === 'number')) {
-                  throw Error("wrong type for 'properties' in Sketchviz.input");
-              }
-    }
-
-    if (!('structures' in o && o['structures'].length !== undefined && typeof o['structures'][0] === 'string')) {
-        throw Error("missing 'structures' in Sketchviz.input");
-    }
-
-    // Check that properties and structures have the same size
-    const size = o['structures'].length;
-    for (const key in o['properties']) {
-        if (o['properties'][key].length !== size) {
-            throw Error("properties and structures don't have the same size")
-        }
-    }
-}
-
-interface VizualizerInput extends VizualizerData {
+interface VizualizerInput extends Dataset {
     plotId: string;
     viewerId: string;
     j2sPath: string;
@@ -51,7 +16,7 @@ interface VizualizerInput extends VizualizerData {
 }
 
 function checkInput(o: any) {
-    checkData(o);
+    checkDataset(o);
 
     if (!('plotId' in o && typeof o['plotId'] === 'string')) {
         throw Error("missing 'plotId' in Sketchviz.input");
@@ -97,7 +62,7 @@ class Vizualizer {
             table: input.propertiesId,
         }
 
-        this.plot = new ScatterPlot(input.plotId, input.name, input.properties);
+        this.plot = new ScatterPlot(input.plotId, input.meta.name, input.properties);
         this.viewer = new StructureViewer(input.viewerId, input.j2sPath, input.structures);
         this.slider = new EnvironementSlider(input.sliderId, input.structures.length - 1);
         this.table = new PropertiesTable(input.propertiesId, input.properties);
@@ -109,13 +74,13 @@ class Vizualizer {
         this.slider.onChange((i) => this.plot.select(i));
     }
 
-    public changeDataset(data: VizualizerData) {
-        checkData(data);
+    public changeDataset(dataset: Dataset) {
+        checkDataset(dataset);
 
-        this.plot.changeDataset(data.name, data.properties);
-        this.viewer.changeDataset(data.structures);
-        this.slider.changeDataset(data.structures.length - 1);
-        this.table = new PropertiesTable(this._ids.table, data.properties);
+        this.plot.changeDataset(dataset.meta.name, dataset.properties);
+        this.viewer.changeDataset(dataset.structures);
+        this.slider.changeDataset(dataset.structures.length - 1);
+        this.table = new PropertiesTable(this._ids.table, dataset.properties);
     }
 }
 
