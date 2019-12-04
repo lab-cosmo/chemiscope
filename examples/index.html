@@ -15,6 +15,9 @@
         <!-- JSmol -->
         <script type="text/javascript" src="jsmol/JSmol.min.nojq.js"></script>
 
+        <!-- Pako: zlib implementation in javascript, to store data files as gziped json -->
+        <script type="text/javascript" src="pako_inflate.min.js"></script>
+
         <script defer type="text/javascript" src="sketchviz.min.js"></script>
     </head>
 
@@ -28,10 +31,10 @@
                     <label class="input-group-text" for=example>Pick an example</label>
                 </div>
                 <select id=example class="custom-select">
-                    <option value="Arginine-Dipeptide">Arginine-Dipeptide</option>
-                    <option value="CSD">Chemical Shieldings</option>
-                    <option value="Qm7b">Qm7b</option>
-                    <option value="Pyrole">Pyrole</option>
+                    <option value="Arginine-Dipeptide.json.gz">Arginine-Dipeptide</option>
+                    <option value="CSD.json">Chemical Shieldings</option>
+                    <option value="Qm7b.json.gz">Qm7b</option>
+                    <option value="Pyrole.json.gz">Pyrole</option>
                 </select>
 
                 <span style="width: 2em;"></span>
@@ -75,9 +78,19 @@
                 }
                 reader.readAsText(upload.files[0]);
             } else {
-                console.log(`loading example file ${example.value}.json`);
-                fetch(`${example.value}.json`)
-                    .then(response => response.json())
+                console.log(`loading example file ${example.value}`);
+                fetch(example.value)
+                    .then(response => response.arrayBuffer())
+                    .then(buffer => {
+                        let text;
+                        if (example.value.endsWith(".gz")) {
+                            text = pako.inflate(buffer, {to: "string"});
+                        } else {
+                            const decoder = new TextDecoder("utf-8");
+                            text = decoder.decode(buffer);
+                        }
+                        return JSON.parse(text);
+                    })
                     .then(json => setupSketchviz(json))
                     .catch(e => console.error(e));
             }
@@ -98,23 +111,23 @@
                         propertiesId: 'skviz-properties',
                     })
 
-                    // vizualizer.viewer.computeSettingsPlacement((rect) => {
-                    //     const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
-                    //
-                    //     return {
-                    //         top: viewerRect.top,
-                    //         left: viewerRect.left - rect.width - 25,
-                    //     };
-                    // })
-                    //
-                    // vizualizer.plot.computeSettingsPlacement((rect) => {
-                    //     const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
-                    //
-                    //     return {
-                    //         top: viewerRect.top,
-                    //         left: viewerRect.left + viewerRect.width + 25,
-                    //     };
-                    // })
+                    vizualizer.viewer.computeSettingsPlacement((rect) => {
+                        const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+
+                        return {
+                            top: viewerRect.top,
+                            left: viewerRect.left - rect.width - 25,
+                        };
+                    })
+
+                    vizualizer.plot.computeSettingsPlacement((rect) => {
+                        const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+
+                        return {
+                            top: viewerRect.top,
+                            left: viewerRect.left + viewerRect.width + 25,
+                        };
+                    })
                 }
             } catch(e) {
                 console.error(e);
