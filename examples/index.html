@@ -47,13 +47,13 @@
             <div style="height: 2em"></div>
             <div class="row">
                 <div class="col-xl-7">
-                    <div id=skviz-plot style="height: 600px"></div>
+                    <div id=skviz-plot style="height: 620px"></div>
                 </div>
 
                 <div class="col-xl-5">
-                    <div id=skviz-viewer style="height: 350px"></div>
-                    <div id=skviz-slider style="height: 30px"></div>
-                    <div id=skviz-properties style="height: 190px"></div>
+                    <div id=skviz-viewer style="height: 320px"></div>
+                    <div id=skviz-slider style="max-height: 60px"></div>
+                    <div id=skviz-properties style="height: 210px"></div>
                 </div>
             </div>
         </div>
@@ -98,23 +98,23 @@
                         propertiesId: 'skviz-properties',
                     })
 
-                    vizualizer.viewer.computeSettingsPlacement((rect) => {
-                        const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
-
-                        return {
-                            top: viewerRect.top,
-                            left: viewerRect.left - rect.width - 25,
-                        };
-                    })
-
-                    vizualizer.plot.computeSettingsPlacement((rect) => {
-                        const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
-
-                        return {
-                            top: viewerRect.top,
-                            left: viewerRect.left + viewerRect.width + 25,
-                        };
-                    })
+                    // vizualizer.viewer.computeSettingsPlacement((rect) => {
+                    //     const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+                    //
+                    //     return {
+                    //         top: viewerRect.top,
+                    //         left: viewerRect.left - rect.width - 25,
+                    //     };
+                    // })
+                    //
+                    // vizualizer.plot.computeSettingsPlacement((rect) => {
+                    //     const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+                    //
+                    //     return {
+                    //         top: viewerRect.top,
+                    //         left: viewerRect.left + viewerRect.width + 25,
+                    //     };
+                    // })
                 }
             } catch(e) {
                 console.error(e);

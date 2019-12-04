@@ -1,108 +1,73 @@
+import assert from 'assert';
 import JSmolViewer from 'materials-cloud-viewer';
-import {Structure} from './dataset';
-import * as linalg from './linalg'
 
-class UnitCell {
-    private matrix: linalg.Matrix;
-    private inverse: linalg.Matrix;
-
-    constructor(data: number[]) {
-        if (data.length !== 9) {
-            throw Error('invalid length for cell: expected 9, got ' + data.length);
-        }
-
-        const vx = data.slice(0, 3) as linalg.Vector3D;
-        const vy = data.slice(3, 6) as linalg.Vector3D;
-        const vz = data.slice(6, 9) as linalg.Vector3D;
-        this.matrix = [vx, vy, vz];
-        if (linalg.determinant(this.matrix) < 1e-9) {
-            throw Error("invalid unit cell");
-        }
-        this.inverse = linalg.invert(this.matrix);
-    }
-
-    /// convert from cartesian to fractional coordinates
-    public fractional(cartesian: linalg.Vector3D): linalg.Vector3D {
-        return linalg.dot(this.inverse, cartesian);
-    }
-
-    /// convert from cartesian to fractional coordinates
-    public cartesian(fractional: linalg.Vector3D): linalg.Vector3D {
-        return linalg.dot(this.matrix, fractional);
-    }
-
-    /// Get the lenghts of the unitcell
-    public lengths(): linalg.Vector3D {
-        return [
-            linalg.norm(this.matrix[0]),
-            linalg.norm(this.matrix[1]),
-            linalg.norm(this.matrix[2]),
-        ];
-    }
-
-    /// Get the angles of the unitcell, in degrees
-    public angles(): linalg.Vector3D {
-        return [
-            linalg.angle(this.matrix[1], this.matrix[2]),
-            linalg.angle(this.matrix[0], this.matrix[2]),
-            linalg.angle(this.matrix[0], this.matrix[1]),
-        ];
-    }
-}
-
-/// Convert a structure to a format that JSMol can read: XYZ if there is no cell
-/// data, and BCS if there is cell data
-function structure2JSmol(s: Structure): string {
-    let buffer = new Array();
-    if (s.cell === undefined) {
-        // use XYZ format
-        const natoms = s.names.length;
-        buffer.push(`${natoms}\n\n`);
-        for (let i=0; i<s.names.length; i++) {
-            buffer.push(`${s.names[i]} ${s.x[i]} ${s.y[i]} ${s.z[i]}\n`);
-        }
-    } else {
-        // use BCS format
-        const cell = new UnitCell(s.cell);
-        buffer.push(`1\n`);
-        const [a, b, c] = cell.lengths();
-        const [alpha, beta, gamma] = cell.angles();
-        buffer.push(`${a} ${b} ${c} ${alpha} ${beta} ${gamma}\n`);
-        const natoms = s.names.length;
-        buffer.push(`${natoms}\n`);
-        for (let i=0; i<s.names.length; i++) {
-            const [x, y, z] = cell.fractional([s.x[i], s.y[i], s.z[i]])
-            buffer.push(`${s.names[i]} ${i} - ${x} ${y} ${z}\n`);
-        }
-    }
-    return buffer.join('');
-}
+import {structure2JSmol} from './jsmol';
+import {Structure, Environment} from './dataset';
+import {Indexes, EnvironmentIndexer} from './indexer';
 
 export class StructureViewer {
-    private _structures: string[];
     private _viewer: JSmolViewer;
+    private _structures: string[];
+    private _environments?: Environment[];
+    private _indexer: EnvironmentIndexer;
+    /// index of the currently displayed structure/atom
+    private _current: Indexes;
 
-    constructor(id: string, j2sPath: string, structures: Structure[]) {
+    constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._viewer = new JSmolViewer(id, j2sPath);
         this._structures = structures.map(structure2JSmol);
-        this.showStructure(0);
+        this._environments = environments;
+        this._indexer = indexer;
+        this._current = {structure: -1, atom: -1};
+        this.show({structure: 0, atom: 0});
     }
 
-    public changeDataset(structures: Structure[]) {
+    public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._structures = structures.map(structure2JSmol);
-        this.showStructure(0);
+        this._environments = environments;
+        this._indexer = indexer;
+        this._current = {structure: -1, atom: -1};
+        this.show({structure: 0, atom: 0});
     }
 
-    public showStructure(index: number) {
-        if (index > this._structures.length) {
-            console.warn(`invalid index in showStructure: got ${index}, max index is ${this._structures.length}`);
-            return;
+    public show(indexes: Indexes) {
+        if (this._current.structure !== indexes.structure) {
+            assert(indexes.structure < this._structures.length);
+            this._viewer.load(`inline '${this._structures[indexes.structure]}'`);
+            // Force atom to be updated
+            this._current.atom = -1;
         }
 
-        this._viewer.load(`inline '${this._structures[index]}'`);
+        if (this._indexer.mode === 'atom' && this._current.atom != indexes.atom) {
+            this._showEnvironment(this._indexer.environment(indexes));
+        }
+
+        this._current = indexes;
     }
 
     public computeSettingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
         this._viewer.computeSettingsPlacement(callback)
+    }
+
+    private _showEnvironment(environment: number) {
+        const env = this._environments![environment];
+        // Default style
+        this._viewer.script("select all;")
+        this._viewer.script("wireframe 0.15; spacefill off; dots off;")
+        this._viewer.script("color atoms translucent cpk;")
+
+        // Style for the atoms in the environment
+        const selection = env.neighbors.map((i) => `@${i + 1}`).join(' or ');
+        this._viewer.script(`select ${selection};`)
+        this._viewer.script("wireframe 0.15; spacefill 23%; dots off;")
+        this._viewer.script("color atoms cpk;")
+
+        // Style for the central atom
+        this._viewer.script(`select @${env.center + 1};`)
+        this._viewer.script("wireframe off; spacefill 23%; dots 0.6;")
+        this._viewer.script("color atoms green;")
+
+        // Reset selection
+        this._viewer.script("select all;")
     }
 }

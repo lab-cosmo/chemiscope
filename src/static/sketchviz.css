@@ -50,13 +50,17 @@
     border-width: 0.7em 0 0.7em 1em;
 }
 
-.skv-play-button.skv-pause {
+.skv-play-button.skv-playing {
     border-style: double;
     border-width: 0px 0 0px 1.2em;
 }
 
 .skv-play-button:hover {
     border-color: transparent transparent transparent #404040;
+}
+
+.skv-slider-label {
+    width: 5.5em;
 }
 
 .skv-properties {
@@ -66,4 +70,8 @@
     margin: auto;
     margin-top: 20px;
     min-width: 400px;
+}
+
+.skv-properties td {
+    width: 50%;
 }

@@ -1,9 +1,10 @@
 import {ScatterPlot} from "./plot";
 import {StructureViewer} from "./viewer";
-import {EnvironementSlider} from './slider';
+import {EnvironmentSlider} from './slider';
 import {PropertiesTable} from './properties';
 
 import {Dataset, checkDataset} from './dataset';
+import {EnvironmentIndexer} from './indexer';
 
 require('./static/sketchviz.css');
 
@@ -41,16 +42,19 @@ function checkInput(o: any) {
 
 
 class Vizualizer {
-    public viewer: StructureViewer;
     public plot: ScatterPlot;
-    public slider: EnvironementSlider;
+    public viewer: StructureViewer;
     public table: PropertiesTable;
+    public slider: EnvironmentSlider;
+
     private _ids: {
         plot: string;
         viewer: string;
         slider: string;
         table: string;
     }
+    /// translate between structure/atom <=> environment
+    private _indexer: EnvironmentIndexer;
 
     constructor(input: VizualizerInput) {
         checkInput(input);
@@ -62,32 +66,55 @@ class Vizualizer {
             table: input.propertiesId,
         }
 
-        this.plot = new ScatterPlot(input.plotId, input.meta.name, input.properties);
-        this.viewer = new StructureViewer(input.viewerId, input.j2sPath, input.structures);
-        this.slider = new EnvironementSlider(input.sliderId, input.structures.length - 1);
-        this.table = new PropertiesTable(input.propertiesId, input.properties);
-        this.plot.onSelectedUpdate((i) => {
-            this.slider.changed(i);
-            this.viewer.showStructure(i);
-            this.table.display(i);
+        const mode = (input.environments === undefined) ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, input.structures, input.environments);
+
+        this.plot = new ScatterPlot(input.plotId, input.meta.name, mode, input.properties);
+        this.viewer = new StructureViewer(input.viewerId, input.j2sPath, this._indexer, input.structures, input.environments);
+
+        this.table = new PropertiesTable(input.propertiesId, input.properties, this._indexer);
+        this.slider = new EnvironmentSlider(input.sliderId, this._indexer);
+        this.slider.onChange((indexes) => {
+            this.plot.select(this._indexer.environment(indexes));
         });
-        this.slider.onChange((i) => this.plot.select(i));
+
+        this.plot.onSelectedUpdate((environment: number) => {
+            const indexes = this._indexer.indexes(environment);
+            this.slider.changed(indexes);
+            this.viewer.show(indexes);
+            this.table.show(indexes);
+        });
     }
 
     public changeDataset(dataset: Dataset) {
         checkDataset(dataset);
 
-        this.plot.changeDataset(dataset.meta.name, dataset.properties);
-        this.viewer.changeDataset(dataset.structures);
-        this.slider.changeDataset(dataset.structures.length - 1);
-        this.table = new PropertiesTable(this._ids.table, dataset.properties);
+        const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+
+        this.plot.changeDataset(dataset.meta.name, mode, dataset.properties);
+        this.viewer.changeDataset(this._indexer, dataset.structures, dataset.environments);
+
+        this.table = new PropertiesTable(this._ids.table, dataset.properties, this._indexer);
+        this.slider = new EnvironmentSlider(this._ids.slider, this._indexer);
+        this.slider.onChange((indexes) => {
+            this.plot.select(this._indexer.environment(indexes));
+        });
+
+        this.plot.onSelectedUpdate((environment: number) => {
+            const indexes = this._indexer.indexes(environment);
+            this.slider.changed(indexes);
+            this.viewer.show(indexes);
+            this.table.show(indexes);
+        });
     }
 }
 
 export {
     StructureViewer,
     ScatterPlot,
-    EnvironementSlider,
+    EnvironmentSlider,
+    EnvironmentIndexer,
     PropertiesTable,
     Vizualizer,
 };

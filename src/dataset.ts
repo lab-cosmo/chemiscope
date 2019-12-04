@@ -47,6 +47,8 @@ export interface Environment {
     neighbors: number[];
 }
 
+export type Mode = 'structure' | 'atom';
+
 /// Check that the given object, potentially comming from javascript,
 /// has all reaquired properties to be a dataset
 export function checkDataset(o: any) {

@@ -4,8 +4,8 @@ import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
-import {Property} from "./dataset"
-import {PlotProperties, NumericProperty} from "./plot_properties"
+import {Property, Mode} from "./dataset"
+import {PlotProperties, NumericProperty} from "./plot_data"
 
 const HTML_SETTINGS = require("./static/settings.html");
 
@@ -79,7 +79,7 @@ export class ScatterPlot {
     /// Are we showing a 2D or 3D plot
     private _is3D: boolean;
     /// Current mode: displaying structure or atomic properties
-    private _mode: 'structure' | 'atom';
+    private _mode: Mode;
     /// Currently displayed data
     private _current!: {
         /// Name of the properties in `this._properties()` used for x values
@@ -107,12 +107,12 @@ export class ScatterPlot {
     /// `position: fixed`
     private _settingsPlacement!: (rect: DOMRect) => {top: number, left: number};
 
-    constructor(id: string, name: string, properties: {[name: string]: Property}) {
+    constructor(id: string, name: string, mode: Mode, properties: {[name: string]: Property}) {
         this._name = name;
+        this._mode = mode;
         this._selectedCallback = (_) => { return; };
         this._selected = 0;
         this._is3D = false;
-        this._mode = 'structure';
 
         const root = document.getElementById(id);
         if (root === null) {
@@ -131,20 +131,20 @@ export class ScatterPlot {
         this._setupPlot();
     }
 
-    /// Register a callback to be called when the selected envirronement is
+    /// Register a callback to be called when the selected environment is
     /// updated
     public onSelectedUpdate(callback: (index: number) => void) {
         this._selectedCallback = callback;
     }
 
-    /// Change the selected environement to the one with the given `index`
-    public select(index: number) {
-        if (index === this._selected) {
+    /// Change the selected environment to the one with the given `index`
+    public select(structure: number, atom?: number) {
+        if (structure === this._selected) {
             // HACK: Calling Plotly.restyle fires the plotly_click event
             // again for 3d plots, ignore it
             return;
         }
-        this._selected = index;
+        this._selected = structure;
 
         Plotly.restyle(this._plot, {
             x: this._xValues(1),
@@ -157,8 +157,9 @@ export class ScatterPlot {
 
     /// Change the current dataset to the provided one, without re-creating the
     /// plot
-    public changeDataset(name: string, properties: {[name: string]: Property}) {
+    public changeDataset(name: string, mode: Mode, properties: {[name: string]: Property}) {
         this._name = name;
+        this._mode = mode;
         this._selected = 0;
         this._allProperties = new PlotProperties(properties);
         this._current.z = undefined;

@@ -1,36 +1,31 @@
-import {Property} from './dataset'
+import assert from 'assert';
+import {Property} from './dataset';
+import {EnvironmentIndexer, Indexes} from './indexer';
+
+interface TableProperty {
+    values: number[] | string[];
+    cell: HTMLTableDataCellElement;
+}
 
 /// A table to display the properties of the current selected structure/environement
 export class PropertiesTable {
     private _root: HTMLElement;
-    private _header: HTMLTableHeaderCellElement;
-    private _cells: {
-        [name: string]: HTMLTableDataCellElement
-    }
+    private _indexer: EnvironmentIndexer;
 
-    private _structureProperties: {
-        [name: string]: number[] | string[]
-    }
-    private _atomProperties: {
-        [name: string]: number[] | string[]
-    }
+    private _atomsTable: HTMLTableElement;
+    private _atomHeader: HTMLTableHeaderCellElement;
+    private _atoms: TableProperty[];
 
-    constructor(id: string, properties: {[name: string]: Property}) {
+    private _structureHeader: HTMLTableHeaderCellElement;
+    private _structures: TableProperty[];
+
+    constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
         const root = document.getElementById(id);
         if (root === null) {
             throw Error(`could not find HTML element #${id}`)
         }
         this._root = root;
-
-        this._structureProperties = {}
-        this._atomProperties = {}
-        for (const name in properties) {
-            if (properties[name].target === 'structure') {
-                this._structureProperties[name] = properties[name].values
-            } else if (properties[name].target === 'atom') {
-                this._atomProperties[name] = properties[name].values
-            }
-        }
+        this._indexer = indexer;
 
         this._root.innerHTML = `
         <div class="skv-properties">
@@ -38,34 +33,62 @@ export class PropertiesTable {
                 <thead><th colspan=2 style="text-align: center;"></th></thead>
                 <tbody></tbody>
             </table>
+            <table class="table table-striped table-sm">
+                <thead><th colspan=2 style="text-align: center;"></th></thead>
+                <tbody></tbody>
+            </table>
         </div>`;
-        this._header = this._root.querySelector('th')!;
 
-        this._cells = {};
-        const tbody = this._root.querySelector('tbody')!;
-        for (const name in this._structureProperties) {
+        this._atomsTable = this._root.querySelectorAll('table')[0];
+        this._atomsTable.style.display = (this._indexer.mode === 'atom') ? 'auto' : 'none';
+
+        const allHeaders = this._root.querySelectorAll('th');
+        this._atomHeader = allHeaders[0]
+        this._structureHeader = allHeaders[1];
+
+        const allBody = this._root.querySelectorAll('tbody');
+        this._atoms = []
+        this._structures = []
+        for (const name in properties) {
             const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.innerText = name;
+            tr.appendChild(td);
+            const cell = document.createElement('td');
+            tr.appendChild(cell);
 
-            const tc = document.createElement('td');
-            tc.innerText = name;
-            tr.appendChild(tc);
-
-            this._cells[name] = document.createElement('td');
-            tr.appendChild(this._cells[name]);
-
-            tbody.appendChild(tr);
+            if (properties[name].target === 'atom') {
+                allBody[0].appendChild(tr);
+                this._atoms.push({
+                    values: properties[name].values,
+                    cell: cell,
+                })
+            } else {
+                assert(properties[name].target === 'structure');
+                allBody[1].appendChild(tr);
+                this._structures.push({
+                    values: properties[name].values,
+                    cell: cell,
+                })
+            }
         }
-        // TODO: handle atom properties
 
-        this.display(0);
+        this.show({structure: 0, atom: 0});
     }
 
-    public display(index: number) {
-        const centerType = 'structure';
-        this._header.innerText = `Properties for ${centerType} ${index}`;
+    public show({structure, atom}: Indexes) {
+        this._structureHeader.innerText = `Properties for structure ${structure}`;
+        for (const s of this._structures) {
+            s.cell.innerText = s.values[structure].toString()
+        }
 
-        for (const name in this._structureProperties) {
-            this._cells[name].innerText = this._structureProperties[name][index].toString()
+        if (this._indexer.mode === 'atom') {
+            this._atomHeader.innerText = `Properties for atom ${atom}`;
+            for (const a of this._atoms) {
+                a.cell.innerText = a.values[atom!].toString()
+            }
+        } else {
+            assert(atom === undefined || atom === 0);
         }
     }
 }
