@@ -478,7 +478,7 @@ export class ScatterPlot {
                 // style charts (different sizes for each point)
                 opacity: 1,
                 colorbar: {
-                    title: this._current.color,
+                    title: "",
                     thickness: 20,
                 },
             },
@@ -520,6 +520,11 @@ export class ScatterPlot {
         };
         Plotly.restyle(this._plot, data as Data)
             .catch(e => console.error(e));
+
+        // Only the trace 0 has an associated colorbar
+        Plotly.restyle(this._plot, {
+            'marker.colorbar.title': this._current.color,
+        } as Data, 0).catch(e => console.error(e));
 
         const layout = {
             'title.text': this._name,
