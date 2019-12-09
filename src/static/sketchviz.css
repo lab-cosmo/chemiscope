@@ -75,3 +75,8 @@
 .skv-properties td {
     width: 50%;
 }
+
+.modebar-group svg.icon {
+    width: 1.5em !important;
+    height: 1.5em !important;
+}
