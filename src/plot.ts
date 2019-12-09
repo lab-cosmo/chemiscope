@@ -130,6 +130,12 @@ export class ScatterPlot {
         this._root = root;
         this._root.style.position = 'relative';
 
+        this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
+        this._plot.style.width = "100%";
+        this._plot.style.height = "100%";
+        this._plot.style.minHeight = "550px";
+        this._root.appendChild(this._plot);
+
         this._allProperties = new PlotProperties(properties);
         this._setupDefaults();
 
@@ -173,8 +179,6 @@ export class ScatterPlot {
         this._current.z = undefined;
         this._setupDefaults();
         this._setupSettings();
-
-        this._root.innerHTML = '';
         this._createPlot();
     }
 
@@ -486,11 +490,7 @@ export class ScatterPlot {
     }
 
     private _createPlot() {
-        this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
-        this._plot.style.width = "100%";
-        this._plot.style.height = "100%";
-        this._plot.style.minHeight = "550px";
-        this._root.appendChild(this._plot);
+        this._plot.innerHTML = '';
 
         const colors = this._colors();
         const colorScales = this._colorScale();
