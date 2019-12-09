@@ -84,8 +84,9 @@ export class PropertiesTable {
 
         if (this._indexer.mode === 'atom') {
             this._atomHeader.innerText = `Properties for atom ${atom}`;
+            const env = this._indexer.environment({structure, atom});
             for (const a of this._atoms) {
-                a.cell.innerText = a.values[atom!].toString()
+                a.cell.innerText = a.values[env].toString()
             }
         } else {
             assert(atom === undefined || atom === 0);
