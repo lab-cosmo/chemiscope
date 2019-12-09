@@ -138,13 +138,13 @@ export class ScatterPlot {
     }
 
     /// Change the selected environment to the one with the given `index`
-    public select(structure: number, atom?: number) {
-        if (structure === this._selected) {
+    public select(index: number) {
+        if (index === this._selected) {
             // HACK: Calling Plotly.restyle fires the plotly_click event
             // again for 3d plots, ignore it
             return;
         }
-        this._selected = structure;
+        this._selected = index;
 
         Plotly.restyle(this._plot, {
             x: this._xValues(1),
@@ -328,11 +328,10 @@ export class ScatterPlot {
                 this._current.color = undefined;
             }
 
-            const colors = this._colors(0);
             const data = {
                 hovertemplate: this._hovertemplate(),
-                'marker.color': colors,
-                'marker.line.color': colors,
+                'marker.color': this._colors(0),
+                'marker.line.color': this._lineColors(0),
                 'marker.colorbar.title': this._current.color,
             };
 
@@ -350,7 +349,6 @@ export class ScatterPlot {
 
         selectPalette.onchange = () => {
             this._current.colorscale = selectPalette.value;
-
             const data = {
                 'marker.colorscale': this._colorScale(0),
                 'marker.line.colorscale': this._lineColorScale(0),
@@ -606,12 +604,8 @@ export class ScatterPlot {
 
     /// Get the colorscale to use for markers lines in the main plotly trace
     private _lineColorScale(trace?: number): Array<undefined | Plotly.ColorScale> {
-        if (this._is3D) {
-            return this._selectTrace(undefined, undefined, trace);
-        } else {
-            const colormap = COLOR_MAPS[this._current.colorscale].rgb;
-            return this._selectTrace(colormap, undefined, trace);
-        }
+        const colormap = COLOR_MAPS[this._current.colorscale].rgb;
+        return this._selectTrace(colormap, undefined, trace);
     }
 
     /// Get the size values to use with the given plotly `trace`
