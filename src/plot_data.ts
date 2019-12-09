@@ -33,6 +33,11 @@ export class StringInterner {
         }
         return this._values[index]
     }
+
+    /// Get all the strings known by this interner
+    public strings(): string[] {
+        return this._values;
+    }
 }
 
 function propertyToNumeric(property: number[] | string[]): NumericProperty {
@@ -88,15 +93,27 @@ export class PlotProperties {
         [name: string]: NumericProperty
     }
 
+    /// Maximal number of symbols in this dataset
+    public maxSymbols: number;
+
     constructor(properties: {[name: string]: Property}) {
         this.structure = {}
         this.atom = {}
+        this.maxSymbols = -1;
 
         for (const name in properties) {
             if (properties[name].target == 'structure') {
-                this.structure[name] = propertyToNumeric(properties[name].values);
+                const property = propertyToNumeric(properties[name].values);
+                this.structure[name] = property;
+                if (property.string !== undefined) {
+                    this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
+                }
             } else if (properties[name].target == 'atom') {
-                this.atom[name] = propertyToNumeric(properties[name].values);
+                const property = propertyToNumeric(properties[name].values);
+                this.atom[name] = property;
+                if (property.string !== undefined) {
+                    this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
+                }
             }
         }
 

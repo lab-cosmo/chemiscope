@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import * as Plotly from "./lib/plotly-scatter";
 import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
 
@@ -11,7 +13,14 @@ const HTML_SETTINGS = require("./static/settings.html");
 
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
-    showlegend: false,
+    showlegend: true,
+    legend: {
+        y: 1,
+        yanchor: "top",
+        tracegroupgap: 5,
+        itemclick: false,
+        itemdoubleclick: false,
+    },
     title: {
         text: "",
         y: 0.982,
@@ -91,14 +100,14 @@ export class ScatterPlot {
         z?: string,
         /// Name of the colorscale to use
         colorscale: string,
-        /// Name of the properties in `this._properties()` used for color values,
-        /// `undefined` when using the default colors
+        /// Name of the properties in `this._properties()` used for color
+        /// values, `undefined` when using the default colors
         color?: string,
         /// Name of the properties in `this._properties()` used for size values,
         /// `undefined` when using the default sizes
         size?: string,
-        /// Name of the properties in `this._properties()` used for symbols values,
-        /// `undefined` when using the default symbols
+        /// Name of the properties in `this._properties()` used for symbols
+        /// values, `undefined` when using the default symbols
         symbols?: string,
     }
     /// callback to get the initial positioning of the settings modal. The
@@ -128,7 +137,6 @@ export class ScatterPlot {
         this._setupSettings();
 
         this._createPlot();
-        this._setupPlot();
     }
 
     /// Register a callback to be called when the selected environment is
@@ -165,7 +173,9 @@ export class ScatterPlot {
         this._current.z = undefined;
         this._setupDefaults();
         this._setupSettings();
-        this._setupPlot();
+
+        this._root.innerHTML = '';
+        this._createPlot();
     }
 
     /// Use the given callback to compute the placement of the settings modal.
@@ -266,7 +276,7 @@ export class ScatterPlot {
 
         selectX.onchange = () => {
             this._current.x = selectX.value;
-            Plotly.restyle(this._plot, { x: this._xValues() })
+            Plotly.restyle(this._plot, { x: this._xValues() }, [0, 1])
                 .catch(e => console.error(e));
             Plotly.relayout(this._plot, {
                 'xaxis.title': this._current.x,
@@ -284,7 +294,7 @@ export class ScatterPlot {
 
         selectY.onchange = () => {
             this._current.y = selectY.value;
-            Plotly.restyle(this._plot, { y: this._yValues() })
+            Plotly.restyle(this._plot, { y: this._yValues() }, [0, 1])
                 .catch(e => console.error(e));
             Plotly.relayout(this._plot, {
                 'yaxis.title': this._current.y,
@@ -302,7 +312,7 @@ export class ScatterPlot {
 
         selectZ.onchange = () => {
             this._current.z = selectZ.value;
-            Plotly.restyle(this._plot, { z: this._zValues() } as Data)
+            Plotly.restyle(this._plot, { z: this._zValues() } as Data, [0, 1])
                 .catch(e => console.error(e));
             Plotly.relayout(this._plot, {
                 'scene.zaxis.title': this._current.z,
@@ -373,8 +383,15 @@ export class ScatterPlot {
                 this._current.symbols = undefined;
             }
 
-            Plotly.restyle(this._plot, { 'marker.symbol': this._symbols() })
-                .catch(e => console.error(e));
+            Plotly.restyle(this._plot, {
+                'marker.symbol': this._symbols(),
+                'marker.colorbar.len': this._colorbarLen(),
+            } as Data, [0, 1]).catch(e => console.error(e));
+
+            Plotly.restyle(this._plot, {
+                showlegend: this._showlegend(),
+                name: this._legendNames(),
+            } as unknown as Data).catch(e => console.error(e));
         }
 
         // ======= marker size
@@ -417,8 +434,14 @@ export class ScatterPlot {
             selectZ.disabled = true;
             this._is3D = false;
             const factor = parseInt(sizeFactor.value);
-            const data = {
+
+            Plotly.restyle(this._plot, {
                 type: 'scattergl',
+                showlegend: this._showlegend(),
+                name: this._legendNames(),
+            } as unknown as Data).catch(e => console.error(e));
+
+            const data = {
                 z: this._zValues(),
                 // size and symbols change from 2D to 3D
                 'marker.size': this._sizes(factor),
@@ -426,8 +449,9 @@ export class ScatterPlot {
                 // Use RGBA colorscale for opacity in 2D mode
                 'marker.colorscale': this._colorScale(),
                 'marker.line.size': [1, 1],
+                'marker.colorbar.len': this._colorbarLen(),
             }
-            Plotly.restyle(this._plot, data as Data).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data as Data, [0, 1]).catch(e => console.error(e));
         };
 
         const plot3D = getByID<HTMLInputElement>('skv-3d-plot');
@@ -439,8 +463,14 @@ export class ScatterPlot {
             selectZ.disabled = false;
             this._is3D = true;
             const factor = parseInt(sizeFactor.value);
-            const data = {
+
+            Plotly.restyle(this._plot, {
                 type: 'scatter3d',
+                showlegend: this._showlegend(),
+                name: this._legendNames(),
+            } as unknown as Data).catch(e => console.error(e));
+
+            const data = {
                 z: this._zValues(),
                 // size and symbols change from 2D to 3D
                 'marker.size': this._sizes(factor),
@@ -448,9 +478,10 @@ export class ScatterPlot {
                 // Do not use opacity in 3D mode, since it renders horribly
                 'marker.colorscale': this._colorScale(),
                 'marker.line.size': [0, 1],
+                'marker.colorbar.len': this._colorbarLen(),
             }
 
-            Plotly.restyle(this._plot, data as Data).catch(e => console.error(e));
+            Plotly.restyle(this._plot, data as Data, [0, 1]).catch(e => console.error(e));
         };
     }
 
@@ -461,16 +492,36 @@ export class ScatterPlot {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
+        const colors = this._colors();
+        const colorScales = this._colorScale();
+        const lineColors = this._lineColors();
+        const lineColorScale = this._lineColorScale();
+        // default value for the size factor is 75
+        const sizes = this._sizes(75);
+        const symbols = this._symbols();
+
+        const x = this._xValues();
+        const y = this._yValues();
+        const z = this._zValues();
+
         // The main trace, containing default data
         const main = {
             type: "scattergl",
+            name: this._name,
+            x: x[0],
+            y: y[0],
+            z: z[0],
             hovertemplate: this._hovertemplate(),
+            showlegend: false,
             mode: "markers",
             marker: {
-                colorscale: this._colorScale(0)[0],
+                color: colors[0],
+                colorscale: colorScales[0],
+                size: sizes[0],
+                symbol: symbols[0],
                 line: {
-                    color: this._lineColors(0)[0],
-                    colorscale: this._lineColorScale(0)[0],
+                    color: lineColors[0],
+                    colorscale: lineColorScale[0],
                     width: 1,
                 },
                 showscale: true,
@@ -478,8 +529,11 @@ export class ScatterPlot {
                 // style charts (different sizes for each point)
                 opacity: 1,
                 colorbar: {
-                    title: "",
+                    title: this._current.color,
                     thickness: 20,
+                    len: 1,
+                    y: 0,
+                    yanchor: "bottom",
                 },
             },
         };
@@ -488,45 +542,51 @@ export class ScatterPlot {
         // display it on top of the main plot with different styling
         const selected = {
             type: "scattergl",
+            name: "",
+            x: x[1],
+            y: y[1],
+            z: z[1],
             hoverinfo: "none",
+            showlegend: false,
             mode: "markers",
             marker: {
+                color: colors[1],
+                colorscale: colorScales[1],
+                size: sizes[1],
+                symbol: symbols[1],
                 line: {
-                    color: this._lineColors(1)[0],
+                    color: lineColors[1],
+                    colorscale: lineColorScale[1],
                     width: 0.5,
                 },
             },
         };
+        const traces = [main as Data, selected as Data];
 
-        // create an empty plot, and fill it in _setupPlot
-        Plotly.newPlot(this._plot,
-            [main as Data, selected as Data],
-            DEFAULT_LAYOUT as Layout,
-            DEFAULT_CONFIG as Config
-        ).catch(e => console.error(e));
-
-        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
-    }
-
-    private _setupPlot() {
-        const data = {
-            x: this._xValues(),
-            y: this._yValues(),
-            'marker.color': this._colors(),
-            'marker.line.color': this._lineColors(),
-            // default value for the size factor is 75
-            'marker.size': this._sizes(75),
-            'marker.symbol': this._symbols(),
-        };
-        Plotly.restyle(this._plot, data as Data)
-            .catch(e => console.error(e));
-
-        // Only the trace 0 has an associated colorbar
-        Plotly.restyle(this._plot, {
-            'marker.colorbar.title': this._current.color,
-        } as Data, 0).catch(e => console.error(e));
+        // add empty traces to be able to display the symbols legend
+        // one trace for each possible symbol
+        for (let i=0; i<this._allProperties.maxSymbols; i++) {
+            const data = {
+                type: "scattergl",
+                name: "",
+                x: [NaN],
+                y: [NaN],
+                z: [NaN],
+                hoverinfo: "none",
+                showlegend: false,
+                legendgroup: i.toString(),
+                mode: "markers",
+                marker: {
+                    color: "black",
+                    size: sizes[0],
+                    symbol: i,
+                },
+            };
+            traces.push(data as Data);
+        }
 
         const layout = {
+            ...DEFAULT_LAYOUT,
             'title.text': this._name,
             'xaxis.title': this._current.x,
             'yaxis.title': this._current.y,
@@ -534,8 +594,15 @@ export class ScatterPlot {
             'scene.yaxis.title': this._current.y,
             'scene.zaxis.title': this._current.z,
         };
-        Plotly.relayout(this._plot, layout)
-            .catch(e => console.error(e));
+
+        // Create an empty plot and fill it below
+        Plotly.newPlot(this._plot,
+            traces,
+            layout as Partial<Layout>,
+            DEFAULT_CONFIG as Config
+        ).catch(e => console.error(e));
+
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
     }
 
     private _properties(): {[name: string]: NumericProperty} {
@@ -628,7 +695,7 @@ export class ScatterPlot {
         }
 
         const factor = logSlider(sizeSliderValue);
-        const defaultSize = this._is3D ? 3 : 10;
+        const defaultSize = this._is3D ? 4.5 : 10;
         let values;
         if (this._current.size === undefined) {
             values = defaultSize * factor;
@@ -636,7 +703,7 @@ export class ScatterPlot {
             const sizes = this._properties()[this._current.size].values;
             const min = Math.min.apply(Math, sizes);
             const max = Math.max.apply(Math, sizes);
-            const defaultSize = this._is3D ? 8 : 20;
+            const defaultSize = this._is3D ? 12 : 20;
             // normalize inside [0, 10 * factor]
             values = sizes.map((v) => {
                 const scaled = (v - min) / (max - min);
@@ -649,17 +716,49 @@ export class ScatterPlot {
 
     /// Get the symbol values to use with the given plotly `trace`
     private _symbols(trace?: number): Array<number | number[]> {
-        let main;
-        let selected;
         if (this._current.symbols !== undefined) {
-            main = this._properties()[this._current.symbols].values;
-            selected = main[this._selected];
+            assert(!this._is3D);
+            const values = this._properties()[this._current.symbols].values;
+            return this._selectTrace<number | number[]>(values, values[this._selected], trace);
         } else {
-            main = 0;
-            selected = 0;
+            // default to 0 (i.e. circles)
+            return this._selectTrace<number | number[]>(0, 0, trace);
         }
+    }
 
-        return this._selectTrace(main, selected, trace);
+    private _showlegend(): Array<boolean> {
+        const result = [false, false];
+
+        if (this._current.symbols !== undefined) {
+            assert(!this._is3D);
+            for (let i=0; i<this._symbolsCount()!; i++) {
+                result.push(true);
+            }
+            return result;
+        } else {
+            for (let i=0; i<this._allProperties.maxSymbols; i++) {
+                result.push(false);
+            }
+            return result;
+        }
+    }
+
+    private _legendNames(): Array<string> {
+        const result = [this._name, ""];
+
+        if (this._current.symbols !== undefined) {
+            assert(!this._is3D);
+            const names = this._properties()[this._current.symbols].string!.strings();
+            for (const name of names) {
+                result.push(name);
+            }
+            return result;
+        } else {
+            for (let i=0; i<this._allProperties.maxSymbols; i++) {
+                result.push("");
+            }
+            return result;
+        }
     }
 
     private _selectTrace<T>(main: T, selected: T, trace?: number): Array<T> {
@@ -672,6 +771,21 @@ export class ScatterPlot {
         } else {
             throw Error("internal error: invalid trace number")
         }
+    }
+
+    /// How many different symbols are being displayed
+    private _symbolsCount(): number {
+        if (this._current.symbols !== undefined) {
+            return this._properties()[this._current.symbols].string!.strings().length;
+        } else {
+            return 0;
+        }
+    }
+
+    private _colorbarLen(): Array<number | undefined> {
+        /// Heigh of a legend item in plot unit
+        const LEGEND_ITEM_HEIGH = 0.045;
+        return [1 - LEGEND_ITEM_HEIGH * this._symbolsCount(), undefined]
     }
 
     private _hasColors(): boolean {
