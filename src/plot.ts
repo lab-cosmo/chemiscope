@@ -784,6 +784,8 @@ export class ScatterPlot {
         layout.title.text = this._name;
         layout.xaxis.title = this._current.x;
         layout.yaxis.title = this._current.y;
+        layout.xaxis.type = this._settings.x.scale.value;
+        layout.yaxis.type = this._settings.y.scale.value;
         layout.scene.xaxis.title = this._current.x;
         layout.scene.yaxis.title = this._current.y;
         layout.scene.zaxis.title = this._current.z;
@@ -1024,6 +1026,10 @@ export class ScatterPlot {
             'coloraxis.colorscale': this._colorScale(),
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
+            // Carry over axis types
+            'scene.xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
+            'scene.yaxis.type': this._settings.y.scale.value as Plotly.AxisType,
+            'scene.zaxis.type': this._settings.z.scale.value as Plotly.AxisType,
         } as unknown as Layout);
     }
 
@@ -1059,6 +1065,9 @@ export class ScatterPlot {
             'coloraxis.colorscale': this._colorScale(),
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
+            // Carry over axis types
+            'xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
+            'yaxis.type': this._settings.y.scale.value as Plotly.AxisType,
         } as unknown as Layout);
     }
 
