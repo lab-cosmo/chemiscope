@@ -16,7 +16,27 @@
 }
 
 .skv-options label {
-    width: 7em;
+    min-width: 5em;
+}
+
+.skv-input-extra {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 1em;
+    margin-bottom: 1.5em;
+}
+
+.skv-input-extra label {
+    min-width: auto;
+}
+
+.skv-extra-options {
+    grid-column: 1 / span 2;
+}
+
+.skv-extra-options-open {
+    margin: auto;
+    display: block;
 }
 
 .skv-options .form-check-label {
@@ -74,6 +94,10 @@
 
 .skv-properties td {
     width: 50%;
+}
+
+.skv-settings-section-title {
+    font-weight: bold;
 }
 
 .modebar-group svg.icon {

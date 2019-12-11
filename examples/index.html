@@ -26,24 +26,24 @@
             <h1 style="text-align: center">Sketchmap vizualization</h1>
         </header>
         <div class="container">
-            <div class="input-group input-group-bg" style="margin: auto">
-                <div class="input-group-prepend">
-                    <label class="input-group-text" for=example>Pick an example</label>
+            <div style="margin: auto; width: 90%; display: grid; grid-gap: 1em; grid-template-columns: 2fr 2fr 1fr;">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for=example>Pick an example</label>
+                    </div>
+                    <select id=example class="custom-select">
+                        <option value="Arginine-Dipeptide.json.gz">Arginine-Dipeptide</option>
+                        <option value="CSD.json">Chemical Shieldings</option>
+                        <option value="Qm7b.json.gz">Qm7b</option>
+                        <option value="Pyrole.json.gz">Pyrole</option>
+                    </select>
                 </div>
-                <select id=example class="custom-select">
-                    <option value="Arginine-Dipeptide.json.gz">Arginine-Dipeptide</option>
-                    <option value="CSD.json">Chemical Shieldings</option>
-                    <option value="Qm7b.json.gz">Qm7b</option>
-                    <option value="Pyrole.json.gz">Pyrole</option>
-                </select>
 
-                <span style="width: 2em;"></span>
-                <div class="input-group-prepend">
-                    <label class="input-group-text" for=upload>Or upload a file</label>
+                <div class="input-group">
+                    <input id=upload type="file" class="form-control-file custom-file-input" />
+                    <label class="custom-file-label" for=upload>Choose file</label>
                 </div>
-                <input id=upload type="file" class="form-control" />
 
-                <span style="width: 2em;"></span>
                 <button style="width: 12em;" type="button" class="btn btn-primary" id=load>Go!</button>
             </div>
 
@@ -60,6 +60,7 @@
                 </div>
             </div>
         </div>
+        <div style="margin-bottom: 5em;"></div>
     </body>
 
     <script>
