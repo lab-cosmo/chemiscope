@@ -71,30 +71,33 @@
 
         function loadData() {
             if (upload.value !== "") {
-                console.log(`loading user file ${upload.files[0].name}`);
+                const name = upload.files[0].name;
+                console.log(`loading user file ${name}`);
                 const reader = new FileReader();
                 reader.onload = () => {
-                    const json = JSON.parse(reader.result);
+                    const json = toJson(name, reader.result);
                     setupSketchviz(json);
                 }
-                reader.readAsText(upload.files[0]);
+                reader.readAsArrayBuffer(upload.files[0]);
             } else {
                 console.log(`loading example file ${example.value}`);
                 fetch(example.value)
                     .then(response => response.arrayBuffer())
-                    .then(buffer => {
-                        let text;
-                        if (example.value.endsWith(".gz")) {
-                            text = pako.inflate(buffer, {to: "string"});
-                        } else {
-                            const decoder = new TextDecoder("utf-8");
-                            text = decoder.decode(buffer);
-                        }
-                        return JSON.parse(text);
-                    })
+                    .then(buffer => toJson(example.value, buffer))
                     .then(json => setupSketchviz(json))
                     .catch(e => console.error(e));
             }
+        }
+
+        function toJson(path, buffer) {
+            let text;
+            if (path.endsWith(".gz")) {
+                text = pako.inflate(buffer, {to: "string"});
+            } else {
+                const decoder = new TextDecoder("utf-8");
+                text = decoder.decode(buffer);
+            }
+            return JSON.parse(text);
         }
 
         function setupSketchviz(json) {
