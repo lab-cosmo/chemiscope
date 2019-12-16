@@ -11,23 +11,23 @@
   "author": "Guillaume Fraux <guillaume.fraux@epfl.ch>",
   "license": "BSD-3-Clause",
   "devDependencies": {
-    "@types/node": "^12.12.12",
-    "@types/plotly.js": "^1.44.17",
+    "@types/node": "^12.12.18",
+    "@types/plotly.js": "^1.44.20",
     "@types/webpack": "^4.41.0",
-    "css-loader": "^3.2.0",
+    "css-loader": "^3.3.2",
     "html-loader": "^0.5.5",
     "ify-loader": "^1.1.0",
-    "style-loader": "^1.0.0",
+    "style-loader": "^1.0.1",
     "transform-loader": "^0.2.4",
     "ts-loader": "^6.2.1",
-    "ts-node": "^8.5.2",
-    "typescript": "^3.7.2",
-    "webpack": "^4.41.2",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3",
+    "webpack": "^4.41.3",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.9.0"
   },
   "dependencies": {
-    "materials-cloud-viewer": "^0.4.1",
-    "plotly.js": "^1.51.1"
+    "materials-cloud-viewer": "^0.4.2",
+    "plotly.js": "^1.51.3"
   }
 }

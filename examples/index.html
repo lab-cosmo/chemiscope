@@ -115,7 +115,7 @@
                         propertiesId: 'skviz-properties',
                     })
 
-                    vizualizer.viewer.computeSettingsPlacement((rect) => {
+                    vizualizer.viewer.settingsPlacement((rect) => {
                         const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
 
                         return {
@@ -124,7 +124,7 @@
                         };
                     })
 
-                    vizualizer.plot.computeSettingsPlacement((rect) => {
+                    vizualizer.plot.settingsPlacement((rect) => {
                         const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
 
                         return {

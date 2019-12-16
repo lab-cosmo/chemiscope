@@ -45,8 +45,8 @@ export class StructureViewer {
         this._current = indexes;
     }
 
-    public computeSettingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        this._viewer.computeSettingsPlacement(callback)
+    public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
+        this._viewer.settingsPlacement(callback)
     }
 
     private _showEnvironment(environment: number) {

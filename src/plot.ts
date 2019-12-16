@@ -289,7 +289,7 @@ export class ScatterPlot {
     /// and should return top and left positions in pixels, used with `position:
     /// fixed`. The callback is called once, the first time the settings are
     /// opened.
-    public computeSettingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
+    public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
         this._settingsPlacement = callback;
     }
 
