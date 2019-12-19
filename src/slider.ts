@@ -86,6 +86,12 @@ export class EnvironmentSlider {
     /// The environment index changed outside, update the slider
     public changed({structure, atom}: Indexes) {
         this._structure.value = structure.toString();
+
+        if (this._indexer.mode == "atom") {
+            const n_atoms = this._indexer.atomsCount(structure);
+            this._atom!.max = (n_atoms - 1).toString();
+        }
+
         if (atom !== undefined) {
             if (this._atom === undefined) {
                 throw Error("Invalid state: got an atomic number to update, but I am displaying only structures")
