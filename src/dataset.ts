@@ -1,3 +1,7 @@
+interface JSmolEnvironment {
+    cutoff: number;
+}
+
 /// All the data needed to create a Vizualizer
 export interface Dataset {
     /// Dataset metadata
@@ -38,13 +42,11 @@ export interface Property {
 }
 
 /// An atom-centered environments
-export interface Environment {
+export interface Environment extends JSmolEnvironment {
     /// Index of the related structure in Dataset.structure
     structure: number;
     /// Index of the central atom in the structure, 0-based
     center: number;
-    /// Indexes of the neighboring atoms in the structure, 0-based
-    neighbors: number[];
 }
 
 export type Mode = 'structure' | 'atom';
@@ -169,18 +171,8 @@ function checkEnvironments(o: any, structures: Structure[]) {
             throw Error(`out of bounds 'center' for environment ${i}: index is ${env['center']}, we have ${n_atoms} atoms`);
         }
 
-        if (!('neighbors' in env && env['neighbors'].length !== undefined)) {
-            throw Error(`missing 'neighbors' for environment ${i}`);
-        }
-
-        for (const neighbor of env['neighbors']) {
-            if (typeof neighbor !== 'number') {
-                throw Error(`'neighbors' in environment ${i} should be numbers`);
-            }
-
-            if (!isPositiveInteger(neighbor) || neighbor >= n_atoms) {
-                throw Error(`out of bounds neighbor for environment ${i}: index is ${neighbor}, we have ${n_atoms} atoms`);
-            }
+        if (!('cutoff' in env && typeof env['cutoff'] === "number")) {
+            throw Error(`missing 'cutoff' for environment ${i}`);
         }
     }
 }

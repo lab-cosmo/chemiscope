@@ -71,6 +71,9 @@ class Vizualizer {
 
         this.plot = new ScatterPlot(input.plotId, input.meta.name, mode, input.properties);
         this.viewer = new StructureViewer(input.viewerId, input.j2sPath, this._indexer, input.structures, input.environments);
+        this.viewer.onSelected((indexes) => {
+            this.plot.select(this._indexer.environment(indexes));
+        });
 
         this.table = new PropertiesTable(input.propertiesId, input.properties, this._indexer);
         this.slider = new EnvironmentSlider(input.sliderId, this._indexer);
@@ -94,6 +97,9 @@ class Vizualizer {
 
         this.plot.changeDataset(dataset.meta.name, mode, dataset.properties);
         this.viewer.changeDataset(this._indexer, dataset.structures, dataset.environments);
+        this.viewer.onSelected((indexes) => {
+            this.plot.select(this._indexer.environment(indexes));
+        });
 
         this.table = new PropertiesTable(this._ids.table, dataset.properties, this._indexer);
         this.slider = new EnvironmentSlider(this._ids.slider, this._indexer);

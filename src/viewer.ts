@@ -5,10 +5,29 @@ import {structure2JSmol} from './jsmol';
 import {Structure, Environment} from './dataset';
 import {Indexes, EnvironmentIndexer} from './indexer';
 
+function groupByStructure(n_structures: number, environments?: Environment[]): Environment[][] | undefined {
+    if (environments === undefined) {
+        return undefined;
+    }
+
+    const result: Environment[][] = [];
+    for (let i=0; i<n_structures; i++) {
+        result.push([]);
+    }
+
+    for (const env of environments) {
+        result[env.structure].push(env);
+    }
+
+    return result;
+}
+
 export class StructureViewer {
     private _viewer: JSmolViewer;
+    /// List of structures in the dataset
     private _structures: string[];
-    private _environments?: Environment[];
+    /// List of environments for each structure
+    private _environments?: Environment[][];
     private _indexer: EnvironmentIndexer;
     /// index of the currently displayed structure/atom
     private _current: Indexes;
@@ -16,7 +35,7 @@ export class StructureViewer {
     constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._viewer = new JSmolViewer(id, j2sPath);
         this._structures = structures.map(structure2JSmol);
-        this._environments = environments;
+        this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
         this.show({structure: 0, atom: 0});
@@ -24,7 +43,7 @@ export class StructureViewer {
 
     public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._structures = structures.map(structure2JSmol);
-        this._environments = environments;
+        this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
         this.show({structure: 0, atom: 0});
@@ -33,13 +52,22 @@ export class StructureViewer {
     public show(indexes: Indexes) {
         if (this._current.structure !== indexes.structure) {
             assert(indexes.structure < this._structures.length);
-            this._viewer.load(`inline '${this._structures[indexes.structure]}'`);
+            const options = {
+                packed: false,
+                supercell: [1, 1, 1]
+            } as any;
+
+            if (this._environments !== undefined) {
+                options.environments = this._environments[indexes.structure];
+            }
+
+            this._viewer.load(`inline '${this._structures[indexes.structure]}'`, options);
             // Force atom to be updated
             this._current.atom = -1;
         }
 
         if (this._indexer.mode === 'atom' && this._current.atom != indexes.atom) {
-            this._showEnvironment(this._indexer.environment(indexes));
+            this._viewer.highlight(indexes.atom)
         }
 
         this._current = indexes;
@@ -49,25 +77,9 @@ export class StructureViewer {
         this._viewer.settingsPlacement(callback)
     }
 
-    private _showEnvironment(environment: number) {
-        const env = this._environments![environment];
-        // Default style
-        this._viewer.script("select all;")
-        this._viewer.script("wireframe 0.15; spacefill off; dots off;")
-        this._viewer.script("color atoms translucent cpk;")
-
-        // Style for the atoms in the environment
-        const selection = env.neighbors.map((i) => `@${i + 1}`).join(' or ');
-        this._viewer.script(`select ${selection};`)
-        this._viewer.script("wireframe 0.15; spacefill 23%; dots off;")
-        this._viewer.script("color atoms cpk;")
-
-        // Style for the central atom
-        this._viewer.script(`select @${env.center + 1};`)
-        this._viewer.script("wireframe off; spacefill 23%; dots 0.6;")
-        this._viewer.script("color atoms green;")
-
-        // Reset selection
-        this._viewer.script("select all;")
+    public onSelected(callback: (indexes: Indexes) => void) {
+        this._viewer.onSelected((atom: number) => {
+            callback({structure: this._current.structure, atom});
+        })
     }
 }
