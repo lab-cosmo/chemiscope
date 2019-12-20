@@ -54,7 +54,6 @@ export class StructureViewer {
             assert(indexes.structure < this._structures.length);
             const options = {
                 packed: false,
-                supercell: [1, 1, 1]
             } as any;
 
             if (this._environments !== undefined) {
