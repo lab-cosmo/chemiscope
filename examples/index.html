@@ -48,6 +48,13 @@
             </div>
 
             <div style="height: 2em"></div>
+            <div class="alert alert-danger" role="alert" id=error-display style="text-align: center; display: none;">
+                <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+            </div>
+
             <div class="row">
                 <div class="col-xl-7">
                     <div id=skviz-plot style="height: 620px"></div>
@@ -101,44 +108,36 @@
         }
 
         function setupSketchviz(json) {
-            try {
-                upload.value = ""
-                if (vizualizer !== undefined) {
-                    vizualizer.changeDataset(json)
-                } else {
-                    vizualizer = new Sketchviz.Vizualizer({
-                        ...json,
-                        plotId: 'skviz-plot',
-                        viewerId: 'skviz-viewer',
-                        j2sPath: 'jsmol/j2s',
-                        sliderId: 'skviz-slider',
-                        propertiesId: 'skviz-properties',
-                    })
+            upload.value = ""
+            if (vizualizer !== undefined) {
+                vizualizer.changeDataset(json)
+            } else {
+                vizualizer = new Sketchviz.Vizualizer({
+                    ...json,
+                    plotId: 'skviz-plot',
+                    viewerId: 'skviz-viewer',
+                    j2sPath: 'jsmol/j2s',
+                    sliderId: 'skviz-slider',
+                    propertiesId: 'skviz-properties',
+                })
 
-                    vizualizer.viewer.settingsPlacement((rect) => {
-                        const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+                vizualizer.viewer.settingsPlacement((rect) => {
+                    const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
 
-                        return {
-                            top: viewerRect.top,
-                            left: viewerRect.left - rect.width - 25,
-                        };
-                    })
+                    return {
+                        top: viewerRect.top,
+                        left: viewerRect.left - rect.width - 25,
+                    };
+                })
 
-                    vizualizer.plot.settingsPlacement((rect) => {
-                        const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+                vizualizer.plot.settingsPlacement((rect) => {
+                    const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
 
-                        return {
-                            top: viewerRect.top,
-                            left: viewerRect.left + viewerRect.width + 25,
-                        };
-                    })
-                }
-            } catch(e) {
-                console.error(e);
-                document.getElementById('skviz-viewer').innerHTML = `
-                    <p style="color: red;">${e}</p>
-                    <p>${e.stack}</p>
-                `;
+                    return {
+                        top: viewerRect.top,
+                        left: viewerRect.left + viewerRect.width + 25,
+                    };
+                })
             }
         }
 
@@ -146,5 +145,13 @@
             load.onclick = loadData;
             loadData()
         })
+
+        window.onerror = (msg, url, line, col, error) => {
+            const display = document.getElementById('error-display');
+            display.style.display = "block";
+
+            const text = error === undefined ? msg : error.toString();
+            display.getElementsByTagName('p')[0].innerText = text;
+        }
     </script>
 </html>
