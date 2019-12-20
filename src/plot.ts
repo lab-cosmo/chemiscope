@@ -273,14 +273,20 @@ export class ScatterPlot {
     /// Change the current dataset to the provided one, without re-creating the
     /// plot
     public changeDataset(name: string, mode: Mode, properties: {[name: string]: Property}) {
+        if (this._is3D()) {
+            this._current.z = undefined;
+            this._switch2D();
+        }
+
         this._name = name;
         this._mode = mode;
         this._selected = 0;
         this._allProperties = new PlotProperties(properties);
-        this._current.z = undefined;
         this._setupDefaults();
         this._setupSettings();
         this._createPlot();
+
+        this._relayout({ 'xaxis.autorange': true, 'yaxis.autorange': true });
     }
 
     /// Use the given callback to compute the placement of the settings modal.
@@ -466,13 +472,6 @@ export class ScatterPlot {
             }
 
             const values = this._zValues();
-            // TODO
-            // if (this._is3D()) {
-            //     setAxisMinMax(this._settings.z, values[0] as number[]);
-            // } else {
-            //     setAxisMinMax(this._settings.z, [0]);
-            // }
-
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout({
                 'scene.zaxis.title': this._current.z,
