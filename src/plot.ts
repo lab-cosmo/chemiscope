@@ -9,7 +9,7 @@ import {make_draggable} from "./draggable";
 import {Property, Mode} from "./dataset"
 import {PlotProperties, NumericProperty} from "./plot-data"
 
-const HTML_SETTINGS = require("./static/settings.html");
+import HTML_SETTINGS from "./static/settings.html";
 
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
