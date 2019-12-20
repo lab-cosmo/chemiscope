@@ -26,7 +26,7 @@ export class StructureViewer {
     private _viewer: JSmolViewer;
     /// List of structures in the dataset
     private _structures: string[];
-    /// List of environments for each structure
+    /// Optional list of environments for each structure
     private _environments?: Environment[][];
     private _indexer: EnvironmentIndexer;
     /// index of the currently displayed structure/atom
@@ -65,8 +65,12 @@ export class StructureViewer {
             this._current.atom = -1;
         }
 
-        if (this._indexer.mode === 'atom' && this._current.atom != indexes.atom) {
-            this._viewer.highlight(indexes.atom)
+        if (this._indexer.mode === 'atom') {
+            if  (this._current.atom != indexes.atom) {
+                this._viewer.highlight(indexes.atom)
+            }
+        } else {
+            this._viewer.highlight(undefined);
         }
 
         this._current = indexes;
