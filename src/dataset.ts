@@ -31,11 +31,13 @@ export interface Structure {
     cell?: number[],
 }
 
+export type Target = 'structure' | 'atom';
+
 /// A single property of a dataset
 export interface Property {
     /// Property target: are we considering atomic properties or global
     /// properties
-    target: "structure" | "atom";
+    target: Target;
     /// Property value: string values should represent classification results
     /// numeric values can be use for everything else.
     values: string[] | number[];
@@ -48,8 +50,6 @@ export interface Environment extends JSmolEnvironment {
     /// Index of the central atom in the structure, 0-based
     center: number;
 }
-
-export type Mode = 'structure' | 'atom';
 
 /// Check that the given object, potentially comming from javascript,
 /// has all reaquired properties to be a dataset

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {Structure, Environment, Mode} from './dataset';
+import {Structure, Environment, Target} from './dataset';
 
 export interface Indexes {
     structure: number;
@@ -8,15 +8,15 @@ export interface Indexes {
 
 /// Map between environment index and structure/atom pairs
 export class EnvironmentIndexer {
-    public mode: Mode;
+    public target: Target;
 
     private _structures: Structure[];
     private _environments?: Environment[];
     /// Number of atoms before the structure at the same index
     private _atomsBefore: number[];
 
-    constructor(mode: Mode, structures: Structure[], environments?: Environment[]) {
-        this.mode = mode;
+    constructor(target: Target, structures: Structure[], environments?: Environment[]) {
+        this.target = target;
         this._structures = structures;
         this._environments = environments;
 
@@ -29,12 +29,12 @@ export class EnvironmentIndexer {
     }
 
     public indexes(environment: number): Indexes {
-        if (this.mode == 'structure') {
+        if (this.target == 'structure') {
             return {
                 structure: environment,
             }
         } else {
-            assert(this.mode === 'atom');
+            assert(this.target === 'atom');
             assert(this._environments !== undefined);
 
             const env = this._environments![environment];
@@ -46,11 +46,11 @@ export class EnvironmentIndexer {
     }
 
     public environment(indexes: Indexes): number {
-        if (this.mode == 'structure') {
+        if (this.target == 'structure') {
             assert(indexes.atom === undefined || indexes.atom === 0);
             return indexes.structure
         } else {
-            assert(this.mode === 'atom');
+            assert(this.target === 'atom');
             assert(this._environments !== undefined);
 
             // assume that environments are ordered structure by structure, then

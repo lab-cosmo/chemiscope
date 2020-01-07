@@ -6,7 +6,7 @@ import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
 import {COLOR_MAPS} from "./colorscales";
 import {make_draggable} from "./draggable";
 
-import {Property, Mode} from "./dataset"
+import {Property, Target} from "./dataset"
 import {PlotProperties, NumericProperty} from "./plot-data"
 
 import HTML_SETTINGS from "./static/settings.html";
@@ -136,12 +136,10 @@ export class ScatterPlot {
     private _name: string;
     /// All known properties
     private _allProperties: PlotProperties;
-    /// Storing the callback for when the plot is clicked
-    private _selectedCallback: (index: number) => void;
     /// Index of the currently selected point
     private _selected: number;
-    /// Current mode: displaying structure or atomic properties
-    private _mode: Mode;
+    /// Current target: displaying structure or atomic properties
+    private _target: Target;
     /// Currently displayed data
     private _current!: {
         /// Name of the properties in `this._properties()` used for x values
@@ -183,11 +181,14 @@ export class ScatterPlot {
         };
     };
 
-    constructor(id: string, name: string, mode: Mode, properties: {[name: string]: Property}) {
+    /// Callback fired when the plot is clicked and a new point is selected
+    public onselect: (index: number) => void;
+
+    constructor(id: string, name: string, target: Target, properties: {[name: string]: Property}) {
         this._name = name;
-        this._mode = mode;
-        this._selectedCallback = (_) => { return; };
+        this._target = target;
         this._selected = 0;
+        this.onselect = () => {};
 
         const root = document.getElementById(id);
         if (root === null) {
@@ -246,12 +247,6 @@ export class ScatterPlot {
         this._createPlot();
     }
 
-    /// Register a callback to be called when the selected environment is
-    /// updated
-    public onSelectedUpdate(callback: (index: number) => void) {
-        this._selectedCallback = callback;
-    }
-
     /// Change the selected environment to the one with the given `index`
     public select(index: number) {
         if (index === this._selected) {
@@ -267,19 +262,18 @@ export class ScatterPlot {
             z: this._zValues(1),
             "marker.symbol": this._symbols(1),
         } as Data, 1);
-        this._selectedCallback(this._selected);
     }
 
     /// Change the current dataset to the provided one, without re-creating the
     /// plot
-    public changeDataset(name: string, mode: Mode, properties: {[name: string]: Property}) {
+    public changeDataset(name: string, target: Target, properties: {[name: string]: Property}) {
         if (this._is3D()) {
             this._current.z = undefined;
             this._switch2D();
         }
 
         this._name = name;
-        this._mode = mode;
+        this._target = target;
         this._selected = 0;
         this._allProperties = new PlotProperties(properties);
         this._setupDefaults();
@@ -800,12 +794,16 @@ export class ScatterPlot {
         Plotly.newPlot(this._plot, traces, layout as Partial<Layout>, DEFAULT_CONFIG as Config)
             .catch(e => console.error(e));
 
-        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => this.select(event.points[0].pointNumber));
+        this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => {
+            const environment = event.points[0].pointNumber;
+            this.select(environment)
+            this.onselect(environment);
+        });
         this._plot.on("plotly_afterplot", () => this._afterplot());
     }
 
     private _properties(): {[name: string]: NumericProperty} {
-        return this._allProperties[this._mode]
+        return this._allProperties[this._target]
     }
 
     /// Get the plotly hovertemplate depending on `this._current.color`

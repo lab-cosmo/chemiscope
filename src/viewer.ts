@@ -32,6 +32,8 @@ export class StructureViewer {
     /// index of the currently displayed structure/atom
     private _current: Indexes;
 
+    public onselect: (indexes: Indexes) => void;
+
     constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._viewer = new JSmolViewer(id, j2sPath);
         this._structures = structures.map(structure2JSmol);
@@ -39,6 +41,15 @@ export class StructureViewer {
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
         this.show({structure: 0, atom: 0});
+
+        this.onselect = () => {};
+
+        this._viewer.onSelected((atom: number) => {
+            if (this._indexer.target == 'atom') {
+                this._viewer.highlight(atom);
+            }
+            this.onselect({structure: this._current.structure, atom});
+        })
     }
 
     public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
@@ -65,7 +76,7 @@ export class StructureViewer {
             this._current.atom = -1;
         }
 
-        if (this._indexer.mode === 'atom') {
+        if (this._indexer.target === 'atom') {
             if  (this._current.atom != indexes.atom) {
                 this._viewer.highlight(indexes.atom)
             }
@@ -78,11 +89,5 @@ export class StructureViewer {
 
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
         this._viewer.settingsPlacement(callback)
-    }
-
-    public onSelected(callback: (indexes: Indexes) => void) {
-        this._viewer.onSelected((atom: number) => {
-            callback({structure: this._current.structure, atom});
-        })
     }
 }

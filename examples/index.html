@@ -61,9 +61,8 @@
                 </div>
 
                 <div class="col-xl-5">
-                    <div id=skviz-viewer style="height: 320px"></div>
-                    <div id=skviz-slider style="max-height: 60px"></div>
-                    <div id=skviz-properties style="height: 210px"></div>
+                    <div id=skviz-viewer style="height: 520px"></div>
+                    <div id=skviz-info style="min-height: 60px"></div>
                 </div>
             </div>
         </div>
@@ -117,8 +116,7 @@
                     plotId: 'skviz-plot',
                     viewerId: 'skviz-viewer',
                     j2sPath: 'jsmol/j2s',
-                    sliderId: 'skviz-slider',
-                    propertiesId: 'skviz-properties',
+                    infoId: 'skviz-info',
                 })
 
                 vizualizer.viewer.settingsPlacement((rect) => {
