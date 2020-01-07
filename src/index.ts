@@ -1,6 +1,6 @@
 import {ScatterPlot} from "./plot";
 import {StructureViewer} from "./viewer";
-import {EnvironmentSlider} from './slider';
+import {EnvironmentInfo} from './info';
 import {PropertiesTable} from './properties';
 
 import {Dataset, checkDataset} from './dataset';
@@ -45,7 +45,7 @@ class Vizualizer {
     public plot: ScatterPlot;
     public viewer: StructureViewer;
     public table: PropertiesTable;
-    public slider: EnvironmentSlider;
+    public slider: EnvironmentInfo;
 
     private _ids: {
         plot: string;
@@ -76,10 +76,10 @@ class Vizualizer {
         });
 
         this.table = new PropertiesTable(input.propertiesId, input.properties, this._indexer);
-        this.slider = new EnvironmentSlider(input.sliderId, this._indexer);
-        this.slider.onChange((indexes) => {
+        this.slider = new EnvironmentInfo(input.sliderId, this._indexer);
+        this.slider.onchange = (indexes) => {
             this.plot.select(this._indexer.environment(indexes));
-        });
+        };
 
         this.plot.onSelectedUpdate((environment: number) => {
             const indexes = this._indexer.indexes(environment);
@@ -102,10 +102,10 @@ class Vizualizer {
         });
 
         this.table = new PropertiesTable(this._ids.table, dataset.properties, this._indexer);
-        this.slider = new EnvironmentSlider(this._ids.slider, this._indexer);
-        this.slider.onChange((indexes) => {
+        this.slider = new EnvironmentInfo(this._ids.slider, this._indexer);
+        this.slider.onchange = (indexes) => {
             this.plot.select(this._indexer.environment(indexes));
-        });
+        };
 
         this.plot.onSelectedUpdate((environment: number) => {
             const indexes = this._indexer.indexes(environment);
@@ -119,7 +119,7 @@ class Vizualizer {
 export {
     StructureViewer,
     ScatterPlot,
-    EnvironmentSlider,
+    EnvironmentInfo,
     EnvironmentIndexer,
     PropertiesTable,
     Vizualizer,

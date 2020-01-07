@@ -80,7 +80,8 @@
 }
 
 .skv-slider-label {
-    width: 5.5em;
+    min-width: 6.5em;
+    cursor: pointer;
 }
 
 .skv-properties {
