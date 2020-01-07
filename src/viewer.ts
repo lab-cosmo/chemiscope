@@ -44,12 +44,12 @@ export class StructureViewer {
 
         this.onselect = () => {};
 
-        this._viewer.onSelected((atom: number) => {
+        this._viewer.onselect = (atom: number) => {
             if (this._indexer.target == 'atom') {
                 this._viewer.highlight(atom);
             }
             this.onselect({structure: this._current.structure, atom});
-        })
+        };
     }
 
     public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
@@ -69,11 +69,12 @@ export class StructureViewer {
 
             if (this._environments !== undefined) {
                 options.environments = this._environments[indexes.structure];
+                if (this._indexer.target === 'atom') {
+                    options.highlight = indexes.atom;
+                }
             }
 
             this._viewer.load(`inline '${this._structures[indexes.structure]}'`, options);
-            // Force atom to be updated
-            this._current.atom = -1;
         }
 
         if (this._indexer.target === 'atom') {
