@@ -35,20 +35,20 @@ export class Slider {
         }
 
         this._slider.onchange = () => {
-            this._label.innerText = `${this._name} ${this.value()}`;
+            this._label.innerText = `${this._name} ${this.value() + 1}`;
             this.onchange();
         }
         this.onchange = () => {};
     }
 
     public reset(max: number) {
-        this._label.innerText = `${this._name} 0`;
+        this._label.innerText = `${this._name} 1`;
         this._slider.value = "0";
         this._slider.max = max.toString();
     }
 
     public update(value: number) {
-        this._label.innerText = `${this._name} ${value}`;
+        this._label.innerText = `${this._name} ${value + 1}`;
         this._slider.value = value.toString();
     }
 

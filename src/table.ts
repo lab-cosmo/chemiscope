@@ -56,11 +56,12 @@ export class Table {
     public show(indexes: Indexes) {
         let id, index;
         if (this._target === 'structure') {
-            id = indexes.structure;
+            id = indexes.structure + 1;
             index = indexes.structure;
         } else {
             assert(this._target === 'atom');
-            id = indexes.atom;
+            assert(indexes.atom !== undefined);
+            id = indexes.atom! + 1;
             index = this._indexer.environment(indexes);
         }
 
