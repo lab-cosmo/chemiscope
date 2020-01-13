@@ -13,12 +13,10 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
         <!-- JSmol -->
-        <script type="text/javascript" src="jsmol/JSmol.min.nojq.js"></script>
+        <script src="https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/JSmol.min.nojq.js"></script>
 
         <!-- Pako: zlib implementation in javascript, to store data files as gziped json -->
         <script type="text/javascript" src="pako_inflate.min.js"></script>
-
-        <script defer type="text/javascript" src="sketchviz.min.js"></script>
     </head>
 
     <body>
@@ -26,25 +24,13 @@
             <h1 style="text-align: center">Sketchmap vizualization</h1>
         </header>
         <div class="container">
-            <div style="margin: auto; width: 90%; display: grid; grid-gap: 1em; grid-template-columns: 2fr 2fr 1fr;">
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <label class="input-group-text" for=example>Pick an example</label>
-                    </div>
-                    <select id=example class="custom-select">
-                        <option value="Arginine-Dipeptide.json.gz">Arginine-Dipeptide</option>
-                        <option value="CSD.json">Chemical Shieldings</option>
-                        <option value="Qm7b.json.gz">Qm7b</option>
-                        <option value="Pyrole.json.gz">Pyrole</option>
-                    </select>
-                </div>
-
+            <div id=upload-group style="margin: auto; width: 50%; display: grid; grid-gap: 1em; grid-template-columns: 2fr 2fr;">
                 <div class="input-group">
                     <input id=upload type="file" class="form-control-file custom-file-input" />
                     <label class="custom-file-label" for=upload>Choose file</label>
                 </div>
 
-                <button style="width: 12em;" type="button" class="btn btn-primary" id=load>Go!</button>
+                <button style="width: 12em;" type="button" class="btn btn-primary" onclick="loadData()">Go!</button>
             </div>
 
             <div style="height: 2em"></div>
@@ -69,34 +55,25 @@
         <div style="margin-bottom: 5em;"></div>
     </body>
 
+    <script type="text/javascript" src="sketchviz.min.js"></script>
+
     <script>
         let vizualizer = undefined;
-        const example = document.getElementById('example');
         const upload = document.getElementById('upload');
         const load = document.getElementById('load');
+        const data = document.getElementById('data');
 
         upload.onchange = () => {
             upload.nextSibling.nextSibling.innerText = upload.files[0].name.toString();
         }
 
         function loadData() {
-            if (upload.value !== "") {
-                const name = upload.files[0].name;
-                console.log(`loading user file ${name}`);
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const json = toJson(name, reader.result);
-                    setupSketchviz(json);
-                }
-                reader.readAsArrayBuffer(upload.files[0]);
-            } else {
-                console.log(`loading example file ${example.value}`);
-                fetch(example.value)
-                    .then(response => response.arrayBuffer())
-                    .then(buffer => toJson(example.value, buffer))
-                    .then(json => setupSketchviz(json))
-                    .catch(e => console.error(e));
+            const reader = new FileReader();
+            reader.onload = () => {
+                const json = toJson(name, reader.result);
+                setupSketchviz(json);
             }
+            reader.readAsArrayBuffer(upload.files[0]);
         }
 
         function toJson(path, buffer) {
@@ -111,42 +88,34 @@
         }
 
         function setupSketchviz(json) {
-            upload.value = ""
-            if (vizualizer !== undefined) {
-                vizualizer.changeDataset(json)
-            } else {
-                vizualizer = new Sketchviz.Vizualizer({
-                    ...json,
-                    plotId: 'skviz-plot',
-                    viewerId: 'skviz-viewer',
-                    j2sPath: 'jsmol/j2s',
-                    infoId: 'skviz-info',
-                })
+            document.getElementById('upload-group').style.display = "none";
 
-                vizualizer.viewer.settingsPlacement((rect) => {
-                    const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+            vizualizer = new Sketchviz.Vizualizer({
+                ...json,
+                plotId: 'skviz-plot',
+                viewerId: 'skviz-viewer',
+                j2sPath: 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
+                infoId: 'skviz-info',
+            })
 
-                    return {
-                        top: viewerRect.top,
-                        left: viewerRect.left - rect.width - 25,
-                    };
-                })
+            vizualizer.viewer.settingsPlacement((rect) => {
+                const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
 
-                vizualizer.plot.settingsPlacement((rect) => {
-                    const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+                return {
+                    top: viewerRect.top,
+                    left: viewerRect.left - rect.width - 25,
+                };
+            })
 
-                    return {
-                        top: viewerRect.top,
-                        left: viewerRect.left + viewerRect.width + 25,
-                    };
-                })
-            }
+            vizualizer.plot.settingsPlacement((rect) => {
+                const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+
+                return {
+                    top: viewerRect.top,
+                    left: viewerRect.left + viewerRect.width + 25,
+                };
+            })
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            load.onclick = loadData;
-            loadData()
-        })
 
         window.onerror = (msg, url, line, col, error) => {
             const display = document.getElementById('error-display');
@@ -155,5 +124,22 @@
             const text = error === undefined ? msg : error.toString();
             display.getElementsByTagName('p')[0].innerText = text;
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = document.getElementById('json-data').innerText.trim();
+            if (data !== "") {
+                const json = JSON.parse(data);
+                setupSketchviz(json)
+            }
+        })
     </script>
 </html>
+
+<!--
+HACK: generate-standalone.py will open a script element with id=json-data
+below. This allows to concatenate the json file to the standalone HTML file
+and automatically load the corresponding dataset. This is NOT standard
+compliant in any way (tag outside of <html></html> and un-closed <script> tag),
+and rely on the fact that browsers will try very hard to make sense of all
+broken HTML they get.
+-->
