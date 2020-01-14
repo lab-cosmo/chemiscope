@@ -79,11 +79,6 @@
     border-color: transparent transparent transparent #404040;
 }
 
-.skv-slider-label {
-    min-width: 6.5em;
-    cursor: pointer;
-}
-
 .skv-properties {
     height: 100%;
     width: 80%;
@@ -103,4 +98,71 @@
 .modebar-group svg.icon {
     width: 1.5em !important;
     height: 1.5em !important;
+}
+
+.skv-info {
+    display: grid;
+    grid-template-columns: 1fr 0.7fr 1fr 1fr;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 0.5em;
+    margin-bottom: 1ex;
+}
+
+.skv-info-structure-btn {
+    font-weight: bold;
+    font-size: small;
+    background-color: #66a5e8;
+}
+
+.skv-info-structure-btn:hover {
+    background-color: #5b94d0;
+}
+
+.skv-info-atom-btn {
+    font-weight: bold;
+    font-size: small;
+    background-color: #4cb64c;
+}
+
+.skv-info-atom-btn:hover {
+    background-color: #44a344;
+}
+
+/* Change the atoms slider thumb color to green, to match jsmol highlight */
+.skv-atom-range::-webkit-slider-thumb {
+    background-color: #008000;
+}
+
+.skv-atom-range::-moz-range-thumb {
+    background-color: #008000;
+}
+
+.skv-atom-range::-ms-thumb {
+    background-color: #008000;
+}
+
+.skv-atom-range::-webkit-slider-thumb:active {
+    background-color: #99cc99;
+}
+
+.skv-atom-range::-moz-range-thumb:active {
+    background-color: #99cc99;
+}
+
+.skv-atom-range::-ms-thumb:active {
+    background-color: #99cc99;
+}
+
+.skv-atom-range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+}
+
+.skv-atom-range:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+}
+
+.skv-atom-range:focus::-ms-thumb {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }

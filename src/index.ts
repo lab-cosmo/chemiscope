@@ -71,9 +71,9 @@ class Vizualizer {
         }
 
         this.info = new EnvironmentInfo(input.infoId, input.properties, this._indexer);
-        this.info.onchange = (indexes) => {
+        this.info.onchange = (indexes, keepOrientation) => {
             this.plot.select(this._indexer.environment(indexes));
-            this.viewer.show(indexes);
+            this.viewer.show(indexes, keepOrientation);
         };
 
         this.plot.onselect = (environment: number) => {

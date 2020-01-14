@@ -60,11 +60,12 @@ export class StructureViewer {
         this.show({structure: 0, atom: 0});
     }
 
-    public show(indexes: Indexes) {
+    public show(indexes: Indexes, keepOrientation = false) {
         if (this._current.structure !== indexes.structure) {
             assert(indexes.structure < this._structures.length);
             const options = {
                 packed: false,
+                keepOrientation: keepOrientation,
             } as any;
 
             if (this._environments !== undefined) {
