@@ -34,11 +34,14 @@
             </div>
 
             <div style="height: 2em"></div>
-            <div class="alert alert-danger" role="alert" id=error-display style="text-align: center; display: none;">
+            <div class="alert alert-danger" role="alert" id=error-display style="display: none;">
                 <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
+                <details backtrace>
+
+                </details>
             </div>
 
             <div class="row">
@@ -123,6 +126,7 @@
 
             const text = error === undefined ? msg : error.toString();
             display.getElementsByTagName('p')[0].innerText = text;
+            display.getElementsByTagName('details')[0].innerText = error.stack;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
