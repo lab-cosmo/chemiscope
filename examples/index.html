@@ -110,7 +110,12 @@
                 const decoder = new TextDecoder("utf-8");
                 text = decoder.decode(buffer);
             }
-            return JSON.parse(text);
+
+            // Allow NaN in the JSON file. They are not part of the spec, but
+            // Python's json module output them, and they can be usefull.
+            return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), function(key, value) {
+                return value === "***NaN***" ? NaN : value;
+            });
         }
 
         function setupSketchviz(json) {
