@@ -29,7 +29,7 @@ export function make_draggable(element: DraggableElement, handle_query: string) 
     };
 
     // on mouse down, register mouseup & mousemove events
-    handle.addEventListener('mousedown', (e) => {
+    handle.addEventListener('mousedown', (e: any) => {
         const event = e as MouseEvent;
         element.dragOffset = {
             x: event.clientX - element.offsetLeft,
