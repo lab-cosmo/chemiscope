@@ -1,0 +1,20 @@
+language: node_js
+node_js:
+  - 12
+
+install:
+    - npm install
+script:
+    - npm run build
+    - cp -r examples/ gh-pages/
+    - cp dist/*.min.js gh-pages/
+    - touch gh-pages/.nojekyll
+    - git clone --depth=1 https://github.com/$TRAVIS_REPO_SLUG --branch gh-pages old-gh-pages
+    - cp old-gh-pages/*.json gh-pages/
+    - cp old-gh-pages/*.json.gz gh-pages/
+    - rm -f gh-pages/standalone.in.html
+deploy:
+  - provider: pages
+    skip_cleanup: true
+    github_token: $GH_TOKEN
+    local_dir: gh-pages
