@@ -49,6 +49,7 @@ export class EnvironmentInfo {
 
         const structureId = 'skv-' + generateId();
         const atomId = 'skv-' + generateId();
+        const settingsID = 'skv-' + generateId();
 
         let atomButton = '<div></div>';
         if (this._indexer.target === 'atom') {
@@ -63,7 +64,8 @@ export class EnvironmentInfo {
             `;
         }
 
-        this._root.innerHTML = `<div class="skv-info">
+        this._root.innerHTML = `
+        <div class="skv-info">
             <button type="button" class="btn btn-sm skv-info-structure-btn"
                 data-toggle="collapse"
                 data-target="#${structureId}"
@@ -72,6 +74,13 @@ export class EnvironmentInfo {
                     structure 1
             </button>
             ${atomButton}
+            <button data-toggle="collapse"
+                    data-target="#${settingsID}"
+                    class="btn btn-light btn-sm skv-trajectory-settings-btn">
+                <div class="skv-hamburger"><div></div><div></div><div></div></div>
+            </button>
+        </div>
+        <div class="collapse skv-trajectory-settings" id="${settingsID}">
             <div class="input-group input-group-sm">
                 <div class="input-group-prepend">
                     <label class="input-group-text" for=skv-playback-delay title="playback delay in tenths of seconds" style="cursor: help;">delay</label>
@@ -79,7 +88,7 @@ export class EnvironmentInfo {
                 <input id=skv-playback-delay class="form-control" type="number" min=1 value=7>
             </div>
 
-            <div class="custom-control custom-switch">
+            <div class="custom-control custom-switch skv-keep-orientation">
                 <input type="checkbox" class="custom-control-input" id=skv-is-trajectory>
                 <label class="custom-control-label" for=skv-is-trajectory title="keep the molecule orientation" style="cursor: help;">trajectory</label>
             </div>

@@ -101,19 +101,48 @@
 }
 
 .skv-info {
-    display: grid;
-    grid-template-columns: 1fr 0.7fr 1fr 1fr;
-    align-items: center;
+    display: flex;
+    position: relative;
+    margin-bottom: 1ex;
     justify-content: center;
-    align-content: start;
-    grid-gap: 0.5em;
+}
+
+.skv-trajectory-settings-btn {
+    position: absolute;
+    top: -3px;
+    right: 5px;
+}
+
+.skv-trajectory-settings {
+    display: grid;
+    grid-template-columns: 8em 8em;
+    justify-content: center;
+    align-content: center;
+    grid-gap: 1em;
     margin-bottom: 1ex;
 }
 
+.skv-keep-orientation {
+    font-size: .875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    border: 1px solid #ced4da;
+    border-radius: .2rem;
+    color: #33383c;
+    background-color: #e9ecef;
+    text-align: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
 .skv-info-structure-btn {
+    margin-right: 1em;
+    min-width: 8em;
     font-weight: bold;
     font-size: small;
-    background-color: #66a5e8;
+    background-color: none;
+    border-color: #66a5e8;
+    border-width: 2px;
 }
 
 .skv-info-structure-btn:hover {
@@ -121,9 +150,13 @@
 }
 
 .skv-info-atom-btn {
+    /* margin: auto; */
+    min-width: 8em;
     font-weight: bold;
     font-size: small;
-    background-color: #4cb64c;
+    background-color: none;
+    border-color: #4cb64c;
+    border-width: 2px;
 }
 
 .skv-info-atom-btn:hover {

@@ -323,12 +323,11 @@ export class ScatterPlot {
     private _createSettings() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
-        template.innerHTML = `<button
-            href="#skv-settings"
-            class="btn btn-light btn-sm skv-open-settings"
-            data-toggle="modal">
-                <div class="skv-hamburger"><div></div><div></div><div></div></div>
-            </button>`;
+        template.innerHTML = `<button data-target="#skv-settings"
+                                      data-toggle="modal"
+                                      class="btn btn-light btn-sm skv-open-settings">
+            <div class="skv-hamburger"><div></div><div></div><div></div></div>
+        </button>`;
         const openSettings = template.content.firstChild!;
         this._root.append(openSettings);
 
