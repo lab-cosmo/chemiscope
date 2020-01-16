@@ -13,6 +13,7 @@ script:
     - cp old-gh-pages/*.json gh-pages/
     - cp old-gh-pages/*.json.gz gh-pages/
     - rm -f gh-pages/standalone.in.html
+    - rm -f gh-pages/.gitignore
 deploy:
   - provider: pages
     skip_cleanup: true
