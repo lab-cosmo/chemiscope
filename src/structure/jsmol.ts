@@ -1,6 +1,6 @@
 import * as linalg from './linalg'
 
-import {Structure} from './dataset';
+import {Structure} from '../dataset';
 
 class UnitCell {
     private matrix: linalg.Matrix;

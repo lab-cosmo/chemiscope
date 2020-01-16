@@ -1,7 +1,7 @@
 import assert from 'assert';
 
-import {Property, Target} from './dataset';
-import {Indexes, EnvironmentIndexer} from './indexer';
+import {Property, Target} from '../dataset';
+import {Indexes, EnvironmentIndexer} from '../indexer';
 
 interface TableProperty {
     values: number[] | string[];

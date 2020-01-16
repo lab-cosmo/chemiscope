@@ -1,4 +1,4 @@
-import {Property} from './dataset'
+import {Property} from '../dataset'
 
 export interface NumericProperty {
     /// All properties have numeric values. String properties also have a string
@@ -82,7 +82,7 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
 /// String properties can be used to assing classes to each data point. They are
 /// mapped to a numeric value using the `StringInterner` for easier
 /// vizualization.
-export class PlotProperties {
+export class MapData {
     /// Structure properties
     public structure: {
         [name: string]: NumericProperty

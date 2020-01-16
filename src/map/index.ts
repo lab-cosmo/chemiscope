@@ -1,15 +1,15 @@
 import assert from "assert";
 
-import * as Plotly from "./lib/plotly-scatter";
-import {Config, Data, Layout, PlotlyHTMLElement} from "./lib/plotly-scatter";
+import * as Plotly from "./plotly/plotly-scatter";
+import {Config, Data, Layout, PlotlyHTMLElement} from "./plotly/plotly-scatter";
 
 import {COLOR_MAPS} from "./colorscales";
-import {make_draggable} from "./draggable";
+import {make_draggable} from "../draggable";
 
-import {Property, Target} from "./dataset"
-import {PlotProperties, NumericProperty} from "./plot-data"
+import {Property, Target} from "../dataset";
+import {MapData, NumericProperty} from "./data";
 
-import HTML_SETTINGS from "./static/settings.html";
+import HTML_SETTINGS from "./settings.html";
 
 const DEFAULT_LAYOUT = {
     hovermode: "closest",
@@ -127,7 +127,7 @@ interface AxisSetting {
     max: HTMLInputElement;
 }
 
-export class ScatterPlot {
+export class PropertiesMap {
     /// HTML root holding the full plot
     private _root: HTMLElement;
     /// Plotly plot
@@ -135,7 +135,7 @@ export class ScatterPlot {
     /// The dataset name
     private _name: string;
     /// All known properties
-    private _allProperties: PlotProperties;
+    private _data: MapData;
     /// Index of the currently selected point
     private _selected: number;
     /// Current target: displaying structure or atomic properties
@@ -203,7 +203,7 @@ export class ScatterPlot {
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
-        this._allProperties = new PlotProperties(properties);
+        this._data = new MapData(properties);
         this._setupDefaults();
 
         this._createSettings();
@@ -275,7 +275,7 @@ export class ScatterPlot {
         this._name = name;
         this._target = target;
         this._selected = 0;
-        this._allProperties = new PlotProperties(properties);
+        this._data = new MapData(properties);
         this._setupDefaults();
         this._setupSettings();
         this._createPlot();
@@ -750,7 +750,7 @@ export class ScatterPlot {
 
         // add empty traces to be able to display the symbols legend
         // one trace for each possible symbol
-        for (let i=0; i<this._allProperties.maxSymbols; i++) {
+        for (let i=0; i<this._data.maxSymbols; i++) {
             const data = {
                 type: "scattergl",
                 name: "",
@@ -802,7 +802,7 @@ export class ScatterPlot {
     }
 
     private _properties(): {[name: string]: NumericProperty} {
-        return this._allProperties[this._target]
+        return this._data[this._target]
     }
 
     /// Get the plotly hovertemplate depending on `this._current.color`
@@ -900,7 +900,7 @@ export class ScatterPlot {
             const max = Math.max.apply(Math, sizes);
             const defaultSize = this._is3D() ? 12 : 20;
             // normalize inside [0, 10 * factor]
-            values = sizes.map((v) => {
+            values = sizes.map((v: number) => {
                 const scaled = (v - min) / (max - min);
                 return defaultSize * factor * (scaled + 0.05);
             })
@@ -931,7 +931,7 @@ export class ScatterPlot {
             }
             return result;
         } else {
-            for (let i=0; i<this._allProperties.maxSymbols; i++) {
+            for (let i=0; i<this._data.maxSymbols; i++) {
                 result.push(false);
             }
             return result;
@@ -949,7 +949,7 @@ export class ScatterPlot {
             }
             return result;
         } else {
-            for (let i=0; i<this._allProperties.maxSymbols; i++) {
+            for (let i=0; i<this._data.maxSymbols; i++) {
                 result.push("");
             }
             return result;

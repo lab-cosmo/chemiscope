@@ -1,4 +1,4 @@
-import {ColorScale} from "./lib/plotly-scatter";
+import {ColorScale} from "./plotly/plotly-scatter";
 
 type RGBColorMap = [number, [number, number, number]][];
 

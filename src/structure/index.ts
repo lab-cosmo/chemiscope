@@ -2,8 +2,8 @@ import assert from 'assert';
 import JSmolViewer from 'materials-cloud-viewer';
 
 import {structure2JSmol} from './jsmol';
-import {Structure, Environment} from './dataset';
-import {Indexes, EnvironmentIndexer} from './indexer';
+import {Structure, Environment} from '../dataset';
+import {Indexes, EnvironmentIndexer} from '../indexer';
 
 function groupByStructure(n_structures: number, environments?: Environment[]): Environment[][] | undefined {
     if (environments === undefined) {

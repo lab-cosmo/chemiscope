@@ -1,5 +1,5 @@
-import {ScatterPlot} from "./plot";
-import {StructureViewer} from "./viewer";
+import {PropertiesMap} from "./map";
+import {StructureViewer} from "./structure";
 import {EnvironmentInfo} from './info';
 
 import {Dataset, checkDataset} from './dataset';
@@ -36,7 +36,7 @@ function checkInput(o: any) {
 
 
 class Vizualizer {
-    public plot: ScatterPlot;
+    public plot: PropertiesMap;
     public viewer: StructureViewer;
     public info: EnvironmentInfo;
 
@@ -60,7 +60,7 @@ class Vizualizer {
         const mode = (input.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, input.structures, input.environments);
 
-        this.plot = new ScatterPlot(input.plotId, input.meta.name, mode, input.properties);
+        this.plot = new PropertiesMap(input.plotId, input.meta.name, mode, input.properties);
         this.viewer = new StructureViewer(input.viewerId, input.j2sPath, this._indexer, input.structures, input.environments);
 
         if (mode === 'atom') {
@@ -116,7 +116,7 @@ class Vizualizer {
 
 export {
     StructureViewer,
-    ScatterPlot,
+    PropertiesMap,
     EnvironmentInfo,
     EnvironmentIndexer,
     Vizualizer,

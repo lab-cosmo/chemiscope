@@ -1,4 +1,4 @@
-import {Target} from './dataset';
+import {Target} from '../dataset';
 
 /// A simple slider to select an environment / play the trajectory
 export class Slider {

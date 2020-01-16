@@ -1,9 +1,10 @@
 import assert from 'assert';
 
-import {Indexes, EnvironmentIndexer} from './indexer';
+import {Indexes, EnvironmentIndexer} from '../indexer';
+import {Property} from '../dataset';
+
 import {Slider} from './slider';
 import {Table} from './table';
-import {Property} from './dataset';
 
 function filter<T extends Object>(obj: T, predicate: (o: any) => boolean): T {
     const result: any = {};
