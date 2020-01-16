@@ -54,7 +54,7 @@ export class EnvironmentIndexer {
             assert(this._environments !== undefined);
 
             // assume that environments are ordered structure by structure, then
-            // by atom in the structure.$
+            // by atom in the structure.
             const {structure, atom} = indexes;
             const environment = this._atomsBefore[structure] + atom!;
             assert(this._environments![environment].center === atom);
