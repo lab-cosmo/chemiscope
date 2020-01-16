@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module info
+ */
+
 import {Target} from '../dataset';
 
 /// A simple slider to select an environment / play the trajectory

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module main
+ */
+
 import {PropertiesMap} from "./map";
 import {StructureViewer} from "./structure";
 import {EnvironmentInfo} from './info';

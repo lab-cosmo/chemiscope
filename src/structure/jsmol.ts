@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module structure
+ */
+
 import * as linalg from './linalg'
 
 import {Structure} from '../dataset';

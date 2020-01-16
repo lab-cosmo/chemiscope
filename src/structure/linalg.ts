@@ -1,5 +1,10 @@
-/// Some very basic linear algebra functionalities for 3D vectors and 3x3
-/// matrixes.
+/**
+ * Some very basic linear algebra functionalities for 3D vectors and 3x3
+ * matrixes.
+ *
+ * @packageDocumentation
+ * @module structure.linalg
+ */
 
 export type Vector3D = [number, number, number];
 export type Matrix = [Vector3D, Vector3D, Vector3D];

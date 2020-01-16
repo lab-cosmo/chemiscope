@@ -7,5 +7,14 @@
             "dom",
             "es5"
         ]
+    },
+    "typedocOptions": {
+        "mode": "module",
+        "inputFiles": "src",
+        "out": "docs/_build/html/api/",
+        "excludePrivate": true,
+        "excludeNotExported": true,
+        "hideGenerator": true,
+        "readme": "none"
     }
 }

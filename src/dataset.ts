@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module main
+ */
+
 interface JSmolEnvironment {
     cutoff: number;
 }

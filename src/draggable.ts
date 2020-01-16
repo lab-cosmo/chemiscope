@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module utils
+ */
+
 interface DraggableElement extends HTMLElement {
     dragOffset?: {
         x: number;

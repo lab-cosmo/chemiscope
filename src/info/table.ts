@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module info
+ */
+
 import assert from 'assert';
 
 import {Property, Target} from '../dataset';

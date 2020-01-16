@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module utils
+ */
+
 import assert from 'assert';
 import {Structure, Environment, Target} from './dataset';
 

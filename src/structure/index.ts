@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module structure
+ */
+
 import assert from 'assert';
 import JSmolViewer from 'materials-cloud-viewer';
 

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module map
+ */
+
 import assert from "assert";
 
 import * as Plotly from "./plotly/plotly-scatter";

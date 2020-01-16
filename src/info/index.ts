@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module info
+ */
+
 import assert from 'assert';
 
 import {Indexes, EnvironmentIndexer} from '../indexer';

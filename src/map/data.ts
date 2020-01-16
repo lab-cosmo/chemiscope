@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module map
+ */
+
 import {Property} from '../dataset'
 
 export interface NumericProperty {
