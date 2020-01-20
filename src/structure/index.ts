@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import JSmolViewer from 'materials-cloud-viewer';
+import JSmolWidget from 'jsmol-widget';
 
 import {structure2JSmol} from './jsmol';
 import {Structure, Environment} from '../dataset';
@@ -28,7 +28,7 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
 }
 
 export class StructureViewer {
-    private _viewer: JSmolViewer;
+    private _widget: JSmolWidget;
     /// List of structures in the dataset
     private _structures: string[];
     /// Optional list of environments for each structure
@@ -40,7 +40,7 @@ export class StructureViewer {
     public onselect: (indexes: Indexes) => void;
 
     constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
-        this._viewer = new JSmolViewer(id, j2sPath);
+        this._widget = new JSmolWidget(id, j2sPath);
         this._structures = structures.map(structure2JSmol);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
@@ -49,14 +49,14 @@ export class StructureViewer {
 
         this.onselect = () => {};
 
-        this._viewer.onselect = (atom: number) => {
+        this._widget.onselect = (atom: number) => {
             if (this._indexer.target == 'atom') {
-                this._viewer.highlight(atom);
+                this._widget.highlight(atom);
             }
             // if the viewer is showing a bigger supercell than [1, 1, 1], the
             // atom index can be outside of [0, natoms), so make sure it is
             // inside this range.
-            const atom_id = atom % this._viewer.natoms()!;
+            const atom_id = atom % this._widget.natoms()!;
             this.onselect({structure: this._current.structure, atom: atom_id});
         };
     }
@@ -84,21 +84,21 @@ export class StructureViewer {
                 }
             }
 
-            this._viewer.load(`inline '${this._structures[indexes.structure]}'`, options);
+            this._widget.load(`inline '${this._structures[indexes.structure]}'`, options);
         }
 
         if (this._indexer.target === 'atom') {
             if  (this._current.atom != indexes.atom) {
-                this._viewer.highlight(indexes.atom)
+                this._widget.highlight(indexes.atom)
             }
         } else {
-            this._viewer.highlight(undefined);
+            this._widget.highlight(undefined);
         }
 
         this._current = indexes;
     }
 
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        this._viewer.settingsPlacement(callback)
+        this._widget.settingsPlacement(callback)
     }
 }
