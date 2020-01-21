@@ -35,7 +35,7 @@ export class StructureViewer {
     private _environments?: Environment[][];
     private _indexer: EnvironmentIndexer;
     /// index of the currently displayed structure/atom
-    private _current: Indexes;
+    private _current: {structure: number, atom?: number};
 
     public onselect: (indexes: Indexes) => void;
 
@@ -45,7 +45,7 @@ export class StructureViewer {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
-        this.show({structure: 0, atom: 0});
+        this.show({environment: 0, structure: 0, atom: 0});
 
         this.onselect = () => {};
 
@@ -57,7 +57,8 @@ export class StructureViewer {
             // atom index can be outside of [0, natoms), so make sure it is
             // inside this range.
             const atom_id = atom % this._widget.natoms()!;
-            this.onselect({structure: this._current.structure, atom: atom_id});
+            const indexes = this._indexer.from_structure_atom(this._current.structure, atom_id);
+            this.onselect(indexes);
         };
     }
 
@@ -66,7 +67,7 @@ export class StructureViewer {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
-        this.show({structure: 0, atom: 0});
+        this.show({environment: 0, structure: 0, atom: 0});
     }
 
     public show(indexes: Indexes, keepOrientation = false) {

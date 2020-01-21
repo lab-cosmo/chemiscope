@@ -6,8 +6,20 @@
 import assert from 'assert';
 import {Structure, Environment, Target} from '../dataset';
 
+/**
+ * Indexes of the
+ */
 export interface Indexes {
+    /** The global environment index */
+    environment: number;
+    /** Index of the structure which the environment corresponds to */
     structure: number;
+    /**
+     * Index of the atom in the structure which corresponds to the environment.
+     *
+     * If we are considering full-structures environments only, this is
+     * `undefined`.
+     */
     atom?: number;
 }
 
@@ -33,9 +45,10 @@ export class EnvironmentIndexer {
         })
     }
 
-    public indexes(environment: number): Indexes {
+    public from_environment(environment: number): Indexes {
         if (this.target == 'structure') {
             return {
+                environment: environment,
                 structure: environment,
             }
         } else {
@@ -44,33 +57,42 @@ export class EnvironmentIndexer {
 
             const env = this._environments![environment];
             return {
+                environment: environment,
                 structure: env.structure,
                 atom: env.center,
             }
         }
     }
 
-    public environment(indexes: Indexes): number {
+    public from_structure_atom(structure: number, atom?: number): Indexes {
         if (this.target == 'structure') {
-            assert(indexes.atom === undefined || indexes.atom === 0);
-            return indexes.structure
+            assert(atom === undefined || atom === 0);
+            return {
+                environment: structure,
+                structure: structure,
+            }
         } else {
             assert(this.target === 'atom');
             assert(this._environments !== undefined);
 
             // assume that environments are ordered structure by structure, then
             // by atom in the structure.
-            const {structure, atom} = indexes;
             const environment = this._atomsBefore[structure] + atom!;
             assert(this._environments![environment].center === atom);
             assert(this._environments![environment].structure === structure);
-            return environment;
+            return {
+                environment: environment,
+                structure: structure,
+                atom: atom,
+            }
         }
     }
 
-    public environmentsCount(): number | undefined {
+    public environmentsCount(): number {
         if (this._environments !== undefined) {
             return this._environments.length;
+        } else {
+            return this._structures.length;
         }
     }
 

@@ -5,8 +5,8 @@
 
 import assert from "assert";
 
-import {Property, Target} from "../dataset";
-import {make_draggable} from "../utils";
+import {Property} from "../dataset";
+import {make_draggable, Indexes, EnvironmentIndexer} from "../utils";
 
 import * as Plotly from "./plotly/plotly-scatter";
 import {Config, Data, Layout, PlotlyHTMLElement} from "./plotly/plotly-scatter";
@@ -143,8 +143,8 @@ export class PropertiesMap {
     private _data: MapData;
     /// Index of the currently selected point
     private _selected: number;
-    /// Current target: displaying structure or atomic properties
-    private _target: Target;
+    /// environment indexer
+    private _indexer: EnvironmentIndexer;
     /// Currently displayed data
     private _current!: {
         /// Name of the properties in `this._properties()` used for x values
@@ -187,11 +187,11 @@ export class PropertiesMap {
     };
 
     /// Callback fired when the plot is clicked and a new point is selected
-    public onselect: (index: number) => void;
+    public onselect: (indexes: Indexes) => void;
 
-    constructor(id: string, name: string, target: Target, properties: {[name: string]: Property}) {
+    constructor(id: string, name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         this._name = name;
-        this._target = target;
+        this._indexer = indexer;
         this._selected = 0;
         this.onselect = () => {};
 
@@ -252,14 +252,14 @@ export class PropertiesMap {
         this._createPlot();
     }
 
-    /// Change the selected environment to the one with the given `index`
-    public select(index: number) {
-        if (index === this._selected) {
+    /// Change the selected environment to the one with the given `indexes`
+    public select(indexes: Indexes) {
+        if (indexes.environment === this._selected) {
             // HACK: Calling Plotly.restyle fires the plotly_click event
             // again for 3d plots, ignore it
             return;
         }
-        this._selected = index;
+        this._selected = indexes.environment;
 
         this._restyle({
             x: this._xValues(1),
@@ -271,14 +271,14 @@ export class PropertiesMap {
 
     /// Change the current dataset to the provided one, without re-creating the
     /// plot
-    public changeDataset(name: string, target: Target, properties: {[name: string]: Property}) {
+    public changeDataset(name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         if (this._is3D()) {
             this._current.z = undefined;
             this._switch2D();
         }
 
         this._name = name;
-        this._target = target;
+        this._indexer = indexer;
         this._selected = 0;
         this._data = new MapData(properties);
         this._setupDefaults();
@@ -800,14 +800,15 @@ export class PropertiesMap {
 
         this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => {
             const environment = event.points[0].pointNumber;
-            this.select(environment)
-            this.onselect(environment);
+            const indexes = this._indexer.from_environment(environment);
+            this.select(indexes)
+            this.onselect(indexes);
         });
         this._plot.on("plotly_afterplot", () => this._afterplot());
     }
 
     private _properties(): {[name: string]: NumericProperty} {
-        return this._data[this._target]
+        return this._data[this._indexer.target]
     }
 
     /// Get the plotly hovertemplate depending on `this._current.color`

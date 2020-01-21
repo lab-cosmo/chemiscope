@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {Property, Target} from '../dataset';
-import {Indexes, EnvironmentIndexer} from '../utils';
+import {Indexes} from '../utils';
 
 interface TableProperty {
     values: number[] | string[];
@@ -17,12 +17,11 @@ interface TableProperty {
 /// structure/environement
 export class Table {
     private _target: Target;
-    private _indexer: EnvironmentIndexer;
 
     private _header: HTMLTableHeaderCellElement;
     private _properties: TableProperty[];
 
-    constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
+    constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse" id=${collapseID}>
         <div class="skv-properties">
@@ -36,7 +35,6 @@ export class Table {
 
         this._header = group.querySelector('th')!;
         this._target = target;
-        this._indexer = indexer;
         this._properties = [];
 
         const tbody = group.querySelector('tbody')!;
@@ -55,24 +53,22 @@ export class Table {
             })
         }
 
-        this.show({structure: 0, atom: 0});
+        this.show({environment: 0, structure: 0, atom: 0});
     }
 
     public show(indexes: Indexes) {
-        let id, index;
+        let id;
         if (this._target === 'structure') {
             id = indexes.structure + 1;
-            index = indexes.structure;
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
             id = indexes.atom! + 1;
-            index = this._indexer.environment(indexes);
         }
 
         this._header.innerText = `Properties for ${this._target} ${id}`;
         for (const s of this._properties) {
-            s.cell.innerText = s.values[index].toString()
+            s.cell.innerText = s.values[indexes.environment].toString()
         }
     }
 }

@@ -65,25 +65,24 @@ class Vizualizer {
         const mode = (input.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, input.structures, input.environments);
 
-        this.plot = new PropertiesMap(input.plotId, input.meta.name, mode, input.properties);
+        this.plot = new PropertiesMap(input.plotId, input.meta.name, this._indexer, input.properties);
         this.viewer = new StructureViewer(input.viewerId, input.j2sPath, this._indexer, input.structures, input.environments);
 
         if (mode === 'atom') {
             this.viewer.onselect = (indexes) => {
-                this.plot.select(this._indexer.environment(indexes));
-                this.info.select(indexes);
+                this.plot.select(indexes);
+                this.info.show(indexes);
             };
         }
 
         this.info = new EnvironmentInfo(input.infoId, input.properties, this._indexer);
         this.info.onchange = (indexes, keepOrientation) => {
-            this.plot.select(this._indexer.environment(indexes));
+            this.plot.select(indexes);
             this.viewer.show(indexes, keepOrientation);
         };
 
-        this.plot.onselect = (environment: number) => {
-            const indexes = this._indexer.indexes(environment);
-            this.info.select(indexes);
+        this.plot.onselect = (indexes) => {
+            this.info.show(indexes);
             this.viewer.show(indexes);
         };
     }
@@ -94,12 +93,12 @@ class Vizualizer {
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
-        this.plot.changeDataset(dataset.meta.name, mode, dataset.properties);
+        this.plot.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
         this.viewer.changeDataset(this._indexer, dataset.structures, dataset.environments);
         if (mode === 'atom') {
             this.viewer.onselect = (indexes) => {
-                this.plot.select(this._indexer.environment(indexes));
-                this.info.select(indexes);
+                this.plot.select(indexes);
+                this.info.show(indexes);
             };
         } else {
             this.viewer.onselect = () => {};
@@ -107,13 +106,12 @@ class Vizualizer {
 
         this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
         this.info.onchange = (indexes) => {
-            this.plot.select(this._indexer.environment(indexes));
+            this.plot.select(indexes);
             this.viewer.show(indexes);
         };
 
-        this.plot.onselect = (environment: number) => {
-            const indexes = this._indexer.indexes(environment);
-            this.info.select(indexes);
+        this.plot.onselect = (indexes) => {
+            this.info.show(indexes);
             this.viewer.show(indexes);
         };
     }

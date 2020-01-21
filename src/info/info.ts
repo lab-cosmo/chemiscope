@@ -102,21 +102,21 @@ export class EnvironmentInfo {
 
         this._keepOrientiation = this._root.querySelector('#skv-is-trajectory') as HTMLInputElement;
 
-        this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'), indexer);
+        this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'));
 
         if (this._indexer.target === 'atom') {
-            this._atom = this._createAtom(atomId, filter(properties, (p) => p.target === 'atom'), indexer);
+            this._atom = this._createAtom(atomId, filter(properties, (p) => p.target === 'atom'));
         }
     }
 
-    private _createStructure(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer): Info {
+    private _createStructure(id: string, properties: {[name: string]: Property}): Info {
         const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
 
         const slider = new Slider(this._root, 'structure', delay);;
         const n_structures = this._indexer.structuresCount();
         slider.reset(n_structures - 1);
 
-        const table = new Table(this._root, 'structure', id, properties, indexer);
+        const table = new Table(this._root, 'structure', id, properties);
 
         slider.onchange = () => {
             if (this._atom !== undefined) {
@@ -141,7 +141,7 @@ export class EnvironmentInfo {
         return { label, slider, table };
     }
 
-    private _createAtom(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
+    private _createAtom(id: string, properties: {[name: string]: Property}) {
         const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
         const slider = new Slider(this._root, 'atom', delay);
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
@@ -153,32 +153,32 @@ export class EnvironmentInfo {
             this.onchange(indexes, this._keepOrientiation.checked);
         }
 
-        const table = new Table(this._root, 'atom', id, properties, indexer);
+        const table = new Table(this._root, 'atom', id, properties);
 
         const label = this._root.getElementsByClassName('skv-info-atom-btn')[0] as HTMLButtonElement;
         return { label, slider, table };
     }
 
-    /// The environment index changed outside, update the sliders
-    public select({structure, atom}: Indexes) {
-        this._structure.label.innerText = `structure ${structure + 1}`;
-        this._structure.slider.update(structure);
-        this._structure.table.show({structure, atom});
+    /// The environment index changed outside, update the sliders & tables
+    public show(indexes: Indexes) {
+        this._structure.label.innerText = `structure ${indexes.structure + 1}`;
+        this._structure.slider.update(indexes.structure);
+        this._structure.table.show(indexes);
 
         if (this._atom !== undefined) {
-            const n_atoms = this._indexer.atomsCount(structure);
+            const n_atoms = this._indexer.atomsCount(indexes.structure);
             this._atom.label.innerText = `atom 1`;
             this._atom.slider.reset(n_atoms - 1);
-            this._structure.table.show({structure, atom});
+            this._structure.table.show(indexes);
         }
 
-        if (atom !== undefined) {
+        if (indexes.atom !== undefined) {
             if (this._atom === undefined) {
                 throw Error("Invalid state: got an atomic number to update, but I am displaying only structures")
             } else {
-                this._atom.label.innerText = `atom ${atom + 1}`;
-                this._atom.slider.update(atom);
-                this._atom.table.show({structure, atom});
+                this._atom.label.innerText = `atom ${indexes.atom + 1}`;
+                this._atom.slider.update(indexes.atom);
+                this._atom.table.show(indexes);
             }
         }
     }
@@ -187,10 +187,10 @@ export class EnvironmentInfo {
         const structure = this._structure.slider.value();
         if (this._atom !== undefined) {
             const atom = this._atom.slider.value();
-            return {structure, atom};
+            return this._indexer.from_structure_atom(structure, atom);
         } else {
             assert(this._indexer.target == 'structure');
-            return {structure};
+            return this._indexer.from_structure_atom(structure);
         }
     }
 }
