@@ -8,7 +8,7 @@ import {StructureViewer} from "./structure";
 import {EnvironmentInfo} from './info';
 
 import {Dataset, checkDataset} from './dataset';
-import {EnvironmentIndexer} from './indexer';
+import {EnvironmentIndexer} from './utils';
 
 require('./static/sketchviz.css');
 

@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Structure, Environment, Target} from './dataset';
+import {Structure, Environment, Target} from '../dataset';
 
 export interface Indexes {
     structure: number;
