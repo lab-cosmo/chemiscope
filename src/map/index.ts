@@ -311,7 +311,7 @@ export class PropertiesMap {
     private _setupDefaults() {
         const prop_names = Object.keys(this._properties());
         if (prop_names.length < 2) {
-            throw Error("Sketchmap needs at least two properties to plot")
+            throw Error("chemiscope needs at least two properties to plot")
         }
 
         this._current = {

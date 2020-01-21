@@ -35,7 +35,7 @@ interface Info {
 }
 
 /// Display information about structure or environment, using both a slider for
-/// selection and an table displaying all properties (hidden by default).
+/// selection and a table displaying all properties (hidden by default).
 export class EnvironmentInfo {
     private _root: HTMLElement;
     private _atom?: Info;
