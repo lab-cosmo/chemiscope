@@ -6,6 +6,8 @@
  * @module structure.linalg
  */
 
+import assert from 'assert';
+
 export type Vector3D = [number, number, number];
 export type Matrix = [Vector3D, Vector3D, Vector3D];
 
@@ -18,18 +20,19 @@ export function determinant(matrix: Matrix): number {
 }
 
 export function invert(matrix: Matrix): Matrix {
-    let invdet = 1.0 / determinant(matrix);
-    let xx = (matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2]) * invdet;
-    let xy = (matrix[0][2] * matrix[2][1] - matrix[0][1] * matrix[2][2]) * invdet;
-    let xz = (matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1]) * invdet;
+    const det = determinant(matrix);
+    assert(Math.abs(det) > 1e-12);
+    const xx = (matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2]) / det;
+    const xy = (matrix[0][2] * matrix[2][1] - matrix[0][1] * matrix[2][2]) / det;
+    const xz = (matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1]) / det;
 
-    let yx = (matrix[1][2] * matrix[2][0] - matrix[1][0] * matrix[2][2]) * invdet;
-    let yy = (matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0]) * invdet;
-    let yz = (matrix[1][0] * matrix[0][2] - matrix[0][0] * matrix[1][2]) * invdet;
+    const yx = (matrix[1][2] * matrix[2][0] - matrix[1][0] * matrix[2][2]) / det;
+    const yy = (matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0]) / det;
+    const yz = (matrix[1][0] * matrix[0][2] - matrix[0][0] * matrix[1][2]) / det;
 
-    let zx = (matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1]) * invdet;
-    let zy = (matrix[2][0] * matrix[0][1] - matrix[0][0] * matrix[2][1]) * invdet;
-    let zz = (matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1]) * invdet;
+    const zx = (matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1]) / det;
+    const zy = (matrix[2][0] * matrix[0][1] - matrix[0][0] * matrix[2][1]) / det;
+    const zz = (matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1]) / det;
 
     return [
         [xx, xy, xz],
