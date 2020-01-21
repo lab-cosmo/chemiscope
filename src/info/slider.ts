@@ -5,13 +5,22 @@
 
 import {Target} from '../dataset';
 
-/// A simple slider to select an environment / play the trajectory
+/** @hidden
+ * A simple slider to select an environment / play the trajectory
+ */
 export class Slider {
     public onchange: () => void;
     private _slider: HTMLInputElement;
     private _play: HTMLElement;
     private _delay: HTMLInputElement;
 
+    /**
+     * Create and append a new slider inside the given `HTMLElement`.
+     *
+     * @param root   where to append the new slider
+     * @param target is this slider related to atom or structure
+     * @param delay  input element used to set the trajectory playback delay
+     */
     constructor(root: HTMLElement, target: Target, delay: HTMLInputElement) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="input-group input-group-sm">
@@ -36,19 +45,31 @@ export class Slider {
         this.onchange = () => {};
     }
 
+    /**
+     * Reset the slider to 0, and update the maximal value to `max`
+     */
     public reset(max: number) {
         this._slider.value = "0";
         this._slider.max = max.toString();
     }
 
+    /**
+     * Update the slider, changing its value to the given one.
+     */
     public update(value: number) {
         this._slider.value = value.toString();
     }
 
+    /**
+     * Get the current value of the slider
+     */
     public value(): number {
         return parseInt(this._slider.value);
     }
 
+    /**
+     * Run a single playback step
+     */
     private _step() {
         setTimeout(() => {
             if (this._play.classList.contains('skv-playing')) {

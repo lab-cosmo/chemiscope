@@ -112,6 +112,7 @@ const DEFAULT_CONFIG = {
     ],
 };
 
+/** Get an HTML element by id */
 function getByID<HTMLType>(id: string): HTMLType {
     const e = document.getElementById(id);
     if (e === null) {
@@ -120,7 +121,7 @@ function getByID<HTMLType>(id: string): HTMLType {
     return e as unknown as HTMLType;
 }
 
-/// Settings for an axis (x, y, z, color)
+/** HTML element holding settings for a given axis (x, y, z, color) */
 interface AxisSetting {
     /// Which values shoudl we use
     select: HTMLSelectElement;
@@ -132,6 +133,15 @@ interface AxisSetting {
     max: HTMLInputElement;
 }
 
+/**
+ * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
+ * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
+ * for rendering.
+ *
+ * Properties can be used as x, y, or z values, as well as points color and
+ * size. Additionally, string properties can be used as symbols for the scatter
+ * plot markers.
+ */
 export class PropertiesMap {
     /// HTML root holding the full plot
     private _root: HTMLElement;
@@ -186,9 +196,19 @@ export class PropertiesMap {
         };
     };
 
-    /// Callback fired when the plot is clicked and a new point is selected
+    /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes) => void;
 
+    /**
+     * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
+     * `id`
+     *
+     * @param id         HTML id of the DOM element where the map should live
+     * @param name       name of the dataset, displayed as the plot title
+     * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
+     *                   environments index to structure/atom indexes
+     * @param properties properties to be displayed
+     */
     constructor(id: string, name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         this._name = name;
         this._indexer = indexer;
@@ -252,7 +272,7 @@ export class PropertiesMap {
         this._createPlot();
     }
 
-    /// Change the selected environment to the one with the given `indexes`
+    /** Change the selected environment to the one with the given `indexes` */
     public select(indexes: Indexes) {
         if (indexes.environment === this._selected) {
             // HACK: Calling Plotly.restyle fires the plotly_click event
@@ -269,8 +289,15 @@ export class PropertiesMap {
         } as Data, 1);
     }
 
-    /// Change the current dataset to the provided one, without re-creating the
-    /// plot
+    /**
+     * Change the displayed dataset to a new one, without re-creating the
+     * viewer itself.
+     *
+     * @param  name       name of the new dataset
+     * @param  indexer    new indexer making the environment index to
+     *                    structure/atom pair translation
+     * @param  properties new properties to display
+     */
     public changeDataset(name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         if (this._is3D()) {
             this._current.z = undefined;
@@ -288,26 +315,28 @@ export class PropertiesMap {
         this._relayout({ 'xaxis.autorange': true, 'yaxis.autorange': true });
     }
 
-    /// Use the given callback to compute the placement of the settings modal.
-    ///
-    /// The callback gets the current placement of the settings as a DOMRect,
-    /// and should return top and left positions in pixels, used with `position:
-    /// fixed`. The callback is called once, the first time the settings are
-    /// opened.
+    /**
+     * Use the given callback to compute the placement of the settings modal.
+     * The callback gets the current placement of the settings as a DOMRect,
+     * and should return top and left positions in pixels, used with `position:
+     * fixed`. The callback is called once, the first time the settings are
+     * opened.
+     */
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
         this._settingsPlacement = callback;
     }
 
-    /// Forward to Ploty.restyle
+    /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) => console.error(e));
     }
 
-    /// Forward to Ploty.relayout
+    /** Forward to Ploty.relayout */
     private _relayout(layout: Partial<Layout>) {
         Plotly.relayout(this._plot, layout).catch((e) => console.error(e));
     }
 
+    /** setup the default values after loading a new dataset */
     private _setupDefaults() {
         const prop_names = Object.keys(this._properties());
         if (prop_names.length < 2) {
@@ -325,6 +354,7 @@ export class PropertiesMap {
         }
     }
 
+    /** Create the settings modal by adding HTML to the page */
     private _createSettings() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
@@ -382,6 +412,7 @@ export class PropertiesMap {
         }
     }
 
+    /** Add all the required callback to the settings */
     private _connectSettings() {
         // ======= x axis settings
         this._settings.x.select.onchange = () => {
@@ -611,6 +642,10 @@ export class PropertiesMap {
         }
     }
 
+    /**
+     * Fill possible values for the settings, depending on the properties in
+     * the dataset
+     */
     private _setupSettings() {
         // ============== Setup the map options ==============
         // ======= data used as x values
@@ -691,6 +726,7 @@ export class PropertiesMap {
         this._settings.size.factor.value = "75";
     }
 
+    /** Actually create the Plotly plot */
     private _createPlot() {
         this._plot.innerHTML = '';
 
@@ -807,11 +843,12 @@ export class PropertiesMap {
         this._plot.on("plotly_afterplot", () => this._afterplot());
     }
 
+    /** Get the currently available properties: either `"atom"` or `"structure"` properties */
     private _properties(): {[name: string]: NumericProperty} {
         return this._data[this._indexer.target]
     }
 
-    /// Get the plotly hovertemplate depending on `this._current.color`
+    /** Get the plotly hovertemplate depending on `this._current.color` */
     private _hovertemplate(): string {
         if (this._hasColors()) {
             return this._current.color + ": %{marker.color:.2f}<extra></extra>";
@@ -820,19 +857,28 @@ export class PropertiesMap {
         }
     }
 
-    /// Get the values to use for the x axis with the given plotly `trace`
+    /**
+     * Get the values to use for the x axis with the given plotly `trace`,
+     * or all of them if `trace === undefined`
+     */
     private _xValues(trace?: number): Array<number[]> {
         const values = this._properties()[this._current.x].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
-    /// Get the values to use for the y axis with the given plotly `trace`
+    /**
+     * Get the values to use for the y axis with the given plotly `trace`,
+     * or all of them if `trace === undefined`
+     */
     private _yValues(trace?: number): Array<number[]> {
         const values = this._properties()[this._current.y].values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
-    /// Get the values to use for the z axis with the given plotly `trace`
+    /**
+     * Get the values to use for the z axis with the given plotly `trace`,
+     * or all of them if `trace === undefined`
+     */
     private _zValues(trace?: number): Array<undefined | number[]> {
         if (!this._is3D()) {
             return this._selectTrace(undefined, undefined, trace);
@@ -842,7 +888,10 @@ export class PropertiesMap {
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
-    /// Get the color values to use with the given plotly `trace`
+    /**
+     * Get the color values to use with the given plotly `trace`, or all of
+     * them if `trace === undefined`
+     */
     private _colors(trace?: number): Array<string | number | number[]> {
         let values;
         if (this._hasColors()) {
@@ -854,7 +903,10 @@ export class PropertiesMap {
         return this._selectTrace<string | number | number[]>(values, "#007bff", trace);
     }
 
-    /// Get the line color values to use with the given plotly `trace`
+    /**
+     * Get the **line** color values to use with the given plotly `trace`, or
+     * all of them if `trace === undefined`
+     */
     private _lineColors(trace?: number): Array<string | number | number[]> {
         let values;
         if (this._hasColors()) {
@@ -866,7 +918,7 @@ export class PropertiesMap {
         return this._selectTrace<string | number | number[]>(values, "black", trace);
     }
 
-    /// Get the colorscale to use for markers in the main plotly trace
+    /** Get the colorscale to use for markers in the main plotly trace */
     private _colorScale(): Plotly.ColorScale {
         if (this._is3D()) {
             return COLOR_MAPS[this._current.colorscale].rgb;
@@ -875,12 +927,17 @@ export class PropertiesMap {
         }
     }
 
-    /// Get the colorscale to use for markers lines in the main plotly trace
+    /** Get the colorscale to use for markers lines in the main plotly trace */
     private _lineColorScale(): Plotly.ColorScale {
         return COLOR_MAPS[this._current.colorscale].rgb;
     }
 
-    /// Get the size values to use with the given plotly `trace`
+    /**
+     * Get the values to use as marker size with the given plotly `trace`, or
+     * all of them if `trace === undefined`.
+     *
+     * The size scaling parameter should be given in `sizeSliderValue`.
+     */
     private _sizes(sizeSliderValue: number, trace?: number): Array<number | number[]> {
         // Transform the linear value from the slider into a logarithmic scale
         const logSlider = (value: number) => {
@@ -915,7 +972,10 @@ export class PropertiesMap {
         return this._selectTrace(values, 2 * defaultSize, trace);
     }
 
-    /// Get the symbol values to use with the given plotly `trace`
+    /**
+     * Get the values to use as marker symbol with the given plotly `trace`, or
+     * all of them if `trace === undefined`.
+     */
     private _symbols(trace?: number): Array<number | number[]> {
         if (this._current.symbols !== undefined) {
             assert(!this._is3D());
@@ -927,6 +987,7 @@ export class PropertiesMap {
         }
     }
 
+    /** Should we show the legend for the various symbols used? */
     private _showlegend(): Array<boolean> {
         const result = [false, false];
 
@@ -944,6 +1005,7 @@ export class PropertiesMap {
         }
     }
 
+    /** Get the list of symbols names to use for the legend */
     private _legendNames(): Array<string> {
         const result = [this._name, ""];
 
@@ -962,6 +1024,10 @@ export class PropertiesMap {
         }
     }
 
+    /**
+     * Select either main, selected or both depending on `trace`, and return
+     * them in a mode usable with `Plotly.restyle`/[[PropertiesMap._restyle]]
+     */
     private _selectTrace<T>(main: T, selected: T, trace?: number): Array<T> {
         if (trace === 0) {
             return [main];
@@ -974,7 +1040,7 @@ export class PropertiesMap {
         }
     }
 
-    /// How many different symbols are being displayed
+    /** How many different symbols are being displayed */
     private _symbolsCount(): number {
         if (this._current.symbols !== undefined) {
             return this._properties()[this._current.symbols].string!.strings().length;
@@ -983,21 +1049,24 @@ export class PropertiesMap {
         }
     }
 
+    /** Get the length of the colorbar to accomodate for the legend */
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
         const LEGEND_ITEM_HEIGH = 0.045;
         return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount()
     }
 
+    /** Does the current plot use color values? */
     private _hasColors(): boolean {
         return this._current.color !== undefined;
     }
 
+    /** Is the the current plot a 3D plot? */
     private _is3D(): boolean {
         return this._current.z !== undefined;
     }
 
-    /// Switch current plot from 2D to 3D
+    /** Switch current plot from 2D to 3D */
     private _switch3D() {
         assert(this._is3D());
         // Can not use symbols with 3D plots, why?
@@ -1035,7 +1104,7 @@ export class PropertiesMap {
         } as unknown as Layout);
     }
 
-    /// Switch current plot from 3D to 2D
+    /** Switch current plot from 3D back to 2D */
     private _switch2D() {
         assert(!this._is3D());
         this._settings.symbol.disabled = false;
@@ -1073,6 +1142,10 @@ export class PropertiesMap {
         } as unknown as Layout);
     }
 
+    /**
+     * Function used as callback to update the axis ranges in settings after
+     * the user changes zoom or range on the plot
+     */
     private _afterplot() {
         // HACK: this is not public, so it might break
         const layout = (this._plot as any)._fullLayout;

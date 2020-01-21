@@ -7,10 +7,18 @@ import * as linalg from './linalg'
 
 import {Structure} from '../dataset';
 
+/** @hidden
+ * A UnitCell, usable to convert between cartesian and fractional coordinates
+ */
 class UnitCell {
     private matrix: linalg.Matrix;
     private inverse: linalg.Matrix;
 
+    /**
+     * Create a new unit cell from an array containing `[ax ay az bx by bz cx
+     * cy cz]`, where **a**, **b**, and **c** are the unit cell vectors. All
+     * values should be expressed in Angströms.
+     */
     constructor(data: number[]) {
         if (data.length !== 9) {
             throw Error('invalid length for cell: expected 9, got ' + data.length);
@@ -26,17 +34,17 @@ class UnitCell {
         this.inverse = linalg.invert(this.matrix);
     }
 
-    /// convert from cartesian to fractional coordinates
+    /** convert from cartesian to fractional coordinates */
     public fractional(cartesian: linalg.Vector3D): linalg.Vector3D {
         return linalg.dot(this.inverse, cartesian);
     }
 
-    /// convert from cartesian to fractional coordinates
+    /** convert from cartesian to fractional coordinates */
     public cartesian(fractional: linalg.Vector3D): linalg.Vector3D {
         return linalg.dot(this.matrix, fractional);
     }
 
-    /// Get the lenghts of the unitcell
+    /** Get the lenghts of the unitcell vectors */
     public lengths(): linalg.Vector3D {
         return [
             linalg.norm(this.matrix[0]),
@@ -45,7 +53,7 @@ class UnitCell {
         ];
     }
 
-    /// Get the angles of the unitcell, in degrees
+    /** Get the angles between the unitcell vectors, in degrees */
     public angles(): linalg.Vector3D {
         return [
             linalg.angle(this.matrix[1], this.matrix[2]),
@@ -55,29 +63,34 @@ class UnitCell {
     }
 }
 
-/// Convert a structure to a format that JSMol can read: XYZ if there is no cell
-/// data, and BCS if there is cell data
-export function structure2JSmol(s: Structure): string {
+/** @hidden
+ * Convert a `structure` to a format that JSmol can read: XYZ if there is no cell
+ * data, and BCS if there is cell data
+ *
+ * @param structure the structure to convert
+ * @return a string representing the structure that JSmol is able to read
+ */
+export function structure2JSmol(structure: Structure): string {
     let buffer = new Array();
-    if (s.cell === undefined) {
+    if (structure.cell === undefined) {
         // use XYZ format
-        const natoms = s.names.length;
+        const natoms = structure.names.length;
         buffer.push(`${natoms}\n\n`);
-        for (let i=0; i<s.names.length; i++) {
-            buffer.push(`${s.names[i]} ${s.x[i]} ${s.y[i]} ${s.z[i]}\n`);
+        for (let i=0; i<natoms; i++) {
+            buffer.push(`${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`);
         }
     } else {
         // use BCS format
-        const cell = new UnitCell(s.cell);
+        const cell = new UnitCell(structure.cell);
         buffer.push(`1\n`);
         const [a, b, c] = cell.lengths();
         const [alpha, beta, gamma] = cell.angles();
         buffer.push(`${a} ${b} ${c} ${alpha} ${beta} ${gamma}\n`);
-        const natoms = s.names.length;
+        const natoms = structure.names.length;
         buffer.push(`${natoms}\n`);
-        for (let i=0; i<s.names.length; i++) {
-            const [x, y, z] = cell.fractional([s.x[i], s.y[i], s.z[i]])
-            buffer.push(`${s.names[i]} ${i} - ${x} ${y} ${z}\n`);
+        for (let i=0; i<natoms; i++) {
+            const [x, y, z] = cell.fractional([structure.x[i], structure.y[i], structure.z[i]])
+            buffer.push(`${structure.names[i]} ${i} - ${x} ${y} ${z}\n`);
         }
     }
     return buffer.join('');

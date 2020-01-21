@@ -10,7 +10,12 @@ interface DraggableElement extends HTMLElement {
     };
 }
 
-/// Make `element` draggable, using `handle_query` as the drag handle.
+/** @hidden
+ * Make `element` draggable, using `handle_query` as the drag handle.
+ * @param  element      DOM element that should be draggable
+ * @param  handle_query query (used in element.querySelector(handle_query))
+ *                      for the drag handle
+ */
 export function make_draggable(element: DraggableElement, handle_query: string) {
     // adapted from https://stackoverflow.com/a/41737171
     const handle = element.querySelector(handle_query);

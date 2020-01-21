@@ -13,14 +13,23 @@ interface TableProperty {
     cell: HTMLTableDataCellElement;
 }
 
-/// A table to display the properties of the current selected
-/// structure/environement
+/** @hidden
+ * A table to display the properties of the current selected structure/environement
+ */
 export class Table {
     private _target: Target;
 
     private _header: HTMLTableHeaderCellElement;
     private _properties: TableProperty[];
 
+    /**
+     * Create and append a new table inside the given `HTMLElement`.
+     *
+     * @param root       where to append the new table
+     * @param target     is this table related to atom or structure
+     * @param collapseID HTML id to use for the root div with class=collapse
+     * @param properties properties to display in this table.
+     */
     constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse" id=${collapseID}>
@@ -56,6 +65,10 @@ export class Table {
         this.show({environment: 0, structure: 0, atom: 0});
     }
 
+    /**
+     * Show the properties for the given `environment`, corresponding to the
+     * given structure/atom `indexes`
+     */
     public show(indexes: Indexes) {
         let id;
         if (this._target === 'structure') {

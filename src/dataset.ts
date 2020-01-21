@@ -3,61 +3,112 @@
  * @module main
  */
 
-interface JSmolEnvironment {
-    cutoff: number;
-}
-
-/// All the data needed to create a Vizualizer
+/** A dataset containing all the data to be displayed. */
 export interface Dataset {
-    /// Dataset metadata
-    meta: Metadata;
-    /// List of structures in the dataset
+    /** Various metadata associated with this dataset */
+    meta: {
+        /** dataset name */
+        name: string;
+    }
+    /** List of structures in the dataset */
     structures: Structure[];
-    /// List of properties for the structure
+    /**
+     * List of properties for the structures (`target == "structure"`), or
+     * atom-centered environments in the structures (`target == "atom"`).
+     *
+     * For structure properties, the `values` array of the property should have
+     * the same size as the [[Dataset.structures|structure list]].
+     *
+     * For atomic properties, the `values` array of the property should have
+     * the same size as the [[Dataset.environments|environments list]].
+     */
     properties: {
         [name: string]: Property;
     };
-    /// List of atom-centered environments
+    /**
+     * List of atom-centered environments in the dataset.
+     *
+     * Currently, the code assumes that every atom is associated with an
+     * environment. This may change in the future.
+     */
     environments?: Environment[];
 }
 
-/// Metadata that can be associated with a dataset
-interface Metadata {
-    /// The dataset name
-    name: string;
-    // TODO: add more here: author, journal, ...
-}
-
+/** A single atomic structure */
 export interface Structure {
+    /** Names of all atoms in the structure */
     names: number[],
+    /**
+     * x position (cartesian coordinate) of all atoms in the structure
+     *
+     * This array should have the same size as [[Structure.names]], and contain
+     * values expressed in Angströms.
+     */
     x: number[],
+    /**
+     * y position (cartesian coordinate) of all atoms in the structure
+     *
+     * This array should have the same size as [[Structure.names]], and contain
+     * values expressed in Angströms.
+     */
     y: number[],
+    /**
+     * z position (cartesian coordinate) of all atoms in the structure
+     *
+     * This array should have the same size as [[Structure.names]], and contain
+     * values expressed in Angströms.
+     */
     z: number[],
+    /**
+     * Unit cell of the system, given as `[ax ay az bx by bz cx cy cz]`, where
+     * **a**, **b**, and **c** are the unit cell vectors. All values should be
+     * expressed in Angströms.
+     */
     cell?: number[],
 }
 
+/** Possible types of properties: full structure property, or atomic property */
 export type Target = 'structure' | 'atom';
 
-/// A single property of a dataset
+/**
+ * A single property in a dataset.
+ *
+ * Properties can be physical properties (energy, number of atoms, density,
+ * *etc.*); values associated with the structure (such as SOAP vectors),
+ * projected onto a lower dimensionality sub-space (through PCA or any other
+ * algorithm); or any other value associated with every structure/environment in
+ * the dataset.
+ */
 export interface Property {
-    /// Property target: are we considering atomic properties or global
-    /// properties
+    /** is this property associated with a full structure or a single atom? */
     target: Target;
-    /// Property value: string values should represent classification results
-    /// numeric values can be use for everything else.
+    /**
+     * values of the property
+     *
+     * string values should represent classification results (category "A", "B"
+     * or "C"); and numeric values should be use for everything else.
+     */
     values: string[] | number[];
 }
 
-/// An atom-centered environments
-export interface Environment extends JSmolEnvironment {
-    /// Index of the related structure in Dataset.structure
+/**
+ * An atom-centered environment.
+ *
+ * Currently, only spherical (i.e. cutoff-based) environments are supported
+ */
+export interface Environment {
+    /** Index of the related structure in [[Dataset.structures]] */
     structure: number;
-    /// Index of the central atom in the structure, 0-based
+    /** Index of the central atom in the structure, 0-based */
     center: number;
+    /** Spherical cutoff radius, expressed in Angströms */
+    cutoff: number;
 }
 
-/// Check that the given object, potentially comming from javascript,
-/// has all reaquired properties to be a dataset
+/** @hidden
+ * Check that the given object, potentially comming from javascript, has all
+ * required properties to be a dataset.
+ */
 export function checkDataset(o: any) {
     if (!('meta' in o && typeof o['meta'] === 'object')) {
         throw Error("missing 'meta' in dataset");

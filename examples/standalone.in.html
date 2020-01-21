@@ -90,16 +90,15 @@
             return JSON.parse(text);
         }
 
-        function setupSketchviz(json) {
+        function setupSketchviz(dataset) {
             document.getElementById('upload-group').style.display = "none";
 
-            vizualizer = new Sketchviz.Vizualizer({
-                ...json,
-                plotId: 'skviz-plot',
-                viewerId: 'skviz-viewer',
+            vizualizer = new Sketchviz.DefaultVizualizer({
+                map: 'skviz-plot',
+                viewer: 'skviz-viewer',
                 j2sPath: 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
-                infoId: 'skviz-info',
-            })
+                info: 'skviz-info',
+            }, dataset)
 
             vizualizer.viewer.settingsPlacement((rect) => {
                 const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();

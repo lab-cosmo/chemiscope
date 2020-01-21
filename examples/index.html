@@ -118,18 +118,17 @@
             });
         }
 
-        function setupSketchviz(json) {
+        function setupSketchviz(dataset) {
             upload.value = ""
             if (vizualizer !== undefined) {
-                vizualizer.changeDataset(json)
+                vizualizer.changeDataset(dataset)
             } else {
-                vizualizer = new Sketchviz.Vizualizer({
-                    ...json,
-                    plotId: 'skviz-plot',
-                    viewerId: 'skviz-viewer',
+                vizualizer = new Sketchviz.DefaultVizualizer({
+                    map: 'skviz-plot',
+                    viewer: 'skviz-viewer',
                     j2sPath: 'jsmol/j2s',
-                    infoId: 'skviz-info',
-                })
+                    info: 'skviz-info',
+                }, dataset)
 
                 vizualizer.viewer.settingsPlacement((rect) => {
                     const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();

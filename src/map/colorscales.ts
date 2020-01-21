@@ -563,6 +563,7 @@ interface ColorMaps {
     [key: string]: PlotlyColorMap;
 }
 
+/** @hidden */
 export const COLOR_MAPS: ColorMaps = {
     inferno: rgb_to_plotly(INFERNO),
     magma: rgb_to_plotly(MAGMA),

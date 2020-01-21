@@ -1,9 +1,7 @@
+/** @ignore */
 /**
  * Some very basic linear algebra functionalities for 3D vectors and 3x3
  * matrixes.
- *
- * @packageDocumentation
- * @module structure.linalg
  */
 
 import assert from 'assert';

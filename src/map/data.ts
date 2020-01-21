@@ -5,22 +5,29 @@
 
 import {Property} from '../dataset'
 
+/** @hidden
+ * Properties turned into numeric values to be displayed on the map.
+ */
 export interface NumericProperty {
-    /// All properties have numeric values. String properties also have a string
-    /// interner
+    /** values for the property */
     values: number[]
+    /** string interner if the property was a string-valued property */
     string?: StringInterner;
 }
 
-/// A simple string => number association, giving a single id to each string
+/** @hidden
+ * A simple string => number association, giving a single numeric id to each
+ * string.
+ */
 export class StringInterner {
     private _values: string[];
 
+    /** Create a new empty [[StringInterner]] */
     constructor() {
         this._values = [];
     }
 
-    /// Get the index associated with the given string `value`
+    /** Get the index associated with the given string `value` */
     public get(value: string): number {
         let index = this._values.findIndex(x => x === value);
         if (index === -1) {
@@ -31,7 +38,7 @@ export class StringInterner {
         return index;
     }
 
-    /// Get the string associated with the given `index`
+    /** Get the string associated with the given `index` */
     public string(index: number): string {
         if (index >= this._values.length) {
             throw Error("requested unknown string from interner")
@@ -39,12 +46,13 @@ export class StringInterner {
         return this._values[index]
     }
 
-    /// Get all the strings known by this interner
+    /** Get all the strings known by this interner */
     public strings(): string[] {
         return this._values;
     }
 }
 
+/** Transform a property to a numeric property */
 function propertyToNumeric(property: number[] | string[]): NumericProperty {
     const prop_type = typeof property[0];
     if (prop_type === "number") {
@@ -67,6 +75,7 @@ function propertyToNumeric(property: number[] | string[]): NumericProperty {
     }
 }
 
+/** Sanity check that all properties have the same size */
 function checkSize(name: string, properties: { [key: string]: NumericProperty }) {
     let size = undefined;
     for (const key in properties) {
@@ -81,26 +90,29 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
     }
 }
 
-/// Data storage for maps, differenciating between numeric/string and
-/// structure/atom properties
-///
-/// String properties can be used to assing classes to each data point. They are
-/// mapped to a numeric value using the `StringInterner` for easier
-/// vizualization.
+/** @hidden
+ * Data storage for maps, differenciating between numeric/string and
+ * structure/atom properties
+ *
+ * String properties can be used to assing classes to each data point. They are
+ * mapped to a numeric value using the `StringInterner` for easier
+ * vizualization.
+ */
 export class MapData {
-    /// Structure properties
+    /** Structure properties */
     public structure: {
         [name: string]: NumericProperty
     }
 
-    /// Atomic properties
+    /** Atomic properties */
     public atom: {
         [name: string]: NumericProperty
     }
 
-    /// Maximal number of symbols in this dataset
+    /** Maximal number of symbols (i.e. different values in string properties) in this dataset */
     public maxSymbols: number;
 
+    /** Create a new [[MapData]] containing values from the given properties */
     constructor(properties: {[name: string]: Property}) {
         this.structure = {}
         this.atom = {}

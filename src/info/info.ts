@@ -22,28 +22,50 @@ function filter<T extends Object>(obj: T, predicate: (o: any) => boolean): T {
     return result;
 };
 
+/** @hidden
+ * Generate a random id with 20 characters
+ */
 function generateId() {
     const arr = new Uint8Array(20);
     window.crypto.getRandomValues(arr);
     return Array.from(arr, (dec) => ('0' + dec.toString(16)).substr(-2)).join('');
 }
 
+/**
+ * Information associated with the current structure or atom
+ */
 interface Info {
+    /** The button hiding/showing the table, displaying the index of the structure / atom */
     label: HTMLButtonElement;
+    /** Slider to select an environment / play the trajectory */
     slider: Slider;
+    /** Property table */
     table: Table;
 }
 
-/// Display information about structure or environment, using both a slider for
-/// selection and an table displaying all properties (hidden by default).
+/**
+ * The [[EnvironmentInfo]] class displays information about structure or
+ * environment, using a slider for selection and an hidden by default table
+ * displaying all properties.
+ */
 export class EnvironmentInfo {
     private _root: HTMLElement;
     private _atom?: Info;
     private _structure: Info;
     private _keepOrientiation: HTMLInputElement;
     private _indexer: EnvironmentIndexer;
+
+    /** Callback used when the user changes one of the sliders value */
     public onchange: (indexes: Indexes, keepOrientation: boolean) => void;
 
+    /**
+     * Create a new [[EnvironmentInfo]] inside the DOM element with given `id`
+     * @param id         HTML id of the DOM element where the sliders and
+     *                   tables should live
+     * @param properties properties to be displayed
+     * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
+     *                   environments index to structure/atom indexes
+     */
     constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
         const root = document.getElementById(id);
         if (root === null) {
@@ -109,6 +131,7 @@ export class EnvironmentInfo {
         }
     }
 
+    /** Create the structure slider and table */
     private _createStructure(id: string, properties: {[name: string]: Property}): Info {
         const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
 
@@ -141,6 +164,7 @@ export class EnvironmentInfo {
         return { label, slider, table };
     }
 
+    /** Create the atom slider and table */
     private _createAtom(id: string, properties: {[name: string]: Property}) {
         const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
         const slider = new Slider(this._root, 'atom', delay);
@@ -159,7 +183,7 @@ export class EnvironmentInfo {
         return { label, slider, table };
     }
 
-    /// The environment index changed outside, update the sliders & tables
+    /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes) {
         this._structure.label.innerText = `structure ${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
@@ -183,6 +207,7 @@ export class EnvironmentInfo {
         }
     }
 
+    /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
         const structure = this._structure.slider.value();
         if (this._atom !== undefined) {
