@@ -53,7 +53,7 @@ export class StringInterner {
 }
 
 /** Transform a property to a numeric property */
-function propertyToNumeric(property: number[] | string[]): NumericProperty {
+function propertyToNumeric(name: string, property: number[] | string[]): NumericProperty {
     const prop_type = typeof property[0];
     if (prop_type === "number") {
         return {
@@ -63,7 +63,17 @@ function propertyToNumeric(property: number[] | string[]): NumericProperty {
         const interner = new StringInterner();
         const values = [];
         for (const value of (property as string[])) {
-            values.push(interner.get(value));
+            const numeric = interner.get(value);
+            values.push(numeric);
+            // string properties are assumed to be categories, and each one of
+            // them have an associated trace to be able to display the symbols
+            // legend. Having more than a handfull of traces drastically slows
+            // down the whole page.
+            if (numeric > 20) {
+                throw Error(
+                    `the '${name}' property contains more than 50 different values, it can not be interpreted as categories`
+                )
+            }
         }
 
         return {
@@ -120,13 +130,13 @@ export class MapData {
 
         for (const name in properties) {
             if (properties[name].target == 'structure') {
-                const property = propertyToNumeric(properties[name].values);
+                const property = propertyToNumeric(name, properties[name].values);
                 this.structure[name] = property;
                 if (property.string !== undefined) {
                     this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
                 }
             } else if (properties[name].target == 'atom') {
-                const property = propertyToNumeric(properties[name].values);
+                const property = propertyToNumeric(name, properties[name].values);
                 this.atom[name] = property;
                 if (property.string !== undefined) {
                     this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
