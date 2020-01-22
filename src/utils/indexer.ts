@@ -4,7 +4,13 @@
  */
 
 import assert from 'assert';
-import {Structure, Environment, Target} from '../dataset';
+import {Structure, Environment} from '../dataset';
+
+/**
+ * If a dataset contains both atomic and structure properties, we can only
+ * display one kind at the time, indicated by the [[DisplayMode]].
+ */
+export type DisplayMode = 'structure' | 'atom';
 
 /** Indexes related to a single environment */
 export interface Indexes {
@@ -34,10 +40,10 @@ export interface Indexes {
  */
 export class EnvironmentIndexer {
     /**
-     * Current [[Target]] being displayed. This is useful for datasets that
+     * Current [[DisplayMode]]. This is useful for datasets that
      * contain both atom-level and structure-level properties.
      */
-    public target: Target;
+    public mode: DisplayMode;
 
     private _structures: Structure[];
     private _environments?: Environment[];
@@ -48,17 +54,16 @@ export class EnvironmentIndexer {
      * Create a new [[EnvironmentIndexer]] for the given set of structures and
      * environments.
      *
-     * @param target       are we dealing with `'atom'` or `'structure'`
-     *                     properties?
+     * @param mode         should we display atomic or structure properties
      * @param structures   structures used in the current dataset
      * @param environments environments used in the current dataset
      */
-    constructor(target: Target, structures: Structure[], environments?: Environment[]) {
-        this.target = target;
+    constructor(mode: DisplayMode, structures: Structure[], environments?: Environment[]) {
+        this.mode = mode;
         this._structures = structures;
         this._environments = environments;
 
-        if (this.target == "atom") {
+        if (this.mode == "atom") {
             assert(this._environments !== undefined);
         }
 
@@ -77,13 +82,13 @@ export class EnvironmentIndexer {
      *                     structure / atom indexes
      */
     public from_environment(environment: number): Indexes {
-        if (this.target == 'structure') {
+        if (this.mode == 'structure') {
             return {
                 environment: environment,
                 structure: environment,
             }
         } else {
-            assert(this.target === 'atom');
+            assert(this.mode === 'atom');
             assert(this._environments !== undefined);
 
             const env = this._environments![environment];
@@ -103,14 +108,14 @@ export class EnvironmentIndexer {
      *                   index
      */
     public from_structure_atom(structure: number, atom?: number): Indexes {
-        if (this.target == 'structure') {
+        if (this.mode == 'structure') {
             assert(atom === undefined || atom === 0);
             return {
                 environment: structure,
                 structure: structure,
             }
         } else {
-            assert(this.target === 'atom');
+            assert(this.mode === 'atom');
             assert(this._environments !== undefined);
 
             // assume that environments are ordered structure by structure, then

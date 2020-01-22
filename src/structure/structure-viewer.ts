@@ -67,7 +67,7 @@ export class StructureViewer {
         this.onselect = () => {};
 
         this._widget.onselect = (atom: number) => {
-            if (this._indexer.target == 'atom') {
+            if (this._indexer.mode == 'atom') {
                 this._widget.highlight(atom);
             }
             // if the viewer is showing a bigger supercell than [1, 1, 1], the
@@ -117,7 +117,7 @@ export class StructureViewer {
 
             if (this._environments !== undefined) {
                 options.environments = this._environments[indexes.structure];
-                if (this._indexer.target === 'atom') {
+                if (this._indexer.mode === 'atom') {
                     options.highlight = indexes.atom;
                 }
             }
@@ -125,7 +125,7 @@ export class StructureViewer {
             this._widget.load(`inline '${this._structures[indexes.structure]}'`, options);
         }
 
-        if (this._indexer.target === 'atom') {
+        if (this._indexer.mode === 'atom') {
             if  (this._current.atom != indexes.atom) {
                 this._widget.highlight(indexes.atom)
             }

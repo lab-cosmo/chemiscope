@@ -845,7 +845,7 @@ export class PropertiesMap {
 
     /** Get the currently available properties: either `"atom"` or `"structure"` properties */
     private _properties(): {[name: string]: NumericProperty} {
-        return this._data[this._indexer.target]
+        return this._data[this._indexer.mode]
     }
 
     /** Get the plotly hovertemplate depending on `this._current.color` */

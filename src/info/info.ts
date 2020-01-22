@@ -80,7 +80,7 @@ export class EnvironmentInfo {
         const settingsID = 'chsp-' + generateId();
 
         let atomButton = '<div></div>';
-        if (this._indexer.target === 'atom') {
+        if (this._indexer.mode === 'atom') {
             atomButton = `
             <button type="button" class="btn btn-sm chsp-info-atom-btn"
                 data-toggle="collapse"
@@ -126,7 +126,7 @@ export class EnvironmentInfo {
 
         this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'));
 
-        if (this._indexer.target === 'atom') {
+        if (this._indexer.mode === 'atom') {
             this._atom = this._createAtom(atomId, filter(properties, (p) => p.target === 'atom'));
         }
     }
@@ -214,7 +214,7 @@ export class EnvironmentInfo {
             const atom = this._atom.slider.value();
             return this._indexer.from_structure_atom(structure, atom);
         } else {
-            assert(this._indexer.target == 'structure');
+            assert(this._indexer.mode == 'structure');
             return this._indexer.from_structure_atom(structure);
         }
     }
