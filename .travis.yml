@@ -17,6 +17,7 @@ script:
     - cp -r examples/ gh-pages/
     - cp dist/*.min.js gh-pages/
     - touch gh-pages/.nojekyll
+    - echo "chemiscope.org" > gh-pages/CNAME
     # Get the example data files from the previous version
     - git clone --depth=1 https://github.com/$TRAVIS_REPO_SLUG --branch gh-pages old-gh-pages
     - cp old-gh-pages/*.json gh-pages/
