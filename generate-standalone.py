@@ -26,7 +26,7 @@ def get_url(url):
         data = requests.get(url)
         return data.text
     else:
-        if url == 'sketchviz.min.js':
+        if url == 'chemiscope.min.js':
             path = os.path.join(ROOT, "dist")
         else:
             path = os.path.join(ROOT, "examples")

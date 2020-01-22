@@ -3,7 +3,7 @@ import os
 
 # -- Project information -----------------------------------------------------
 
-project = 'maptomic'
+project = 'chemiscope'
 copyright = '2020, Guillaume Fraux'
 author = 'Guillaume Fraux'
 
@@ -33,7 +33,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 html_theme_options = {
     'navbar_links': [
-        ("See it in action", "http://luthaf.fr/sketchviz/index"),
+        ("See it in action", "https://chemiscope.org"),
     ],
     'bootswatch_theme': "flatly",
 }

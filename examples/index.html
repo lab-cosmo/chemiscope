@@ -18,12 +18,12 @@
         <!-- Pako: zlib implementation in javascript, to store data files as gziped json -->
         <script type="text/javascript" src="pako_inflate.min.js"></script>
 
-        <script defer type="text/javascript" src="sketchviz.min.js"></script>
+        <script defer type="text/javascript" src="chemiscope.min.js"></script>
     </head>
 
     <body>
         <header style="padding: 1em 0; margin-bottom: 2em;">
-            <h1 style="text-align: center">chemiscope visualizer</h1>
+            <h1 style="text-align: center">Chemiscope</h1>
         </header>
         <div class="container">
             <div style="margin: auto; width: 90%; display: grid; grid-gap: 1em; grid-template-columns: 2fr 2fr 1fr;">
@@ -89,7 +89,7 @@
                 const reader = new FileReader();
                 reader.onload = () => {
                     const json = toJson(name, reader.result);
-                    setupSketchviz(json);
+                    setupChemiscope(json);
                 }
                 reader.readAsArrayBuffer(upload.files[0]);
             } else {
@@ -97,7 +97,7 @@
                 fetch(example.value)
                     .then(response => response.arrayBuffer())
                     .then(buffer => toJson(example.value, buffer))
-                    .then(json => setupSketchviz(json))
+                    .then(json => setupChemiscope(json))
                     .catch(e => console.error(e));
             }
         }
@@ -118,12 +118,12 @@
             });
         }
 
-        function setupSketchviz(dataset) {
+        function setupChemiscope(dataset) {
             upload.value = ""
             if (vizualizer !== undefined) {
                 vizualizer.changeDataset(dataset)
             } else {
-                vizualizer = new Sketchviz.DefaultVizualizer({
+                vizualizer = new Chemiscope.DefaultVizualizer({
                     map: 'skviz-plot',
                     viewer: 'skviz-viewer',
                     j2sPath: 'jsmol/j2s',

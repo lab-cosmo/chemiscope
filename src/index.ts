@@ -25,7 +25,7 @@ import {EnvironmentInfo} from './info';
 import {Dataset, checkDataset} from './dataset';
 import {EnvironmentIndexer} from './utils';
 
-require('./static/sketchviz.css');
+require('./static/chemiscope.css');
 
 /**
  * Configuration for the [[DefaultVizualizer]]
@@ -46,19 +46,19 @@ export interface Config {
  */
 function checkConfig(o: any) {
     if (!('map' in o && typeof o['map'] === 'string')) {
-        throw Error("missing 'map' in Sketchviz.input");
+        throw Error("missing 'map' in chemiscope config");
     }
 
     if (!('viewer' in o && typeof o['viewer'] === 'string')) {
-        throw Error("missing 'viewer' in Sketchviz.input");
+        throw Error("missing 'viewer' in chemiscope config");
     }
 
     if (!('j2sPath' in o && typeof o['j2sPath'] === 'string')) {
-        throw Error("missing 'j2sPath' in Sketchviz.input");
+        throw Error("missing 'j2sPath' in chemiscope config");
     }
 
     if (!('info' in o && typeof o['info'] === 'string')) {
-        throw Error("missing 'info' in Sketchviz.input");
+        throw Error("missing 'info' in chemiscope config");
     }
 }
 

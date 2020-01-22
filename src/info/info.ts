@@ -75,14 +75,14 @@ export class EnvironmentInfo {
         this._indexer = indexer;
         this.onchange = () => {};
 
-        const structureId = 'skv-' + generateId();
-        const atomId = 'skv-' + generateId();
-        const settingsID = 'skv-' + generateId();
+        const structureId = 'chsp-' + generateId();
+        const atomId = 'chsp-' + generateId();
+        const settingsID = 'chsp-' + generateId();
 
         let atomButton = '<div></div>';
         if (this._indexer.target === 'atom') {
             atomButton = `
-            <button type="button" class="btn btn-sm skv-info-atom-btn"
+            <button type="button" class="btn btn-sm chsp-info-atom-btn"
                 data-toggle="collapse"
                 data-target="#${atomId}"
                 aria-expanded="false"
@@ -93,8 +93,8 @@ export class EnvironmentInfo {
         }
 
         this._root.innerHTML = `
-        <div class="skv-info">
-            <button type="button" class="btn btn-sm skv-info-structure-btn"
+        <div class="chsp-info">
+            <button type="button" class="btn btn-sm chsp-info-structure-btn"
                 data-toggle="collapse"
                 data-target="#${structureId}"
                 aria-expanded="false"
@@ -104,25 +104,25 @@ export class EnvironmentInfo {
             ${atomButton}
             <button data-toggle="collapse"
                     data-target="#${settingsID}"
-                    class="btn btn-light btn-sm skv-trajectory-settings-btn">
-                <div class="skv-hamburger"><div></div><div></div><div></div></div>
+                    class="btn btn-light btn-sm chsp-trajectory-settings-btn">
+                <div class="chsp-hamburger"><div></div><div></div><div></div></div>
             </button>
         </div>
-        <div class="collapse skv-trajectory-settings" id="${settingsID}">
+        <div class="collapse chsp-trajectory-settings" id="${settingsID}">
             <div class="input-group input-group-sm">
                 <div class="input-group-prepend">
-                    <label class="input-group-text" for=skv-playback-delay title="playback delay in tenths of seconds" style="cursor: help;">delay</label>
+                    <label class="input-group-text" for=chsp-playback-delay title="playback delay in tenths of seconds" style="cursor: help;">delay</label>
                 </div>
-                <input id=skv-playback-delay class="form-control" type="number" min=1 value=7>
+                <input id=chsp-playback-delay class="form-control" type="number" min=1 value=7>
             </div>
 
-            <div class="custom-control custom-switch skv-keep-orientation">
-                <input type="checkbox" class="custom-control-input" id=skv-is-trajectory>
-                <label class="custom-control-label" for=skv-is-trajectory title="keep the molecule orientation" style="cursor: help;">trajectory</label>
+            <div class="custom-control custom-switch chsp-keep-orientation">
+                <input type="checkbox" class="custom-control-input" id=chsp-is-trajectory>
+                <label class="custom-control-label" for=chsp-is-trajectory title="keep the molecule orientation" style="cursor: help;">trajectory</label>
             </div>
         </div>`;
 
-        this._keepOrientiation = this._root.querySelector('#skv-is-trajectory') as HTMLInputElement;
+        this._keepOrientiation = this._root.querySelector('#chsp-is-trajectory') as HTMLInputElement;
 
         this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'));
 
@@ -133,7 +133,7 @@ export class EnvironmentInfo {
 
     /** Create the structure slider and table */
     private _createStructure(id: string, properties: {[name: string]: Property}): Info {
-        const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
+        const delay = this._root.querySelector('#chsp-playback-delay') as HTMLInputElement;
 
         const slider = new Slider(this._root, 'structure', delay);;
         const n_structures = this._indexer.structuresCount();
@@ -159,14 +159,14 @@ export class EnvironmentInfo {
             this.onchange(indexes, this._keepOrientiation.checked);
         }
 
-        const label = this._root.getElementsByClassName('skv-info-structure-btn')[0] as HTMLButtonElement;
+        const label = this._root.getElementsByClassName('chsp-info-structure-btn')[0] as HTMLButtonElement;
 
         return { label, slider, table };
     }
 
     /** Create the atom slider and table */
     private _createAtom(id: string, properties: {[name: string]: Property}) {
-        const delay = this._root.querySelector('#skv-playback-delay') as HTMLInputElement;
+        const delay = this._root.querySelector('#chsp-playback-delay') as HTMLInputElement;
         const slider = new Slider(this._root, 'atom', delay);
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
         slider.reset(n_atoms - 1);
@@ -179,7 +179,7 @@ export class EnvironmentInfo {
 
         const table = new Table(this._root, 'atom', id, properties);
 
-        const label = this._root.getElementsByClassName('skv-info-atom-btn')[0] as HTMLButtonElement;
+        const label = this._root.getElementsByClassName('chsp-info-atom-btn')[0] as HTMLButtonElement;
         return { label, slider, table };
     }
 

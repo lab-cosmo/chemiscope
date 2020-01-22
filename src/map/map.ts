@@ -234,35 +234,35 @@ export class PropertiesMap {
         this._createSettings();
         this._settings = {
             x: {
-                select: getByID<HTMLSelectElement>('skv-x'),
-                scale: getByID<HTMLSelectElement>('skv-x-scale'),
-                min: getByID<HTMLInputElement>('skv-x-min'),
-                max: getByID<HTMLInputElement>('skv-x-max'),
+                select: getByID<HTMLSelectElement>('chsp-x'),
+                scale: getByID<HTMLSelectElement>('chsp-x-scale'),
+                min: getByID<HTMLInputElement>('chsp-x-min'),
+                max: getByID<HTMLInputElement>('chsp-x-max'),
             },
             y: {
-                select: getByID<HTMLSelectElement>('skv-y'),
-                scale: getByID<HTMLSelectElement>('skv-y-scale'),
-                min: getByID<HTMLInputElement>('skv-y-min'),
-                max: getByID<HTMLInputElement>('skv-y-max'),
+                select: getByID<HTMLSelectElement>('chsp-y'),
+                scale: getByID<HTMLSelectElement>('chsp-y-scale'),
+                min: getByID<HTMLInputElement>('chsp-y-min'),
+                max: getByID<HTMLInputElement>('chsp-y-max'),
             },
             z: {
-                select: getByID<HTMLSelectElement>('skv-z'),
-                scale: getByID<HTMLSelectElement>('skv-z-scale'),
-                min: getByID<HTMLInputElement>('skv-z-min'),
-                max: getByID<HTMLInputElement>('skv-z-max'),
+                select: getByID<HTMLSelectElement>('chsp-z'),
+                scale: getByID<HTMLSelectElement>('chsp-z-scale'),
+                min: getByID<HTMLInputElement>('chsp-z-min'),
+                max: getByID<HTMLInputElement>('chsp-z-max'),
             },
             color: {
-                select: getByID<HTMLSelectElement>('skv-color'),
+                select: getByID<HTMLSelectElement>('chsp-color'),
                 scale: document.createElement('select'),
-                min: getByID<HTMLInputElement>('skv-color-min'),
-                max: getByID<HTMLInputElement>('skv-color-max'),
+                min: getByID<HTMLInputElement>('chsp-color-min'),
+                max: getByID<HTMLInputElement>('chsp-color-max'),
             },
-            colorReset: getByID<HTMLButtonElement>('skv-color-reset'),
-            palette: getByID<HTMLSelectElement>('skv-palette'),
-            symbol: getByID<HTMLSelectElement>('skv-symbol'),
+            colorReset: getByID<HTMLButtonElement>('chsp-color-reset'),
+            palette: getByID<HTMLSelectElement>('chsp-palette'),
+            symbol: getByID<HTMLSelectElement>('chsp-symbol'),
             size: {
-                select: getByID<HTMLSelectElement>('skv-size'),
-                factor: getByID<HTMLInputElement>('skv-size-factor'),
+                select: getByID<HTMLSelectElement>('chsp-size'),
+                factor: getByID<HTMLInputElement>('chsp-size-factor'),
             }
         };
 
@@ -358,10 +358,10 @@ export class PropertiesMap {
     private _createSettings() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
-        template.innerHTML = `<button data-target="#skv-settings"
+        template.innerHTML = `<button data-target="#chsp-settings"
                                       data-toggle="modal"
-                                      class="btn btn-light btn-sm skv-open-settings">
-            <div class="skv-hamburger"><div></div><div></div><div></div></div>
+                                      class="btn btn-light btn-sm chsp-open-settings">
+            <div class="chsp-hamburger"><div></div><div></div><div></div></div>
         </button>`;
         const openSettings = template.content.firstChild!;
         this._root.append(openSettings);

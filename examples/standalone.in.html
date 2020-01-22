@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>chemiscope</title>
+        <title>Chemiscope</title>
 
         <!-- bootstrap -->
         <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -21,7 +21,7 @@
 
     <body>
         <header style="padding: 1em 0; margin-bottom: 2em;">
-            <h1 style="text-align: center">chemiscope visualizer</h1>
+            <h1 style="text-align: center">Chemiscope</h1>
         </header>
         <div class="container">
             <div id=upload-group style="margin: auto; width: 50%; display: grid; grid-gap: 1em; grid-template-columns: 2fr 2fr;">
@@ -58,7 +58,7 @@
         <div style="margin-bottom: 5em;"></div>
     </body>
 
-    <script type="text/javascript" src="sketchviz.min.js"></script>
+    <script type="text/javascript" src="chemiscope.min.js"></script>
 
     <script>
         let vizualizer = undefined;
@@ -74,7 +74,7 @@
             const reader = new FileReader();
             reader.onload = () => {
                 const json = toJson(name, reader.result);
-                setupSketchviz(json);
+                setupChemiscope(json);
             }
             reader.readAsArrayBuffer(upload.files[0]);
         }
@@ -90,10 +90,10 @@
             return JSON.parse(text);
         }
 
-        function setupSketchviz(dataset) {
+        function setupChemiscope(dataset) {
             document.getElementById('upload-group').style.display = "none";
 
-            vizualizer = new Sketchviz.DefaultVizualizer({
+            vizualizer = new Chemiscope.DefaultVizualizer({
                 map: 'skviz-plot',
                 viewer: 'skviz-viewer',
                 j2sPath: 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
@@ -132,7 +132,7 @@
             const data = document.getElementById('json-data').innerText.trim();
             if (data !== "") {
                 const json = JSON.parse(data);
-                setupSketchviz(json)
+                setupChemiscope(json)
             }
         })
     </script>

@@ -1,11 +1,11 @@
-.skv-open-settings {
+.chsp-open-settings {
     position: absolute;
     top: 3px;
     left: 5px;
     z-index: 10;
 }
 
-.skv-options {
+.chsp-options {
     font-weight: bold;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -15,46 +15,46 @@
     grid-gap: 1em;
 }
 
-.skv-options label {
+.chsp-options label {
     min-width: 5em;
 }
 
-.skv-input-extra {
+.chsp-input-extra {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 1em;
     margin-bottom: 1.5em;
 }
 
-.skv-input-extra label {
+.chsp-input-extra label {
     min-width: auto;
 }
 
-.skv-extra-options {
+.chsp-extra-options {
     grid-column: 1 / span 2;
 }
 
-.skv-extra-options-open {
+.chsp-extra-options-open {
     margin: auto;
     display: block;
 }
 
-.skv-options .form-check-label {
+.chsp-options .form-check-label {
     width: auto;
 }
 
-.skv-modal-header {
+.chsp-modal-header {
     cursor: grab;
 }
 
-.skv-hamburger div {
+.chsp-hamburger div {
     width: 1.1em;
     height: 0.4ex;
     background-color: black;
     margin: 0.4ex 0;
 }
 
-.skv-play-button {
+.chsp-play-button {
     border: 0;
     background: transparent;
     box-sizing: border-box;
@@ -70,16 +70,16 @@
     border-width: 0.7em 0 0.7em 1em;
 }
 
-.skv-play-button.skv-playing {
+.chsp-play-button.chsp-playing {
     border-style: double;
     border-width: 0px 0 0px 1.2em;
 }
 
-.skv-play-button:hover {
+.chsp-play-button:hover {
     border-color: transparent transparent transparent #404040;
 }
 
-.skv-properties {
+.chsp-properties {
     height: 100%;
     width: 80%;
     margin: auto;
@@ -87,11 +87,11 @@
     min-width: 400px;
 }
 
-.skv-properties td {
+.chsp-properties td {
     width: 50%;
 }
 
-.skv-settings-section-title {
+.chsp-settings-section-title {
     font-weight: bold;
 }
 
@@ -100,20 +100,20 @@
     height: 1.5em !important;
 }
 
-.skv-info {
+.chsp-info {
     display: flex;
     position: relative;
     margin-bottom: 1ex;
     justify-content: center;
 }
 
-.skv-trajectory-settings-btn {
+.chsp-trajectory-settings-btn {
     position: absolute;
     top: -3px;
     right: 5px;
 }
 
-.skv-trajectory-settings {
+.chsp-trajectory-settings {
     display: grid;
     grid-template-columns: 8em 8em;
     justify-content: center;
@@ -122,7 +122,7 @@
     margin-bottom: 1ex;
 }
 
-.skv-keep-orientation {
+.chsp-keep-orientation {
     font-size: .875rem;
     font-weight: 400;
     line-height: 1.5;
@@ -135,7 +135,7 @@
     padding-bottom: 4px;
 }
 
-.skv-info-structure-btn {
+.chsp-info-structure-btn {
     margin-right: 1em;
     min-width: 8em;
     font-weight: bold;
@@ -145,11 +145,11 @@
     border-width: 2px;
 }
 
-.skv-info-structure-btn:hover {
+.chsp-info-structure-btn:hover {
     background-color: #5b94d0;
 }
 
-.skv-info-atom-btn {
+.chsp-info-atom-btn {
     /* margin: auto; */
     min-width: 8em;
     font-weight: bold;
@@ -159,43 +159,43 @@
     border-width: 2px;
 }
 
-.skv-info-atom-btn:hover {
+.chsp-info-atom-btn:hover {
     background-color: #44a344;
 }
 
 /* Change the atoms slider thumb color to green, to match jsmol highlight */
-.skv-atom-range::-webkit-slider-thumb {
+.chsp-atom-range::-webkit-slider-thumb {
     background-color: #008000;
 }
 
-.skv-atom-range::-moz-range-thumb {
+.chsp-atom-range::-moz-range-thumb {
     background-color: #008000;
 }
 
-.skv-atom-range::-ms-thumb {
+.chsp-atom-range::-ms-thumb {
     background-color: #008000;
 }
 
-.skv-atom-range::-webkit-slider-thumb:active {
+.chsp-atom-range::-webkit-slider-thumb:active {
     background-color: #99cc99;
 }
 
-.skv-atom-range::-moz-range-thumb:active {
+.chsp-atom-range::-moz-range-thumb:active {
     background-color: #99cc99;
 }
 
-.skv-atom-range::-ms-thumb:active {
+.chsp-atom-range::-ms-thumb:active {
     background-color: #99cc99;
 }
 
-.skv-atom-range:focus::-webkit-slider-thumb {
+.chsp-atom-range:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
-.skv-atom-range:focus::-moz-range-thumb {
+.chsp-atom-range:focus::-moz-range-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
-.skv-atom-range:focus::-ms-thumb {
+.chsp-atom-range:focus::-ms-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }

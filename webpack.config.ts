@@ -6,9 +6,9 @@ const config: webpack.Configuration = {
     entry: "./src/index.ts",
     output: {
         path: path.resolve(__dirname, "dist"),
-        filename: "sketchviz.min.js",
+        filename: "chemiscope.min.js",
         libraryTarget: "var",
-        library: "Sketchviz",
+        library: "Chemiscope",
     },
     resolve: {
         modules: ['./node_modules'],

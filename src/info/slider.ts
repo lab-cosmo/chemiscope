@@ -25,19 +25,19 @@ export class Slider {
         const template = document.createElement('template');
         template.innerHTML = `<div class="input-group input-group-sm">
             <div class="input-group-prepend">
-                <span class="input-group-text"><div class="skv-play-button"></div></span>
+                <span class="input-group-text"><div class="chsp-play-button"></div></span>
             </div>
-            <input class="form-control custom-range skv-${target}-range" type='range' min=0 value=0 step=1></input>
+            <input class="form-control custom-range chsp-${target}-range" type='range' min=0 value=0 step=1></input>
         </div>`;
         const group = template.content.firstChild! as HTMLElement;
         root.appendChild(group);
 
         this._slider = group.querySelector('input')! as HTMLInputElement;
-        this._play = group.querySelector('.skv-play-button')! as HTMLElement;
+        this._play = group.querySelector('.chsp-play-button')! as HTMLElement;
         this._delay = delay;
 
         this._play.onclick = () => {
-            this._play.classList.toggle('skv-playing');
+            this._play.classList.toggle('chsp-playing');
             this._step();
         }
 
@@ -72,11 +72,11 @@ export class Slider {
      */
     private _step() {
         setTimeout(() => {
-            if (this._play.classList.contains('skv-playing')) {
+            if (this._play.classList.contains('chsp-playing')) {
                 const value = (this.value() + 1) % parseInt(this._slider.max);
                 this.update(value);
                 this.onchange();
-                // contibue playing until the 'skv-playing' class
+                // contibue playing until the 'chsp-playing' class
                 // is no longer there
                 this._step();
             }
