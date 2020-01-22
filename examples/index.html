@@ -53,9 +53,17 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
-                <details backtrace>
-
+                <details>
+                    <summary>Backtrace</summary>
+                    <p></p>
                 </details>
+            </div>
+
+            <div class="alert alert-warning" role="alert" id=warning-display style="display: none;">
+                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
             </div>
 
             <div class="row">
@@ -151,6 +159,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            Chemiscope.addWarningHandler((message) => {
+                const display = document.getElementById('warning-display');
+                display.style.display = "block";
+                display.getElementsByTagName('p')[0].innerText = message;
+            });
             load.onclick = loadData;
             loadData()
         })
@@ -161,7 +174,8 @@
 
             const text = error === undefined ? msg : error.toString();
             display.getElementsByTagName('p')[0].innerText = text;
-            display.getElementsByTagName('details')[0].innerText = error.stack;
+            const backtrace = display.getElementsByTagName('details')[0];
+            backtrace.getElementsByTagName('p')[0].innerText = error.stack;
         }
     </script>
 </html>

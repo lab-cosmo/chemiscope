@@ -23,7 +23,7 @@ import {StructureViewer} from "./structure";
 import {EnvironmentInfo} from './info';
 
 import {Dataset, checkDataset} from './dataset';
-import {EnvironmentIndexer} from './utils';
+import {EnvironmentIndexer, addWarningHandler} from './utils';
 
 require('./static/chemiscope.css');
 
@@ -135,6 +135,7 @@ class DefaultVizualizer {
 }
 
 export {
+    addWarningHandler,
     StructureViewer,
     PropertiesMap,
     EnvironmentInfo,

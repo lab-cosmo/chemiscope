@@ -4,6 +4,7 @@
  */
 
 import {Property} from '../dataset'
+import {sendWarning} from '../utils'
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
@@ -129,18 +130,16 @@ export class MapData {
         this.maxSymbols = -1;
 
         for (const name in properties) {
-            if (properties[name].target == 'structure') {
-                const property = propertyToNumeric(name, properties[name].values);
-                this.structure[name] = property;
-                if (property.string !== undefined) {
-                    this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
-                }
-            } else if (properties[name].target == 'atom') {
-                const property = propertyToNumeric(name, properties[name].values);
-                this.atom[name] = property;
-                if (property.string !== undefined) {
-                    this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
-                }
+            let property;
+            try {
+                property = propertyToNumeric(name, properties[name].values);
+            } catch (e) {
+                sendWarning(`warning: ${e.message}`);
+                continue;
+            }
+            this[properties[name].target][name] = property;
+            if (property.string !== undefined) {
+                this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
             }
         }
 
