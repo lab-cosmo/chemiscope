@@ -70,18 +70,20 @@ export class Table {
      * given structure/atom `indexes`
      */
     public show(indexes: Indexes) {
-        let id;
+        let id, index;
         if (this._target === 'structure') {
             id = indexes.structure + 1;
+            index = indexes.structure;
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
             id = indexes.atom! + 1;
+            index = indexes.environment;
         }
 
         this._header.innerText = `Properties for ${this._target} ${id}`;
         for (const s of this._properties) {
-            s.cell.innerText = s.values[indexes.environment].toString()
+            s.cell.innerText = s.values[index].toString()
         }
     }
 }
