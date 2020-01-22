@@ -33,12 +33,12 @@ require('./static/chemiscope.css');
 export interface Config {
     /** Id of the DOM element to use for the [[PropertiesMap|map]] */
     map: string;
-    /** Id of the DOM element to use for the [[StructureViewer|structure viewer]] */
-    viewer: string;
-    /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
-    j2sPath: string;
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
     info: string;
+    /** Id of the DOM element to use for the [[StructureViewer|structure viewer]] */
+    structure: string;
+    /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
+    j2sPath: string;
 }
 
 /** @hidden
@@ -49,28 +49,28 @@ function checkConfig(o: any) {
         throw Error("missing 'map' in chemiscope config");
     }
 
-    if (!('viewer' in o && typeof o['viewer'] === 'string')) {
-        throw Error("missing 'viewer' in chemiscope config");
+    if (!('info' in o && typeof o['info'] === 'string')) {
+        throw Error("missing 'info' in chemiscope config");
+    }
+
+    if (!('structure' in o && typeof o['structure'] === 'string')) {
+        throw Error("missing 'structure' in chemiscope config");
     }
 
     if (!('j2sPath' in o && typeof o['j2sPath'] === 'string')) {
         throw Error("missing 'j2sPath' in chemiscope config");
     }
-
-    if (!('info' in o && typeof o['info'] === 'string')) {
-        throw Error("missing 'info' in chemiscope config");
-    }
 }
 
 class DefaultVizualizer {
-    public viewer: StructureViewer;
-    public info: EnvironmentInfo;
     public map: PropertiesMap;
+    public info: EnvironmentInfo;
+    public structure: StructureViewer;
 
     private _ids: {
-        viewer: string;
-        info: string;
         map: string;
+        info: string;
+        structure: string;
     }
     private _indexer: EnvironmentIndexer;
 
@@ -83,10 +83,10 @@ class DefaultVizualizer {
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
         this.map = new PropertiesMap(config.map, dataset.meta.name, this._indexer, dataset.properties);
-        this.viewer = new StructureViewer(config.viewer, config.j2sPath, this._indexer, dataset.structures, dataset.environments);
+        this.structure = new StructureViewer(config.structure, config.j2sPath, this._indexer, dataset.structures, dataset.environments);
 
         if (mode === 'atom') {
-            this.viewer.onselect = (indexes) => {
+            this.structure.onselect = (indexes) => {
                 this.map.select(indexes);
                 this.info.show(indexes);
             };
@@ -95,12 +95,12 @@ class DefaultVizualizer {
         this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
         this.info.onchange = (indexes, keepOrientation) => {
             this.map.select(indexes);
-            this.viewer.show(indexes, keepOrientation);
+            this.structure.show(indexes, keepOrientation);
         };
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);
-            this.viewer.show(indexes);
+            this.structure.show(indexes);
         };
     }
 
@@ -111,25 +111,25 @@ class DefaultVizualizer {
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
         this.map.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
-        this.viewer.changeDataset(this._indexer, dataset.structures, dataset.environments);
+        this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
         if (mode === 'atom') {
-            this.viewer.onselect = (indexes) => {
+            this.structure.onselect = (indexes) => {
                 this.map.select(indexes);
                 this.info.show(indexes);
             };
         } else {
-            this.viewer.onselect = () => {};
+            this.structure.onselect = () => {};
         }
 
         this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
-            this.viewer.show(indexes);
+            this.structure.show(indexes);
         };
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);
-            this.viewer.show(indexes);
+            this.structure.show(indexes);
         };
     }
 }

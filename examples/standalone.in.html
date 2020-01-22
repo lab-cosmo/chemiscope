@@ -46,12 +46,12 @@
 
             <div class="row">
                 <div class="col-xl-7">
-                    <div id=skviz-plot style="height: 620px"></div>
+                    <div id=chemiscope-map style="height: 620px"></div>
                 </div>
 
                 <div class="col-xl-5" style="padding: 0;">
-                    <div id=skviz-viewer style="height: 480px;"></div>
-                    <div id=skviz-info style="min-height: 100px;"></div>
+                    <div id=chemiscope-structure style="height: 480px;"></div>
+                    <div id=chemiscope-info style="min-height: 100px;"></div>
                 </div>
             </div>
         </div>
@@ -94,27 +94,27 @@
             document.getElementById('upload-group').style.display = "none";
 
             vizualizer = new Chemiscope.DefaultVizualizer({
-                map: 'skviz-plot',
-                viewer: 'skviz-viewer',
-                j2sPath: 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
-                info: 'skviz-info',
+                map:       'chemiscope-map',
+                info:      'chemiscope-info',
+                structure: 'chemiscope-structure',
+                j2sPath:   'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
             }, dataset)
 
-            vizualizer.viewer.settingsPlacement((rect) => {
-                const viewerRect = document.getElementById('skviz-viewer').getBoundingClientRect();
+            vizualizer.structure.settingsPlacement((rect) => {
+                const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
 
                 return {
-                    top: viewerRect.top,
-                    left: viewerRect.left - rect.width - 25,
+                    top: structureRect.top,
+                    left: structureRect.left - rect.width - 25,
                 };
             })
 
-            vizualizer.plot.settingsPlacement((rect) => {
-                const viewerRect = document.getElementById('skviz-plot').getBoundingClientRect();
+            vizualizer.map.settingsPlacement((rect) => {
+                const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
 
                 return {
-                    top: viewerRect.top,
-                    left: viewerRect.left + viewerRect.width + 25,
+                    top: mapRect.top,
+                    left: mapRect.left + mapRect.width + 25,
                 };
             })
         }
