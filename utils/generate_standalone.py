@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+'''
 Generate a standalone version of the example/index.html file by inlining all
 javascript/css except for jsmol.
 
 This creates a file that can be distributed in supplementary information
-"""
+'''
 import os
 
 from bs4 import BeautifulSoup
 import requests
 
 
-ROOT = os.path.dirname(__file__)
+ROOT = os.path.join(os.path.dirname(__file__), '..')
 
 
 def get_html():
-    with open(os.path.join(ROOT, "examples", "standalone.in.html")) as fd:
+    with open(os.path.join(ROOT, 'examples', 'standalone.in.html')) as fd:
         html = fd.read()
     return BeautifulSoup(html, 'html.parser')
 
@@ -27,9 +27,9 @@ def get_url(url):
         return data.text
     else:
         if url == 'chemiscope.min.js':
-            path = os.path.join(ROOT, "dist")
+            path = os.path.join(ROOT, 'dist')s
         else:
-            path = os.path.join(ROOT, "examples")
+            path = os.path.join(ROOT, 'examples')
 
         with open(os.path.join(path, url)) as fd:
             return fd.read()
@@ -45,7 +45,7 @@ def inline_ressources(html):
 
             content = get_url(url)
 
-            new_script = html.new_tag('script', type="text/javascript")
+            new_script = html.new_tag('script', type='text/javascript')
             new_script.string = content
             script.replace_with(new_script)
 
