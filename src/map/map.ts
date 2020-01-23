@@ -798,9 +798,7 @@ export class PropertiesMap {
                 x: [NaN],
                 y: [NaN],
                 z: [NaN],
-                hoverinfo: "none",
                 showlegend: false,
-                legendgroup: i.toString(),
                 mode: "markers",
                 marker: {
                     color: "black",
