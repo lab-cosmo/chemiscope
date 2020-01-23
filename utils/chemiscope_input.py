@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 '''
-Generate JSON input files for the default visualizer using ASE to read
-structures.
+Generate JSON input files for the default chemiscope visualizer.
 '''
 import numpy as np
 import json
-
-import ase
-from ase import neighborlist
 
 
 def _typetransform(data):
@@ -81,26 +77,43 @@ def _generate_environments(frames, cutoff):
 
 def write_chemiscope_input(filename, name, frames, extra, cutoff=None):
     '''
-    Write the json file expected by the sketchmap vizualizer at ``filename``.
+    Write the json file expected by the default chemiscope visualizer at
+    ``filename``.
 
-    ---Arguments---
-    filename: name of the file to use to save the json data
-    name: name of the dataset
-    frames: ase.Atoms list containing all the structures
-    extra: dictionary of extra properties to display.
-        For example:
+    :param str filename: name of the file to use to save the json data
+    :param str name: name of the dataset
+    :param list frames: list of `ase.Atoms`_ objects containing all the
+                        structures
+    :param dict extra: dictionary of additional properties, see below
+    :param float cutoff: optional. If present, will be used to generate
+                         atom-centered environments
 
-            extra = {
-                'CS': {
-                    'target': 'atom',
-                    'values': [2, 3, 4, 5, 6, 7]
-                }
+    The written JSON file will contain all the properties defined on the
+    `ase.Atoms`_ objects. Values in ``ase.Atoms.arrays`` are mapped to
+    ``target = "atom"`` properties; while values in ``ase.Atoms.info`` are
+    mapped to ``target = "structure"`` properties.
+
+    Additional properties can be added with the ``extra`` parameter. This
+    parameter should be a dictionary containing one entry for each property.
+    Each entry contains a ``target`` attribute (``'atom'`` or ``'structure'``)
+    and a set of values. ``values`` can be a Python list of float or string; a
+    1D numpy array of numeric values; or a 2D numpy array of numeric values. In
+    the later case, multiple properties will be generated along the second axis.
+    For example, passing
+
+    .. code-block:: python
+
+        extra = {
+            'cheese': {
+                'target': 'atom',
+                'values': np.zeros((300, 4))
             }
+        }
 
-        'target' can be 'atom' or 'structure', and 'values' can contain either
-        numbers or strings
-    cutoff: real, optional. If present, will be used to generate atom-centered
-            environments, containing all other atoms inside the spherical cutoff
+    will generate four properties named ``cheese[1]``, ``cheese[2]``,
+    ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
+
+    .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     '''
 
     data = {

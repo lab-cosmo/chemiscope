@@ -1,2 +1,2 @@
-Embedding
-=========
+Using chemiscope in your own code
+=================================

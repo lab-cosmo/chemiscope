@@ -1,5 +1,6 @@
 import sphinx_bootstrap_theme
 import os
+import sys
 
 # -- Project information -----------------------------------------------------
 
@@ -15,7 +16,11 @@ release = '0.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = [
+    'sphinx.ext.autodoc',
+]
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "utils"))
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -33,7 +38,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 html_theme_options = {
     'navbar_links': [
-        ("See it in action", "https://chemiscope.org"),
+        ("See it in action", "https://chemiscope.org/index"),
     ],
     'bootswatch_theme': "flatly",
 }
