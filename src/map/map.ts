@@ -78,17 +78,21 @@ const DEFAULT_LAYOUT = {
     scene: {
         camera: {
             projection: {
-                type: "orthographic"
+                // broken, see https://github.com/plotly/plotly.js/issues/4514
+                // type: "orthographic"
             }
         },
         xaxis: {
-            title: ""
+            title: "",
+            showspikes: false,
         },
         yaxis: {
-            title: ""
+            title: "",
+            showspikes: false,
         },
         zaxis: {
-            title: <undefined | string> ""
+            title: <undefined | string> "",
+            showspikes: false,
         },
     },
 };
