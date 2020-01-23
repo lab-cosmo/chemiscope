@@ -39,7 +39,7 @@ class UnitCell {
         return linalg.dot(this.inverse, cartesian);
     }
 
-    /** convert from cartesian to fractional coordinates */
+    /** convert from fractional to cartesian coordinates */
     public cartesian(fractional: linalg.Vector3D): linalg.Vector3D {
         return linalg.dot(this.matrix, fractional);
     }

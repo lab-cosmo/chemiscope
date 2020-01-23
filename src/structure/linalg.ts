@@ -11,9 +11,12 @@ export type Matrix = [Vector3D, Vector3D, Vector3D];
 
 export function determinant(matrix: Matrix): number {
     let determinant = 0.0;
-    determinant += matrix[0][0] * matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2];
-    determinant -= matrix[0][1] * matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0];
-    determinant += matrix[0][2] * matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0];
+    determinant += matrix[0][0] * matrix[1][1] * matrix[2][2];
+    determinant += matrix[0][1] * matrix[1][2] * matrix[2][0];
+    determinant += matrix[0][2] * matrix[1][0] * matrix[2][1];
+    determinant -= matrix[0][0] * matrix[2][1] * matrix[1][2];
+    determinant -= matrix[0][1] * matrix[1][0] * matrix[2][2];
+    determinant -= matrix[0][2] * matrix[1][1] * matrix[2][0];
     return determinant;
 }
 
@@ -41,9 +44,9 @@ export function invert(matrix: Matrix): Matrix {
 
 export function dot(matrix: Matrix, vector: Vector3D): Vector3D {
     return [
-        matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2],
-        matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2],
-        matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2],
+        matrix[0][0] * vector[0] + matrix[1][0] * vector[1] + matrix[2][0] * vector[2],
+        matrix[0][1] * vector[0] + matrix[1][1] * vector[1] + matrix[2][1] * vector[2],
+        matrix[0][2] * vector[0] + matrix[1][2] * vector[1] + matrix[2][2] * vector[2],
     ];
 }
 
