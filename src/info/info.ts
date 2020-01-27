@@ -35,8 +35,8 @@ function generateId() {
  * Information associated with the current structure or atom
  */
 interface Info {
-    /** The button hiding/showing the table, displaying the index of the structure / atom */
-    label: HTMLButtonElement;
+    /** Manual id setting with input[type=number] */
+    number: HTMLInputElement
     /** Slider to select an environment / play the trajectory */
     slider: Slider;
     /** Property table */
@@ -82,25 +82,25 @@ export class EnvironmentInfo {
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {
             atomButton = `
-            <button type="button" class="btn btn-sm chsp-info-atom-btn"
+            <div class="btn btn-sm chsp-info-atom-btn"
                 data-toggle="collapse"
                 data-target="#${atomId}"
                 aria-expanded="false"
                 aria-controls="${atomId}">
-                    atom 1
-            </button>
+                    atom <input class="chsp-info-number" type=number value=1 min=1></input>
+            </div>
             `;
         }
 
         this._root.innerHTML = `
         <div class="chsp-info">
-            <button type="button" class="btn btn-sm chsp-info-structure-btn"
+            <div class="btn btn-sm chsp-info-structure-btn"
                 data-toggle="collapse"
                 data-target="#${structureId}"
                 aria-expanded="false"
                 aria-controls="${structureId}">
-                    structure 1
-            </button>
+                    structure <input class="chsp-info-number" type=number value=1 min=1></input>
+            </div>
             ${atomButton}
             <button data-toggle="collapse"
                     data-target="#${settingsID}"
@@ -144,13 +144,14 @@ export class EnvironmentInfo {
         slider.onchange = () => {
             if (this._atom !== undefined) {
                 const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
-                this._atom.label.innerText = `atom 1`;
+                this._atom.number.value = "1";
+                this._atom.number.max = n_atoms.toString();
                 this._atom.slider.reset(n_atoms - 1);
             }
 
             const indexes = this._indexes();
             this._structure.table.show(indexes);
-            this._structure.label.innerText = `structure ${indexes.structure + 1}`;
+            this._structure.number.value = `${indexes.structure + 1}`;
 
             if (this._atom !== undefined) {
                 this._atom.table.show(indexes);
@@ -159,9 +160,35 @@ export class EnvironmentInfo {
             this.onchange(indexes, this._keepOrientiation.checked);
         }
 
-        const label = this._root.getElementsByClassName('chsp-info-structure-btn')[0] as HTMLButtonElement;
+        const number = this._root.querySelector('.chsp-info-structure-btn .chsp-info-number') as HTMLInputElement;
+        number.max = this._indexer.structuresCount().toString();
+        // Don't collapse the info table when clicking on the input field
+        number.onclick = (event) => event.stopPropagation();
+        number.onchange = () => {
+            const value = parseInt(number.value) - 1;
+            if (isNaN(value) || value < 0 || value >= parseInt(number.max)) {
+                // reset to the current slider value if we got an invalid value
+                number.value = `${this._structure.slider.value() + 1}`;
+            } else {
+                this._structure.slider.update(value);
+                if (this._atom !== undefined) {
+                    const n_atoms = this._indexer.atomsCount(value);
+                    this._atom.slider.reset(n_atoms - 1);
+                    this._atom.number.value = "1";
+                    this._atom.number.max = n_atoms.toString();
+                }
 
-        return { label, slider, table };
+                const indexes = this._indexes();
+                this._structure.table.show(indexes);
+                if (this._atom !== undefined) {
+                    this._atom.table.show(indexes);
+                }
+
+                this.onchange(indexes, this._keepOrientiation.checked);
+            }
+        }
+
+        return { number, slider, table };
     }
 
     /** Create the atom slider and table */
@@ -173,25 +200,42 @@ export class EnvironmentInfo {
         slider.onchange = () => {
             const indexes = this._indexes();
             this._atom!.table.show(indexes);
-            this._atom!.label.innerText = `atom ${indexes.atom! + 1}`;
+            this._atom!.number.value = `${indexes.atom! + 1}`;
             this.onchange(indexes, this._keepOrientiation.checked);
         }
 
         const table = new Table(this._root, 'atom', id, properties);
 
-        const label = this._root.getElementsByClassName('chsp-info-atom-btn')[0] as HTMLButtonElement;
-        return { label, slider, table };
+        const number = this._root.querySelector('.chsp-info-atom-btn .chsp-info-number') as HTMLInputElement;
+        number.max = n_atoms.toString();
+        // Don't collapse the info table when clicking on the input field
+        number.onclick = (event) => event.stopPropagation();
+        number.onchange = () => {
+            const value = parseInt(number.value) - 1;
+            if (isNaN(value) || value < 0 || value >= parseInt(number.max)) {
+                // reset to the current slider value if we got an invalid value
+                number.value = `${this._atom!.slider.value() + 1}`;
+            } else {
+                this._atom!.slider.update(value);
+                const indexes = this._indexes();
+                this._atom!.table.show(indexes);
+
+                this.onchange(indexes, this._keepOrientiation.checked);
+            }
+        }
+
+        return { number, slider, table };
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes) {
-        this._structure.label.innerText = `structure ${indexes.structure + 1}`;
+        this._structure.number.value = `${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
 
         if (this._atom !== undefined) {
             const n_atoms = this._indexer.atomsCount(indexes.structure);
-            this._atom.label.innerText = `atom 1`;
+            this._atom.number.value = "1";
             this._atom.slider.reset(n_atoms - 1);
             this._structure.table.show(indexes);
         }
@@ -200,7 +244,7 @@ export class EnvironmentInfo {
             if (this._atom === undefined) {
                 throw Error("Invalid state: got an atomic number to update, but I am displaying only structures")
             } else {
-                this._atom.label.innerText = `atom ${indexes.atom + 1}`;
+                this._atom.number.value = `${indexes.atom + 1}`;
                 this._atom.slider.update(indexes.atom);
                 this._atom.table.show(indexes);
             }

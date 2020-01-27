@@ -150,7 +150,6 @@
 }
 
 .chsp-info-atom-btn {
-    /* margin: auto; */
     min-width: 8em;
     font-weight: bold;
     font-size: small;
@@ -161,6 +160,31 @@
 
 .chsp-info-atom-btn:hover {
     background-color: #44a344;
+}
+
+.chsp-info-number {
+    -moz-appearance:textfield;
+    border: none;
+    transition: background-color .15s;
+    background-color: #ebedf0;
+    padding-left: 2px;
+    padding-right: 2px;
+    font-family: inherit;
+    width: 4em;
+}
+
+.chsp-info-atom-btn:hover .chsp-info-number {
+    background-color: #69b569;
+}
+
+.chsp-info-structure-btn:hover .chsp-info-number {
+    background-color: #7ba9d9;
+}
+
+.chsp-info-number::-webkit-outer-spin-button,
+.chsp-info-number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 /* Change the atoms slider thumb color to green, to match jsmol highlight */
