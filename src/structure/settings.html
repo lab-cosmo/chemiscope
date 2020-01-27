@@ -1,0 +1,130 @@
+<div id=settings class="modal fade" tabindex='-1'>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header chsp-modal-header">
+                <h4 class="modal-title">Visualizer settings</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h5 class="chsp-settings-section-title">Representation</h5>
+                <div class="chsp-settings-representation">
+                    <div class="custom-control custom-switch">
+                        <input class="custom-control-input" id=bonds type="checkbox" checked>
+                        <label class="custom-control-label" for=bonds title="show bonds between atoms">bonds</label>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input class="custom-control-input" id=space-filling type="checkbox">
+                        <label class="custom-control-label" for=space-filling title="show atoms as spheres">space filling</label>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input class="custom-control-input" id=atom-labels type="checkbox">
+                        <label class="custom-control-label" for=atom-labels title="show element symbols">atom labels</label>
+                    </div>
+                    <div class="custom-control custom-switch chsp-hide-if-no-cell">
+                        <input class="custom-control-input" id=unit-cell type="checkbox">
+                        <label class="custom-control-label" for=unit-cell title="show the unit cell">unit cell</label>
+                    </div>
+                    <div class="custom-control custom-switch chsp-hide-if-no-cell">
+                        <input class="custom-control-input" id=packed-cell type="checkbox">
+                        <label class="custom-control-label" for=packed-cell title="show atoms on the edge of the cell/supercell">packed cell</label>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input class="custom-control-input" id=rotation type="checkbox">
+                        <label class="custom-control-label" for=rotation title="rotate the camera continuously">rotation</label>
+                    </div>
+                </div>
+
+                <div class="chsp-hide-if-no-cell">
+                <div style="margin-bottom: 1.5em;"></div>
+                <h5 class="chsp-settings-section-title">Supercell</h5>
+                <div class="chsp-settings-supercell">
+                    <span class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                           <label class="input-group-text" for=supercell-a>X:</label>
+                         </div>
+                        <input class="form-control chsp-supercell-count" id=supercell-a type="number" min="1" max= "10" value="1">
+                    </span>
+                    <span class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                           <label class="input-group-text" for=supercell-b>Y:</label>
+                         </div>
+                        <input class="form-control chsp-supercell-count" id=supercell-b type="number" min="1" max= "10" value="1">
+                    </span>
+                    <span class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                           <label class="input-group-text" for=supercell-c>Z:</label>
+                         </div>
+                        <input class="form-control chsp-supercell-count" id=supercell-c type="number" min="1" max= "10" value="1">
+                    </span>
+                    <button class="btn btn-primary btn-sm" id=reset-supercell>reset supercell</button>
+                </div>
+                </div>
+
+                <div style="margin-bottom: 0.8em;"></div>
+                <div class="input-group input-group-sm">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for=axes>Axes:</label>
+                    </div>
+                    <select id=axes class="custom-select">
+                        <option value="off" selected>off</option>
+                        <option value="xyz">xyz</option>
+                        <option class="chsp-hide-if-no-cell" value="abc">abc</option>
+                    </select>
+                </div>
+
+                <div class="chsp-hide-if-no-environments">
+                    <div style="margin-bottom: 1.5em;"></div>
+                    <h5 class="chsp-settings-section-title">Environments</h5>
+                    <div class="chsp-settings-environments">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                               <label class="input-group-text" for=env-cutoff>cutoff</label>
+                             </div>
+                             <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1" disabled>
+                        </div>
+
+                        <button class="btn btn-secondary btn-sm" id=env-reset disabled>reset cutoff</button>
+                        <button class="btn btn-primary btn-sm" id=env-toggle>enable</button>
+
+                        <div>
+                            <span style="vertical-align: middle">Background atoms</span>
+                        </div>
+
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                               <label class="input-group-text" for=env-bg-color>color</label>
+                             </div>
+                             <select id=env-bg-color class="custom-select" disabled>
+                                 <option value="CPK">CPK</option>
+                                 <option value="grey">grey</option>
+                             </select>
+                         </div>
+
+                         <div class="input-group input-group-sm">
+                             <div class="input-group-prepend">
+                                <label class="input-group-text" for=env-bg-style>style</label>
+                              </div>
+                              <select id=env-bg-style class="custom-select" disabled>
+                                  <option value="licorice">licorice</option>
+                                  <option value="ball-stick">ball and stick</option>
+                                  <option value="hide">hide</option>
+                              </select>
+                          </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5em;"></div>
+                <h5 class="chsp-settings-section-title">Camera</h5>
+                <div class="chsp-settings-camera">
+                    <button class="btn btn-secondary" id=align-x>x</button>
+                    <button class="btn btn-secondary" id=align-y>y</button>
+                    <button class="btn btn-secondary" id=align-z>z</button>
+                    <span class="chsp-hide-if-no-cell"></span>
+                    <button class="btn btn-secondary chsp-hide-if-no-cell" id=align-a>a</button>
+                    <button class="btn btn-secondary chsp-hide-if-no-cell" id=align-b>b</button>
+                    <button class="btn btn-secondary chsp-hide-if-no-cell" id=align-c>c</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

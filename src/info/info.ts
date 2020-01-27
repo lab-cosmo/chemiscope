@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {Indexes, EnvironmentIndexer} from '../utils';
+import {generateGUID, Indexes, EnvironmentIndexer} from '../utils';
 import {Property} from '../dataset';
 
 import {Slider} from './slider';
@@ -21,15 +21,6 @@ function filter<T extends Object>(obj: T, predicate: (o: any) => boolean): T {
 
     return result;
 };
-
-/** @hidden
- * Generate a random id with 20 characters
- */
-function generateId() {
-    const arr = new Uint8Array(20);
-    window.crypto.getRandomValues(arr);
-    return Array.from(arr, (dec) => ('0' + dec.toString(16)).substr(-2)).join('');
-}
 
 /**
  * Information associated with the current structure or atom
@@ -75,9 +66,9 @@ export class EnvironmentInfo {
         this._indexer = indexer;
         this.onchange = () => {};
 
-        const structureId = 'chsp-' + generateId();
-        const atomId = 'chsp-' + generateId();
-        const settingsID = 'chsp-' + generateId();
+        const structureId = 'chsp-' + generateGUID();
+        const atomId = 'chsp-' + generateGUID();
+        const settingsID = 'chsp-' + generateGUID();
 
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {

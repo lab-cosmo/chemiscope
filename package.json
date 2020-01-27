@@ -30,7 +30,6 @@
     "webpack-dev-server": "^3.10.1"
   },
   "dependencies": {
-    "jsmol-widget": "^0.7.0",
     "plotly.js": "^1.52.1"
   }
 }

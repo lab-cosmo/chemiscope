@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <h5 class="chsp-settings-section-title">Data</h5>
-                <div class="chsp-options">
+                <div class="chsp-map-options">
                     <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
                             <label class="input-group-text" for=chsp-x>x axis:</label>
@@ -16,35 +16,33 @@
                         </select>
                     </div>
 
-                    <button class="btn btn-sm btn-secondary chsp-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-x" id=chsp-x-more>
+                    <button class="btn btn-sm btn-secondary chsp-map-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-x" id=chsp-x-more>
                         more options
                     </button>
 
-                    <div class="collapse chsp-extra-options" id=chsp-extra-x>
-                        <div class="chsp-input-extra">
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-x-scale>scale:</label>
-                                </div>
-                                <select id=chsp-x-scale class="custom-select">
-                                    <option value="linear" selected>linear</option>
-                                    <option value="log">log</option>
-                                </select>
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-x>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-x-scale>scale:</label>
                             </div>
+                            <select id=chsp-x-scale class="custom-select">
+                                <option value="linear" selected>linear</option>
+                                <option value="log">log</option>
+                            </select>
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-x-min>min:</label>
-                                </div>
-                                <input id=chsp-x-min class="form-control" type="number" step="any">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-x-min>min:</label>
                             </div>
+                            <input id=chsp-x-min class="form-control" type="number" step="any">
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-x-max>max:</label>
-                                </div>
-                                <input id=chsp-x-max class="form-control" type="number" step="any">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-x-max>max:</label>
                             </div>
+                            <input id=chsp-x-max class="form-control" type="number" step="any">
                         </div>
                     </div>
 
@@ -56,35 +54,33 @@
                         </select>
                     </div>
 
-                    <button class="btn btn-sm btn-secondary chsp-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-y" id=chsp-y-more>
+                    <button class="btn btn-sm btn-secondary chsp-map-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-y" id=chsp-y-more>
                         more options
                     </button>
 
-                    <div class="collapse chsp-extra-options" id=chsp-extra-y>
-                        <div class="chsp-input-extra">
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-y-scale>scale:</label>
-                                </div>
-                                <select id=chsp-y-scale class="custom-select">
-                                    <option value="linear" selected>linear</option>
-                                    <option value="log">log</option>
-                                </select>
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-y>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-y-scale>scale:</label>
                             </div>
+                            <select id=chsp-y-scale class="custom-select">
+                                <option value="linear" selected>linear</option>
+                                <option value="log">log</option>
+                            </select>
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-y-min>min:</label>
-                                </div>
-                                <input id=chsp-y-min class="form-control" type="number" step="any">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-y-min>min:</label>
                             </div>
+                            <input id=chsp-y-min class="form-control" type="number" step="any">
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-y-max>max:</label>
-                                </div>
-                                <input id=chsp-y-max class="form-control" type="number" step="any">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-y-max>max:</label>
                             </div>
+                            <input id=chsp-y-max class="form-control" type="number" step="any">
                         </div>
                     </div>
 
@@ -97,42 +93,40 @@
                         </select>
                     </div>
 
-                    <button class="btn btn-sm btn-secondary chsp-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-z" id=chsp-z-more>
+                    <button class="btn btn-sm btn-secondary chsp-map-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-z" id=chsp-z-more>
                         more options
                     </button>
 
-                    <div class="collapse chsp-extra-options" id=chsp-extra-z>
-                        <div class="chsp-input-extra">
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-z-scale>scale:</label>
-                                </div>
-                                <select id=chsp-z-scale class="custom-select" disabled>
-                                    <option value="linear" selected>linear</option>
-                                    <option value="log">log</option>
-                                </select>
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-z>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-z-scale>scale:</label>
                             </div>
+                            <select id=chsp-z-scale class="custom-select" disabled>
+                                <option value="linear" selected>linear</option>
+                                <option value="log">log</option>
+                            </select>
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-z-min>min:</label>
-                                </div>
-                                <input id=chsp-z-min class="form-control" type="number" step="any" disabled>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-z-min>min:</label>
                             </div>
+                            <input id=chsp-z-min class="form-control" type="number" step="any" disabled>
+                        </div>
 
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-x-max>max:</label>
-                                </div>
-                                <input id=chsp-z-max class="form-control" type="number" step="any" disabled>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-x-max>max:</label>
                             </div>
+                            <input id=chsp-z-max class="form-control" type="number" step="any" disabled>
                         </div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 1.5em;"></div>
                 <h5 class="chsp-settings-section-title">Style</h5>
-                <div class="chsp-options">
+                <div class="chsp-map-options">
                     <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
                             <label class="input-group-text" for=chsp-color>color:</label>
@@ -142,28 +136,26 @@
                         </select>
                     </div>
 
-                    <button class="btn btn-sm btn-secondary chsp-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-color" id=chsp-color-more>
+                    <button class="btn btn-sm btn-secondary chsp-map-extra-options-open" type="button" data-toggle="collapse" data-target="#chsp-extra-color" id=chsp-color-more>
                         more options
                     </button>
 
-                    <div class="collapse chsp-extra-options" id=chsp-extra-color>
-                        <div class="chsp-input-extra">
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-color-min>min:</label>
-                                </div>
-                                <input id=chsp-color-min class="form-control" type="number" step="any">
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-color>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-color-min>min:</label>
                             </div>
-
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for=chsp-color-max>max:</label>
-                                </div>
-                                <input id=chsp-color-max class="form-control" type="number" step="any">
-                            </div>
-
-                            <button class="btn btn-sm btn-light" type="button" id=chsp-color-reset>reset</button>
+                            <input id=chsp-color-min class="form-control" type="number" step="any">
                         </div>
+
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-color-max>max:</label>
+                            </div>
+                            <input id=chsp-color-max class="form-control" type="number" step="any">
+                        </div>
+
+                        <button class="btn btn-sm btn-light" type="button" id=chsp-color-reset>reset</button>
                     </div>
 
                     <div class="input-group input-group-sm">

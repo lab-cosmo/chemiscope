@@ -27,7 +27,7 @@ export class Slider {
             <div class="input-group-prepend">
                 <span class="input-group-text"><div class="chsp-play-button"></div></span>
             </div>
-            <input class="form-control custom-range chsp-${target}-range" type='range' min=0 value=0 step=1></input>
+            <input class="form-control custom-range chsp-${target}-slider" type='range' min=0 value=0 step=1></input>
         </div>`;
         const group = template.content.firstChild! as HTMLElement;
         root.appendChild(group);

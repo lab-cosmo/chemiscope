@@ -4,8 +4,8 @@
  */
 
 import assert from 'assert';
-import JSmolWidget from 'jsmol-widget';
 
+import {JSmolWidget} from './widget';
 import {structure2JSmol} from './jsmol';
 import {Structure, Environment} from '../dataset';
 import {Indexes, EnvironmentIndexer} from '../utils';

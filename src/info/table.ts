@@ -33,7 +33,7 @@ export class Table {
     constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse" id=${collapseID}>
-        <div class="chsp-properties">
+        <div class="chsp-properties-table">
             <table class="table table-striped table-sm">
                 <thead><th colspan=2 style="text-align: center;"></th></thead>
                 <tbody></tbody>

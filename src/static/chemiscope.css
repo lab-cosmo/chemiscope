@@ -1,11 +1,19 @@
-.chsp-open-settings {
+.chsp-open-map-settings {
     position: absolute;
     top: 3px;
     left: 5px;
     z-index: 10;
 }
 
-.chsp-options {
+.chsp-open-viewer-settings {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    /* Place on top of jsmol applet */
+    z-index: 10;
+}
+
+.chsp-map-options {
     font-weight: bold;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -15,31 +23,35 @@
     grid-gap: 1em;
 }
 
-.chsp-options label {
+.chsp-map-options label {
     min-width: 5em;
 }
 
-.chsp-input-extra {
+.chsp-map-extra-options {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 1em;
     margin-bottom: 1.5em;
 }
 
-.chsp-input-extra label {
+.chsp-map-extra-options label {
     min-width: auto;
 }
 
-.chsp-extra-options {
+.chsp-map-extra-options {
     grid-column: 1 / span 2;
 }
 
-.chsp-extra-options-open {
+.chsp-map-extra-options {
+    grid-column: 1 / span 2;
+}
+
+.chsp-map-extra-options-open {
     margin: auto;
     display: block;
 }
 
-.chsp-options .form-check-label {
+.chsp-map-options .form-check-label {
     width: auto;
 }
 
@@ -79,7 +91,7 @@
     border-color: transparent transparent transparent #404040;
 }
 
-.chsp-properties {
+.chsp-properties-table {
     height: 100%;
     width: 80%;
     margin: auto;
@@ -87,7 +99,7 @@
     min-width: 400px;
 }
 
-.chsp-properties td {
+.chsp-properties-table td {
     width: 50%;
 }
 
@@ -188,38 +200,79 @@
 }
 
 /* Change the atoms slider thumb color to green, to match jsmol highlight */
-.chsp-atom-range::-webkit-slider-thumb {
+.chsp-atom-slider::-webkit-slider-thumb {
     background-color: #008000;
 }
 
-.chsp-atom-range::-moz-range-thumb {
+.chsp-atom-slider::-moz-range-thumb {
     background-color: #008000;
 }
 
-.chsp-atom-range::-ms-thumb {
+.chsp-atom-slider::-ms-thumb {
     background-color: #008000;
 }
 
-.chsp-atom-range::-webkit-slider-thumb:active {
+.chsp-atom-slider::-webkit-slider-thumb:active {
     background-color: #99cc99;
 }
 
-.chsp-atom-range::-moz-range-thumb:active {
+.chsp-atom-slider::-moz-range-thumb:active {
     background-color: #99cc99;
 }
 
-.chsp-atom-range::-ms-thumb:active {
+.chsp-atom-slider::-ms-thumb:active {
     background-color: #99cc99;
 }
 
-.chsp-atom-range:focus::-webkit-slider-thumb {
+.chsp-atom-slider:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
-.chsp-atom-range:focus::-moz-range-thumb {
+.chsp-atom-slider:focus::-moz-range-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
-.chsp-atom-range:focus::-ms-thumb {
+.chsp-atom-slider:focus::-ms-thumb {
   box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+}
+
+.chsp-settings-representation {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-row-gap: 1ex;
+}
+
+.chsp-settings-representation label {
+    cursor: help;
+}
+
+.chsp-settings-supercell {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 2fr;
+}
+
+.chsp-supercell-count {
+    max-width: 3.5em;
+}
+
+.chsp-settings-camera {
+    display: grid;
+    grid-gap: 1em;
+    grid-template-columns: repeat(7, auto);
+    justify-content: center;
+}
+
+.chsp-settings-environments {
+    display: grid;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.chsp-cell-info {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    /* Place on top of jsmol applet */
+    z-index: 10;
+    font-size: 0.8em;
 }

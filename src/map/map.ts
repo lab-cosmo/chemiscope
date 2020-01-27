@@ -6,7 +6,7 @@
 import assert from "assert";
 
 import {Property} from "../dataset";
-import {make_draggable, Indexes, EnvironmentIndexer} from "../utils";
+import {makeDraggable, getByID, Indexes, EnvironmentIndexer} from "../utils";
 
 import * as Plotly from "./plotly/plotly-scatter";
 import {Config, Data, Layout, PlotlyHTMLElement} from "./plotly/plotly-scatter";
@@ -115,15 +115,6 @@ const DEFAULT_CONFIG = {
         "resetCameraLastSave3d",
     ],
 };
-
-/** Get an HTML element by id */
-function getByID<HTMLType>(id: string): HTMLType {
-    const e = document.getElementById(id);
-    if (e === null) {
-        throw Error(`unable to get element with id ${id}`);
-    }
-    return e as unknown as HTMLType;
-}
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
 interface AxisSetting {
@@ -364,7 +355,7 @@ export class PropertiesMap {
         const template = document.createElement('template');
         template.innerHTML = `<button data-target="#chsp-settings"
                                       data-toggle="modal"
-                                      class="btn btn-light btn-sm chsp-open-settings">
+                                      class="btn btn-light btn-sm chsp-open-map-settings">
             <div class="chsp-hamburger"><div></div><div></div><div></div></div>
         </button>`;
         const openSettings = template.content.firstChild!;
@@ -381,7 +372,7 @@ export class PropertiesMap {
             throw Error("internal error: missing modal-dialog class")
         }
         // make the settings modal draggable
-        make_draggable(modalDialog, ".modal-header");
+        makeDraggable(modalDialog, ".modal-header");
 
         // Position modal near the actual viewer
         openSettings.addEventListener('click', () => {

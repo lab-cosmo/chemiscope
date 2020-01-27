@@ -1,11 +1,12 @@
 /**
  * This module contains the [[StructureViewer|structure viewer]] class and
- * associated code.
+ * associated code. Notably, it contains the [[JSmolWidget]] class, that can be
+ * used outside of chemiscope as a small wrapper around JSmol.  
  *
  * @packageDocumentation
  * @module structure
  * @preferred
  */
 
-import {StructureViewer} from './structure-viewer';
+import {StructureViewer} from './structure';
 export {StructureViewer};
