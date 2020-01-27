@@ -38,12 +38,24 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 html_theme_options = {
     'navbar_links': [
-        ("See it in action", "https://chemiscope.org/index"),
+        ("See it in action!", "https://chemiscope.org/", True),
     ],
+    'navbar_pagenav': False,
     'bootswatch_theme': "flatly",
+    'source_link_position': None,
+}
+
+html_sidebars = {
+    '**': ['sidebar-toc.html', 'searchbox.html']
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = [os.path.join('..', '_static')]
+
+templates_path = [os.path.join('..', '_templates')]
+
+
+def setup(app):
+    app.add_stylesheet("css/chemiscope.css")
