@@ -85,18 +85,18 @@ class DefaultVizualizer {
         this.map = new PropertiesMap(config.map, dataset.meta.name, this._indexer, dataset.properties);
         this.structure = new StructureViewer(config.structure, config.j2sPath, this._indexer, dataset.structures, dataset.environments);
 
-        if (mode === 'atom') {
-            this.structure.onselect = (indexes) => {
-                this.map.select(indexes);
-                this.info.show(indexes);
-            };
-        }
+        this.structure.onselect = (indexes) => {
+            this.map.select(indexes);
+            this.info.show(indexes);
+        };
 
         this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
-        this.info.onchange = (indexes, keepOrientation) => {
+        this.info.onchange = (indexes) => {
             this.map.select(indexes);
-            this.structure.show(indexes, keepOrientation);
+            this.structure.show(indexes);
         };
+        this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
+        this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);
@@ -112,20 +112,19 @@ class DefaultVizualizer {
 
         this.map.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
         this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
-        if (mode === 'atom') {
-            this.structure.onselect = (indexes) => {
-                this.map.select(indexes);
-                this.info.show(indexes);
-            };
-        } else {
-            this.structure.onselect = () => {};
-        }
+        this.structure.onselect = (indexes) => {
+            this.map.select(indexes);
+            this.info.show(indexes);
+        };
 
         this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
             this.structure.show(indexes);
         };
+        this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
+        this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
+
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);

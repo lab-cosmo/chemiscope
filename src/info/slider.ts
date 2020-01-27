@@ -9,19 +9,24 @@ import {Target} from '../dataset';
  * A simple slider to select an environment / play the trajectory
  */
 export class Slider {
-    public onchange: () => void;
     private _slider: HTMLInputElement;
     private _play: HTMLElement;
-    private _delay: HTMLInputElement;
+
+    /** Callback fired when the use changes the slider value */
+    public onchange: () => void;
+    /**
+     * Callback fired when the use click the play button. The `advance`
+     * callback indicate whether to continue playback or not.
+     */
+    public startPlayback: (advance: () => boolean) => void;
 
     /**
      * Create and append a new slider inside the given `HTMLElement`.
      *
      * @param root   where to append the new slider
      * @param target is this slider related to atom or structure
-     * @param delay  input element used to set the trajectory playback delay
      */
-    constructor(root: HTMLElement, target: Target, delay: HTMLInputElement) {
+    constructor(root: HTMLElement, target: Target) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="input-group input-group-sm">
             <div class="input-group-prepend">
@@ -34,15 +39,15 @@ export class Slider {
 
         this._slider = group.querySelector('input')! as HTMLInputElement;
         this._play = group.querySelector('.chsp-play-button')! as HTMLElement;
-        this._delay = delay;
 
         this._play.onclick = () => {
             this._play.classList.toggle('chsp-playing');
-            this._step();
+            this.startPlayback(() => {return this._play.classList.contains('chsp-playing');});
         }
 
         this._slider.onchange = () => this.onchange();
         this.onchange = () => {};
+        this.startPlayback = () => {};
     }
 
     /**
@@ -65,21 +70,5 @@ export class Slider {
      */
     public value(): number {
         return parseInt(this._slider.value);
-    }
-
-    /**
-     * Run a single playback step
-     */
-    private _step() {
-        setTimeout(() => {
-            if (this._play.classList.contains('chsp-playing')) {
-                const value = (this.value() + 1) % parseInt(this._slider.max);
-                this.update(value);
-                this.onchange();
-                // contibue playing until the 'chsp-playing' class
-                // is no longer there
-                this._step();
-            }
-        }, parseInt(this._delay.value) * 100);
     }
 }

@@ -7,6 +7,7 @@ import assert from 'assert';
 
 import {generateGUID, Indexes, EnvironmentIndexer} from '../utils';
 import {Property} from '../dataset';
+import {StructureViewer} from '../structure';
 
 import {Slider} from './slider';
 import {Table} from './table';
@@ -43,11 +44,20 @@ export class EnvironmentInfo {
     private _root: HTMLElement;
     private _atom?: Info;
     private _structure: Info;
-    private _keepOrientiation: HTMLInputElement;
     private _indexer: EnvironmentIndexer;
 
     /** Callback used when the user changes one of the sliders value */
-    public onchange: (indexes: Indexes, keepOrientation: boolean) => void;
+    public onchange: (indexes: Indexes) => void;
+    /**
+     * Callback fired when the use click the play button of the structure slider.
+     * The `advance` callback indicate whether to continue playback or not.
+     */
+    public startStructurePlayback: (advance: () => boolean) => void;
+    /**
+     * Callback fired when the use click the play button of the atom slider.
+     * The `advance` callback indicate whether to continue playback or not.
+     */
+    public startAtomPlayback: (advance: () => boolean) => void;
 
     /**
      * Create a new [[EnvironmentInfo]] inside the DOM element with given `id`
@@ -56,6 +66,7 @@ export class EnvironmentInfo {
      * @param properties properties to be displayed
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
+     * @param viewer     [[StructureViewer]] from which we get the playback delay
      */
     constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
         const root = document.getElementById(id);
@@ -65,10 +76,11 @@ export class EnvironmentInfo {
         this._root = root;
         this._indexer = indexer;
         this.onchange = () => {};
+        this.startStructurePlayback = () => {};
+        this.startAtomPlayback = () => {};
 
         const structureId = 'chsp-' + generateGUID();
         const atomId = 'chsp-' + generateGUID();
-        const settingsID = 'chsp-' + generateGUID();
 
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {
@@ -93,27 +105,7 @@ export class EnvironmentInfo {
                     structure <input class="chsp-info-number" type=number value=1 min=1></input>
             </div>
             ${atomButton}
-            <button data-toggle="collapse"
-                    data-target="#${settingsID}"
-                    class="btn btn-light btn-sm chsp-trajectory-settings-btn">
-                <div class="chsp-hamburger"><div></div><div></div><div></div></div>
-            </button>
-        </div>
-        <div class="collapse chsp-trajectory-settings" id="${settingsID}">
-            <div class="input-group input-group-sm">
-                <div class="input-group-prepend">
-                    <label class="input-group-text" for=chsp-playback-delay title="playback delay in tenths of seconds" style="cursor: help;">delay</label>
-                </div>
-                <input id=chsp-playback-delay class="form-control" type="number" min=1 value=7>
-            </div>
-
-            <div class="custom-control custom-switch chsp-keep-orientation">
-                <input type="checkbox" class="custom-control-input" id=chsp-is-trajectory>
-                <label class="custom-control-label" for=chsp-is-trajectory title="keep the molecule orientation" style="cursor: help;">trajectory</label>
-            </div>
         </div>`;
-
-        this._keepOrientiation = this._root.querySelector('#chsp-is-trajectory') as HTMLInputElement;
 
         this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'));
 
@@ -124,14 +116,13 @@ export class EnvironmentInfo {
 
     /** Create the structure slider and table */
     private _createStructure(id: string, properties: {[name: string]: Property}): Info {
-        const delay = this._root.querySelector('#chsp-playback-delay') as HTMLInputElement;
-
-        const slider = new Slider(this._root, 'structure', delay);;
+        const slider = new Slider(this._root, 'structure');;
         const n_structures = this._indexer.structuresCount();
         slider.reset(n_structures - 1);
 
         const table = new Table(this._root, 'structure', id, properties);
 
+        slider.startPlayback = (advance) => this.startStructurePlayback(advance);
         slider.onchange = () => {
             if (this._atom !== undefined) {
                 const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
@@ -148,7 +139,7 @@ export class EnvironmentInfo {
                 this._atom.table.show(indexes);
             }
 
-            this.onchange(indexes, this._keepOrientiation.checked);
+            this.onchange(indexes);
         }
 
         const number = this._root.querySelector('.chsp-info-structure-btn .chsp-info-number') as HTMLInputElement;
@@ -175,7 +166,7 @@ export class EnvironmentInfo {
                     this._atom.table.show(indexes);
                 }
 
-                this.onchange(indexes, this._keepOrientiation.checked);
+                this.onchange(indexes);
             }
         }
 
@@ -184,15 +175,15 @@ export class EnvironmentInfo {
 
     /** Create the atom slider and table */
     private _createAtom(id: string, properties: {[name: string]: Property}) {
-        const delay = this._root.querySelector('#chsp-playback-delay') as HTMLInputElement;
-        const slider = new Slider(this._root, 'atom', delay);
+        const slider = new Slider(this._root, 'atom');
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
         slider.reset(n_atoms - 1);
+        slider.startPlayback = (advance) => this.startAtomPlayback(advance);
         slider.onchange = () => {
             const indexes = this._indexes();
             this._atom!.table.show(indexes);
             this._atom!.number.value = `${indexes.atom! + 1}`;
-            this.onchange(indexes, this._keepOrientiation.checked);
+            this.onchange(indexes);
         }
 
         const table = new Table(this._root, 'atom', id, properties);
@@ -211,7 +202,7 @@ export class EnvironmentInfo {
                 const indexes = this._indexes();
                 this._atom!.table.show(indexes);
 
-                this.onchange(indexes, this._keepOrientiation.checked);
+                this.onchange(indexes);
             }
         }
 

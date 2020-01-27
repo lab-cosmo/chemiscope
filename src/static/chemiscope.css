@@ -119,34 +119,6 @@
     justify-content: center;
 }
 
-.chsp-trajectory-settings-btn {
-    position: absolute;
-    top: -3px;
-    right: 5px;
-}
-
-.chsp-trajectory-settings {
-    display: grid;
-    grid-template-columns: 8em 8em;
-    justify-content: center;
-    align-content: center;
-    grid-gap: 1em;
-    margin-bottom: 1ex;
-}
-
-.chsp-keep-orientation {
-    font-size: .875rem;
-    font-weight: 400;
-    line-height: 1.5;
-    border: 1px solid #ced4da;
-    border-radius: .2rem;
-    color: #33383c;
-    background-color: #e9ecef;
-    text-align: center;
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
 .chsp-info-structure-btn {
     margin-right: 1em;
     min-width: 8em;
@@ -266,6 +238,15 @@
     display: grid;
     grid-gap: 1em;
     grid-template-columns: 1fr 1fr 1fr;
+}
+
+.chsp-settings-trajectory {
+    display: grid;
+    grid-template-columns: 12em 12em;
+    justify-content: center;
+    align-content: center;
+    grid-gap: 1em;
+    margin-bottom: 1ex;
 }
 
 .chsp-cell-info {

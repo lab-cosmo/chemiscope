@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module structure
+ */
+
 import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
@@ -75,6 +80,8 @@ export interface LoadOption {
     packed: boolean;
     /** Should we the current camera orientation (default: false) */
     keepOrientation: boolean;
+    /** Are we loading a file part of a trajectory (default: false) */
+    trajectory: boolean;
     /** List of atom-centered environments */
     environments: Environment[];
     /**
@@ -87,15 +94,13 @@ export interface LoadOption {
 /**
  * A light wrapper around JSmol, displaying a single structure. This is kept as
  * a separate class from the [[StructureViewer]] to be easier to use outside of
- * chemiscope. 
+ * chemiscope.
  */
 export class JSmolWidget {
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
     /// Reference to the global Jmol variable
     private _Jmol: JmolObject;
-    /// Unique identifier of this viewer
-    private _guid: string;
     /// Reference to the JSmol applet to be updated with script calls
     private _applet!: JSmolApplet;
     /// Representation options from the HTML side
@@ -125,6 +130,8 @@ export class JSmolWidget {
             // enable/disable environments display
             toggle: HTMLButtonElement;
         }
+        // keep the orientation constant when loading a new structure if checked
+        keepOrientation: HTMLInputElement;
     };
     /// Supercell related options and data
     private _supercell!: {
@@ -171,6 +178,13 @@ export class JSmolWidget {
     public onselect: (atom: number) => void;
 
     /**
+     * Unique identifier of this viewer.
+     *
+     * All HTML elements created by this class use this ID to ensure unicity.
+     */
+    public guid: string;
+
+    /**
      * Create a new JSmolWidget inside the HTML DOM element with the given `id`.
      *
      * @param id HTML element id inside which the viewer will be created
@@ -185,7 +199,7 @@ export class JSmolWidget {
         // add a 'chsp-' prefic to ensure the id start with letter. It looks like
         // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
         // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
-        this._guid = 'chsp-' + generateGUID();
+        this.guid = 'chsp-' + generateGUID();
         this._lastSelected = -1;
 
         // store a reference to the global Jmol and the HTML root
@@ -201,7 +215,7 @@ export class JSmolWidget {
             root.appendChild(this._root);
 
             this._root.style.position = "relative";
-            this._root.id = this._guid;
+            this._root.id = this.guid;
             this._root.style.width = "100%";
             this._root.style.height = "100%";
         }
@@ -217,7 +231,7 @@ export class JSmolWidget {
         // create a global function with unique name and install it as callback
         // for JSmol. This function will then call the callback inside this
         // instance of the viewer
-        const name: string = this._guid.replace(/-/g, '_') + '_loaded_callback'
+        const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback'
         const window_as_map = window as { [key: string]: any };
         window_as_map[name] = (_a: any, _b: any, _c: any, _d: any, _e: any, status: any) => {
             if (status.valueOf() === 3 && this._loadedCallback !== undefined) {
@@ -227,12 +241,12 @@ export class JSmolWidget {
         this.script(`set LoadStructCallback "${name}"`)
 
         this._noCellStyle = createStyleSheet([
-            `#${this._guid} .chsp-hide-if-no-cell { display: none; }`,
-            `#${this._guid}-settings .chsp-hide-if-no-cell { display: none; }`
+            `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
+            `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`
         ])
 
         this._noEnvsStyle = createStyleSheet([
-            `#${this._guid}-settings .chsp-hide-if-no-environments { display: none; }`
+            `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`
         ])
 
         // By default, position the modal for settings on top of the viewer,
@@ -363,8 +377,20 @@ export class JSmolWidget {
             this._environments = options.environments;
         }
 
-        const keepOrientation = (options.keepOrientation !== undefined) ?
-            options.keepOrientation : false;
+        let keepOrientation: boolean;
+        if (options.keepOrientation === undefined) {
+            // keep pre-existting settings if any
+            keepOrientation = this._options.keepOrientation.checked;
+        } else {
+            keepOrientation = options.keepOrientation
+        }
+
+        const trajectoryOptions = getByID<HTMLElement>(`${this.guid}-trajectory-settings-group`);
+        if (options.trajectory === undefined || !options.trajectory) {
+            trajectoryOptions.style.display = "none";
+        } else {
+            trajectoryOptions.style.display = "block";
+        }
 
         if (this._environments === undefined) {
             this._noEnvsStyle.disabled = false;
@@ -428,6 +454,38 @@ export class JSmolWidget {
         this._do_load(data, keepOrientation);
     }
 
+    private _reload() {
+        this._do_load("''", true);
+    }
+
+    private _do_load(data: string, keepOrientation: boolean) {
+        if (data.includes(';')) {
+            throw Error('invalid \';\' in  JSmolWidget.load');
+        }
+        if (data.includes('packed')) {
+            throw Error('invalid \'packed\' in  JSmolWidget.load');
+        }
+
+        const packed = this._supercell.packed.checked ? ' packed' : '';
+
+        const saveOrientation = keepOrientation ? `save orientation "${this.guid}"`: '';
+        const restoreOrientation = keepOrientation ? `restore orientation "${this.guid}"`: '';
+
+        this._setCellInfo();
+
+        const supercell = supercell_555([
+            parseInt(this._supercell.repeat_a.value),
+            parseInt(this._supercell.repeat_b.value),
+            parseInt(this._supercell.repeat_c.value)
+        ]);
+        this._Jmol.script(this._applet, `
+            ${saveOrientation};
+            load ${data} ${supercell} ${packed};
+            ${this._updateStateCommands()};
+            ${restoreOrientation};
+        `);
+    }
+
     private _changeHighlighted(environment?: number) {
         if (environment !== undefined) {
             const supercell = parseInt(this._supercell.repeat_a.value) *
@@ -459,38 +517,6 @@ export class JSmolWidget {
         }
     }
 
-    private _reload() {
-        this._do_load("''", true);
-    }
-
-    private _do_load(data: string, keepOrientation: boolean) {
-        if (data.includes(';')) {
-            throw Error('invalid \';\' in  JSmolWidget.load');
-        }
-        if (data.includes('packed')) {
-            throw Error('invalid \'packed\' in  JSmolWidget.load');
-        }
-
-        const packed = this._supercell.packed.checked ? ' packed' : '';
-
-        const saveOrientation = keepOrientation ? `save orientation "${this._guid}"`: '';
-        const restoreOrientation = keepOrientation ? `restore orientation "${this._guid}"`: '';
-
-        this._setCellInfo();
-
-        const supercell = supercell_555([
-            parseInt(this._supercell.repeat_a.value),
-            parseInt(this._supercell.repeat_b.value),
-            parseInt(this._supercell.repeat_c.value)
-        ]);
-        this._Jmol.script(this._applet, `
-            ${saveOrientation};
-            load ${data} ${supercell} ${packed};
-            ${this._updateStateCommands()};
-            ${restoreOrientation};
-        `);
-    }
-
     private _createApplet(j2sPath: string, serverURL: string) {
         const width = this._root.clientWidth;
         const height = this._root.clientHeight;
@@ -504,7 +530,7 @@ export class JSmolWidget {
         }
 
         // create the main Jmol applet
-        this._applet = this._Jmol.getApplet(this._guid, {
+        this._applet = this._Jmol.getApplet(this.guid, {
             use: "HTML5",
             script: `
                 // use anti-aliasing
@@ -540,7 +566,7 @@ export class JSmolWidget {
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-open-viewer-settings"
-            data-target="#${this._guid}-settings"
+            data-target="#${this.guid}-settings"
             data-toggle="modal">
                 <div class="chsp-hamburger"><div></div><div></div><div></div></div>
             </button>`;
@@ -550,8 +576,8 @@ export class JSmolWidget {
         // replace id to ensure they are unique even if we have mulitple viewers
         // on a single page
         template.innerHTML = HTML_SETTINGS
-            .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this._guid}-${id} `)
-            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this._guid}-${id} `);
+            .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this.guid}-${id} `)
+            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `);
 
         const modal = template.content.firstChild!;
         document.body.appendChild(modal);
@@ -588,19 +614,20 @@ export class JSmolWidget {
 
         // get the HTML options and keep them around for use in _updateState
         this._options = {
-            bonds:        getByID<HTMLInputElement>(`${this._guid}-bonds`),
-            spaceFilling: getByID<HTMLInputElement>(`${this._guid}-space-filling`),
-            atomLabels:   getByID<HTMLInputElement>(`${this._guid}-atom-labels`),
-            unitCell:     getByID<HTMLInputElement>(`${this._guid}-unit-cell`),
-            rotation:     getByID<HTMLInputElement>(`${this._guid}-rotation`),
-            axes:         getByID<HTMLSelectElement>(`${this._guid}-axes`),
+            bonds:        getByID<HTMLInputElement>(`${this.guid}-bonds`),
+            spaceFilling: getByID<HTMLInputElement>(`${this.guid}-space-filling`),
+            atomLabels:   getByID<HTMLInputElement>(`${this.guid}-atom-labels`),
+            unitCell:     getByID<HTMLInputElement>(`${this.guid}-unit-cell`),
+            rotation:     getByID<HTMLInputElement>(`${this.guid}-rotation`),
+            axes:         getByID<HTMLSelectElement>(`${this.guid}-axes`),
             environments: {
-                cutoff:  getByID<HTMLInputElement>(`${this._guid}-env-cutoff`),
-                bgColor: getByID<HTMLSelectElement>(`${this._guid}-env-bg-color`),
-                bgStyle: getByID<HTMLSelectElement>(`${this._guid}-env-bg-style`),
-                reset:   getByID<HTMLButtonElement>(`${this._guid}-env-reset`),
-                toggle:  getByID<HTMLButtonElement>(`${this._guid}-env-toggle`),
-            }
+                cutoff:  getByID<HTMLInputElement>(`${this.guid}-env-cutoff`),
+                bgColor: getByID<HTMLSelectElement>(`${this.guid}-env-bg-color`),
+                bgStyle: getByID<HTMLSelectElement>(`${this.guid}-env-bg-style`),
+                reset:   getByID<HTMLButtonElement>(`${this.guid}-env-reset`),
+                toggle:  getByID<HTMLButtonElement>(`${this.guid}-env-toggle`),
+            },
+            keepOrientation: getByID<HTMLInputElement>(`${this.guid}-keep-orientation`),
         };
 
         for (const key in this._options) {
@@ -623,32 +650,32 @@ export class JSmolWidget {
             this._updateState();
         }
 
-        const alignX = getByID<HTMLButtonElement>(`${this._guid}-align-x`);
+        const alignX = getByID<HTMLButtonElement>(`${this.guid}-align-x`);
         alignX.onclick = () => this.script('moveto 1 axis x');
 
-        const alignY = getByID<HTMLButtonElement>(`${this._guid}-align-y`);
+        const alignY = getByID<HTMLButtonElement>(`${this.guid}-align-y`);
         alignY.onclick = () => this.script('moveto 1 axis y');
 
-        const alignZ = getByID<HTMLButtonElement>(`${this._guid}-align-z`);
+        const alignZ = getByID<HTMLButtonElement>(`${this.guid}-align-z`);
         alignZ.onclick = () => this.script('moveto 1 axis z');
 
-        const alignA = getByID<HTMLButtonElement>(`${this._guid}-align-a`);
+        const alignA = getByID<HTMLButtonElement>(`${this.guid}-align-a`);
         alignA.onclick = () => this.script('moveto 1 axis a');
 
-        const alignB = getByID<HTMLButtonElement>(`${this._guid}-align-b`);
+        const alignB = getByID<HTMLButtonElement>(`${this.guid}-align-b`);
         alignB.onclick = () => this.script('moveto 1 axis b');
 
-        const alignC = getByID<HTMLButtonElement>(`${this._guid}-align-c`);
+        const alignC = getByID<HTMLButtonElement>(`${this.guid}-align-c`);
         alignC.onclick = () => this.script('moveto 1 axis c');
 
         // cell handling: we need to reload to change the supercell or the
         // packed status
         this._supercell = {
-            repeat_a: getByID<HTMLInputElement>(`${this._guid}-supercell-a`),
-            repeat_b: getByID<HTMLInputElement>(`${this._guid}-supercell-b`),
-            repeat_c: getByID<HTMLInputElement>(`${this._guid}-supercell-c`),
-            packed: getByID<HTMLInputElement>(`${this._guid}-packed-cell`),
-            reset: getByID<HTMLButtonElement>(`${this._guid}-reset-supercell`),
+            repeat_a: getByID<HTMLInputElement>(`${this.guid}-supercell-a`),
+            repeat_b: getByID<HTMLInputElement>(`${this.guid}-supercell-b`),
+            repeat_c: getByID<HTMLInputElement>(`${this.guid}-supercell-c`),
+            packed: getByID<HTMLInputElement>(`${this.guid}-packed-cell`),
+            reset: getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`),
         }
 
         for (const key in this._supercell) {

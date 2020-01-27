@@ -33,6 +33,8 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
  */
 export class StructureViewer {
     private _widget: JSmolWidget;
+    /// PLayback delay setting
+    private _delay: HTMLInputElement;
     /// List of structures in the dataset
     private _structures: string[];
     /// Optional list of environments for each structure
@@ -41,7 +43,7 @@ export class StructureViewer {
     /// index of the currently displayed structure/atom
     private _current: {structure: number; atom?: number};
 
-    /** Callback used when the user select an atom by clicking on it */
+    /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
 
     /**
@@ -58,6 +60,7 @@ export class StructureViewer {
      */
     constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._widget = new JSmolWidget(id, j2sPath);
+        this._delay = document.getElementById(`${this._widget.guid}-playback-delay`) as HTMLInputElement;
         this._structures = structures.map(structure2JSmol);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
@@ -103,16 +106,13 @@ export class StructureViewer {
      * highlight the atom-centered environment corresponding to `indexes.atom`.
      *
      * @param  indexes         structure / atom pair to display
-     * @param  keepOrientation should we keep the camera orientation the same
-     *                         when reloading? This is useful when disaplying a
-     *                         trajectory
      */
-    public show(indexes: Indexes, keepOrientation = false) {
+    public show(indexes: Indexes) {
         if (this._current.structure !== indexes.structure) {
             assert(indexes.structure < this._structures.length);
             const options = {
                 packed: false,
-                keepOrientation: keepOrientation,
+                trajectory: true,
             } as any;
 
             if (this._environments !== undefined) {
@@ -147,5 +147,40 @@ export class StructureViewer {
      */
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
         this._widget.settingsPlacement(callback)
+    }
+
+    /**
+     * Start playing the trajectory of structures in this dataset, until
+     * `advance` returns false
+     */
+    public structurePlayback(advance: () => boolean) {
+        setTimeout(() => {
+            if (advance()) {
+                const structure = (this._current.structure + 1) % this._indexer.structuresCount();
+                const indexes = this._indexer.from_structure_atom(structure, 0);
+                this.show(indexes);
+                this.onselect(indexes);
+                // continue playing until the advance callback returns false
+                this.structurePlayback(advance);
+            }
+        }, parseFloat(this._delay.value) * 100)
+    }
+
+    /**
+     * Start playing the 'trajectory' of atoms in the current structure, until
+     * `advance` returns false
+     */
+    public atomPlayback(advance: () => boolean) {
+        setTimeout(() => {
+            if (advance()) {
+                const structure = this._current.structure;
+                const atom = (this._current.atom! + 1) % this._indexer.atomsCount(structure);
+                const indexes = this._indexer.from_structure_atom(structure, atom);
+                this.show(indexes);
+                this.onselect(indexes);
+                // continue playing until the advance callback returns false
+                this.atomPlayback(advance);
+            }
+        }, parseFloat(this._delay.value) * 100)
     }
 }

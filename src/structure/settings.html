@@ -124,6 +124,24 @@
                     <button class="btn btn-secondary chsp-hide-if-no-cell" id=align-b>b</button>
                     <button class="btn btn-secondary chsp-hide-if-no-cell" id=align-c>c</button>
                 </div>
+
+                <div id=trajectory-settings-group>
+                    <div style="margin-bottom: 1.5em;"></div>
+                    <h5 class="chsp-settings-section-title">Trajectory</h5>
+                    <div class="chsp-settings-trajectory">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=playback-delay title="playback delay in tenths of seconds" style="cursor: help;">playback delay</label>
+                            </div>
+                            <input id=playback-delay class="form-control" type="number" min=1 value=7>
+                        </div>
+
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id=keep-orientation>
+                            <label class="custom-control-label" for=keep-orientation title="keep the camera orientation when loading a new molecule" style="cursor: help;">keep orientation</label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
