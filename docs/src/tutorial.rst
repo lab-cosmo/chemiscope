@@ -7,7 +7,41 @@ settings; as well as how to create an input file for it.
 
 .. _chemiscope: https://chemiscope.org
 
-TODO: basics: environments, structure/atom, properties, descriptors, dim reduction
+Introduction to structural properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Before we get started, we will introduce a few concepts used in chemiscope, and
+in particular how structural properties can be used to create a *"map"* of
+structures in 2D or 3D, in which similar structures are grouped together.
+Everything starts with  **environments**. Chemiscope can work with either
+full-structures environments or atom-centered environments. These environments
+are fully defined by the positions of all atoms in the structure or around a
+central atom. To be able to compare different environments, we use descriptors
+based for example on `atom density representation <soap>`_ or `Behler-Parrinello
+symmetry functions <Behler-Parrinello>`_. These descriptors are usually
+high-dimensional vectors, hard to visualize and interpret. The next step is to
+use a dimensionality reduction algorithm, such as `PCA`_, `sketch-map`_, *etc.*
+The interpretation of the resulting map will differ depending on both the
+descriptor used to represent the environments and the dimensionality reduction
+algorithm.
+
+.. figure:: img/mol-to-map.*
+    :width: 65 %
+
+    Illustration of the process used to create structural properties from a
+    molecule.
+
+Chemiscope is completly agnostic with respect to how structural properties are
+generated, and do not provide any facilities to generate such structural
+properties. In the rest of this document, we will refer to properties describing
+the structure of an environment as *structural properties*; and other properties
+associated with the environment (such as energy, density, ...) as *physical
+properties*.
+
+.. _soap: https://doi.org/10.1063/1.5090481
+.. _Behler-Parrinello: https://doi.org/10.1103/physrevlett.98.146401
+.. _PCA: https://en.wikipedia.org/wiki/Principal_component_analysis
+.. _sketch-map: https://doi.org/10.1073/pnas.1108486108
 
 Different panels and settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,12 +51,13 @@ the structure viewer and the environment information display. This section will
 present each one, as well as the main settings accessible to customize the
 display.
 
-The map is a 2D or 3D scatter plot showing structural or physical properties for
-all the environments in the dataset. You can set which properties should be used
-a the x, y, and potentially z axis; as well as for color and size of the points.
-Additionally, string properties can be used as category data to set the symbols
-used for the points. To open the settings modal window, click on the hamburger
-menu (the ☰ symbol) on the left of the dataset title.
+The map is a 2D or 3D scatter plot showing properties for all the environments
+in the dataset. You can set which properties (structural or physical) should be
+used a the x, y, and potentially z axis; as well as for color and size of the
+points. Additionally, properties which have string values (an not numeric
+values) can be used as category data to set the symbols used for the points. To
+open the settings modal window, click on the hamburger menu (the ☰ symbol) on
+the left of the dataset title.
 
 .. figure:: img/map.png
     :width: 80 %
@@ -45,7 +80,7 @@ Finally, the environments information panel features sliders and text input to
 allow for an easy selection of the environment of interest. The play button on
 the left of the sliders activates the trajectory playback, looping over the
 structures in the datasets or the atoms in a structure. By clicking on the
-labels at the top (`structure XXX` and `atom XXX`), one can hide or show the
+labels at the top (*structure XXX* and*atom XXX*), one can hide or show the
 full property tables. These tables show all properties in the dataset for the
 currently selected environment.
 
@@ -59,18 +94,38 @@ currently selected environment.
 Input file format for chemiscope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+When using the default chemiscope interface, all the structures and properties
+in a dataset are loaded from a single JSON file. This sections describe how to
+generate such JSON file, either using a pre-existing python script that does
+most of the work for you, or by writing the JSON file directly. Since the
+resulting JSON file can be quite large and thus harder to share with
+collaborators, the default chemiscope interface also allows to load JSON files
+compressed with gzip.
+
 Creating an input file
 ----------------------
 
+The easiest way to create a JSON input file is to use the `chemiscope_input`_
+Python 3 script that lives inside chemiscope's `github`_ repository. Download
+the script and place it somewhere it can be imported by Python. Then, in your
+own script, run the ``write_chemiscope_input`` function to generate the JSON
+file. This script assumes you use the `ase`_ Python module to read the
+structures.
+
 .. autofunction:: chemiscope_input::write_chemiscope_input
 
+.. _chemiscope_input: https://github.com/cosmo-epfl/chemiscope/blob/master/utils/chemiscope_input.py
+.. _github: https://github.com/cosmo-epfl/chemiscope
+.. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 
 Input file structure
 --------------------
 
-The input file structure follows closely the `Dataset`_ interface from the code.
-Here is another representation of what the JSON file should contain, in
-pseudo-JSON format.
+If you can not or do not want to use the script mentionned above, you can also
+directly write the JSON file conforming to the schema described here. The input
+file follows closely the `Dataset`_ typescript interface used in the library.
+Using a pseudo-JSON format, the file should contains the following fields and
+values:
 
 .. code-block:: javascript
 
@@ -140,3 +195,28 @@ pseudo-JSON format.
 
 Using the standalone visualizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The default chemiscope interface lives online, at https://chemiscope.org/. But
+there are some cases where you do not want to use an online tool for your own
+dataset, such as scientific article supplementation information. For these use
+cases, a standalone, mostly offline visualizer exists that uses the same input
+file format as the default interface.
+
+To create a standalone visualizer with your own dataset, please follow the steps
+below:
+
+.. code-block:: bash
+
+    git clone https://github.com/cosmo-epfl/chemiscope
+    cd chemiscope
+    npm install
+    npm run build
+    python3 ./utils/generate_standalone.py
+
+This will create a ``standalone.html`` file containing all the required HTML and
+javascript. You can then add your own dataset by adding the correspinding JSON
+file at the end of the ``standalone.html`` file.
+
+.. code-block:: bash
+
+    cat standalone.html my-dataset.json > my-dataset.html

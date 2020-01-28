@@ -27,7 +27,7 @@ def get_url(url):
         return data.text
     else:
         if url == 'chemiscope.min.js':
-            path = os.path.join(ROOT, 'dist')s
+            path = os.path.join(ROOT, 'dist')
         else:
             path = os.path.join(ROOT, 'examples')
 

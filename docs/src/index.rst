@@ -7,8 +7,7 @@ chemiscope is to provide interactive exploration of large databases of materials
 and molecules and help researchers to find structure-properties correlations
 inside such databases. The screenshot below shows an example of such database
 being visualized with chemiscope. The first part of this documentation describes
-the default interface of chemiscope; and explain the format of input files used
-by this default interface.
+the default interface of chemiscope and how to use it with your own database.
 
 .. figure:: img/screenshot.png
     :align: center
