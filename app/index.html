@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Chemiscope</title>
+
+        <!-- jquery -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+        <!-- bootstrap -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y=" crossorigin="anonymous" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg=" crossorigin="anonymous"></script>
+
+        <!-- font-awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css">
+
+        <!-- Pako: zlib implementation in javascript, to store data files as gziped json -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.10/pako_inflate.min.js" integrity="sha256-LKJ+mo2uVpzerEJ1LtGu0a/v9/GSgtPMEsCqpUoIvAQ=" crossorigin="anonymous"></script>
+
+        <!-- JSmol -->
+        <script type="text/javascript" src="static/js/jsmol/JSmol.min.nojq.js"></script>
+
+        <!-- Chemiscope code and default viewer code -->
+        <script defer type="text/javascript" src="chemiscope.min.js"></script>
+        <script type="text/javascript" src="static/js/default.js"></script>
+        <link rel="stylesheet" href="static/css/default.css">
+    </head>
+
+    <body>
+        <header>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="#">Chemiscope</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbar">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="docs/"><i class="fa fa-book"></i> Documentation</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="modal" href="#about"><i class="fa fa-user"></i> About</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="examples" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-images"></i> Examples
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="examples">
+                                <span class="dropdown-item" onclick="loadExample(this.getAttribute('data-file'));" data-file="Arginine-Dipeptide.json.gz">Arginine-Dipeptide</span>
+                                <span class="dropdown-item" onclick="loadExample(this.getAttribute('data-file'));" data-file="CSD.json.gz">Chemical Shieldings</span>
+                                <span class="dropdown-item" onclick="loadExample(this.getAttribute('data-file'));" data-file="Qm7b.json.gz">Qm7b</span>
+                                <span class="dropdown-item" onclick="loadExample(this.getAttribute('data-file'));" data-file="Pyrole.json.gz">Pyrole</span>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="form-inline">
+                        <div class="input-group">
+                            <input id=upload type="file" class="form-control-file custom-file-input" accept=".json,.json.gz"/>
+                            <label style="display: inline;" class="custom-file-label" for=upload>Load your own dataset</label>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="alert alert-danger" role="alert" id=error-display style="display: none;">
+                <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+                <details>
+                    <summary>Backtrace</summary>
+                    <p></p>
+                </details>
+            </div>
+
+            <div class="alert alert-warning" role="alert" id=warning-display style="display: none;">
+                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+            </div>
+        </div>
+
+        <main class="container">
+            <div style="margin-bottom: 2em;"></div>
+
+            <div class="row">
+                <div class="col-xl-7">
+                    <div id=chemiscope-map style="height: 620px"></div>
+                </div>
+
+                <div class="col-xl-5" style="padding: 0;">
+                    <div id=chemiscope-structure style="height: 480px;"></div>
+                    <div id=chemiscope-info style="min-height: 100px;"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="text-muted" style="float: left;">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
+                <div class="text-muted" style="float: right;"><i class="far fa-copyright"></i> 2020 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a></div>
+                <div class="text-muted" style="text-align: center;">Chemiscope: interactive structure/property explorer for materials and molecules</div>
+            </div>
+        </footer>
+
+        <div class="modal fade" tabindex="-1" id='about'>
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">
+                    Chemiscope: interactive structure/property explorer for materials and molecules
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>
+                    Chemiscope is a tool for interactive exploration of
+                    databases of materials and molecular, correlating local and
+                    global structure descriptors with the properties of the
+                    systems. Structural properties are represented by a
+                    descriptor mapped onto a smaller space using a
+                    dimensionality reduction algorithm.
+                </p>
+
+                <p>
+                    Chemiscope is free and open source, distributed under the
+                    BSD license itself, and the GPL license for the Jmol
+                    dependency. It is developed by <a
+                    href="https://guillaume.fraux.fr">Guillaume Fraux</a> in
+                    the <a href="https://cosmo.epfl.ch">COSMO lab</a> at EPFL.
+                </p>
+
+
+                <h5>References</h5>
+                <ul class="references">
+                    <li>
+                        <a href="https://doi.org/10.1063/1.5090481">Atomic-Density representations for machine learning</a>
+                        <br/>MJ Willatt, F Musil, M Ceriotti - J. Chem. Phys, 2019
+                    </li>
+                    <li>
+                        <a href="https://doi.org/10.1039/c6cp00415f">Comparing molecules and solids across structural and alchemical space</a>
+                        <br/>S De, AP Bartók, G Csányi, M Ceriotti - PCCP, 2016
+                    </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    </body>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const standalone = document.getElementById('standalone-json-data');
+            const isStandalone = (standalone !== null)
+
+            setupDefaultChemiscope(isStandalone);
+            if (!isStandalone) {
+                loadExample('Arginine-Dipeptide.json.gz');
+            } else {
+                const data = standalone.innerText;
+                if (data.trim() !== "") {
+                    setupChemiscope(JSON.parse(standalone.innerText));
+                }
+            }
+        })
+    </script>
+</html>
