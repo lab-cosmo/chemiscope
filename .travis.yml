@@ -12,7 +12,7 @@ node_js:
   - 12
 
 install:
-    - npm install
+    - npm ci
     - python3 -m pip install -r docs/requirements.txt
 script:
     - npm run build
