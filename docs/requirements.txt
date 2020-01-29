@@ -2,3 +2,4 @@ sphinx>=2.1
 sphinx-js
 sphinx-bootstrap-theme
 m2r
+numpy
