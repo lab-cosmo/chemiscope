@@ -9,7 +9,7 @@ import {Property} from "../dataset";
 import {makeDraggable, getByID, Indexes, EnvironmentIndexer} from "../utils";
 
 import * as Plotly from "./plotly/plotly-scatter";
-import {Config, Data, Layout, PlotlyHTMLElement} from "./plotly/plotly-scatter";
+import {Config, Data, Layout, PlotlyScatterElement} from "./plotly/plotly-scatter";
 
 import {COLOR_MAPS} from "./colorscales";
 import {MapData, NumericProperty} from "./data";
@@ -141,7 +141,7 @@ export class PropertiesMap {
     /// HTML root holding the full plot
     private _root: HTMLElement;
     /// Plotly plot
-    private _plot!: PlotlyHTMLElement;
+    private _plot!: PlotlyScatterElement;
     /// The dataset name
     private _name: string;
     /// All known properties
@@ -190,6 +190,11 @@ export class PropertiesMap {
             factor: HTMLInputElement;
         };
     };
+    /// Marker indicating the position of the latest selected point in 2D mode
+    /// Using such div is much faster than trying to restyle the full plot,
+    /// especially with more than 100k points. In 3D mode, a separate trace is
+    /// used instead.
+    private _selectedMarker: HTMLElement;
 
     /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes) => void;
@@ -217,11 +222,15 @@ export class PropertiesMap {
         this._root = root;
         this._root.style.position = 'relative';
 
-        this._plot = document.createElement("div") as unknown as PlotlyHTMLElement;
+        this._plot = document.createElement("div") as unknown as PlotlyScatterElement;
         this._plot.style.width = "100%";
         this._plot.style.height = "100%";
         this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
+
+        this._selectedMarker = document.createElement("div");
+        this._root.appendChild(this._selectedMarker);
+        this._selectedMarker.classList.add("chsp-selected");
 
         this._data = new MapData(properties);
         this._setupDefaults();
@@ -269,19 +278,13 @@ export class PropertiesMap {
 
     /** Change the selected environment to the one with the given `indexes` */
     public select(indexes: Indexes) {
-        if (indexes.environment === this._selected) {
-            // HACK: Calling Plotly.restyle fires the plotly_click event
-            // again for 3d plots, ignore it
-            return;
+        // Plotly.restyle fires the plotly_click event, so ensure we only run
+        // the update once.
+        // https://github.com/plotly/plotly.js/issues/1025
+        if (indexes.environment !== this._selected) {
+            this._selected = indexes.environment;
+            this._updateSelectedMarker();
         }
-        this._selected = indexes.environment;
-
-        this._restyle({
-            x: this._xValues(1),
-            y: this._yValues(1),
-            z: this._zValues(1),
-            "marker.symbol": this._symbols(1),
-        } as Data, 1);
     }
 
     /**
@@ -762,20 +765,21 @@ export class PropertiesMap {
         };
 
         // Create a second trace to store the last clicked point, in order to
-        // display it on top of the main plot with different styling
+        // display it on top of the main plot with different styling. This is
+        // only used in 3D mode, since it is way slower than moving
+        // this._selectedMarker around.
         const selected = {
             type: "scattergl",
             name: "",
-            x: x[1],
-            y: y[1],
-            z: z[1],
+            x: [NaN],
+            y: [NaN],
+            z: [NaN],
             hoverinfo: "none",
             showlegend: false,
             mode: "markers",
             marker: {
                 color: colors[1],
                 size: sizes[1],
-                symbol: symbols[1],
                 line: {
                     color: lineColors[1],
                     width: 0.5,
@@ -834,6 +838,8 @@ export class PropertiesMap {
             this.onselect(indexes);
         });
         this._plot.on("plotly_afterplot", () => this._afterplot());
+
+        this._updateSelectedMarker();
     }
 
     /** Get the currently available properties: either `"atom"` or `"structure"` properties */
@@ -1076,6 +1082,9 @@ export class PropertiesMap {
             name: this._legendNames(),
         } as unknown as Data);
 
+        this._selectedMarker.style.display = "none";
+        this._updateSelectedMarker();
+
         // Change the data that vary between 2D and 3D mode
         const factor = parseInt(this._settings.size.factor.value);
         this._restyle({
@@ -1115,6 +1124,10 @@ export class PropertiesMap {
             name: this._legendNames(),
         } as unknown as Data);
 
+        this._selectedMarker.style.display = "block";
+        this._restyle({x: [NaN], y: [NaN]}, 1);
+        this._updateSelectedMarker();
+
         // Change the data that vary between 2D and 3D mode
         const factor = parseInt(this._settings.size.factor.value);
         this._restyle({
@@ -1141,7 +1154,7 @@ export class PropertiesMap {
      */
     private _afterplot() {
         // HACK: this is not public, so it might break
-        const layout = (this._plot as any)._fullLayout;
+        const layout = this._plot._fullLayout;
         if (this._is3D()) {
             this._settings.x.min.value = layout.scene.xaxis.range[0].toString();
             this._settings.x.max.value = layout.scene.xaxis.range[1].toString();
@@ -1157,6 +1170,44 @@ export class PropertiesMap {
 
             this._settings.y.min.value = layout.yaxis.range[0].toString();
             this._settings.y.max.value = layout.yaxis.range[1].toString();
+
+            this._updateSelectedMarker();
+        }
+    }
+
+    /** Update the position of the selected marker */
+    private _updateSelectedMarker() {
+        if (this._is3D()) {
+            this._restyle({
+                x: this._xValues(1),
+                y: this._yValues(1),
+                z: this._zValues(1),
+            } as Data, 1);
+        } else {
+            const xaxis = this._plot._fullLayout.xaxis;
+            const yaxis = this._plot._fullLayout.yaxis;
+
+            const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
+            const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
+
+            const x = computeX(this._xValues(0)[0][this._selected]);
+            const y = computeY(this._yValues(0)[0][this._selected]);
+
+            // hide the point if it is outside the plot, allow for up to 10px
+            // overflow (for points just on the border)
+            const minX = computeX(xaxis.range[0]) - 10;
+            const maxX = computeX(xaxis.range[1]) + 10;
+            const minY = computeY(yaxis.range[1]) - 10;
+            const maxY = computeY(yaxis.range[0]) + 10;
+            if (x < minX || x > maxX || y < minY || y > maxY) {
+                this._selectedMarker.style.display = "none";
+            } else {
+                this._selectedMarker.style.display = "block";
+            }
+
+            // -10 since we want the centers to match, and the marker div is 20px wide
+            this._selectedMarker.style.top = `${y - 10}px`;
+            this._selectedMarker.style.left = `${x - 10}px`;
         }
     }
 }
