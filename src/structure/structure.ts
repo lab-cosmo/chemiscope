@@ -36,7 +36,9 @@ export class StructureViewer {
     /// PLayback delay setting
     private _delay: HTMLInputElement;
     /// List of structures in the dataset
-    private _structures: string[];
+    private _structures: Structure[];
+    /// Cached string representation of structures
+    private _cachedStructures: string[];
     /// Optional list of environments for each structure
     private _environments?: Environment[][];
     private _indexer: EnvironmentIndexer;
@@ -61,7 +63,8 @@ export class StructureViewer {
     constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
         this._widget = new JSmolWidget(id, j2sPath);
         this._delay = document.getElementById(`${this._widget.guid}-playback-delay`) as HTMLInputElement;
-        this._structures = structures.map(structure2JSmol);
+        this._structures = structures
+        this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
@@ -92,7 +95,8 @@ export class StructureViewer {
      * @param  environments new list of atom centered environments
      */
     public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
-        this._structures = structures.map(structure2JSmol);
+        this._structures = structures
+        this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
@@ -122,7 +126,7 @@ export class StructureViewer {
                 }
             }
 
-            this._widget.load(`inline '${this._structures[indexes.structure]}'`, options);
+            this._widget.load(`inline '${this._structureForJSmol(indexes.structure)}'`, options);
         }
 
         if (this._indexer.mode === 'atom') {
@@ -182,5 +186,12 @@ export class StructureViewer {
                 this.atomPlayback(advance);
             }
         }, parseFloat(this._delay.value) * 100)
+    }
+
+    private _structureForJSmol(index: number): string {
+        if (this._cachedStructures[index] === undefined) {
+            this._cachedStructures[index] = structure2JSmol(this._structures[index]);
+        }
+        return this._cachedStructures[index];
     }
 }
