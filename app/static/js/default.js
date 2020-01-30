@@ -16,8 +16,11 @@ function toJson(path, buffer) {
 
 let visualizer = undefined;
 function setupChemiscope(dataset) {
+    const loading = document.getElementById('loading');
     if (visualizer !== undefined) {
-        visualizer.changeDataset(dataset)
+        visualizer.changeDataset(dataset).then(() => {
+            loading.style.display = 'none';
+        })
     } else {
         const config = {
             map:       'chemiscope-map',
@@ -45,6 +48,8 @@ function setupChemiscope(dataset) {
                     left: mapRect.left + mapRect.width + 25,
                 };
             });
+
+            loading.style.display = 'none';
         })
     }
 }
@@ -64,6 +69,7 @@ function displayWarning(message) {
 }
 
 function loadExample(url) {
+    document.getElementById('loading').style.display = 'block';
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -86,6 +92,7 @@ function setupDefaultChemiscope(isStandalone) {
 
     const upload = document.getElementById('upload');
     upload.onchange = () => {
+        document.getElementById('loading').style.display = 'block';
         const name = upload.files[0].name;
         const reader = new FileReader();
         reader.onload = () => {

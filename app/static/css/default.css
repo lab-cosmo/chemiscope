@@ -36,3 +36,10 @@ header {
 .references a {
     color: grey;
 }
+
+#loading {
+    font-size: 6em;
+    margin: auto;
+    text-align: center;
+    color: grey;
+}
