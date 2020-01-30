@@ -116,6 +116,18 @@ const DEFAULT_CONFIG = {
     ],
 };
 
+// get the max/min of an array. Math.min(...array) fails with very large arrays
+function arrayMaxMin(values: number[]): {max: number, min: number} {
+    let max = Number.MIN_VALUE;
+    let min = Number.MAX_VALUE;
+    for (let i = 0; i < values.length; i++) {
+        const value = values[i];
+        if (value > max) max = value;
+        if (value < min) min = value;
+    }
+    return {max, min};
+}
+
 /** HTML element holding settings for a given axis (x, y, z, color) */
 interface AxisSetting {
     /// Which values shoudl we use
@@ -530,8 +542,7 @@ export class PropertiesMap {
                 this._settings.colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
-                const min = Math.min(...values);
-                const max = Math.max(...values);
+                const {min, max} = arrayMaxMin(values);
 
                 this._settings.color.min.value = min.toString();
                 this._settings.color.max.value = max.toString();
@@ -581,8 +592,7 @@ export class PropertiesMap {
 
         this._settings.colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
-            const min = Math.min(...values);
-            const max = Math.max(...values);
+            const {min, max} = arrayMaxMin(values);
             this._settings.color.min.value = min.toString();
             this._settings.color.max.value = max.toString();
             this._relayout({
@@ -682,8 +692,7 @@ export class PropertiesMap {
             this._settings.colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
-            const min = Math.min(...values);
-            const max = Math.max(...values);
+            const {min, max} = arrayMaxMin(values);
 
             this._settings.color.min.value = min.toString();
             this._settings.color.max.value = max.toString();
@@ -958,8 +967,7 @@ export class PropertiesMap {
             values = defaultSize * factor;
         } else {
             const sizes = this._properties()[this._current.size].values;
-            const min = Math.min.apply(Math, sizes);
-            const max = Math.max.apply(Math, sizes);
+            const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 12 : 20;
             // normalize inside [0, 10 * factor]
             values = sizes.map((v: number) => {
