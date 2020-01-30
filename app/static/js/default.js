@@ -16,11 +16,10 @@ function toJson(path, buffer) {
 
 let visualizer = undefined;
 function setupChemiscope(dataset) {
-    const loading = document.getElementById('loading');
     if (visualizer !== undefined) {
-        visualizer.changeDataset(dataset).then(() => {
-            loading.style.display = 'none';
-        })
+        visualizer.changeDataset(dataset)
+            .then(() => stopLoading())
+            .catch(e => setTimeout(() => {throw e;}));
     } else {
         const config = {
             map:       'chemiscope-map',
@@ -49,12 +48,14 @@ function setupChemiscope(dataset) {
                 };
             });
 
-            loading.style.display = 'none';
-        })
+            stopLoading();
+        }).catch(e => setTimeout(() => {throw e;}));
     }
 }
 
 function displayError(error) {
+    document.getElementById('loading').style.display = 'none';
+
     const display = document.getElementById('error-display');
     display.style.display = "block";
     display.getElementsByTagName('p')[0].innerText = error.toString();
@@ -68,8 +69,23 @@ function displayWarning(message) {
     display.getElementsByTagName('p')[0].innerText = message;
 }
 
-function loadExample(url) {
+function startLoading() {
     document.getElementById('loading').style.display = 'block';
+
+    const main = document.getElementsByTagName('main')[0];
+    main.onclick = () => {};
+    main.style.opacity = 0.3;
+}
+
+function stopLoading() {
+    document.getElementById('loading').style.display = 'none';
+
+    const main = document.getElementsByTagName('main')[0];
+    main.onclick = null;
+    main.style.opacity = 1;
+}
+
+function loadExample(url) {
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -80,7 +96,7 @@ function loadExample(url) {
         })
         .then(buffer => toJson(url, buffer))
         .then(json => setupChemiscope(json))
-        .catch(error => displayError(error));
+        .catch(e => setTimeout(() => {throw e;}));
 }
 
 function setupDefaultChemiscope(isStandalone) {
@@ -92,7 +108,7 @@ function setupDefaultChemiscope(isStandalone) {
 
     const upload = document.getElementById('upload');
     upload.onchange = () => {
-        document.getElementById('loading').style.display = 'block';
+        startLoading();
         const name = upload.files[0].name;
         const reader = new FileReader();
         reader.onload = () => {
