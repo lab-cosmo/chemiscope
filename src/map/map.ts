@@ -326,12 +326,12 @@ export class PropertiesMap {
 
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
-        Plotly.restyle(this._plot, data, traces).catch((e) => console.error(e));
+        Plotly.restyle(this._plot, data, traces).catch(e => setTimeout(() => {throw e;}));
     }
 
     /** Forward to Ploty.relayout */
     private _relayout(layout: Partial<Layout>) {
-        Plotly.relayout(this._plot, layout).catch((e) => console.error(e));
+        Plotly.relayout(this._plot, layout).catch(e => setTimeout(() => {throw e;}));
     }
 
     /** setup the default values after loading a new dataset */
@@ -829,7 +829,7 @@ export class PropertiesMap {
 
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout as Partial<Layout>, DEFAULT_CONFIG as Config)
-            .catch(e => console.error(e));
+            .catch(e => setTimeout(() => {throw e;}));
 
         this._plot.on("plotly_click", (event: Plotly.PlotMouseEvent) => {
             const environment = event.points[0].pointNumber;
