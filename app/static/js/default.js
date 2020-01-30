@@ -14,34 +14,37 @@ function toJson(path, buffer) {
     });
 }
 
-let vizualizer = undefined;
+let visualizer = undefined;
 function setupChemiscope(dataset) {
-    if (vizualizer !== undefined) {
-        vizualizer.changeDataset(dataset)
+    if (visualizer !== undefined) {
+        visualizer.changeDataset(dataset)
     } else {
-        vizualizer = new Chemiscope.DefaultVizualizer({
+        const config = {
             map:       'chemiscope-map',
             info:      'chemiscope-info',
             structure: 'chemiscope-structure',
             j2sPath:   GLOBAL_JS2_PATH,
-        }, dataset)
+        };
 
-        vizualizer.structure.settingsPlacement((rect) => {
-            const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
+        Chemiscope.DefaultVizualizer.load(config, dataset).then(v => {
+            visualizer = v;
+            visualizer.structure.settingsPlacement((rect) => {
+                const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
 
-            return {
-                top: structureRect.top,
-                left: structureRect.left - rect.width - 25,
-            };
-        })
+                return {
+                    top: structureRect.top,
+                    left: structureRect.left - rect.width - 25,
+                };
+            });
 
-        vizualizer.map.settingsPlacement((rect) => {
-            const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
+            visualizer.map.settingsPlacement((rect) => {
+                const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
 
-            return {
-                top: mapRect.top,
-                left: mapRect.left + mapRect.width + 25,
-            };
+                return {
+                    top: mapRect.top,
+                    left: mapRect.left + mapRect.width + 25,
+                };
+            });
         })
     }
 }

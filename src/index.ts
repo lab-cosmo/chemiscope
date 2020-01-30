@@ -62,6 +62,11 @@ function checkConfig(o: any) {
     }
 }
 
+// return new Promise((resolve, reject) => {
+//     const res = longrunning()
+//     resolve('I don\'t actually like fish ' + res)
+// })
+
 class DefaultVizualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
@@ -74,7 +79,7 @@ class DefaultVizualizer {
     }
     private _indexer: EnvironmentIndexer;
 
-    constructor(config: Config, dataset: Dataset) {
+    private constructor(config: Config, dataset: Dataset) {
         checkConfig(config);
         checkDataset(dataset);
 
@@ -104,32 +109,42 @@ class DefaultVizualizer {
         };
     }
 
-    public changeDataset(dataset: Dataset) {
-        checkDataset(dataset);
+    static load(config: Config, dataset: Dataset): Promise<DefaultVizualizer> {
+        return new Promise((resolve, _) => {
+            const visualizer = new DefaultVizualizer(config, dataset);
+            resolve(visualizer);
+        });
+    }
 
-        const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
-        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+    public changeDataset(dataset: Dataset): Promise<void> {
+        return new Promise((resolve, _) => {
+            checkDataset(dataset);
 
-        this.map.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
-        this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
-        this.structure.onselect = (indexes) => {
-            this.map.select(indexes);
-            this.info.show(indexes);
-        };
+            const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
+            this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
-        this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
-        this.info.onchange = (indexes) => {
-            this.map.select(indexes);
-            this.structure.show(indexes);
-        };
-        this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
-        this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
+            this.map.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
+            this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
+            this.structure.onselect = (indexes) => {
+                this.map.select(indexes);
+                this.info.show(indexes);
+            };
+
+            this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
+            this.info.onchange = (indexes) => {
+                this.map.select(indexes);
+                this.structure.show(indexes);
+            };
+            this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
+            this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
 
-        this.map.onselect = (indexes) => {
-            this.info.show(indexes);
-            this.structure.show(indexes);
-        };
+            this.map.onselect = (indexes) => {
+                this.info.show(indexes);
+                this.structure.show(indexes);
+            };
+            resolve();
+        });
     }
 }
 
