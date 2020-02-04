@@ -45,20 +45,20 @@ header {
 }
 
 main.container-fluid {
-    margin: 1.5em 0em 1.5em 0em;
+    margin: 1.5em 0em calc(1.5em + 60px) 0em;
     width: 100%;
 }
 
 @media screen and (min-width: 1200px) {
     main.container-fluid {
-        margin: 2em 2em 2em 2em;
+        margin: 2em 2em calc(2em + 60px) 2em;
         width: calc(100% - 4em);
     }
 }
 
 @media screen and (min-width: 1500px) {
     main.container-fluid {
-        margin: 2em auto 2em auto;
+        margin: 2em auto calc(2em + 60px) auto;
         width: 1500px;
     }
 }
