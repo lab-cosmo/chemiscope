@@ -43,3 +43,61 @@ header {
     text-align: center;
     color: grey;
 }
+
+main.container-fluid {
+    margin: 1.5em 0em 1.5em 0em;
+    width: 100%;
+}
+
+@media screen and (min-width: 1200px) {
+    main.container-fluid {
+        margin: 2em 2em 2em 2em;
+        width: calc(100% - 4em);
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    main.container-fluid {
+        margin: 2em auto 2em auto;
+        width: 1500px;
+    }
+}
+
+#chemiscope-map {
+    height: 80vw;
+    width: 100%;
+}
+
+@media screen and (min-width: 992px) {
+    #chemiscope-map {
+        height: 45vw;
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    #chemiscope-map {
+        height: 750px;
+    }
+}
+
+#chemiscope-structure {
+    height: 60vw;
+    width: 100%;
+}
+
+@media screen and (min-width: 992px) {
+    #chemiscope-structure {
+        height: 35vw;
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    #chemiscope-structure {
+        height: 600px;
+    }
+}
+
+#chemiscope-info {
+    min-height: 100px;
+    width: 100%;
+}

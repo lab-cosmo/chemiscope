@@ -520,7 +520,6 @@ export class JSmolWidget {
     private _createApplet(j2sPath: string, serverURL: string) {
         const width = this._root.clientWidth;
         const height = this._root.clientHeight;
-
         if (width === 0 || height === 0) {
             const parentId = this._root.parentElement!.id;
             console.error(
@@ -548,11 +547,13 @@ export class JSmolWidget {
             zIndexBase: 1,
             j2sPath: j2sPath,
             serverURL: serverURL,
-            width: width,
-            height: height,
+            width: "100%",
+            height: "100%",
         });
 
         const div = document.createElement("div");
+        div.style.height = "100%";
+        div.style.width = "100%";
         this._root.appendChild(div);
         div.innerHTML = this._Jmol.getAppletHtml(this._applet);
         // Jmol rely on this script being implicitly executed, but this is not

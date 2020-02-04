@@ -101,6 +101,7 @@ const DEFAULT_CONFIG = {
     displayModeBar: true,
     displaylogo: false,
     scrollZoom: true,
+    responsive: true,
     modeBarButtonsToRemove: [
         "hoverClosestCartesian",
         "hoverCompareCartesian",
@@ -237,7 +238,6 @@ export class PropertiesMap {
         this._plot = document.createElement("div") as unknown as PlotlyScatterElement;
         this._plot.style.width = "100%";
         this._plot.style.height = "100%";
-        this._plot.style.minHeight = "550px";
         this._root.appendChild(this._plot);
 
         this._selectedMarker = document.createElement("div");
