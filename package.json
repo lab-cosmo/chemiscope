@@ -20,7 +20,7 @@
     "api-docs": "typedoc",
     "start": "webpack-dev-server -d --content-base ./app",
     "merge-dts": "dts-bundle --name chemiscope --main dist/src/index.d.ts --baseDir dist --out chemiscope.d.ts --removeSource",
-    "prepare": "rm -rf dist && webpack --mode production && npm run merge-dts"
+    "prepublishOnly": "rm -rf dist && npm run build && npm run merge-dts"
   },
   "devDependencies": {
     "@types/node": "^13.7.0",
