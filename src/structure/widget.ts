@@ -11,6 +11,8 @@ import {makeDraggable, getByID, generateGUID} from '../utils';
 
 import HTML_SETTINGS from './settings.html';
 
+require('../static/chemiscope.css');
+
 
 /** @hidden
  * Create a stylesheet in the main `document` with the given `rules`

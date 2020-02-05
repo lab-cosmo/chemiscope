@@ -3,10 +3,13 @@ import webpack from "webpack";
 
 const config: webpack.Configuration = {
     mode: "development",
-    entry: "./src/index.ts",
+    entry: {
+        "chemiscope": "./src/index.ts",
+        "jsmol-widget": "./src/structure/widget.ts",
+    },
     output: {
         path: path.resolve(__dirname, "dist"),
-        filename: "chemiscope.min.js",
+        filename: "[name].min.js",
         libraryTarget: "var",
         library: "Chemiscope",
     },
