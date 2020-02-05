@@ -14,22 +14,33 @@ node_js:
 install:
     - npm ci
     - python3 -m pip install -r docs/requirements.txt
+
 script:
     - npm run build
+    - npm run download-example-input
     - cp -r app/ gh-pages/
     - cp dist/*.min.js gh-pages/
     - touch gh-pages/.nojekyll
     - echo "chemiscope.org" > gh-pages/CNAME
-    # Get the example data files from the previous version
-    - git clone --depth=1 https://github.com/$TRAVIS_REPO_SLUG --branch gh-pages old-gh-pages
-    - cp old-gh-pages/*.json.gz gh-pages/
+    # Cleanup a few files
     - rm -f gh-pages/standalone.in.html
     - rm -f gh-pages/.gitignore
     # Build the docs
     - cd docs && make html && cd -
     - cp -r docs/_build/html/ gh-pages/docs/
+
 deploy:
+  # Deploy the default app to gh-pages
   - provider: pages
     skip_cleanup: true
     github_token: $GH_TOKEN
     local_dir: gh-pages
+  - provider: releases
+    api_key: $GH_TOKEN
+    file:
+      - "dist/chemiscope.d.ts"
+      - "dist/chemiscope.min.js"
+      - "dist/jsmol-widget.min.js"
+    skip_cleanup: true
+    on:
+      tags: true
