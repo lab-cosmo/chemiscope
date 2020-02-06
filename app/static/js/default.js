@@ -86,6 +86,7 @@ function stopLoading() {
 }
 
 function loadExample(url) {
+    startLoading();
     fetch(url)
         .then(response => {
             if (!response.ok) {
