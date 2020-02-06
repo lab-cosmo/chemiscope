@@ -63,41 +63,40 @@ main.container-fluid {
     }
 }
 
+main .embed-responsive {
+    margin: auto;
+}
+
+main .embed-responsive-item {
+    display: flex;
+    flex-flow: column;
+}
+
+.embed-responsive-5by7::before {
+    padding-top: 200%;
+}
+
+@media screen and (min-width: 768px) {
+    .embed-responsive-5by7 {
+        max-height: calc(100vh - 4em - 120px);
+    }
+
+    main .embed-responsive {
+        /* set the width to fit the vertical space, and the height will be set automatically */
+        max-width: calc(100vh - 4em - 120px);
+    }
+
+}
+
 #chemiscope-map {
-    height: 80vw;
-    width: 100%;
-}
-
-@media screen and (min-width: 992px) {
-    #chemiscope-map {
-        height: 45vw;
-    }
-}
-
-@media screen and (min-width: 1500px) {
-    #chemiscope-map {
-        height: 750px;
-    }
+    display: block;
 }
 
 #chemiscope-structure {
-    height: 60vw;
-    width: 100%;
-}
-
-@media screen and (min-width: 992px) {
-    #chemiscope-structure {
-        height: 35vw;
-    }
-}
-
-@media screen and (min-width: 1500px) {
-    #chemiscope-structure {
-        height: 600px;
-    }
+    flex: 1 1 auto;
 }
 
 #chemiscope-info {
-    min-height: 100px;
+    flex: 0 1 auto;
     width: 100%;
 }

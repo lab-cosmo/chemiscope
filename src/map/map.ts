@@ -233,7 +233,9 @@ export class PropertiesMap {
             throw Error(`could not find HTML element #${id}`)
         }
         this._root = root;
-        this._root.style.position = 'relative';
+        if (this._root.style.position === "") {
+            this._root.style.position = 'relative';
+        }
 
         this._plot = document.createElement("div") as unknown as PlotlyScatterElement;
         this._plot.style.width = "100%";
