@@ -42,6 +42,9 @@ header {
     margin: auto;
     text-align: center;
     color: grey;
+    position: absolute;
+    z-index: 100000;
+    left: 50%;
 }
 
 main.container-fluid {
