@@ -73,7 +73,7 @@ main .embed-responsive-item {
 }
 
 .embed-responsive-5by7::before {
-    padding-top: 200%;
+    padding-top: 140%;
 }
 
 @media screen and (min-width: 768px) {
