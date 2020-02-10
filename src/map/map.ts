@@ -873,7 +873,11 @@ export class PropertiesMap {
      */
     private _xValues(trace?: number): Array<number[]> {
         const values = this._properties()[this._current.x].values;
-        return this._selectTrace(values, [values[this._selected]], trace);
+        const selected = [values[this._selected]];
+        if (!this._is3D()) {
+            selected[0] = NaN;
+        }
+        return this._selectTrace(values, selected, trace);
     }
 
     /**
@@ -882,7 +886,11 @@ export class PropertiesMap {
      */
     private _yValues(trace?: number): Array<number[]> {
         const values = this._properties()[this._current.y].values;
-        return this._selectTrace(values, [values[this._selected]], trace);
+        const selected = [values[this._selected]];
+        if (!this._is3D()) {
+            selected[0] = NaN;
+        }
+        return this._selectTrace(values, selected, trace);
     }
 
     /**
