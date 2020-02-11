@@ -25,7 +25,7 @@ function setupChemiscope(dataset) {
             map:       'chemiscope-map',
             info:      'chemiscope-info',
             structure: 'chemiscope-structure',
-            j2sPath:   GLOBAL_JS2_PATH,
+            j2sPath:   GLOBAL_J2S_PATH,
         };
 
         Chemiscope.DefaultVizualizer.load(config, dataset).then(v => {
@@ -121,8 +121,8 @@ function setupDefaultChemiscope(isStandalone) {
 
     if (isStandalone) {
         document.getElementById('examples').style.display = 'none';
-        window.GLOBAL_JS2_PATH = 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/';
+        window.GLOBAL_J2S_PATH = 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/';
     } else {
-        window.GLOBAL_JS2_PATH = 'static/js/jsmol/j2s';
+        window.GLOBAL_J2S_PATH = 'static/js/jsmol/j2s';
     }
 }

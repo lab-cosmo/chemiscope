@@ -62,11 +62,6 @@ function checkConfig(o: any) {
     }
 }
 
-// return new Promise((resolve, reject) => {
-//     const res = longrunning()
-//     resolve('I don\'t actually like fish ' + res)
-// })
-
 class DefaultVizualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
