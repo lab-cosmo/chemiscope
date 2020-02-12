@@ -15,7 +15,7 @@ function download(file_url) {
     req.end();
 }
 
-download('https://chemiscope.org/CSD.json.gz');
+download('https://chemiscope.org/CSD-500.json.gz');
 download('https://chemiscope.org/Arginine-Dipeptide.json.gz');
 download('https://chemiscope.org/Qm7b.json.gz');
-download('https://chemiscope.org/Pyrole.json.gz');
+download('https://chemiscope.org/Azaphenacenes.json.gz');
