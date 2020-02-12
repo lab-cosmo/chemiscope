@@ -135,7 +135,7 @@ def write_chemiscope_input(filename, meta, frames, extra, cutoff=None):
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     '''
 
-    if not filename.endswith('.json') or filename.endswith('.json.gz'):
+    if not (filename.endswith('.json') or filename.endswith('.json.gz')):
         raise Exception('filename should end with .json or .json.gz')
 
     data = {
