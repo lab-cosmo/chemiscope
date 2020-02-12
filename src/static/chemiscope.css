@@ -3,6 +3,21 @@
     cursor: pointer;
 }
 
+.chsp-authors-list {
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.chsp-authors-list li {
+    border: solid #dee2e6 1px;
+    padding: 10px;
+    list-style-type: none;
+    white-space: nowrap;
+}
+
 .chsp-selected {
     position: absolute;
     width: 20px;

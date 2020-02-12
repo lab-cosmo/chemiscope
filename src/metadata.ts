@@ -3,6 +3,7 @@
  * @module main
  */
 
+import {default as markdown} from 'markdown-it';
 import {Metadata} from './dataset';
 import {generateGUID} from './utils';
 
@@ -13,6 +14,12 @@ function generateName(guid: string, name: string): string {
 }
 
 function generateModal(guid: string, metadata: Metadata): string {
+    const md = markdown({
+        html: false,
+        linkify: true,
+        typographer: true,
+    });
+
     // Deal with missing metadata
     let description = "No description for this dataset."
     if (metadata.description !== undefined) {
@@ -21,9 +28,12 @@ function generateModal(guid: string, metadata: Metadata): string {
 
     let authors = 'No authors for this dataset.';
     if (metadata.authors !== undefined) {
-        authors = '<ul>';
-        for (const name of metadata.authors) {
-            authors += `<li>${name}</li>`;
+        authors = '<ul class="chsp-authors-list">';
+        for (const author of metadata.authors) {
+            // remove enclosing <p> tag added by markdown rendering
+            const render = md.render(author).slice(3, -5);
+            console.log(render);
+            authors += `<li>${render}</li>`;
         }
         authors += '</ul>';
     }
@@ -31,8 +41,8 @@ function generateModal(guid: string, metadata: Metadata): string {
     let ref = 'No references for this dataset.';
     if (metadata.references !== undefined) {
         ref = '<ul>';
-        for (const r of metadata.references) {
-            ref += `<li>${r}</li>`;
+        for (const reference of metadata.references) {
+            ref += `<li>${md.render(reference)}</li>`;
         }
         ref += '</ul>'
     }
@@ -45,8 +55,8 @@ function generateModal(guid: string, metadata: Metadata): string {
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div>${description}</div>
-                    <h5 style="margin-top: 1em;">Autors</h5>
+                    <div>${md.render(description)}</div>
+                    <h5 style="margin-top: 1em;">Authors</h5>
                     ${authors}
                     <h5 style="margin-top: 1em;">References</h5>
                     ${ref}
@@ -79,6 +89,10 @@ export class MetadataPanel {
      * @param metadata dataset metadata
      */
     constructor(id: string, metadata: Metadata) {
+        // sanitize HTML, all the other field will go through markdown
+        metadata.name = metadata.name.replace(/</g, '&lt;');
+        metadata.name = metadata.name.replace(/>/g, '&gt;');
+
         this._guid = 'chsp-' + generateGUID();
 
         const name = document.getElementById(id);

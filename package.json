@@ -23,6 +23,7 @@
     "prepublishOnly": "rm -rf dist && npm run build && npm run merge-dts"
   },
   "devDependencies": {
+    "@types/markdown-it": "0.0.9",
     "@types/node": "^13.7.0",
     "@types/plotly.js": "^1.44.24",
     "@types/webpack": "^4.41.5",
@@ -42,6 +43,7 @@
     "webpack-dev-server": "^3.10.3"
   },
   "dependencies": {
+    "markdown-it": "^10.0.0",
     "plotly.js": "^1.52.2"
   }
 }

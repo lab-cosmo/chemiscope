@@ -132,10 +132,13 @@ values:
 .. code-block:: javascript
 
     {
-        // metadata of the dataset
+        // metadata of the dataset. `description`, `authors` and `references`
+        // will be rendered as markdown.
         "meta": {
             // the name of the dataset
             "name": "this is my name"
+            // description of the dataset, OPTIONAL
+            "description": "This contains data from ..."
             // authors of the dataset, OPTIONAL
             "authors": ["John Doe", "Mr Green, green@example.com"],
             // references for the dataset, OPTIONAL
@@ -143,8 +146,6 @@ values:
                 "'A new molecular construction', Journal of Random Words 19 (1923) pp 3333, DOI: 10.0000/0001100",
                 "'nice website' http://example.com",
             ],
-            // description of the dataset, OPTIONAL
-            "description": "This contains data from ..."
         },
 
         // list of properties in this dataset
