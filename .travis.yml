@@ -17,6 +17,7 @@ install:
 
 script:
     - npm run build
+    - npm run merge-dts
     - npm run download-example-input
     - cp -r app/ gh-pages/
     - cp dist/*.min.js gh-pages/
