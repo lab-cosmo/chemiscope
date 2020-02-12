@@ -150,6 +150,34 @@ function checkMetadata(o: any) {
     if (!('name' in o && typeof o['name'] === 'string')) {
         throw Error("missing 'meta.name' in dataset");
     }
+
+    if ('description' in o && typeof o['description'] !== 'string') {
+        throw Error("'meta.description' should be a string in dataset");
+    }
+
+    if ('authors' in o) {
+        if (typeof o['authors'].length === undefined) {
+            throw Error("'meta.authors' must be an array in dataset");
+        }
+
+        for (const a of o['authors']) {
+            if (typeof a !== 'string') {
+                throw Error("'meta.authors' must be an array of strings in dataset");
+            }
+        }
+    }
+
+    if ('references' in o) {
+        if (typeof o['references'].length === undefined) {
+            throw Error("'meta.references' must be an array in dataset");
+        }
+
+        for (const a of o['references']) {
+            if (typeof a !== 'string') {
+                throw Error("'meta.references' must be an array of strings in dataset");
+            }
+        }
+    }
 }
 
 function checkStructure(o: any): [number, number] {
