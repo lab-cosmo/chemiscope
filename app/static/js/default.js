@@ -24,6 +24,7 @@ function setupChemiscope(dataset) {
         const config = {
             map:       'chemiscope-map',
             info:      'chemiscope-info',
+            meta:      'chemiscope-meta',
             structure: 'chemiscope-structure',
             j2sPath:   GLOBAL_J2S_PATH,
         };

@@ -1,0 +1,105 @@
+/**
+ * @packageDocumentation
+ * @module main
+ */
+
+import {Metadata} from './dataset';
+import {generateGUID} from './utils';
+
+function generateName(guid: string, name: string): string {
+    return `<span data-toggle="modal" data-target="#${guid}">
+        ${name}
+    </span>`;
+}
+
+function generateModal(guid: string, metadata: Metadata): string {
+    // Deal with missing metadata
+    let description = "No description for this dataset."
+    if (metadata.description !== undefined) {
+        description = metadata.description;
+    }
+
+    let authors = 'No authors for this dataset.';
+    if (metadata.authors !== undefined) {
+        authors = '<ul>';
+        for (const name of metadata.authors) {
+            authors += `<li>${name}</li>`;
+        }
+        authors += '</ul>';
+    }
+
+    let ref = 'No references for this dataset.';
+    if (metadata.references !== undefined) {
+        ref = '<ul>';
+        for (const r of metadata.references) {
+            ref += `<li>${r}</li>`;
+        }
+        ref += '</ul>'
+    }
+
+    return `<div id=${guid} class="modal fade" tabindex='-1'>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header chsp-modal-header">
+                    <h4 class="modal-title">${metadata.name}</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div>${description}</div>
+                    <h5 style="margin-top: 1em;">Autors</h5>
+                    ${authors}
+                    <h5 style="margin-top: 1em;">References</h5>
+                    ${ref}
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+/**
+ * The [[MetadataPanel]] class displays information regarding the dataset: name,
+ * authors, references, description, etc.
+ *
+ * By default, only the name is shown, and clicking on it reveals a modal with
+ * the other information.
+ */
+export class MetadataPanel {
+    /// Global id of this panel
+    private _guid: string;
+    /// The HTML element serving as root element for the name
+    private _name: HTMLElement;
+    /// The HTML element containing the modal for the current dataset
+    private _modal: HTMLElement;
+
+    /**
+     * Create a new [[MetadataPanel]] inside the HTML element with the given
+     * `id`.
+     *
+     * @param id       HTML id of the DOM element where the name should live
+     * @param metadata dataset metadata
+     */
+    constructor(id: string, metadata: Metadata) {
+        this._guid = 'chsp-' + generateGUID();
+
+        const name = document.getElementById(id);
+        if (name === null) {
+            throw Error(`could not find HTML element #${id}`)
+        }
+        this._name = name;
+        this._name.innerHTML = generateName(this._guid, metadata.name);
+        this._name.classList.add("chsp-meta");
+
+        this._modal = document.createElement('div');
+        document.body.appendChild(this._modal);
+        this._modal.innerHTML = generateModal(this._guid, metadata);
+    }
+
+    /**
+     * Change the displayed dataset to a new one
+     * @param  metadata new dataset metadata
+     */
+    public changeDataset(metadata: Metadata) {
+        this._name.innerHTML = generateName(this._guid, metadata.name);
+        this._modal.innerHTML = generateModal(this._guid, metadata);
+    }
+}

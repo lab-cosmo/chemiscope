@@ -33,7 +33,7 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
  */
 export class StructureViewer {
     private _widget: JSmolWidget;
-    /// PLayback delay setting
+    /// Playback delay setting
     private _delay: HTMLInputElement;
     /// List of structures in the dataset
     private _structures: Structure[];

@@ -2,10 +2,10 @@
  * This module contains the [[DefaultVizualizer]] class, which is the default
  * entry point of the code.
  *
- * The default vizualization is organized around three panels: the
- * [[PropertiesMap|map]] (a scatter plot of properties), the
- * [[StructureViewer|structure viewer]], and the general dataset
- * [[EnvironmentInfo|information]]. Each one of these is defined in a
+ * The default vizualization is organized around four panels: the
+ * [[MetadataPanel|metadata]] panel; the [[PropertiesMap|map]] (a scatter plot of
+ * properties), the [[StructureViewer|structure viewer]], and the general
+ * dataset [[EnvironmentInfo|information]]. Each one of these is defined in a
  * separate module.
  *
  * Other organization of the vizualization are possible by using the classes
@@ -19,8 +19,9 @@
  */
 
 import {PropertiesMap} from "./map";
-import {StructureViewer} from "./structure";
+import {MetadataPanel} from './metadata';
 import {EnvironmentInfo} from './info';
+import {StructureViewer} from "./structure";
 
 import {Dataset, checkDataset} from './dataset';
 import {EnvironmentIndexer, addWarningHandler} from './utils';
@@ -31,6 +32,8 @@ require('./static/chemiscope.css');
  * Configuration for the [[DefaultVizualizer]]
  */
 export interface Config {
+    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    meta: string;
     /** Id of the DOM element to use for the [[PropertiesMap|map]] */
     map: string;
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
@@ -45,6 +48,10 @@ export interface Config {
  * Check if `o` contains all the expected fields to be a [[Config]].
  */
 function checkConfig(o: any) {
+    if (!('meta' in o && typeof o['meta'] === 'string')) {
+        throw Error("missing 'meta' in chemiscope config");
+    }
+
     if (!('map' in o && typeof o['map'] === 'string')) {
         throw Error("missing 'map' in chemiscope config");
     }
@@ -65,10 +72,12 @@ function checkConfig(o: any) {
 class DefaultVizualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
+    public meta: MetadataPanel;
     public structure: StructureViewer;
 
     private _ids: {
         map: string;
+        meta: string;
         info: string;
         structure: string;
     }
@@ -82,7 +91,9 @@ class DefaultVizualizer {
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
-        this.map = new PropertiesMap(config.map, dataset.meta.name, this._indexer, dataset.properties);
+        this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        this.map = new PropertiesMap(config.map, this._indexer, dataset.properties);
         this.structure = new StructureViewer(config.structure, config.j2sPath, this._indexer, dataset.structures, dataset.environments);
 
         this.structure.onselect = (indexes) => {
@@ -118,7 +129,9 @@ class DefaultVizualizer {
             const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
             this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
-            this.map.changeDataset(dataset.meta.name, this._indexer, dataset.properties);
+            this.meta.changeDataset(dataset.meta);
+
+            this.map.changeDataset(this._indexer, dataset.properties);
             this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
             this.structure.onselect = (indexes) => {
                 this.map.select(indexes);
@@ -145,8 +158,9 @@ class DefaultVizualizer {
 
 export {
     addWarningHandler,
-    StructureViewer,
+    MetadataPanel,
     PropertiesMap,
+    StructureViewer,
     EnvironmentInfo,
     EnvironmentIndexer,
     DefaultVizualizer,

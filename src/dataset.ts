@@ -5,11 +5,8 @@
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
-    /** Various metadata associated with this dataset */
-    meta: {
-        /** dataset name */
-        name: string;
-    }
+    /** metadata for this dataset */
+    meta: Metadata;
     /** List of structures in the dataset */
     structures: Structure[];
     /**
@@ -32,6 +29,18 @@ export interface Dataset {
      * environment. This may change in the future.
      */
     environments?: Environment[];
+}
+
+/** Various metadata associated with a dataset */
+export interface Metadata {
+    /** dataset name */
+    name: string;
+    /** authors of the dataset */
+    authors?: string[];
+    /** academic references related to this dataset */
+    references?: string[];
+    /** description of the dataset */
+    description?: string;
 }
 
 /** A single atomic structure */

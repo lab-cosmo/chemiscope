@@ -47,7 +47,9 @@ Different panels and settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The default chemiscope visualizer is organized in three main panels: the map,
-the structure viewer and the environment information display. This section will
+the structure viewer and the environment information display. Additionally,
+clicking on the dataset title (on top of the map) will display some metadata
+about the dataset (description, authors, references). This section will
 present each one, as well as the main settings accessible to customize the
 display.
 
@@ -134,6 +136,15 @@ values:
         "meta": {
             // the name of the dataset
             "name": "this is my name"
+            // authors of the dataset, OPTIONAL
+            "authors": ["John Doe", "Mr Green, green@example.com"],
+            // references for the dataset, OPTIONAL
+            "references": [
+                "'A new molecular construction', Journal of Random Words 19 (1923) pp 3333, DOI: 10.0000/0001100",
+                "'nice website' http://example.com",
+            ],
+            // description of the dataset, OPTIONAL
+            "description": "This contains data from ..."
         },
 
         // list of properties in this dataset

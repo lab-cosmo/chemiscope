@@ -91,6 +91,13 @@ main .embed-responsive-item {
 
 }
 
+#chemiscope-meta {
+    position: absolute;
+    top: 0;
+    left: 2.5em;
+    font-size: 16pt;
+}
+
 #chemiscope-map {
     display: block;
 }

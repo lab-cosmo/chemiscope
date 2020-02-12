@@ -26,14 +26,6 @@ const DEFAULT_LAYOUT = {
         itemclick: false,
         itemdoubleclick: false,
     },
-    title: {
-        text: "",
-        y: 0.982,
-        x: 0.08,
-        font: {
-            size: 25,
-        },
-    },
     margin: {
         l: 50,
         t: 50,
@@ -155,8 +147,6 @@ export class PropertiesMap {
     private _root: HTMLElement;
     /// Plotly plot
     private _plot!: PlotlyScatterElement;
-    /// The dataset name
-    private _name: string;
     /// All known properties
     private _data: MapData;
     /// Index of the currently selected point
@@ -217,13 +207,11 @@ export class PropertiesMap {
      * `id`
      *
      * @param id         HTML id of the DOM element where the map should live
-     * @param name       name of the dataset, displayed as the plot title
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
      */
-    constructor(id: string, name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
-        this._name = name;
+    constructor(id: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         this._indexer = indexer;
         this._selected = 0;
         this.onselect = () => {};
@@ -310,13 +298,12 @@ export class PropertiesMap {
      *                    structure/atom pair translation
      * @param  properties new properties to display
      */
-    public changeDataset(name: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
+    public changeDataset(indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         if (this._is3D()) {
             this._current.z = undefined;
             this._switch2D();
         }
 
-        this._name = name;
         this._indexer = indexer;
         this._selected = 0;
         this._data = new MapData(properties);
@@ -752,7 +739,7 @@ export class PropertiesMap {
         // The main trace, containing default data
         const main = {
             type: "scattergl",
-            name: this._name,
+            name: "",
             x: x[0],
             y: y[0],
             z: z[0],
@@ -822,7 +809,6 @@ export class PropertiesMap {
         let layout = {
             ...DEFAULT_LAYOUT
         };
-        layout.title.text = this._name;
         layout.xaxis.title = this._current.x;
         layout.yaxis.title = this._current.y;
         layout.xaxis.type = this._settings.x.scale.value;
@@ -1024,7 +1010,7 @@ export class PropertiesMap {
 
     /** Get the list of symbols names to use for the legend */
     private _legendNames(): Array<string> {
-        const result = [this._name, ""];
+        const result = ["", ""];
 
         if (this._current.symbols !== undefined) {
             assert(!this._is3D());

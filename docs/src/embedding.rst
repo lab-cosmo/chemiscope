@@ -32,6 +32,7 @@ which contains references to
 
 - `Chemiscope.DefaultVizualizer <DefaultVizualizer_>`_
 - `Chemiscope.addWarningHandler <addWarningHandler_>`_
+- `Chemiscope.MetadataPanel <MetadataPanel_>`_
 - `Chemiscope.StructureViewer <StructureViewer_>`_
 - `Chemiscope.PropertiesMap <PropertiesMap_>`_
 - `Chemiscope.EnvironmentInfo <EnvironmentInfo_>`_
@@ -47,6 +48,7 @@ part of chemiscope can be added upon request.
 .. _StructureViewer: api/classes/structure.structureviewer.html
 .. _PropertiesMap: api/classes/map.propertiesmap.html
 .. _EnvironmentInfo: api/classes/info.environmentinfo.html
+.. _MetadataPanel: api/classes/main.metadatapanel.html
 .. _EnvironmentIndexer: api/classes/utils.environmentindexer.html
 .. _JSmolWidget: api/classes/structure.jsmolwidget.html
 
@@ -130,6 +132,7 @@ using JSON files or directly.
 
         <body>
             <!-- Create basic DOM element for the different panels to live in -->
+            <div id=meta></div>
             <div id=map></div>
             <div id=structure></div>
             <div id=info></div>
@@ -148,6 +151,7 @@ using JSON files or directly.
             const config = {
                 // id of the different elements
                 map:       'map',
+                meta:      'meta',
                 info:      'info',
                 structure: 'structure',
                 // path to load J2S files for JSmol

@@ -2,8 +2,10 @@
 '''
 Generate JSON input files for the default chemiscope visualizer.
 '''
+import warnings
 import numpy as np
 import json
+import gzip
 
 
 def _typetransform(data):
@@ -75,18 +77,35 @@ def _generate_environments(frames, cutoff):
     return environments
 
 
-def write_chemiscope_input(filename, name, frames, extra, cutoff=None):
+def write_chemiscope_input(filename, meta, frames, extra, cutoff=None):
     '''
     Write the json file expected by the default chemiscope visualizer at
     ``filename``.
 
-    :param str filename: name of the file to use to save the json data
-    :param str name: name of the dataset
+    :param str filename: name of the file to use to save the json data. If it
+                         ends with '.gz', a gzip compressed file will be written
+    :param dict meta: metadata of the dataset, see below
     :param list frames: list of `ase.Atoms`_ objects containing all the
                         structures
     :param dict extra: dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
+
+    The dataset metadata should be given in the ``meta`` dictionary, the
+    possible keys are:
+
+    .. code-block:: python
+
+        meta = {
+            'name': '...',         # str, dataset name
+            'description': '...',  # str, dataset description
+            'authors': [           # list of str, dataset authors, OPTIONAL
+                '...',
+            ],
+            'references': [        # list of str, references for this dataset,
+                '...',             # OPTIONAL
+            ],
+        }
 
     The written JSON file will contain all the properties defined on the
     `ase.Atoms`_ objects. Values in ``ase.Atoms.arrays`` are mapped to
@@ -116,19 +135,30 @@ def write_chemiscope_input(filename, name, frames, extra, cutoff=None):
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     '''
 
+    if not filename.endswith('.json') or filename.endswith('.json.gz'):
+        raise Exception('filename should end with .json or .json.gz')
+
     data = {
         'meta': {
-            'name': name,
+            'name': meta['name'],
+            'description': meta.get('description', None),
+            'authors': meta.get('authors', None),
+            'references': meta.get('references', None),
         }
     }
+
+    for key in meta.keys():
+        if key not in ['name', 'description', 'authors', 'references']:
+            warnings.warn('ignoring unexpected metadata: {}'.format(key))
 
     properties = {}
     for name, value in extra.items():
         properties.update(_linearize(name, value))
 
+    # Read properties coming from the ase.Atoms objects
     from_frames = {}
 
-    # target: structure
+    # target: structure properties
     from_frames.update({
         name: {
             'target': 'structure',
@@ -140,7 +170,7 @@ def write_chemiscope_input(filename, name, frames, extra, cutoff=None):
         for name, value in frame.info.items():
             from_frames[name]['values'].append(value)
 
-    # target: atom
+    # target: atom properties
     from_frames.update({
         name: {
             'target': 'atom',
@@ -163,5 +193,9 @@ def write_chemiscope_input(filename, name, frames, extra, cutoff=None):
     if cutoff is not None:
         data['environments'] = _generate_environments(frames, cutoff)
 
-    with open(filename, 'w') as file:
-        json.dump(data, file)
+    if filename.endswith(".gz"):
+        with gzip.open(filename, 'w', 9) as file:
+            file.write(json.dumps(data).encode("utf8"))
+    else:
+        with open(filename, 'w') as file:
+            json.dump(data, file)
