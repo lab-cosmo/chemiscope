@@ -32,7 +32,6 @@ function generateModal(guid: string, metadata: Metadata): string {
         for (const author of metadata.authors) {
             // remove enclosing <p> tag added by markdown rendering
             const render = md.render(author).slice(3, -5);
-            console.log(render);
             authors += `<li>${render}</li>`;
         }
         authors += '</ul>';

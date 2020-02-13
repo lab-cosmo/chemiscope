@@ -212,15 +212,15 @@ export class JSmolWidget {
         const root = document.getElementById(id);
         if (root === null) {
             throw Error(`Could not get the "#${id}" element`);
-        } else {
-            this._root = document.createElement("div");
-            root.appendChild(this._root);
-
-            this._root.style.position = "relative";
-            this._root.id = this.guid;
-            this._root.style.width = "100%";
-            this._root.style.height = "100%";
         }
+
+        this._root = document.createElement("div");
+        root.appendChild(this._root);
+
+        this._root.style.position = "relative";
+        this._root.id = this.guid
+        this._root.style.width = "100%";
+        this._root.style.height = "100%";
 
         this._cellInfo = document.createElement("span");
         this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
@@ -228,6 +228,11 @@ export class JSmolWidget {
 
         this._createOptions();
         this._createApplet(j2sPath, serverURL);
+
+        // Invert (cf -1 below) wheel zoom direction to match the one in the
+        // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
+        // direction.
+        this.script('bind "WHEEL" "zoom *@{1.15 ** (-1 * _DELTAY)}";');
 
         this._loadedCallback = undefined;
         // create a global function with unique name and install it as callback
