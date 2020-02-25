@@ -13,6 +13,13 @@ import HTML_SETTINGS from './settings.html';
 
 require('../static/chemiscope.css');
 
+function isSafari(): boolean {
+    const s = (window as any)['safari'];
+    if (!s) {
+        return false;
+    }
+    return s.pushNotification.toString() === "[object SafariRemoteNotification]";
+}
 
 /** @hidden
  * Create a stylesheet in the main `document` with the given `rules`
@@ -229,10 +236,17 @@ export class JSmolWidget {
         this._createOptions();
         this._createApplet(j2sPath, serverURL);
 
-        // Invert (cf -1 below) wheel zoom direction to match the one in the
-        // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
-        // direction.
-        this.script('bind "WHEEL" "zoom *@{1.15 ** (-1 * _DELTAY)}";');
+
+        if (!isSafari()) {
+            // Invert (cf -1 below) wheel zoom direction to match the one in the
+            // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
+            // direction.
+            //
+            // For some reason, safari is already reversed, and binding a
+            // callback to WHEEL though jsmol is very slow, so don't reverse
+            // in this case
+            this.script('bind "WHEEL" "zoom *@{1.15 ** (-1 * _DELTAY)}";');
+        }
 
         this._loadedCallback = undefined;
         // create a global function with unique name and install it as callback

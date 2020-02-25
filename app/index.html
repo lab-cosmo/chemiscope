@@ -107,7 +107,11 @@
                 <div class="col-md-5" style="padding: 0;">
                     <div class="embed-responsive embed-responsive-5by7">
                         <div class="embed-responsive-item">
-                            <div id=chemiscope-structure></div>
+                            <!-- height: 0 below is a hack to force safari to
+                            respect height: 100% on the children
+                            https://github.com/philipwalton/flexbugs/issues/197#issuecomment-378908438
+                            -->
+                            <div id=chemiscope-structure style="height: 0;"></div>
                             <div id=chemiscope-info></div>
                         </div>
                     </div>
