@@ -89,14 +89,16 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
 /** Sanity check that all properties have the same size */
 function checkSize(name: string, properties: { [key: string]: NumericProperty }) {
     let size = undefined;
+    let initial = undefined;
     for (const key in properties) {
         if (size === undefined) {
             size = properties[key].values.length;
+            initial = key;
             continue
         }
 
         if (properties[key].values.length !== size) {
-            throw Error(`${name} properties do not all have the same size`);
+            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial}'`);
         }
     }
 }
