@@ -77,7 +77,7 @@ def _generate_environments(frames, cutoff):
     return environments
 
 
-def write_chemiscope_input(filename, meta, frames, extra, cutoff=None):
+def write_chemiscope_input(filename, meta, frames, extra=None, cutoff=None):
     '''
     Write the json file expected by the default chemiscope visualizer at
     ``filename``.
@@ -87,7 +87,7 @@ def write_chemiscope_input(filename, meta, frames, extra, cutoff=None):
     :param dict meta: metadata of the dataset, see below
     :param list frames: list of `ase.Atoms`_ objects containing all the
                         structures
-    :param dict extra: dictionary of additional properties, see below
+    :param dict extra: optional dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
 
@@ -152,8 +152,9 @@ def write_chemiscope_input(filename, meta, frames, extra, cutoff=None):
             warnings.warn('ignoring unexpected metadata: {}'.format(key))
 
     properties = {}
-    for name, value in extra.items():
-        properties.update(_linearize(name, value))
+    if extra is not None:
+        for name, value in extra.items():
+            properties.update(_linearize(name, value))
 
     # Read properties coming from the ase.Atoms objects
     from_frames = {}
