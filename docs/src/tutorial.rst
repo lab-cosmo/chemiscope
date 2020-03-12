@@ -226,7 +226,7 @@ below:
     python3 ./utils/generate_standalone.py
 
 This will create a ``standalone.html`` file containing all the required HTML and
-javascript. You can then add your own dataset by adding the correspinding JSON
+javascript. You can then add your own dataset by adding the corresponding JSON
 file at the end of the ``standalone.html`` file.
 
 .. code-block:: bash
