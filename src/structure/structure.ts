@@ -73,9 +73,11 @@ export class StructureViewer {
         this.onselect = () => {};
 
         this._widget.onselect = (atom: number) => {
-            if (this._indexer.mode == 'atom') {
-                this._widget.highlight(atom);
+            if (this._indexer.mode !== 'atom') {
+                return;
             }
+
+            this._widget.highlight(atom);
             // if the viewer is showing a bigger supercell than [1, 1, 1], the
             // atom index can be outside of [0, natoms), so make sure it is
             // inside this range.
