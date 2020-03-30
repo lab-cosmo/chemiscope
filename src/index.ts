@@ -18,14 +18,15 @@
  * @preferred
  */
 
-import {PropertiesMap} from "./map";
-import {MetadataPanel} from './metadata';
 import {EnvironmentInfo} from './info';
-import {StructureViewer} from "./structure";
+import {PropertiesMap} from './map';
+import {MetadataPanel} from './metadata';
+import {StructureViewer} from './structure';
 
-import {Dataset, checkDataset} from './dataset';
-import {EnvironmentIndexer, addWarningHandler} from './utils';
+import {checkDataset, Dataset} from './dataset';
+import {addWarningHandler, EnvironmentIndexer} from './utils';
 
+// tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
 
 /**
@@ -48,28 +49,35 @@ export interface Config {
  * Check if `o` contains all the expected fields to be a [[Config]].
  */
 function checkConfig(o: any) {
-    if (!('meta' in o && typeof o['meta'] === 'string')) {
-        throw Error("missing 'meta' in chemiscope config");
+    if (!('meta' in o && typeof o.meta === 'string')) {
+        throw Error('missing "meta" key in chemiscope config');
     }
 
-    if (!('map' in o && typeof o['map'] === 'string')) {
-        throw Error("missing 'map' in chemiscope config");
+    if (!('map' in o && typeof o.map === 'string')) {
+        throw Error('missing "map" key in chemiscope config');
     }
 
-    if (!('info' in o && typeof o['info'] === 'string')) {
-        throw Error("missing 'info' in chemiscope config");
+    if (!('info' in o && typeof o.info === 'string')) {
+        throw Error('missing "info" key in chemiscope config');
     }
 
-    if (!('structure' in o && typeof o['structure'] === 'string')) {
-        throw Error("missing 'structure' in chemiscope config");
+    if (!('structure' in o && typeof o.structure === 'string')) {
+        throw Error('missing "structure" key in chemiscope config');
     }
 
-    if (!('j2sPath' in o && typeof o['j2sPath'] === 'string')) {
-        throw Error("missing 'j2sPath' in chemiscope config");
+    if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
+        throw Error('missing "j2sPath" key in chemiscope config');
     }
 }
 
 class DefaultVizualizer {
+    public static load(config: Config, dataset: Dataset): Promise<DefaultVizualizer> {
+        return new Promise((resolve, _) => {
+            const visualizer = new DefaultVizualizer(config, dataset);
+            resolve(visualizer);
+        });
+    }
+
     public map: PropertiesMap;
     public info: EnvironmentInfo;
     public meta: MetadataPanel;
@@ -80,7 +88,7 @@ class DefaultVizualizer {
         meta: string;
         info: string;
         structure: string;
-    }
+    };
     private _indexer: EnvironmentIndexer;
 
     private constructor(config: Config, dataset: Dataset) {
@@ -94,7 +102,13 @@ class DefaultVizualizer {
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
         this.map = new PropertiesMap(config.map, this._indexer, dataset.properties);
-        this.structure = new StructureViewer(config.structure, config.j2sPath, this._indexer, dataset.structures, dataset.environments);
+        this.structure = new StructureViewer(
+            config.structure,
+            config.j2sPath,
+            this._indexer,
+            dataset.structures,
+            dataset.environments,
+        );
 
         this.structure.onselect = (indexes) => {
             this.map.select(indexes);
@@ -113,13 +127,6 @@ class DefaultVizualizer {
             this.info.show(indexes);
             this.structure.show(indexes);
         };
-    }
-
-    static load(config: Config, dataset: Dataset): Promise<DefaultVizualizer> {
-        return new Promise((resolve, _) => {
-            const visualizer = new DefaultVizualizer(config, dataset);
-            resolve(visualizer);
-        });
     }
 
     public changeDataset(dataset: Dataset): Promise<void> {
@@ -145,7 +152,6 @@ class DefaultVizualizer {
             };
             this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
             this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
-
 
             this.map.onselect = (indexes) => {
                 this.info.show(indexes);

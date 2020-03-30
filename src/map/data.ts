@@ -3,15 +3,15 @@
  * @module map
  */
 
-import {Property} from '../dataset'
-import {sendWarning} from '../utils'
+import {Property} from '../dataset';
+import {sendWarning} from '../utils';
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
  */
 export interface NumericProperty {
     /** values for the property */
-    values: number[]
+    values: number[];
     /** string interner if the property was a string-valued property */
     string?: StringInterner;
 }
@@ -30,7 +30,7 @@ export class StringInterner {
 
     /** Get the index associated with the given string `value` */
     public get(value: string): number {
-        let index = this._values.findIndex(x => x === value);
+        let index = this._values.findIndex((x) => x === value);
         if (index === -1) {
             index = this._values.length;
             this._values.push(value);
@@ -42,9 +42,9 @@ export class StringInterner {
     /** Get the string associated with the given `index` */
     public string(index: number): string {
         if (index >= this._values.length) {
-            throw Error("requested unknown string from interner")
+            throw Error('requested unknown string from interner');
         }
-        return this._values[index]
+        return this._values[index];
     }
 
     /** Get all the strings known by this interner */
@@ -56,11 +56,11 @@ export class StringInterner {
 /** Transform a property to a numeric property */
 function propertyToNumeric(name: string, property: number[] | string[]): NumericProperty {
     const prop_type = typeof property[0];
-    if (prop_type === "number") {
+    if (prop_type === 'number') {
         return {
             values: property as number[],
-        }
-    } else if (prop_type === "string") {
+        };
+    } else if (prop_type === 'string') {
         const interner = new StringInterner();
         const values = [];
         for (const value of (property as string[])) {
@@ -72,15 +72,16 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
             // down the whole page.
             if (numeric > 20) {
                 throw Error(
-                    `the '${name}' property contains more than 50 different values, it can not be interpreted as categories`
-                )
+                    `the '${name}' property contains more than 50 different values, \
+                    it can not be interpreted as categories`,
+                );
             }
         }
 
         return {
-            values: values,
             string: interner,
-        }
+            values: values,
+        };
     } else {
         throw Error(`unexpected property type '${prop_type}'`);
     }
@@ -88,13 +89,13 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
 
 /** Sanity check that all properties have the same size */
 function checkSize(name: string, properties: { [key: string]: NumericProperty }) {
-    let size = undefined;
-    let initial = undefined;
+    let size;
+    let initial;
     for (const key in properties) {
         if (size === undefined) {
             size = properties[key].values.length;
             initial = key;
-            continue
+            continue;
         }
 
         if (properties[key].values.length !== size) {
@@ -114,21 +115,21 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
 export class MapData {
     /** Structure properties */
     public structure: {
-        [name: string]: NumericProperty
-    }
+        [name: string]: NumericProperty;
+    };
 
     /** Atomic properties */
     public atom: {
-        [name: string]: NumericProperty
-    }
+        [name: string]: NumericProperty;
+    };
 
     /** Maximal number of symbols (i.e. different values in string properties) in this dataset */
     public maxSymbols: number;
 
     /** Create a new [[MapData]] containing values from the given properties */
     constructor(properties: {[name: string]: Property}) {
-        this.structure = {}
-        this.atom = {}
+        this.structure = {};
+        this.atom = {};
         this.maxSymbols = -1;
 
         for (const name in properties) {
@@ -141,7 +142,7 @@ export class MapData {
             }
             this[properties[name].target][name] = property;
             if (property.string !== undefined) {
-                this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length)
+                this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length);
             }
         }
 

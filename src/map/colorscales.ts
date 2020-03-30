@@ -3,8 +3,9 @@
  * @module map
  */
 
-import {ColorScale} from "./plotly/plotly-scatter";
+import {ColorScale} from './plotly/plotly-scatter';
 
+// tslint:disable-next-line:array-type
 type RGBColorMap = [number, [number, number, number]][];
 
 interface PlotlyColorMap {
@@ -14,13 +15,13 @@ interface PlotlyColorMap {
 
 function rgb_to_plotly(colormap: RGBColorMap): PlotlyColorMap {
     return {
-        rgba: colormap.map((c) => {
-            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.5)`] as [number, string];
-        }),
         rgb: colormap.map((c) => {
             return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`] as [number, string];
         }),
-    }
+        rgba: colormap.map((c) => {
+            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.5)`] as [number, string];
+        }),
+    };
 }
 
 const INFERNO: RGBColorMap = [
@@ -563,14 +564,15 @@ interface ColorMaps {
     [key: string]: PlotlyColorMap;
 }
 
+// tslint:disable:object-literal-sort-keys
 /** @hidden */
 export const COLOR_MAPS: ColorMaps = {
-    inferno: rgb_to_plotly(INFERNO),
-    magma: rgb_to_plotly(MAGMA),
-    plasma: rgb_to_plotly(PLASMA),
-    viridis: rgb_to_plotly(VIRIDIS),
-    cividis: rgb_to_plotly(CIVIDIS),
+    'inferno': rgb_to_plotly(INFERNO),
+    'magma': rgb_to_plotly(MAGMA),
+    'plasma': rgb_to_plotly(PLASMA),
+    'viridis': rgb_to_plotly(VIRIDIS),
+    'cividis': rgb_to_plotly(CIVIDIS),
     'twilight (periodic)': rgb_to_plotly(TWILIGHT),
     'twilight dark (periodic)': rgb_to_plotly(TWILIGHT_SHIFTED),
     'hsv (periodic)': rgb_to_plotly(HSV),
-}
+};

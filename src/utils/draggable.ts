@@ -53,5 +53,5 @@ export function makeDraggable(element: DraggableElement, handle_query: string) {
 
         document.addEventListener('mousemove', mousemove, false);
         document.addEventListener('mouseup', mouseup, false);
-    }, false)
+    }, false);
 }

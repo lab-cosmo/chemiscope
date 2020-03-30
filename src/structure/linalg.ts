@@ -10,14 +10,14 @@ export type Vector3D = [number, number, number];
 export type Matrix = [Vector3D, Vector3D, Vector3D];
 
 export function determinant(matrix: Matrix): number {
-    let determinant = 0.0;
-    determinant += matrix[0][0] * matrix[1][1] * matrix[2][2];
-    determinant += matrix[0][1] * matrix[1][2] * matrix[2][0];
-    determinant += matrix[0][2] * matrix[1][0] * matrix[2][1];
-    determinant -= matrix[0][0] * matrix[2][1] * matrix[1][2];
-    determinant -= matrix[0][1] * matrix[1][0] * matrix[2][2];
-    determinant -= matrix[0][2] * matrix[1][1] * matrix[2][0];
-    return determinant;
+    let result = 0.0;
+    result += matrix[0][0] * matrix[1][1] * matrix[2][2];
+    result += matrix[0][1] * matrix[1][2] * matrix[2][0];
+    result += matrix[0][2] * matrix[1][0] * matrix[2][1];
+    result -= matrix[0][0] * matrix[2][1] * matrix[1][2];
+    result -= matrix[0][1] * matrix[1][0] * matrix[2][2];
+    result -= matrix[0][2] * matrix[1][1] * matrix[2][0];
+    return result;
 }
 
 export function invert(matrix: Matrix): Matrix {
@@ -56,7 +56,7 @@ function vec_dot(lhs: Vector3D, rhs: Vector3D): number {
 
 export function angle(lhs: Vector3D, rhs: Vector3D) {
     const PI = 3.141592653589793;
-    return Math.acos(vec_dot(lhs, rhs) / (norm(lhs) * norm(rhs))) * 180. / PI
+    return Math.acos(vec_dot(lhs, rhs) / (norm(lhs) * norm(rhs))) * 180. / PI;
 }
 
 export function norm(vector: Vector3D): number {

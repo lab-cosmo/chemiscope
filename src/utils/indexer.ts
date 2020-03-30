@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Structure, Environment} from '../dataset';
+import {Environment, Structure} from '../dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
@@ -63,16 +63,16 @@ export class EnvironmentIndexer {
         this._structures = structures;
         this._environments = environments;
 
-        if (this.mode == "atom") {
+        if (this.mode === 'atom') {
             assert(this._environments !== undefined);
         }
 
         let current = 0;
         this._atomsBefore = this._structures.map((structure) => {
-            let result = current;
-            current += structure.names.length
+            const result = current;
+            current += structure.names.length;
             return result;
-        })
+        });
     }
 
     /**
@@ -82,21 +82,21 @@ export class EnvironmentIndexer {
      *                     structure / atom indexes
      */
     public from_environment(environment: number): Indexes {
-        if (this.mode == 'structure') {
+        if (this.mode === 'structure') {
             return {
                 environment: environment,
                 structure: environment,
-            }
+            };
         } else {
             assert(this.mode === 'atom');
             assert(this._environments !== undefined);
 
             const env = this._environments![environment];
             return {
+                atom: env.center,
                 environment: environment,
                 structure: env.structure,
-                atom: env.center,
-            }
+            };
         }
     }
 
@@ -108,12 +108,12 @@ export class EnvironmentIndexer {
      *                   index
      */
     public from_structure_atom(structure: number, atom?: number): Indexes {
-        if (this.mode == 'structure') {
+        if (this.mode === 'structure') {
             assert(atom === undefined || atom === 0);
             return {
                 environment: structure,
                 structure: structure,
-            }
+            };
         } else {
             assert(this.mode === 'atom');
             assert(this._environments !== undefined);
@@ -124,10 +124,10 @@ export class EnvironmentIndexer {
             assert(this._environments![environment].center === atom);
             assert(this._environments![environment].structure === structure);
             return {
+                atom: atom,
                 environment: environment,
                 structure: structure,
-                atom: atom,
-            }
+            };
         }
     }
 

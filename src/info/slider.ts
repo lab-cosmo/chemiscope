@@ -9,9 +9,6 @@ import {Target} from '../dataset';
  * A simple slider to select an environment / play the trajectory
  */
 export class Slider {
-    private _slider: HTMLInputElement;
-    private _play: HTMLElement;
-
     /** Callback fired when the use changes the slider value */
     public onchange: () => void;
     /**
@@ -19,6 +16,9 @@ export class Slider {
      * callback indicate whether to continue playback or not.
      */
     public startPlayback: (advance: () => boolean) => void;
+
+    private _slider: HTMLInputElement;
+    private _play: HTMLElement;
 
     /**
      * Create and append a new slider inside the given `HTMLElement`.
@@ -42,8 +42,10 @@ export class Slider {
 
         this._play.onclick = () => {
             this._play.classList.toggle('chsp-playing');
-            this.startPlayback(() => {return this._play.classList.contains('chsp-playing');});
-        }
+            this.startPlayback(() => {
+                return this._play.classList.contains('chsp-playing');
+            });
+        };
 
         this._slider.onchange = () => this.onchange();
         this.onchange = () => {};
@@ -54,7 +56,7 @@ export class Slider {
      * Reset the slider to 0, and update the maximal value to `max`
      */
     public reset(max: number) {
-        this._slider.value = "0";
+        this._slider.value = '0';
         this._slider.max = max.toString();
     }
 
@@ -69,6 +71,6 @@ export class Slider {
      * Get the current value of the slider
      */
     public value(): number {
-        return parseInt(this._slider.value);
+        return parseInt(this._slider.value, 10);
     }
 }

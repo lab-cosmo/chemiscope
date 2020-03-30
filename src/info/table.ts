@@ -57,9 +57,9 @@ export class Table {
 
             tbody.appendChild(tr);
             this._properties.push({
-                values: properties[name].values,
                 cell: cell,
-            })
+                values: properties[name].values,
+            });
         }
 
         this.show({environment: 0, structure: 0, atom: 0});
@@ -70,20 +70,21 @@ export class Table {
      * given structure/atom `indexes`
      */
     public show(indexes: Indexes) {
-        let id, index;
+        let displayId;
+        let index;
         if (this._target === 'structure') {
-            id = indexes.structure + 1;
+            displayId = indexes.structure + 1;
             index = indexes.structure;
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
-            id = indexes.atom! + 1;
+            displayId = indexes.atom! + 1;
             index = indexes.environment;
         }
 
-        this._header.innerText = `Properties for ${this._target} ${id}`;
+        this._header.innerText = `Properties for ${this._target} ${displayId}`;
         for (const s of this._properties) {
-            s.cell.innerText = s.values[index].toString()
+            s.cell.innerText = s.values[index].toString();
         }
     }
 }

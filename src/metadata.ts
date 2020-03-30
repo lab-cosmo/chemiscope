@@ -21,7 +21,7 @@ function generateModal(guid: string, metadata: Metadata): string {
     });
 
     // Deal with missing metadata
-    let description = "No description for this dataset."
+    let description = 'No description for this dataset.';
     if (metadata.description !== undefined) {
         description = metadata.description;
     }
@@ -43,7 +43,7 @@ function generateModal(guid: string, metadata: Metadata): string {
         for (const reference of metadata.references) {
             ref += `<li>${md.render(reference)}</li>`;
         }
-        ref += '</ul>'
+        ref += '</ul>';
     }
 
     return `<div id=${guid} class="modal fade" tabindex='-1'>
@@ -96,11 +96,11 @@ export class MetadataPanel {
 
         const name = document.getElementById(id);
         if (name === null) {
-            throw Error(`could not find HTML element #${id}`)
+            throw Error(`could not find HTML element #${id}`);
         }
         this._name = name;
         this._name.innerHTML = generateName(this._guid, metadata.name);
-        this._name.classList.add("chsp-meta");
+        this._name.classList.add('chsp-meta');
 
         this._modal = document.createElement('div');
         document.body.appendChild(this._modal);

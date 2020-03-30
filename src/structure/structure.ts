@@ -5,10 +5,11 @@
 
 import assert from 'assert';
 
-import {JSmolWidget} from './widget';
+import {Environment, Structure} from '../dataset';
+import {EnvironmentIndexer, Indexes} from '../utils';
+
 import {structure2JSmol} from './jsmol';
-import {Structure, Environment} from '../dataset';
-import {Indexes, EnvironmentIndexer} from '../utils';
+import {JSmolWidget} from './widget';
 
 function groupByStructure(n_structures: number, environments?: Environment[]): Environment[][] | undefined {
     if (environments === undefined) {
@@ -16,7 +17,7 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
     }
 
     const result: Environment[][] = [];
-    for (let i=0; i<n_structures; i++) {
+    for (let i = 0; i < n_structures; i++) {
         result.push([]);
     }
 
@@ -32,6 +33,9 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
  * [JSmol](http://wiki.jmol.org/index.php/JSmol) for rendering.
  */
 export class StructureViewer {
+    /** Callback used when the user select an environment */
+    public onselect: (indexes: Indexes) => void;
+
     private _widget: JSmolWidget;
     /// Playback delay setting
     private _delay: HTMLInputElement;
@@ -45,9 +49,6 @@ export class StructureViewer {
     /// index of the currently displayed structure/atom
     private _current: {structure: number; atom?: number};
 
-    /** Callback used when the user select an environment */
-    public onselect: (indexes: Indexes) => void;
-
     /**
      * Create a new [[StructureViewer]] inside the HTML element with the given
      * `id`
@@ -60,10 +61,16 @@ export class StructureViewer {
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
      */
-    constructor(id: string, j2sPath: string, indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
+    constructor(
+        id: string,
+        j2sPath: string,
+        indexer: EnvironmentIndexer,
+        structures: Structure[],
+        environments?: Environment[],
+    ) {
         this._widget = new JSmolWidget(id, j2sPath);
         this._delay = document.getElementById(`${this._widget.guid}-playback-delay`) as HTMLInputElement;
-        this._structures = structures
+        this._structures = structures;
         this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
@@ -97,7 +104,7 @@ export class StructureViewer {
      * @param  environments new list of atom centered environments
      */
     public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
-        this._structures = structures
+        this._structures = structures;
         this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
@@ -132,8 +139,8 @@ export class StructureViewer {
         }
 
         if (this._indexer.mode === 'atom') {
-            if  (this._current.atom != indexes.atom) {
-                this._widget.highlight(indexes.atom)
+            if  (this._current.atom !== indexes.atom) {
+                this._widget.highlight(indexes.atom);
             }
         } else {
             this._widget.highlight(undefined);
@@ -152,7 +159,7 @@ export class StructureViewer {
      * opened.
      */
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        this._widget.settingsPlacement(callback)
+        this._widget.settingsPlacement(callback);
     }
 
     /**
@@ -169,7 +176,7 @@ export class StructureViewer {
                 // continue playing until the advance callback returns false
                 this.structurePlayback(advance);
             }
-        }, parseFloat(this._delay.value) * 100)
+        }, parseFloat(this._delay.value) * 100);
     }
 
     /**
@@ -187,7 +194,7 @@ export class StructureViewer {
                 // continue playing until the advance callback returns false
                 this.atomPlayback(advance);
             }
-        }, parseFloat(this._delay.value) * 100)
+        }, parseFloat(this._delay.value) * 100);
     }
 
     private _structureForJSmol(index: number): string {

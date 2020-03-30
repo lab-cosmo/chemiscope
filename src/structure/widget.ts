@@ -7,18 +7,19 @@ import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
 
-import {makeDraggable, getByID, generateGUID} from '../utils';
+import {generateGUID, getByID, makeDraggable} from '../utils';
 
 import HTML_SETTINGS from './settings.html';
 
+// tslint:disable-next-line: no-var-requires
 require('../static/chemiscope.css');
 
 function isSafari(): boolean {
-    const s = (window as any)['safari'];
+    const s = (window as any).safari;
     if (!s) {
         return false;
     }
-    return s.pushNotification.toString() === "[object SafariRemoteNotification]";
+    return s.pushNotification.toString() === '[object SafariRemoteNotification]';
 }
 
 /** @hidden
@@ -32,7 +33,7 @@ function createStyleSheet(rules: string[]): CSSStyleSheet {
     for (const rule of rules) {
         sheet.insertRule(rule);
     }
-    return sheet
+    return sheet;
 }
 
 /**
@@ -59,7 +60,7 @@ function supercell_555(supercell: [number, number, number]): string {
         5 + supercell[2] - (supercellCenter[2] + 1),
     ];
 
-    return `{${first[0]}${first[1]}${first[2]} ${second[0]}${second[1]}${second[2]} 1}`
+    return `{${first[0]}${first[1]}${first[2]} ${second[0]}${second[1]}${second[2]} 1}`;
 }
 
 /** A spherical atom-centered environment */
@@ -100,12 +101,24 @@ export interface LoadOption {
     highlight: number;
 }
 
+const DEFAULT_SERVER_URL = 'https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php';
+
 /**
  * A light wrapper around JSmol, displaying a single structure. This is kept as
  * a separate class from the [[StructureViewer]] to be easier to use outside of
  * chemiscope.
  */
 export class JSmolWidget {
+    /** callback called when a new atom is clicked on */
+    public onselect: (atom: number) => void;
+
+    /**
+     * Unique identifier of this viewer.
+     *
+     * All HTML elements created by this class use this ID to ensure unicity.
+     */
+    public guid: string;
+
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
     /// Reference to the global Jmol variable
@@ -156,7 +169,7 @@ export class JSmolWidget {
         packed: HTMLInputElement;
         /// The supercell used to intialize the viewer
         initial?: [number, number, number];
-    }
+    };
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
     /// Dynamic CSS used to hide options related to the unit cell if there is no
@@ -183,16 +196,6 @@ export class JSmolWidget {
     /// last selected atom
     private _lastSelected: number;
 
-    /** callback called when a new atom is clicked on */
-    public onselect: (atom: number) => void;
-
-    /**
-     * Unique identifier of this viewer.
-     *
-     * All HTML elements created by this class use this ID to ensure unicity.
-     */
-    public guid: string;
-
     /**
      * Create a new JSmolWidget inside the HTML DOM element with the given `id`.
      *
@@ -200,7 +203,7 @@ export class JSmolWidget {
      * @param j2sPath path where j2s files can be loaded by Jmol
      * @param serverURL URL where to find `jsmol.php`
      */
-    constructor(id: string, j2sPath: string, serverURL: string = "https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php") {
+    constructor(id: string, j2sPath: string, serverURL: string = DEFAULT_SERVER_URL) {
         if (window.Jmol === undefined) {
             throw Error('Jmol is required, load it from your favorite source');
         }
@@ -221,21 +224,20 @@ export class JSmolWidget {
             throw Error(`Could not get the "#${id}" element`);
         }
 
-        this._root = document.createElement("div");
+        this._root = document.createElement('div');
         root.appendChild(this._root);
 
-        this._root.style.position = "relative";
-        this._root.id = this.guid
-        this._root.style.width = "100%";
-        this._root.style.height = "100%";
+        this._root.style.position = 'relative';
+        this._root.id = this.guid;
+        this._root.style.width = '100%';
+        this._root.style.height = '100%';
 
-        this._cellInfo = document.createElement("span");
+        this._cellInfo = document.createElement('span');
         this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
         this._root.appendChild(this._cellInfo);
 
         this._createOptions();
         this._createApplet(j2sPath, serverURL);
-
 
         if (!isSafari()) {
             // Invert (cf -1 below) wheel zoom direction to match the one in the
@@ -252,43 +254,43 @@ export class JSmolWidget {
         // create a global function with unique name and install it as callback
         // for JSmol. This function will then call the callback inside this
         // instance of the viewer
-        const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback'
+        const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback';
         const window_as_map = window as { [key: string]: any };
         window_as_map[name] = (_a: any, _b: any, _c: any, _d: any, _e: any, status: any) => {
             if (status.valueOf() === 3 && this._loadedCallback !== undefined) {
                 this._loadedCallback();
             }
-        }
-        this.script(`set LoadStructCallback "${name}"`)
+        };
+        this.script(`set LoadStructCallback "${name}"`);
 
         this._noCellStyle = createStyleSheet([
             `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
-            `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`
-        ])
+            `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`,
+        ]);
 
         this._noEnvsStyle = createStyleSheet([
-            `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`
-        ])
+            `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`,
+        ]);
 
         // By default, position the modal for settings on top of the viewer,
         // centered horizontally
         this._settingsPlacement = (rect: DOMRect) => {
             const rootRect = this._root.getBoundingClientRect();
             return {
-                top: rootRect.top + 20,
                 left: rootRect.left + rootRect.width / 2 - rect.width / 2,
-            }
-        }
+                top: rootRect.top + 20,
+            };
+        };
 
         this.onselect = () => {};
         this._root.onclick = () => {
             // picked is 0-based
-            let picked = this.evaluate('_atomPicked');
+            const picked = this.evaluate('_atomPicked');
 
-            if (picked === "") {
+            if (picked === '') {
                 return;
             } else {
-                assert(typeof picked === "number");
+                assert(typeof picked === 'number');
             }
 
             if (picked === this._lastSelected) {
@@ -298,7 +300,7 @@ export class JSmolWidget {
             }
 
             this.onselect(picked);
-        }
+        };
     }
 
     /**
@@ -308,7 +310,7 @@ export class JSmolWidget {
      * @return the number of atoms in the currenly loaded structure
      */
     public natoms(): number | undefined {
-        return this._natoms
+        return this._natoms;
     }
 
     /**
@@ -369,7 +371,7 @@ export class JSmolWidget {
      * @param options options for the new structure
      */
     public load(data: string, options: Partial<LoadOption> = {}) {
-        if (data === "''" || data === '""') {
+        if (data === '\'\'' || data === '""') {
             throw Error('invalid use of JSmolWidget.load to reload data');
         }
 
@@ -380,9 +382,9 @@ export class JSmolWidget {
             // keep pre-existing supercell settings, default to [1, 1, 1] from
             // settings.html
             supercell = [
-                parseInt(this._supercell.repeat_a.value),
-                parseInt(this._supercell.repeat_b.value),
-                parseInt(this._supercell.repeat_c.value),
+                parseInt(this._supercell.repeat_a.value, 10),
+                parseInt(this._supercell.repeat_b.value, 10),
+                parseInt(this._supercell.repeat_c.value, 10),
             ];
         } else {
             supercell = options.supercell;
@@ -403,14 +405,14 @@ export class JSmolWidget {
             // keep pre-existting settings if any
             keepOrientation = this._options.keepOrientation.checked;
         } else {
-            keepOrientation = options.keepOrientation
+            keepOrientation = options.keepOrientation;
         }
 
         const trajectoryOptions = getByID<HTMLElement>(`${this.guid}-trajectory-settings-group`);
         if (options.trajectory === undefined || !options.trajectory) {
-            trajectoryOptions.style.display = "none";
+            trajectoryOptions.style.display = 'none';
         } else {
-            trajectoryOptions.style.display = "block";
+            trajectoryOptions.style.display = 'block';
         }
 
         if (this._environments === undefined) {
@@ -418,7 +420,7 @@ export class JSmolWidget {
             this._changeHighlighted(undefined);
         } else {
             if (options.packed !== undefined && options.packed) {
-                throw Error("Can not have both packed cell and environments")
+                throw Error('Can not have both packed cell and environments');
             }
 
             this._noEnvsStyle.disabled = true;
@@ -449,34 +451,35 @@ export class JSmolWidget {
         this._loadedCallback = () => {
             window.Error = savedError;
 
-            if (this.evaluate("@{unitcell(\"conventional\")}") === "ERROR") {
+            if (this.evaluate('@{unitcell("conventional")}') === 'ERROR') {
                 this._noCellStyle.disabled = false;
             } else {
                 this._noCellStyle.disabled = true;
             }
 
-            const supercell = parseInt(this._supercell.repeat_a.value) *
-                              parseInt(this._supercell.repeat_b.value) *
-                              parseInt(this._supercell.repeat_c.value);
-            this._natoms = parseInt(this.evaluate("{*}.size")) / supercell;
+            const repeat = parseInt(this._supercell.repeat_a.value, 10) *
+                           parseInt(this._supercell.repeat_b.value, 10) *
+                           parseInt(this._supercell.repeat_c.value, 10);
+            this._natoms = parseInt(this.evaluate('{*}.size'), 10) / repeat;
             if (this._environments !== undefined && this._environments.length !== this._natoms) {
-                let message = "invalid number of environments for this structure ";
-                message += `got ${this._environments.length} environments, there are ${this._natoms} atoms`
+                let message = 'invalid number of environments for this structure ';
+                message += `got ${this._environments.length} environments, there are ${this._natoms} atoms`;
                 // We can not throw an error here, since it seems to be caught
                 // by JSmol.
+                // tslint:disable-next-line:no-console
                 console.error(message);
             }
 
             // once we are done, disable the callback to prevent it from firing
             // on restyle/reload
             this._loadedCallback = undefined;
-        }
+        };
 
         this._do_load(data, keepOrientation);
     }
 
     private _reload() {
-        this._do_load("''", true);
+        this._do_load('""', true);
     }
 
     private _do_load(data: string, keepOrientation: boolean) {
@@ -489,15 +492,15 @@ export class JSmolWidget {
 
         const packed = this._supercell.packed.checked ? ' packed' : '';
 
-        const saveOrientation = keepOrientation ? `save orientation "${this.guid}"`: '';
-        const restoreOrientation = keepOrientation ? `restore orientation "${this.guid}"`: '';
+        const saveOrientation = keepOrientation ? `save orientation "${this.guid}"` : '';
+        const restoreOrientation = keepOrientation ? `restore orientation "${this.guid}"` : '';
 
         this._setCellInfo();
 
         const supercell = supercell_555([
-            parseInt(this._supercell.repeat_a.value),
-            parseInt(this._supercell.repeat_b.value),
-            parseInt(this._supercell.repeat_c.value)
+            parseInt(this._supercell.repeat_a.value, 10),
+            parseInt(this._supercell.repeat_b.value, 10),
+            parseInt(this._supercell.repeat_c.value, 10),
         ]);
         this._Jmol.script(this._applet, `
             ${saveOrientation};
@@ -509,9 +512,9 @@ export class JSmolWidget {
 
     private _changeHighlighted(environment?: number) {
         if (environment !== undefined) {
-            const supercell = parseInt(this._supercell.repeat_a.value) *
-                              parseInt(this._supercell.repeat_b.value) *
-                              parseInt(this._supercell.repeat_c.value);
+            const supercell = parseInt(this._supercell.repeat_a.value, 10) *
+                              parseInt(this._supercell.repeat_b.value, 10) *
+                              parseInt(this._supercell.repeat_c.value, 10);
             if (this._natoms !== undefined && environment >= this._natoms * supercell) {
                 let message = 'selected environment is out of bounds: ';
                 message += `got ${environment}, we have ${this._natoms * supercell} atoms in the current structure`;
@@ -519,7 +522,7 @@ export class JSmolWidget {
             }
 
             if (this._environments === undefined) {
-                throw Error("no environments defined for the current structure");
+                throw Error('no environments defined for the current structure');
             }
         }
 
@@ -527,12 +530,12 @@ export class JSmolWidget {
 
         if (this._highlighted === undefined) {
             this._enableEnvironmentSettings(false);
-            this._options.environments.cutoff.value = "";
+            this._options.environments.cutoff.value = '';
         } else {
             this._enableEnvironmentSettings(true);
 
             // keep user defined cutoff, if any
-            if (this._options.environments.cutoff.value === "") {
+            if (this._options.environments.cutoff.value === '') {
                 this._options.environments.cutoff.value = this._currentDefaultCutoff().toString();
             }
         }
@@ -543,38 +546,41 @@ export class JSmolWidget {
         const height = this._root.clientHeight;
         if (width === 0 || height === 0) {
             const parentId = this._root.parentElement!.id;
+            // tslint:disable-next-line:no-console
             console.error(
                 `JSmolWidget: width (=${width}px) or heigh (=${height}px) ` +
-                `of #${parentId} is zero, you will not see the molecules`
+                `of #${parentId} is zero, you will not see the molecules`,
             );
         }
 
+        const INITIAL_SCRIPT = `
+            // use anti-aliasing
+            set antialiasdisplay;
+            // remove jmol logo
+            set frank off;
+            // use the smaller of height/width when setting zoom level
+            set zoomlarge false;
+            // Allow sending script commands while moveto is executing
+            set waitformoveto off;
+            hide off;
+        `;
         // create the main Jmol applet
         this._applet = this._Jmol.getApplet(this.guid, {
-            use: "HTML5",
-            script: `
-                // use anti-aliasing
-                set antialiasdisplay;
-                // remove jmol logo
-                set frank off;
-                // use the smaller of height/width when setting zoom level
-                set zoomlarge false;
-                // Allow sending script commands while moveto is executing
-                set waitformoveto off;
-                hide off;
-            `,
-            disableJ2SLoadMonitor: true,
+            height: '100%',
+            width: '100%',
+
             disableInitialConsole: true,
-            zIndexBase: 1,
+            disableJ2SLoadMonitor: true,
             j2sPath: j2sPath,
+            script: INITIAL_SCRIPT,
             serverURL: serverURL,
-            width: "100%",
-            height: "100%",
+            use: 'HTML5',
+            zIndexBase: 1,
         });
 
-        const div = document.createElement("div");
-        div.style.height = "100%";
-        div.style.width = "100%";
+        const div = document.createElement('div');
+        div.style.height = '100%';
+        div.style.width = '100%';
         this._root.appendChild(div);
         div.innerHTML = this._Jmol.getAppletHtml(this._applet);
         // Jmol rely on this script being implicitly executed, but this is not
@@ -604,9 +610,9 @@ export class JSmolWidget {
         const modal = template.content.firstChild!;
         document.body.appendChild(modal);
 
-        const modalDialog = modal.childNodes[1]! as HTMLElement
+        const modalDialog = modal.childNodes[1]! as HTMLElement;
         if (!modalDialog.classList.contains('modal-dialog')) {
-            throw Error("internal error: missing modal-dialog class")
+            throw Error('internal error: missing modal-dialog class');
         }
 
         // Position modal near the actual viewer
@@ -614,7 +620,7 @@ export class JSmolWidget {
             // only set style once, on first open, and keep previous position
             // on next open to keep the 'draged-to' position
             if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
-                modalDialog.setAttribute('data-initial-modal-positions-set', "true");
+                modalDialog.setAttribute('data-initial-modal-positions-set', 'true');
 
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
@@ -629,27 +635,27 @@ export class JSmolWidget {
                 modalDialog.style.top = `${top}px`;
                 modalDialog.style.left = `${left}px`;
             }
-        })
+        });
 
         // make the settings modal draggable
-        makeDraggable(modalDialog, ".modal-header");
+        makeDraggable(modalDialog, '.modal-header');
 
         // get the HTML options and keep them around for use in _updateState
         this._options = {
-            bonds:        getByID<HTMLInputElement>(`${this.guid}-bonds`),
-            spaceFilling: getByID<HTMLInputElement>(`${this.guid}-space-filling`),
-            atomLabels:   getByID<HTMLInputElement>(`${this.guid}-atom-labels`),
-            unitCell:     getByID<HTMLInputElement>(`${this.guid}-unit-cell`),
-            rotation:     getByID<HTMLInputElement>(`${this.guid}-rotation`),
-            axes:         getByID<HTMLSelectElement>(`${this.guid}-axes`),
+            atomLabels: getByID<HTMLInputElement>(`${this.guid}-atom-labels`),
+            axes:       getByID<HTMLSelectElement>(`${this.guid}-axes`),
+            bonds:      getByID<HTMLInputElement>(`${this.guid}-bonds`),
             environments: {
-                cutoff:  getByID<HTMLInputElement>(`${this.guid}-env-cutoff`),
                 bgColor: getByID<HTMLSelectElement>(`${this.guid}-env-bg-color`),
                 bgStyle: getByID<HTMLSelectElement>(`${this.guid}-env-bg-style`),
+                cutoff:  getByID<HTMLInputElement>(`${this.guid}-env-cutoff`),
                 reset:   getByID<HTMLButtonElement>(`${this.guid}-env-reset`),
                 toggle:  getByID<HTMLButtonElement>(`${this.guid}-env-toggle`),
             },
             keepOrientation: getByID<HTMLInputElement>(`${this.guid}-keep-orientation`),
+            rotation:        getByID<HTMLInputElement>(`${this.guid}-rotation`),
+            spaceFilling:    getByID<HTMLInputElement>(`${this.guid}-space-filling`),
+            unitCell:        getByID<HTMLInputElement>(`${this.guid}-unit-cell`),
         };
 
         for (const key in this._options) {
@@ -665,12 +671,12 @@ export class JSmolWidget {
         this._options.environments.reset.onclick = () => {
             this._options.environments.cutoff.value = this._currentDefaultCutoff().toString();
             this._updateState();
-        }
+        };
 
         this._options.environments.toggle.onclick = () => {
             this._toggleEnvironmentSettings();
             this._updateState();
-        }
+        };
 
         const alignX = getByID<HTMLButtonElement>(`${this.guid}-align-x`);
         alignX.onclick = () => this.script('moveto 1 axis x');
@@ -693,12 +699,12 @@ export class JSmolWidget {
         // cell handling: we need to reload to change the supercell or the
         // packed status
         this._supercell = {
+            packed:   getByID<HTMLInputElement>(`${this.guid}-packed-cell`),
             repeat_a: getByID<HTMLInputElement>(`${this.guid}-supercell-a`),
             repeat_b: getByID<HTMLInputElement>(`${this.guid}-supercell-b`),
             repeat_c: getByID<HTMLInputElement>(`${this.guid}-supercell-c`),
-            packed: getByID<HTMLInputElement>(`${this.guid}-packed-cell`),
-            reset: getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`),
-        }
+            reset:    getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`),
+        };
 
         for (const key in this._supercell) {
             if (key !== 'reset') {
@@ -708,7 +714,7 @@ export class JSmolWidget {
 
         this._supercell.reset.onclick = () => {
             if (this._supercell.initial === undefined) {
-                throw Error("internal bug: this._supercell.initial is undefined")
+                throw Error('internal bug: this._supercell.initial is undefined');
             }
 
             const [a, b, c] = this._supercell.initial;
@@ -716,7 +722,7 @@ export class JSmolWidget {
             this._supercell.repeat_b.value = b.toString();
             this._supercell.repeat_c.value = c.toString();
             this._reload();
-        }
+        };
     }
 
     private _updateState() {
@@ -725,19 +731,19 @@ export class JSmolWidget {
 
     private _showAxesCommands(axes: string): string {
         switch (axes) {
-        case "xyz":
+        case 'xyz':
             return `
                 axes off;
                 draw xaxis '>X' vector {0 0 0} {2 0 0} color red width 0.15;
                 draw yaxis '>Y' vector {0 0 0} {0 2 0} color green width 0.15;
                 draw zaxis '>Z' vector {0 0 0} {0 0 2} color blue width 0.15;
             `;
-        case "abc":
+        case 'abc':
             return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 set axesUnitcell ON; axes 5;
             `;
-        case "off":
+        case 'off':
             return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 axes off;
@@ -761,7 +767,7 @@ export class JSmolWidget {
             commands += `dots off; ${wireframe}; ${spacefill};`;
         } else {
             // Atoms not in the environment
-            commands += 'select all;'
+            commands += 'select all;';
             commands += this._backgroundStyle();
 
             // atoms in the environment
@@ -772,10 +778,10 @@ export class JSmolWidget {
             commands += `dots off; ${wireframe}; ${spacefill};`;
 
             // central atom
-            commands += `select @${this._highlighted + 1};`
+            commands += `select @${this._highlighted + 1};`;
             commands += 'hide hidden and not selected;';
             commands += 'color atoms cpk; color atoms opaque;';
-            commands += `wireframe off; ${spacefill};`
+            commands += `wireframe off; ${spacefill};`;
             commands += 'color dots green; dots 0.6;';
         }
 
@@ -786,7 +792,7 @@ export class JSmolWidget {
             spin ${options.rotation.checked ? 'on' : 'off'};
         `;
 
-        return commands + this._showAxesCommands(options.axes.value)
+        return commands + this._showAxesCommands(options.axes.value);
     }
 
     private _setCellInfo() {
@@ -807,25 +813,25 @@ export class JSmolWidget {
 
         const wireframe = `wireframe ${this._options.bonds.checked ? '0.15' : 'off'}`;
         const style = this._options.environments.bgStyle.value;
-        if (style === "licorice") {
+        if (style === 'licorice') {
             commands += `hide none; dots off; ${wireframe}; spacefill off;`;
-        } else if (style === "ball-stick") {
+        } else if (style === 'ball-stick') {
             commands += `hide none; dots off; ${wireframe}; spacefill 23%;`;
-        } else if (style === "hide") {
+        } else if (style === 'hide') {
             commands += 'hide *;';
         } else {
-            throw Error(`invalid background atoms style '${style}'`)
+            throw Error(`invalid background atoms style '${style}'`);
         }
 
         const color = this._options.environments.bgColor.value;
-        if (color === "CPK") {
+        if (color === 'CPK') {
             commands += 'color atoms cpk;';
             commands += 'color atoms translucent 0.8;';
-        } else if (color === "grey") {
+        } else if (color === 'grey') {
             commands += 'color atoms [xa0a0a0];';
             commands += 'color atoms translucent 0.8;';
         } else {
-            throw Error(`invalid background atoms color '${color}'`)
+            throw Error(`invalid background atoms color '${color}'`);
         }
 
         return commands;
@@ -882,7 +888,7 @@ export class JSmolWidget {
     /// `JSmolWidget.load`.
     private _environment(): number | undefined {
         if (this._highlighted === undefined ||  this._environments === undefined) {
-            return undefined
+            return undefined;
         }
 
         // `this._natoms ?? 1` is needed because this code might be called
@@ -904,7 +910,7 @@ export class JSmolWidget {
     private _currentDefaultCutoff(): number {
         const i = this._environment();
         if (i === undefined) {
-            throw Error("no environments defined when calling _currentCutoff")
+            throw Error('no environments defined when calling _currentCutoff');
         } else {
             return this._environments![i].cutoff;
         }

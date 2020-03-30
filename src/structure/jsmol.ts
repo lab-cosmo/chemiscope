@@ -3,7 +3,7 @@
  * @module structure
  */
 
-import * as linalg from './linalg'
+import * as linalg from './linalg';
 
 import {Structure} from '../dataset';
 
@@ -29,7 +29,7 @@ class UnitCell {
         const vz = data.slice(6, 9) as linalg.Vector3D;
         this.matrix = [vx, vy, vz];
         if (linalg.determinant(this.matrix) < 1e-9) {
-            throw Error("invalid unit cell");
+            throw Error('invalid unit cell');
         }
         this.inverse = linalg.invert(this.matrix);
     }
@@ -71,12 +71,12 @@ class UnitCell {
  * @return a string representing the structure that JSmol is able to read
  */
 export function structure2JSmol(structure: Structure): string {
-    let buffer = new Array();
+    const buffer = new Array();
     if (structure.cell === undefined) {
         // use XYZ format
         const natoms = structure.names.length;
         buffer.push(`${natoms}\n\n`);
-        for (let i=0; i<natoms; i++) {
+        for (let i = 0; i < natoms; i++) {
             buffer.push(`${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`);
         }
     } else {
@@ -88,8 +88,8 @@ export function structure2JSmol(structure: Structure): string {
         buffer.push(`${a} ${b} ${c} ${alpha} ${beta} ${gamma}\n`);
         const natoms = structure.names.length;
         buffer.push(`${natoms}\n`);
-        for (let i=0; i<natoms; i++) {
-            const [x, y, z] = cell.fractional([structure.x[i], structure.y[i], structure.z[i]])
+        for (let i = 0; i < natoms; i++) {
+            const [x, y, z] = cell.fractional([structure.x[i], structure.y[i], structure.z[i]]);
             buffer.push(`${structure.names[i]} ${i} - ${x} ${y} ${z}\n`);
         }
     }

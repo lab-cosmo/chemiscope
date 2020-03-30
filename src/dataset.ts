@@ -46,34 +46,34 @@ export interface Metadata {
 /** A single atomic structure */
 export interface Structure {
     /** Names of all atoms in the structure */
-    names: number[],
+    names: number[];
     /**
      * x position (cartesian coordinate) of all atoms in the structure
      *
      * This array should have the same size as [[Structure.names]], and contain
      * values expressed in Angströms.
      */
-    x: number[],
+    x: number[];
     /**
      * y position (cartesian coordinate) of all atoms in the structure
      *
      * This array should have the same size as [[Structure.names]], and contain
      * values expressed in Angströms.
      */
-    y: number[],
+    y: number[];
     /**
      * z position (cartesian coordinate) of all atoms in the structure
      *
      * This array should have the same size as [[Structure.names]], and contain
      * values expressed in Angströms.
      */
-    z: number[],
+    z: number[];
     /**
      * Unit cell of the system, given as `[ax ay az bx by bz cx cy cz]`, where
      * **a**, **b**, and **c** are the unit cell vectors. All values should be
      * expressed in Angströms.
      */
-    cell?: number[],
+    cell?: number[];
 }
 
 /** Possible types of properties: full structure property, or atomic property */
@@ -119,62 +119,62 @@ export interface Environment {
  * required properties to be a dataset.
  */
 export function checkDataset(o: any) {
-    if (!('meta' in o && typeof o['meta'] === 'object')) {
-        throw Error("missing 'meta' in dataset");
+    if (!('meta' in o && typeof o.meta === 'object')) {
+        throw Error('missing "meta" key in dataset');
     }
-    checkMetadata(o['meta']);
+    checkMetadata(o.meta);
 
-    if (!('structures' in o && o['structures'].length !== undefined)) {
-        throw Error("missing 'structures' in dataset");
+    if (!('structures' in o && o.structures.length !== undefined)) {
+        throw Error('missing "structures" key in dataset');
     }
-    const [n_structures, n_atoms] = checkStructure(o['structures']);
+    const [n_structures, n_atoms] = checkStructure(o.structures);
 
-    if (!('properties' in o && typeof o['properties'] === 'object')) {
-        throw Error("missing 'properties' in dataset");
+    if (!('properties' in o && typeof o.properties === 'object')) {
+        throw Error('missing "properties" key in dataset');
     }
-    checkProperties(o['properties'], n_structures, n_atoms);
+    checkProperties(o.properties, n_structures, n_atoms);
 
     if ('environments' in o) {
-        if (typeof o['environments'].length === undefined) {
-            throw Error("'environments' must be an array in dataset");
+        if (typeof o.environments.length === undefined) {
+            throw Error('"environments" must be an array in dataset');
         }
 
-        if (o['environments'].length !== n_atoms) {
-            throw Error(`epxpected ${n_atoms} environments, got ${o['environments'].length} instead`);
+        if (o.environments.length !== n_atoms) {
+            throw Error(`epxpected ${n_atoms} environments, got ${o.environments.length} instead`);
         }
-        checkEnvironments(o['environments'], o['structures']);
+        checkEnvironments(o.environments, o.structures);
     }
 }
 
 function checkMetadata(o: any) {
-    if (!('name' in o && typeof o['name'] === 'string')) {
-        throw Error("missing 'meta.name' in dataset");
+    if (!('name' in o && typeof o.name === 'string')) {
+        throw Error('missing "meta.name" key in dataset');
     }
 
-    if ('description' in o && typeof o['description'] !== 'string') {
-        throw Error("'meta.description' should be a string in dataset");
+    if ('description' in o && typeof o.description !== 'string') {
+        throw Error('"meta.description" should be a string in dataset');
     }
 
     if ('authors' in o) {
-        if (typeof o['authors'].length === undefined) {
-            throw Error("'meta.authors' must be an array in dataset");
+        if (typeof o.authors.length === undefined) {
+            throw Error('"meta.authors" must be an array in dataset');
         }
 
-        for (const a of o['authors']) {
+        for (const a of o.authors) {
             if (typeof a !== 'string') {
-                throw Error("'meta.authors' must be an array of strings in dataset");
+                throw Error('"meta.authors" must be an array of strings in dataset');
             }
         }
     }
 
     if ('references' in o) {
-        if (typeof o['references'].length === undefined) {
-            throw Error("'meta.references' must be an array in dataset");
+        if (typeof o.references.length === undefined) {
+            throw Error('"meta.references" must be an array in dataset');
         }
 
-        for (const a of o['references']) {
+        for (const a of o.references) {
             if (typeof a !== 'string') {
-                throw Error("'meta.references' must be an array of strings in dataset");
+                throw Error('"meta.references" must be an array of strings in dataset');
             }
         }
     }
@@ -182,25 +182,25 @@ function checkMetadata(o: any) {
 
 function checkStructure(o: any): [number, number] {
     let n_atoms = 0;
-    for (let i=0; i<o.length; i++) {
+    for (let i = 0; i < o.length; i++) {
         const structure = o[i];
-        if (!('names' in structure && structure['names'].length !== undefined)) {
+        if (!('names' in structure && structure.names.length !== undefined)) {
             throw Error(`missing 'names' for structure ${i}`);
         }
-        const size = structure['names'].length;
+        const size = structure.names.length;
         n_atoms += size;
 
         for (const name of ['x', 'y', 'z']) {
             if (!(name in structure && structure[name].length !== undefined)) {
                 throw Error(`missing '${name}' for structure ${i}`);
             }
-            if (structure['x'].length !== size) {
+            if (structure[name].length !== size) {
                 throw Error(`wrong size for '${name}' in structure ${i}, expected ${size}, got ${structure[name].length}`);
             }
         }
 
         if ('cell' in structure) {
-            if (structure['cell'].length !== 9) {
+            if (structure.cell.length !== 9) {
                 throw Error(`'cell' must be an array of size 9 for structure ${i}`);
             }
         }
@@ -209,10 +209,10 @@ function checkStructure(o: any): [number, number] {
 }
 
 function checkProperties(o: any, n_structures: number, n_atoms: number) {
-    for (const key in o['properties']) {
-        const property = o['properties'][key];
+    for (const key in o.properties) {
+        const property = o.properties[key];
 
-        if (!('target' in property && typeof property['target'] === 'string')) {
+        if (!('target' in property && typeof property.target === 'string')) {
             Error(`'properties['${key}'].target' should be a string`);
         }
 
@@ -224,19 +224,19 @@ function checkProperties(o: any, n_structures: number, n_atoms: number) {
             Error(`'properties['${key}'].values' should be an array`);
         }
 
-        if (property.target == 'atom' && property.values.length != n_atoms) {
+        if (property.target === 'atom' && property.values.length !== n_atoms) {
             throw Error(`wrong size for 'properties['${key}'].values': expected ${n_atoms}, got ${property.values.length}`);
-        } else if (property.target == 'structure' && property.values.length != n_structures) {
+        } else if (property.target === 'structure' && property.values.length !== n_structures) {
             throw Error(`wrong size for 'properties['${key}'].values': expected ${n_structures}, got ${property.values.length}`);
         }
 
-        const initial = typeof property.values[0]
-        if (initial != 'string' && initial != 'number') {
+        const initial = typeof property.values[0];
+        if (initial !== 'string' && initial !== 'number') {
             throw Error(`'properties['${key}'].values' should contain string or number`);
         }
 
-        for (let i=0; i<property.values.length; i++) {
-            if (typeof property.values[i] !== initial) {
+        for (const value of property.values) {
+            if (typeof value !== initial) {
                 throw Error(`'properties['${key}'].values' should be of a single type`);
             }
         }
@@ -244,27 +244,33 @@ function checkProperties(o: any, n_structures: number, n_atoms: number) {
 }
 
 function checkEnvironments(o: any, structures: Structure[]) {
-    for (let i=0; i<o.length; i++) {
+    for (let i = 0; i < o.length; i++) {
         const env = o[i];
 
-        if (!('structure' in env && typeof env['structure'] === 'number')) {
+        if (!('structure' in env && typeof env.structure === 'number')) {
             throw Error(`missing 'structure' for environment ${i}`);
         }
 
-        if (!isPositiveInteger(env['structure']) || env['structure'] >= structures.length) {
-            throw Error(`out of bounds 'structure' for environment ${i}: index is ${env['structure']}, we have ${structures.length} structures`);
+        if (!isPositiveInteger(env.structure) || env.structure >= structures.length) {
+            throw Error(
+                `out of bounds 'structure' for environment ${i}: index is \
+                ${env.structure}, we have ${structures.length} structures`,
+            );
         }
 
-        const n_atoms = structures[env['structure']].names.length;
-        if (!('center' in env && typeof env['center'] === 'number')) {
+        const n_atoms = structures[env.structure].names.length;
+        if (!('center' in env && typeof env.center === 'number')) {
             throw Error(`missing 'center' for environment ${i}`);
         }
 
-        if (!isPositiveInteger(env['center']) || env['center'] >= n_atoms) {
-            throw Error(`out of bounds 'center' for environment ${i}: index is ${env['center']}, we have ${n_atoms} atoms`);
+        if (!isPositiveInteger(env.center) || env.center >= n_atoms) {
+            throw Error(
+                `out of bounds 'center' for environment ${i}: index is \
+                ${env.center}, we have ${n_atoms} atoms`,
+            );
         }
 
-        if (!('cutoff' in env && typeof env['cutoff'] === "number")) {
+        if (!('cutoff' in env && typeof env.cutoff === 'number')) {
             throw Error(`missing 'cutoff' for environment ${i}`);
         }
     }
