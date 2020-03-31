@@ -22,8 +22,7 @@ const config: webpack.Configuration = {
             { test: /\.ts?$/, loader: 'ts-loader' },
             { test: /\.css?$/, use: ['style-loader', 'css-loader'] },
             { test: /\.html?$/, loader: 'html-loader', options: { minimize: true } },
-            // from https://github.com/plotly/plotly-webpack
-            { test: /\.js?$/, use: ['ify-loader', 'transform-loader?plotly.js/tasks/compress_attributes.js'] },
+            { test: /\.js?$/, use: ['ify-loader'] },
         ],
     },
 };
