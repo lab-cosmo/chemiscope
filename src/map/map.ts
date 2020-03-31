@@ -8,7 +8,7 @@ import assert from 'assert';
 import {Property} from '../dataset';
 import {EnvironmentIndexer, getByID, Indexes, makeDraggable} from '../utils';
 
-import * as Plotly from './plotly/plotly-scatter';
+import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
 
 import {COLOR_MAPS} from './colorscales';
@@ -33,13 +33,6 @@ const DEFAULT_LAYOUT = {
         colorscale: [] as Plotly.ColorScale,
         showscale: true,
     },
-    // coloraxis2 is used for the markers lines
-    coloraxis2: {
-        cmax: 0,
-        cmin: 0,
-        colorscale: [] as Plotly.ColorScale,
-        showscale: false,
-    },
     hovermode: 'closest',
     legend: {
         itemclick: false,
@@ -57,8 +50,7 @@ const DEFAULT_LAYOUT = {
     scene: {
         camera: {
             projection: {
-                // broken, see https://github.com/plotly/plotly.js/issues/4514
-                // type: 'orthographic'
+                type: 'orthographic',
             },
         },
         xaxis: {
@@ -546,8 +538,6 @@ export class PropertiesMap {
                     'coloraxis.cmin': min,
                     'coloraxis.colorbar.title.text': this._current.color,
                     'coloraxis.showscale': true,
-                    'coloraxis2.cmax': max,
-                    'coloraxis2.cmin': min,
                 } as unknown as Layout);
 
             } else {
@@ -567,7 +557,6 @@ export class PropertiesMap {
             this._restyle({
                 'hovertemplate': this._hovertemplate(),
                 'marker.color': this._colors(0),
-                'marker.line.color': this._lineColors(0),
             } as Data, 0);
         };
 
@@ -577,8 +566,6 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
-                'coloraxis2.cmax': max,
-                'coloraxis2.cmin': min,
             } as unknown as Layout);
         };
         this._settings.color.min.onchange = colorRangeChange;
@@ -592,8 +579,6 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
-                'coloraxis2.cmax': max,
-                'coloraxis2.cmin': min,
             } as unknown as Layout);
         };
 
@@ -602,7 +587,6 @@ export class PropertiesMap {
             this._current.colorscale = this._settings.palette.value;
             this._relayout({
                 'coloraxis.colorscale': this._colorScale(),
-                'coloraxis2.colorscale': this._lineColorScale(),
             } as unknown as Layout);
         };
 
@@ -756,7 +740,6 @@ export class PropertiesMap {
                 coloraxis: 'coloraxis',
                 line: {
                     color: lineColors[0],
-                    coloraxis: 'coloraxis2',
                     width: 1,
                 },
                 // prevent plolty from messing with opacity when doing bubble
@@ -786,7 +769,7 @@ export class PropertiesMap {
                 color: colors[1],
                 line: {
                     color: lineColors[1],
-                    width: 0.5,
+                    width: 1,
                 },
                 size: sizes[1],
             },
@@ -830,9 +813,6 @@ export class PropertiesMap {
         layout.coloraxis.colorscale = this._colorScale();
         layout.coloraxis.cmin = parseFloat(this._settings.color.min.value);
         layout.coloraxis.cmax = parseFloat(this._settings.color.max.value);
-        layout.coloraxis2.cmin = parseFloat(this._settings.color.min.value);
-        layout.coloraxis2.cmax = parseFloat(this._settings.color.max.value);
-        layout.coloraxis2.colorscale = this._lineColorScale();
         layout.coloraxis.colorbar.title.text = this._current.color;
 
         // Create an empty plot and fill it below
@@ -922,29 +902,17 @@ export class PropertiesMap {
      * Get the **line** color values to use with the given plotly `trace`, or
      * all of them if `trace === undefined`
      */
-    private _lineColors(trace?: number): Array<string | number | number[]> {
-        let values;
-        if (this._hasColors()) {
-            values = this._properties()[this._current.color!].values;
+    private _lineColors(trace?: number): string[] {
+        if (this._is3D()) {
+            return this._selectTrace<string>('black', 'black', trace);
         } else {
-            values = 0.5;
+            return this._selectTrace<string>('rgba(1, 1, 1, 0.3)', 'black', trace);
         }
-
-        return this._selectTrace<string | number | number[]>(values, 'black', trace);
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */
     private _colorScale(): Plotly.ColorScale {
-        if (this._is3D()) {
-            return COLOR_MAPS[this._current.colorscale].rgb;
-        } else {
-            return COLOR_MAPS[this._current.colorscale].rgba;
-        }
-    }
-
-    /** Get the colorscale to use for markers lines in the main plotly trace */
-    private _lineColorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this._current.colorscale].rgb;
+        return COLOR_MAPS[this._current.colorscale];
     }
 
     /**
@@ -970,12 +938,11 @@ export class PropertiesMap {
 
         let values;
         if (this._current.size === undefined) {
-            const defaultSize = this._is3D() ? 4.5 : 10;
-            values = defaultSize * userFactor;
+            values = 10 * userFactor;
         } else {
             const sizes = this._properties()[this._current.size].values;
             const {min, max} = arrayMaxMin(sizes);
-            const defaultSize = this._is3D() ? 12 : 20;
+            const defaultSize = this._is3D() ? 20 : 15;
             // normalize
             values = sizes.map((v: number) => {
                 const scaled = (v - min) / (max - min);
@@ -1103,6 +1070,10 @@ export class PropertiesMap {
         // Change the data that vary between 2D and 3D mode
         const factor = parseInt(this._settings.size.factor.value, 10);
         this._restyle({
+            // transparency messes with depth sorting in 3D mode, even with
+            // line width set to 0 ¯\_(ツ)_/¯
+            // https://github.com/plotly/plotly.js/issues/4111
+            'marker.line.color': this._lineColors(),
             'marker.line.width': [0, 1],
             // size and symbols change from 2D to 3D
             'marker.size': this._sizes(factor),
@@ -1112,8 +1083,6 @@ export class PropertiesMap {
         this._relayout({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
-            // Do not use opacity in 3D mode, since it renders horribly
-            'coloraxis.colorscale': this._colorScale(),
             // Carry over axis types
             'scene.xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
             'scene.yaxis.type': this._settings.y.scale.value as Plotly.AxisType,
@@ -1146,6 +1115,9 @@ export class PropertiesMap {
         // Change the data that vary between 2D and 3D mode
         const factor = parseInt(this._settings.size.factor.value, 10);
         this._restyle({
+            // transparency messes with depth sorting in 3D mode
+            // https://github.com/plotly/plotly.js/issues/4111
+            'marker.line.color': this._lineColors(),
             'marker.line.width': [1, 1],
             // size and symbols change from 2D to 3D
             'marker.size': this._sizes(factor),
@@ -1155,8 +1127,6 @@ export class PropertiesMap {
         this._relayout({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
-            // Do not use opacity in 3D mode, since it renders horribly
-            'coloraxis.colorscale': this._colorScale(),
             // Carry over axis types
             'xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._settings.y.scale.value as Plotly.AxisType,

@@ -8,20 +8,10 @@ import {ColorScale} from './plotly/plotly-scatter';
 // tslint:disable-next-line:array-type
 type RGBColorMap = [number, [number, number, number]][];
 
-interface PlotlyColorMap {
-    rgba: ColorScale;
-    rgb: ColorScale;
-}
-
-function rgb_to_plotly(colormap: RGBColorMap): PlotlyColorMap {
-    return {
-        rgb: colormap.map((c) => {
-            return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`] as [number, string];
-        }),
-        rgba: colormap.map((c) => {
-            return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, 0.5)`] as [number, string];
-        }),
-    };
+function rgb_to_plotly(colormap: RGBColorMap): ColorScale {
+    return colormap.map((c) => {
+        return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`] as [number, string];
+    });
 }
 
 const INFERNO: RGBColorMap = [
@@ -561,7 +551,7 @@ const TWILIGHT_SHIFTED: RGBColorMap = [
 ];
 
 interface ColorMaps {
-    [key: string]: PlotlyColorMap;
+    [key: string]: ColorScale;
 }
 
 // tslint:disable:object-literal-sort-keys
