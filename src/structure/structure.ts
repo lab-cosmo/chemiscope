@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {Environment, Structure} from '../dataset';
+import {Environment, Structure, UserStructure} from '../dataset';
 import {EnvironmentIndexer, Indexes} from '../utils';
 
 import {structure2JSmol} from './jsmol';
@@ -36,11 +36,24 @@ export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
 
+    /**
+     * Callback used when a new structure should be loaded
+     *
+     * By default, this assumes that the loaded dataset contains [[Structure]]
+     * directly, and returns the data from there. If the loaded dataset contains
+     * [[UserStructure]] instead, this callback should be set to transform from
+     * data in [[UserStructure.data]] to a [[Structure]].
+     *
+     * The callback gets two parameter: the structure index (0-based); and the
+     * full [[UserStructure]].
+     */
+    public loadStructure: (index: number, structure: any) => Structure;
+
     private _widget: JSmolWidget;
     /// Playback delay setting
     private _delay: HTMLInputElement;
     /// List of structures in the dataset
-    private _structures: Structure[];
+    private _structures: Structure[] | UserStructure[];
     /// Cached string representation of structures
     private _cachedStructures: string[];
     /// Optional list of environments for each structure
@@ -65,7 +78,7 @@ export class StructureViewer {
         id: string,
         j2sPath: string,
         indexer: EnvironmentIndexer,
-        structures: Structure[],
+        structures: Structure[] | UserStructure[],
         environments?: Environment[],
     ) {
         this._widget = new JSmolWidget(id, j2sPath);
@@ -75,7 +88,17 @@ export class StructureViewer {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
-        this.show({environment: 0, structure: 0, atom: 0});
+
+        this.loadStructure = (_, s) => {
+            // check that the data does conform to the Structure interface
+            if (!('names' in s && 'x' in s && 'y' in s && 'z' in s)) {
+                throw Error(
+                    'got custom data in "structures", but no custom loadStructure callback',
+                );
+            } else {
+                return s;
+            }
+        };
 
         this.onselect = () => {};
 
@@ -92,6 +115,8 @@ export class StructureViewer {
             const indexes = this._indexer.from_structure_atom(this._current.structure, atom_id);
             this.onselect(indexes);
         };
+
+        this.show({environment: 0, structure: 0, atom: 0});
     }
 
     /**
@@ -103,7 +128,11 @@ export class StructureViewer {
      * @param  structures   new list of structures to display
      * @param  environments new list of atom centered environments
      */
-    public changeDataset(indexer: EnvironmentIndexer, structures: Structure[], environments?: Environment[]) {
+    public changeDataset(
+        indexer: EnvironmentIndexer,
+        structures: Structure[] | UserStructure[],
+        environments?: Environment[],
+    ) {
         this._structures = structures;
         this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
@@ -199,7 +228,9 @@ export class StructureViewer {
 
     private _structureForJSmol(index: number): string {
         if (this._cachedStructures[index] === undefined) {
-            this._cachedStructures[index] = structure2JSmol(this._structures[index]);
+            this._cachedStructures[index] = structure2JSmol(
+                this.loadStructure(index, this._structures[index]),
+            );
         }
         return this._cachedStructures[index];
     }

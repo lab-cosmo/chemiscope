@@ -7,8 +7,16 @@
 export interface Dataset {
     /** metadata for this dataset */
     meta: Metadata;
-    /** List of structures in the dataset */
-    structures: Structure[];
+    /**
+     * List of structures in the dataset.
+     *
+     * The structures can either follow the `Structure` interface, in which
+     * case they will be loaded as-defined; or contain any kind of data as a
+     * [[UserStructure]], in which case the [[StructureViewer.loadStructure]]
+     * callback should be set to translate from whatever is stored to a
+     * [[Structure]].
+     */
+    structures: Structure[] | UserStructure[];
     /**
      * List of properties for the structures (`target == "structure"`), or
      * atom-centered environments in the structures (`target == "atom"`).
@@ -45,6 +53,8 @@ export interface Metadata {
 
 /** A single atomic structure */
 export interface Structure {
+    /** Number of atoms in the structure */
+    size: number;
     /** Names of all atoms in the structure */
     names: number[];
     /**
@@ -74,6 +84,25 @@ export interface Structure {
      * expressed in Angströms.
      */
     cell?: number[];
+}
+
+/**
+ * User-defined data to allow dynamic loading of the structures.
+ *
+ * The main use-case of this is making the initial loading time of chemiscope
+ * faster by loading structure on-demand, from files, a database or even a
+ * javascript program.
+ */
+export interface UserStructure {
+    /** Number of atoms in the structure */
+    size: number;
+    /**
+     * User-defined data which can be turned into a [[Structure]].
+     *
+     * [[StructureViewer.loadStructure]] must be set to be able to load this
+     * data.
+     */
+    data: any;
 }
 
 /** Possible types of properties: full structure property, or atomic property */
@@ -127,20 +156,20 @@ export function checkDataset(o: any) {
     if (!('structures' in o && o.structures.length !== undefined)) {
         throw Error('missing "structures" key in dataset');
     }
-    const [n_structures, n_atoms] = checkStructure(o.structures);
+    const [structureCount, envCount] = checkStructures(o.structures);
 
     if (!('properties' in o && typeof o.properties === 'object')) {
         throw Error('missing "properties" key in dataset');
     }
-    checkProperties(o.properties, n_structures, n_atoms);
+    checkProperties(o.properties, structureCount, envCount);
 
     if ('environments' in o) {
         if (typeof o.environments.length === undefined) {
             throw Error('"environments" must be an array in dataset');
         }
 
-        if (o.environments.length !== n_atoms) {
-            throw Error(`epxpected ${n_atoms} environments, got ${o.environments.length} instead`);
+        if (o.environments.length !== envCount) {
+            throw Error(`expected ${envCount} environments, got ${o.environments.length} instead`);
         }
         checkEnvironments(o.environments, o.structures);
     }
@@ -180,35 +209,42 @@ function checkMetadata(o: any) {
     }
 }
 
-function checkStructure(o: any): [number, number] {
-    let n_atoms = 0;
+export function checkStructures(o: any): [number, number] {
+    let envCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
-        if (!('names' in structure && structure.names.length !== undefined)) {
-            throw Error(`missing 'names' for structure ${i}`);
+        if (!('size' in structure && typeof structure.size === 'number' && isPositiveInteger(structure.size))) {
+            throw Error(`missing 'size' for structure ${i}`);
         }
-        const size = structure.names.length;
-        n_atoms += size;
+        envCount += structure.size;
 
-        for (const name of ['x', 'y', 'z']) {
-            if (!(name in structure && structure[name].length !== undefined)) {
-                throw Error(`missing '${name}' for structure ${i}`);
+        if ('names' in structure && 'x' in structure && 'y' in structure && 'z' in structure) {
+            for (const key of ['names', 'x', 'y', 'z']) {
+                if (!(key in structure && structure[key].length !== undefined)) {
+                    throw Error(`missing '${name}' for structure ${i}`);
+                }
+                if (structure[key].length !== structure.size) {
+                    throw Error(`wrong size for '${name}' in structure ${i}, expected ${structure.size}, got ${structure[name].length}`);
+                }
             }
-            if (structure[name].length !== size) {
-                throw Error(`wrong size for '${name}' in structure ${i}, expected ${size}, got ${structure[name].length}`);
-            }
-        }
 
-        if ('cell' in structure) {
-            if (structure.cell.length !== 9) {
-                throw Error(`'cell' must be an array of size 9 for structure ${i}`);
+            if ('cell' in structure) {
+                if (structure.cell.length !== 9) {
+                    throw Error(`'cell' must be an array of size 9 for structure ${i}`);
+                }
             }
+        } else if ('data' in structure) {
+            // nothing to check
+        } else {
+            throw Error(`structure ${i} must contains either 'names'/'x'/'y'/'z' or 'data'`);
+
         }
     }
-    return [o.length, n_atoms];
+
+    return [o.length, envCount];
 }
 
-function checkProperties(o: any, n_structures: number, n_atoms: number) {
+function checkProperties(o: any, structureCount: number, envCount: number) {
     for (const key in o.properties) {
         const property = o.properties[key];
 
@@ -224,10 +260,18 @@ function checkProperties(o: any, n_structures: number, n_atoms: number) {
             Error(`'properties['${key}'].values' should be an array`);
         }
 
-        if (property.target === 'atom' && property.values.length !== n_atoms) {
-            throw Error(`wrong size for 'properties['${key}'].values': expected ${n_atoms}, got ${property.values.length}`);
-        } else if (property.target === 'structure' && property.values.length !== n_structures) {
-            throw Error(`wrong size for 'properties['${key}'].values': expected ${n_structures}, got ${property.values.length}`);
+        // check size is possible
+        let expected;
+        if (property.target === 'atom') {
+            expected = envCount;
+        } else if (property.target === 'structure') {
+            expected = structureCount;
+        } else {
+            throw Error(`invalid property target: ${property.target}`);
+        }
+
+        if (property.values.length !== expected) {
+            throw Error(`wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`);
         }
 
         const initial = typeof property.values[0];
@@ -258,15 +302,15 @@ function checkEnvironments(o: any, structures: Structure[]) {
             );
         }
 
-        const n_atoms = structures[env.structure].names.length;
         if (!('center' in env && typeof env.center === 'number')) {
             throw Error(`missing 'center' for environment ${i}`);
         }
 
-        if (!isPositiveInteger(env.center) || env.center >= n_atoms) {
+        const size = structures[env.structure].size;
+        if (!isPositiveInteger(env.center) || env.center >= size) {
             throw Error(
                 `out of bounds 'center' for environment ${i}: index is \
-                ${env.center}, we have ${n_atoms} atoms`,
+                ${env.center}, we have ${size} atoms in structure ${env.structure}`,
             );
         }
 
@@ -277,5 +321,5 @@ function checkEnvironments(o: any, structures: Structure[]) {
 }
 
 function isPositiveInteger(number: number): boolean {
-    return number !== Infinity && Math.floor(number) === number && number >= 0;
+    return Number.isInteger(number) && number >= 0;
 }

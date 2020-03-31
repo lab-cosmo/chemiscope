@@ -54,6 +54,7 @@ def _linearize(name, property):
 
 def _frame_to_json(frame):
     data = {}
+    data['size'] = len(frame)
     data['names'] = list(frame.symbols)
     data['x'] = [float(value) for value in frame.positions[:, 0]]
     data['y'] = [float(value) for value in frame.positions[:, 1]]

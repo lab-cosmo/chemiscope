@@ -165,6 +165,8 @@ values:
         // list of structures in this dataset
         "structures": [
             {
+                // number of atoms in the structure
+                "size": 42,
                 // names of the atoms in the structure
                 "names": ["H", "O", "C", "C", ...],
                 // x cartesian coordinate of all the atoms, in Angstroms

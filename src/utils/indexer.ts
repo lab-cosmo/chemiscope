@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Environment, Structure} from '../dataset';
+import {Environment, Structure, UserStructure} from '../dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
@@ -45,7 +45,7 @@ export class EnvironmentIndexer {
      */
     public mode: DisplayMode;
 
-    private _structures: Structure[];
+    private _structures: Structure[] | UserStructure[];
     private _environments?: Environment[];
     /// Number of atoms before the structure at the same index
     private _atomsBefore: number[];
@@ -58,7 +58,7 @@ export class EnvironmentIndexer {
      * @param structures   structures used in the current dataset
      * @param environments environments used in the current dataset
      */
-    constructor(mode: DisplayMode, structures: Structure[], environments?: Environment[]) {
+    constructor(mode: DisplayMode, structures: Structure[] | UserStructure[], environments?: Environment[]) {
         this.mode = mode;
         this._structures = structures;
         this._environments = environments;
@@ -67,12 +67,12 @@ export class EnvironmentIndexer {
             assert(this._environments !== undefined);
         }
 
-        let current = 0;
-        this._atomsBefore = this._structures.map((structure) => {
-            const result = current;
-            current += structure.names.length;
-            return result;
-        });
+        let count = 0;
+        this._atomsBefore = [];
+        for (const structure of this._structures) {
+            this._atomsBefore.push(count);
+            count += structure.size;
+        }
     }
 
     /**
@@ -147,6 +147,6 @@ export class EnvironmentIndexer {
 
     /** Get the total number of atom in the `structure` with given index */
     public atomsCount(structure: number): number {
-        return this._structures[structure].names.length;
+        return this._structures[structure].size;
     }
 }

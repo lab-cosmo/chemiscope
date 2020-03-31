@@ -14,10 +14,27 @@ function toJson(path, buffer) {
     });
 }
 
-let visualizer = undefined;
+let VISUALIZER = undefined;
+let DATASET = undefined;
+let ORIGINAL_LOAD_STRUCTURE = undefined;
+
+function loadStructure(index, structure) {
+    return JSON.parse($.ajax({
+        type: "GET",
+        url: structure.data,
+        // this is getting deprecated, but the best option for now
+        async: false
+    }).responseText);
+}
+
 function setupChemiscope(dataset) {
-    if (visualizer !== undefined) {
-        visualizer.changeDataset(dataset)
+    if (VISUALIZER !== undefined) {
+        if (DATASET === "Azaphenacenes.json.gz") {
+            VISUALIZER.structure.loadStructure = loadStructure;
+        } else {
+            VISUALIZER.structure.loadStructure = ORIGINAL_LOAD_STRUCTURE;
+        }
+        VISUALIZER.changeDataset(dataset)
             .then(() => stopLoading())
             .catch(e => setTimeout(() => {throw e;}));
     } else {
@@ -30,8 +47,8 @@ function setupChemiscope(dataset) {
         };
 
         Chemiscope.DefaultVizualizer.load(config, dataset).then(v => {
-            visualizer = v;
-            visualizer.structure.settingsPlacement((rect) => {
+            VISUALIZER = v;
+            VISUALIZER.structure.settingsPlacement((rect) => {
                 const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
 
                 return {
@@ -40,7 +57,12 @@ function setupChemiscope(dataset) {
                 };
             });
 
-            visualizer.map.settingsPlacement((rect) => {
+            ORIGINAL_LOAD_STRUCTURE = VISUALIZER.structure.loadStructure;
+            if (DATASET === "Azaphenacenes.json.gz") {
+                VISUALIZER.structure.loadStructure = loadStructure;
+            }
+
+            VISUALIZER.map.settingsPlacement((rect) => {
                 const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
 
                 return {
@@ -88,6 +110,7 @@ function stopLoading() {
 
 function loadExample(url) {
     startLoading();
+    DATASET = url;
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -112,6 +135,7 @@ function setupDefaultChemiscope(isStandalone) {
     upload.onchange = () => {
         startLoading();
         const name = upload.files[0].name;
+        DATASET = `user-loaded: ${name}`;
         const reader = new FileReader();
         reader.onload = () => {
             const json = toJson(name, reader.result);
