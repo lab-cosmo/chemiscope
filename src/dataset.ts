@@ -320,6 +320,7 @@ function checkEnvironments(o: any, structures: Structure[]) {
     }
 }
 
-function isPositiveInteger(number: number): boolean {
+/** @hidden */
+export function isPositiveInteger(number: number): boolean {
     return Number.isInteger(number) && number >= 0;
 }

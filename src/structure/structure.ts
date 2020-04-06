@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {Environment, Structure, UserStructure} from '../dataset';
+import {Environment, isPositiveInteger, Structure, UserStructure} from '../dataset';
 import {EnvironmentIndexer, Indexes} from '../utils';
 
 import {structure2JSmol} from './jsmol';
@@ -26,6 +26,34 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
     }
 
     return result;
+}
+
+/**
+ * Check that the given object is a structure. Return a string describing the
+ * issue with `s` if any, or the empty string if `s` looks like a valid
+ * structure.
+ */
+function checkStructure(s: any): string {
+    if (!('size' in s && typeof s.size === 'number' && isPositiveInteger(s.size))) {
+        return 'missing "size" in structure';
+    }
+
+    for (const key of ['names', 'x', 'y', 'z']) {
+        if (!(key in s && s[key].length !== undefined)) {
+            return `missing "${name}" in structure`;
+        }
+        if (s[key].length !== s.size) {
+            return `wrong size for "${name}" in structure, expected ${s.size}, got ${s[name].length}`;
+        }
+    }
+
+    if ('cell' in s) {
+        if (s.cell.length !== 9) {
+            return '"cell" must be an array of size 9 in structure';
+        }
+    }
+
+    return '';
 }
 
 /**
@@ -91,9 +119,10 @@ export class StructureViewer {
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
-            if (!('names' in s && 'x' in s && 'y' in s && 'z' in s)) {
+            if (checkStructure(s) !== '') {
                 throw Error(
-                    'got custom data in "structures", but no custom loadStructure callback',
+                    'got custom data for this structure, but no custom loadStructure callback\n' +
+                    `the object was ${JSON.stringify(s)}`,
                 );
             } else {
                 return s;
@@ -115,8 +144,6 @@ export class StructureViewer {
             const indexes = this._indexer.from_structure_atom(this._current.structure, atom_id);
             this.onselect(indexes);
         };
-
-        this.show({environment: 0, structure: 0, atom: 0});
     }
 
     /**
@@ -138,7 +165,6 @@ export class StructureViewer {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._current = {structure: -1, atom: -1};
-        this.show({environment: 0, structure: 0, atom: 0});
     }
 
     /**
@@ -228,9 +254,15 @@ export class StructureViewer {
 
     private _structureForJSmol(index: number): string {
         if (this._cachedStructures[index] === undefined) {
-            this._cachedStructures[index] = structure2JSmol(
-                this.loadStructure(index, this._structures[index]),
-            );
+            const s = this.loadStructure(index, this._structures[index]);
+            const check = checkStructure(s);
+            if (check !== '') {
+                throw Error(
+                    `got invalid object as structure: ${check}` + '\n' +
+                    `the object was ${JSON.stringify(s)}`,
+                );
+            }
+            this._cachedStructures[index] = structure2JSmol(s);
         }
         return this._cachedStructures[index];
     }

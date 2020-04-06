@@ -23,7 +23,7 @@ import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
 import {StructureViewer} from './structure';
 
-import {checkDataset, Dataset} from './dataset';
+import {checkDataset, Dataset, Structure} from './dataset';
 import {addWarningHandler, EnvironmentIndexer} from './utils';
 
 // tslint:disable-next-line: no-var-requires
@@ -43,6 +43,8 @@ export interface Config {
     structure: string;
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
+    /** Custom structure loading callback, used to set [[StructureViewer.loadStructure]] */
+    loadStructure?: (index: number, structure: any) => Structure;
 }
 
 /** @hidden
@@ -68,9 +70,32 @@ function checkConfig(o: any) {
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
         throw Error('missing "j2sPath" key in chemiscope config');
     }
+
+    // from underscore.js / https://stackoverflow.com/a/6000016
+    const isFunction = (obj: any) => {
+        return !!(obj && obj.constructor && obj.call && obj.apply);
+    };
+
+    if ('loadStructure' in o && !isFunction(o.loadStructure)) {
+        throw Error('"loadStructure" should be a function in chemiscope config');
+    }
 }
 
+/**
+ * The default vizualization state of chemiscope: three panels (map, structure,
+ * info) updating one another when the user interact with any of them.
+ */
 class DefaultVizualizer {
+    /**
+     * Load a dataset and create a vizualizer.
+     *
+     * This function returns a `Promise<DefaultVizualizer>` to prevent blocking
+     * the browser while everything is loading.
+     *
+     * @param  config  configuration of the vizualizer
+     * @param  dataset dataset to load
+     * @return         Promise that resolves to a [[DefaultVizualizer]]
+     */
     public static load(config: Config, dataset: Dataset): Promise<DefaultVizualizer> {
         return new Promise((resolve, _) => {
             const visualizer = new DefaultVizualizer(config, dataset);
@@ -91,6 +116,8 @@ class DefaultVizualizer {
     };
     private _indexer: EnvironmentIndexer;
 
+    // the constructor is private because the main entry point is the static
+    // `load` function
     private constructor(config: Config, dataset: Dataset) {
         checkConfig(config);
         checkDataset(dataset);
@@ -110,6 +137,10 @@ class DefaultVizualizer {
             dataset.environments,
         );
 
+        if (config.loadStructure !== undefined) {
+            this.structure.loadStructure = config.loadStructure;
+        }
+
         this.structure.onselect = (indexes) => {
             this.map.select(indexes);
             this.info.show(indexes);
@@ -127,8 +158,22 @@ class DefaultVizualizer {
             this.info.show(indexes);
             this.structure.show(indexes);
         };
+
+        const initial = {environment: 0, structure: 0, atom: 0};
+        this.structure.show(initial);
+        this.info.show(initial);
+        this.map.select(initial);
     }
 
+    /**
+     * Change the loaded dataset in an existing vizualizer.
+     *
+     * This function returns a `Promise` to prevent blocking the browser while
+     * everything is loading.
+     *
+     * @param  dataset dataset to load
+     * @return         Promise that resolves when everything is loaded
+     */
     public changeDataset(dataset: Dataset): Promise<void> {
         return new Promise((resolve, _) => {
             checkDataset(dataset);
@@ -157,6 +202,11 @@ class DefaultVizualizer {
                 this.info.show(indexes);
                 this.structure.show(indexes);
             };
+
+            const initial = {environment: 0, structure: 0, atom: 0};
+            this.structure.show(initial);
+            this.info.show(initial);
+            this.map.select(initial);
             resolve();
         });
     }

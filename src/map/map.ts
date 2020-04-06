@@ -209,7 +209,7 @@ export class PropertiesMap {
      */
     constructor(id: string, indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         this._indexer = indexer;
-        this._selected = 0;
+        this._selected = -1;
         this.onselect = () => {};
 
         const root = document.getElementById(id);

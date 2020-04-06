@@ -127,7 +127,9 @@ export class EnvironmentInfo {
 
         if (indexes.atom !== undefined) {
             if (this._atom === undefined) {
-                throw Error('Invalid state: got an atomic number to update, but I am displaying only structures');
+                if (indexes.atom !== 0) {
+                    throw Error('Invalid state: got an atomic number to update, but I am displaying only structures');
+                }
             } else {
                 this._atom.number.value = `${indexes.atom + 1}`;
                 this._atom.slider.update(indexes.atom);
