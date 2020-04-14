@@ -94,7 +94,8 @@ export class EnvironmentInfo {
         }
 
         this._root.innerHTML = `
-        <div class='chsp-info'>
+        <div class='chsp-info-tables'></div>
+        <div class='chsp-info-btns'>
             <div class='btn btn-sm chsp-info-structure-btn'
                 data-toggle='collapse'
                 data-target='#${structureId}'
@@ -144,7 +145,9 @@ export class EnvironmentInfo {
         const n_structures = this._indexer.structuresCount();
         slider.reset(n_structures - 1);
 
-        const table = new Table(this._root, 'structure', id, properties);
+        const tableRoot = this._root.children[0] as HTMLElement;
+        assert(tableRoot.tagName.toLowerCase() === 'div');
+        const table = new Table(tableRoot, 'structure', id, properties);
 
         slider.startPlayback = (advance) => this.startStructurePlayback(advance);
         slider.onchange = () => {
@@ -210,7 +213,9 @@ export class EnvironmentInfo {
             this.onchange(indexes);
         };
 
-        const table = new Table(this._root, 'atom', id, properties);
+        const tableRoot = this._root.children[0] as HTMLElement;
+        assert(tableRoot.tagName.toLowerCase() === 'div');
+        const table = new Table(tableRoot, 'atom', id, properties);
 
         const number = this._root.querySelector('.chsp-info-atom-btn .chsp-info-number') as HTMLInputElement;
         number.max = n_atoms.toString();

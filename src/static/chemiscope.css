@@ -127,12 +127,12 @@
     height: 100%;
     width: 80%;
     margin: auto;
-    margin-top: 20px;
     min-width: 400px;
 }
 
-.chsp-properties-table td {
+.chsp-properties-table td, .chsp-properties-table th {
     width: 50%;
+    border-top: none;
 }
 
 .chsp-settings-section-title {
@@ -144,7 +144,7 @@
     height: 1.5em !important;
 }
 
-.chsp-info {
+.chsp-info-btns {
     display: flex;
     position: relative;
     margin-bottom: 1ex;
@@ -201,6 +201,20 @@
 .chsp-info-number::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+
+.chsp-info-tables {
+    position: relative;
+    width: 100%;
+}
+
+.chsp-info-table {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background-color: white;
 }
 
 /* Change the atoms slider thumb color to green, to match jsmol highlight */
