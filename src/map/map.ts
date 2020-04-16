@@ -820,8 +820,10 @@ export class PropertiesMap {
             .catch((e) => setTimeout(() => { throw e; }));
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
-            // don't update selected env on double click, i.e. zoom reset
-            if (event.event.detail === 2) {
+            // don't update selected env on double click, since it is lined to
+            // 'reset zoom level' in 2D mode.
+            // `event.event` is only set in 2D mode
+            if (event.event && event.event.detail === 2) {
                 return;
             }
             const environment = event.points[0].pointNumber;
