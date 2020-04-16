@@ -137,6 +137,7 @@ export class StructureViewer {
             }
 
             this._widget.highlight(atom);
+            this._current.atom = atom;
             // if the viewer is showing a bigger supercell than [1, 1, 1], the
             // atom index can be outside of [0, natoms), so make sure it is
             // inside this range.
@@ -194,7 +195,7 @@ export class StructureViewer {
         }
 
         if (this._indexer.mode === 'atom') {
-            if  (this._current.atom !== indexes.atom) {
+            if (this._current.atom !== indexes.atom) {
                 this._widget.highlight(indexes.atom);
             }
         } else {
