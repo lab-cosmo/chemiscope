@@ -1190,7 +1190,7 @@ export class PropertiesMap {
             const maxX = computeX(xaxis.range[1]) + 10;
             const minY = computeY(yaxis.range[1]) - 10;
             const maxY = computeY(yaxis.range[0]) + 10;
-            if (x < minX || x > maxX || y < minY || y > maxY) {
+            if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
                 this._selectedMarker.style.display = 'none';
             } else {
                 this._selectedMarker.style.display = 'block';
