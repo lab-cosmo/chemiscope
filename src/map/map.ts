@@ -104,8 +104,8 @@ const DEFAULT_CONFIG = {
 
 // get the max/min of an array. Math.min(...array) fails with very large arrays
 function arrayMaxMin(values: number[]): {max: number, min: number} {
-    let max = Number.MIN_VALUE;
-    let min = Number.MAX_VALUE;
+    let max = Number.NEGATIVE_INFINITY;
+    let min = Number.POSITIVE_INFINITY;
     for (const value of values) {
         if (value > max) {
             max = value;
@@ -114,6 +114,7 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
             min = value;
         }
     }
+    assert(isFinite(min) && isFinite(max));
     return {max, min};
 }
 
