@@ -49,6 +49,8 @@ export interface Metadata {
     references?: string[];
     /** description of the dataset */
     description?: string;
+    /** style settings **/
+    presets?: string; // probably better type is called for 
 }
 
 /** A single atomic structure */
