@@ -110,7 +110,7 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
  *
  * String properties can be used to assing classes to each data point. They are
  * mapped to a numeric value using the `StringInterner` for easier
- * vizualization.
+ * visualization.
  */
 export class MapData {
     /** Structure properties */

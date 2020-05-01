@@ -46,7 +46,7 @@ function setupChemiscope(dataset) {
             j2sPath:   GLOBAL_J2S_PATH,
         };
 
-        Chemiscope.DefaultVizualizer.load(config, dataset).then(v => {
+        Chemiscope.DefaultVisualizer.load(config, dataset).then(v => {
             VISUALIZER = v;
             VISUALIZER.structure.settingsPlacement((rect) => {
                 const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();

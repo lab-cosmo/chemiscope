@@ -30,7 +30,7 @@ file is ``chemiscope.min.js``, containing the needed JavaScript code to create
 the default visualizer. This file exports a single global object ``Chemiscope``,
 which contains references to
 
-- `Chemiscope.DefaultVizualizer <DefaultVizualizer_>`_
+- `Chemiscope.DefaultVisualizer <DefaultVisualizer_>`_
 - `Chemiscope.addWarningHandler <addWarningHandler_>`_
 - `Chemiscope.MetadataPanel <MetadataPanel_>`_
 - `Chemiscope.StructureViewer <StructureViewer_>`_
@@ -43,7 +43,7 @@ only contains code related to `Chemiscope.JSmolWidget <JSmolWidget_>`_, making
 the minified JavaScript file much smaller. Other partial builds containing only
 part of chemiscope can be added upon request.
 
-.. _DefaultVizualizer: api/classes/main.defaultvizualizer.html
+.. _DefaultVisualizer: api/classes/main.defaultvisualizer.html
 .. _addWarningHandler: api/modules/utils.html#addwarninghandler
 .. _StructureViewer: api/classes/structure.structureviewer.html
 .. _PropertiesMap: api/classes/map.propertiesmap.html
@@ -158,6 +158,6 @@ using JSON files or directly.
                 j2sPath:   'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/',
             };
 
-            Chemiscope.DefaultVizualizer.load(config, dataset);
+            Chemiscope.DefaultVisualizer.load(config, dataset);
         </script>
     </html>

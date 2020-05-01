@@ -1,16 +1,16 @@
 /**
- * This module contains the [[DefaultVizualizer]] class, which is the default
+ * This module contains the [[DefaultVisualizer]] class, which is the default
  * entry point of the code.
  *
- * The default vizualization is organized around four panels: the
+ * The default visualization is organized around four panels: the
  * [[MetadataPanel|metadata]] panel; the [[PropertiesMap|map]] (a scatter plot of
  * properties), the [[StructureViewer|structure viewer]], and the general
  * dataset [[EnvironmentInfo|information]]. Each one of these is defined in a
  * separate module.
  *
- * Other organization of the vizualization are possible by using the classes
+ * Other organization of the visualization are possible by using the classes
  * responsible for each sub-panel separately, instead of using the
- * [[DefaultVizualizer]]. In this case, users should make sure to finish the
+ * [[DefaultVisualizer]]. In this case, users should make sure to finish the
  * plumbing by setting the right callbacks on each element used.
  *
  * @packageDocumentation
@@ -30,7 +30,7 @@ import {addWarningHandler, EnvironmentIndexer} from './utils';
 require('./static/chemiscope.css');
 
 /**
- * Configuration for the [[DefaultVizualizer]]
+ * Configuration for the [[DefaultVisualizer]]
  */
 export interface Config {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
@@ -82,23 +82,23 @@ function checkConfig(o: any) {
 }
 
 /**
- * The default vizualization state of chemiscope: three panels (map, structure,
+ * The default visualization state of chemiscope: three panels (map, structure,
  * info) updating one another when the user interact with any of them.
  */
-class DefaultVizualizer {
+class DefaultVisualizer {
     /**
-     * Load a dataset and create a vizualizer.
+     * Load a dataset and create a visualizer.
      *
-     * This function returns a `Promise<DefaultVizualizer>` to prevent blocking
+     * This function returns a `Promise<DefaultVisualizer>` to prevent blocking
      * the browser while everything is loading.
      *
-     * @param  config  configuration of the vizualizer
+     * @param  config  configuration of the visualizer
      * @param  dataset dataset to load
-     * @return         Promise that resolves to a [[DefaultVizualizer]]
+     * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
-    public static load(config: Config, dataset: Dataset): Promise<DefaultVizualizer> {
+    public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
         return new Promise((resolve, _) => {
-            const visualizer = new DefaultVizualizer(config, dataset);
+            const visualizer = new DefaultVisualizer(config, dataset);
             resolve(visualizer);
         });
     }
@@ -166,7 +166,7 @@ class DefaultVizualizer {
     }
 
     /**
-     * Change the loaded dataset in an existing vizualizer.
+     * Change the loaded dataset in an existing visualizer.
      *
      * This function returns a `Promise` to prevent blocking the browser while
      * everything is loading.
@@ -219,5 +219,5 @@ export {
     StructureViewer,
     EnvironmentInfo,
     EnvironmentIndexer,
-    DefaultVizualizer,
+    DefaultVisualizer,
 };
