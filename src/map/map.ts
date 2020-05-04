@@ -567,6 +567,11 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
+                // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
+                // not update the color of the points (although it does change
+                // the colorbar). Asking for an update of 'coloraxis.colorscale'
+                // seems to do the trick. This is possiblely a Ploty bug, we
+                // would need to investiguate a bit more.
                 'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
@@ -581,6 +586,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
+                // same as above regarding update of the points color
                 'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
