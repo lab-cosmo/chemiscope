@@ -212,8 +212,14 @@ class DefaultVisualizer {
     }
 }
 
+declare const CHEMISCOPE_GIT_VERSION: string;
+function version(): string {
+    return CHEMISCOPE_GIT_VERSION;
+}
+
 export {
     addWarningHandler,
+    version,
     MetadataPanel,
     PropertiesMap,
     StructureViewer,

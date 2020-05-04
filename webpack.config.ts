@@ -1,22 +1,16 @@
-import path from "path";
-import webpack from "webpack";
+import path from 'path';
+import webpack from 'webpack';
+
+import {execSync} from 'child_process';
+
+const GIT_VERSION = execSync('git describe --tags --dirty').toString().trim();
 
 const config: webpack.Configuration = {
-    mode: "development",
     entry: {
-        "chemiscope": "./src/index.ts",
-        "jsmol-widget": "./src/structure/widget.ts",
+        'chemiscope': './src/index.ts',
+        'jsmol-widget': './src/structure/widget.ts',
     },
-    output: {
-        path: path.resolve(__dirname, "dist"),
-        filename: "[name].min.js",
-        libraryTarget: "var",
-        library: "Chemiscope",
-    },
-    resolve: {
-        modules: ['./node_modules'],
-        extensions: ['.js', '.ts'],
-    },
+    mode: 'development',
     module: {
         rules: [
             { test: /\.ts?$/, loader: 'ts-loader' },
@@ -24,6 +18,21 @@ const config: webpack.Configuration = {
             { test: /\.html?$/, loader: 'html-loader', options: { minimize: true } },
             { test: /\.js?$/, use: ['ify-loader'] },
         ],
+    },
+    output: {
+        filename: '[name].min.js',
+        library: 'Chemiscope',
+        libraryTarget: 'var',
+        path: path.resolve(__dirname, 'dist'),
+    },
+    plugins: [
+        new webpack.DefinePlugin({
+            CHEMISCOPE_GIT_VERSION: `"${GIT_VERSION}"`,
+        }),
+    ],
+    resolve: {
+        extensions: ['.js', '.ts'],
+        modules: ['./node_modules'],
     },
 };
 

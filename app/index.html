@@ -121,9 +121,14 @@
 
         <footer class="footer">
             <div class="container">
-                <div class="" style="float: left;">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
-                <div class="" style="float: right;"><i class="far fa-copyright"></i> 2020 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a></div>
-                <div class="" style="text-align: center;">Chemiscope: interactive structure/property explorer for materials and molecules</div>
+                <div style="float: left; font-size: x-small">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
+                <div style="float: right; font-size: x-small">
+                    <i class="far fa-copyright"></i> 2020 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a>
+                    <br><span id="chemiscope-version">unknown version</span>
+                </div>
+                <div style="text-align: center;">
+                    Chemiscope: interactive structure/property explorer for materials and molecules
+                </div>
             </div>
         </footer>
 
@@ -180,7 +185,10 @@
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', () => {
             const standalone = document.getElementById('standalone-json-data');
-            const isStandalone = (standalone !== null)
+            const isStandalone = (standalone !== null);
+
+            const version = document.getElementById('chemiscope-version');
+            version.innerText = `version ${Chemiscope.version()}`;
 
             setupDefaultChemiscope(isStandalone);
             if (!isStandalone) {
