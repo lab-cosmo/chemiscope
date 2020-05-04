@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, getByID, Indexes, makeDraggable} from '../utils';
+import {EnvironmentIndexer, getByID, Indexes, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
@@ -101,6 +101,15 @@ const DEFAULT_CONFIG = {
         'resetCameraLastSave3d',
     ],
 };
+
+// in 3D mode, only strings are supported for 'marker.symbol', and only very few
+// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
+// issue tracking more symbols in 3D mode.
+const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
+
+function get3DSymbol(i: number): string {
+    return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
+}
 
 // get the max/min of an array. Math.min(...array) fails with very large arrays
 function arrayMaxMin(values: number[]): {max: number, min: number} {
@@ -972,14 +981,25 @@ export class PropertiesMap {
      * Get the values to use as marker symbol with the given plotly `trace`, or
      * all of them if `trace === undefined`.
      */
-    private _symbols(trace?: number): Array<number | number[]> {
+    private _symbols(trace?: number): Array<number | number[] | string | string[]> {
         if (this._current.symbols !== undefined) {
-            assert(!this._is3D());
             const values = this._properties()[this._current.symbols].values;
-            return this._selectTrace<number | number[]>(values, values[this._selected], trace);
+            if (this._is3D()) {
+                // If we need more symbols than available, we'll send a warning
+                // and repeat existing ones
+                if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
+                    sendWarning(`${this._symbolsCount()} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`);
+                }
+                const symbols = values.map(get3DSymbol);
+                return this._selectTrace<string | string[]>(symbols, symbols[this._selected], trace);
+            } else {
+                // in 2D mode, use automatic assignment of symbols from numeric
+                // values
+                return this._selectTrace<number | number[]>(values, values[this._selected], trace);
+            }
         } else {
             // default to 0 (i.e. circles)
-            return this._selectTrace<number | number[]>(0, 0, trace);
+            return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
     }
 
@@ -988,7 +1008,6 @@ export class PropertiesMap {
         const result = [false, false];
 
         if (this._current.symbols !== undefined) {
-            assert(!this._is3D());
             for (let i = 0; i < this._symbolsCount()!; i++) {
                 result.push(true);
             }
@@ -1006,7 +1025,6 @@ export class PropertiesMap {
         const result = ['', ''];
 
         if (this._current.symbols !== undefined) {
-            assert(!this._is3D());
             const names = this._properties()[this._current.symbols].string!.strings();
             for (const name of names) {
                 result.push(name);
@@ -1065,18 +1083,19 @@ export class PropertiesMap {
     /** Switch current plot from 2D to 3D */
     private _switch3D() {
         assert(this._is3D());
-        // Can not use symbols with 3D plots, why?
-        this._settings.symbol.disabled = true;
-        this._current.symbols = undefined;
         this._settings.z.scale.disabled = false;
         this._settings.z.min.disabled = false;
         this._settings.z.max.disabled = false;
 
-        // Switch all traces to 3D mode
+        const symbols = this._symbols();
+        for (let i = 0; i < this._data.maxSymbols; i++) {
+            symbols.push([get3DSymbol(i)]);
+        }
+
+        // switch all traces to 3D mode
         this._restyle({
-            name: this._legendNames(),
-            showlegend: this._showlegend(),
-            type: 'scatter3d',
+            'marker.symbol': symbols,
+            'type': 'scatter3d',
         } as unknown as Data);
 
         this._selectedMarker.style.display = 'none';
@@ -1090,9 +1109,8 @@ export class PropertiesMap {
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
             'marker.line.width': [0, 1],
-            // size and symbols change from 2D to 3D
+            // size change from 2D to 3D
             'marker.size': this._sizes(factor),
-            'marker.symbol': this._symbols(),
         } as Data, [0, 1]);
 
         this._relayout({
@@ -1108,19 +1126,19 @@ export class PropertiesMap {
     /** Switch current plot from 3D back to 2D */
     private _switch2D() {
         assert(!this._is3D());
-        this._settings.symbol.disabled = false;
-        if (this._settings.symbol.value !== '') {
-            this._current.symbols = this._settings.symbol.value;
-        }
         this._settings.z.scale.disabled = true;
         this._settings.z.min.disabled = true;
         this._settings.z.max.disabled = true;
 
+        const symbols = this._symbols();
+        for (let i = 0; i < this._data.maxSymbols; i++) {
+            symbols.push([i]);
+        }
+
         // switch all traces to 2D mode
         this._restyle({
-            name: this._legendNames(),
-            showlegend: this._showlegend(),
-            type: 'scattergl',
+            'marker.symbol': symbols,
+            'type': 'scattergl',
         } as unknown as Data);
 
         this._selectedMarker.style.display = 'block';
@@ -1134,9 +1152,8 @@ export class PropertiesMap {
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
             'marker.line.width': [1, 1],
-            // size and symbols change from 2D to 3D
+            // size change from 2D to 3D
             'marker.size': this._sizes(factor),
-            'marker.symbol': this._symbols(),
         } as Data, [0, 1]);
 
         this._relayout({
@@ -1178,10 +1195,20 @@ export class PropertiesMap {
     /** Update the position of the selected marker */
     private _updateSelectedMarker() {
         if (this._is3D()) {
+            let symbol;
+            if (this._current.symbols !== undefined) {
+                const symbols = this._properties()[this._current.symbols!].values;
+                symbol = get3DSymbol(symbols[this._selected]);
+            } else {
+                symbol = get3DSymbol(0);
+            }
+
             this._restyle({
-                x: this._xValues(1),
-                y: this._yValues(1),
-                z: this._zValues(1),
+                'x': this._xValues(1),
+                'y': this._yValues(1),
+                'z': this._zValues(1),
+
+                'marker.symbol': symbol,
             } as Data, 1);
         } else {
             const xaxis = this._plot._fullLayout.xaxis;
