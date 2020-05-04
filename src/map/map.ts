@@ -726,7 +726,7 @@ export class PropertiesMap {
         for (const key in this._properties()) {
             this._settings.size.select.options.add(new Option(key, key));
         }
-        this._settings.size.factor.value = '75';
+        this._settings.size.factor.value = '50';
     }
 
     /** Actually create the Plotly plot */
@@ -735,8 +735,8 @@ export class PropertiesMap {
 
         const colors = this._colors();
         const lineColors = this._lineColors();
-        // default value for the size factor is 75
-        const sizes = this._sizes(75);
+        // default value for the size factor is 50
+        const sizes = this._sizes(50);
         const symbols = this._symbols();
 
         const x = this._xValues();
@@ -764,6 +764,7 @@ export class PropertiesMap {
                 // style charts (different sizes for each point)
                 opacity: 1,
                 size: sizes[0],
+                sizemode: 'area',
                 symbol: symbols[0],
             },
             mode: 'markers',
@@ -790,6 +791,7 @@ export class PropertiesMap {
                     width: 1,
                 },
                 size: sizes[1],
+                sizemode: 'area',
             },
             mode: 'markers',
             showlegend: false,
@@ -809,7 +811,7 @@ export class PropertiesMap {
 
                 marker: {
                     color: 'black',
-                    size: sizes[0],
+                    size: 10,
                     symbol: i,
                 },
                 mode: 'markers',
@@ -951,8 +953,9 @@ export class PropertiesMap {
             const min_slider = 1;
             const max_slider = 100;
 
+            // go from 1/6th of the size to 6 time the size
             const min_value = Math.log(1.0 / 6.0);
-            const max_value = Math.log(2.0);
+            const max_value = Math.log(6.0);
 
             const tmp = (max_value - min_value) / (max_slider - min_slider);
             return Math.exp(min_value + tmp * (value - min_slider));
@@ -961,20 +964,28 @@ export class PropertiesMap {
         const userFactor = logSlider(sizeSliderValue);
 
         let values;
-        if (this._current.size === undefined) {
-            values = 10 * userFactor;
-        } else {
+        if (this._current.size !== undefined) {
             const sizes = this._properties()[this._current.size].values;
             const {min, max} = arrayMaxMin(sizes);
-            const defaultSize = this._is3D() ? 20 : 15;
-            // normalize
+            const defaultSize = this._is3D() ? 2000 : 150;
             values = sizes.map((v: number) => {
-                const scaled = (v - min) / (max - min);
-                return defaultSize * userFactor * (scaled + 0.05);
+                // normalize between 0 and 1, then scale by the user provided value
+                const scaled = userFactor * (v + 0.05 - min) / (max - min);
+                // since we are using scalemode: 'area', square the scaled value
+                return defaultSize * scaled * scaled;
             });
+        } else {
+            // we need to use an array instead of a single value because of
+            // https://github.com/plotly/plotly.js/issues/2735
+            values = new Array(this._indexer.environmentsCount());
+            if (this._is3D()) {
+                values.fill(500 * userFactor);
+            } else {
+                values.fill(50 * userFactor);
+            }
         }
 
-        return this._selectTrace(values, 20, trace);
+        return this._selectTrace<number | number[]>(values, 20, trace);
     }
 
     /**
@@ -1111,6 +1122,7 @@ export class PropertiesMap {
             'marker.line.width': [0, 1],
             // size change from 2D to 3D
             'marker.size': this._sizes(factor),
+            'marker.sizemode': 'area',
         } as Data, [0, 1]);
 
         this._relayout({

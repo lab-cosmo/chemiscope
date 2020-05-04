@@ -131,10 +131,10 @@ export class EnvironmentIndexer {
         }
     }
 
-    /** Get the total number of environments we know about */
+    /** Get the total number of environments currently being displayed */
     public environmentsCount(): number {
-        if (this._environments !== undefined) {
-            return this._environments.length;
+        if (this.mode === 'atom') {
+            return this._environments!.length;
         } else {
             return this._structures.length;
         }
