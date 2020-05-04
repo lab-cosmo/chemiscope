@@ -567,10 +567,9 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
-                 'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
-        
         this._settings.color.min.onchange = colorRangeChange;
         this._settings.color.max.onchange = colorRangeChange;
 
@@ -582,6 +581,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
+                'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
 
