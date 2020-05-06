@@ -1,28 +1,29 @@
 const fs = require('fs');
-const url = require('url');
-const https = require('https');
+const tmp = require('tmp');
+const childProcess = require('child_process');
 
-function download(file_url) {
-    console.log(`downloading ${file_url}`);
+const tmpdir = tmp.dirSync({unsafeCleanup: true});
+const checkout = tmpdir.name + '/chemiscope';
 
-    const pathname = url.parse(file_url).pathname;
-    const file = fs.createWriteStream(`./app/${pathname}`);
+childProcess.execSync(
+    'git clone https://github.com/cosmo-epfl/chemiscope' +
+    ' --depth=1 ' + ' --branch=gh-pages ' + checkout
+);
 
-    const req = https.request(file_url, res => {
-        res.on('data', data => file.write(data))
-           .on('end', () => file.end());
-    });
-    req.end();
+for (const file of ['CSD-500.json.gz', 'Arginine-Dipeptide.json.gz', 'Qm7b.json.gz', 'Azaphenacenes.json.gz', 'Zeolites.json.gz']) {
+    fs.renameSync(`${checkout}/${file}`, `./app/${file}`);
 }
-
-download('https://chemiscope.org/CSD-500.json.gz');
-download('https://chemiscope.org/Arginine-Dipeptide.json.gz');
-download('https://chemiscope.org/Qm7b.json.gz');
-download('https://chemiscope.org/Azaphenacenes.json.gz');
 
 fs.mkdirSync('./app/structures/', {recursive: true});
 for (let i=0; i<523; i++) {
-    // separate requests to not get banned by DoS protection
-    const delay = (i % 100) * 100;
-    setTimeout(() => download(`https://chemiscope.org/structures/Azaphenacenes-${i}.json`), delay);
+    const file = `Azaphenacenes-${i}.json`
+    fs.renameSync(`${checkout}/structures/${file}`, `./app/structures/${file}`);
 }
+
+for (let i=0; i<10000; i++) {
+    const file = `Zeolite-${i}.json`
+    fs.renameSync(`${checkout}/structures/${file}`, `./app/structures/${file}`);
+}
+
+
+tmpdir.removeCallback();

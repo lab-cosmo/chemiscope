@@ -29,7 +29,7 @@ function loadStructure(index, structure) {
 
 function setupChemiscope(dataset) {
     if (VISUALIZER !== undefined) {
-        if (DATASET === "Azaphenacenes.json.gz") {
+        if (DATASET === "Azaphenacenes.json.gz" || DATASET === "Zeolites.json.gz") {
             VISUALIZER.structure.loadStructure = loadStructure;
         } else {
             VISUALIZER.structure.loadStructure = ORIGINAL_LOAD_STRUCTURE;
@@ -58,7 +58,7 @@ function setupChemiscope(dataset) {
             });
 
             ORIGINAL_LOAD_STRUCTURE = VISUALIZER.structure.loadStructure;
-            if (DATASET === "Azaphenacenes.json.gz") {
+            if (DATASET === "Azaphenacenes.json.gz" || DATASET === "Zeolites.json.gz") {
                 VISUALIZER.structure.loadStructure = loadStructure;
             }
 
