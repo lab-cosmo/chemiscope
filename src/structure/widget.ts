@@ -193,7 +193,8 @@ export class JSmolWidget {
     private _environments?: Environment[];
     /// Index of the central atom to highlight, if any
     private _highlighted?: number;
-    /// last selected atom
+    /// caching the last selected atom to prevent calling onselect multiple
+    /// time with the same atom number
     private _lastSelected: number;
 
     /**
