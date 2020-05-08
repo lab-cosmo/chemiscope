@@ -244,9 +244,9 @@ export function checkStructures(o: any): [number, number] {
     return [o.length, envCount];
 }
 
-function checkProperties(o: any, structureCount: number, envCount: number) {
-    for (const key in o.properties) {
-        const property = o.properties[key];
+function checkProperties(properties: any, structureCount: number, envCount: number) {
+    for (const key in properties) {
+        const property = properties[key];
 
         if (!('target' in property && typeof property.target === 'string')) {
             Error(`'properties['${key}'].target' should be a string`);

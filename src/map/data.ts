@@ -99,7 +99,7 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
         }
 
         if (properties[key].values.length !== size) {
-            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial}'`);
+            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial}': expected ${size}, got ${properties[key].values.length}`);
         }
     }
 }
