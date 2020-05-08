@@ -20,10 +20,4 @@ for (let i=0; i<523; i++) {
     fs.renameSync(`${checkout}/structures/${file}`, `./app/structures/${file}`);
 }
 
-for (let i=0; i<10000; i++) {
-    const file = `Zeolite-${i}.json`
-    fs.renameSync(`${checkout}/structures/${file}`, `./app/structures/${file}`);
-}
-
-
 tmpdir.removeCallback();
