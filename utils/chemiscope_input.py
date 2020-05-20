@@ -78,16 +78,16 @@ def _generate_environments(frames, cutoff):
     return environments
 
 
-def write_chemiscope_input(filename, meta, frames, extra=None, cutoff=None):
+def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None):
     '''
     Write the json file expected by the default chemiscope visualizer at
     ``filename``.
 
     :param str filename: name of the file to use to save the json data. If it
                          ends with '.gz', a gzip compressed file will be written
-    :param dict meta: metadata of the dataset, see below
     :param list frames: list of `ase.Atoms`_ objects containing all the
                         structures
+    :param dict meta: optional metadata of the dataset, see below
     :param dict extra: optional dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
@@ -139,18 +139,27 @@ def write_chemiscope_input(filename, meta, frames, extra=None, cutoff=None):
     if not (filename.endswith('.json') or filename.endswith('.json.gz')):
         raise Exception('filename should end with .json or .json.gz')
 
-    data = {
-        'meta': {
-            'name': meta['name'],
-            'description': meta.get('description', None),
-            'authors': meta.get('authors', None),
-            'references': meta.get('references', None),
-        }
-    }
+    data = {'meta': {}}
 
-    for key in meta.keys():
-        if key not in ['name', 'description', 'authors', 'references']:
-            warnings.warn('ignoring unexpected metadata: {}'.format(key))
+    if meta is not None:
+        if 'name' in meta:
+            data['meta']['name'] = str(meta['name'])
+
+        if 'description' in meta:
+            data['meta']['description'] = str(meta['description'])
+
+        if 'authors' in meta:
+            data['meta']['authors'] = list(map(str, meta['authors']))
+
+        if 'references' in meta:
+            data['meta']['references'] = list(map(str, meta['references']))
+
+        for key in meta.keys():
+            if key not in ['name', 'description', 'authors', 'references']:
+                warnings.warn('ignoring unexpected metadata: {}'.format(key))
+
+    if 'name' not in data['meta'] or not data['meta']['name']:
+        data['meta']['name'] = filename
 
     properties = {}
     if extra is not None:
