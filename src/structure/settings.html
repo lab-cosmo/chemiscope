@@ -9,7 +9,7 @@
                 <h5 class="chsp-settings-section-title">Representation</h5>
                 <div class="chsp-settings-representation">
                     <div class="custom-control custom-switch">
-                        <input class="custom-control-input" id=bonds type="checkbox" checked>
+                        <input class="custom-control-input" id=bonds type="checkbox">
                         <label class="custom-control-label" for=bonds title="show bonds between atoms">bonds</label>
                     </div>
                     <div class="custom-control custom-switch">
@@ -42,19 +42,19 @@
                         <div class="input-group-prepend">
                            <label class="input-group-text" for=supercell-a>X:</label>
                          </div>
-                        <input class="form-control chsp-supercell-count" id=supercell-a type="number" min="1" max= "10" value="1">
+                        <input class="form-control chsp-supercell-count" id=supercell-a type="number" min="1" max= "10">
                     </span>
                     <span class="input-group input-group-sm">
                         <div class="input-group-prepend">
                            <label class="input-group-text" for=supercell-b>Y:</label>
                          </div>
-                        <input class="form-control chsp-supercell-count" id=supercell-b type="number" min="1" max= "10" value="1">
+                        <input class="form-control chsp-supercell-count" id=supercell-b type="number" min="1" max= "10">
                     </span>
                     <span class="input-group input-group-sm">
                         <div class="input-group-prepend">
                            <label class="input-group-text" for=supercell-c>Z:</label>
                          </div>
-                        <input class="form-control chsp-supercell-count" id=supercell-c type="number" min="1" max= "10" value="1">
+                        <input class="form-control chsp-supercell-count" id=supercell-c type="number" min="1" max= "10">
                     </span>
                     <button class="btn btn-primary btn-sm" id=reset-supercell>reset supercell</button>
                 </div>
@@ -80,11 +80,16 @@
                             <div class="input-group-prepend">
                                <label class="input-group-text" for=env-cutoff>cutoff</label>
                              </div>
-                             <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1" disabled>
+                             <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
                         </div>
 
-                        <button class="btn btn-secondary btn-sm" id=env-reset disabled>reset cutoff</button>
-                        <button class="btn btn-primary btn-sm" id=env-toggle>enable</button>
+                        <button class="btn btn-secondary btn-sm" id=env-reset>reset cutoff</button>
+
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-primary btn-sm active" style="width: 100%">
+                            <input type="checkbox" id=env-activated> Enable
+                        </label>
+                        </div>
 
                         <div>
                             <span style="vertical-align: middle">Background atoms</span>
@@ -94,7 +99,7 @@
                             <div class="input-group-prepend">
                                <label class="input-group-text" for=env-bg-color>color</label>
                              </div>
-                             <select id=env-bg-color class="custom-select" disabled>
+                             <select id=env-bg-color class="custom-select">
                                  <option value="CPK">CPK</option>
                                  <option value="grey">grey</option>
                              </select>
@@ -104,7 +109,7 @@
                              <div class="input-group-prepend">
                                 <label class="input-group-text" for=env-bg-style>style</label>
                               </div>
-                              <select id=env-bg-style class="custom-select" disabled>
+                              <select id=env-bg-style class="custom-select">
                                   <option value="licorice">licorice</option>
                                   <option value="ball-stick">ball and stick</option>
                                   <option value="hide">hide</option>
