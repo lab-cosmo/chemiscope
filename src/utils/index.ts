@@ -5,6 +5,7 @@
 
 import {makeDraggable} from './draggable';
 import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
+import {HTMLSetting} from './settings';
 import {addWarningHandler, sendWarning} from './warnings';
 
 function generateGUID() {
@@ -18,7 +19,7 @@ function generateGUID() {
 }
 
 /** Get an HTML element by id */
-function getByID<HTMLType>(id: string): HTMLType {
+function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
     const e = document.getElementById(id);
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
@@ -35,4 +36,5 @@ export {
     Indexes,
     DisplayMode,
     EnvironmentIndexer,
+    HTMLSetting,
 };
