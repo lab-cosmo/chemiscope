@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {Environment, isPositiveInteger, Structure, UserStructure} from '../dataset';
-import {EnvironmentIndexer, Indexes} from '../utils';
+import {EnvironmentIndexer, getByID, Indexes} from '../utils';
 
 import {structure2JSmol} from './jsmol';
 import {JSmolWidget} from './widget';
@@ -110,7 +110,7 @@ export class StructureViewer {
         environments?: Environment[],
     ) {
         this._widget = new JSmolWidget(id, j2sPath);
-        this._delay = document.getElementById(`${this._widget.guid}-playback-delay`) as HTMLInputElement;
+        this._delay = getByID<HTMLInputElement>(`${this._widget.guid}-playback-delay`);
         this._structures = structures;
         this._cachedStructures = new Array(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);

@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, generateGUID, Indexes} from '../utils';
+import {EnvironmentIndexer, generateGUID, getByID, Indexes} from '../utils';
 
 import {Slider} from './slider';
 import {Table} from './table';
@@ -67,11 +67,7 @@ export class EnvironmentInfo {
      * @param viewer     [[StructureViewer]] from which we get the playback delay
      */
     constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
-        const root = document.getElementById(id);
-        if (root === null) {
-            throw Error(`could not find HTML element #${id}`);
-        }
-        this._root = root;
+        this._root = getByID(id);
         this._indexer = indexer;
         this.onchange = () => {};
         this.startStructurePlayback = () => {};
