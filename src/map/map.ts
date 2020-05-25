@@ -129,8 +129,8 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
 interface AxisSetting {
-    /// Which values shoudl we use
-    select: HTMLSelectElement;
+    /// Which property should we use for this axis
+    property: HTMLSelectElement;
     /// Which scale (linear/log) should we use
     scale: HTMLSelectElement;
     /// The minimal value for this axis
@@ -162,27 +162,6 @@ export class PropertiesMap {
     private _selected: number;
     /// environment indexer
     private _indexer: EnvironmentIndexer;
-    /// Currently displayed data
-    private _current!: {
-        /// Name of the properties in `this._properties()` used for x values
-        x: string,
-        /// Name of the properties in `this._properties()` used for y values
-        y: string,
-        /// Name of the properties in `this._properties()` used for z values,
-        /// `undefined` for 2D plots
-        z?: string,
-        /// Name of the colorscale to use
-        colorscale: string,
-        /// Name of the properties in `this._properties()` used for color
-        /// values, `undefined` when using the default colors
-        color?: string,
-        /// Name of the properties in `this._properties()` used for size values,
-        /// `undefined` when using the default sizes
-        size?: string,
-        /// Name of the properties in `this._properties()` used for symbols
-        /// values, `undefined` when using the default symbols
-        symbols?: string,
-    };
     /// callback to get the initial positioning of the settings modal. The
     /// callback gets the current placement of the settings as a DOMRect, and
     /// should return top and left positions in pixels, used with
@@ -194,14 +173,15 @@ export class PropertiesMap {
         y: AxisSetting;
         z: AxisSetting;
         color: AxisSetting;
-        colorReset: HTMLButtonElement;
         palette: HTMLSelectElement;
         symbol: HTMLSelectElement;
         size: {
-            select: HTMLSelectElement;
+            property: HTMLSelectElement;
             factor: HTMLInputElement;
         };
     };
+    /// Button used to reset the range of the color axis
+    private _colorReset: HTMLButtonElement;
     /// Marker indicating the position of the latest selected point in 2D mode
     /// Using such div is much faster than trying to restyle the full plot,
     /// especially with more than 100k points. In 3D mode, a separate trace is
@@ -237,43 +217,42 @@ export class PropertiesMap {
         this._selectedMarker.classList.add('chsp-selected');
 
         this._data = new MapData(properties);
-        this._setupDefaults();
 
         this._createSettings();
         this._settings = {
             color: {
                 max: getByID<HTMLInputElement>('chsp-color-max'),
                 min: getByID<HTMLInputElement>('chsp-color-min'),
+                property: getByID<HTMLSelectElement>('chsp-color'),
                 scale: document.createElement('select'),
-                select: getByID<HTMLSelectElement>('chsp-color'),
             },
             x: {
                 max: getByID<HTMLInputElement>('chsp-x-max'),
                 min: getByID<HTMLInputElement>('chsp-x-min'),
+                property: getByID<HTMLSelectElement>('chsp-x'),
                 scale: getByID<HTMLSelectElement>('chsp-x-scale'),
-                select: getByID<HTMLSelectElement>('chsp-x'),
             },
             y: {
                 max: getByID<HTMLInputElement>('chsp-y-max'),
                 min: getByID<HTMLInputElement>('chsp-y-min'),
+                property: getByID<HTMLSelectElement>('chsp-y'),
                 scale: getByID<HTMLSelectElement>('chsp-y-scale'),
-                select: getByID<HTMLSelectElement>('chsp-y'),
             },
             z: {
                 max: getByID<HTMLInputElement>('chsp-z-max'),
                 min: getByID<HTMLInputElement>('chsp-z-min'),
+                property: getByID<HTMLSelectElement>('chsp-z'),
                 scale: getByID<HTMLSelectElement>('chsp-z-scale'),
-                select: getByID<HTMLSelectElement>('chsp-z'),
             },
 
-            colorReset: getByID<HTMLButtonElement>('chsp-color-reset'),
             palette: getByID<HTMLSelectElement>('chsp-palette'),
             size: {
                 factor: getByID<HTMLInputElement>('chsp-size-factor'),
-                select: getByID<HTMLSelectElement>('chsp-size'),
+                property: getByID<HTMLSelectElement>('chsp-size'),
             },
             symbol: getByID<HTMLSelectElement>('chsp-symbol'),
         };
+        this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
         this._connectSettings();
         this._setupSettings();
@@ -303,14 +282,13 @@ export class PropertiesMap {
      */
     public changeDataset(indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
         if (this._is3D()) {
-            this._current.z = undefined;
+            this._settings.z.property.value = '';
             this._switch2D();
         }
 
         this._indexer = indexer;
         this._selected = 0;
         this._data = new MapData(properties);
-        this._setupDefaults();
         this._setupSettings();
         this._createPlot();
 
@@ -336,24 +314,6 @@ export class PropertiesMap {
     /** Forward to Ploty.relayout */
     private _relayout(layout: Partial<Layout>) {
         Plotly.relayout(this._plot, layout).catch((e) => setTimeout(() => { throw e; }));
-    }
-
-    /** setup the default values after loading a new dataset */
-    private _setupDefaults() {
-        const prop_names = Object.keys(this._properties());
-        if (prop_names.length < 2) {
-            throw Error('we need at least two properties to plot in the map');
-        }
-
-        this._current = {
-            colorscale: 'inferno',
-            x: prop_names[0],
-            y: prop_names[1],
-        };
-
-        if (prop_names.length > 2) {
-            this._current.color = prop_names[2];
-        }
     }
 
     /** Create the settings modal by adding HTML to the page */
@@ -417,13 +377,12 @@ export class PropertiesMap {
     /** Add all the required callback to the settings */
     private _connectSettings() {
         // ======= x axis settings
-        this._settings.x.select.onchange = () => {
-            this._current.x = this._settings.x.select.value;
+        this._settings.x.property.onchange = () => {
             const values = this._xValues();
             this._restyle({ x: values }, [0, 1]);
             this._relayout({
-                'scene.xaxis.title': this._current.x,
-                'xaxis.title': this._current.x,
+                'scene.xaxis.title': this._settings.x.property.value,
+                'xaxis.title': this._settings.x.property.value,
             } as unknown as Layout);
         };
 
@@ -452,13 +411,12 @@ export class PropertiesMap {
         this._settings.x.max.onchange = xRangeChange;
 
         // ======= y axis settings
-        this._settings.y.select.onchange = () => {
-            this._current.y = this._settings.y.select.value;
+        this._settings.y.property.onchange = () => {
             const values = this._yValues();
             this._restyle({ y:  values}, [0, 1]);
             this._relayout({
-                'scene.yaxis.title': this._current.y,
-                'yaxis.title': this._current.y,
+                'scene.yaxis.title': this._settings.y.property.value,
+                'yaxis.title': this._settings.y.property.value,
             } as unknown as Layout);
         };
 
@@ -487,16 +445,13 @@ export class PropertiesMap {
         this._settings.y.max.onchange = yRangeChange;
 
         // ======= z axis settings
-        this._settings.z.select.onchange = () => {
-            if (this._settings.z.select.value === '') {
-                const was3D = this._is3D();
-                this._current.z = undefined;
+        this._settings.z.property.onchange = () => {
+            const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
+            if (this._settings.z.property.value === '') {
                 if (was3D) {
                     this._switch2D();
                 }
             } else {
-                const was3D = this._is3D();
-                this._current.z = this._settings.z.select.value;
                 if (!was3D) {
                     this._switch3D();
                 }
@@ -505,7 +460,7 @@ export class PropertiesMap {
             const values = this._zValues();
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout({
-                'scene.zaxis.title': this._current.z,
+                'scene.zaxis.title': this._settings.z.property.value,
             } as unknown as Layout);
         };
 
@@ -526,12 +481,11 @@ export class PropertiesMap {
         this._settings.z.max.onchange = zRangeChange;
 
         // ======= color axis settings
-        this._settings.color.select.onchange = () => {
-            if (this._settings.color.select.value !== '') {
-                this._current.color = this._settings.color.select.value;
+        this._settings.color.property.onchange = () => {
+            if (this._settings.color.property.value !== '') {
                 this._settings.color.min.disabled = false;
                 this._settings.color.max.disabled = false;
-                this._settings.colorReset.disabled = false;
+                this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
                 const {min, max} = arrayMaxMin(values);
@@ -542,17 +496,18 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.cmax': max,
                     'coloraxis.cmin': min,
-                    'coloraxis.colorbar.title.text': this._current.color,
+                    'coloraxis.colorbar.title.text': this._settings.color.property.value,
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
             } else {
-                this._current.color = undefined;
                 this._settings.color.min.disabled = true;
                 this._settings.color.max.disabled = true;
-                this._settings.colorReset.disabled = true;
+
                 this._settings.color.min.value = '0';
                 this._settings.color.max.value = '0';
+
+                this._colorReset.disabled = true;
 
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
@@ -583,7 +538,7 @@ export class PropertiesMap {
         this._settings.color.min.onchange = colorRangeChange;
         this._settings.color.max.onchange = colorRangeChange;
 
-        this._settings.colorReset.onclick = () => {
+        this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
             this._settings.color.min.value = min.toString();
@@ -598,7 +553,6 @@ export class PropertiesMap {
 
         // ======= color palette
         this._settings.palette.onchange = () => {
-            this._current.colorscale = this._settings.palette.value;
             this._relayout({
                 'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
@@ -606,12 +560,6 @@ export class PropertiesMap {
 
         // ======= markers symbols
         this._settings.symbol.onchange = () => {
-            if (this._settings.symbol.value !== '') {
-                this._current.symbols = this._settings.symbol.value;
-            } else {
-                this._current.symbols = undefined;
-            }
-
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
 
             this._restyle({
@@ -625,13 +573,7 @@ export class PropertiesMap {
         };
 
         // ======= markers size
-        this._settings.size.select.onchange = () => {
-            if (this._settings.size.select.value !== '') {
-                this._current.size = this._settings.size.select.value;
-            } else {
-                this._current.size = undefined;
-            }
-
+        this._settings.size.property.onchange = () => {
             const factor = parseInt(this._settings.size.factor.value, 10);
             this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
         };
@@ -647,41 +589,46 @@ export class PropertiesMap {
      * the dataset
      */
     private _setupSettings() {
+        if (Object.keys(this._properties()).length < 2) {
+            throw Error('we need at least two properties to plot in the map');
+        }
+
         // ============== Setup the map options ==============
         // ======= data used as x values
-        this._settings.x.select.options.length = 0;
+        this._settings.x.property.options.length = 0;
         for (const key in this._properties()) {
-            this._settings.x.select.options.add(new Option(key, key));
+            this._settings.x.property.options.add(new Option(key, key));
         }
-        this._settings.x.select.selectedIndex = 0;
+        this._settings.x.property.selectedIndex = 0;
 
         // ======= data used as y values
-        this._settings.y.select.options.length = 0;
+        this._settings.y.property.options.length = 0;
         for (const key in this._properties()) {
-            this._settings.y.select.options.add(new Option(key, key));
+            this._settings.y.property.options.add(new Option(key, key));
         }
-        this._settings.y.select.selectedIndex = 1;
+        this._settings.y.property.selectedIndex = 1;
 
         // ======= data used as z values
         // first option is 'none'
-        this._settings.z.select.options.length = 1;
+        this._settings.z.property.options.length = 1;
         for (const key in this._properties()) {
-            this._settings.z.select.options.add(new Option(key, key));
+            this._settings.z.property.options.add(new Option(key, key));
         }
-        this._settings.z.select.selectedIndex = 0;
+        this._settings.z.property.selectedIndex = 0;
 
         // ======= data used as color values
-        this._settings.color.select.options.length = 1;
+        this._settings.color.property.options.length = 1;
         for (const key in this._properties()) {
-            this._settings.color.select.options.add(new Option(key, key));
+            this._settings.color.property.options.add(new Option(key, key));
         }
-        if (this._hasColors()) {
+
+        if (Object.keys(this._properties()).length >= 3) {
             // index 0 is 'none', 1 is the x values, 2 the y values, use 3 for
             // colors
-            this._settings.color.select.selectedIndex = 3;
+            this._settings.color.property.selectedIndex = 3;
             this._settings.color.min.disabled = false;
             this._settings.color.max.disabled = false;
-            this._settings.colorReset.disabled = false;
+            this._colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
@@ -689,10 +636,10 @@ export class PropertiesMap {
             this._settings.color.min.value = min.toString();
             this._settings.color.max.value = max.toString();
         } else {
-            this._settings.color.select.selectedIndex = 0;
+            this._settings.color.property.selectedIndex = 0;
             this._settings.color.min.disabled = true;
             this._settings.color.max.disabled = true;
-            this._settings.colorReset.disabled = true;
+            this._colorReset.disabled = true;
 
             this._settings.color.min.value = '0';
             this._settings.color.max.value = '0';
@@ -703,24 +650,24 @@ export class PropertiesMap {
         for (const key in COLOR_MAPS) {
             this._settings.palette.options.add(new Option(key, key));
         }
-        this._settings.palette.value = this._current.colorscale;
+        this._settings.palette.selectedIndex = 0;
 
         // ======= marker symbols
         // first option is 'default'
         this._settings.symbol.options.length = 1;
         this._settings.symbol.selectedIndex = 0;
         for (const key in this._properties()) {
-            if (this._properties()[key].string !== undefined) {
+            if (this._property(key).string !== undefined) {
                 this._settings.symbol.options.add(new Option(key, key));
             }
         }
 
         // ======= marker size
         // first option is 'default'
-        this._settings.size.select.options.length = 1;
-        this._settings.size.select.selectedIndex = 0;
+        this._settings.size.property.options.length = 1;
+        this._settings.size.property.selectedIndex = 0;
         for (const key in this._properties()) {
-            this._settings.size.select.options.add(new Option(key, key));
+            this._settings.size.property.options.add(new Option(key, key));
         }
         this._settings.size.factor.value = '50';
     }
@@ -819,17 +766,17 @@ export class PropertiesMap {
         // make a copy of the default layout
         const layout = {...DEFAULT_LAYOUT};
         // and set values speific to the displayed dataset
-        layout.xaxis.title = this._current.x;
-        layout.yaxis.title = this._current.y;
+        layout.xaxis.title = this._settings.x.property.value;
+        layout.yaxis.title = this._settings.y.property.value;
         layout.xaxis.type = this._settings.x.scale.value;
         layout.yaxis.type = this._settings.y.scale.value;
-        layout.scene.xaxis.title = this._current.x;
-        layout.scene.yaxis.title = this._current.y;
-        layout.scene.zaxis.title = this._current.z;
+        layout.scene.xaxis.title = this._settings.x.property.value;
+        layout.scene.yaxis.title = this._settings.y.property.value;
+        layout.scene.zaxis.title = this._settings.z.property.value;
         layout.coloraxis.colorscale = this._colorScale();
         layout.coloraxis.cmin = parseFloat(this._settings.color.min.value);
         layout.coloraxis.cmax = parseFloat(this._settings.color.max.value);
-        layout.coloraxis.colorbar.title.text = this._current.color;
+        layout.coloraxis.colorbar.title.text = this._settings.color.property.value;
 
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout as Partial<Layout>, DEFAULT_CONFIG as Config)
@@ -857,10 +804,19 @@ export class PropertiesMap {
         return this._data[this._indexer.mode];
     }
 
+    /** Get the property with the given name */
+    private _property(name: string): NumericProperty {
+        const result = this._data[this._indexer.mode][name];
+        if (result === undefined) {
+            throw Error(`unknown property '${name}' requested in map`);
+        }
+        return result;
+    }
+
     /** Get the plotly hovertemplate depending on `this._current.color` */
     private _hovertemplate(): string {
         if (this._hasColors()) {
-            return this._current.color + ': %{marker.color:.2f}<extra></extra>';
+            return this._settings.color.property.value + ': %{marker.color:.2f}<extra></extra>';
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
@@ -871,7 +827,7 @@ export class PropertiesMap {
      * or all of them if `trace === undefined`
      */
     private _xValues(trace?: number): number[][] {
-        const values = this._properties()[this._current.x].values;
+        const values = this._property(this._settings.x.property.value).values;
         const selected = [values[this._selected]];
         if (!this._is3D()) {
             selected[0] = NaN;
@@ -884,7 +840,7 @@ export class PropertiesMap {
      * or all of them if `trace === undefined`
      */
     private _yValues(trace?: number): number[][] {
-        const values = this._properties()[this._current.y].values;
+        const values = this._property(this._settings.y.property.value).values;
         const selected = [values[this._selected]];
         if (!this._is3D()) {
             selected[0] = NaN;
@@ -901,7 +857,7 @@ export class PropertiesMap {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._properties()[this._current.z!].values;
+        const values = this._property(this._settings.z.property.value).values;
         return this._selectTrace(values, [values[this._selected]], trace);
     }
 
@@ -912,7 +868,7 @@ export class PropertiesMap {
     private _colors(trace?: number): Array<string | number | number[]> {
         let values;
         if (this._hasColors()) {
-            values = this._properties()[this._current.color!].values;
+            values = this._property(this._settings.color.property.value).values;
         } else {
             values = 0.5;
         }
@@ -934,7 +890,7 @@ export class PropertiesMap {
 
     /** Get the colorscale to use for markers in the main plotly trace */
     private _colorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this._current.colorscale];
+        return COLOR_MAPS[this._settings.palette.value];
     }
 
     /**
@@ -960,8 +916,8 @@ export class PropertiesMap {
         const userFactor = logSlider(sizeSliderValue);
 
         let values;
-        if (this._current.size !== undefined) {
-            const sizes = this._properties()[this._current.size].values;
+        if (this._settings.size.property.value !== '') {
+            const sizes = this._property(this._settings.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
             values = sizes.map((v: number) => {
@@ -989,8 +945,8 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _symbols(trace?: number): Array<number | number[] | string | string[]> {
-        if (this._current.symbols !== undefined) {
-            const values = this._properties()[this._current.symbols].values;
+        if (this._settings.symbol.value !== '') {
+            const values = this._property(this._settings.symbol.value).values;
             if (this._is3D()) {
                 // If we need more symbols than available, we'll send a warning
                 // and repeat existing ones
@@ -1014,7 +970,7 @@ export class PropertiesMap {
     private _showlegend(): boolean[] {
         const result = [false, false];
 
-        if (this._current.symbols !== undefined) {
+        if (this._settings.symbol.value !== '') {
             for (let i = 0; i < this._symbolsCount()!; i++) {
                 result.push(true);
             }
@@ -1031,8 +987,8 @@ export class PropertiesMap {
     private _legendNames(): string[] {
         const result = ['', ''];
 
-        if (this._current.symbols !== undefined) {
-            const names = this._properties()[this._current.symbols].string!.strings();
+        if (this._settings.symbol.value !== '') {
+            const names = this._property(this._settings.symbol.value).string!.strings();
             for (const name of names) {
                 result.push(name);
             }
@@ -1063,8 +1019,8 @@ export class PropertiesMap {
 
     /** How many different symbols are being displayed */
     private _symbolsCount(): number {
-        if (this._current.symbols !== undefined) {
-            return this._properties()[this._current.symbols].string!.strings().length;
+        if (this._settings.symbol.value !== '') {
+            return this._property(this._settings.symbol.value).string!.strings().length;
         } else {
             return 0;
         }
@@ -1079,12 +1035,12 @@ export class PropertiesMap {
 
     /** Does the current plot use color values? */
     private _hasColors(): boolean {
-        return this._current.color !== undefined;
+        return this._settings.color.property.value !== '';
     }
 
     /** Is the the current plot a 3D plot? */
     private _is3D(): boolean {
-        return this._current.z !== undefined;
+        return this._settings.z.property.value !== '';
     }
 
     /** Switch current plot from 2D to 3D */
@@ -1204,8 +1160,8 @@ export class PropertiesMap {
     private _updateSelectedMarker() {
         if (this._is3D()) {
             let symbol;
-            if (this._current.symbols !== undefined) {
-                const symbols = this._properties()[this._current.symbols!].values;
+            if (this._settings.symbol.value !== '') {
+                const symbols = this._property(this._settings.symbol.value).values;
                 symbol = get3DSymbol(symbols[this._selected]);
             } else {
                 symbol = get3DSymbol(0);
