@@ -217,12 +217,8 @@ export class JSmolWidget {
         // Do not insert new applets automatically
         this._Jmol.setDocument(false);
 
-        const root = document.getElementById(id);
-        if (root === null) {
-            throw Error(`Could not get the "#${id}" element`);
-        }
-
         this._root = document.createElement('div');
+        const root = getByID(id);
         root.appendChild(this._root);
 
         this._root.style.position = 'relative';

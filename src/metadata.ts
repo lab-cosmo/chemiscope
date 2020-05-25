@@ -5,7 +5,7 @@
 
 import {default as markdown} from 'markdown-it';
 import {Metadata} from './dataset';
-import {generateGUID} from './utils';
+import {generateGUID, getByID} from './utils';
 
 function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">
@@ -94,11 +94,7 @@ export class MetadataPanel {
 
         this._guid = 'chsp-' + generateGUID();
 
-        const name = document.getElementById(id);
-        if (name === null) {
-            throw Error(`could not find HTML element #${id}`);
-        }
-        this._name = name;
+        this._name = getByID(id);
         this._name.innerHTML = generateName(this._guid, metadata.name);
         this._name.classList.add('chsp-meta');
 

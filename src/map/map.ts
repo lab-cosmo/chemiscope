@@ -222,11 +222,7 @@ export class PropertiesMap {
         this._selected = -1;
         this.onselect = () => {};
 
-        const root = document.getElementById(id);
-        if (root === null) {
-            throw Error(`could not find HTML element #${id}`);
-        }
-        this._root = root;
+        this._root = getByID(id);
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
         }
