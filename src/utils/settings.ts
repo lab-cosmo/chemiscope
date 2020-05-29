@@ -3,6 +3,10 @@
  * @module utils
  */
 
+import assert from 'assert';
+
+import {getByID} from './index';
+
 /**
  * Possible HTML attributes to attach to a setting
  */
@@ -49,6 +53,41 @@ function parse<T extends SettingsType>(type: T, value: string): SettingsValue<T>
     throw Error(`unknown type '${type}' passed to parse`);
 }
 
+/** Possible origins of a setting change: from JS code, or from DOM interaction */
+export type SettingModificationOrigin = 'JS' | 'DOM';
+
+/** A single DOM element that will be synchronized with the javascript value of a setting */
+interface HTMLSettingElement {
+    /** The DOM element that we should check for changes */
+    element: HTMLElement;
+    /** Which atrribute of the element should we check */
+    attribute: Attribute;
+    /** Store the function used to listen on the element to be able to remove it */
+    listener: (e: Event) => void;
+}
+
+/** Multiple settings stored together as (potentially nested) javascript object */
+export interface SettingGroup {
+    [key: string]: HTMLSetting<any> | SettingGroup;
+}
+
+/**
+ * Call the given callback on each setting inside the given SettingGroup
+ *
+ * @param settings group of settings
+ * @param callback callback operating on a single setting
+ */
+export function foreachSetting(settings: SettingGroup, callback: (s: HTMLSetting<any>) => void): void {
+    for (const key in settings) {
+        const element = settings[key];
+        if (element instanceof HTMLSetting) {
+            callback(element);
+        } else {
+            foreachSetting(element as SettingGroup, callback);
+        }
+    }
+}
+
 /**
  * Simple two-way data binding implementation to store settings in chemiscope.
  *
@@ -57,19 +96,20 @@ function parse<T extends SettingsType>(type: T, value: string): SettingsValue<T>
  * linked HTML element, it is automatically updated everywhere.
  */
 export class HTMLSetting<T extends SettingsType> {
-    /** The value of the setting, accessible to JS/TS code */
-    declare public value: SettingsValue<T>;
+    /** the type of the value stored by this setting */
+    public readonly type: T;
+    /** Callback to validate the new value before propagating changes. */
+    public validate: (value: SettingsValue<T>) => void;
     /** Additional callback to run whenever the setting value changes */
-    public onchange: (value: SettingsValue<T>) => void;
+    public onchange: (value: SettingsValue<T>, origin: SettingModificationOrigin) => void;
 
-    // Store the expected type of the value
-    private _type: T;
-    // Store the value itself
+    // storage of the actual value, this is separated from this.value to allow
+    // intercepting set
     private _value: SettingsValue<T>;
-    // Store linked HTML elements: any update to the setting `value` or any of
+    // list of bound HTML elements: any update to the setting `value` or any of
     // the element will change both the settting value and all of the linked
     // elements
-    private _elements: Array<[HTMLElement, Attribute]>;
+    private _boundList: HTMLSettingElement[];
 
     /**
      * Create a new [[HTMLSetting]] containing a value of the given type.
@@ -80,30 +120,23 @@ export class HTMLSetting<T extends SettingsType> {
      * @param value initial value of the setting
      */
     constructor(type: T, value: SettingsValue<T>) {
-        this._type = type;
+        this.type = type;
         this._value = value;
-        this._elements = [];
+        this._boundList = [];
+        this.validate = () => {};
         this.onchange = () => {};
 
-        // uses a Proxy on a frozen object to catch get/set events
         Object.preventExtensions(this);
-        return new Proxy(this, {
-            get: (_, key) => {
-                if (key === 'value') {
-                    return this._value;
-                } else {
-                    return Reflect.get(this, key);
-                }
-            },
-            set: (_, key, v) => {
-                if (key === 'value') {
-                    this._update(v.toString());
-                    return true;
-                } else {
-                    return Reflect.set(this, key, v);
-                }
-            },
-        });
+    }
+
+    /** Get the value of this setting */
+    public get value(): SettingsValue<T> {
+        return this._value;
+    }
+
+    /** Set a new value for this setting */
+    public set value(v: SettingsValue<T>) {
+        this._update(v.toString(), 'JS');
     }
 
     /**
@@ -111,15 +144,25 @@ export class HTMLSetting<T extends SettingsType> {
      * `element.attribute` will be set to the setting value, and the setting
      * value will be updated everytime the 'change' event is emmited.
      *
-     * @param  element   HTML DOM element to watch for updates
+     * @param  element   HTML DOM element to watch for updates, or string id
+     *                   of such element
      * @param  attribute attribute of the HTML element to use as value
      */
-    public bind(element: HTMLElement, attribute: Attribute): void {
-        this._elements.push([element, attribute]);
+    public bind(element: HTMLElement | string, attribute: Attribute): void {
+        if (typeof element === 'string') {
+            element = getByID(element);
+        }
+        element = element as HTMLElement;
+
+        const listener = (event: Event) => {
+            assert(event.target !== null);
+            this._update((event.target as any)[attribute].toString(), 'DOM');
+        };
+
         (element as any)[attribute] = this._value;
-        element.addEventListener('change', () => {
-            this._update((element as any)[attribute].toString());
-        });
+        element.addEventListener('change', listener);
+
+        this._boundList.push({element, attribute, listener});
     }
 
     /**
@@ -128,10 +171,9 @@ export class HTMLSetting<T extends SettingsType> {
      * disable HTMLInputElement.
      */
     public disable(): void {
-        for (const pair of this._elements) {
-            const element = pair[0];
-            if ('disabled' in element) {
-                (element as any).disabled = true;
+        for (const bound of this._boundList) {
+            if ('disabled' in bound.element) {
+                (bound.element as any).disabled = true;
             }
         }
     }
@@ -142,22 +184,35 @@ export class HTMLSetting<T extends SettingsType> {
      * enable HTMLInputElement.
      */
     public enable(): void {
-        for (const pair of this._elements) {
-            const element = pair[0];
-            if ('disabled' in element) {
-                (element as any).disabled = false;
+        for (const bound of this._boundList) {
+            if ('disabled' in bound.element) {
+                (bound.element as any).disabled = false;
             }
         }
+    }
+
+    /**
+     * Remove all HTML elements bound to this setting, and the associated event
+     * listeners.
+     */
+    public unbindAll(): void {
+        for (const bound of this._boundList) {
+            bound.element.removeEventListener('change', bound.listener);
+        }
+        this._boundList = [];
     }
 
     // Actually perform the update of the value and all linked elements. The
     // value is passed around as a string, since that's the easiest way to merge
     // different data types coming from the DOM.
-    private _update(value: string) {
-        this._value = parse<T>(this._type, value);
-        for (const [element, attribute] of this._elements) {
-            (element as any)[attribute] = this._value;
+    private _update(value: string, origin: SettingModificationOrigin) {
+        const updated = parse<T>(this.type, value);
+        this.validate(updated);
+
+        this._value = updated;
+        for (const bound of this._boundList) {
+            (bound.element as any)[bound.attribute] = updated;
         }
-        this.onchange(this._value);
+        this.onchange(updated, origin);
     }
 }

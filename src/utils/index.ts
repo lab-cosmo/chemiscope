@@ -5,7 +5,7 @@
 
 import {makeDraggable} from './draggable';
 import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
-import {HTMLSetting} from './settings';
+import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin} from './settings';
 import {addWarningHandler, sendWarning} from './warnings';
 
 function generateGUID() {
@@ -31,10 +31,13 @@ export {
     makeDraggable,
     sendWarning,
     addWarningHandler,
+    foreachSetting,
     generateGUID,
     getByID,
     Indexes,
     DisplayMode,
     EnvironmentIndexer,
     HTMLSetting,
+    SettingGroup,
+    SettingModificationOrigin,
 };
