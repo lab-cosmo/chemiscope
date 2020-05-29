@@ -684,7 +684,6 @@ const BRG: RGBColorMap = [
     [1.0000, [   0, 256,   0]],
 ];
 
-
 interface ColorMaps {
     [key: string]: ColorScale;
 }

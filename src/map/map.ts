@@ -6,7 +6,8 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, getByID, Indexes, makeDraggable, sendWarning} from '../utils';
+import {EnvironmentIndexer, HTMLSetting, Indexes, SettingGroup, SettingModificationOrigin} from '../utils';
+import {foreachSetting, getByID, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
@@ -128,15 +129,50 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
 }
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
-interface AxisSetting {
+class AxisSetting {
     /// Which property should we use for this axis
-    property: HTMLSelectElement;
+    public property: HTMLSetting<'string'>;
     /// Which scale (linear/log) should we use
-    scale: HTMLSelectElement;
+    public scale: HTMLSetting<'string'>;
     /// The minimal value for this axis
-    min: HTMLInputElement;
+    public min: HTMLSetting<'number'>;
     /// The maximal value for this axis
-    max: HTMLInputElement;
+    public max: HTMLSetting<'number'>;
+
+    constructor(properties: string[], initial: string) {
+        this.max = new HTMLSetting('number', 0);
+        this.min = new HTMLSetting('number', 0);
+
+        this.property = new HTMLSetting('string', initial);
+        this.property.validate = (value) => {
+            if (properties.includes(value) || (initial === '' && value === '')) {
+                return;
+            }
+            throw Error(`invalid property '${value}' for axis`);
+        };
+
+        this.scale = new HTMLSetting('string', 'linear');
+        this.scale.validate = (value) => {
+            if (value === 'linear' || value === 'log') {
+                return;
+            }
+            throw Error(`invalid value '${value}' for axis scale`);
+        };
+    }
+
+    /** Disable auxiliary settings (min/max/scale) related to this axis */
+    public disable() {
+        this.max.disable();
+        this.min.disable();
+        this.scale.disable();
+    }
+
+    /** Enable auxiliary settings (min/max/scale) related to this axis */
+    public enable() {
+        this.max.enable();
+        this.min.enable();
+        this.scale.enable();
+    }
 }
 
 /**
@@ -168,20 +204,21 @@ export class PropertiesMap {
     /// `position: fixed`
     private _settingsPlacement!: (rect: DOMRect) => {top: number, left: number};
     /// Store the HTML elements used for settings
-    private _settings: {
+    private _settings!: {
         x: AxisSetting;
         y: AxisSetting;
         z: AxisSetting;
         color: AxisSetting;
-        palette: HTMLSelectElement;
-        symbol: HTMLSelectElement;
+        palette: HTMLSetting<'string'>;
+        symbol: HTMLSetting<'string'>;
         size: {
-            property: HTMLSelectElement;
-            factor: HTMLInputElement;
+            property: HTMLSetting<'string'>;
+            factor: HTMLSetting<'number'>;
         };
     };
-    /// Button used to reset the range of the color axis
+    /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
+
     /// Marker indicating the position of the latest selected point in 2D mode
     /// Using such div is much faster than trying to restyle the full plot,
     /// especially with more than 100k points. In 3D mode, a separate trace is
@@ -218,44 +255,11 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
-        this._createSettings();
-        this._settings = {
-            color: {
-                max: getByID<HTMLInputElement>('chsp-color-max'),
-                min: getByID<HTMLInputElement>('chsp-color-min'),
-                property: getByID<HTMLSelectElement>('chsp-color'),
-                scale: document.createElement('select'),
-            },
-            x: {
-                max: getByID<HTMLInputElement>('chsp-x-max'),
-                min: getByID<HTMLInputElement>('chsp-x-min'),
-                property: getByID<HTMLSelectElement>('chsp-x'),
-                scale: getByID<HTMLSelectElement>('chsp-x-scale'),
-            },
-            y: {
-                max: getByID<HTMLInputElement>('chsp-y-max'),
-                min: getByID<HTMLInputElement>('chsp-y-min'),
-                property: getByID<HTMLSelectElement>('chsp-y'),
-                scale: getByID<HTMLSelectElement>('chsp-y-scale'),
-            },
-            z: {
-                max: getByID<HTMLInputElement>('chsp-z-max'),
-                min: getByID<HTMLInputElement>('chsp-z-min'),
-                property: getByID<HTMLSelectElement>('chsp-z'),
-                scale: getByID<HTMLSelectElement>('chsp-z-scale'),
-            },
-
-            palette: getByID<HTMLSelectElement>('chsp-palette'),
-            size: {
-                factor: getByID<HTMLInputElement>('chsp-size-factor'),
-                property: getByID<HTMLSelectElement>('chsp-size'),
-            },
-            symbol: getByID<HTMLSelectElement>('chsp-symbol'),
-        };
+        this._insertSettingsHTML();
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
-        this._connectSettings();
         this._setupSettings();
+        this._connectSettings();
 
         this._createPlot();
     }
@@ -290,6 +294,8 @@ export class PropertiesMap {
         this._selected = 0;
         this._data = new MapData(properties);
         this._setupSettings();
+        this._connectSettings();
+
         this._createPlot();
 
         this._relayout({ 'xaxis.autorange': true, 'yaxis.autorange': true });
@@ -317,7 +323,7 @@ export class PropertiesMap {
     }
 
     /** Create the settings modal by adding HTML to the page */
-    private _createSettings() {
+    private _insertSettingsHTML() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button data-target='#chsp-settings'
@@ -396,19 +402,29 @@ export class PropertiesMap {
             }
         };
 
-        const xRangeChange = () => {
-            const min = parseFloat(this._settings.x.min.value);
-            const max = parseFloat(this._settings.x.max.value);
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.xaxis.range': [min, max],
-                } as unknown as Layout);
-            } else {
-                this._relayout({ 'xaxis.range': [min, max] });
-            }
+        // function creating a function to be used as onchange callback
+        // for <axis>.min and <axis>.max
+        const rangeChange = (name: string, axis: AxisSetting) => {
+            return (_: number, origin: SettingModificationOrigin) => {
+                if (origin === 'JS') {
+                    // prevent recursion: this function calls relayout, which then
+                    // calls _afterplot, which reset the min/max values.
+                    return;
+                }
+                const min = axis.min.value;
+                const max = axis.max.value;
+                if (this._is3D()) {
+                    this._relayout({
+                        [`scene.${name}.range`]: [min, max],
+                    } as unknown as Layout);
+                } else {
+                    this._relayout({ [`${name}.range`]: [min, max] });
+                }
+            };
         };
-        this._settings.x.min.onchange = xRangeChange;
-        this._settings.x.max.onchange = xRangeChange;
+
+        this._settings.x.min.onchange = rangeChange('xaxis', this._settings.x);
+        this._settings.x.max.onchange = rangeChange('xaxis', this._settings.x);
 
         // ======= y axis settings
         this._settings.y.property.onchange = () => {
@@ -430,19 +446,8 @@ export class PropertiesMap {
             }
         };
 
-        const yRangeChange = () => {
-            const min = parseFloat(this._settings.y.min.value);
-            const max = parseFloat(this._settings.y.max.value);
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.yaxis.range': [min, max],
-                } as unknown as Layout);
-            } else {
-                this._relayout({ 'yaxis.range': [min, max] });
-            }
-        };
-        this._settings.y.min.onchange = yRangeChange;
-        this._settings.y.max.onchange = yRangeChange;
+        this._settings.y.min.onchange = rangeChange('yaxis', this._settings.y);
+        this._settings.y.max.onchange = rangeChange('yaxis', this._settings.y);
 
         // ======= z axis settings
         this._settings.z.property.onchange = () => {
@@ -470,44 +475,32 @@ export class PropertiesMap {
             } as unknown as Layout);
         };
 
-        const zRangeChange = () => {
-            const min = parseFloat(this._settings.z.min.value);
-            const max = parseFloat(this._settings.z.max.value);
-            this._relayout({
-                'scene.zaxis.range': [min, max],
-            } as unknown as Layout);
-        };
-        this._settings.z.min.onchange = zRangeChange;
-        this._settings.z.max.onchange = zRangeChange;
+        this._settings.z.min.onchange = rangeChange('zaxis', this._settings.z);
+        this._settings.z.max.onchange = rangeChange('zaxis', this._settings.z);
 
         // ======= color axis settings
         this._settings.color.property.onchange = () => {
             if (this._settings.color.property.value !== '') {
-                this._settings.color.min.disabled = false;
-                this._settings.color.max.disabled = false;
+                this._settings.color.enable();
                 this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
                 const {min, max} = arrayMaxMin(values);
 
-                this._settings.color.min.value = min.toString();
-                this._settings.color.max.value = max.toString();
+                this._settings.color.min.value = min;
+                this._settings.color.max.value = max;
 
                 this._relayout({
-                    'coloraxis.cmax': max,
-                    'coloraxis.cmin': min,
                     'coloraxis.colorbar.title.text': this._settings.color.property.value,
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
             } else {
-                this._settings.color.min.disabled = true;
-                this._settings.color.max.disabled = true;
-
-                this._settings.color.min.value = '0';
-                this._settings.color.max.value = '0';
-
+                this._settings.color.disable();
                 this._colorReset.disabled = true;
+
+                this._settings.color.min.value = 0;
+                this._settings.color.max.value = 0;
 
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
@@ -522,8 +515,8 @@ export class PropertiesMap {
         };
 
         const colorRangeChange = () => {
-            const min = parseFloat(this._settings.color.min.value);
-            const max = parseFloat(this._settings.color.max.value);
+            const min = this._settings.color.min.value;
+            const max = this._settings.color.max.value;
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -541,8 +534,8 @@ export class PropertiesMap {
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
-            this._settings.color.min.value = min.toString();
-            this._settings.color.max.value = max.toString();
+            this._settings.color.min.value = min;
+            this._settings.color.max.value = max;
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -574,12 +567,12 @@ export class PropertiesMap {
 
         // ======= markers size
         this._settings.size.property.onchange = () => {
-            const factor = parseInt(this._settings.size.factor.value, 10);
+            const factor = this._settings.size.factor.value;
             this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
         };
 
         this._settings.size.factor.onchange = () => {
-            const factor = parseInt(this._settings.size.factor.value, 10);
+            const factor = this._settings.size.factor.value;
             this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
         };
     }
@@ -589,87 +582,138 @@ export class PropertiesMap {
      * the dataset
      */
     private _setupSettings() {
-        if (Object.keys(this._properties()).length < 2) {
+        const properties = Object.keys(this._properties());
+        if (properties.length < 2) {
             throw Error('we need at least two properties to plot in the map');
         }
 
+        if (this._settings !== undefined) {
+            // when changing dataset, remove all previous event listeners
+            foreachSetting(this._settings as unknown as SettingGroup, (setting) => {
+                setting.unbindAll();
+            });
+        }
+
+        this._settings = {
+            color: new AxisSetting(properties, ''),
+            x: new AxisSetting(properties, properties[0]),
+            y: new AxisSetting(properties, properties[1]),
+            z: new AxisSetting(properties, ''),
+
+            palette: new HTMLSetting('string', 'inferno'),
+            size: {
+                factor: new HTMLSetting('number', 50),
+                property: new HTMLSetting('string', ''),
+            },
+            symbol: new HTMLSetting('string', ''),
+        };
+
+        const validate = (value: string) => {
+            if (properties.includes(value) || value === '') {
+                return;
+            }
+            throw Error(`invalid property name '${value}'`);
+        };
+        this._settings.size.property.validate = validate;
+        this._settings.symbol.validate = validate;
+
         // ============== Setup the map options ==============
         // ======= data used as x values
-        this._settings.x.property.options.length = 0;
-        for (const key in this._properties()) {
-            this._settings.x.property.options.add(new Option(key, key));
+        const selectXProperty = getByID<HTMLSelectElement>('chsp-x');
+        selectXProperty.options.length = 0;
+        for (const key of properties) {
+            selectXProperty.options.add(new Option(key, key));
         }
-        this._settings.x.property.selectedIndex = 0;
+        this._settings.x.property.bind(selectXProperty, 'value');
+        this._settings.x.min.bind('chsp-x-min', 'value');
+        this._settings.x.max.bind('chsp-x-max', 'value');
+        this._settings.x.scale.bind('chsp-x-scale', 'value');
 
         // ======= data used as y values
-        this._settings.y.property.options.length = 0;
-        for (const key in this._properties()) {
-            this._settings.y.property.options.add(new Option(key, key));
+        const selectYProperty = getByID<HTMLSelectElement>('chsp-y');
+        selectYProperty.options.length = 0;
+        for (const key of properties) {
+            selectYProperty.options.add(new Option(key, key));
         }
-        this._settings.y.property.selectedIndex = 1;
+        this._settings.y.property.bind(selectYProperty, 'value');
+        this._settings.y.min.bind('chsp-y-min', 'value');
+        this._settings.y.max.bind('chsp-y-max', 'value');
+        this._settings.y.scale.bind('chsp-y-scale', 'value');
 
         // ======= data used as z values
+        const selectZProperty = getByID<HTMLSelectElement>('chsp-z');
         // first option is 'none'
-        this._settings.z.property.options.length = 1;
-        for (const key in this._properties()) {
-            this._settings.z.property.options.add(new Option(key, key));
+        selectZProperty.options.length = 0;
+        selectZProperty.options.add(new Option('none', ''));
+        for (const key of properties) {
+            selectZProperty.options.add(new Option(key, key));
         }
-        this._settings.z.property.selectedIndex = 0;
+        this._settings.z.property.bind(selectZProperty, 'value');
+        this._settings.z.min.bind('chsp-z-min', 'value');
+        this._settings.z.max.bind('chsp-z-max', 'value');
+        this._settings.z.scale.bind('chsp-z-scale', 'value');
 
         // ======= data used as color values
-        this._settings.color.property.options.length = 1;
-        for (const key in this._properties()) {
-            this._settings.color.property.options.add(new Option(key, key));
+        const selectColorProperty = getByID<HTMLSelectElement>('chsp-color');
+        // first option is 'none'
+        selectColorProperty.options.length = 0;
+        selectColorProperty.options.add(new Option('none', ''));
+        for (const key of properties) {
+            selectColorProperty.options.add(new Option(key, key));
         }
+        this._settings.color.property.bind(selectColorProperty, 'value');
+        this._settings.color.min.bind('chsp-color-min', 'value');
+        this._settings.color.max.bind('chsp-color-max', 'value');
 
-        if (Object.keys(this._properties()).length >= 3) {
-            // index 0 is 'none', 1 is the x values, 2 the y values, use 3 for
-            // colors
-            this._settings.color.property.selectedIndex = 3;
-            this._settings.color.min.disabled = false;
-            this._settings.color.max.disabled = false;
+        if (properties.length >= 3) {
+            this._settings.color.property.value = properties[2];
+            this._settings.color.enable();
             this._colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
 
-            this._settings.color.min.value = min.toString();
-            this._settings.color.max.value = max.toString();
+            this._settings.color.min.value = min;
+            this._settings.color.max.value = max;
         } else {
-            this._settings.color.property.selectedIndex = 0;
-            this._settings.color.min.disabled = true;
-            this._settings.color.max.disabled = true;
+            this._settings.color.property.value = '';
+            this._settings.color.min.disable();
             this._colorReset.disabled = true;
 
-            this._settings.color.min.value = '0';
-            this._settings.color.max.value = '0';
+            this._settings.color.min.value = 0;
+            this._settings.color.max.value = 0;
         }
 
         // ======= color palette
-        this._settings.palette.options.length = 0;
+        const selectPalette = getByID<HTMLSelectElement>('chsp-palette');
+        selectPalette.length = 0;
         for (const key in COLOR_MAPS) {
-            this._settings.palette.options.add(new Option(key, key));
+            selectPalette.options.add(new Option(key, key));
         }
-        this._settings.palette.selectedIndex = 0;
+        this._settings.palette.bind(selectPalette, 'value');
 
         // ======= marker symbols
+        const selectSymbolProperty = getByID<HTMLSelectElement>('chsp-symbol');
         // first option is 'default'
-        this._settings.symbol.options.length = 1;
-        this._settings.symbol.selectedIndex = 0;
-        for (const key in this._properties()) {
+        selectSymbolProperty.options.length = 0;
+        selectSymbolProperty.options.add(new Option('default', ''));
+        for (const key of properties) {
             if (this._property(key).string !== undefined) {
-                this._settings.symbol.options.add(new Option(key, key));
+                selectSymbolProperty.options.add(new Option(key, key));
             }
         }
+        this._settings.symbol.bind(selectSymbolProperty, 'value');
 
         // ======= marker size
+        const selectSizeProperty = getByID<HTMLSelectElement>('chsp-size');
         // first option is 'default'
-        this._settings.size.property.options.length = 1;
-        this._settings.size.property.selectedIndex = 0;
-        for (const key in this._properties()) {
-            this._settings.size.property.options.add(new Option(key, key));
+        selectSizeProperty.options.length = 0;
+        selectSizeProperty.options.add(new Option('default', ''));
+        for (const key of properties) {
+            selectSizeProperty.options.add(new Option(key, key));
         }
-        this._settings.size.factor.value = '50';
+        this._settings.size.property.bind(selectSizeProperty, 'value');
+        this._settings.size.factor.bind('chsp-size-factor', 'value');
     }
 
     /** Actually create the Plotly plot */
@@ -774,8 +818,8 @@ export class PropertiesMap {
         layout.scene.yaxis.title = this._settings.y.property.value;
         layout.scene.zaxis.title = this._settings.z.property.value;
         layout.coloraxis.colorscale = this._colorScale();
-        layout.coloraxis.cmin = parseFloat(this._settings.color.min.value);
-        layout.coloraxis.cmax = parseFloat(this._settings.color.max.value);
+        layout.coloraxis.cmin = this._settings.color.min.value;
+        layout.coloraxis.cmax = this._settings.color.max.value;
         layout.coloraxis.colorbar.title.text = this._settings.color.property.value;
 
         // Create an empty plot and fill it below
@@ -1046,9 +1090,7 @@ export class PropertiesMap {
     /** Switch current plot from 2D to 3D */
     private _switch3D() {
         assert(this._is3D());
-        this._settings.z.scale.disabled = false;
-        this._settings.z.min.disabled = false;
-        this._settings.z.max.disabled = false;
+        this._settings.z.enable();
 
         const symbols = this._symbols();
         for (let i = 0; i < this._data.maxSymbols; i++) {
@@ -1065,7 +1107,7 @@ export class PropertiesMap {
         this._updateSelectedMarker();
 
         // Change the data that vary between 2D and 3D mode
-        const factor = parseInt(this._settings.size.factor.value, 10);
+        const factor = this._settings.size.factor.value;
         this._restyle({
             // transparency messes with depth sorting in 3D mode, even with
             // line width set to 0 ¯\_(ツ)_/¯
@@ -1090,9 +1132,7 @@ export class PropertiesMap {
     /** Switch current plot from 3D back to 2D */
     private _switch2D() {
         assert(!this._is3D());
-        this._settings.z.scale.disabled = true;
-        this._settings.z.min.disabled = true;
-        this._settings.z.max.disabled = true;
+        this._settings.z.disable();
 
         const symbols = this._symbols();
         for (let i = 0; i < this._data.maxSymbols; i++) {
@@ -1110,7 +1150,7 @@ export class PropertiesMap {
         this._updateSelectedMarker();
 
         // Change the data that vary between 2D and 3D mode
-        const factor = parseInt(this._settings.size.factor.value, 10);
+        const factor = this._settings.size.factor.value;
         this._restyle({
             // transparency messes with depth sorting in 3D mode
             // https://github.com/plotly/plotly.js/issues/4111
@@ -1137,20 +1177,20 @@ export class PropertiesMap {
         // HACK: this is not public, so it might break
         const layout = this._plot._fullLayout;
         if (this._is3D()) {
-            this._settings.x.min.value = layout.scene.xaxis.range[0].toString();
-            this._settings.x.max.value = layout.scene.xaxis.range[1].toString();
+            this._settings.x.min.value = layout.scene.xaxis.range[0];
+            this._settings.x.max.value = layout.scene.xaxis.range[1];
 
-            this._settings.y.min.value = layout.scene.yaxis.range[0].toString();
-            this._settings.y.max.value = layout.scene.yaxis.range[1].toString();
+            this._settings.y.min.value = layout.scene.yaxis.range[0];
+            this._settings.y.max.value = layout.scene.yaxis.range[1];
 
-            this._settings.z.min.value = layout.scene.zaxis.range[0].toString();
-            this._settings.z.max.value = layout.scene.zaxis.range[1].toString();
+            this._settings.z.min.value = layout.scene.zaxis.range[0];
+            this._settings.z.max.value = layout.scene.zaxis.range[1];
         } else {
-            this._settings.x.min.value = layout.xaxis.range[0].toString();
-            this._settings.x.max.value = layout.xaxis.range[1].toString();
+            this._settings.x.min.value = layout.xaxis.range[0];
+            this._settings.x.max.value = layout.xaxis.range[1];
 
-            this._settings.y.min.value = layout.yaxis.range[0].toString();
-            this._settings.y.max.value = layout.yaxis.range[1].toString();
+            this._settings.y.min.value = layout.yaxis.range[0];
+            this._settings.y.max.value = layout.yaxis.range[1];
 
             this._updateSelectedMarker();
         }

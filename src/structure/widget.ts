@@ -666,25 +666,25 @@ export class JSmolWidget {
         };
 
         // bind all the settings to corresponding HTML elements
-        this._settings.atomLabels.bind(getByID(`${this.guid}-atom-labels`), 'checked');
-        this._settings.spaceFilling.bind(getByID(`${this.guid}-space-filling`), 'checked');
-        this._settings.bonds.bind(getByID(`${this.guid}-bonds`), 'checked');
+        this._settings.atomLabels.bind(`${this.guid}-atom-labels`, 'checked');
+        this._settings.spaceFilling.bind(`${this.guid}-space-filling`, 'checked');
+        this._settings.bonds.bind(`${this.guid}-bonds`, 'checked');
 
-        this._settings.rotation.bind(getByID(`${this.guid}-rotation`), 'checked');
-        this._settings.unitCell.bind(getByID(`${this.guid}-unit-cell`), 'checked');
-        this._settings.packedCell.bind(getByID(`${this.guid}-packed-cell`), 'checked');
+        this._settings.rotation.bind(`${this.guid}-rotation`, 'checked');
+        this._settings.unitCell.bind(`${this.guid}-unit-cell`, 'checked');
+        this._settings.packedCell.bind(`${this.guid}-packed-cell`, 'checked');
 
-        this._settings.supercell[0].bind(getByID(`${this.guid}-supercell-a`), 'value');
-        this._settings.supercell[1].bind(getByID(`${this.guid}-supercell-b`), 'value');
-        this._settings.supercell[2].bind(getByID(`${this.guid}-supercell-c`), 'value');
+        this._settings.supercell[0].bind(`${this.guid}-supercell-a`, 'value');
+        this._settings.supercell[1].bind(`${this.guid}-supercell-b`, 'value');
+        this._settings.supercell[2].bind(`${this.guid}-supercell-c`, 'value');
 
-        this._settings.axes.bind(getByID(`${this.guid}-axes`), 'value');
-        this._settings.keepOrientation.bind(getByID(`${this.guid}-keep-orientation`), 'checked');
+        this._settings.axes.bind(`${this.guid}-axes`, 'value');
+        this._settings.keepOrientation.bind(`${this.guid}-keep-orientation`, 'checked');
 
-        this._settings.environments.activated.bind(getByID(`${this.guid}-env-activated`), 'checked');
-        this._settings.environments.bgColor.bind(getByID(`${this.guid}-env-bg-color`), 'value');
-        this._settings.environments.bgStyle.bind(getByID(`${this.guid}-env-bg-style`), 'value');
-        this._settings.environments.cutoff.bind(getByID(`${this.guid}-env-cutoff`), 'value');
+        this._settings.environments.activated.bind(`${this.guid}-env-activated`, 'checked');
+        this._settings.environments.bgColor.bind(`${this.guid}-env-bg-color`, 'value');
+        this._settings.environments.bgStyle.bind(`${this.guid}-env-bg-style`, 'value');
+        this._settings.environments.cutoff.bind(`${this.guid}-env-cutoff`, 'value');
 
         // recursively bind the right update function to HTMLSetting `onchange`
         const bindUpdateState = (object: any) => {
