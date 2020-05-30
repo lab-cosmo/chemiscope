@@ -114,6 +114,10 @@ own script, run the ``write_chemiscope_input`` function to generate the JSON
 file. This script assumes you use the `ase`_ Python module to read the
 structures.
 
+If all the properties you want to include into chemiscope are already stored
+in an  `ase`_-readable ifle, you can also use the chemiscope_input`_ script
+from the command line. 
+
 .. autofunction:: chemiscope_input::write_chemiscope_input
 
 .. _chemiscope_input: https://github.com/cosmo-epfl/chemiscope/blob/master/utils/chemiscope_input.py
