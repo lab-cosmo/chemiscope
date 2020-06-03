@@ -8,6 +8,8 @@ import numpy as np
 import json
 import gzip
 
+IGNORED_ASE_ARRAYS = ['positions', 'numbers']
+
 
 def _typetransform(data):
     assert isinstance(data, list) and len(data) > 0
@@ -112,7 +114,10 @@ def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None)
     The written JSON file will contain all the properties defined on the
     `ase.Atoms`_ objects. Values in ``ase.Atoms.arrays`` are mapped to
     ``target = "atom"`` properties; while values in ``ase.Atoms.info`` are
-    mapped to ``target = "structure"`` properties.
+    mapped to ``target = "structure"`` properties. The only exception is
+    ``ase.Atoms.arrays["numbers"]``, which is always ignored. If you want to
+    have the atomic numbers as a property, you should add it to ``extra``
+    manually.
 
     Additional properties can be added with the ``extra`` parameter. This
     parameter should be a dictionary containing one entry for each property.
@@ -188,11 +193,11 @@ def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None)
             'target': 'atom',
             'values': value
         }
-        for name, value in frames[0].arrays.items() if name != 'positions'
+        for name, value in frames[0].arrays.items() if name not in IGNORED_ASE_ARRAYS
     })
     for frame in frames[1:]:
         for name, value in frame.arrays.items():
-            if name == 'positions':
+            if name in IGNORED_ASE_ARRAYS:
                 continue
             from_frames[name]['values'] = np.concatenate([from_frames[name]['values'], value])
 
@@ -265,7 +270,9 @@ def main():
     frames = ase_io.read(args.input, ':')
     if args.only_structures:
         for frame in frames:
-            frame.arrays = {}
+            for key in list(frame.arrays.keys()):
+                if key not in IGNORED_ASE_ARRAYS:
+                    del frame.arrays[key]
     elif args.only_atoms:
         for frame in frames:
             frame.info = {}
