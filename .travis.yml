@@ -16,26 +16,30 @@ install:
     - python3 -m pip install -r docs/requirements.txt
 
 script:
+    # Build the code
     - npm run build
     - npm run merge-dts
+    # Run tests & lints
+    - npm test
+    # Build the website
     - npm run download-example-input
     - cp -r app/ gh-pages/
     - cp dist/*.min.js gh-pages/
     - touch gh-pages/.nojekyll
     - echo "chemiscope.org" > gh-pages/CNAME
     # Cleanup a few files
-    - rm -f gh-pages/standalone.in.html
     - rm -f gh-pages/.gitignore
     # Build the docs
     - cd docs && make html && cd -
     - cp -r docs/_build/html/ gh-pages/docs/
 
 deploy:
-  # Deploy the default app to gh-pages
+  # Deploy the website to gh-pages
   - provider: pages
     skip_cleanup: true
     github_token: $GH_TOKEN
     local_dir: gh-pages
+  # Deploy built code to github releases
   - provider: releases
     api_key: $GH_TOKEN
     file:
