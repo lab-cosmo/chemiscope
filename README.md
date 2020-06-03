@@ -12,6 +12,15 @@ re-usable components useful to create new interfaces.
 You may be interested in particular about how to [create a visualization of your
 own dataset](https://chemiscope.org/docs/tutorial.html#input-file-format-for-chemiscope).
 
+## Getting help for using chemiscope
+
+If you want to get help when using chemiscope either as a JavaScript/TypeScript
+library inside your own project; or for creating input files for the default
+visualizer at https://chemiscope.org, you can open a [Github
+issue](https://github.com/cosmo-epfl/chemiscope/issues/new) with your question;
+or send an email to the developers (you can find these emails on the lab
+webpage: https://www.epfl.ch/labs/cosmo/people/)
+
 ## Getting and running the code
 
 ```bash
@@ -32,13 +41,17 @@ cd chemiscope
 npm install
 npm run build
 
-# Include dist/chemiscope.min.js in your own web page
+# Include dist/chemiscope.min.js or dist/jsmol-widget.min.js
+# in your own web page
 ```
 
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)
 for a examples of how to create a webpage using chemiscope.
 
 ## License and contributions
+
+If you are interested in contributing to chemiscope, please have a look at our
+[contribution guidelines](Contributing.md)
 
 Chemiscope itself is distributed under the 3-Clauses BSD license. By
 contributing to this repository, you agree to distribute your contributions
