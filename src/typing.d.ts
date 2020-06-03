@@ -5,7 +5,7 @@ declare module '*.html' {
 
 declare module 'jsmol' {
     export interface JSmolApplet {
-        _cover: Function
+        _cover: (_: boolean) => void;
     }
 
     /**
@@ -13,7 +13,7 @@ declare module 'jsmol' {
      * interface.
      */
     export interface JmolInfo {
-        use: "HTML5" | "Java" | "WebGL";
+        use: 'HTML5' | 'Java' | 'WebGL';
         j2sPath: string;
         serverURL: string;
         height: number | string;
