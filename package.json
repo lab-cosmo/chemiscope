@@ -16,7 +16,7 @@
   "scripts": {
     "test": "npm run lint",
     "build": "webpack --mode production",
-    "download-example-input": "node ./utils/download-example-input.js",
+    "download-example-input": "ts-node ./utils/download-example-input.ts",
     "api-docs": "typedoc",
     "start": "webpack-dev-server -d --content-base ./app",
     "merge-dts": "dts-bundle --name chemiscope --main dist/src/index.d.ts --baseDir dist --out chemiscope.d.ts --removeSource",
@@ -27,6 +27,7 @@
     "@types/markdown-it": "0.0.9",
     "@types/node": "^13.13.9",
     "@types/plotly.js": "^1.50.12",
+    "@types/tmp": "^0.2.0",
     "@types/webpack": "^4.41.13",
     "css-loader": "^3.5.3",
     "dts-bundle": "^0.7.3",

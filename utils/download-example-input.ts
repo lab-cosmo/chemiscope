@@ -1,6 +1,6 @@
-const fs = require('fs');
-const tmp = require('tmp');
-const childProcess = require('child_process');
+import * as fs from 'fs';
+import * as tmp from 'tmp';
+import * as childProcess from 'child_process';
 
 const tmpdir = tmp.dirSync({unsafeCleanup: true});
 const checkout = tmpdir.name + '/chemiscope';
