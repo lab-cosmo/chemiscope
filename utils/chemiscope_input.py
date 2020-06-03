@@ -212,17 +212,18 @@ def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None)
             json.dump(data, file)
 
 
-helpstring = """
-Command-line utility to generate an input for chemiscope - the interactive
-structure-property explorer. Parses an input file containing atomic structures
-using the ASE I/O module, and converts it into a JSON file that can be loaded in
-chemiscope. Frame and environment properties must be written in the same file
-containing atomic structures: we recommend the extended xyz format, which is
-flexible and simple. In all cases, this utility will simply transfer to the JSON
-input anything that is readable by ASE.
-"""
+def main():
+    """
+    Command-line utility to generate an input for chemiscope - the interactive
+    structure-property explorer. Parses an input file containing atomic
+    structures using the ASE I/O module, and converts it into a JSON file that
+    can be loaded in chemiscope. Frame and environment properties must be
+    written in the same file containing atomic structures: we recommend the
+    extended xyz format, which is flexible and simple. In all cases, this
+    utility will simply transfer to the JSON input anything that is readable by
+    ASE.
+    """
 
-if __name__ == '__main__':
     # command-line execution. requires ASE IO module
     import argparse
     try:
@@ -230,14 +231,13 @@ if __name__ == '__main__':
     except ImportError:
         raise ImportError("chemiscope_input needs ASE modules to parse structure inputs")
 
-    parser = argparse.ArgumentParser(description=helpstring)
+    parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('-i', '--input', type=str, required=True,
                         help='Input file name.')
     parser.add_argument('-o', '--output', type=str,
                         help='Chemiscope JSON output file.')
     parser.add_argument('-c', '--cutoff', type=float,
-                        help='Generate  atom-centred environments with the \
-                              given cutoff.')
+                        help='Generate  atom-centred environments with the given cutoff.')
     parser.add_argument('--name', default="", type=str,
                         help='Dataset name.')
     parser.add_argument('--description', default="", type=str,
@@ -248,7 +248,7 @@ if __name__ == '__main__':
                         help='List of references for the dataset.')
     args = parser.parse_args()
 
-    # reads filen with ASE
+    # reads file with ASE
     frames = ase_io.read(args.input, ':')
 
     # determines output file name automatically if missing
@@ -268,3 +268,7 @@ if __name__ == '__main__':
         extra=None,
         cutoff=args.cutoff
     )
+
+
+if __name__ == '__main__':
+    main()
