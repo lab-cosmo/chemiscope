@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
 Generate JSON input files for the default chemiscope visualizer.
@@ -214,13 +215,13 @@ def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None)
 
 def main():
     """
-    Command-line utility to generate an input for chemiscope - the interactive
+    Command-line utility to generate an input for chemiscope — the interactive
     structure-property explorer. Parses an input file containing atomic
     structures using the ASE I/O module, and converts it into a JSON file that
     can be loaded in chemiscope. Frame and environment properties must be
     written in the same file containing atomic structures: we recommend the
     extended xyz format, which is flexible and simple. In all cases, this
-    utility will simply transfer to the JSON input anything that is readable by
+    utility will simply write to the JSON file anything that is readable by
     ASE.
     """
 
@@ -232,33 +233,47 @@ def main():
         raise ImportError("chemiscope_input needs ASE modules to parse structure inputs")
 
     parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument('-i', '--input', type=str, required=True,
-                        help='Input file name.')
+    parser.add_argument('input', type=str,
+                        help='input file containing the structures and properties')
     parser.add_argument('-o', '--output', type=str,
-                        help='Chemiscope JSON output file.')
+                        help='chemiscope output file in JSON format')
     parser.add_argument('-c', '--cutoff', type=float,
-                        help='Generate  atom-centred environments with the given cutoff.')
+                        help='generate atom-centred environments with the given cutoff')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--only-atoms', action="store_true",
+                       help='only use per-atom properties from the input file')
+    group.add_argument('--only-structures', action="store_true",
+                       help='only use per-structure properties from the input file')
     parser.add_argument('--name', default="", type=str,
-                        help='Dataset name.')
+                        help='name of the dataset')
     parser.add_argument('--description', default="", type=str,
-                        help='Dataset description.')
+                        help='description of the dataset')
     parser.add_argument('--authors', nargs='*', type=str, default=[],
-                        help='List of dataset authors.')
+                        help='list of dataset authors')
     parser.add_argument('--references', nargs='*', type=str, default=[],
-                        help='List of references for the dataset.')
+                        help='list of references for the dataset')
     args = parser.parse_args()
 
-    # reads file with ASE
-    frames = ase_io.read(args.input, ':')
+    if args.only_atoms and args.cutoff is None:
+        raise Exception("--only-atoms requires to give --cutoff")
+    if args.only_structures and args.cutoff is not None:
+        raise Exception("--only-structure can not be given with --cutoff")
 
-    # determines output file name automatically if missing
-    output = args.output
-    if args.output is None:
-        output = args.input + "_chemiscope.json"
+    # read file with ASE and remove extraneous properties
+    frames = ase_io.read(args.input, ':')
+    if args.only_structures:
+        for frame in frames:
+            frame.arrays = {}
+    elif args.only_atoms:
+        for frame in frames:
+            frame.info = {}
+
+    # determine output file name automatically if missing
+    output = args.output or args.input + "_chemiscope.json.gz"
 
     write_chemiscope_input(
-        output,
-        frames,
+        filename=output,
+        frames=frames,
         meta={
             "name": args.name,
             "description": args.description,
