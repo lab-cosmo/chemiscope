@@ -1,0 +1,18 @@
+name: Tests & Lints
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      # we need the full history to be able to get the chemiscope version with
+      # git describe during the build
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - uses: bahmutov/npm-install@v1
+    - run: npm run build
+    - run: npm test
