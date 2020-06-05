@@ -23,7 +23,7 @@ import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
 import {StructureViewer} from './structure';
 
-import {checkDataset, Dataset, Structure} from './dataset';
+import {Dataset, JsObject, Structure, validateDataset} from './dataset';
 import {addWarningHandler, EnvironmentIndexer} from './utils';
 
 // tslint:disable-next-line: no-var-requires
@@ -50,7 +50,7 @@ export interface Config {
 /** @hidden
  * Check if `o` contains all the expected fields to be a [[Config]].
  */
-function checkConfig(o: any) {
+function validateConfig(o: JsObject) {
     if (!('meta' in o && typeof o.meta === 'string')) {
         throw Error('missing "meta" key in chemiscope config');
     }
@@ -76,7 +76,7 @@ function checkConfig(o: any) {
         return !!(obj && obj.constructor && obj.call && obj.apply);
     };
 
-    if ('loadStructure' in o && !isFunction(o.loadStructure)) {
+    if ('loadStructure' in o && o.loadStructure !== undefined && !isFunction(o.loadStructure)) {
         throw Error('"loadStructure" should be a function in chemiscope config');
     }
 }
@@ -113,8 +113,8 @@ class DefaultVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: Config, dataset: Dataset) {
-        checkConfig(config);
-        checkDataset(dataset);
+        validateConfig(config as unknown as JsObject);
+        validateDataset(dataset as unknown as JsObject);
 
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
