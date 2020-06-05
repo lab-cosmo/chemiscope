@@ -1,0 +1,36 @@
+name: Build website
+on: [push, pull_request]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      # we need the full history to be able to get the chemiscope version with
+      # git describe during the build
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: install npm dependencies
+      uses: bahmutov/npm-install@v1
+    - name: install python dependencies
+      run: python3 -m pip install -r docs/requirements.txt
+    - run: npm run build
+    - run: npm run download-example-input
+    - run: cd docs && make html
+    - name: assemble full website
+      run: |
+          cp -r app/ gh-pages/
+          cp dist/*.min.js gh-pages/
+          cp -r docs/_build/html/ gh-pages/docs/
+          tar czf gh-pages.tar.gz gh-pages/
+    - name: upload built website archive
+      uses: actions/upload-artifact@v1
+      with:
+          name: website.tar.gz
+          path: gh-pages.tar.gz
