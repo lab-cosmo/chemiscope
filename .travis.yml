@@ -16,7 +16,8 @@ install:
     # git describe
     - git fetch --unshallow
     - npm ci
-    - python3 -m pip install -r docs/requirements.txt
+    - python3 -m pip install -r docs/requirements.txt    
+    - python3 -m pip install beautifulsoup4 requests
 
 script:
     # Build the code
@@ -27,8 +28,8 @@ script:
     # Build the website & standalone version
     - npm run download-example-input
     - cp -r app/ gh-pages/
+    - cp dist/*.min.js gh-pages/    
     - python3 utils/generate_standalone.py -o gh-pages/chemiscope_standalone.html    
-    - cp dist/*.min.js gh-pages/
     - touch gh-pages/.nojekyll
     - echo "chemiscope.org" > gh-pages/CNAME
     # Cleanup a few files
