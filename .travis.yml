@@ -24,9 +24,10 @@ script:
     - npm run merge-dts
     # Run tests & lints
     - npm test
-    # Build the website
+    # Build the website & standalone version
     - npm run download-example-input
     - cp -r app/ gh-pages/
+    - python3 utils/generate_standalone.py -o gh-pages/chemiscope_standalone.html    
     - cp dist/*.min.js gh-pages/
     - touch gh-pages/.nojekyll
     - echo "chemiscope.org" > gh-pages/CNAME
