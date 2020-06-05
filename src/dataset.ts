@@ -143,28 +143,31 @@ export interface Environment {
     cutoff: number;
 }
 
+/** Arbitrary javascript object, to be validated */
+export type JsObject = Record<string, unknown>;
+
 /** @hidden
  * Check that the given object, potentially comming from javascript, has all
  * required properties to be a dataset.
  */
-export function checkDataset(o: any) {
-    if (!('meta' in o && typeof o.meta === 'object')) {
+export function validateDataset(o: JsObject) {
+    if (!('meta' in o && typeof o.meta === 'object' && o.meta !== null)) {
         throw Error('missing "meta" key in dataset');
     }
-    checkMetadata(o.meta);
+    checkMetadata(o.meta as JsObject);
 
-    if (!('structures' in o && o.structures.length !== undefined)) {
+    if (!('structures' in o && Array.isArray(o.structures))) {
         throw Error('missing "structures" key in dataset');
     }
     const [structureCount, envCount] = checkStructures(o.structures);
 
-    if (!('properties' in o && typeof o.properties === 'object')) {
+    if (!('properties' in o && typeof o.properties === 'object' && o.properties !== null)) {
         throw Error('missing "properties" key in dataset');
     }
-    checkProperties(o.properties, structureCount, envCount);
+    checkProperties(o.properties as JsObject, structureCount, envCount);
 
     if ('environments' in o) {
-        if (typeof o.environments.length === undefined) {
+        if (!Array.isArray(o.environments)) {
             throw Error('"environments" must be an array in dataset');
         }
 
@@ -175,7 +178,7 @@ export function checkDataset(o: any) {
     }
 }
 
-function checkMetadata(o: any) {
+function checkMetadata(o: JsObject) {
     if (!('name' in o && typeof o.name === 'string')) {
         throw Error('missing "meta.name" key in dataset');
     }
@@ -185,7 +188,7 @@ function checkMetadata(o: any) {
     }
 
     if ('authors' in o) {
-        if (typeof o.authors.length === undefined) {
+        if (!Array.isArray(o.authors)) {
             throw Error('"meta.authors" must be an array in dataset');
         }
 
@@ -197,7 +200,7 @@ function checkMetadata(o: any) {
     }
 
     if ('references' in o) {
-        if (typeof o.references.length === undefined) {
+        if (!Array.isArray(o.references)) {
             throw Error('"meta.references" must be an array in dataset');
         }
 
@@ -209,7 +212,7 @@ function checkMetadata(o: any) {
     }
 }
 
-export function checkStructures(o: any): [number, number] {
+function checkStructures(o: JsObject[]): [number, number] {
     let envCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
@@ -220,16 +223,18 @@ export function checkStructures(o: any): [number, number] {
 
         if ('names' in structure && 'x' in structure && 'y' in structure && 'z' in structure) {
             for (const key of ['names', 'x', 'y', 'z']) {
-                if (!(key in structure && structure[key].length !== undefined)) {
+                if (!(key in structure)) {
                     throw Error(`missing '${name}' for structure ${i}`);
                 }
-                if (structure[key].length !== structure.size) {
-                    throw Error(`wrong size for '${name}' in structure ${i}, expected ${structure.size}, got ${structure[name].length}`);
+                const array = structure[key] as JsObject;
+
+                if (array.length !== structure.size) {
+                    throw Error(`wrong size for '${name}' in structure ${i}, expected ${structure.size}, got ${array.length}`);
                 }
             }
 
             if ('cell' in structure) {
-                if (structure.cell.length !== 9) {
+                if ((structure.cell as JsObject).length !== 9) {
                     throw Error(`'cell' must be an array of size 9 for structure ${i}`);
                 }
             }
@@ -237,16 +242,15 @@ export function checkStructures(o: any): [number, number] {
             // nothing to check
         } else {
             throw Error(`structure ${i} must contains either 'names'/'x'/'y'/'z' or 'data'`);
-
         }
     }
 
     return [o.length, envCount];
 }
 
-function checkProperties(properties: any, structureCount: number, envCount: number) {
+function checkProperties(properties: JsObject, structureCount: number, envCount: number) {
     for (const key in properties) {
-        const property = properties[key];
+        const property = properties[key] as JsObject;
 
         if (!('target' in property && typeof property.target === 'string')) {
             Error(`'properties['${key}'].target' should be a string`);
@@ -256,11 +260,11 @@ function checkProperties(properties: any, structureCount: number, envCount: numb
             throw Error(`'properties['${key}'].target', should be 'atom' | 'structure'`);
         }
 
-        if (!('values' in property && property.values.length !== undefined)) {
-            Error(`'properties['${key}'].values' should be an array`);
+        if (!('values' in property && Array.isArray(property.values))) {
+            throw Error(`'properties["${key}"].values' should be an array`);
         }
 
-        // check size is possible
+        // check size if possible
         let expected;
         if (property.target === 'atom') {
             expected = envCount;
@@ -287,7 +291,7 @@ function checkProperties(properties: any, structureCount: number, envCount: numb
     }
 }
 
-function checkEnvironments(o: any, structures: Structure[]) {
+function checkEnvironments(o: JsObject[], structures: Structure[]) {
     for (let i = 0; i < o.length; i++) {
         const env = o[i];
 
