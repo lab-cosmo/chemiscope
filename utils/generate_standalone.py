@@ -101,6 +101,8 @@ def main():
 
     json_data = ""
     if args.input != "":
+        if args.input.endswith(".gz"):
+            raise ValueError("Only plain-text JSON inputs can be used with the standalone viewer")
         with open(args.input) as fd:
             json_data = fd.read()
 
