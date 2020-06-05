@@ -12,6 +12,9 @@ node_js:
   - 12
 
 install:
+    # we need the full history to be able to get the chemiscope version with
+    # git describe
+    - git fetch --unshallow
     - npm ci
     - python3 -m pip install -r docs/requirements.txt
 
