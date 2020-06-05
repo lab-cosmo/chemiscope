@@ -1,8 +1,12 @@
 name: Build website
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
+    # Check all PR
 
 jobs:
-  build-and-deploy:
+  build-website:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -32,5 +36,23 @@ jobs:
     - name: upload built website archive
       uses: actions/upload-artifact@v1
       with:
-          name: website.tar.gz
+          name: website
           path: gh-pages.tar.gz
+
+  deploy-website:
+    needs: build-website
+    # only deploy if we are in the master branch
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: download build website
+        uses: actions/download-artifact@v2
+        with:
+          name: website
+      - name: extract website
+        run: tar xf gh-pages.tar.gz
+      - name: deploy website to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages/
