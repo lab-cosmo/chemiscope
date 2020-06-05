@@ -90,7 +90,7 @@ export class EnvironmentInfo {
         }
 
         this._root.innerHTML = `
-        <div class='chsp-info-tables'></div>
+        <div class='accordion chsp-info-tables' id='info-tables'></div>
         <div class='chsp-info-btns'>
             <div class='btn btn-sm chsp-info-structure-btn'
                 data-toggle='collapse'
