@@ -88,7 +88,7 @@ export interface LoadOption {
     supercell: [number, number, number];
     /** Should we display a packed cell (default: false) */
     packed: boolean;
-    /** Should we the current camera orientation (default: false) */
+    /** Should preserve we the current camera orientation (default: false) */
     keepOrientation: boolean;
     /** Are we loading a file part of a trajectory (default: false) */
     trajectory: boolean;
@@ -153,6 +153,8 @@ export class JSmolWidget {
             bgStyle: HTMLSetting<'string'>;
             // which colors for atoms not in the environment
             bgColor: HTMLSetting<'string'>;
+            // automatically center the environment when loading it
+            autoCenter: HTMLSetting<'boolean'>;            
         }
         // keep the orientation constant when loading a new structure if checked
         keepOrientation: HTMLSetting<'boolean'>;
@@ -404,7 +406,7 @@ export class JSmolWidget {
         } else {
             keepOrientation = options.keepOrientation;
         }
-
+        
         const trajectoryOptions = getByID<HTMLElement>(`${this.guid}-trajectory-settings-group`);
         if (options.trajectory === undefined || !options.trajectory) {
             trajectoryOptions.style.display = 'none';
@@ -649,6 +651,7 @@ export class JSmolWidget {
             bonds: new HTMLSetting('boolean', true),
             environments: {
                 activated: new HTMLSetting('boolean', false),
+                autoCenter: new HTMLSetting('boolean', false),
                 bgColor: new HTMLSetting('string', 'CPK'),
                 bgStyle: new HTMLSetting('string', 'licorice'),
                 cutoff: new HTMLSetting('number', 0),
@@ -685,7 +688,8 @@ export class JSmolWidget {
         this._settings.environments.bgColor.bind(`${this.guid}-env-bg-color`, 'value');
         this._settings.environments.bgStyle.bind(`${this.guid}-env-bg-style`, 'value');
         this._settings.environments.cutoff.bind(`${this.guid}-env-cutoff`, 'value');
-
+        this._settings.environments.autoCenter.bind(`${this.guid}-auto-center`, 'checked');
+        
         // recursively bind the right update function to HTMLSetting `onchange`
         const bindUpdateState = (object: any) => {
             for (const key in object) {
@@ -797,6 +801,12 @@ export class JSmolWidget {
             commands += 'color atoms cpk; color atoms opaque;';
             commands += `dots off; ${wireframe}; ${spacefill};`;
         } else {
+            // center of the environment
+            if (settings.environments.autoCenter.value) {
+                commands += `select @${this._highlighted + 1};`;
+            	commands += 'centerAt average;';
+            }
+                        
             // Atoms not in the environment
             commands += 'select all;';
             commands += this._backgroundStyle();

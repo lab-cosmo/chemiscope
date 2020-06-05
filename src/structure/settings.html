@@ -76,25 +76,29 @@
                     <div style="margin-bottom: 1.5em;"></div>
                     <h5 class="chsp-settings-section-title">Environments</h5>
                     <div class="chsp-settings-environments">
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-primary btn-sm active" style="width: 100%">
+                            <input type="checkbox" id=env-activated> Enable
+                        </label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id=auto-center>
+                            <label class="custom-control-label" for=auto-center title="center automatically structure or environment in the viewport" style="cursor: help;">center</label>
+                        </div>
+                                                
                         <div class="input-group input-group-sm">
                             <div class="input-group-prepend">
                                <label class="input-group-text" for=env-cutoff>cutoff</label>
                              </div>
                              <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
                         </div>
-
-                        <button class="btn btn-secondary btn-sm" id=env-reset>reset cutoff</button>
-
-                        <div class="btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-primary btn-sm active" style="width: 100%">
-                            <input type="checkbox" id=env-activated> Enable
-                        </label>
-                        </div>
-
+                        <button class="btn btn-secondary btn-sm" id=env-reset>reset</button>
+                    </div>
+                    <div style="margin-bottom: 0.8em;"></div>
+                    <div class="chsp-settings-environments-bg">                        
                         <div>
                             <span style="vertical-align: middle">Background atoms</span>
                         </div>
-
                         <div class="input-group input-group-sm">
                             <div class="input-group-prepend">
                                <label class="input-group-text" for=env-bg-color>color</label>
@@ -103,10 +107,9 @@
                                  <option value="CPK">CPK</option>
                                  <option value="grey">grey</option>
                              </select>
-                         </div>
-
-                         <div class="input-group input-group-sm">
-                             <div class="input-group-prepend">
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
                                 <label class="input-group-text" for=env-bg-style>style</label>
                               </div>
                               <select id=env-bg-style class="custom-select">
@@ -114,7 +117,7 @@
                                   <option value="ball-stick">ball and stick</option>
                                   <option value="hide">hide</option>
                               </select>
-                          </div>
+                        </div>                        
                     </div>
                 </div>
 
@@ -140,11 +143,10 @@
                             </div>
                             <input id=playback-delay class="form-control" type="number" min=1 value=7>
                         </div>
-
                         <div class="custom-control custom-switch">
                             <input type="checkbox" class="custom-control-input" id=keep-orientation>
                             <label class="custom-control-label" for=keep-orientation title="keep the camera orientation when loading a new molecule" style="cursor: help;">keep orientation</label>
-                        </div>
+                        </div>                        
                     </div>
                 </div>
             </div>
