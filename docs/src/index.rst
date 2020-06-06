@@ -16,7 +16,7 @@ the default interface of chemiscope and how to use it with your own database.
 
 
 Chemiscope is built around re-usable components, that can be arranged in
-different manners to create visualization adapted to different kind of data. The
+different manners to create visualization adapted to different kinds of data. The
 second part of this documentation explains how to build the code and use it in
 your own website to create new interfaces.
 
