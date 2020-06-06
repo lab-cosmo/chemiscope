@@ -68,7 +68,14 @@
                             <label style="display: inline;" class="custom-file-label" for=upload>Load your own dataset</label>
                         </div>
                     </div>
-                </div>
+
+                    <ul class="navbar-nav mr-auto">
+                    <li class="nav-item" onclick="download('chemiscope.json', VISUALIZER.dump())" style="cursor:pointer">
+                        <a class="nav-link">
+                            <i class="fa fa-save"></i> Save
+                        </a>
+                    </li>
+                    </ul>
             </nav>
         </header>
 
@@ -213,7 +220,6 @@
                     </a> of the standard viewer, which you can use to
                     display locally datasets prepared in the chemiscope
                     JSON format.
-
                 </p>
               </div>
             </div>
