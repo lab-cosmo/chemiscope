@@ -8,7 +8,7 @@ function toJson(path, buffer) {
     }
 
     // Allow NaN in the JSON file. They are not part of the spec, but
-    // Python's json module output them, and they can be usefull.
+    // Python's json module output them, and they can be useful.
     return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), function(key, value) {
         return value === "***NaN***" ? NaN : value;
     });
@@ -30,9 +30,14 @@ function loadStructureOnDemand(index, structure) {
     }).responseText);
 }
 
-function setupChemiscope(dataset) {
+function setupChemiscope(json) {
+        
     const config = {
-        map:       'chemiscope-map',
+        map:    {
+            id:   'chemiscope-map',
+            // picks presets if present
+            presets:  (json.presets === undefined ? undefined : json.presets.map)
+        },
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
         structure: 'chemiscope-structure',
@@ -47,8 +52,8 @@ function setupChemiscope(dataset) {
     if (VISUALIZER !== undefined) {
         VISUALIZER.remove();
     }
-
-    Chemiscope.DefaultVisualizer.load(config, dataset).then((v) => {
+    
+    Chemiscope.DefaultVisualizer.load(config, json).then((v) => {
         VISUALIZER = v;
         v.structure.positionSettingsModal = (rect) => {
             const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
@@ -145,4 +150,17 @@ function setupDefaultChemiscope(j2sPath) {
         }
         reader.readAsArrayBuffer(upload.files[0]);
     }
+}
+
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
 }

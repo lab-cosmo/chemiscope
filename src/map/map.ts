@@ -5,15 +5,17 @@
 
 import assert from 'assert';
 
-import {Property} from '../dataset';
-import {EnvironmentIndexer, HTMLSetting, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
-import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
-
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
 
-import {COLOR_MAPS} from './colorscales';
+import {Property} from '../dataset';
+import {EnvironmentIndexer, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
+import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
+
 import {MapData, NumericProperty} from './data';
+import {AxisSettings, MapPresets, MapSettings} from './settings';
+
+import {COLOR_MAPS} from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
@@ -129,53 +131,6 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
     return {max, min};
 }
 
-/** HTML element holding settings for a given axis (x, y, z, color) */
-class AxisSetting {
-    /// Which property should we use for this axis
-    public property: HTMLSetting<'string'>;
-    /// Which scale (linear/log) should we use
-    public scale: HTMLSetting<'string'>;
-    /// The minimal value for this axis
-    public min: HTMLSetting<'number'>;
-    /// The maximal value for this axis
-    public max: HTMLSetting<'number'>;
-
-    constructor(properties: string[], initial: string) {
-        this.max = new HTMLSetting('number', 0);
-        this.min = new HTMLSetting('number', 0);
-
-        this.property = new HTMLSetting('string', initial);
-        this.property.validate = (value) => {
-            if (properties.includes(value) || (initial === '' && value === '')) {
-                return;
-            }
-            throw Error(`invalid property '${value}' for axis`);
-        };
-
-        this.scale = new HTMLSetting('string', 'linear');
-        this.scale.validate = (value) => {
-            if (value === 'linear' || value === 'log') {
-                return;
-            }
-            throw Error(`invalid value '${value}' for axis scale`);
-        };
-    }
-
-    /** Disable auxiliary settings (min/max/scale) related to this axis */
-    public disable() {
-        this.max.disable();
-        this.min.disable();
-        this.scale.disable();
-    }
-
-    /** Enable auxiliary settings (min/max/scale) related to this axis */
-    public enable() {
-        this.max.enable();
-        this.min.enable();
-        this.scale.enable();
-    }
-}
-
 /// interface to contain synchronized parameters for marker instances
 interface MarkerData {
     /// color of the marker, synchronized with the StructureViewer where appropriate
@@ -188,6 +143,7 @@ interface MarkerData {
     /// used instead.
     marker: HTMLElement;
 }
+
 /**
  * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
  * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
@@ -227,18 +183,7 @@ export class PropertiesMap {
     /// environment indexer
     private _indexer: EnvironmentIndexer;
     /// Store the HTML elements used for settings
-    private _settings!: {
-        x: AxisSetting;
-        y: AxisSetting;
-        z: AxisSetting;
-        color: AxisSetting;
-        palette: HTMLSetting<'string'>;
-        symbol: HTMLSetting<'string'>;
-        size: {
-            property: HTMLSetting<'string'>;
-            factor: HTMLSetting<'number'>;
-        };
-    };
+    private _settings!: MapSettings;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
     /// The HTML element containing the settings modal
@@ -254,17 +199,17 @@ export class PropertiesMap {
      * @param properties properties to be displayed
      * @param starterGUID if synchronized with a StructureViewer, the GUID of the first structure viewer cell
      */
-    constructor(id: string,
-                indexer: EnvironmentIndexer,
-                properties: {[name: string]: Property},
-                starterGUID?: string,
-                ) {
+    constructor(
+        config: { id: string, presets?: MapPresets },
+        indexer: EnvironmentIndexer,
+        properties: {[name: string]: Property},
+        starterGUID?: string,
+    ) {
         this._indexer = indexer;
         this.onselect = () => {};
         this._selected = new Map();
 
-        this._root = getByID(id);
-
+        this._root = getByID(config.id);
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
         }
@@ -287,7 +232,7 @@ export class PropertiesMap {
         this._insertSettingsHTML();
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
-        this._setupSettings();
+        this._setupSettings(config.presets);
         this._connectSettings();
 
         this._createPlot();
@@ -389,6 +334,20 @@ export class PropertiesMap {
         this.onselect(indexes, this._active);
     }
 
+    /**
+     * Apply saved settings to the map.
+     */
+    public applyPresets(presets?: MapPresets) {
+        this._settings.applyPresets(presets);
+    }
+
+    /**
+     * Fetches current settings as presets
+     */
+    public dumpPresets() {
+        return this._settings.dumpPresets();
+    }
+
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) => setTimeout(() => { throw e; }));
@@ -473,7 +432,7 @@ export class PropertiesMap {
 
         // function creating a function to be used as onchange callback
         // for <axis>.min and <axis>.max
-        const rangeChange = (name: string, axis: AxisSetting) => {
+        const rangeChange = (name: string, axis: AxisSettings) => {
             return (_: number, origin: SettingModificationOrigin) => {
                 if (origin === 'JS') {
                     // prevent recursion: this function calls relayout, which then
@@ -539,9 +498,11 @@ export class PropertiesMap {
         };
 
         this._settings.z.scale.onchange = () => {
-            this._relayout({
-                'scene.zaxis.type': this._settings.z.scale.value,
-            } as unknown as Layout);
+            if (this._settings.z.property.value !== '') {
+                this._relayout({
+                    'scene.zaxis.type': this._settings.z.scale.value,
+                } as unknown as Layout);
+            }
         };
 
         this._settings.z.min.onchange = rangeChange('zaxis', this._settings.z);
@@ -647,10 +608,10 @@ export class PropertiesMap {
     }
 
     /**
-     * Fill possible values for the settings, depending on the properties in
-     * the dataset
+     * Initial setup of the map. Can determine initial settings from the dataset,
+     * or apply saved presets.
      */
-    private _setupSettings() {
+    private _setupSettings(presets ?: MapPresets) {
         const properties = Object.keys(this._properties());
         if (properties.length < 2) {
             throw Error('we need at least two properties to plot in the map');
@@ -663,28 +624,7 @@ export class PropertiesMap {
             });
         }
 
-        this._settings = {
-            color: new AxisSetting(properties, ''),
-            x: new AxisSetting(properties, properties[0]),
-            y: new AxisSetting(properties, properties[1]),
-            z: new AxisSetting(properties, ''),
-
-            palette: new HTMLSetting('string', 'inferno'),
-            size: {
-                factor: new HTMLSetting('number', 50),
-                property: new HTMLSetting('string', ''),
-            },
-            symbol: new HTMLSetting('string', ''),
-        };
-
-        const validate = (value: string) => {
-            if (properties.includes(value) || value === '') {
-                return;
-            }
-            throw Error(`invalid property name '${value}'`);
-        };
-        this._settings.size.property.validate = validate;
-        this._settings.symbol.validate = validate;
+        this._settings = new MapSettings(properties, presets);
 
         // ============== Setup the map options ==============
         // ======= data used as x values
@@ -734,8 +674,7 @@ export class PropertiesMap {
         this._settings.color.min.bind('chsp-color-min', 'value');
         this._settings.color.max.bind('chsp-color-max', 'value');
 
-        if (properties.length >= 3) {
-            this._settings.color.property.value = properties[2];
+        if (this._settings.color.property.value) {
             this._settings.color.enable();
             this._colorReset.disabled = false;
 
@@ -745,7 +684,6 @@ export class PropertiesMap {
             this._settings.color.min.value = min;
             this._settings.color.max.value = max;
         } else {
-            this._settings.color.property.value = '';
             this._settings.color.min.disable();
             this._colorReset.disabled = true;
 
@@ -928,8 +866,15 @@ export class PropertiesMap {
             this.select(indexes, this._active);
             this.onselect(indexes, this._active);
         });
-        this._plot.on('plotly_afterplot', () => this._afterplot());
 
+        // check if we need to go to 3D mode
+        if (this._settings.z.property.value !== '') {
+            this._switch3D();
+        }
+        // trigger update of the plot symbol to conditionally show legend
+        this._settings.symbol.value = this._settings.symbol.value;
+
+        this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateAllMarkers();
     }
 

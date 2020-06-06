@@ -5,7 +5,7 @@
 
 import {makeDraggable} from './draggable';
 import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
-import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin} from './settings';
+import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin, settingsValidator} from './settings';
 import {addWarningHandler, sendWarning} from './warnings';
 
 /** Callback type to position an HTML element.
@@ -65,4 +65,5 @@ export {
     HTMLSetting,
     SettingGroup,
     SettingModificationOrigin,
+    settingsValidator,
 };

@@ -89,6 +89,24 @@ export function foreachSetting(settings: SettingGroup, callback: (s: HTMLSetting
 }
 
 /**
+ * Creates a valitating function that checks value against a list of valid
+ * entries. This is intended to be used as a `validate` callback on an
+ * [[HTMLSetting]].
+ *
+ * @param  valid list of valid values for the setting
+ * @param  name  name of the setting for better error messages
+ * @return       a function that can be used to validate a new setting value
+ */
+export function settingsValidator<T>(valid: T[], name = ''): (value: T) => void {
+    return (value: T) => {
+        if (valid.includes(value)) {
+            return;
+        }
+        throw Error(`invalid property '${value}' for ${name}`);
+    };
+}
+
+/**
  * Simple two-way data binding implementation to store settings in chemiscope.
  *
  * This class manages a setting single value, and bind it to HTML elements.
