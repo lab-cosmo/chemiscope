@@ -458,6 +458,7 @@ export class JSmolWidget {
                            this._settings.supercell[1].value *
                            this._settings.supercell[2].value;
             this._natoms = parseInt(this.evaluate('{*}.size'), 10) / repeat;
+            /*
             if (this._environments !== undefined && this._environments.length !== this._natoms) {
                 let message = 'invalid number of environments for this structure ';
                 message += `got ${this._environments.length} environments, there are ${this._natoms} atoms`;
@@ -465,7 +466,7 @@ export class JSmolWidget {
                 // by JSmol.
                 // tslint:disable-next-line:no-console
                 console.error(message);
-            }
+            }*/
 
             // once we are done, disable the callback to prevent it from firing
             // on restyle/reload

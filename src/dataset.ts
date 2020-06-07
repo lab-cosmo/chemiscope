@@ -156,23 +156,21 @@ export function checkDataset(o: any) {
     if (!('structures' in o && o.structures.length !== undefined)) {
         throw Error('missing "structures" key in dataset');
     }
-    const [structureCount, envCount] = checkStructures(o.structures);
+    const structureCount = checkStructures(o.structures);
 
-    if (!('properties' in o && typeof o.properties === 'object')) {
-        throw Error('missing "properties" key in dataset');
-    }
-    checkProperties(o.properties, structureCount, envCount);
-
+    var envCount = 0;
     if ('environments' in o) {
         if (typeof o.environments.length === undefined) {
             throw Error('"environments" must be an array in dataset');
         }
 
-        if (o.environments.length !== envCount) {
-            throw Error(`expected ${envCount} environments, got ${o.environments.length} instead`);
-        }
-        checkEnvironments(o.environments, o.structures);
+        envCount = checkEnvironments(o.environments, o.structures);
     }
+    console.log("counts", envCount, structureCount);
+    if (!('properties' in o && typeof o.properties === 'object')) {
+        throw Error('missing "properties" key in dataset');
+    }
+    checkProperties(o.properties, structureCount, envCount);    
 }
 
 function checkMetadata(o: any) {
@@ -210,14 +208,12 @@ function checkMetadata(o: any) {
 }
 
 export function checkStructures(o: any): [number, number] {
-    let envCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
         if (!('size' in structure && typeof structure.size === 'number' && isPositiveInteger(structure.size))) {
             throw Error(`missing 'size' for structure ${i}`);
         }
-        envCount += structure.size;
-
+    
         if ('names' in structure && 'x' in structure && 'y' in structure && 'z' in structure) {
             for (const key of ['names', 'x', 'y', 'z']) {
                 if (!(key in structure && structure[key].length !== undefined)) {
@@ -241,7 +237,41 @@ export function checkStructures(o: any): [number, number] {
         }
     }
 
-    return [o.length, envCount];
+    return o.length;
+}
+
+function checkEnvironments(o: any, structures: Structure[]) {
+    for (let i = 0; i < o.length; i++) {
+        const env = o[i];
+
+        if (!('structure' in env && typeof env.structure === 'number')) {
+            throw Error(`missing 'structure' for environment ${i}`);
+        }
+
+        if (!isPositiveInteger(env.structure) || env.structure >= structures.length) {
+            throw Error(
+                `out of bounds 'structure' for environment ${i}: index is \
+                ${env.structure}, we have ${structures.length} structures`,
+            );
+        }
+
+        if (!('center' in env && typeof env.center === 'number')) {
+            throw Error(`missing 'center' for environment ${i}`);
+        }
+
+        const size = structures[env.structure].size;
+        if (!isPositiveInteger(env.center) || env.center >= size) {
+            throw Error(
+                `out of bounds 'center' for environment ${i}: index is \
+                ${env.center}, we have ${size} atoms in structure ${env.structure}`,
+            );
+        }
+
+        if (!('cutoff' in env && typeof env.cutoff === 'number')) {
+            throw Error(`missing 'cutoff' for environment ${i}`);
+        }
+    }
+    return o.length;
 }
 
 function checkProperties(properties: any, structureCount: number, envCount: number) {
@@ -287,38 +317,6 @@ function checkProperties(properties: any, structureCount: number, envCount: numb
     }
 }
 
-function checkEnvironments(o: any, structures: Structure[]) {
-    for (let i = 0; i < o.length; i++) {
-        const env = o[i];
-
-        if (!('structure' in env && typeof env.structure === 'number')) {
-            throw Error(`missing 'structure' for environment ${i}`);
-        }
-
-        if (!isPositiveInteger(env.structure) || env.structure >= structures.length) {
-            throw Error(
-                `out of bounds 'structure' for environment ${i}: index is \
-                ${env.structure}, we have ${structures.length} structures`,
-            );
-        }
-
-        if (!('center' in env && typeof env.center === 'number')) {
-            throw Error(`missing 'center' for environment ${i}`);
-        }
-
-        const size = structures[env.structure].size;
-        if (!isPositiveInteger(env.center) || env.center >= size) {
-            throw Error(
-                `out of bounds 'center' for environment ${i}: index is \
-                ${env.center}, we have ${size} atoms in structure ${env.structure}`,
-            );
-        }
-
-        if (!('cutoff' in env && typeof env.cutoff === 'number')) {
-            throw Error(`missing 'cutoff' for environment ${i}`);
-        }
-    }
-}
 
 /** @hidden */
 export function isPositiveInteger(number: number): boolean {
