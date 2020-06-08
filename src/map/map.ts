@@ -202,8 +202,8 @@ export class PropertiesMap {
 
     /// GUID of the currently selected point
     private _active: string;
-    /// Dictionary of current markers/GUIDs
-    private _markerMap: Map<string, MarkerData>;//{[GUID: string]: MarkerData; };
+    /// Map of current markers/GUIDs
+    private _markerMap: Map<string, MarkerData>;
 
     /// list of GUIDs
     private _GUIDs: string[];
@@ -285,25 +285,25 @@ export class PropertiesMap {
         // the update once.
         // https://github.com/plotly/plotly.js/issues/1025
         if (selectedGUID !== undefined) {
-          if (indexes.structure < 0 && indexes.environment < 0) {
-            this._removeMarker(selectedGUID, true);
-          } else {
-            /// Checks if marker exists on this map, if not adds it
-            if (! this._markerMap.has(selectedGUID)) {
-              this._addMarker(selectedGUID, indexes.environment);
-            }
+            if (indexes.structure < 0 && indexes.environment < 0) {
+                this._removeMarker(selectedGUID, true);
+            } else {
+                /// Checks if marker exists on this map, if not adds it
+                if (!this._markerMap.has(selectedGUID)) {
+                    this._addMarker(selectedGUID, indexes.environment);
+                }
 
-            const markerData = this._markerMap.get(selectedGUID);
-            if (markerData !== undefined) {
-              /// Sets the active marker on this map
-              this.active = selectedGUID;
+                const markerData = this._markerMap.get(selectedGUID);
+                if (markerData !== undefined) {
+                    /// Sets the active marker on this map
+                    this.active = selectedGUID;
 
-              if (markerData.current === undefined || indexes.environment !== markerData.current ) {
-                markerData.current = indexes.environment;
-              }
-              this._updateSelectedMarker(selectedGUID);
+                    if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+                        markerData.current = indexes.environment;
+                    }
+                    this._updateSelectedMarker(selectedGUID);
+                }
             }
-          }
         }
     }
 
@@ -1028,7 +1028,7 @@ export class PropertiesMap {
         if (this._settings.symbol.value !== '') {
             const values = this._property(this._settings.symbol.value).values;
             const markerData = this._markerMap.get(this._active);
-            if (markerData !== undefined ) {
+            if (markerData !== undefined) {
               if (this._is3D()) {
                   // If we need more symbols than available, we'll send a warning
                   // and repeat existing ones
@@ -1145,7 +1145,7 @@ export class PropertiesMap {
         } as unknown as Data);
 
         for (const guid of this._GUIDs) {
-          this._removeMarker(guid, false);
+            this._removeMarker(guid, false);
         }
 
         // Change the data that vary between 2D and 3D mode
@@ -1188,10 +1188,10 @@ export class PropertiesMap {
         } as unknown as Data);
 
         for (const guid of this._GUIDs) {
-          const markerData = this._markerMap.get(guid);
-          if (markerData !== undefined ) {
-            this._addMarker(guid, markerData.current);
-          }
+            const markerData = this._markerMap.get(guid);
+            if (markerData !== undefined ) {
+                this._addMarker(guid, markerData.current);
+            }
         }
 
         // Change the data that vary between 2D and 3D mode
@@ -1242,150 +1242,175 @@ export class PropertiesMap {
             }
         }
     }
-    /*
-     * Function to set the active marker for communicating with the structure viewer
+
+    /**
+     * Function to set the active marker for communicating with the structure
+     * viewer
+     *
+     * @param  activeGUID the GUID of the new active viewer
      */
     public set active(activeGUID: string) {
-      if (activeGUID !== this._active) {
-        if (this._active !== '') {
-          // this has been left as document.getElementById for when we are
-          // setting a new active because the old one has been deleted.
-          const oldButton = document.getElementById(`chsp-selected-${this._active}`);
-          if (oldButton !== null) {
-            oldButton.classList.toggle('chsp-inactive-structure-marker', true);
-            oldButton.classList.toggle('chsp-active-structure-marker', false);
-          }
-        }
-        const newButton = getByID(`chsp-selected-${activeGUID}`);
-        this._active = activeGUID;
-        newButton.classList.toggle('chsp-inactive-structure-marker', false);
-        newButton.classList.toggle('chsp-active-structure-marker', true);
+        if (activeGUID !== this._active) {
+            if (this._active !== '') {
+                // this has been left as document.getElementById for when we are
+                // setting a new active because the old one has been deleted.
+                const oldButton = document.getElementById(`chsp-selected-${this._active}`);
+                if (oldButton !== null) {
+                    oldButton.classList.toggle('chsp-inactive-structure-marker', true);
+                    oldButton.classList.toggle('chsp-active-structure-marker', false);
+                }
+            }
+            const newButton = getByID(`chsp-selected-${activeGUID}`);
+            this._active = activeGUID;
+            newButton.classList.toggle('chsp-inactive-structure-marker', false);
+            newButton.classList.toggle('chsp-active-structure-marker', true);
 
-        const markerData = this._markerMap.get(this._active);
-        if (markerData !== undefined) {
-          const indexes = this._indexer.from_environment(markerData.current);
-          this.onselect(indexes, this._active);
+            const markerData = this._markerMap.get(this._active);
+            if (markerData !== undefined) {
+                const indexes = this._indexer.from_environment(markerData.current);
+                this.onselect(indexes, this._active);
+            }
         }
-      }
     }
-    /** Update the position of the selected marker */
-    private _updateSelectedMarker(selectedGUID: string) {
+
+    /**
+     * Update the position of all the markers indicating selected points in the
+     * map.
+     *
+     * In 3D mode, the markers uses the second Plotly trace.
+     * In 2D mode, these markers are HTML div styled as colored circles that
+     * we manually move around, saving a call to `restyle`.
+     *
+     * @param selectedGUID TODO(pinning)
+     */
+    private _updateSelectedMarker(selectedGUID: string): void {
         const markerData = this._markerMap.get(selectedGUID);
         if (markerData !== undefined) {
-          const selected = markerData.current;
-          const marker = getByID(`chsp-selected-${selectedGUID}`);
+            const selected = markerData.current;
+            const marker = getByID(`chsp-selected-${selectedGUID}`);
 
-          if (this._is3D()) {
-              let symbol;
-              if (this._settings.symbol.value !== '') {
-                  const symbols = this._property(this._settings.symbol.value).values;
-                  symbol = get3DSymbol(symbols[selected]);
-              } else {
-                  symbol = get3DSymbol(0);
-              }
+            if (this._is3D()) {
+                let symbol;
+                if (this._settings.symbol.value !== '') {
+                    const symbols = this._property(this._settings.symbol.value).values;
+                    symbol = get3DSymbol(symbols[selected]);
+                } else {
+                    symbol = get3DSymbol(0);
+                }
 
-              this._restyle({
-                  'x': this._xValues(1),
-                  'y': this._yValues(1),
-                  'z': this._zValues(1),
+                this._restyle({
+                    'x': this._xValues(1),
+                    'y': this._yValues(1),
+                    'z': this._zValues(1),
 
-                  'marker.symbol': symbol,
-              } as Data, 1);
-          } else {
-              const xaxis = this._plot._fullLayout.xaxis;
-              const yaxis = this._plot._fullLayout.yaxis;
-
-              const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
-              const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
-
-              const x = computeX(this._xValues(0)[0][selected]);
-              const y = computeY(this._yValues(0)[0][selected]);
-
-              // hide the point if it is outside the plot, allow for up to 10px
-              // overflow (for points just on the border)
-              const minX = computeX(xaxis.range[0]) - 10;
-              const maxX = computeX(xaxis.range[1]) + 10;
-              const minY = computeY(yaxis.range[1]) - 10;
-              const maxY = computeY(yaxis.range[0]) + 10;
-              if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
-                  marker.style.display = 'none';
-              } else {
-                  marker.style.display = 'block';
-              }
-
-              // -10 since we want the centers to match, and the marker div is 20px wide
-              marker.style.top = `${y - 10}px`;
-              marker.style.left = `${x - 10}px`;
-            }
-
-          const indexes = this._indexer.from_environment(markerData.current);
-          this.onselect(indexes, selectedGUID);
-        }
-      }
-    /*
-     * Function to add a marker with the given GUID string and indices to the map.
-     */
-    private _addMarker(addedGUID: string, index: number = 0, color?: string) {
-      if (! this._markerMap.has(addedGUID)) {
-        const activeButton = getByID(`chsp-activate-${addedGUID}`);
-        const marker = document.createElement('button');
-        marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker-map');
-        if (addedGUID === this._active) {
-          marker.classList.toggle('chsp-inactive-structure-marker-map', false);
-          marker.classList.toggle('chsp-active-structure-marker', true);
-        }
-        marker.id = `chsp-selected-${addedGUID}`;
-        marker.onclick = () => {this.active = addedGUID; };
-
-        color = activeButton.style.backgroundColor;
-        marker.style.backgroundColor = color;
-        this._markerMap.set(addedGUID, {
-                                 color : color,
-                                 current: Math.max(0, index),
-                                 marker: marker,
-                                });
-      }
-      const markerData = this._markerMap.get(addedGUID);
-      if (markerData !== undefined) {
-        if (! this._is3D()) {
-          this._root.appendChild(markerData.marker);
-        }
-        if (! this._GUIDs.includes(addedGUID)) {
-          this._GUIDs.push(addedGUID);
-        }
-      }
-    }
-    /*
-     * Removes a marker from the map.
-     * The parameter deleteFromGUIDs pertains to removing the guid from the guid list.
-     * This is *not* the same as the `force` parameter in structure._removeWidget.
-     * One may want to remove a marker when switching from 2D --> 3D but retain the information.
-     */
-    private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true) {
-        const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
-        if (marker !== null) {
-          if (marker.parentNode !== null) {
-            marker.parentNode.removeChild(marker);
-          }
-
-          // This will be false when going from 2D --> 3D as we want
-          // to remove all markers, but keep their information stored
-          if (deleteFromGUIDs) {
-            this._markerMap.delete(trashedGUID);
-            const idx = this._GUIDs.indexOf(trashedGUID);
-            if (idx >= 0 ) {
-              this._GUIDs.splice(idx, 1);
-            }
-          }
-
-          if (this._active === trashedGUID ) {
-            if ( this._markerMap.has(this._GUIDs[0]) ) {
-              this.active = this._GUIDs[0];
+                    'marker.symbol': symbol,
+                } as Data, 1);
             } else {
-              this._active = '';
-            }
-          }
-        }
-      }
+                const xaxis = this._plot._fullLayout.xaxis;
+                const yaxis = this._plot._fullLayout.yaxis;
 
+                const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
+                const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
+
+                const x = computeX(this._xValues(0)[0][selected]);
+                const y = computeY(this._yValues(0)[0][selected]);
+
+                // hide the point if it is outside the plot, allow for up to 10px
+                // overflow (for points just on the border)
+                const minX = computeX(xaxis.range[0]) - 10;
+                const maxX = computeX(xaxis.range[1]) + 10;
+                const minY = computeY(yaxis.range[1]) - 10;
+                const maxY = computeY(yaxis.range[0]) + 10;
+                if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
+                    marker.style.display = 'none';
+                } else {
+                    marker.style.display = 'block';
+                }
+
+                // -10 since we want the centers to match, and the marker div is 20px wide
+                marker.style.top = `${y - 10}px`;
+                marker.style.left = `${x - 10}px`;
+            }
+
+            const indexes = this._indexer.from_environment(markerData.current);
+            this.onselect(indexes, selectedGUID);
+        }
+    }
+
+    /**
+     * Function to add a marker with the given GUID string and indices to the map.
+     *
+     * @param  addedGUID TODO(pinning)
+     * @param  index     TODO(pinning)
+     * @param  color     TODO(pinning)
+     */
+    private _addMarker(addedGUID: string, index: number = 0, color?: string): void {
+        if (!this._markerMap.has(addedGUID)) {
+            const activeButton = getByID(`chsp-activate-${addedGUID}`);
+            const marker = document.createElement('button');
+            marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker-map');
+            if (addedGUID === this._active) {
+                marker.classList.toggle('chsp-inactive-structure-marker-map', false);
+                marker.classList.toggle('chsp-active-structure-marker', true);
+            }
+            marker.id = `chsp-selected-${addedGUID}`;
+            marker.onclick = () => {this.active = addedGUID; };
+
+            color = activeButton.style.backgroundColor;
+            marker.style.backgroundColor = color;
+            this._markerMap.set(addedGUID, {
+                color : color,
+                current: Math.max(0, index),
+                marker: marker,
+            });
+        }
+
+        const markerData = this._markerMap.get(addedGUID);
+        if (markerData !== undefined) {
+            if (!this._is3D()) {
+                this._root.appendChild(markerData.marker);
+            }
+            if (!this._GUIDs.includes(addedGUID)) {
+                this._GUIDs.push(addedGUID);
+            }
+        }
+    }
+
+    /**
+     * Removes a marker from the map.
+     *
+     * The parameter deleteFromGUIDs pertains to removing the guid from the guid
+     * list. This is *not* the same as the `force` parameter in
+     * `structure._removeWidget`. One may want to remove a marker when switching
+     * from 2D --> 3D but retain the information.
+     *
+     * @param  trashedGUID     TODO(pinning)
+     * @param  deleteFromGUIDs TODO(pinning)
+     */
+     private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true): void {
+         const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
+         if (marker !== null) {
+             if (marker.parentNode !== null) {
+                 marker.parentNode.removeChild(marker);
+             }
+
+             // This will be false when going from 2D --> 3D as we want
+             // to remove all markers, but keep their information stored
+             if (deleteFromGUIDs) {
+                 this._markerMap.delete(trashedGUID);
+                 const idx = this._GUIDs.indexOf(trashedGUID);
+                 if (idx >= 0 ) {
+                     this._GUIDs.splice(idx, 1);
+                 }
+             }
+
+             if (this._active === trashedGUID ) {
+                 if ( this._markerMap.has(this._GUIDs[0]) ) {
+                     this.active = this._GUIDs[0];
+                 } else {
+                     this._active = '';
+                 }
+             }
+         }
+     }
 }
