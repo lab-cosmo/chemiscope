@@ -135,6 +135,13 @@ export class EnvironmentInfo {
         }
     }
 
+    /**
+     * Remove all HTML added by this [[EnvironmentInfo]] in the current document
+     */
+    public remove(): void {
+        this._root.innerHTML = '';
+    }
+
     /** Create the structure slider and table */
     private _createStructure(id: string, properties: {[name: string]: Property}): Info {
         const slider = new Slider(this._root, 'structure');

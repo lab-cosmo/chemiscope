@@ -19,7 +19,7 @@ let DATASET = undefined;
 let ORIGINAL_LOAD_STRUCTURE = undefined;
 
 function loadStructureOnDemand(index, structure) {
-    /**  
+    /**
      * An example of a loadStructure callback to load structures from an URL on demand
     */
     return JSON.parse($.ajax({
@@ -30,7 +30,7 @@ function loadStructureOnDemand(index, structure) {
     }).responseText);
 }
 
-function setupChemiscope(dataset) {    
+function setupChemiscope(dataset) {
     const config = {
         map:       'chemiscope-map',
         info:      'chemiscope-info',
@@ -45,13 +45,11 @@ function setupChemiscope(dataset) {
     }
 
     if (VISUALIZER !== undefined) {
-        VISUALIZER.unload();
+        VISUALIZER.remove();
     }
 
-    Chemiscope.DefaultVisualizer.load(config, dataset).then((v) => {        
-        
+    Chemiscope.DefaultVisualizer.load(config, dataset).then((v) => {
         VISUALIZER = v;
-        
         v.structure.settingsPlacement((rect) => {
             const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
 
