@@ -276,32 +276,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Change the displayed dataset to a new one, without re-creating the
-     * viewer itself.
-     *
-     * @param  name       name of the new dataset
-     * @param  indexer    new indexer making the environment index to
-     *                    structure/atom pair translation
-     * @param  properties new properties to display
-     */
-    public changeDataset(indexer: EnvironmentIndexer, properties: {[name: string]: Property}) {
-        if (this._is3D()) {
-            this._settings.z.property.value = '';
-            this._switch2D();
-        }
-
-        this._indexer = indexer;
-        this._selected = 0;
-        this._data = new MapData(properties);
-        this._setupSettings();
-        this._connectSettings();
-
-        this._createPlot();
-
-        this._relayout({ 'xaxis.autorange': true, 'yaxis.autorange': true });
-    }
-
-    /**
      * Use the given callback to compute the placement of the settings modal.
      * The callback gets the current placement of the settings as a DOMRect,
      * and should return top and left positions in pixels, used with `position:

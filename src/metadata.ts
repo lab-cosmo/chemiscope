@@ -103,12 +103,4 @@ export class MetadataPanel {
         this._modal.innerHTML = generateModal(this._guid, metadata);
     }
 
-    /**
-     * Change the displayed dataset to a new one
-     * @param  metadata new dataset metadata
-     */
-    public changeDataset(metadata: Metadata) {
-        this._name.innerHTML = generateName(this._guid, metadata.name);
-        this._modal.innerHTML = generateModal(this._guid, metadata);
-    }
 }
