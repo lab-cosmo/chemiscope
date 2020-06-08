@@ -16,6 +16,7 @@ const config: webpack.Configuration = {
             { test: /\.ts?$/, loader: 'ts-loader' },
             { test: /\.css?$/, use: ['style-loader', 'css-loader'] },
             { test: /\.html?$/, loader: 'html-loader', options: { minimize: true } },
+            { test: /\.svg?$/, loader: 'html-loader', options: { minimize: true } },
             { test: /\.js?$/, use: ['ify-loader'] },
         ],
     },

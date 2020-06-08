@@ -205,15 +205,25 @@ export class JSmolWidget {
      * @param j2sPath path where j2s files can be loaded by Jmol
      * @param serverURL URL where to find `jsmol.php`
      */
-    constructor(id: string, j2sPath: string, serverURL: string = DEFAULT_SERVER_URL) {
+    constructor(id: string, j2sPath: string, guid?: string, serverURL: string = DEFAULT_SERVER_URL) {
         if (window.Jmol === undefined) {
             throw Error('Jmol is required, load it from your favorite source');
         }
 
-        // add a 'chsp-' prefic to ensure the id start with letter. It looks like
-        // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
-        // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
-        this.guid = 'chsp-' + generateGUID();
+        if(guid === undefined) {
+          // add a 'chsp-' prefic to ensure the id start with letter. It looks like
+          // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
+          // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
+          this.guid = 'chsp-' + generateGUID();
+        }
+        else {
+          if(guid.match(/^\d/)) {
+            this.guid = 'chsp-' + guid;
+            }
+          else{
+            this.guid = guid;
+          }
+        }
         this._lastSelected = -1;
 
         // store a reference to the global Jmol and the HTML root
@@ -863,6 +873,7 @@ export class JSmolWidget {
         }
     }
 
+    /// Background *atoms*
     private _backgroundStyle(): string {
         let commands = '';
 

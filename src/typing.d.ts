@@ -3,6 +3,11 @@ declare module '*.html' {
     export default content;
 }
 
+declare module '*.svg' {
+    const content: string;
+    export default content;
+}
+
 declare module 'jsmol' {
     export interface JSmolApplet {
         _cover: (_: boolean) => void;
