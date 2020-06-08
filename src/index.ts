@@ -24,7 +24,7 @@ import {MetadataPanel} from './metadata';
 import {StructureViewer} from './structure';
 
 import {checkDataset, Dataset, Structure} from './dataset';
-import {addWarningHandler, EnvironmentIndexer, getByID} from './utils';
+import {addWarningHandler, EnvironmentIndexer} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
@@ -108,12 +108,6 @@ class DefaultVisualizer {
     public meta: MetadataPanel;
     public structure: StructureViewer;
 
-    private _ids: {
-        map: string;
-        meta: string;
-        info: string;
-        structure: string;
-    };
     private _indexer: EnvironmentIndexer;
 
     // the constructor is private because the main entry point is the static
@@ -122,7 +116,6 @@ class DefaultVisualizer {
         checkConfig(config);
         checkDataset(dataset);
 
-        this._ids = config;
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
@@ -168,11 +161,11 @@ class DefaultVisualizer {
     /**
      * Removes all the chemiscope widgets from the DOM
      */
-    public unload() : void {
-        getByID(this._ids.map).innerHTML = '';
-        getByID(this._ids.meta).innerHTML = '';
-        getByID(this._ids.info).innerHTML = '';
-        getByID(this._ids.structure).innerHTML = '';
+    public remove(): void {
+        this.map.remove();
+        this.meta.remove();
+        this.info.remove();
+        this.structure.remove();
     }
 }
 
