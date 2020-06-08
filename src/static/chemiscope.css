@@ -50,6 +50,131 @@
     display: block;
 }
 
+/* Tooltip text */
+.tooltiptext {
+  visibility: hidden;
+  font-size: 12px;
+  height: 28px;
+  background-color: #69738a;
+  color: white;
+  border-radius: 2px;
+  white-space: nowrap;
+  text-align: center;
+  placement: auto bottom;
+  trigger: hover focus;
+  display: inline-block;
+  line-height: 28px;
+  horizontal-padding: 10px;
+  top: 120%;
+  /* Position the tooltip text - see examples below! */
+  position: relative;
+  z-index: 100000;
+}
+
+.chsp-active-structure-marker {
+    border-radius: 50%;
+    border: solid thin black;
+    position: absolute;
+    z-index: 10;
+    background-color: #4CAF50;
+    right: 110px;
+    top: 10px;
+    border-width: 2px;
+    height: 20px;
+    width: 20px;
+}
+
+.chsp-active-structure-marker:hover{
+  border-width: 3px;
+}
+
+.chsp-active-structure-marker:hover .tooltiptext {
+  visibility: visible;
+}
+
+.chsp-inactive-structure-marker {
+    border-radius: 50%;
+    border: solid thin black;
+    position: absolute;
+    z-index: 10;
+    background-color: #4CAF50;
+    height: 15px;
+    width: 15px;
+    right: 112.5px;
+    top: 12.5px;
+    border-width: 1px;
+}
+
+.chsp-inactive-structure-marker:hover {
+    height: 20px;
+    width: 20px;
+    right: 110px;
+    top: 10px;
+}
+
+.chsp-inactive-structure-marker:hover .tooltiptext {
+  visibility: visible;
+ }
+
+.chsp-close-widget-button {
+  border: none;
+  background-color: #ffffff;
+  position: absolute;
+  top: 7.5px;
+  right: 50px;
+  height:25px;
+  width:25px;
+  opacity: 0.4;
+  z-index: 10;
+ }
+
+.chsp-close-widget-button:hover {
+  opacity: 0.9;
+}
+
+.chsp-close-widget-button:hover .tooltiptext {
+  visibility: visible;
+ }
+
+.chsp-duplicate-widget-button {
+  border: none;
+  background-color: #ffffff;
+  position: absolute;
+  top: 7.5px;
+  right: 80px;
+  height:25px;
+  width:25px;
+  opacity:0.4;
+  z-index: 10;
+ }
+
+ .chsp-duplicate-widget-button:hover {
+  opacity: 0.9;
+ }
+
+.chsp-duplicate-widget-button:hover .tooltiptext {
+  visibility: visible;
+ }
+
+.chsp-structure-viewer-grid {
+  display: grid;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  grid-column-gap: 2px;
+  grid-row-gap: 2px;
+}
+
+.chsp-structure-viewer-cell {
+  width: 98%;
+  height: 98%;
+  left: 1%;
+  top: 1%;
+  position: relative;
+  border : 1px solid black;
+  padding : 1px;
+}
+
 .chsp-map-options {
     font-weight: bold;
     display: grid;

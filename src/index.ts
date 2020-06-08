@@ -121,7 +121,6 @@ class DefaultVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
-        this.map = new PropertiesMap(config.map, this._indexer, dataset.properties);
         this.structure = new StructureViewer(
             config.structure,
             config.j2sPath,
@@ -130,13 +129,22 @@ class DefaultVisualizer {
             dataset.environments,
         );
 
+        this.map = new PropertiesMap(
+            config.map,
+            this._indexer,
+            dataset.properties,
+            this.structure.active,
+        );
+
         if (config.loadStructure !== undefined) {
             this.structure.loadStructure = config.loadStructure;
         }
 
-        this.structure.onselect = (indexes) => {
-            this.map.select(indexes);
-            this.info.show(indexes);
+        this.structure.onselect = (indexes, selectedGUID) => {
+            this.map.select(indexes, selectedGUID);
+            if (indexes.structure > 0 && indexes.environment > 0) {
+              this.info.show(indexes);
+            }
         };
 
         this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
@@ -147,9 +155,9 @@ class DefaultVisualizer {
         this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
-        this.map.onselect = (indexes) => {
+        this.map.onselect = (indexes, selectedGUID) => {
             this.info.show(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes, selectedGUID);
         };
 
         const initial = {environment: 0, structure: 0, atom: 0};
