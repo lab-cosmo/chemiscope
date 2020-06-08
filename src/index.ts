@@ -24,7 +24,7 @@ import {MetadataPanel} from './metadata';
 import {StructureViewer} from './structure';
 
 import {checkDataset, Dataset, Structure} from './dataset';
-import {addWarningHandler, EnvironmentIndexer} from './utils';
+import {addWarningHandler, EnvironmentIndexer, getByID} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
@@ -166,49 +166,13 @@ class DefaultVisualizer {
     }
 
     /**
-     * Change the loaded dataset in an existing visualizer.
-     *
-     * This function returns a `Promise` to prevent blocking the browser while
-     * everything is loading.
-     *
-     * @param  dataset dataset to load
-     * @return         Promise that resolves when everything is loaded
+     * Removes all the chemiscope widgets from the DOM
      */
-    public changeDataset(dataset: Dataset): Promise<void> {
-        return new Promise((resolve, _) => {
-            checkDataset(dataset);
-
-            const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
-            this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
-
-            this.meta.changeDataset(dataset.meta);
-
-            this.map.changeDataset(this._indexer, dataset.properties);
-            this.structure.changeDataset(this._indexer, dataset.structures, dataset.environments);
-            this.structure.onselect = (indexes) => {
-                this.map.select(indexes);
-                this.info.show(indexes);
-            };
-
-            this.info = new EnvironmentInfo(this._ids.info, dataset.properties, this._indexer);
-            this.info.onchange = (indexes) => {
-                this.map.select(indexes);
-                this.structure.show(indexes);
-            };
-            this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
-            this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
-
-            this.map.onselect = (indexes) => {
-                this.info.show(indexes);
-                this.structure.show(indexes);
-            };
-
-            const initial = {environment: 0, structure: 0, atom: 0};
-            this.structure.show(initial);
-            this.info.show(initial);
-            this.map.select(initial);
-            resolve();
-        });
+    public unload() : void {
+        getByID(this._ids.map).innerHTML = '';
+        getByID(this._ids.meta).innerHTML = '';
+        getByID(this._ids.info).innerHTML = '';
+        getByID(this._ids.structure).innerHTML = '';
     }
 }
 
