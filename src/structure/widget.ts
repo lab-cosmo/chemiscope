@@ -203,6 +203,7 @@ export class JSmolWidget {
      *
      * @param id HTML element id inside which the viewer will be created
      * @param j2sPath path where j2s files can be loaded by Jmol
+     * @param guid TODO(pinning)
      * @param serverURL URL where to find `jsmol.php`
      */
     constructor(id: string, j2sPath: string, guid?: string, serverURL: string = DEFAULT_SERVER_URL) {
@@ -210,20 +211,14 @@ export class JSmolWidget {
             throw Error('Jmol is required, load it from your favorite source');
         }
 
-        if(guid === undefined) {
-          // add a 'chsp-' prefic to ensure the id start with letter. It looks like
-          // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
-          // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
-          this.guid = 'chsp-' + generateGUID();
+        if (guid === undefined) {
+            guid = generateGUID();
         }
-        else {
-          if(guid.match(/^\d/)) {
-            this.guid = 'chsp-' + guid;
-            }
-          else{
-            this.guid = guid;
-          }
-        }
+
+        // add a 'chsp-' prefic to ensure the id start with letter. It looks like
+        // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
+        // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
+        this.guid = 'chsp-' + guid;
         this._lastSelected = -1;
 
         // store a reference to the global Jmol and the HTML root
