@@ -619,7 +619,8 @@ export class JSmolWidget {
         // on a single page
         template.innerHTML = HTML_SETTINGS
             .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this.guid}-${id} `)
-            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `);
+            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `)
+            .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${this.guid}-${id} `);
 
         this._settingsModal = template.content.firstChild! as HTMLElement;
         document.body.appendChild(this._settingsModal);
@@ -804,18 +805,21 @@ export class JSmolWidget {
         const wireframe = `wireframe ${settings.bonds.value ? '0.15' : 'off'}`;
         const spacefill = `spacefill ${settings.spaceFilling.value ? '80%' : '23%'}`;
 
-        let commands = '';
+        let commands = '';        
         if (this._highlighted === undefined || !settings.environments.activated.value) {
             commands += 'select all;';
+        	commands += 'centerAt average;';
             commands += 'hide none;';
             commands += 'color atoms cpk; color atoms opaque;';
             commands += `dots off; ${wireframe}; ${spacefill};`;
         } else {
-            // center of the environment
+            // center of the environment (or structure)
             if (settings.environments.center.value) {
-                commands += `select @${this._highlighted + 1};`;
-            	commands += 'centerAt average;';
+                commands += `select @${this._highlighted + 1};`;            
+            } else {
+                commands += 'select all;'
             }
+            commands += 'centerAt average;';
 
             // Atoms not in the environment
             commands += 'select all;';
