@@ -172,7 +172,7 @@ class DefaultVisualizer {
         getByID(this._ids.map).innerHTML = '';
         getByID(this._ids.meta).innerHTML = '';
         getByID(this._ids.info).innerHTML = '';
-        getByID(this._ids.structure).innerHTML = '';
+        getByID(this._ids.structure).innerHTML = '';                
     }
 }
 
