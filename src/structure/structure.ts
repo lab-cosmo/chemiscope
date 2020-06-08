@@ -148,27 +148,6 @@ export class StructureViewer {
     }
 
     /**
-     * Change the displayed dataset to a new one, without re-creating the
-     * viewer itself.
-     *
-     * @param  indexer      new indexer making the environment index to
-     *                      structure/atom pair translation
-     * @param  structures   new list of structures to display
-     * @param  environments new list of atom centered environments
-     */
-    public changeDataset(
-        indexer: EnvironmentIndexer,
-        structures: Structure[] | UserStructure[],
-        environments?: Environment[],
-    ) {
-        this._structures = structures;
-        this._cachedStructures = new Array(structures.length);
-        this._environments = groupByStructure(this._structures.length, environments);
-        this._indexer = indexer;
-        this._current = {structure: -1, atom: -1};
-    }
-
-    /**
      * Show a new structure, as identified by `indexes`. This will switch to
      * the structure at index `indexes.structure`, and if environments where
      * passed to the constructor and the current display mode is `"atom"`,

@@ -18,7 +18,10 @@ let VISUALIZER = undefined;
 let DATASET = undefined;
 let ORIGINAL_LOAD_STRUCTURE = undefined;
 
-function loadStructure(index, structure) {
+function loadStructureOnDemand(index, structure) {
+    /**  
+     * An example of a loadStructure callback to load structures from an URL on demand
+    */
     return JSON.parse($.ajax({
         type: "GET",
         url: structure.data,
@@ -27,53 +30,48 @@ function loadStructure(index, structure) {
     }).responseText);
 }
 
-function setupChemiscope(dataset) {
-    if (VISUALIZER !== undefined) {
-        if (DATASET === "Azaphenacenes.json.gz") {
-            VISUALIZER.structure.loadStructure = loadStructure;
-        } else {
-            VISUALIZER.structure.loadStructure = ORIGINAL_LOAD_STRUCTURE;
-        }
-        VISUALIZER.changeDataset(dataset)
-            .then(() => stopLoading())
-            .catch(e => setTimeout(() => {throw e;}));
-    } else {
-        const config = {
-            map:       'chemiscope-map',
-            info:      'chemiscope-info',
-            meta:      'chemiscope-meta',
-            structure: 'chemiscope-structure',
-            j2sPath:   GLOBAL_J2S_PATH,
-        };
+function setupChemiscope(dataset) {    
+    const config = {
+        map:       'chemiscope-map',
+        info:      'chemiscope-info',
+        meta:      'chemiscope-meta',
+        structure: 'chemiscope-structure',
+        j2sPath:   GLOBAL_J2S_PATH,
+    };
 
-        Chemiscope.DefaultVisualizer.load(config, dataset).then(v => {
-            VISUALIZER = v;
-            VISUALIZER.structure.settingsPlacement((rect) => {
-                const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
-
-                return {
-                    top: structureRect.top,
-                    left: structureRect.left - rect.width - 25,
-                };
-            });
-
-            ORIGINAL_LOAD_STRUCTURE = VISUALIZER.structure.loadStructure;
-            if (DATASET === "Azaphenacenes.json.gz") {
-                VISUALIZER.structure.loadStructure = loadStructure;
-            }
-
-            VISUALIZER.map.settingsPlacement((rect) => {
-                const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
-
-                return {
-                    top: mapRect.top,
-                    left: mapRect.left + mapRect.width + 25,
-                };
-            });
-
-            stopLoading();
-        }).catch(e => setTimeout(() => {throw e;}));
+    if (DATASET === "Azaphenacenes.json.gz") {
+        // example of asynchronous structure loading
+        config.loadStructure = loadStructureOnDemand;
     }
+
+    if (VISUALIZER !== undefined) {
+        VISUALIZER.unload();
+    }
+
+    Chemiscope.DefaultVisualizer.load(config, dataset).then((v) => {        
+        
+        VISUALIZER = v;
+        
+        v.structure.settingsPlacement((rect) => {
+            const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
+
+            return {
+                top: structureRect.top,
+                left: structureRect.left - rect.width - 25,
+            };
+        });
+
+        v.map.settingsPlacement((rect) => {
+            const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
+
+            return {
+                top: mapRect.top,
+                left: mapRect.left + mapRect.width + 25,
+            };
+        });
+
+        stopLoading();
+    }).catch(e => setTimeout(() => {throw e;}));
 }
 
 function displayError(error) {
