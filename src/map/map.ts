@@ -202,11 +202,8 @@ export class PropertiesMap {
 
     /// GUID of the currently selected point
     private _active: string;
-    /// Map of current markers/GUIDs
-    private _markerMap: Map<string, MarkerData>;
-
-    /// list of GUIDs
-    private _GUIDs: string[];
+    /// Map associating currently selected markers GUID to additional data
+    private _selected: Map<string, MarkerData>;
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
@@ -249,11 +246,8 @@ export class PropertiesMap {
                 ) {
         this._indexer = indexer;
         this.onselect = () => {};
-
-        /// new parameters
         this._active = '';
-        this._markerMap = new Map();
-        this._GUIDs = [];
+        this._selected = new Map();
 
         this._root = getByID(id);
 
@@ -289,11 +283,11 @@ export class PropertiesMap {
                 this._removeMarker(selectedGUID, true);
             } else {
                 /// Checks if marker exists on this map, if not adds it
-                if (!this._markerMap.has(selectedGUID)) {
+                if (!this._selected.has(selectedGUID)) {
                     this._addMarker(selectedGUID, indexes.environment);
                 }
 
-                const markerData = this._markerMap.get(selectedGUID);
+                const markerData = this._selected.get(selectedGUID);
                 if (markerData !== undefined) {
                     /// Sets the active marker on this map
                     this.active = selectedGUID;
@@ -854,8 +848,8 @@ export class PropertiesMap {
         });
         this._plot.on('plotly_afterplot', () => this._afterplot());
 
-        for (const guid of this._GUIDs) {
-          this._updateSelectedMarker(guid);
+        for (const guid of this._selected.keys()) {
+            this._updateSelectedMarker(guid);
         }
     }
 
@@ -889,11 +883,8 @@ export class PropertiesMap {
     private _xValues(trace?: number): number[][] {
         const values = this._property(this._settings.x.property.value).values;
         const selected = [];
-        for (const guid of this._GUIDs) {
-          const markerData = this._markerMap.get(guid);
-          if (markerData !== undefined ) {
-            selected.push(values[markerData.current]);
-          }
+        for (const marker of this._selected.values()) {
+            selected.push(values[marker.current]);
         }
 
         if (!this._is3D()) {
@@ -909,12 +900,10 @@ export class PropertiesMap {
     private _yValues(trace?: number): number[][] {
         const values = this._property(this._settings.y.property.value).values;
         const selected = [];
-        for (const guid of this._GUIDs) {
-          const markerData = this._markerMap.get(guid);
-          if (markerData !== undefined ) {
-            selected.push(values[markerData.current]);
-          }
+        for (const marker of this._selected.values()) {
+            selected.push(values[marker.current]);
         }
+
         if (!this._is3D()) {
             selected[0] = NaN;
         }
@@ -932,11 +921,8 @@ export class PropertiesMap {
 
         const values = this._property(this._settings.z.property.value).values;
         const selected = [];
-        for (const guid of this._GUIDs) {
-          const markerData = this._markerMap.get(guid);
-          if (markerData !== undefined ) {
-            selected.push(values[markerData.current]);
-          }
+        for (const marker of this._selected.values()) {
+            selected.push(values[marker.current]);
         }
         return this._selectTrace(values, selected, trace);
     }
@@ -1025,29 +1011,29 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _symbols(trace?: number): Array<number | number[] | string | string[]> {
-        if (this._settings.symbol.value !== '') {
-            const values = this._property(this._settings.symbol.value).values;
-            const markerData = this._markerMap.get(this._active);
-            if (markerData !== undefined) {
-              if (this._is3D()) {
-                  // If we need more symbols than available, we'll send a warning
-                  // and repeat existing ones
-                  if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
-                      sendWarning(`${this._symbolsCount()} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`);
-                  }
-                  const symbols = values.map(get3DSymbol);
-                  const symbol = symbols[markerData.current];
-                  return this._selectTrace<string | string[]>(symbols, symbol, trace);
-              } else {
-                  // in 2D mode, use automatic assignment of symbols from numeric
-                  // values
-                  const value = values[markerData.current];
-                  return this._selectTrace<number | number[]>(values, value, trace);
-              }
-            } else { throw Error('The data for the active marker does not exist.'); }
-        } else {
+        if (this._settings.symbol.value === '') {
             // default to 0 (i.e. circles)
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
+        }
+
+        const values = this._property(this._settings.symbol.value).values;
+        const markerData = this._selected.get(this._active);
+        assert(markerData !== undefined);
+
+        if (this._is3D()) {
+            // If we need more symbols than available, we'll send a warning
+            // and repeat existing ones
+            if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
+              sendWarning(`${this._symbolsCount()} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`);
+            }
+            const symbols = values.map(get3DSymbol);
+            const symbol = symbols[markerData.current];
+            return this._selectTrace<string | string[]>(symbols, symbol, trace);
+        } else {
+            // in 2D mode, use automatic assignment of symbols from numeric
+            // values
+            const value = values[markerData.current];
+            return this._selectTrace<number | number[]>(values, value, trace);
         }
     }
 
@@ -1144,7 +1130,7 @@ export class PropertiesMap {
             'type': 'scatter3d',
         } as unknown as Data);
 
-        for (const guid of this._GUIDs) {
+        for (const guid of this._selected.keys()) {
             this._removeMarker(guid, false);
         }
 
@@ -1187,11 +1173,8 @@ export class PropertiesMap {
             'type': 'scattergl',
         } as unknown as Data);
 
-        for (const guid of this._GUIDs) {
-            const markerData = this._markerMap.get(guid);
-            if (markerData !== undefined ) {
-                this._addMarker(guid, markerData.current);
-            }
+        for (const [guid, marker] of this._selected.entries()) {
+            this._addMarker(guid, marker.current);
         }
 
         // Change the data that vary between 2D and 3D mode
@@ -1237,7 +1220,7 @@ export class PropertiesMap {
             this._settings.y.min.value = layout.yaxis.range[0];
             this._settings.y.max.value = layout.yaxis.range[1];
 
-            for (const guid of this._GUIDs) {
+            for (const guid of this._selected.keys()) {
                 this._updateSelectedMarker(guid);
             }
         }
@@ -1265,7 +1248,7 @@ export class PropertiesMap {
             newButton.classList.toggle('chsp-inactive-structure-marker', false);
             newButton.classList.toggle('chsp-active-structure-marker', true);
 
-            const markerData = this._markerMap.get(this._active);
+            const markerData = this._selected.get(this._active);
             if (markerData !== undefined) {
                 const indexes = this._indexer.from_environment(markerData.current);
                 this.onselect(indexes, this._active);
@@ -1284,7 +1267,7 @@ export class PropertiesMap {
      * @param selectedGUID TODO(pinning)
      */
     private _updateSelectedMarker(selectedGUID: string): void {
-        const markerData = this._markerMap.get(selectedGUID);
+        const markerData = this._selected.get(selectedGUID);
         if (markerData !== undefined) {
             const selected = markerData.current;
             const marker = getByID(`chsp-selected-${selectedGUID}`);
@@ -1345,7 +1328,7 @@ export class PropertiesMap {
      * @param  color     TODO(pinning)
      */
     private _addMarker(addedGUID: string, index: number = 0, color?: string): void {
-        if (!this._markerMap.has(addedGUID)) {
+        if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
             const marker = document.createElement('button');
             marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker-map');
@@ -1358,20 +1341,17 @@ export class PropertiesMap {
 
             color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
-            this._markerMap.set(addedGUID, {
+            this._selected.set(addedGUID, {
                 color : color,
                 current: Math.max(0, index),
                 marker: marker,
             });
         }
 
-        const markerData = this._markerMap.get(addedGUID);
+        const markerData = this._selected.get(addedGUID);
         if (markerData !== undefined) {
             if (!this._is3D()) {
                 this._root.appendChild(markerData.marker);
-            }
-            if (!this._GUIDs.includes(addedGUID)) {
-                this._GUIDs.push(addedGUID);
             }
         }
     }
@@ -1387,30 +1367,23 @@ export class PropertiesMap {
      * @param  trashedGUID     TODO(pinning)
      * @param  deleteFromGUIDs TODO(pinning)
      */
-     private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true): void {
-         const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
-         if (marker !== null) {
-             if (marker.parentNode !== null) {
-                 marker.parentNode.removeChild(marker);
-             }
+    private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true): void {
+        const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
+        if (marker !== null) {
+            if (marker.parentNode !== null) {
+                marker.parentNode.removeChild(marker);
+            }
 
-             // This will be false when going from 2D --> 3D as we want
-             // to remove all markers, but keep their information stored
-             if (deleteFromGUIDs) {
-                 this._markerMap.delete(trashedGUID);
-                 const idx = this._GUIDs.indexOf(trashedGUID);
-                 if (idx >= 0 ) {
-                     this._GUIDs.splice(idx, 1);
-                 }
-             }
+            // This will be false when going from 2D --> 3D as we want
+            // to remove all markers, but keep their information stored
+            if (deleteFromGUIDs) {
+                this._selected.delete(trashedGUID);
+            }
 
-             if (this._active === trashedGUID ) {
-                 if ( this._markerMap.has(this._GUIDs[0]) ) {
-                     this.active = this._GUIDs[0];
-                 } else {
-                     this._active = '';
-                 }
-             }
-         }
-     }
+            if (this._active === trashedGUID) {
+                assert(this._selected.size > 0);
+                this.active = this._selected.keys().next().value;
+            }
+        }
+    }
 }
