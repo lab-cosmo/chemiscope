@@ -85,42 +85,39 @@
                             <input type="checkbox" class="custom-control-input" id=env-center>
                             <label class="custom-control-label" for=env-center title="center automatically structure or environment in the viewport" style="cursor: help;">center</label>
                         </div>
-                        <button class="btn btn-sm btn-secondary chsp-settings-extra-env-open" type="button" data-toggle="collapse" data-target="#chsp-extra-env" id=chsp-env-more>
+                        <button class="btn btn-sm btn-secondary chsp-extra-options-btn" type="button" data-toggle="collapse" data-target="#chsp-extra-env" id=chsp-env-more>
                             more options
                         </button>
-                        <div class="collapse chsp-map-extra-env" id=chsp-extra-env>
-                            <div class="chsp-settings-environments">
-                                <div> </div>                                
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend">
-                                       <label class="input-group-text" for=env-cutoff>cutoff</label>
-                                     </div>
-                                     <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
-                                </div>
-                                <button class="btn btn-sm btn-light" id=env-reset>reset</button>
-                                <div>
-                                    <span style="vertical-align: middle">Background atoms</span>
-                                </div>
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend">
-                                       <label class="input-group-text" for=env-bg-color>color</label>
-                                     </div>
-                                     <select id=env-bg-color class="custom-select">
-                                         <option value="CPK">CPK</option>
-                                         <option value="grey">grey</option>
-                                     </select>
-                                </div>
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend">
-                                        <label class="input-group-text" for=env-bg-style>style</label>
-                                      </div>
-                                      <select id=env-bg-style class="custom-select">
-                                          <option value="licorice">licorice</option>
-                                          <option value="ball-stick">ball and stick</option>
-                                          <option value="hide">hide</option>
-                                      </select>
-                                </div>
-                            </div>                        
+                        <div class="collapse chsp-settings-extra-options" id=chsp-extra-env>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                   <label class="input-group-text" for=env-cutoff>cutoff</label>
+                                 </div>
+                                 <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
+                            </div>
+                            <button class="btn btn-sm btn-light" id=env-reset>reset</button>
+                            <div>
+                                <span style="vertical-align: middle">Background atoms</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                   <label class="input-group-text" for=env-bg-color>color</label>
+                                 </div>
+                                 <select id=env-bg-color class="custom-select">
+                                     <option value="CPK">CPK</option>
+                                     <option value="grey">grey</option>
+                                 </select>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for=env-bg-style>style</label>
+                                  </div>
+                                  <select id=env-bg-style class="custom-select">
+                                      <option value="licorice">licorice</option>
+                                      <option value="ball-stick">ball and stick</option>
+                                      <option value="hide">hide</option>
+                                  </select>
+                            </div> 
                         </div>
                     </div>
                     <div style="margin-bottom: 0.8em;"></div>                    

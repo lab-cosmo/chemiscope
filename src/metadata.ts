@@ -98,9 +98,17 @@ export class MetadataPanel {
         this._name.innerHTML = generateName(this._guid, metadata.name);
         this._name.classList.add('chsp-meta');
 
-        this._modal = document.createElement('div');
+        const template = document.createElement('template');
+        template.innerHTML = generateModal(this._guid, metadata);
+        this._modal = template.content.firstChild! as HTMLElement;
         document.body.appendChild(this._modal);
-        this._modal.innerHTML = generateModal(this._guid, metadata);
     }
 
+    /**
+     * Remove all HTML added by this [[EnvironmentInfo]] in the current document
+     */
+    public remove(): void {
+        this._name.innerHTML = '';
+        this._modal.remove();
+    }
 }

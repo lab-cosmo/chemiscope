@@ -218,6 +218,8 @@ export class PropertiesMap {
     };
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
+    /// The HTML element containing the settings modal
+    private _settingsModal!: HTMLElement;
 
     /// Marker indicating the position of the latest selected point in 2D mode
     /// Using such div is much faster than trying to restyle the full plot,
@@ -276,6 +278,14 @@ export class PropertiesMap {
     }
 
     /**
+     * Remove all HTML added by this [[PropertiesMap]] in the current document
+     */
+    public remove(): void {
+        this._root.innerHTML = '';
+        this._settingsModal.remove();
+    }
+
+    /**
      * Use the given callback to compute the placement of the settings modal.
      * The callback gets the current placement of the settings as a DOMRect,
      * and should return top and left positions in pixels, used with `position:
@@ -308,13 +318,13 @@ export class PropertiesMap {
         const openSettings = template.content.firstChild!;
         this._root.append(openSettings);
 
-        // replace id to ensure they are unique even if we have mulitple viewers
-        // on a single page
+        // TODO: set unique HTML id in the settings to allow multiple map in
+        // the same page
         template.innerHTML = HTML_SETTINGS;
-        const modal = template.content.firstChild!;
-        document.body.appendChild(modal);
+        this._settingsModal = template.content.firstChild! as HTMLElement;
+        document.body.appendChild(this._settingsModal);
 
-        const modalDialog = modal.childNodes[1]! as HTMLElement;
+        const modalDialog = this._settingsModal.childNodes[1]! as HTMLElement;
         if (!modalDialog.classList.contains('modal-dialog')) {
             throw Error('internal error: missing modal-dialog class');
         }

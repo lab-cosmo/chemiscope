@@ -121,6 +121,8 @@ export class JSmolWidget {
 
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
+    /// The HTML element containing the settings modal
+    private _settingsModal!: HTMLElement;
     /// Reference to the global Jmol variable
     private _Jmol: JmolObject;
     /// Reference to the JSmol applet to be updated with script calls
@@ -297,6 +299,14 @@ export class JSmolWidget {
 
             this.onselect(picked);
         };
+    }
+
+    /**
+     * Remove all HTML added by this [[JSmolWidget]] in the current document
+     */
+    public remove(): void {
+        (this._root.parentNode! as HTMLElement).innerHTML = '';
+        this._settingsModal.remove();
     }
 
     /**
@@ -611,10 +621,10 @@ export class JSmolWidget {
             .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this.guid}-${id} `)
             .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `);
 
-        const modal = template.content.firstChild!;
-        document.body.appendChild(modal);
+        this._settingsModal = template.content.firstChild! as HTMLElement;
+        document.body.appendChild(this._settingsModal);
 
-        const modalDialog = modal.childNodes[1]! as HTMLElement;
+        const modalDialog = this._settingsModal.childNodes[1]! as HTMLElement;
         if (!modalDialog.classList.contains('modal-dialog')) {
             throw Error('internal error: missing modal-dialog class');
         }

@@ -77,6 +77,7 @@ export class StructureViewer {
      */
     public loadStructure: (index: number, structure: any) => Structure;
 
+    /// The JSmolWidget is responsible for displaying the current structure
     private _widget: JSmolWidget;
     /// Playback delay setting
     private _delay: HTMLInputElement;
@@ -230,6 +231,13 @@ export class StructureViewer {
                 this.atomPlayback(advance);
             }
         }, parseFloat(this._delay.value) * 100);
+    }
+
+    /**
+     * Remove all HTML added by this [[StructureViewer]] in the current document
+     */
+    public remove(): void {
+        this._widget.remove();
     }
 
     private _structureForJSmol(index: number): string {
