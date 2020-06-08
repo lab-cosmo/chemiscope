@@ -108,6 +108,7 @@ def main():
 
     with open(output_name, 'w') as fd:
         fd.write(str(html))
+        fd.write('<script type="text/javascript"> for (const element of document.getElementsByClassName("hide-if-standalone") ) { element.style.display = "none"; } </script>')
         fd.write('<script id=standalone-json-data type="application/json">')
         fd.write(json_data)
         
