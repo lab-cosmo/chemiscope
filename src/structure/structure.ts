@@ -40,8 +40,18 @@ function bestGridArrangement(n: number) {
     }
 }
 
-/*
- * Needs documentation.
+/**
+ * Create a list of environments grouped together by structure.
+ *
+ *
+ * This function returns `undefined` if `environment` is undefined, else it
+ * returns a list of list of environments, such as `list[0]` contains all
+ * environments in structure 0; `list[33]` all environments in structure 33, etc.
+ *
+ * @param  n_structures Expected number of structures
+ * @param  environments Full list of environments
+ *
+ * @return              The list of environments grouped by structure
  */
 function groupByStructure(n_structures: number, environments?: Environment[]): Environment[][] | undefined {
     if (environments === undefined) {
@@ -193,7 +203,10 @@ export class StructureViewer {
         this._setupGrid(1);
         this.active = this._GUIDs[0];
         this._active = this._GUIDs[0];
-        this._delay = this._setDelay();
+
+        // get the 'delay' setting inside the current widget setting
+        // TODO(pinning): this needs to be updated when another widget is made active
+        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
     }
 
     /**
@@ -311,7 +324,11 @@ export class StructureViewer {
     }
 
     /**
-     * Needs documentation
+     * Get the structure at the given index in a format JSmol can undertand
+     * and load. [[Structure]] already rendered as strings are cached for faster
+     * subsequent access.
+     * @param  index index of the structure
+     * @return       a string that can be passed to JSmol `load INLINE` command
      */
     private _structureForJSmol(index: number): string {
         if (this._cachedStructures[index] === undefined) {
@@ -388,13 +405,6 @@ export class StructureViewer {
             }
             this.onselect(indexes, this._active);
         }
-    }
-
-    /*
-     * Needs documentation
-     */
-    private _setDelay(): HTMLInputElement {
-        return getByID(`chsp-${this._active}-playback-delay`) as HTMLInputElement;
     }
 
     /*
