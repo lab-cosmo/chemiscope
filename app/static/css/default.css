@@ -31,6 +31,8 @@ header {
 
 .navbar {
     margin-bottom: 1em;
+    z-index: 999;
+    background-color: inherit;
 }
 
 .references a {
