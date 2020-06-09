@@ -51,19 +51,19 @@
 /* Tooltip text */
 .chsp-tooltip {
   visibility: hidden;
-  font-size: 12px;
-  height: 28px;
   background-color: #69738a;
   color: white;
   border-radius: 2px;
   white-space: nowrap;
   text-align: center;
-  placement: auto bottom;
-  trigger: hover focus;
   display: inline-block;
+  font-size: 12px;
+  height: 28px;
   line-height: 28px;
-  horizontal-padding: 10px;
-  top: 120%;
+  padding-left: 8px;
+  padding-right: 8px;
+  top: 30px;
+  left: -60px;
   /* Position the tooltip text - see examples below! */
   position: relative;
   z-index: 100000;

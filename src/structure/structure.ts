@@ -358,13 +358,13 @@ export class StructureViewer {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
                     oldButton.classList.toggle('chsp-inactive-structure-marker', true);
                     oldButton.classList.toggle('chsp-active-structure-marker', false);
-                    oldButton.innerHTML = `<span class="chsp-tooltip">Choose as active.</span>`;
+                    oldButton.innerHTML = `<span class="chsp-tooltip">Activate viewer</span>`;
                 }
                 this._active = activeGUID;
                 const newButton = getByID(`chsp-activate-${this._active}`);
                 newButton.classList.toggle('chsp-inactive-structure-marker', false);
                 newButton.classList.toggle('chsp-active-structure-marker', true);
-                newButton.innerHTML = `<span class="chsp-tooltip">This is the active button</span>`;
+                newButton.innerHTML = `<span class="chsp-tooltip">this is the active viewer</span>`;
 
                 const activeWidgetData = this._selected.get(this._active);
                 assert(activeWidgetData !== undefined);
@@ -438,7 +438,9 @@ export class StructureViewer {
             close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
             close.id = `chsp-close-widget-button-${cellGUID}`;
             close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
-            close.innerHTML = `<span class="chsp-tooltip">Close widget</span><object>${CLOSE_SVG}</object>`;
+            close.innerHTML = `
+                <span class="chsp-tooltip">remove viewer</span>
+                <object>${CLOSE_SVG}</object>`;
             cell.appendChild(close);
 
             // add a button to duplicate the widget
@@ -460,7 +462,9 @@ export class StructureViewer {
 
             };
 
-            duplicate.innerHTML = `<span class="chsp-tooltip">Add duplicate widget</span><object>${DUPLICATE_SVG}</object>`;
+            duplicate.innerHTML = `
+                <span class="chsp-tooltip">duplicate viewer</span>
+                <object>${DUPLICATE_SVG}</object>`;
             cell.appendChild(duplicate);
 
             this._root.appendChild(cell);
@@ -480,14 +484,14 @@ export class StructureViewer {
               sendWarning('Cannot delete last widget.');
           } else {
               if (nwidgets > MAX_WIDGETS ) {
-                  sendWarning(`Widget grid cannot contain more than ${MAX_WIDGETS} widgets.`);
+                  sendWarning(`Viewer grid cannot contain more than ${MAX_WIDGETS} widgets.`);
               } else {
 
                   // Determine best arrangement for nwidgets
                   const arrangement = bestGridArrangement(nwidgets);
 
                   if (this._selected.size > nwidgets) {
-                      sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} widgets.`);
+                      sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} viewers.`);
                       const wl = this._selected.size;
                       const mapKeys = this._selected.keys();
                       for (let i = 0; i < wl; i++) {
