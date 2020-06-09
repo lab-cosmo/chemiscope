@@ -271,15 +271,16 @@ export class StructureViewer {
         setTimeout(() => {
             if (advance()) {
                 const widgetData = this._selected.get(this._active);
-                if (widgetData !== undefined) {
-                  const current = widgetData.current;
-                  const structure = (current.structure + 1) % this._indexer.structuresCount();
-                  const indexes = this._indexer.from_structure_atom(structure, 0);
-                  this.show(indexes);
-                  this.onselect(indexes, this._active);
-                  // continue playing until the advance callback returns false
-                  this.structurePlayback(advance);
-                }
+                assert(widgetData !== undefined);
+
+                const current = widgetData.current;
+                const structure = (current.structure + 1) % this._indexer.structuresCount();
+                const indexes = this._indexer.from_structure_atom(structure, 0);
+                this.show(indexes);
+                this.onselect(indexes, this._active);
+                // continue playing until the advance callback returns false
+                this.structurePlayback(advance);
+
             }
         }, parseFloat(this._delay.value) * 100);
     }
@@ -292,16 +293,16 @@ export class StructureViewer {
         setTimeout(() => {
             if (advance()) {
                 const widgetData = this._selected.get(this._active);
-                if (widgetData !== undefined) {
-                  const current = widgetData.current;
-                  const structure = current.structure;
-                  const atom = (current.atom! + 1) % this._indexer.atomsCount(structure);
-                  const indexes = this._indexer.from_structure_atom(structure, atom);
-                  this.show(indexes);
-                  this.onselect(indexes, this._active);
-                  // continue playing until the advance callback returns false
-                  this.atomPlayback(advance);
-                }
+                assert(widgetData !== undefined);
+
+                const current = widgetData.current;
+                const structure = current.structure;
+                const atom = (current.atom! + 1) % this._indexer.atomsCount(structure);
+                const indexes = this._indexer.from_structure_atom(structure, atom);
+                this.show(indexes);
+                this.onselect(indexes, this._active);
+                // continue playing until the advance callback returns false
+                this.atomPlayback(advance);
             }
         }, parseFloat(this._delay.value) * 100);
     }
@@ -367,32 +368,32 @@ export class StructureViewer {
                 newButton.innerHTML = `<span class="tooltiptext">This is the active button</span>`;
 
                 const activeWidgetData = this._selected.get(this._active);
-                if (activeWidgetData !== undefined) {
-                    activeWidgetData.widget.onselect = (atom: number) => {
-                        if (this._indexer.mode !== 'atom') {
-                            return;
-                        }
+                assert(activeWidgetData !== undefined);
 
-                        activeWidgetData.widget.highlight(atom);
-
-                        // if the viewer is showing a bigger supercell than [1, 1, 1], the
-                        // atom index can be outside of [0, natoms), so make sure it is
-                        // inside this range.
-                        const current = activeWidgetData.current;
-                        const atom_id = atom % activeWidgetData.widget.natoms()!;
-                        indexes = this._indexer.from_structure_atom(current.structure, atom_id);
-                        this.onselect(indexes, this._active);
-                    };
-
-                    if (this._indexer.mode === 'structure') {
-                        indexes = this._indexer.from_structure_atom(activeWidgetData.current.structure);
-                    } else {
-                        const structure = activeWidgetData.current.structure;
-                        const atom = activeWidgetData.current.atom;
-                        indexes = this._indexer.from_structure_atom(structure, atom);
+                activeWidgetData.widget.onselect = (atom: number) => {
+                    if (this._indexer.mode !== 'atom') {
+                        return;
                     }
+
+                    activeWidgetData.widget.highlight(atom);
+
+                    // if the viewer is showing a bigger supercell than [1, 1, 1], the
+                    // atom index can be outside of [0, natoms), so make sure it is
+                    // inside this range.
+                    const current = activeWidgetData.current;
+                    const atom_id = atom % activeWidgetData.widget.natoms()!;
+                    indexes = this._indexer.from_structure_atom(current.structure, atom_id);
                     this.onselect(indexes, this._active);
+                };
+
+                if (this._indexer.mode === 'structure') {
+                    indexes = this._indexer.from_structure_atom(activeWidgetData.current.structure);
+                } else {
+                    const structure = activeWidgetData.current.structure;
+                    const atom = activeWidgetData.current.atom;
+                    indexes = this._indexer.from_structure_atom(structure, atom);
                 }
+                this.onselect(indexes, this._active);
             }
         }
     }
@@ -444,8 +445,10 @@ export class StructureViewer {
             duplicate.classList.add('chsp-duplicate-widget-button', 'btn', 'btn-light', 'btn-sm');
             duplicate.id = `chsp-duplicate-widget-button-${cellGUID}`;
             duplicate.onclick = () => {
+
                 const data = this._selected.get(cellGUID);
                 assert(data !== undefined);
+
                 let index;
                 if (this._indexer.mode === 'structure') {
                     index = this._indexer.from_structure_atom(data.current.structure);
@@ -536,13 +539,12 @@ export class StructureViewer {
                           });
                           this.show(index, cellGUID);
                           this.onselect(index, cellGUID);
-                      } else {
-                          const widgetData = this._selected.get(cellGUID);
-                          assert(widgetData !== undefined);
-                          widgetData.widget.script('refresh');
                       }
                   }
-              }
+                  for (const widgetData of this._selected.values()) {
+                    widgetData.widget.script('refresh');
+                  }
+            }
         }
     }
     /*

@@ -293,17 +293,17 @@ export class PropertiesMap {
             this.active = selectedGUID;
 
             const markerData = this._selected.get(selectedGUID);
-            if (markerData !== undefined) {
-                /// Sets the active marker on this map
-                if (markerData.current === undefined || indexes.environment !== markerData.current ) {
-                    markerData.current = indexes.environment;
-                }
+            assert(markerData !== undefined);
 
-                // if we are in 3D there is no need to update the visuals.
-                // visuals will be updated when returning to 2D
-                if (! this._is3D()) {
-                  this._updateSelectedMarker(selectedGUID);
-                }
+            /// Sets the active marker on this map
+            if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+                markerData.current = indexes.environment;
+            }
+
+            // if we are in 3D there is no need to update the visuals.
+            // visuals will be updated when returning to 2D
+            if (! this._is3D()) {
+              this._updateSelectedMarker(selectedGUID, markerData);
             }
         }
     }
@@ -1259,10 +1259,11 @@ export class PropertiesMap {
               newButton.classList.toggle('chsp-active-structure-marker', true);
 
               const markerData = this._selected.get(this._active);
-              if (markerData !== undefined) {
-                  const indexes = this._indexer.from_environment(markerData.current);
-                  this.onselect(indexes, this._active);
-              }
+              assert(markerData !== undefined);
+
+              const indexes = this._indexer.from_environment(markerData.current);
+              this.onselect(indexes, this._active);
+
           // in 3D we need only to update the GUID, visuals will be updated
           // upon returning to 2D
           } else {this._active = activeGUID; }
@@ -1362,12 +1363,11 @@ export class PropertiesMap {
             });
         }
 
-        const markerData = this._selected.get(addedGUID);
-        if (markerData !== undefined) {
-            if (!this._is3D()) {
-                this._root.appendChild(markerData.marker);
-            }
-        }
+        if (!this._is3D()) {
+            const markerData = this._selected.get(addedGUID);
+            assert(markerData !== undefined);
+            this._root.appendChild(markerData.marker);
+          }
     }
 
     /**
