@@ -203,7 +203,7 @@ export class JSmolWidget {
      *
      * @param id HTML element id inside which the viewer will be created
      * @param j2sPath path where j2s files can be loaded by Jmol
-     * @param guid TODO(pinning)
+     * @param guid (optional) unique identifier for the widget
      * @param serverURL URL where to find `jsmol.php`
      */
     constructor(id: string, j2sPath: string, guid?: string, serverURL: string = DEFAULT_SERVER_URL) {
