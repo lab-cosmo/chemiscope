@@ -35,11 +35,11 @@ declare module 'jsmol' {
      * Declaration of the functions available on the Jmol global object
      */
     export interface JmolObject {
-        setDocument(doc: any): void;
+        setDocument(doc: boolean): void;
         getApplet(htmlId: string, info: Partial<JmolInfo>): JSmolApplet;
         script(applet: JSmolApplet, commands: string): void;
         getAppletHtml(applet: JSmolApplet): string;
-        evaluateVar(applet: JSmolApplet, commands: string): any;
+        evaluateVar(applet: JSmolApplet, commands: string): unknown;
     }
 
     global {

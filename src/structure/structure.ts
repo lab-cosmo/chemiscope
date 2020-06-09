@@ -10,7 +10,7 @@ import {EnvironmentIndexer, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './jsmol';
-import {JSmolWidget} from './widget';
+import {JSmolWidget, LoadOptions} from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -129,7 +129,7 @@ export class StructureViewer {
      * The callback gets two parameter: the structure index (0-based); and the
      * full [[UserStructure]].
      */
-    public loadStructure: (index: number, structure: any) => Structure;
+    public loadStructure: (index: number, structure: unknown) => Structure;
 
     /// Root element containing the full viewer grid
     private _root: HTMLElement;
@@ -181,13 +181,13 @@ export class StructureViewer {
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
-            if (checkStructure(s) !== '') {
+            if (checkStructure(s as JsObject) !== '') {
                 throw Error(
                     'got custom data for this structure, but no custom loadStructure callback\n' +
                     `the object was ${JSON.stringify(s)}`,
                 );
             } else {
-                return s;
+                return s as Structure;
             }
         };
 
@@ -223,10 +223,10 @@ export class StructureViewer {
 
         const widget = data.widget;
         if (data.current.structure !== indexes.structure) {
-            const options = {
+            const options: Partial<LoadOptions> = {
                 packed: false,
                 trajectory: true,
-            } as any;
+            };
             assert(indexes.structure < this._structures.length);
 
             if (this._environments !== undefined) {

@@ -85,7 +85,7 @@ export interface Position {
 }
 
 /** Possible options passed to `JSmolWidget.load` */
-export interface LoadOption {
+export interface LoadOptions {
     /** Supercell to display (default: [1, 1, 1]) */
     supercell: [number, number, number];
     /** Should we display a packed cell (default: false) */
@@ -373,7 +373,7 @@ export class JSmolWidget {
      *             command](https://chemapps.stolaf.edu/jmol/docs/#load).
      * @param options options for the new structure
      */
-    public load(data: string, options: Partial<LoadOption> = {}) {
+    public load(data: string, options: Partial<LoadOptions> = {}) {
         if (data === '\'\'' || data === '""') {
             throw Error('invalid use of JSmolWidget.load to reload data');
         }
