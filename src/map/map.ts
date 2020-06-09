@@ -1375,8 +1375,8 @@ export class PropertiesMap {
      * `structure._removeWidget`. One may want to remove a marker when switching
      * from 2D --> 3D but retain the information.
      *
-     * @param  trashedGUID     TODO(pinning)
-     * @param  deleteFromGUIDs TODO(pinning)
+     * @param  trashedGUID     unique string identifier of the marker to remove
+     * @param  deleteFromGUIDs boolean, if false keep the data of the marker stored
      */
     private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true): void {
         const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
