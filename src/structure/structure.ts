@@ -125,11 +125,7 @@ export class StructureViewer {
      */
     public loadStructure: (index: number, structure: any) => Structure;
 
-    // GUID of the Active Widget
-    private _active: string;
-    // Map of Widgets GUIDS to their color, widget, and current structure
-    private _selected: Map<string, WidgetGridData>;
-    // Documentation needed.
+    /// Root element containing the full viewer grid
     private _root: HTMLElement;
     /// Playback delay setting
     private _delay: HTMLInputElement;
@@ -139,11 +135,16 @@ export class StructureViewer {
     private _cachedStructures: string[];
     /// Optional list of environments for each structure
     private _environments?: Environment[][];
-    // Documentation needed.
+    /// The indexer translating between environments indexes and structure/atom
+    /// indexes
     private _indexer: EnvironmentIndexer;
     // path to the j2s files used by JSmol.
     // saved for instantiating new Widget instances
     private _j2spath: string;
+    /// GUID of the Active Widget
+    private _active: string;
+    /// Map of Widgets GUIDS to their color, widget, and current structure
+    private _selected: Map<string, WidgetGridData>;
 
     /**
      * Create a new [[StructureViewer]] inside the HTML element with the given
