@@ -75,7 +75,7 @@
     position: absolute;
     z-index: 10;
     background-color: #4CAF50;
-    right: 110px;
+    right: 102px;
     top: 10px;
     height: 20px;
     width: 20px;
@@ -84,7 +84,7 @@
 .chsp-active-structure-marker:hover{
     height: 22px;
     width: 22px;
-    right: 109px;
+    right: 101px;
     top: 9px;
 }
 
@@ -98,16 +98,16 @@
     position: absolute;
     z-index: 10;
     background-color: #4caf50;
-    height: 15px;
-    width: 15px;
-    right: 112px;
-    top: 12px;
+    height: 12px;
+    width: 12px;
+    right: 107px;
+    top: 14px;
 }
 
 .chsp-inactive-structure-marker:hover {
     height: 20px;
     width: 20px;
-    right: 110px;
+    right: 102px;
     top: 10px;
     cursor: pointer;
 }
@@ -120,10 +120,13 @@
     border: none;
     background-color: #ffffff;
     position: absolute;
-    top: 7px;
-    right: 50px;
-    height:25px;
-    width:25px;
+    padding: 1px;
+    align-items: center;
+    vertical-align: middle;
+    top: 8px;
+    right: 40px;
+    height:24px;
+    width:24px;
     opacity: 0.4;
     z-index: 10;
 }
@@ -140,10 +143,11 @@
     border: none;
     background-color: #ffffff;
     position: absolute;
-    top: 7px;
-    right: 80px;
-    height:25px;
-    width:25px;
+    padding: 1px;
+    top: 8px;
+    right: 70px;
+    height:24px;
+    width:24px;
     opacity:0.4;
     z-index: 10;
 }
@@ -166,12 +170,22 @@
 }
 
 .chsp-structure-viewer-cell {
-    width: 98%;
-    height: 98%;
-    left: 1%;
-    top: 1%;
+    width: 99%;
+    height: 99%;
+    left: 0.5%;
+    top: 0.5%;
     position: relative;
-    border : 1px solid black;
+    border : 1px solid lightgray;
+    padding : 1px;
+}
+
+.chsp-structure-viewer-cell-active {
+    width: 99%;
+    height: 99%;
+    left: 0.5%;
+    top: 0.5%;
+    position: relative;
+    border : 1px solid gray;
     padding : 1px;
 }
 
@@ -268,7 +282,8 @@
 .chsp-info-btns {
     display: flex;
     position: relative;
-    margin-bottom: 1ex;
+    margin-bottom: 0.5ex;
+    margin-top: 0.5ex;
     justify-content: center;
 }
 
