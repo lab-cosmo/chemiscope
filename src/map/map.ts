@@ -855,9 +855,7 @@ export class PropertiesMap {
         });
         this._plot.on('plotly_afterplot', () => this._afterplot());
 
-        for (const guid of this._selected.keys()) {
-            this._updateSelectedMarker(guid);
-        }
+        this._updateAllMarkers();
     }
 
     /** Get the currently available properties: either `'atom'` or `'structure'` properties */
@@ -1227,9 +1225,7 @@ export class PropertiesMap {
             this._settings.y.min.value = layout.yaxis.range[0];
             this._settings.y.max.value = layout.yaxis.range[1];
 
-            for (const guid of this._selected.keys()) {
-                this._updateSelectedMarker(guid);
-            }
+            this._updateAllMarkers();
         }
     }
 
@@ -1280,61 +1276,63 @@ export class PropertiesMap {
      *
      * @param selectedGUID TODO(pinning)
      */
-    private _updateSelectedMarker(selectedGUID: string): void {
-        const markerData = this._selected.get(selectedGUID);
-        if (markerData !== undefined) {
-            const selected = markerData.current;
+    private _updateSelectedMarker(selectedGUID: string, selectedMarkerData: MarkerData): void {
 
-            if (this._is3D()) {
-                let symbol;
-                if (this._settings.symbol.value !== '') {
-                    const symbols = this._property(this._settings.symbol.value).values;
-                    symbol = get3DSymbol(symbols[selected]);
-                } else {
-                    symbol = get3DSymbol(0);
-                }
+          const selected = selectedMarkerData.current;
+          const marker = selectedMarkerData.marker;
 
-                this._restyle({
-                    'x': this._xValues(1),
-                    'y': this._yValues(1),
-                    'z': this._zValues(1),
+          if (this._is3D()) {
+              let symbol;
+              if (this._settings.symbol.value !== '') {
+                  const symbols = this._property(this._settings.symbol.value).values;
+                  symbol = get3DSymbol(symbols[selected]);
+              } else {
+                  symbol = get3DSymbol(0);
+              }
 
-                    'marker.symbol': symbol,
-                } as Data, 1);
-            } else {
-                // marker only exists on document in 2D
-                const marker = getByID(`chsp-selected-${selectedGUID}`);
+              this._restyle({
+                  'x': this._xValues(1),
+                  'y': this._yValues(1),
+                  'z': this._zValues(1),
 
-                const xaxis = this._plot._fullLayout.xaxis;
-                const yaxis = this._plot._fullLayout.yaxis;
+                  'marker.symbol': symbol,
+              } as Data, 1);
+          } else {
 
-                const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
-                const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
+              const xaxis = this._plot._fullLayout.xaxis;
+              const yaxis = this._plot._fullLayout.yaxis;
 
-                const x = computeX(this._xValues(0)[0][selected]);
-                const y = computeY(this._yValues(0)[0][selected]);
+              const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
+              const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
 
-                // hide the point if it is outside the plot, allow for up to 10px
-                // overflow (for points just on the border)
-                const minX = computeX(xaxis.range[0]) - 10;
-                const maxX = computeX(xaxis.range[1]) + 10;
-                const minY = computeY(yaxis.range[1]) - 10;
-                const maxY = computeY(yaxis.range[0]) + 10;
-                if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
-                    marker.style.display = 'none';
-                } else {
-                    marker.style.display = 'block';
-                }
+              const x = computeX(this._xValues(0)[0][selected]);
+              const y = computeY(this._yValues(0)[0][selected]);
 
-                // -10 since we want the centers to match, and the marker div is 20px wide
-                marker.style.top = `${y - 10}px`;
-                marker.style.left = `${x - 10}px`;
-            }
-            const indexes = this._indexer.from_environment(markerData.current);
-            this.onselect(indexes, selectedGUID);
-        }
+              // hide the point if it is outside the plot, allow for up to 10px
+              // overflow (for points just on the border)
+              const minX = computeX(xaxis.range[0]) - 10;
+              const maxX = computeX(xaxis.range[1]) + 10;
+              const minY = computeY(yaxis.range[1]) - 10;
+              const maxY = computeY(yaxis.range[0]) + 10;
+              if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
+                  marker.style.display = 'none';
+              } else {
+                  marker.style.display = 'block';
+              }
+
+              // -10 since we want the centers to match, and the marker div is 20px wide
+              marker.style.top = `${y - 10}px`;
+              marker.style.left = `${x - 10}px`;
+          }
+          const indexes = this._indexer.from_environment(selected);
+          this.onselect(indexes, selectedGUID);
     }
 
+    private _updateAllMarkers() {
+      for (const [guid, markerData] of this._selected.entries()) {
+          this._updateSelectedMarker(guid, markerData);
+      }
+    }
     /**
      * Function to add a marker with the given GUID string and indices to the map.
      *
