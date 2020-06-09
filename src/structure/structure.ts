@@ -403,7 +403,7 @@ export class StructureViewer {
      * Will generate a GUID string if one does not exist for the cell
      * and instantiate all necessary buttons.
      */
-    private _setupCell(cellGUID: string, cellNo: number, colNum: number, rowNum: number) {
+    private _setupCell(cellGUID: string, colNum: number, rowNum: number) {
 
         const cellId = `gi-${cellGUID}`;
         let cell = document.getElementById(cellId);
@@ -510,11 +510,11 @@ export class StructureViewer {
                   for (let c = 0; c < nwidgets; c++) {
                       let cellGUID;
                       if (c >= this._selected.size) {
-                        cellGUID = generateGUID();
+                          cellGUID = generateGUID();
                       } else {
-                        cellGUID = mapKeys.next().value;
+                          cellGUID = mapKeys.next().value;
                       }
-                      let color = this._setupCell(cellGUID, c, colNum, rowNum);
+                      let color = this._setupCell(cellGUID, colNum, rowNum);
                       if (color === '') {
                           const colors = [];
                           for (const widgetData of this._selected.values()) {
@@ -530,8 +530,7 @@ export class StructureViewer {
                       }
 
                       // add a new widget if necessary
-
-                      if (! this._selected.has(cellGUID)) {
+                      if (!this._selected.has(cellGUID)) {
                           const widget = new JSmolWidget(
                               `gi-${cellGUID}`,
                               this._j2spath,
