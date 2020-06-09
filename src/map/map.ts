@@ -1343,10 +1343,10 @@ export class PropertiesMap {
     private _addMarker(addedGUID: string, index: number = 0, color?: string): void {
         if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
-            const marker = document.createElement('button');
-            marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker-map');
+            const marker = document.createElement('div');
+            marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker', 'btn-light');
             if (addedGUID === this._active) {
-                marker.classList.toggle('chsp-inactive-structure-marker-map', false);
+                marker.classList.toggle('chsp-inactive-structure-marker', false);
                 marker.classList.toggle('chsp-active-structure-marker', true);
             }
             marker.id = `chsp-selected-${addedGUID}`;
