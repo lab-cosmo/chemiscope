@@ -201,7 +201,6 @@ export class StructureViewer {
         this._active = this._selected.keys().next().value;
 
         // get the 'delay' setting inside the current widget setting
-        // TODO(pinning): this needs to be updated when another widget is made active
         this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
     }
 
@@ -385,6 +384,8 @@ export class StructureViewer {
                     indexes = this._indexer.from_structure_atom(current.structure, atom_id);
                     this.onselect(indexes, this._active);
                 };
+
+                this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
 
                 if (this._indexer.mode === 'structure') {
                     indexes = this._indexer.from_structure_atom(activeWidgetData.current.structure);
