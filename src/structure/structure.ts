@@ -211,7 +211,7 @@ export class StructureViewer {
      * highlight the atom-centered environment corresponding to `indexes.atom`.
      *
      * @param  indexes         structure / atom pair to display
-     * @param  wi              GUID of the widget to show
+     * @param  selectedGUID   GUID of the widget to show
      */
     public show(indexes: Indexes, selectedGUID: string = this._active) {
         const data = this._selected.get(selectedGUID);
