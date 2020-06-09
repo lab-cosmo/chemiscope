@@ -1274,7 +1274,7 @@ export class PropertiesMap {
      * In 2D mode, these markers are HTML div styled as colored circles that
      * we manually move around, saving a call to `restyle`.
      *
-     * @param selectedGUID TODO(pinning)
+     * @param selectedGUID unique string identifier of the marker to update
      */
     private _updateSelectedMarker(selectedGUID: string, selectedMarkerData: MarkerData): void {
 
@@ -1336,11 +1336,10 @@ export class PropertiesMap {
     /**
      * Function to add a marker with the given GUID string and indices to the map.
      *
-     * @param  addedGUID TODO(pinning)
-     * @param  index     TODO(pinning)
-     * @param  color     TODO(pinning)
+     * @param  addedGUID unique string identifier of the marker to add
+     * @param  index     numeric index of the structure (with respect to dataset) to show
      */
-    private _addMarker(addedGUID: string, index: number = 0, color?: string): void {
+    private _addMarker(addedGUID: string, index: number = 0): void {
         if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
             const marker = document.createElement('div');
@@ -1352,7 +1351,7 @@ export class PropertiesMap {
             marker.id = `chsp-selected-${addedGUID}`;
             marker.onclick = () => {this.active = addedGUID; };
 
-            color = activeButton.style.backgroundColor;
+            const color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
             this._selected.set(addedGUID, {
                 color : color,
