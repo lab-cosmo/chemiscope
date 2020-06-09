@@ -419,8 +419,8 @@ export class StructureViewer {
             // because it will conflict with the button behavior
 
             // add a button to activate the widget (i.e. set as `active`)
-            const activeFlag = document.createElement('button');
-            activeFlag.classList.add('chsp-inactive-structure-marker');
+            const activeFlag = document.createElement('div');
+            activeFlag.classList.add('chsp-inactive-structure-marker', 'btn-light');
             activeFlag.id = `chsp-activate-${cellGUID}`;
             const colors = [];
             for (const widgetData of this._selected.values()) {
@@ -433,7 +433,7 @@ export class StructureViewer {
             cell.appendChild(activeFlag);
 
             // add a button to close the widget
-            const close = document.createElement('button');
+            const close = document.createElement('div');
             close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
             close.id = `chsp-close-widget-button-${cellGUID}`;
             close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
@@ -441,7 +441,7 @@ export class StructureViewer {
             cell.appendChild(close);
 
             // add a button to duplicate the widget
-            const duplicate = document.createElement('button');
+            const duplicate = document.createElement('div');
             duplicate.classList.add('chsp-duplicate-widget-button', 'btn', 'btn-light', 'btn-sm');
             duplicate.id = `chsp-duplicate-widget-button-${cellGUID}`;
             duplicate.onclick = () => {
