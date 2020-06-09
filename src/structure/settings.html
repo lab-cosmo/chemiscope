@@ -76,46 +76,54 @@
                     <div style="margin-bottom: 1.5em;"></div>
                     <h5 class="chsp-settings-section-title">Environments</h5>
                     <div class="chsp-settings-environments">
-                        <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                               <label class="input-group-text" for=env-cutoff>cutoff</label>
-                             </div>
-                             <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
-                        </div>
-
-                        <button class="btn btn-secondary btn-sm" id=env-reset>reset cutoff</button>
-
                         <div class="btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-primary btn-sm active" style="width: 100%">
                             <input type="checkbox" id=env-activated> Enable
                         </label>
                         </div>
-
-                        <div>
-                            <span style="vertical-align: middle">Background atoms</span>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id=env-center>
+                            <label class="custom-control-label" for=env-center title="center automatically structure or environment in the viewport" style="cursor: help;">center</label>
                         </div>
-
-                        <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                               <label class="input-group-text" for=env-bg-color>color</label>
-                             </div>
-                             <select id=env-bg-color class="custom-select">
-                                 <option value="CPK">CPK</option>
-                                 <option value="grey">grey</option>
-                             </select>
-                         </div>
-
-                         <div class="input-group input-group-sm">
-                             <div class="input-group-prepend">
-                                <label class="input-group-text" for=env-bg-style>style</label>
-                              </div>
-                              <select id=env-bg-style class="custom-select">
-                                  <option value="licorice">licorice</option>
-                                  <option value="ball-stick">ball and stick</option>
-                                  <option value="hide">hide</option>
-                              </select>
-                          </div>
+                        <button class="btn btn-sm btn-secondary chsp-extra-options-btn" type="button" data-toggle="collapse" data-target="#chsp-extra-env" id=chsp-env-more>
+                            more options
+                        </button>
+                        <div class="collapse chsp-settings-extra-options" id=chsp-extra-env>
+                            <div> 
+                            	  <span style="vertical-align: middle">Highlight region</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                 <div class="input-group-prepend">
+                                   <label class="input-group-text" for=env-cutoff>cutoff</label>
+                                 </div>
+                                 <input class="form-control" id=env-cutoff type="number" min="0" max= "50" step="0.1">
+                            </div>
+                            <button class="btn btn-sm btn-light" id=env-reset>reset</button>
+                            <div>
+                                <span style="vertical-align: middle">Background atoms</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                   <label class="input-group-text" for=env-bg-color>color</label>
+                                 </div>
+                                 <select id=env-bg-color class="custom-select">
+                                     <option value="CPK">CPK</option>
+                                     <option value="grey">grey</option>
+                                 </select>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for=env-bg-style>style</label>
+                                  </div>
+                                  <select id=env-bg-style class="custom-select">
+                                      <option value="licorice">licorice</option>
+                                      <option value="ball-stick">ball and stick</option>
+                                      <option value="hide">hide</option>
+                                  </select>
+                            </div> 
+                        </div>
                     </div>
+                    <div style="margin-bottom: 0.8em;"></div>                    
                 </div>
 
                 <div style="margin-bottom: 1.5em;"></div>
@@ -140,7 +148,6 @@
                             </div>
                             <input id=playback-delay class="form-control" type="number" min=1 value=7>
                         </div>
-
                         <div class="custom-control custom-switch">
                             <input type="checkbox" class="custom-control-input" id=keep-orientation>
                             <label class="custom-control-label" for=keep-orientation title="keep the camera orientation when loading a new molecule" style="cursor: help;">keep orientation</label>

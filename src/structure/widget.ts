@@ -88,7 +88,7 @@ export interface LoadOption {
     supercell: [number, number, number];
     /** Should we display a packed cell (default: false) */
     packed: boolean;
-    /** Should we the current camera orientation (default: false) */
+    /** Should preserve we the current camera orientation (default: false) */
     keepOrientation: boolean;
     /** Are we loading a file part of a trajectory (default: false) */
     trajectory: boolean;
@@ -149,6 +149,8 @@ export class JSmolWidget {
         environments: {
             // should we display environments & environments options
             activated: HTMLSetting<'boolean'>;
+            // automatically center the environment when loading it
+            center: HTMLSetting<'boolean'>;
             // the cutoff value for spherical environments
             cutoff: HTMLSetting<'number'>;
             // which style for atoms not in the environment
@@ -617,7 +619,8 @@ export class JSmolWidget {
         // on a single page
         template.innerHTML = HTML_SETTINGS
             .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this.guid}-${id} `)
-            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `);
+            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `)
+            .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${this.guid}-${id} `);
 
         this._settingsModal = template.content.firstChild! as HTMLElement;
         document.body.appendChild(this._settingsModal);
@@ -659,6 +662,7 @@ export class JSmolWidget {
             bonds: new HTMLSetting('boolean', true),
             environments: {
                 activated: new HTMLSetting('boolean', false),
+                center: new HTMLSetting('boolean', false),
                 bgColor: new HTMLSetting('string', 'CPK'),
                 bgStyle: new HTMLSetting('string', 'licorice'),
                 cutoff: new HTMLSetting('number', 0),
@@ -695,6 +699,7 @@ export class JSmolWidget {
         this._settings.environments.bgColor.bind(`${this.guid}-env-bg-color`, 'value');
         this._settings.environments.bgStyle.bind(`${this.guid}-env-bg-style`, 'value');
         this._settings.environments.cutoff.bind(`${this.guid}-env-cutoff`, 'value');
+        this._settings.environments.center.bind(`${this.guid}-env-center`, 'checked');
 
         // recursively bind the right update function to HTMLSetting `onchange`
         const bindUpdateState = (object: any) => {
@@ -800,13 +805,22 @@ export class JSmolWidget {
         const wireframe = `wireframe ${settings.bonds.value ? '0.15' : 'off'}`;
         const spacefill = `spacefill ${settings.spaceFilling.value ? '80%' : '23%'}`;
 
-        let commands = '';
+        let commands = '';        
         if (this._highlighted === undefined || !settings.environments.activated.value) {
             commands += 'select all;';
+        	commands += 'centerAt average;';
             commands += 'hide none;';
             commands += 'color atoms cpk; color atoms opaque;';
             commands += `dots off; ${wireframe}; ${spacefill};`;
         } else {
+            // center of the environment (or structure)
+            if (settings.environments.center.value) {
+                commands += `select @${this._highlighted + 1};`;            
+            } else {
+                commands += 'select all;'
+            }
+            commands += 'centerAt average;';
+
             // Atoms not in the environment
             commands += 'select all;';
             commands += this._backgroundStyle();

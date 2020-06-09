@@ -45,6 +45,11 @@
     z-index: 10;
 }
 
+.chsp-extra-options-btn {
+    margin: auto;
+    display: block;
+}
+
 .chsp-map-options {
     font-weight: bold;
     display: grid;
@@ -72,15 +77,6 @@
 
 .chsp-map-extra-options {
     grid-column: 1 / span 2;
-}
-
-.chsp-map-extra-options {
-    grid-column: 1 / span 2;
-}
-
-.chsp-map-extra-options-open {
-    margin: auto;
-    display: block;
 }
 
 .chsp-map-options .form-check-label {
@@ -284,6 +280,13 @@
     display: grid;
     grid-gap: 1em;
     grid-template-columns: 1fr 1fr 1fr;
+}
+
+.chsp-settings-extra-options {
+    display: grid;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-column: 1 / span 3;
 }
 
 .chsp-settings-trajectory {
