@@ -178,6 +178,10 @@ class AxisSetting {
 interface MarkerData {
     color: string;
     current: number;
+    /// Marker indicating the position of the point in 2D mode
+    /// Using an HTML element is much faster than using Plolty to restyle the full plot,
+    /// especially with more than 100k points. In 3D mode, a separate trace is
+    /// used instead.
     marker: HTMLElement;
 }
 /**
