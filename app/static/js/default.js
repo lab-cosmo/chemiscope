@@ -16,7 +16,7 @@ function toJson(path, buffer) {
 
 let VISUALIZER = undefined;
 let DATASET = undefined;
-let ORIGINAL_LOAD_STRUCTURE = undefined;
+let J2S_PATH = undefined;
 
 function loadStructureOnDemand(index, structure) {
     /**
@@ -36,10 +36,10 @@ function setupChemiscope(dataset) {
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
         structure: 'chemiscope-structure',
-        j2sPath:   GLOBAL_J2S_PATH,
+        j2sPath:   J2S_PATH,
     };
 
-    if (DATASET === "Azaphenacenes.json.gz") {
+    if (DATASET.includes("Azaphenacenes.json.gz")) {
         // example of asynchronous structure loading
         config.loadStructure = loadStructureOnDemand;
     }
@@ -120,7 +120,8 @@ function loadExample(url) {
         .catch(e => setTimeout(() => {throw e;}));
 }
 
-function setupDefaultChemiscope(isStandalone) {
+function setupDefaultChemiscope(j2sPath) {
+    J2S_PATH = j2sPath;
     Chemiscope.addWarningHandler((message) => displayWarning(message));
 
     window.onerror = (msg, url, line, col, error) => {
@@ -138,12 +139,5 @@ function setupDefaultChemiscope(isStandalone) {
             setupChemiscope(json);
         }
         reader.readAsArrayBuffer(upload.files[0]);
-    }
-
-    if (isStandalone) {
-        document.getElementById('examples').style.display = 'none';
-        window.GLOBAL_J2S_PATH = 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/';
-    } else {
-        window.GLOBAL_J2S_PATH = 'static/js/jsmol/j2s';
     }
 }
