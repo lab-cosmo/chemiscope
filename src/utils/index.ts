@@ -8,34 +8,20 @@ import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
 import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin} from './settings';
 import {addWarningHandler, sendWarning} from './warnings';
 
-const LIGHT_COLORS = ['White', 'Snow', 'Honeydew', 'MintCream',
-                     'Azure', 'AliceBlue', 'GhostWhite', 'WhiteSmoke',
-                     'Seashell', 'Beige', 'OldLace', 'FloralWhite',
-                     'Ivory', 'AntiqueWhite', 'Linen', 'LavenderBlush',
-                     'MistyRose'];
-const STANDARD_COLORS = ['Red', 'Yellow', 'Green', 'Blue',
-                   'Orange', 'Aqua', 'Purple', 'Teal',
-                   'White', 'Gray', 'Black',
-                   'Maroon', 'Olive', 'Silver', 'Lime',
-                   'Navy', 'Fuchsia'];
+const STANDARD_COLORS = [
+    'Red', 'Yellow', 'Green', 'Blue',
+    'Orange', 'Aqua', 'Purple', 'Teal',
+    'White', 'Gray', 'Black', 'Maroon',
+    'Olive', 'Silver', 'Lime', 'Navy', 'Fuchsia',
+];
 
-// to be replaced later
-export function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
-
-export function getNextColor(colors: string[]) {
+export function getNextColor(alreadyUsedColors: string[]) {
     for (const color of STANDARD_COLORS) {
-      if ( colors.indexOf(color) < 0) {
-        return color;
-      }
+        if (!alreadyUsedColors.includes(color)) {
+            return color;
+        }
     }
-    return STANDARD_COLORS[1];
+    throw Error('required more colors than available');
 }
 
 function generateGUID() {
