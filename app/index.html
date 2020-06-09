@@ -47,7 +47,7 @@
                             <a class="nav-link" data-toggle="modal" href="#about"><i class="fa fa-user"></i> About</a>
                         </li>
                         <li class="nav-item hide-if-standalone">
-                            <a class="nav-link" data-toggle="modal" href="#download"><i class="fa fa-download"></i> Download</a>                        
+                            <a class="nav-link" data-toggle="modal" href="#download"><i class="fa fa-download"></i> Download</a>
                         </li>
                         <li class="nav-item dropdown hide-if-standalone">
                             <a class="nav-link dropdown-toggle" href="#" id="examples" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -193,26 +193,26 @@
               </div>
               <div class="modal-body">
                 <p>
-                    Chemiscope consists in a set of JavaScript modules to 
-                    visualize atomic structures and map associated data. 
+                    Chemiscope consists in a set of JavaScript modules to
+                    visualize atomic structures and map associated data.
                     These modules can be assembled into all sorts of interactive
                     visualization tools, such as that which you can use on these
-                    pages. 
+                    pages.
                 </p>
 
                 <p>
                     If you are a developer you may be interested in downloading
                     the <a href="https://github.com/cosmo-epfl/chemiscope"> source code</a>,
-                    which is available on GitHub. 
+                    which is available on GitHub.
                 </p>
 
                 <p>
-                    If you are a user, you may want to download a 
-                    <a href="chemiscope_standalone.html" download> 
+                    If you are a user, you may want to download a
+                    <a href="chemiscope_standalone.html" download>
                     standalone version
-                    </a> of the standard viewer, which you can use to 
-                    display locally datasets prepared in the chemiscope 
-                    JSON format. 
+                    </a> of the standard viewer, which you can use to
+                    display locally datasets prepared in the chemiscope
+                    JSON format.
 
                 </p>
               </div>
@@ -230,13 +230,19 @@
             const version = document.getElementById('chemiscope-version');
             version.innerText = `version ${Chemiscope.version()}`;
 
-            setupDefaultChemiscope(isStandalone);
+            const j2sPath = isStandalone ?
+                'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/' :
+                'static/js/jsmol/j2s';
+            setupDefaultChemiscope(j2sPath);
+
             if (!isStandalone) {
                 loadExample('Arginine-Dipeptide.json.gz');
             } else {
                 const data = standalone.innerText;
                 if (data.trim() !== "") {
                     setupChemiscope(JSON.parse(standalone.innerText));
+                } else {
+                    document.getElementById('loading').style.display = "none";
                 }
             }
         })
