@@ -102,7 +102,7 @@ export interface UserStructure {
      * [[StructureViewer.loadStructure]] must be set to be able to load this
      * data.
      */
-    data: any;
+    data: unknown;
 }
 
 /** Possible types of properties: full structure property, or atomic property */
