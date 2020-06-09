@@ -1233,8 +1233,8 @@ export class PropertiesMap {
      * @param  activeGUID the GUID of the new active viewer
      */
     public set active(activeGUID: string) {
-        if (activeGUID !== this._active) {
-            if (this._active !== '') {
+        if (activeGUID !== this._active && this._selected.has(activeGUID)) {
+            if (this._selected.has(this._active)) {
                 // this has been left as document.getElementById for when we are
                 // setting a new active because the old one has been deleted.
                 const oldButton = document.getElementById(`chsp-selected-${this._active}`);

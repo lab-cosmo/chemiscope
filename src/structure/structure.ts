@@ -354,7 +354,7 @@ export class StructureViewer {
             let indexes;
 
             if (this._selected.has(activeGUID) ) {
-                if (this._active !== '' && this._active !== undefined) {
+                if (this._selected.has(this._active)) {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
                     oldButton.classList.toggle('chsp-inactive-structure-marker', true);
                     oldButton.classList.toggle('chsp-active-structure-marker', false);
@@ -383,19 +383,17 @@ export class StructureViewer {
                         indexes = this._indexer.from_structure_atom(current.structure, atom_id);
                         this.onselect(indexes, this._active);
                     };
+
+                    if (this._indexer.mode === 'structure') {
+                        indexes = this._indexer.from_structure_atom(activeWidgetData.current.structure);
+                    } else {
+                        const structure = activeWidgetData.current.structure;
+                        const atom = activeWidgetData.current.atom;
+                        indexes = this._indexer.from_structure_atom(structure, atom);
+                    }
+                    this.onselect(indexes, this._active);
                 }
             }
-
-            const active = this._selected.get(this._active);
-            assert(active !== undefined);
-            if (this._indexer.mode === 'structure') {
-                indexes = this._indexer.from_structure_atom(active.current.structure);
-            } else {
-                const structure = active.current.structure;
-                const atom = active.current.atom;
-                indexes = this._indexer.from_structure_atom(structure, atom);
-            }
-            this.onselect(indexes, this._active);
         }
     }
     /*
