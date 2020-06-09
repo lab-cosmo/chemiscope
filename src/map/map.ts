@@ -245,7 +245,7 @@ export class PropertiesMap {
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
-     * @param starterGUID
+     * @param starterGUID if synchronized with a StructureViewer, the GUID of the first structure viewer cell
      */
     constructor(id: string,
                 indexer: EnvironmentIndexer,
@@ -254,6 +254,8 @@ export class PropertiesMap {
                 ) {
         this._indexer = indexer;
         this.onselect = () => {};
+
+        /// Temporary assignment to skirt npm errors
         this._active = '';
         this._selected = new Map();
 
@@ -270,7 +272,7 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
-        if (starterGUID !== null) {
+        if (starterGUID !== undefined) {
           this._addMarker(starterGUID);
           this.active = starterGUID;
         } else {
