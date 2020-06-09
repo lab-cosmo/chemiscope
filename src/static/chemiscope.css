@@ -49,7 +49,7 @@
 }
 
 /* Tooltip text */
-.tooltiptext {
+.chsp-tooltip {
   visibility: hidden;
   font-size: 12px;
   height: 28px;
@@ -90,7 +90,7 @@
     top: 9px;
 }
 
-.chsp-active-structure-marker:hover .tooltiptext {
+.chsp-active-structure-marker:hover .chsp-tooltip {
     visibility: visible;
 }
 
@@ -114,7 +114,7 @@
     top: 10px;
 }
 
-.chsp-inactive-structure-marker:hover .tooltiptext {
+.chsp-inactive-structure-marker:hover .chsp-tooltip {
     visibility: visible;
 }
 
@@ -134,7 +134,7 @@
     opacity: 0.9;
 }
 
-.chsp-close-widget-button:hover .tooltiptext {
+.chsp-close-widget-button:hover .chsp-tooltip {
     visibility: visible;
 }
 
@@ -154,7 +154,7 @@
     opacity: 0.9;
 }
 
-.chsp-duplicate-widget-button:hover .tooltiptext {
+.chsp-duplicate-widget-button:hover .chsp-tooltip {
     visibility: visible;
 }
 

@@ -358,13 +358,13 @@ export class StructureViewer {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
                     oldButton.classList.toggle('chsp-inactive-structure-marker', true);
                     oldButton.classList.toggle('chsp-active-structure-marker', false);
-                    oldButton.innerHTML = `<span class="tooltiptext">Choose as active.</span>`;
+                    oldButton.innerHTML = `<span class="chsp-tooltip">Choose as active.</span>`;
                 }
                 this._active = activeGUID;
                 const newButton = getByID(`chsp-activate-${this._active}`);
                 newButton.classList.toggle('chsp-inactive-structure-marker', false);
                 newButton.classList.toggle('chsp-active-structure-marker', true);
-                newButton.innerHTML = `<span class="tooltiptext">This is the active button</span>`;
+                newButton.innerHTML = `<span class="chsp-tooltip">This is the active button</span>`;
 
                 const activeWidgetData = this._selected.get(this._active);
                 assert(activeWidgetData !== undefined);
@@ -430,7 +430,7 @@ export class StructureViewer {
             color = getNextColor(colors);
             activeFlag.style.backgroundColor = color;
             activeFlag.onclick = () => {this.active = cellGUID; };
-            activeFlag.innerHTML = `<span class="tooltiptext">Choose as active</span>`;
+            activeFlag.innerHTML = `<span class="chsp-tooltip">Choose as active</span>`;
             cell.appendChild(activeFlag);
 
             // add a button to close the widget
@@ -438,7 +438,7 @@ export class StructureViewer {
             close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
             close.id = `chsp-close-widget-button-${cellGUID}`;
             close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
-            close.innerHTML = `<span class="tooltiptext">Close widget</span><object>${CLOSE_SVG}</object>`;
+            close.innerHTML = `<span class="chsp-tooltip">Close widget</span><object>${CLOSE_SVG}</object>`;
             cell.appendChild(close);
 
             // add a button to duplicate the widget
@@ -460,7 +460,7 @@ export class StructureViewer {
 
             };
 
-            duplicate.innerHTML = `<span class="tooltiptext">Add duplicate widget</span><object>${DUPLICATE_SVG}</object>`;
+            duplicate.innerHTML = `<span class="chsp-tooltip">Add duplicate widget</span><object>${DUPLICATE_SVG}</object>`;
             cell.appendChild(duplicate);
 
             this._root.appendChild(cell);
