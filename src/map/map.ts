@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import {Property} from '../dataset';
 import {EnvironmentIndexer, HTMLSetting, Indexes, SettingGroup, SettingModificationOrigin} from '../utils';
-import {foreachSetting, getByID, generateGUID, makeDraggable, sendWarning} from '../utils';
+import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
@@ -208,7 +208,7 @@ export class PropertiesMap {
     private _data: MapData;
 
     /// GUID of the currently selected point
-    private _active: string;
+    private _active!: string;
     /// Map associating currently selected markers GUID to additional data
     private _selected: Map<string, MarkerData>;
 
@@ -250,13 +250,10 @@ export class PropertiesMap {
     constructor(id: string,
                 indexer: EnvironmentIndexer,
                 properties: {[name: string]: Property},
-                starterGUID?: string
+                starterGUID?: string,
                 ) {
         this._indexer = indexer;
         this.onselect = () => {};
-
-        /// Temporary assignment to skirt npm errors
-        this._active = '';
         this._selected = new Map();
 
         this._root = getByID(id);
@@ -273,11 +270,11 @@ export class PropertiesMap {
         this._data = new MapData(properties);
 
         if (starterGUID !== undefined) {
-          this._addMarker(starterGUID);
-          this.active = starterGUID;
+            this._addMarker(starterGUID);
+            this.active = starterGUID;
         } else {
-          this._addMarker(generateGUID());
-          this.active = this._selected.keys().next().value;
+            this._addMarker(generateGUID());
+            this.active = this._selected.keys().next().value;
         }
 
         this._insertSettingsHTML();
