@@ -360,12 +360,19 @@ export class StructureViewer {
                     oldButton.classList.toggle('chsp-inactive-structure-marker', true);
                     oldButton.classList.toggle('chsp-active-structure-marker', false);
                     oldButton.innerHTML = `<span class="chsp-tooltip">Activate viewer</span>`;
+
+                    const oldCell = getByID(`gi-${this._active}`);
+                    oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
+                    oldCell.classList.toggle('chsp-structure-viewer-cell', true);
                 }
                 this._active = activeGUID;
                 const newButton = getByID(`chsp-activate-${this._active}`);
                 newButton.classList.toggle('chsp-inactive-structure-marker', false);
                 newButton.classList.toggle('chsp-active-structure-marker', true);
                 newButton.innerHTML = `<span class="chsp-tooltip">this is the active viewer</span>`;
+                const newCell = getByID(`gi-${this._active}`);
+                newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
+                newCell.classList.toggle('chsp-structure-viewer-cell', false);
 
                 const activeWidgetData = this._selected.get(this._active);
                 assert(activeWidgetData !== undefined);
@@ -439,9 +446,9 @@ export class StructureViewer {
             close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
             close.id = `chsp-close-widget-button-${cellGUID}`;
             close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
-            close.innerHTML = `
+            close.innerHTML = `<span>${CLOSE_SVG}</span>
                 <span class="chsp-tooltip">remove viewer</span>
-                <object>${CLOSE_SVG}</object>`;
+                `;
             cell.appendChild(close);
 
             // add a button to duplicate the widget
@@ -463,9 +470,8 @@ export class StructureViewer {
 
             };
 
-            duplicate.innerHTML = `
-                <span class="chsp-tooltip">duplicate viewer</span>
-                <object>${DUPLICATE_SVG}</object>`;
+            duplicate.innerHTML = `<span>${DUPLICATE_SVG}</span>
+                <span class="chsp-tooltip">duplicate viewer</span>`;
             cell.appendChild(duplicate);
 
             this._root.appendChild(cell);
