@@ -73,6 +73,11 @@ function setupChemiscope(dataset) {
 }
 
 function displayError(error) {
+    if (error.toString() === "IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.") {
+        // Ignores mysterious JSMol resize error we really have no clear way to fix.
+        return;
+    }
+    
     document.getElementById('loading').style.display = 'none';
 
     const display = document.getElementById('error-display');
