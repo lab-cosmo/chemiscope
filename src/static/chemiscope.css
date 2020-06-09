@@ -26,8 +26,6 @@
     border: solid thin black;
     border-radius: 10px;
     z-index: 100;
-    top: 0;
-    left: 0;
 }
 
 .chsp-open-map-settings {
@@ -85,7 +83,11 @@
 }
 
 .chsp-active-structure-marker:hover{
-    border-width: 3px;
+    /* border-width: 3px; */
+    height: 22px;
+    width: 22px;
+    right: 109px;
+    top: 9px;
 }
 
 .chsp-active-structure-marker:hover .tooltiptext {
