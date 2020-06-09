@@ -278,24 +278,31 @@ export class PropertiesMap {
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
         // https://github.com/plotly/plotly.js/issues/1025
-        if (selectedGUID !== undefined) {
-            if (indexes.structure < 0 && indexes.environment < 0) {
-                this._removeMarker(selectedGUID, true);
-            } else {
-                /// Checks if marker exists on this map, if not adds it
-                if (!this._selected.has(selectedGUID)) {
-                    this._addMarker(selectedGUID, indexes.environment);
+
+        // this is the indicator that this guid has been removed from the
+        // structure viewer
+        if (indexes.structure < 0 && indexes.environment < 0) {
+            this._removeMarker(selectedGUID, true);
+        } else {
+            /// Checks if marker exists on this map, if not adds it
+            if (!this._selected.has(selectedGUID)) {
+                this._addMarker(selectedGUID, indexes.environment);
+            }
+
+            // sets this marker to active
+            this.active = selectedGUID;
+
+            const markerData = this._selected.get(selectedGUID);
+            if (markerData !== undefined) {
+                /// Sets the active marker on this map
+                if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+                    markerData.current = indexes.environment;
                 }
 
-                const markerData = this._selected.get(selectedGUID);
-                if (markerData !== undefined) {
-                    /// Sets the active marker on this map
-                    this.active = selectedGUID;
-
-                    if (markerData.current === undefined || indexes.environment !== markerData.current ) {
-                        markerData.current = indexes.environment;
-                    }
-                    this._updateSelectedMarker(selectedGUID);
+                // if we are in 3D there is no need to update the visuals.
+                // visuals will be updated when returning to 2D
+                if (! this._is3D()) {
+                  this._updateSelectedMarker(selectedGUID);
                 }
             }
         }
@@ -1233,26 +1240,32 @@ export class PropertiesMap {
      * @param  activeGUID the GUID of the new active viewer
      */
     public set active(activeGUID: string) {
-        if (activeGUID !== this._active && this._selected.has(activeGUID)) {
-            if (this._selected.has(this._active)) {
-                // this has been left as document.getElementById for when we are
-                // setting a new active because the old one has been deleted.
-                const oldButton = document.getElementById(`chsp-selected-${this._active}`);
-                if (oldButton !== null) {
-                    oldButton.classList.toggle('chsp-inactive-structure-marker', true);
-                    oldButton.classList.toggle('chsp-active-structure-marker', false);
-                }
-            }
-            const newButton = getByID(`chsp-selected-${activeGUID}`);
-            this._active = activeGUID;
-            newButton.classList.toggle('chsp-inactive-structure-marker', false);
-            newButton.classList.toggle('chsp-active-structure-marker', true);
+      if (activeGUID !== this._active && this._selected.has(activeGUID)) {
 
-            const markerData = this._selected.get(this._active);
-            if (markerData !== undefined) {
-                const indexes = this._indexer.from_environment(markerData.current);
-                this.onselect(indexes, this._active);
-            }
+          // if we are in 2D we need to update the visuals
+          if (! this._is3D()) {
+              if (this._selected.has(this._active)) {
+                  // this has been left as document.getElementById for when we are
+                  // setting a new active because the old one has been deleted.
+                  const oldButton = document.getElementById(`chsp-selected-${this._active}`);
+                  if (oldButton !== null) {
+                      oldButton.classList.toggle('chsp-inactive-structure-marker', true);
+                      oldButton.classList.toggle('chsp-active-structure-marker', false);
+                  }
+              }
+              const newButton = getByID(`chsp-selected-${activeGUID}`);
+              this._active = activeGUID;
+              newButton.classList.toggle('chsp-inactive-structure-marker', false);
+              newButton.classList.toggle('chsp-active-structure-marker', true);
+
+              const markerData = this._selected.get(this._active);
+              if (markerData !== undefined) {
+                  const indexes = this._indexer.from_environment(markerData.current);
+                  this.onselect(indexes, this._active);
+              }
+          // in 3D we need only to update the GUID, visuals will be updated
+          // upon returning to 2D
+          } else {this._active = activeGUID; }
         }
     }
 
@@ -1270,7 +1283,6 @@ export class PropertiesMap {
         const markerData = this._selected.get(selectedGUID);
         if (markerData !== undefined) {
             const selected = markerData.current;
-            const marker = getByID(`chsp-selected-${selectedGUID}`);
 
             if (this._is3D()) {
                 let symbol;
@@ -1289,6 +1301,9 @@ export class PropertiesMap {
                     'marker.symbol': symbol,
                 } as Data, 1);
             } else {
+                // marker only exists on document in 2D
+                const marker = getByID(`chsp-selected-${selectedGUID}`);
+
                 const xaxis = this._plot._fullLayout.xaxis;
                 const yaxis = this._plot._fullLayout.yaxis;
 
@@ -1314,7 +1329,6 @@ export class PropertiesMap {
                 marker.style.top = `${y - 10}px`;
                 marker.style.left = `${x - 10}px`;
             }
-
             const indexes = this._indexer.from_environment(markerData.current);
             this.onselect(indexes, selectedGUID);
         }
