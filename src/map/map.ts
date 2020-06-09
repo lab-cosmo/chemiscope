@@ -175,8 +175,11 @@ class AxisSetting {
     }
 }
 
+/// interface to contain synchronized parameters for marker instances
 interface MarkerData {
+    /// color of the marker, synchronized with the StructureViewer where appropriate
     color: string;
+    /// index of the currently displayed structure
     current: number;
     /// Marker indicating the position of the point in 2D mode
     /// Using an HTML element is much faster than using Plolty to restyle the full plot,
