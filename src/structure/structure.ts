@@ -128,9 +128,7 @@ export class StructureViewer {
     // GUID of the Active Widget
     private _active: string;
     // Map of Widgets GUIDS to their color, widget, and current structure
-    private _widgetMap: Map<string, WidgetGridData>;
-    // List of Widgets GUIDS in the StructureViewer
-    private _GUIDs: string[];
+    private _selected: Map<string, WidgetGridData>;
     // Documentation needed.
     private _root: HTMLElement;
     /// Playback delay setting
@@ -185,9 +183,7 @@ export class StructureViewer {
         };
 
         // Initializes with 1 widget upon opening.
-        this._widgetMap = new Map();
-        // this._widgetMap = {};
-        this._GUIDs = [];
+        this._selected = new Map();
         this.onselect = () => {};
 
         // Initialize the _root div as a grid (see function below)
@@ -201,8 +197,8 @@ export class StructureViewer {
         root.appendChild(this._root);
 
         this._setupGrid(1);
-        this.active = this._GUIDs[0];
-        this._active = this._GUIDs[0];
+        this.active = this._selected.keys().next().value;
+        this._active = this._selected.keys().next().value;
 
         // get the 'delay' setting inside the current widget setting
         // TODO(pinning): this needs to be updated when another widget is made active
@@ -219,7 +215,7 @@ export class StructureViewer {
      * @param  wi              GUID of the widget to show
      */
     public show(indexes: Indexes, selectedGUID: string = this._active) {
-        const data = this._widgetMap.get(selectedGUID);
+        const data = this._selected.get(selectedGUID);
         assert(data !== undefined);
 
         const widget = data.widget;
@@ -262,11 +258,8 @@ export class StructureViewer {
      * opened.
      */
     public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        for (const guid of this._GUIDs) {
-            const widgetData = this._widgetMap.get(guid);
-            if (widgetData !== undefined ) {
-                widgetData.widget.settingsPlacement(callback);
-            }
+        for (const widgetData of this._selected.values()) {
+            widgetData.widget.settingsPlacement(callback);
         }
     }
 
@@ -277,7 +270,7 @@ export class StructureViewer {
     public structurePlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._widgetMap.get(this._active);
+                const widgetData = this._selected.get(this._active);
                 if (widgetData !== undefined) {
                   const current = widgetData.current;
                   const structure = (current.structure + 1) % this._indexer.structuresCount();
@@ -298,7 +291,7 @@ export class StructureViewer {
     public atomPlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._widgetMap.get(this._active);
+                const widgetData = this._selected.get(this._active);
                 if (widgetData !== undefined) {
                   const current = widgetData.current;
                   const structure = current.structure;
@@ -317,7 +310,7 @@ export class StructureViewer {
      * Remove all HTML added by this [[StructureViewer]] in the current document
      */
     public remove(): void {
-        for (const data of this._widgetMap.values()) {
+        for (const data of this._selected.values()) {
             data.widget.remove();
         }
         this._root.parentElement!.innerHTML = '';
@@ -358,10 +351,9 @@ export class StructureViewer {
     public set active(activeGUID: string) {
         /// this is here to prevent infinite loops
         if (activeGUID !== this._active) {
-            const newActiveIdx = this._GUIDs.indexOf(activeGUID);
             let indexes;
 
-            if (newActiveIdx >= 0) {
+            if (this._selected.has(activeGUID) ) {
                 if (this._active !== '' && this._active !== undefined) {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
                     oldButton.classList.toggle('chsp-inactive-structure-marker', true);
@@ -374,7 +366,7 @@ export class StructureViewer {
                 newButton.classList.toggle('chsp-active-structure-marker', true);
                 newButton.innerHTML = `<span class="tooltiptext">This is the active button</span>`;
 
-                const activeWidgetData = this._widgetMap.get(this._active);
+                const activeWidgetData = this._selected.get(this._active);
                 if (activeWidgetData !== undefined) {
                     activeWidgetData.widget.onselect = (atom: number) => {
                         if (this._indexer.mode !== 'atom') {
@@ -394,7 +386,7 @@ export class StructureViewer {
                 }
             }
 
-            const active = this._widgetMap.get(this._active);
+            const active = this._selected.get(this._active);
             assert(active !== undefined);
             if (this._indexer.mode === 'structure') {
                 indexes = this._indexer.from_structure_atom(active.current.structure);
@@ -406,34 +398,16 @@ export class StructureViewer {
             this.onselect(indexes, this._active);
         }
     }
-
-    /*
-     * Function to resize the grid to this._GUIDs.length + inc widgets
-     */
-    private _resizeGridInc(inc: number) {
-        if (this._GUIDs.length + inc < 1) {
-            sendWarning('Cannot delete last widget.');
-        } else {
-            if (this._GUIDs.length + inc > MAX_WIDGETS ) {
-                sendWarning(`Widget grid cannot contain more than ${MAX_WIDGETS} widgets.`);
-            } else {
-                this._setupGrid(this._GUIDs.length + inc);
-            }
-        }
-    }
     /*
      * Function to setup the cell in the structure viewer grid.
      * Will generate a GUID string if one does not exist for the cell
      * and instantiate all necessary buttons.
      */
-    private _setupCell(cellNo: number, colNum: number, rowNum: number) {
-        if (cellNo >= this._GUIDs.length) {
-            this._GUIDs.push(generateGUID());
-        }
+    private _setupCell(cellGUID: string, cellNo: number, colNum: number, rowNum: number) {
 
-        const cellGUID = this._GUIDs[cellNo];
         const cellId = `gi-${cellGUID}`;
         let cell = document.getElementById(cellId);
+        let color = '';
 
         if (cell === null) {
             cell = document.createElement('div');
@@ -450,13 +424,10 @@ export class StructureViewer {
             activeFlag.classList.add('chsp-inactive-structure-marker');
             activeFlag.id = `chsp-activate-${cellGUID}`;
             const colors = [];
-            for (const guid of this._GUIDs) {
-                const widgetData = this._widgetMap.get(guid);
-                if (widgetData !== undefined) {
-                    colors.push(widgetData.color);
-                }
+            for (const widgetData of this._selected.values()) {
+                colors.push(widgetData.color);
             }
-            const color = getNextColor(colors);
+            color = getNextColor(colors);
             activeFlag.style.backgroundColor = color;
             activeFlag.onclick = () => {this.active = cellGUID; };
             activeFlag.innerHTML = `<span class="tooltiptext">Choose as active</span>`;
@@ -466,7 +437,7 @@ export class StructureViewer {
             const close = document.createElement('button');
             close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
             close.id = `chsp-close-widget-button-${cellGUID}`;
-            close.onclick = () => {this._removeWidget(cellGUID); this._resizeGridInc(0); };
+            close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
             close.innerHTML = `<span class="tooltiptext">Close widget</span><object>${CLOSE_SVG}</object>`;
             cell.appendChild(close);
 
@@ -475,18 +446,16 @@ export class StructureViewer {
             duplicate.classList.add('chsp-duplicate-widget-button', 'btn', 'btn-light', 'btn-sm');
             duplicate.id = `chsp-duplicate-widget-button-${cellGUID}`;
             duplicate.onclick = () => {
-                const data = this._widgetMap.get(cellGUID);
+                const data = this._selected.get(cellGUID);
                 assert(data !== undefined);
-                this._resizeGridInc(1);
                 let index;
                 if (this._indexer.mode === 'structure') {
                     index = this._indexer.from_structure_atom(data.current.structure);
                 } else {
                     index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
                 }
+                this._setupGrid(this._selected.size + 1, index);
 
-                this.show(index, this._GUIDs[this._GUIDs.length - 1]);
-                this.onselect(index, this._GUIDs[this._GUIDs.length - 1]);
             };
 
             duplicate.innerHTML = `<span class="tooltiptext">Add duplicate widget</span><object>${DUPLICATE_SVG}</object>`;
@@ -504,74 +473,87 @@ export class StructureViewer {
      * Function to initialize the grid instance for `this._nwidgets` cells and place
      * onto the DOM element mapped in `this._root`
      */
-    private _setupGrid(nwidgets: number) {
-        if (nwidgets <= 0) {
-            throw Error('Cannot initialize a grid with 0 widgets.');
-        }
+    private _setupGrid(nwidgets: number, index: Indexes = {atom: 0, structure: 0, environment: 0}) {
+          if (nwidgets < 1) {
+              sendWarning('Cannot delete last widget.');
+          } else {
+              if (nwidgets > MAX_WIDGETS ) {
+                  sendWarning(`Widget grid cannot contain more than ${MAX_WIDGETS} widgets.`);
+              } else {
 
-        // Determine best arrangement for nwidgets
-        const arrangement = bestGridArrangement(nwidgets);
+                  // Determine best arrangement for nwidgets
+                  const arrangement = bestGridArrangement(nwidgets);
 
-        if (this._GUIDs.length > nwidgets) {
-            sendWarning(`Warning: Eliminating last ${this._GUIDs.length - nwidgets} widgets.`);
-            const wl = this._GUIDs.length;
-            for (let i = nwidgets; i < wl; i++) {
-                this._removeWidget(this._GUIDs[i]);
-            }
-        }
+                  if (this._selected.size > nwidgets) {
+                      sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} widgets.`);
+                      const wl = this._selected.size;
+                      const mapKeys = this._selected.keys();
+                      for (let i = 0; i < wl; i++) {
+                          const excessGUID = mapKeys.next().value;
+                          if (i >= nwidgets) {
+                            this._removeWidget(excessGUID);
+                          }
+                      }
+                  }
 
-        // Start at the third row to skip the inc/dec buttons
-        let rowNum = 1;
-        let colNum = 1;
+                  // Start at the third row to skip the inc/dec buttons
+                  let rowNum = 1;
+                  let colNum = 1;
 
-        for (let c = 0; c < nwidgets; c++) {
-            let color = this._setupCell(c, colNum, rowNum);
-            if (color === '') {
-                const colors = [];
-                for (const guid of this._GUIDs) {
-                    const widgetData = this._widgetMap.get(guid);
-                    if (widgetData !== undefined) {
-                        colors.push(widgetData.color);
-                    }
-                }
-                color = getNextColor(colors);
-            }
+                  const mapKeys = this._selected.keys();
+                  for (let c = 0; c < nwidgets; c++) {
+                      let cellGUID;
+                      if (c >= this._selected.size) {
+                        cellGUID = generateGUID();
+                      } else {
+                        cellGUID = mapKeys.next().value;
+                      }
+                      let color = this._setupCell(cellGUID, c, colNum, rowNum);
+                      if (color === '') {
+                          const colors = [];
+                          for (const widgetData of this._selected.values()) {
+                              colors.push(widgetData.color);
+                          }
+                          color = getNextColor(colors);
+                      }
 
-            colNum++;
-            if (colNum > arrangement.columns) {
-                rowNum++;
-                colNum = 1;
-            }
+                      colNum++;
+                      if (colNum > arrangement.columns) {
+                          rowNum++;
+                          colNum = 1;
+                      }
 
-            // add a new widget if necessary
-            const widgetData = this._widgetMap.get(this._GUIDs[c]);
-            if (widgetData === undefined) {
-                const widget = new JSmolWidget(
-                    `gi-${this._GUIDs[c]}`,
-                    this._j2spath,
-                    this._GUIDs[c],
-                );
-                const current = {atom: -1, structure: -1, environment: -1};
-                this._widgetMap.set(this._GUIDs[c], {color: color,
-                    current: current,
-                    widget: widget,
-                });
-                const index = {atom: 0, structure: 0, environment: 0};
-                this.show(index, this._GUIDs[c]);
-                this.onselect(index, this._GUIDs[c]);
-            } else {
-                widgetData.widget.script('refresh');
-            }
+                      // add a new widget if necessary
+
+                      if (! this._selected.has(cellGUID)) {
+                          const widget = new JSmolWidget(
+                              `gi-${cellGUID}`,
+                              this._j2spath,
+                              cellGUID,
+                          );
+                          const current = {atom: -1, structure: -1, environment: -1};
+                          this._selected.set(cellGUID, {color: color,
+                              current: current,
+                              widget: widget,
+                          });
+                          this.show(index, cellGUID);
+                          this.onselect(index, cellGUID);
+                      } else {
+                          const widgetData = this._selected.get(cellGUID);
+                          assert(widgetData !== undefined);
+                          widgetData.widget.script('refresh');
+                      }
+                  }
+              }
         }
     }
-
     /*
      * Removes a widget from the structure viewer grid.
      * The parameter force pertains to removing the *only* widget in the grid,
      * which should only be done when changing datasets.
      */
     private _removeWidget(trashedGUID: string, force: boolean = false) {
-        if (this._GUIDs.length > 1 || force === true) {
+        if (this._selected.size > 1 || force === true) {
             const widgetRoot = getByID(`chsp-${trashedGUID}`);
 
             this.onselect({structure: -1, environment: -1}, trashedGUID);
@@ -582,16 +564,12 @@ export class StructureViewer {
             const deadCell = getByID(`gi-${trashedGUID}`);
             if (deadCell !== null) {deadCell.remove(); }
 
-            const cellNo = this._GUIDs.indexOf(trashedGUID);
-            this._widgetMap.delete(trashedGUID);
-            this._GUIDs.splice(cellNo, 1);
+            this._selected.delete(trashedGUID);
 
             if (this._active === trashedGUID ) {
-                if ( this._widgetMap.get(this._GUIDs[0]) !== undefined) {
-                    this.active = this._GUIDs[0];
-                } else {
-                    this._active = '';
-                }
+                if (this._selected.size > 0) {
+                  this.active = this._selected.keys().next().value;
+                } else { this._active = ''; }
             }
         }
     }
