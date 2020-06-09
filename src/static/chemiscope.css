@@ -71,19 +71,17 @@
 
 .chsp-active-structure-marker {
     border-radius: 50%;
-    border: solid thin black;
+    border: solid 2px black;
     position: absolute;
     z-index: 10;
     background-color: #4CAF50;
     right: 110px;
     top: 10px;
-    border-width: 2px;
     height: 20px;
     width: 20px;
 }
 
 .chsp-active-structure-marker:hover{
-    /* border-width: 3px; */
     height: 22px;
     width: 22px;
     right: 109px;
@@ -96,15 +94,14 @@
 
 .chsp-inactive-structure-marker {
     border-radius: 50%;
-    border: solid thin black;
+    border: solid 1px black;
     position: absolute;
     z-index: 10;
-    background-color: #4CAF50;
+    background-color: #4caf50;
     height: 15px;
     width: 15px;
-    right: 112.5px;
-    top: 12.5px;
-    border-width: 1px;
+    right: 112px;
+    top: 12px;
 }
 
 .chsp-inactive-structure-marker:hover {
@@ -112,6 +109,7 @@
     width: 20px;
     right: 110px;
     top: 10px;
+    cursor: pointer;
 }
 
 .chsp-inactive-structure-marker:hover .chsp-tooltip {
@@ -122,7 +120,7 @@
     border: none;
     background-color: #ffffff;
     position: absolute;
-    top: 7.5px;
+    top: 7px;
     right: 50px;
     height:25px;
     width:25px;
@@ -142,7 +140,7 @@
     border: none;
     background-color: #ffffff;
     position: absolute;
-    top: 7.5px;
+    top: 7px;
     right: 80px;
     height:25px;
     width:25px;
