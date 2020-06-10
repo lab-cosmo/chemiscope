@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {Environment, isPositiveInteger, JsObject, Structure, UserStructure} from '../dataset';
+import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
 import {EnvironmentIndexer, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
 
@@ -69,39 +69,6 @@ function groupByStructure(n_structures: number, environments?: Environment[]): E
     }
 
     return result;
-}
-
-/**
- * Check that the given object is a structure. Return a string describing the
- * issue with `s` if any, or the empty string if `s` looks like a valid
- * structure.
- */
-function checkStructure(s: JsObject): string {
-    if (!('size' in s && typeof s.size === 'number' && isPositiveInteger(s.size))) {
-        return 'missing "size" in structure';
-    }
-
-    for (const key of ['names', 'x', 'y', 'z']) {
-        if (!(key in s)) {
-            return `missing "${name}" in structure`;
-        }
-        const array = s[key];
-        if (!Array.isArray(array)) {
-            return `"${name}" must be an array in structure`;
-        }
-
-        if (array.length !== s.size) {
-            return `wrong size for "${name}" in structure, expected ${s.size}, got ${array.length}`;
-        }
-    }
-
-    if ('cell' in s) {
-        if (!(Array.isArray(s.cell) && s.cell.length === 9)) {
-            return '"cell" must be an array of size 9 in structure';
-        }
-    }
-
-    return '';
 }
 
 interface WidgetGridData {

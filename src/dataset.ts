@@ -164,7 +164,7 @@ export function validateDataset(o: JsObject) {
     if (!('properties' in o && typeof o.properties === 'object' && o.properties !== null)) {
         throw Error('missing "properties" key in dataset');
     }
-    checkProperties(o.properties as JsObject, structureCount, envCount);
+    checkProperties(o.properties as Record<string, JsObject>, structureCount, envCount);
 
     if ('environments' in o) {
         if (!Array.isArray(o.environments)) {
@@ -221,36 +221,55 @@ function checkStructures(o: JsObject[]): [number, number] {
         }
         envCount += structure.size;
 
-        if ('names' in structure && 'x' in structure && 'y' in structure && 'z' in structure) {
-            for (const key of ['names', 'x', 'y', 'z']) {
-                if (!(key in structure)) {
-                    throw Error(`missing '${name}' for structure ${i}`);
-                }
-                const array = structure[key] as JsObject;
-
-                if (array.length !== structure.size) {
-                    throw Error(`wrong size for '${name}' in structure ${i}, expected ${structure.size}, got ${array.length}`);
-                }
-            }
-
-            if ('cell' in structure) {
-                if ((structure.cell as JsObject).length !== 9) {
-                    throw Error(`'cell' must be an array of size 9 for structure ${i}`);
-                }
-            }
-        } else if ('data' in structure) {
-            // nothing to check
+        if ('data' in structure) {
+            // user-specified structure, nothing to do
         } else {
-            throw Error(`structure ${i} must contains either 'names'/'x'/'y'/'z' or 'data'`);
+            const message = checkStructure(structure);
+            if (message !== '') {
+                throw Error(`error in structure ${i}: ${message}`);
+            }
         }
     }
 
     return [o.length, envCount];
 }
 
-function checkProperties(properties: JsObject, structureCount: number, envCount: number) {
+/**
+ * Check that the given object is a structure. Return a string describing the
+ * issue with `s` if any, or the empty string if `s` looks like a valid
+ * structure.
+ */
+export function checkStructure(s: JsObject): string {
+    if (!('size' in s && typeof s.size === 'number' && isPositiveInteger(s.size))) {
+        return 'missing "size"';
+    }
+
+    for (const key of ['names', 'x', 'y', 'z']) {
+        if (!(key in s)) {
+            return `missing "${name}"`;
+        }
+        const array = s[key];
+        if (!Array.isArray(array)) {
+            return `"${name}" must be an array`;
+        }
+
+        if (array.length !== s.size) {
+            return `wrong size for "${name}", expected ${s.size}, got ${array.length}`;
+        }
+    }
+
+    if ('cell' in s) {
+        if (!(Array.isArray(s.cell) && s.cell.length === 9)) {
+            return '"cell" must be an array of size 9';
+        }
+    }
+
+    return '';
+}
+
+function checkProperties(properties: Record<string, JsObject>, structureCount: number, envCount: number) {
     for (const key in properties) {
-        const property = properties[key] as JsObject;
+        const property = properties[key];
 
         if (!('target' in property && typeof property.target === 'string')) {
             Error(`'properties['${key}'].target' should be a string`);
