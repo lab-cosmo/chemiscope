@@ -15,6 +15,7 @@ import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatte
 import {COLOR_MAPS} from './colorscales';
 import {MapData, NumericProperty} from './data';
 
+import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
 
 const DEFAULT_LAYOUT = {
@@ -354,11 +355,13 @@ export class PropertiesMap {
     private _insertSettingsHTML() {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
-        template.innerHTML = `<button data-target='#chsp-settings'
-                                      data-toggle='modal'
-                                      class='btn btn-light btn-sm chsp-open-map-settings'>
-            <div class='chsp-hamburger'><div></div><div></div><div></div></div>
-        </button>`;
+        template.innerHTML = `<button
+            class="btn btn-light btn-sm chsp-viewer-button"
+            data-target='#chsp-settings'
+            data-toggle="modal"
+            style="top: 4px; left: 5px; opacity: 1;">
+                <div>${BARS_SVG}</div>
+            </button>`;
         const openSettings = template.content.firstChild!;
         this._root.append(openSettings);
 

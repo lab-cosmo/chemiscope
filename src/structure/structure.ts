@@ -11,8 +11,8 @@ import {EnvironmentIndexer, generateGUID, getByID, getNextColor, Indexes, sendWa
 import {structure2JSmol} from './jsmol';
 import {JSmolWidget} from './widget';
 
-import CLOSE_SVG from './close.svg';
-import DUPLICATE_SVG from './duplicate.svg';
+import CLOSE_SVG from '../static/close.svg';
+import DUPLICATE_SVG from '../static/duplicate.svg';
 
 const MAX_WIDGETS = 9;
 
