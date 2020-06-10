@@ -1258,14 +1258,12 @@ export class PropertiesMap {
                   // setting a new active because the old one has been deleted.
                   const oldButton = document.getElementById(`chsp-selected-${this._active}`);
                   if (oldButton !== null) {
-                      oldButton.classList.toggle('chsp-inactive-structure-marker', true);
-                      oldButton.classList.toggle('chsp-active-structure-marker', false);
+                      oldButton.classList.toggle('chsp-active-structure', false);
                   }
               }
               const newButton = getByID(`chsp-selected-${activeGUID}`);
               this._active = activeGUID;
-              newButton.classList.toggle('chsp-inactive-structure-marker', false);
-              newButton.classList.toggle('chsp-active-structure-marker', true);
+              newButton.classList.toggle('chsp-active-structure', true);
 
               const markerData = this._selected.get(this._active);
               assert(markerData !== undefined);
@@ -1290,7 +1288,6 @@ export class PropertiesMap {
      * @param selectedGUID unique string identifier of the marker to update
      */
     private _updateSelectedMarker(selectedGUID: string, selectedMarkerData: MarkerData): void {
-
           const selected = selectedMarkerData.current;
           const marker = selectedMarkerData.marker;
 
@@ -1311,7 +1308,6 @@ export class PropertiesMap {
                   'marker.symbol': symbol,
               } as Data, 1);
           } else {
-
               const xaxis = this._plot._fullLayout.xaxis;
               const yaxis = this._plot._fullLayout.yaxis;
 
@@ -1333,9 +1329,9 @@ export class PropertiesMap {
                   marker.style.display = 'block';
               }
 
-              // -10 since we want the centers to match, and the marker div is 20px wide
-              marker.style.top = `${y - 10}px`;
-              marker.style.left = `${x - 10}px`;
+              marker.style.top = `${y}px`;
+              const plotWidth = this._plot.getBoundingClientRect().width;
+              marker.style.right = `${plotWidth - x}px`;
           }
           const indexes = this._indexer.from_environment(selected);
           this.onselect(indexes, selectedGUID);
@@ -1356,10 +1352,9 @@ export class PropertiesMap {
         if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
             const marker = document.createElement('div');
-            marker.classList.add('chsp-selected', 'chsp-inactive-structure-marker', 'btn-light');
+            marker.classList.add('chsp-structure-marker');
             if (addedGUID === this._active) {
-                marker.classList.toggle('chsp-inactive-structure-marker', false);
-                marker.classList.toggle('chsp-active-structure-marker', true);
+                marker.classList.toggle('chsp-active-structure', true);
             }
             marker.id = `chsp-selected-${addedGUID}`;
             marker.onclick = () => {this.active = addedGUID; };
