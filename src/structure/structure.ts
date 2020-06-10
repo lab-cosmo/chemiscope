@@ -364,7 +364,6 @@ export class StructureViewer {
 
                     const oldCell = getByID(`gi-${this._active}`);
                     oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
-                    oldCell.classList.toggle('chsp-structure-viewer-cell', true);
                 }
                 this._active = activeGUID;
                 const newButton = getByID(`chsp-activate-${this._active}`);
@@ -375,7 +374,6 @@ export class StructureViewer {
 
                 const newCell = getByID(`gi-${this._active}`);
                 newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
-                newCell.classList.toggle('chsp-structure-viewer-cell', false);
 
                 const activeWidgetData = this._selected.get(this._active);
                 assert(activeWidgetData !== undefined);
