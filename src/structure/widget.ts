@@ -667,9 +667,9 @@ export class JSmolWidget {
             bonds: new HTMLSetting('boolean', true),
             environments: {
                 activated: new HTMLSetting('boolean', false),
-                center: new HTMLSetting('boolean', false),
                 bgColor: new HTMLSetting('string', 'CPK'),
                 bgStyle: new HTMLSetting('string', 'licorice'),
+                center: new HTMLSetting('boolean', false),
                 cutoff: new HTMLSetting('number', 0),
             },
             keepOrientation: new HTMLSetting('boolean', false),
@@ -810,19 +810,19 @@ export class JSmolWidget {
         const wireframe = `wireframe ${settings.bonds.value ? '0.15' : 'off'}`;
         const spacefill = `spacefill ${settings.spaceFilling.value ? '80%' : '23%'}`;
 
-        let commands = '';        
+        let commands = '';
         if (this._highlighted === undefined || !settings.environments.activated.value) {
             commands += 'select all;';
-        	commands += 'centerAt average;';
+            commands += 'centerAt average;';
             commands += 'hide none;';
             commands += 'color atoms cpk; color atoms opaque;';
             commands += `dots off; ${wireframe}; ${spacefill};`;
         } else {
             // center of the environment (or structure)
             if (settings.environments.center.value) {
-                commands += `select @${this._highlighted + 1};`;            
+                commands += `select @${this._highlighted + 1};`;
             } else {
-                commands += 'select all;'
+                commands += 'select all;';
             }
             commands += 'centerAt average;';
 
