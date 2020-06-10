@@ -18,16 +18,6 @@
     white-space: nowrap;
 }
 
-.chsp-selected {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: #007bff;
-    border: solid thin black;
-    border-radius: 10px;
-    z-index: 100;
-}
-
 .chsp-open-map-settings {
     position: absolute;
     top: 3px;
@@ -50,114 +40,69 @@
 
 /* Tooltip text */
 .chsp-tooltip {
-  visibility: hidden;
-  background-color: #69738a;
-  color: white;
-  border-radius: 2px;
-  white-space: nowrap;
-  text-align: center;
-  display: inline-block;
-  font-size: 12px;
-  height: 28px;
-  line-height: 28px;
-  padding-left: 8px;
-  padding-right: 8px;
-  top: 30px;
-  left: -60px;
-  /* Position the tooltip text - see examples below! */
-  position: relative;
-  z-index: 100000;
-}
-
-.chsp-active-structure-marker {
-    border-radius: 50%;
-    border: solid 2px black;
+    visibility: hidden;
+    background-color: #69738a;
+    color: white;
+    border-radius: 2px;
+    white-space: nowrap;
+    text-align: center;
+    display: inline-block;
+    font-size: 12px;
+    height: 28px;
+    line-height: 28px;
+    padding-left: 8px;
+    padding-right: 8px;
+    top: 30px;
+    left: -60px;
+    /* Position the tooltip text - see examples below! */
     position: absolute;
-    z-index: 10;
-    background-color: #4CAF50;
-    right: 102px;
-    top: 10px;
-    height: 20px;
-    width: 20px;
+    z-index: 100000;
 }
 
-.chsp-active-structure-marker:hover{
-    height: 22px;
-    width: 22px;
-    right: 101px;
-    top: 9px;
-}
-
-.chsp-active-structure-marker:hover .chsp-tooltip {
+.chsp-has-tooltip:hover .chsp-tooltip {
     visibility: visible;
 }
 
-.chsp-inactive-structure-marker {
+.chsp-structure-marker {
     border-radius: 50%;
     border: solid 1px black;
+    --size: 12px;
+    width: var(--size);
+    height: var(--size);
     position: absolute;
+    /* ensure the top/right/left/bottom positioning is relative to the center of the div */
+    transform: translate(calc(-50% + var(--size)), -50%);
     z-index: 10;
-    background-color: #4caf50;
-    height: 12px;
-    width: 12px;
-    right: 107px;
-    top: 14px;
 }
 
-.chsp-inactive-structure-marker:hover {
-    height: 20px;
-    width: 20px;
-    right: 102px;
-    top: 10px;
+.chsp-structure-marker:hover {
+    --size: 20px;
     cursor: pointer;
 }
 
-.chsp-inactive-structure-marker:hover .chsp-tooltip {
-    visibility: visible;
+/* This class is added on top of .chsp-structure-marker for the active structure */
+.chsp-active-structure {
+    border-width: 2px;
+    --size: 20px;
 }
 
-.chsp-close-widget-button {
-    border: none;
-    background-color: #ffffff;
+.chsp-active-structure:hover {
+    --size: 22px;
+    cursor: default;
+}
+
+.chsp-viewer-button {
     position: absolute;
     padding: 1px;
-    align-items: center;
-    vertical-align: middle;
-    top: 8px;
-    right: 40px;
-    height:24px;
-    width:24px;
+    margin: 0;
+    height: 28px;
+    width: 28px;
     opacity: 0.4;
     z-index: 10;
 }
 
-.chsp-close-widget-button:hover {
+.chsp-viewer-button:hover {
     opacity: 0.9;
-}
-
-.chsp-close-widget-button:hover .chsp-tooltip {
-    visibility: visible;
-}
-
-.chsp-duplicate-widget-button {
-    border: none;
-    background-color: #ffffff;
-    position: absolute;
-    padding: 1px;
-    top: 8px;
-    right: 70px;
-    height:24px;
-    width:24px;
-    opacity:0.4;
-    z-index: 10;
-}
-
-.chsp-duplicate-widget-button:hover {
-    opacity: 0.9;
-}
-
-.chsp-duplicate-widget-button:hover .chsp-tooltip {
-    visibility: visible;
 }
 
 .chsp-structure-viewer-grid {

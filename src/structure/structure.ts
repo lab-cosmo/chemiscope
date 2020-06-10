@@ -357,9 +357,10 @@ export class StructureViewer {
             if (this._selected.has(activeGUID) ) {
                 if (this._selected.has(this._active)) {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
-                    oldButton.classList.toggle('chsp-inactive-structure-marker', true);
-                    oldButton.classList.toggle('chsp-active-structure-marker', false);
-                    oldButton.innerHTML = `<span class="chsp-tooltip">Activate viewer</span>`;
+                    oldButton.classList.toggle('chsp-active-structure', false);
+                    const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
+                    assert(oldTooltip !== null);
+                    oldTooltip.innerHTML = 'choose as active';
 
                     const oldCell = getByID(`gi-${this._active}`);
                     oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
@@ -367,9 +368,11 @@ export class StructureViewer {
                 }
                 this._active = activeGUID;
                 const newButton = getByID(`chsp-activate-${this._active}`);
-                newButton.classList.toggle('chsp-inactive-structure-marker', false);
-                newButton.classList.toggle('chsp-active-structure-marker', true);
-                newButton.innerHTML = `<span class="chsp-tooltip">this is the active viewer</span>`;
+                newButton.classList.toggle('chsp-active-structure', true);
+                const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
+                assert(tooltip !== null);
+                tooltip.innerHTML = 'this is the active viewer';
+
                 const newCell = getByID(`gi-${this._active}`);
                 newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
                 newCell.classList.toggle('chsp-structure-viewer-cell', false);
@@ -441,32 +444,42 @@ export class StructureViewer {
             // because it will conflict with the button behavior
 
             // add a button to activate the widget (i.e. set as `active`)
-            const activeFlag = document.createElement('div');
-            activeFlag.classList.add('chsp-inactive-structure-marker', 'btn-light');
-            activeFlag.id = `chsp-activate-${cellGUID}`;
-
+            const template = document.createElement('template');
             color = this._getNextColor();
-            activeFlag.style.backgroundColor = color;
-            activeFlag.onclick = () => {this.active = cellGUID; };
-            activeFlag.innerHTML = `<span class="chsp-tooltip">Choose as active</span>`;
-            cell.appendChild(activeFlag);
+            template.innerHTML = `<div
+                class="chsp-has-tooltip"
+                style="position: absolute; top: 9px; right: 115px;">
+                    <div id="chsp-activate-${cellGUID}"
+                         class="chsp-structure-marker"
+                         style="background-color: ${color}; top: 14px; right: 0px;"
+                    ></div>
+                    <span class="chsp-tooltip">WILL BE FILLED LATER</span>
+                </div>`;
+            const isActive = template.content.firstChild! as HTMLElement;
+            isActive.onclick = () => {this.active = cellGUID; };
+            cell.appendChild(isActive);
 
             // add a button to close the widget
-            const close = document.createElement('div');
-            close.classList.add('chsp-close-widget-button', 'btn', 'btn-light', 'btn-sm');
-            close.id = `chsp-close-widget-button-${cellGUID}`;
+            template.innerHTML = `<button
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
+                style="top: 8px; right: 40px;">
+                    <span>${CLOSE_SVG}</span>
+                    <span class="chsp-tooltip">remove viewer</span>
+                </button>`;
+            const close = template.content.firstChild! as HTMLElement;
             close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
-            close.innerHTML = `<span>${CLOSE_SVG}</span>
-                <span class="chsp-tooltip">remove viewer</span>
-                `;
             cell.appendChild(close);
 
             // add a button to duplicate the widget
-            const duplicate = document.createElement('div');
-            duplicate.classList.add('chsp-duplicate-widget-button', 'btn', 'btn-light', 'btn-sm');
-            duplicate.id = `chsp-duplicate-widget-button-${cellGUID}`;
-            duplicate.onclick = () => {
+            template.innerHTML = `<button
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
+                style="top: 8px; right: 70px;">
+                    <span>${DUPLICATE_SVG}</span>
+                    <span class="chsp-tooltip">duplicate viewer</span>
+                </button>`;
+            const duplicate = template.content.firstChild! as HTMLElement;
 
+            duplicate.onclick = () => {
                 const data = this._selected.get(cellGUID);
                 assert(data !== undefined);
 
@@ -477,11 +490,8 @@ export class StructureViewer {
                     index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
                 }
                 this._setupGrid(this._selected.size + 1, index);
-
             };
 
-            duplicate.innerHTML = `<span>${DUPLICATE_SVG}</span>
-                <span class="chsp-tooltip">duplicate viewer</span>`;
             cell.appendChild(duplicate);
 
             this._root.appendChild(cell);
