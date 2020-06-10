@@ -120,18 +120,12 @@
     left: 0.5%;
     top: 0.5%;
     position: relative;
-    border : 1px solid lightgray;
-    padding : 1px;
+    border: 1px solid lightgray;
+    padding: 1px;
 }
 
 .chsp-structure-viewer-cell-active {
-    width: 99%;
-    height: 99%;
-    left: 0.5%;
-    top: 0.5%;
-    position: relative;
-    border : 1px solid gray;
-    padding : 1px;
+    border-color: gray;
 }
 
 .chsp-map-options {
