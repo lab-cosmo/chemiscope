@@ -165,13 +165,6 @@
     cursor: grab;
 }
 
-.chsp-hamburger div {
-    width: 1.1em;
-    height: 0.4ex;
-    background-color: black;
-    margin: 0.4ex 0;
-}
-
 .chsp-play-button {
     border: 0;
     background: transparent;

@@ -9,6 +9,7 @@ import {JmolObject, JSmolApplet} from 'jsmol';
 
 import {generateGUID, getByID, HTMLSetting, makeDraggable} from '../utils';
 
+import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
 
 // tslint:disable-next-line: no-var-requires
@@ -612,10 +613,11 @@ export class JSmolWidget {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button
-            class="btn btn-light btn-sm chsp-open-viewer-settings"
+            class="btn btn-light btn-sm chsp-viewer-button"
             data-target="#${this.guid}-settings"
-            data-toggle="modal">
-                <div class="chsp-hamburger"><div></div><div></div><div></div></div>
+            data-toggle="modal"
+            style="top: 5px; right: 5px; opacity: 1;">
+                <div>${BARS_SVG}</div>
             </button>`;
         const openSettings = template.content.firstChild!;
         this._root.append(openSettings);
