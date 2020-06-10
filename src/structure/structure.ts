@@ -406,13 +406,26 @@ export class StructureViewer {
             }
         }
     }
+
+    /**
+     * Get an unused color to identify a viewer
+     *
+     * @return a CSS compatible color name
+     */
+    private _getNextColor(): string {
+        const colors = [];
+        for (const data of this._selected.values()) {
+            colors.push(data.color);
+        }
+        return getNextColor(colors);
+    }
+
     /*
      * Function to setup the cell in the structure viewer grid.
      * Will generate a GUID string if one does not exist for the cell
      * and instantiate all necessary buttons.
      */
-    private _setupCell(cellGUID: string, colNum: number, rowNum: number) {
-
+    private _setupCell(cellGUID: string, colNum: number, rowNum: number): string {
         const cellId = `gi-${cellGUID}`;
         let cell = document.getElementById(cellId);
         let color = '';
@@ -431,11 +444,8 @@ export class StructureViewer {
             const activeFlag = document.createElement('div');
             activeFlag.classList.add('chsp-inactive-structure-marker', 'btn-light');
             activeFlag.id = `chsp-activate-${cellGUID}`;
-            const colors = [];
-            for (const widgetData of this._selected.values()) {
-                colors.push(widgetData.color);
-            }
-            color = getNextColor(colors);
+
+            color = this._getNextColor();
             activeFlag.style.backgroundColor = color;
             activeFlag.onclick = () => {this.active = cellGUID; };
             activeFlag.innerHTML = `<span class="chsp-tooltip">Choose as active</span>`;
@@ -482,6 +492,7 @@ export class StructureViewer {
             return '';
         }
     }
+
     /*
      * Function to initialize the grid instance for `this._nwidgets` cells and place
      * onto the DOM element mapped in `this._root`
@@ -523,11 +534,7 @@ export class StructureViewer {
                       }
                       let color = this._setupCell(cellGUID, colNum, rowNum);
                       if (color === '') {
-                          const colors = [];
-                          for (const widgetData of this._selected.values()) {
-                              colors.push(widgetData.color);
-                          }
-                          color = getNextColor(colors);
+                          color = this._getNextColor();
                       }
 
                       colNum++;
@@ -544,7 +551,8 @@ export class StructureViewer {
                               cellGUID,
                           );
                           const current = {atom: -1, structure: -1, environment: -1};
-                          this._selected.set(cellGUID, {color: color,
+                          this._selected.set(cellGUID, {
+                              color: color,
                               current: current,
                               widget: widget,
                           });
