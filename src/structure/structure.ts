@@ -528,13 +528,12 @@ export class StructureViewer {
         const arrangement = bestGridArrangement(nwidgets);
         if (this._viewers.size > nwidgets) {
             sendWarning(`Warning: Eliminating last ${this._viewers.size - nwidgets} viewers.`);
-            const wl = this._viewers.size;
-            const mapKeys = this._viewers.keys();
-            for (let i = 0; i < wl; i++) {
-                const excessGUID = mapKeys.next().value;
+            let i = 0;
+            for (const guid of this._viewers.keys()) {
                 if (i >= nwidgets) {
-                    this._removeWidget(excessGUID);
+                    this._removeWidget(guid);
                 }
+                i += 1;
             }
         }
 
