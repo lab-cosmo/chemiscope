@@ -318,9 +318,9 @@ export class PropertiesMap {
             if (!this._selected.has(selectedGUID)) {
                 this._addMarker(selectedGUID, indexes.environment);
 
-                const markerData = this._selected.get(selectedGUID);
-                assert(markerData !== undefined);
-                this._updateSelectedMarker(selectedGUID, markerData);
+                const newMarkerData = this._selected.get(selectedGUID);
+                assert(newMarkerData !== undefined);
+                this._updateSelectedMarker(selectedGUID, newMarkerData);
             }
 
             // sets this marker to active
@@ -344,6 +344,45 @@ export class PropertiesMap {
     public remove(): void {
         this._root.innerHTML = '';
         this._settingsModal.remove();
+    }
+
+    /**
+     * Function to set the active marker for communicating with the structure
+     * viewer
+     *
+     * @param  activeGUID the GUID of the new active viewer
+     */
+    public set active(activeGUID: string) {
+      if (activeGUID !== this._active && this._selected.has(activeGUID)) {
+
+          // if we are in 2D we need to update the visuals
+          if (! this._is3D()) {
+              if (this._selected.has(this._active)) {
+                  // this has been left as document.getElementById for when we are
+                  // setting a new active because the old one has been deleted.
+                  const oldButton = document.getElementById(`chsp-selected-${this._active}`);
+                  if (oldButton !== null) {
+                      oldButton.classList.toggle('chsp-active-structure', false);
+                  }
+              }
+              const newButton = getByID(`chsp-selected-${activeGUID}`);
+              this._active = activeGUID;
+              newButton.classList.toggle('chsp-active-structure', true);
+
+              const markerData = this._selected.get(this._active);
+              assert(markerData !== undefined);
+
+              const indexes = this._indexer.from_environment(markerData.current);
+              this.onselect(indexes, this._active);
+
+          // in 3D we need only to update the GUID, visuals will be updated
+          // upon returning to 2D
+          } else {
+            this._active = activeGUID;
+            const factor = this._settings.size.factor.value;
+            this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
+            }
+        }
     }
 
     /** Forward to Ploty.restyle */
@@ -900,11 +939,9 @@ export class PropertiesMap {
         const values = this._property(this._settings.x.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
-            selected.push(values[marker.current]);
-        }
-
-        if (!this._is3D()) {
-            selected[0] = NaN;
+            if (this._is3D()) {
+              selected.push(values[marker.current]);
+            } else { selected.push(NaN); }
         }
         return this._selectTrace(values, selected, trace);
     }
@@ -917,12 +954,11 @@ export class PropertiesMap {
         const values = this._property(this._settings.y.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
-            selected.push(values[marker.current]);
+            if (this._is3D()) {
+              selected.push(values[marker.current]);
+            } else { selected.push(NaN); }
         }
 
-        if (!this._is3D()) {
-            selected[0] = NaN;
-        }
         return this._selectTrace(values, selected, trace);
     }
 
@@ -1020,10 +1056,20 @@ export class PropertiesMap {
         }
 
         const selectedValues = [];
-        for (const guid of this._selected.keys()) {
-            if (guid === this._active) {
-              selectedValues.push(4000);
-            } else {selectedValues.push(2000); }
+        if (this._is3D()) {
+          for (const guid of this._selected.keys()) {
+              if (guid === this._active) {
+                selectedValues.push(4000);
+              } else {selectedValues.push(2000); }
+          }
+        } else {
+          // I have put this in here in case we decide to use the plotly
+          // markers in 2D as well
+          for (const guid of this._selected.keys()) {
+              if (guid === this._active) {
+                selectedValues.push(NaN);
+              } else {selectedValues.push(NaN); }
+          }
         }
         return this._selectTrace<number | number[]>(values, selectedValues, trace);
     }
@@ -1248,45 +1294,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Function to set the active marker for communicating with the structure
-     * viewer
-     *
-     * @param  activeGUID the GUID of the new active viewer
-     */
-    public set active(activeGUID: string) {
-      if (activeGUID !== this._active && this._selected.has(activeGUID)) {
-
-          // if we are in 2D we need to update the visuals
-          if (! this._is3D()) {
-              if (this._selected.has(this._active)) {
-                  // this has been left as document.getElementById for when we are
-                  // setting a new active because the old one has been deleted.
-                  const oldButton = document.getElementById(`chsp-selected-${this._active}`);
-                  if (oldButton !== null) {
-                      oldButton.classList.toggle('chsp-active-structure', false);
-                  }
-              }
-              const newButton = getByID(`chsp-selected-${activeGUID}`);
-              this._active = activeGUID;
-              newButton.classList.toggle('chsp-active-structure', true);
-
-              const markerData = this._selected.get(this._active);
-              assert(markerData !== undefined);
-
-              const indexes = this._indexer.from_environment(markerData.current);
-              this.onselect(indexes, this._active);
-
-          // in 3D we need only to update the GUID, visuals will be updated
-          // upon returning to 2D
-          } else {
-            this._active = activeGUID;
-            const factor = this._settings.size.factor.value;
-            this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
-            }
-        }
-    }
-
-    /**
      * Update the position of all the markers indicating selected points in the
      * map.
      *
@@ -1378,18 +1385,22 @@ export class PropertiesMap {
 
             const color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
-            this._selected.set(addedGUID, {
-                color : color,
-                current: Math.max(0, index),
-                marker: marker,
-            });
+            const newMarkerData = {
+                                      color : color,
+                                      current: Math.max(0, index),
+                                      marker: marker,
+                                  };
+            this._selected.set(addedGUID, newMarkerData);
         }
 
         const markerData = this._selected.get(addedGUID);
         assert(markerData !== undefined);
+
         this._root.appendChild(markerData.marker);
 
-        if (!this._is3D()) {markerData.marker.style.display = 'none'; }
+        if (this._is3D()) {
+          markerData.marker.style.display = 'none';
+        }
     }
 
     /**
