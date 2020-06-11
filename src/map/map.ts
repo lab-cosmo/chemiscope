@@ -353,35 +353,38 @@ export class PropertiesMap {
      * @param  activeGUID the GUID of the new active viewer
      */
     public set active(activeGUID: string) {
-      if (activeGUID !== this._active && this._selected.has(activeGUID)) {
+        if (this._active === activeGUID) {
+            // guard against infinite recursion
+            // `Structure set active => StructureViewer.show => Map set active
+            // => PropertiesMap.select => Structure set active`
+            return;
+        }
 
-          // if we are in 2D we need to update the visuals
-          if (! this._is3D()) {
-              if (this._selected.has(this._active)) {
-                  // this has been left as document.getElementById for when we are
-                  // setting a new active because the old one has been deleted.
-                  const oldButton = document.getElementById(`chsp-selected-${this._active}`);
-                  if (oldButton !== null) {
-                      oldButton.classList.toggle('chsp-active-structure', false);
-                  }
-              }
-              const newButton = getByID(`chsp-selected-${activeGUID}`);
-              this._active = activeGUID;
-              newButton.classList.toggle('chsp-active-structure', true);
+        assert(this._selected.has(activeGUID));
 
-              const markerData = this._selected.get(this._active);
-              assert(markerData !== undefined);
+        if (!this._is3D()) {
+            // if we are in 2D we need to update the visuals
+            if (this._selected.has(this._active)) {
+                // this has been left as document.getElementById for when we are
+                // setting a new active because the old one has been deleted.
+                const oldButton = document.getElementById(`chsp-selected-${this._active}`);
+                if (oldButton !== null) {
+                    oldButton.classList.toggle('chsp-active-structure', false);
+                }
+            }
+            const newButton = getByID(`chsp-selected-${activeGUID}`);
+            this._active = activeGUID;
+            newButton.classList.toggle('chsp-active-structure', true);
 
-              const indexes = this._indexer.from_environment(markerData.current);
-              this.onselect(indexes, this._active);
+            const markerData = this._selected.get(this._active);
+            assert(markerData !== undefined);
 
-          // in 3D we need only to update the GUID, visuals will be updated
-          // upon returning to 2D
-          } else {
+            const indexes = this._indexer.from_environment(markerData.current);
+            this.onselect(indexes, this._active);
+        } else {
             this._active = activeGUID;
             const factor = this._settings.size.factor.value;
             this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
-            }
         }
     }
 
@@ -1381,7 +1384,7 @@ export class PropertiesMap {
                 marker.classList.toggle('chsp-active-structure', true);
             }
             marker.id = `chsp-selected-${addedGUID}`;
-            marker.onclick = () => {this.active = addedGUID; };
+            marker.onclick = () => this.active = addedGUID;
 
             const color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
