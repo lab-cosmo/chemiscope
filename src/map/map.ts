@@ -328,13 +328,9 @@ export class PropertiesMap {
             /// Sets the active marker on this map
             if (markerData.current === undefined || indexes.environment !== markerData.current ) {
                 markerData.current = indexes.environment;
+                this._updateSelectedMarker(selectedGUID, markerData);
             }
 
-            // if we are in 3D there is no need to update the visuals.
-            // visuals will be updated when returning to 2D
-            if (! this._is3D()) {
-              this._updateSelectedMarker(selectedGUID, markerData);
-            }
         }
     }
 
@@ -1146,8 +1142,9 @@ export class PropertiesMap {
             'type': 'scatter3d',
         } as unknown as Data);
 
-        for (const guid of this._selected.keys()) {
+        for (const [guid, markerData] of this._selected.entries()) {
             this._removeMarker(guid, false);
+            this._updateSelectedMarker(guid, markerData);
         }
 
         // Change the data that vary between 2D and 3D mode
@@ -1290,6 +1287,7 @@ export class PropertiesMap {
           const marker = selectedMarkerData.marker;
 
           if (this._is3D()) {
+              marker.style.display = 'none';
               let symbol;
               if (this._settings.symbol.value !== '') {
                   const symbols = this._property(this._settings.symbol.value).values;
@@ -1366,11 +1364,11 @@ export class PropertiesMap {
             });
         }
 
-        if (!this._is3D()) {
-            const markerData = this._selected.get(addedGUID);
-            assert(markerData !== undefined);
-            this._root.appendChild(markerData.marker);
-          }
+        const markerData = this._selected.get(addedGUID);
+        assert(markerData !== undefined);
+        this._root.appendChild(markerData.marker);
+
+        if (!this._is3D()) {markerData.marker.style.display = 'none'; }
     }
 
     /**
