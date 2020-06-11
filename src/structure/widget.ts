@@ -313,7 +313,9 @@ export class JSmolWidget {
      * Remove all HTML added by this [[JSmolWidget]] in the current document
      */
     public remove(): void {
-        (this._root.parentNode! as HTMLElement).innerHTML = '';
+        if (this._root.parentElement !== null) {
+            this._root.parentElement.innerHTML = '';
+        }
         this._settingsModal.remove();
     }
 

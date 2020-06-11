@@ -298,7 +298,10 @@ export class StructureViewer {
         for (const data of this._viewers.values()) {
             data.widget.remove();
         }
-        this._root.parentElement!.innerHTML = '';
+
+        if (this._root.parentElement !== null) {
+            this._root.parentElement.innerHTML = '';
+        }
     }
 
     /**
@@ -601,7 +604,7 @@ export class StructureViewer {
             const widgetRoot = getByID(`chsp-${trashedGUID}`);
 
             this.onselect({structure: -1, environment: -1}, trashedGUID);
-            if ( widgetRoot.parentNode !== null) {
+            if (widgetRoot.parentNode !== null) {
                 widgetRoot.parentNode.removeChild(widgetRoot);
             }
 
