@@ -151,24 +151,30 @@ export type JsObject = Record<string, unknown>;
  * required properties to be a dataset.
  */
 export function validateDataset(o: JsObject) {
-    if (!('meta' in o && typeof o.meta === 'object' && o.meta !== null)) {
-        throw Error('missing "meta" key in dataset');
+    if (!('meta' in o)) {
+        throw Error('missing "meta" key in the dataset');
+    } else if (!(typeof o.meta === 'object' && o.meta !== null)) {
+        throw Error('"meta" must be an object in the dataset');
     }
     checkMetadata(o.meta as JsObject);
 
-    if (!('structures' in o && Array.isArray(o.structures))) {
-        throw Error('missing "structures" key in dataset');
+    if (!('structures' in o)) {
+        throw Error('missing "structures" key in the dataset');
+    } else if (!(Array.isArray(o.structures))) {
+        throw Error('"structures" must be an array in the dataset');
     }
     const [structureCount, envCount] = checkStructures(o.structures);
 
-    if (!('properties' in o && typeof o.properties === 'object' && o.properties !== null)) {
-        throw Error('missing "properties" key in dataset');
+    if (!('properties' in o)) {
+        throw Error('missing "properties" key in then dataset');
+    } else if (!(typeof o.properties === 'object' && o.properties !== null)) {
+        throw Error('"properties" must be an object in the dataset');
     }
     checkProperties(o.properties as Record<string, JsObject>, structureCount, envCount);
 
     if ('environments' in o) {
         if (!Array.isArray(o.environments)) {
-            throw Error('"environments" must be an array in dataset');
+            throw Error('"environments" must be an array in the dataset');
         }
 
         if (o.environments.length !== envCount) {
@@ -179,34 +185,36 @@ export function validateDataset(o: JsObject) {
 }
 
 function checkMetadata(o: JsObject) {
-    if (!('name' in o && typeof o.name === 'string')) {
-        throw Error('missing "meta.name" key in dataset');
+    if (!('name' in o)) {
+        throw Error('missing "meta.name" key in the dataset');
+    } else if (typeof o.name !== 'string') {
+        throw Error('"meta.name" must be a string in the dataset');
     }
 
     if ('description' in o && typeof o.description !== 'string') {
-        throw Error('"meta.description" should be a string in dataset');
+        throw Error('"meta.description" should be a string in the dataset');
     }
 
     if ('authors' in o) {
         if (!Array.isArray(o.authors)) {
-            throw Error('"meta.authors" must be an array in dataset');
+            throw Error('"meta.authors" must be an array in the dataset');
         }
 
         for (const a of o.authors) {
             if (typeof a !== 'string') {
-                throw Error('"meta.authors" must be an array of strings in dataset');
+                throw Error('"meta.authors" must be an array of strings in the dataset');
             }
         }
     }
 
     if ('references' in o) {
         if (!Array.isArray(o.references)) {
-            throw Error('"meta.references" must be an array in dataset');
+            throw Error('"meta.references" must be an array in the dataset');
         }
 
         for (const a of o.references) {
             if (typeof a !== 'string') {
-                throw Error('"meta.references" must be an array of strings in dataset');
+                throw Error('"meta.references" must be an array of strings in the dataset');
             }
         }
     }
