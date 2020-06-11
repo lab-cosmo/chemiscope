@@ -325,7 +325,7 @@ export class PropertiesMap {
 
             // sets this marker to active
             this.active = selectedGUID;
-
+            
             const markerData = this._selected.get(selectedGUID);
             assert(markerData !== undefined);
 
@@ -1365,9 +1365,18 @@ export class PropertiesMap {
     }
 
     private _updateAllMarkers() {
-      for (const [guid, markerData] of this._selected.entries()) {
+        // stores info on current active point    
+        const active = this._active;
+        const markerData = this._selected.get(this._active);
+        assert(markerData !== undefined);
+        const indexes = this._indexer.from_environment(markerData.current);
+            
+        for (const [guid, markerData] of this._selected.entries()) {
           this._updateSelectedMarker(guid, markerData);
-      }
+        }
+        
+        // HACK: restores the point that was active before the update
+        this.select(indexes, active); 
     }
     /**
      * Function to add a marker with the given GUID string and indices to the map.
