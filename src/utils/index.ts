@@ -8,6 +8,15 @@ import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
 import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin} from './settings';
 import {addWarningHandler, sendWarning} from './warnings';
 
+/** Callback type to position an HTML element.
+ *
+ * The callback gets the current placement of the settings as a
+ * [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect), and
+ * should return top and left positions in pixels, used with `position:
+ * fixed`.
+ */
+export type PositioningCallback = (rect: DOMRect) => {top: number, left: number};
+
 const STANDARD_COLORS = [
     'Red', 'Yellow', 'Green', 'Blue',
     'Orange', 'Aqua', 'Purple', 'Teal',
