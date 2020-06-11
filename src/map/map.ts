@@ -1296,11 +1296,17 @@ export class PropertiesMap {
                   symbol = get3DSymbol(0);
               }
 
+              const markerColors = [];
+              for (const [guid, markerData] of this._selected.entries()) {
+                  markerColors.push(markerData.color);
+              }
+
+              console.log(markerColors)
               this._restyle({
                   'x': this._xValues(1),
                   'y': this._yValues(1),
                   'z': this._zValues(1),
-
+                  'marker.color': [markerColors],
                   'marker.symbol': symbol,
               } as Data, 1);
           } else {
