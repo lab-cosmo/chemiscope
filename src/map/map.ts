@@ -325,7 +325,7 @@ export class PropertiesMap {
 
             // sets this marker to active
             this.active = selectedGUID;
-            
+
             const markerData = this._selected.get(selectedGUID);
             assert(markerData !== undefined);
 
@@ -376,16 +376,17 @@ export class PropertiesMap {
             this._active = activeGUID;
             newButton.classList.toggle('chsp-active-structure', true);
 
-            const markerData = this._selected.get(this._active);
-            assert(markerData !== undefined);
-
-            const indexes = this._indexer.from_environment(markerData.current);
-            this.onselect(indexes, this._active);
         } else {
             this._active = activeGUID;
             const factor = this._settings.size.factor.value;
             this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
         }
+
+        const markerData = this._selected.get(this._active);
+        assert(markerData !== undefined);
+
+        const indexes = this._indexer.from_environment(markerData.current);
+        this.onselect(indexes, this._active);
     }
 
     /** Forward to Ploty.restyle */
@@ -1223,10 +1224,12 @@ export class PropertiesMap {
             'type': 'scatter3d',
         } as unknown as Data);
 
+        const cachedActive = this._active;
         for (const [guid, markerData] of this._selected.entries()) {
             this._removeMarker(guid, false);
             this._updateSelectedMarker(guid, markerData);
         }
+        this.active = cachedActive;
 
         // Change the data that vary between 2D and 3D mode
         const factor = this._settings.size.factor.value;
@@ -1267,9 +1270,13 @@ export class PropertiesMap {
             'type': 'scattergl',
         } as unknown as Data);
 
+        const cachedActive = this._active;
+
         for (const [guid, marker] of this._selected.entries()) {
             this._addMarker(guid, marker.current);
         }
+
+        this.active = cachedActive;
 
         // Change the data that vary between 2D and 3D mode
         const factor = this._settings.size.factor.value;
@@ -1349,10 +1356,10 @@ export class PropertiesMap {
 
               const factor = this._settings.size.factor.value;
               this._restyle({
-                  'name': 'selected',
                   'marker.color': [markerColors],
                   'marker.size': this._sizes(factor, 1),
                   'marker.symbol': symbol,
+                  'name': 'selected',
                   'x': this._xValues(1),
                   'y': this._yValues(1),
                   'z': this._zValues(1),
@@ -1388,18 +1395,18 @@ export class PropertiesMap {
     }
 
     private _updateAllMarkers() {
-        // stores info on current active point    
+        // stores info on current active point
         const active = this._active;
-        const markerData = this._selected.get(this._active);
-        assert(markerData !== undefined);
-        const indexes = this._indexer.from_environment(markerData.current);
-            
+        const activeMarkerData = this._selected.get(this._active);
+        assert(activeMarkerData !== undefined);
+        const indexes = this._indexer.from_environment(activeMarkerData.current);
+
         for (const [guid, markerData] of this._selected.entries()) {
           this._updateSelectedMarker(guid, markerData);
         }
-        
+
         // HACK: restores the point that was active before the update
-        this.select(indexes, active); 
+        this.select(indexes, active);
     }
     /**
      * Function to add a marker with the given GUID string and indices to the map.
