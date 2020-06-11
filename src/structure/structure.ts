@@ -197,11 +197,10 @@ export class StructureViewer {
         root.appendChild(this._root);
 
         this._setupGrid(1);
-        this.active = this._viewers.keys().next().value;
         this._active = this._viewers.keys().next().value;
 
         // get the 'delay' setting inside the current widget setting
-        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
+        this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
     }
 
     /**
@@ -213,7 +212,7 @@ export class StructureViewer {
      * @param  indexes         structure / atom pair to display
      * @param  selectedGUID   GUID of the widget to show
      */
-    public show(indexes: Indexes, selectedGUID: string = this._active) {
+    public show(indexes: Indexes, selectedGUID: string = this.active) {
         const data = this._viewers.get(selectedGUID);
         assert(data !== undefined);
 
@@ -254,14 +253,14 @@ export class StructureViewer {
     public structurePlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._viewers.get(this._active);
+                const widgetData = this._viewers.get(this.active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
                 const structure = (current.structure + 1) % this._indexer.structuresCount();
                 const indexes = this._indexer.from_structure_atom(structure, 0);
                 this.show(indexes);
-                this.onselect(indexes, this._active);
+                this.onselect(indexes, this.active);
                 // continue playing until the advance callback returns false
                 this.structurePlayback(advance);
 
@@ -276,7 +275,7 @@ export class StructureViewer {
     public atomPlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._viewers.get(this._active);
+                const widgetData = this._viewers.get(this.active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
@@ -284,7 +283,7 @@ export class StructureViewer {
                 const atom = (current.atom! + 1) % this._indexer.atomsCount(structure);
                 const indexes = this._indexer.from_structure_atom(structure, atom);
                 this.show(indexes);
-                this.onselect(indexes, this._active);
+                this.onselect(indexes, this.active);
                 // continue playing until the advance callback returns false
                 this.atomPlayback(advance);
             }
@@ -346,70 +345,53 @@ export class StructureViewer {
     /**
      * Returns the GUID string corresponding to the selected widget.
      */
-    public get active() {
+    public get active(): string {
         return this._active;
     }
 
     /*
      * Function to set the active widget for communicating with the map
      */
-    public set active(activeGUID: string) {
-        /// this is here to prevent infinite loops
-        if (activeGUID !== this._active) {
-            let indexes;
+    public set active(guid: string) {
+        const old = this.active;
+        assert(this._viewers.has(guid));
+        assert(this._viewers.has(old));
 
-            if (this._viewers.has(activeGUID) ) {
-                if (this._viewers.has(this._active)) {
-                    const oldButton = getByID(`chsp-activate-${this._active}`);
-                    oldButton.classList.toggle('chsp-active-structure', false);
-                    const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
-                    assert(oldTooltip !== null);
-                    oldTooltip.innerHTML = 'choose as active';
+        this._active = guid;
 
-                    const oldCell = getByID(`gi-${this._active}`);
-                    oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
-                }
-                this._active = activeGUID;
-                const newButton = getByID(`chsp-activate-${this._active}`);
-                newButton.classList.toggle('chsp-active-structure', true);
-                const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
-                assert(tooltip !== null);
-                tooltip.innerHTML = 'this is the active viewer';
+        // change tooltip text in the active marker
+        const oldButton = getByID(`chsp-activate-${old}`);
+        oldButton.classList.toggle('chsp-active-structure', false);
+        const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
+        assert(oldTooltip !== null);
+        oldTooltip.innerHTML = 'choose as active';
 
-                const newCell = getByID(`gi-${this._active}`);
-                newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
+        const newButton = getByID(`chsp-activate-${this.active}`);
+        newButton.classList.toggle('chsp-active-structure', true);
+        const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
+        assert(tooltip !== null);
+        tooltip.innerHTML = 'this is the active viewer';
 
-                const activeWidgetData = this._viewers.get(this._active);
-                assert(activeWidgetData !== undefined);
+        // change style of the cell border
+        const oldCell = getByID(`gi-${old}`);
+        oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
 
-                activeWidgetData.widget.onselect = (atom: number) => {
-                    if (this._indexer.mode !== 'atom') {
-                        return;
-                    }
+        const newCell = getByID(`gi-${this.active}`);
+        newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
 
-                    activeWidgetData.widget.highlight(atom);
+        this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
 
-                    // if the viewer is showing a bigger supercell than [1, 1, 1], the
-                    // atom index can be outside of [0, natoms), so make sure it is
-                    // inside this range.
-                    const current = activeWidgetData.current;
-                    const atom_id = atom % activeWidgetData.widget.natoms()!;
-                    indexes = this._indexer.from_structure_atom(current.structure, atom_id);
-                    this.onselect(indexes, this._active);
-                };
-
-                this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
-
-                if (this._indexer.mode === 'structure') {
-                    indexes = this._indexer.from_structure_atom(activeWidgetData.current.structure);
-                } else {
-                    const structure = activeWidgetData.current.structure;
-                    const atom = activeWidgetData.current.atom;
-                    indexes = this._indexer.from_structure_atom(structure, atom);
-                }
-                this.onselect(indexes, this._active);
-            }
+        const data = this._viewers.get(this.active);
+        assert(data !== undefined);
+        let indexes;
+        if (this._indexer.mode === 'structure') {
+            indexes = this._indexer.from_structure_atom(data.current.structure);
+        } else {
+            const structure = data.current.structure;
+            const atom = data.current.atom;
+            indexes = this._indexer.from_structure_atom(structure, atom);
         }
+        this.onselect(indexes, this.active);
     }
 
     /**
@@ -546,7 +528,7 @@ export class StructureViewer {
 
         const mapKeys = this._viewers.keys();
         for (let c = 0; c < nwidgets; c++) {
-            let cellGUID;
+            let cellGUID: string;
             if (c >= this._viewers.size) {
                 cellGUID = generateGUID();
             } else {
@@ -570,6 +552,23 @@ export class StructureViewer {
                     this._j2spath,
                     cellGUID,
                 );
+
+                widget.onselect = (atom: number) => {
+                    if (this._indexer.mode !== 'atom' || this.active !== cellGUID) {
+                        return;
+                    }
+
+                    widget.highlight(atom);
+
+                    // if the viewer is showing a bigger supercell than [1, 1, 1], the
+                    // atom index can be outside of [0, natoms), so make sure it is
+                    // inside this range.
+                    const data = this._viewers.get(this.active);
+                    assert(data !== undefined);
+                    const atom_id = atom % widget.natoms()!;
+                    const indexes = this._indexer.from_structure_atom(data.current.structure, atom_id);
+                    this.onselect(indexes, this.active);
+                };
 
                 const current = {atom: -1, structure: -1, environment: -1};
                 this._viewers.set(cellGUID, {
@@ -613,10 +612,9 @@ export class StructureViewer {
 
             this._viewers.delete(trashedGUID);
 
-            if (this._active === trashedGUID ) {
-                if (this._viewers.size > 0) {
-                  this.active = this._viewers.keys().next().value;
-                } else { this._active = ''; }
+            if (this.active === trashedGUID) {
+                assert(this._viewers.size > 0);
+                this.active = this._viewers.keys().next().value;
             }
         }
     }
