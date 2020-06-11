@@ -317,6 +317,10 @@ export class PropertiesMap {
             /// Checks if marker exists on this map, if not adds it
             if (!this._selected.has(selectedGUID)) {
                 this._addMarker(selectedGUID, indexes.environment);
+
+                const markerData = this._selected.get(selectedGUID);
+                assert(markerData !== undefined);
+                this._updateSelectedMarker(selectedGUID, markerData);
             }
 
             // sets this marker to active
