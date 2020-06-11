@@ -898,11 +898,33 @@ export class PropertiesMap {
             // don't update selected env on double click, since it is lined to
             // 'reset zoom level' in 2D mode.
             // `event.event` is only set in 2D mode
+
             if (event.event && event.event.detail === 2) {
                 return;
             }
-            const environment = event.points[0].pointNumber;
-            const indexes = this._indexer.from_environment(environment);
+
+            let indexes; // container for the indices
+            let md; // container for the marker data
+
+            // if someone has clicked on a selection marker, set to active
+            if (event.points[0].data.name === 'selected' ) {
+              let i = 0;
+              for (const [guid, markerData] of this._selected.entries()) {
+                if (i === event.points[0].pointNumber) {
+                    this.active = guid;
+                    md = markerData;
+                    break;
+                    }
+                i++;
+              }
+            }
+            if (md !== undefined) {
+              indexes = this._indexer.from_environment(md.current);
+            } else {
+              // default if someone has clicked generally on the map or on a
+              // place the selected marker doesn't recognize
+              indexes = this._indexer.from_environment(event.points[0].pointNumber);
+            }
             this.select(indexes, this._active);
             this.onselect(indexes, this._active);
         });
