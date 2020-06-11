@@ -1327,6 +1327,7 @@ export class PropertiesMap {
 
               const factor = this._settings.size.factor.value;
               this._restyle({
+                  'name': 'selected',
                   'marker.color': [markerColors],
                   'marker.size': this._sizes(factor, 1),
                   'marker.symbol': symbol,
