@@ -7,7 +7,8 @@ import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
 
-import {generateGUID, getByID, HTMLSetting, makeDraggable} from '../utils';
+import {generateGUID, getByID, makeDraggable} from '../utils';
+import {HTMLSetting, PositioningCallback} from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
@@ -112,6 +113,12 @@ const DEFAULT_SERVER_URL = 'https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php
 export class JSmolWidget {
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
+    /**
+     * Callback to get the initial positioning of the settings modal.
+     *
+     * The callback is called once, the first time the settings are opened.
+     */
+    public positionSettingsModal: PositioningCallback;
 
     /**
      * Unique identifier of this viewer.
@@ -178,11 +185,6 @@ export class JSmolWidget {
     private _noEnvsStyle: CSSStyleSheet;
     /// callback called on successfull (re)loading of a file
     private _loadedCallback?: () => void;
-    /// callback to get the initial positioning of the settings modal. The
-    /// callback gets the current placement of the settings as a DOMRect, and
-    /// should return top and left positions in pixels, used with
-    /// `position: fixed`
-    private _settingsPlacement: (rect: DOMRect) => {top: number, left: number};
     /// Number of atoms in the currenly loaded structure 1x1x1 supercell.
     ///
     /// If another supercell is displayed, there are na x nb x nc x natoms atoms
@@ -278,7 +280,7 @@ export class JSmolWidget {
 
         // By default, position the modal for settings on top of the viewer,
         // centered horizontally
-        this._settingsPlacement = (rect: DOMRect) => {
+        this.positionSettingsModal = (rect: DOMRect) => {
             const rootRect = this._root.getBoundingClientRect();
             return {
                 left: rootRect.left + rootRect.width / 2 - rect.width / 2,
@@ -342,19 +344,6 @@ export class JSmolWidget {
      */
     public evaluate(commands: string): any {
         return this._Jmol.evaluateVar(this._applet, commands);
-    }
-
-    /**
-     * Register a `callback` to compute the placement of the settings modal.
-     *
-     * The callback gets the current placement of the settings as a
-     * [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect),
-     * and should return top and left positions in pixels, used with `position:
-     * fixed`. The callback is called once, the first time the settings are
-     * opened.
-     */
-    public settingsPlacement(callback: (rect: DOMRect) => Position) {
-        this._settingsPlacement = callback;
     }
 
     /**
@@ -647,7 +636,7 @@ export class JSmolWidget {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const {top, left} = this._settingsPlacement(modalDialog.getBoundingClientRect());
+                const {top, left} = this.positionSettingsModal(modalDialog.getBoundingClientRect());
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;

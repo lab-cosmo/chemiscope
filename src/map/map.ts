@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, HTMLSetting, Indexes, SettingGroup, SettingModificationOrigin} from '../utils';
+import {EnvironmentIndexer, HTMLSetting, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
 import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
@@ -201,6 +201,17 @@ export class PropertiesMap {
     /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes, selectedGUID?: string) => void;
 
+    /**
+     * Callback to get the initial positioning of the settings modal.
+     *
+     * The callback gets the current placement of the settings as a
+     * [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect), and
+     * should return top and left positions in pixels, used with `position:
+     * fixed`. The callback is called once, the first time the settings are
+     * opened.
+     */
+    public positionSettingsModal: PositioningCallback;
+
     /// HTML root holding the full plot
     private _root: HTMLElement;
     /// Plotly plot
@@ -215,11 +226,6 @@ export class PropertiesMap {
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
-    /// callback to get the initial positioning of the settings modal. The
-    /// callback gets the current placement of the settings as a DOMRect, and
-    /// should return top and left positions in pixels, used with
-    /// `position: fixed`
-    private _settingsPlacement!: (rect: DOMRect) => {top: number, left: number};
     /// Store the HTML elements used for settings
     private _settings!: {
         x: AxisSetting;
@@ -285,6 +291,16 @@ export class PropertiesMap {
         this._connectSettings();
 
         this._createPlot();
+
+        // By default, position the modal for settings on top of the plot,
+        // centered horizontally
+        this.positionSettingsModal = (rect: DOMRect) => {
+            const rootRect = this._root.getBoundingClientRect();
+            return {
+                left: rootRect.left + rootRect.width / 2 - rect.width / 2,
+                top: rootRect.top + 20,
+            };
+        };
     }
 
     /** Change the selected environment to the one with the given `indexes` */
@@ -328,17 +344,6 @@ export class PropertiesMap {
     public remove(): void {
         this._root.innerHTML = '';
         this._settingsModal.remove();
-    }
-
-    /**
-     * Use the given callback to compute the placement of the settings modal.
-     * The callback gets the current placement of the settings as a DOMRect,
-     * and should return top and left positions in pixels, used with `position:
-     * fixed`. The callback is called once, the first time the settings are
-     * opened.
-     */
-    public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        this._settingsPlacement = callback;
     }
 
     /** Forward to Ploty.restyle */
@@ -388,7 +393,7 @@ export class PropertiesMap {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const {top, left} = this._settingsPlacement(modalDialog.getBoundingClientRect());
+                const {top, left} = this.positionSettingsModal(modalDialog.getBoundingClientRect());
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;
@@ -399,16 +404,6 @@ export class PropertiesMap {
                 modalDialog.style.left = `${left}px`;
             }
         });
-
-        // By default, position the modal for settings on top of the plot,
-        // centered horizontally
-        this._settingsPlacement = (rect: DOMRect) => {
-            const rootRect = this._root.getBoundingClientRect();
-            return {
-                left: rootRect.left + rootRect.width / 2 - rect.width / 2,
-                top: rootRect.top + 20,
-            };
-        };
     }
 
     /** Add all the required callback to the settings */

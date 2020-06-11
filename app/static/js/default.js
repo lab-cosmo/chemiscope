@@ -50,23 +50,23 @@ function setupChemiscope(dataset) {
 
     Chemiscope.DefaultVisualizer.load(config, dataset).then((v) => {
         VISUALIZER = v;
-        v.structure.settingsPlacement((rect) => {
+        v.structure.positionSettingsModal = (rect) => {
             const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
 
             return {
                 top: structureRect.top,
                 left: structureRect.left - rect.width - 25,
             };
-        });
+        };
 
-        v.map.settingsPlacement((rect) => {
+        v.map.positionSettingsModal = (rect) => {
             const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
 
             return {
                 top: mapRect.top,
                 left: mapRect.left + mapRect.width + 25,
             };
-        });
+        };
 
         stopLoading();
     }).catch(e => setTimeout(() => {throw e;}));
@@ -77,7 +77,7 @@ function displayError(error) {
         // Ignores mysterious JSMol resize error we really have no clear way to fix.
         return;
     }
-    
+
     document.getElementById('loading').style.display = 'none';
 
     const display = document.getElementById('error-display');

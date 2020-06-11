@@ -6,7 +6,8 @@
 import assert from 'assert';
 
 import {Environment, isPositiveInteger, Structure, UserStructure} from '../dataset';
-import {EnvironmentIndexer, generateGUID, getByID, getNextColor, Indexes, sendWarning} from '../utils';
+import {EnvironmentIndexer, Indexes, PositioningCallback} from '../utils';
+import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './jsmol';
 import {JSmolWidget} from './widget';
@@ -144,7 +145,9 @@ export class StructureViewer {
     /// GUID of the Active Widget
     private _active: string;
     /// Map of Widgets GUIDS to their color, widget, and current structure
-    private _selected: Map<string, WidgetGridData>;
+    private _viewers: Map<string, WidgetGridData>;
+    /// Callback used to override all grid viewers' positionSettingsModal
+    private _positionSettingsModal?: PositioningCallback;
 
     /**
      * Create a new [[StructureViewer]] inside the HTML element with the given
@@ -184,22 +187,18 @@ export class StructureViewer {
         };
 
         // Initializes with 1 widget upon opening.
-        this._selected = new Map();
+        this._viewers = new Map();
         this.onselect = () => {};
 
-        // Initialize the _root div as a grid (see function below)
         const root = getByID(id);
-
-        // Initialize the grid root
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
-
         root.appendChild(this._root);
 
         this._setupGrid(1);
-        this.active = this._selected.keys().next().value;
-        this._active = this._selected.keys().next().value;
+        this.active = this._viewers.keys().next().value;
+        this._active = this._viewers.keys().next().value;
 
         // get the 'delay' setting inside the current widget setting
         this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
@@ -215,7 +214,7 @@ export class StructureViewer {
      * @param  selectedGUID   GUID of the widget to show
      */
     public show(indexes: Indexes, selectedGUID: string = this._active) {
-        const data = this._selected.get(selectedGUID);
+        const data = this._viewers.get(selectedGUID);
         assert(data !== undefined);
 
         const widget = data.widget;
@@ -249,28 +248,13 @@ export class StructureViewer {
     }
 
     /**
-     * Register a `callback` to compute the placement of the settings modal.
-     *
-     * The callback gets the current placement of the settings as a
-     * [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect),
-     * and should return top and left positions in pixels, used with `position:
-     * fixed`. The callback is called once, the first time the settings are
-     * opened.
-     */
-    public settingsPlacement(callback: (rect: DOMRect) => {top: number, left: number}) {
-        for (const widgetData of this._selected.values()) {
-            widgetData.widget.settingsPlacement(callback);
-        }
-    }
-
-    /**
      * Start playing the trajectory of structures in this dataset, until
      * `advance` returns false
      */
     public structurePlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._selected.get(this._active);
+                const widgetData = this._viewers.get(this._active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
@@ -292,7 +276,7 @@ export class StructureViewer {
     public atomPlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._selected.get(this._active);
+                const widgetData = this._viewers.get(this._active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
@@ -311,10 +295,27 @@ export class StructureViewer {
      * Remove all HTML added by this [[StructureViewer]] in the current document
      */
     public remove(): void {
-        for (const data of this._selected.values()) {
+        for (const data of this._viewers.values()) {
             data.widget.remove();
         }
         this._root.parentElement!.innerHTML = '';
+    }
+
+    /**
+     * Set a callback to get the initial positioning of the settings modal of
+     * the viewers. The same callback is used for all viewers in the grid.
+     *
+     * The callback gets the current placement of the settings as a
+     * [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect), and
+     * should return top and left positions in pixels, used with `position:
+     * fixed`. The callback is called once, the first time the settings are
+     * opened.
+     */
+    public set positionSettingsModal(value: PositioningCallback) {
+        this._positionSettingsModal = value;
+        for (const viewer of this._viewers.values()) {
+            viewer.widget.positionSettingsModal = value;
+        }
     }
 
     /**
@@ -354,8 +355,8 @@ export class StructureViewer {
         if (activeGUID !== this._active) {
             let indexes;
 
-            if (this._selected.has(activeGUID) ) {
-                if (this._selected.has(this._active)) {
+            if (this._viewers.has(activeGUID) ) {
+                if (this._viewers.has(this._active)) {
                     const oldButton = getByID(`chsp-activate-${this._active}`);
                     oldButton.classList.toggle('chsp-active-structure', false);
                     const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
@@ -375,7 +376,7 @@ export class StructureViewer {
                 const newCell = getByID(`gi-${this._active}`);
                 newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
 
-                const activeWidgetData = this._selected.get(this._active);
+                const activeWidgetData = this._viewers.get(this._active);
                 assert(activeWidgetData !== undefined);
 
                 activeWidgetData.widget.onselect = (atom: number) => {
@@ -415,7 +416,7 @@ export class StructureViewer {
      */
     private _getNextColor(): string {
         const colors = [];
-        for (const data of this._selected.values()) {
+        for (const data of this._viewers.values()) {
             colors.push(data.color);
         }
         return getNextColor(colors);
@@ -467,7 +468,7 @@ export class StructureViewer {
             const close = template.content.firstChild! as HTMLElement;
             close.onclick = () => {
                 this._removeWidget(cellGUID);
-                this._setupGrid(this._selected.size);
+                this._setupGrid(this._viewers.size);
             };
             cell.appendChild(close);
 
@@ -481,7 +482,7 @@ export class StructureViewer {
             const duplicate = template.content.firstChild! as HTMLElement;
 
             duplicate.onclick = () => {
-                const data = this._selected.get(cellGUID);
+                const data = this._viewers.get(cellGUID);
                 assert(data !== undefined);
 
                 let index;
@@ -491,7 +492,7 @@ export class StructureViewer {
                     index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
                 }
 
-                const newGuid = this._setupGrid(this._selected.size + 1);
+                const newGuid = this._setupGrid(this._viewers.size + 1);
                 assert(newGuid.length === 1);
                 this.show(index, newGuid[0]);
                 this.onselect(index, newGuid[0]);
@@ -525,10 +526,10 @@ export class StructureViewer {
 
         // Determine best arrangement for nwidgets
         const arrangement = bestGridArrangement(nwidgets);
-        if (this._selected.size > nwidgets) {
-            sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} viewers.`);
-            const wl = this._selected.size;
-            const mapKeys = this._selected.keys();
+        if (this._viewers.size > nwidgets) {
+            sendWarning(`Warning: Eliminating last ${this._viewers.size - nwidgets} viewers.`);
+            const wl = this._viewers.size;
+            const mapKeys = this._viewers.keys();
             for (let i = 0; i < wl; i++) {
                 const excessGUID = mapKeys.next().value;
                 if (i >= nwidgets) {
@@ -541,10 +542,10 @@ export class StructureViewer {
         let rowNum = 1;
         let colNum = 1;
 
-        const mapKeys = this._selected.keys();
+        const mapKeys = this._viewers.keys();
         for (let c = 0; c < nwidgets; c++) {
             let cellGUID;
-            if (c >= this._selected.size) {
+            if (c >= this._viewers.size) {
                 cellGUID = generateGUID();
             } else {
                 cellGUID = mapKeys.next().value;
@@ -561,7 +562,7 @@ export class StructureViewer {
             }
 
             // add a new widget if necessary
-            if (!this._selected.has(cellGUID)) {
+            if (!this._viewers.has(cellGUID)) {
                 const widget = new JSmolWidget(
                     `gi-${cellGUID}`,
                     this._j2spath,
@@ -569,18 +570,22 @@ export class StructureViewer {
                 );
 
                 const current = {atom: -1, structure: -1, environment: -1};
-                this._selected.set(cellGUID, {
+                this._viewers.set(cellGUID, {
                     color: color,
                     current: current,
                     widget: widget,
                 });
+
+                if (this._positionSettingsModal !== undefined) {
+                    widget.positionSettingsModal = this._positionSettingsModal;
+                }
 
                 newGUID.push(cellGUID);
             }
         }
 
         // Force a refresh of the viewer in case the aspect ratio changed
-        for (const widgetData of this._selected.values()) {
+        for (const widgetData of this._viewers.values()) {
             widgetData.widget.script('refresh');
         }
 
@@ -593,7 +598,7 @@ export class StructureViewer {
      * which should only be done when changing datasets.
      */
     private _removeWidget(trashedGUID: string, force: boolean = false) {
-        if (this._selected.size > 1 || force === true) {
+        if (this._viewers.size > 1 || force === true) {
             const widgetRoot = getByID(`chsp-${trashedGUID}`);
 
             this.onselect({structure: -1, environment: -1}, trashedGUID);
@@ -604,11 +609,11 @@ export class StructureViewer {
             const deadCell = getByID(`gi-${trashedGUID}`);
             if (deadCell !== null) {deadCell.remove(); }
 
-            this._selected.delete(trashedGUID);
+            this._viewers.delete(trashedGUID);
 
             if (this._active === trashedGUID ) {
-                if (this._selected.size > 0) {
-                  this.active = this._selected.keys().next().value;
+                if (this._viewers.size > 0) {
+                  this.active = this._viewers.keys().next().value;
                 } else { this._active = ''; }
             }
         }
