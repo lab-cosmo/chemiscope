@@ -1019,7 +1019,13 @@ export class PropertiesMap {
             }
         }
 
-        return this._selectTrace<number | number[]>(values, 20, trace);
+        const selectedValues = [];
+        for (const guid of this._selected.keys()) {
+            if (guid === this._active) {
+              selectedValues.push(4000);
+            } else {selectedValues.push(2000); }
+        }
+        return this._selectTrace<number | number[]>(values, selectedValues, trace);
     }
 
     /**
@@ -1272,7 +1278,11 @@ export class PropertiesMap {
 
           // in 3D we need only to update the GUID, visuals will be updated
           // upon returning to 2D
-          } else {this._active = activeGUID; }
+          } else {
+            this._active = activeGUID;
+            const factor = this._settings.size.factor.value;
+            this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
+            }
         }
     }
 
@@ -1305,13 +1315,14 @@ export class PropertiesMap {
                   markerColors.push(markerData.color);
               }
 
-              console.log(markerColors)
+              const factor = this._settings.size.factor.value;
               this._restyle({
+                  'marker.color': [markerColors],
+                  'marker.size': this._sizes(factor, 1),
+                  'marker.symbol': symbol,
                   'x': this._xValues(1),
                   'y': this._yValues(1),
                   'z': this._zValues(1),
-                  'marker.color': [markerColors],
-                  'marker.symbol': symbol,
               } as Data, 1);
           } else {
               const xaxis = this._plot._fullLayout.xaxis;
