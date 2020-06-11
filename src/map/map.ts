@@ -1321,8 +1321,8 @@ export class PropertiesMap {
               }
 
               const markerColors = [];
-              for (const [guid, markerData] of this._selected.entries()) {
-                  markerColors.push(markerData.color);
+              for (const data of this._selected.values()) {
+                  markerColors.push(data.color);
               }
 
               const factor = this._settings.size.factor.value;
