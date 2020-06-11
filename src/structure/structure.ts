@@ -465,7 +465,10 @@ export class StructureViewer {
                     <span class="chsp-tooltip">remove viewer</span>
                 </button>`;
             const close = template.content.firstChild! as HTMLElement;
-            close.onclick = () => {this._removeWidget(cellGUID); this._setupGrid(this._selected.size); };
+            close.onclick = () => {
+                this._removeWidget(cellGUID);
+                this._setupGrid(this._selected.size);
+            };
             cell.appendChild(close);
 
             // add a button to duplicate the widget
@@ -487,7 +490,11 @@ export class StructureViewer {
                 } else {
                     index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
                 }
-                this._setupGrid(this._selected.size + 1, index);
+
+                const newGuid = this._setupGrid(this._selected.size + 1);
+                assert(newGuid.length === 1);
+                this.show(index, newGuid[0]);
+                this.onselect(index, newGuid[0]);
             };
 
             cell.appendChild(duplicate);
@@ -502,78 +509,84 @@ export class StructureViewer {
     }
 
     /*
-     * Function to initialize the grid instance for `this._nwidgets` cells and place
-     * onto the DOM element mapped in `this._root`
+     * Function to initialize the grid instance for `this._nwidgets` cells and
+     * place onto the DOM element mapped in `this._root`. If more cells are
+     * needed, this function return the list of new cell GUID
      */
-    private _setupGrid(nwidgets: number, index: Indexes = {atom: 0, structure: 0, environment: 0}) {
-          if (nwidgets < 1) {
-              sendWarning('Cannot delete last widget.');
-          } else {
-              if (nwidgets > MAX_WIDGETS ) {
-                  sendWarning(`Viewer grid cannot contain more than ${MAX_WIDGETS} widgets.`);
-              } else {
+    private _setupGrid(nwidgets: number): string[] {
+        const newGUID = [] as string[];
+        if (nwidgets < 1) {
+            sendWarning('Cannot delete last widget.');
+            return newGUID;
+        } else if (nwidgets > MAX_WIDGETS ) {
+            sendWarning(`Viewer grid cannot contain more than ${MAX_WIDGETS} widgets.`);
+            return newGUID;
+        }
 
-                  // Determine best arrangement for nwidgets
-                  const arrangement = bestGridArrangement(nwidgets);
-
-                  if (this._selected.size > nwidgets) {
-                      sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} viewers.`);
-                      const wl = this._selected.size;
-                      const mapKeys = this._selected.keys();
-                      for (let i = 0; i < wl; i++) {
-                          const excessGUID = mapKeys.next().value;
-                          if (i >= nwidgets) {
-                            this._removeWidget(excessGUID);
-                          }
-                      }
-                  }
-
-                  // Start at the third row to skip the inc/dec buttons
-                  let rowNum = 1;
-                  let colNum = 1;
-
-                  const mapKeys = this._selected.keys();
-                  for (let c = 0; c < nwidgets; c++) {
-                      let cellGUID;
-                      if (c >= this._selected.size) {
-                          cellGUID = generateGUID();
-                      } else {
-                          cellGUID = mapKeys.next().value;
-                      }
-                      let color = this._setupCell(cellGUID, colNum, rowNum);
-                      if (color === '') {
-                          color = this._getNextColor();
-                      }
-
-                      colNum++;
-                      if (colNum > arrangement.columns) {
-                          rowNum++;
-                          colNum = 1;
-                      }
-
-                      // add a new widget if necessary
-                      if (!this._selected.has(cellGUID)) {
-                          const widget = new JSmolWidget(
-                              `gi-${cellGUID}`,
-                              this._j2spath,
-                              cellGUID,
-                          );
-                          const current = {atom: -1, structure: -1, environment: -1};
-                          this._selected.set(cellGUID, {
-                              color: color,
-                              current: current,
-                              widget: widget,
-                          });
-                          this.show(index, cellGUID);
-                          this.onselect(index, cellGUID);
-                      }
-                  }
-                  for (const widgetData of this._selected.values()) {
-                    widgetData.widget.script('refresh');
-                  }
+        // Determine best arrangement for nwidgets
+        const arrangement = bestGridArrangement(nwidgets);
+        if (this._selected.size > nwidgets) {
+            sendWarning(`Warning: Eliminating last ${this._selected.size - nwidgets} viewers.`);
+            const wl = this._selected.size;
+            const mapKeys = this._selected.keys();
+            for (let i = 0; i < wl; i++) {
+                const excessGUID = mapKeys.next().value;
+                if (i >= nwidgets) {
+                    this._removeWidget(excessGUID);
+                }
             }
         }
+
+        // Start at the third row to skip the inc/dec buttons
+        let rowNum = 1;
+        let colNum = 1;
+
+        const mapKeys = this._selected.keys();
+        for (let c = 0; c < nwidgets; c++) {
+            let cellGUID;
+            if (c >= this._selected.size) {
+                cellGUID = generateGUID();
+            } else {
+                cellGUID = mapKeys.next().value;
+            }
+            let color = this._setupCell(cellGUID, colNum, rowNum);
+            if (color === '') {
+                color = this._getNextColor();
+            }
+
+            colNum++;
+            if (colNum > arrangement.columns) {
+                rowNum++;
+                colNum = 1;
+            }
+
+            // add a new widget if necessary
+            if (!this._selected.has(cellGUID)) {
+                const widget = new JSmolWidget(
+                    `gi-${cellGUID}`,
+                    this._j2spath,
+                    cellGUID,
+                );
+
+                const current = {atom: -1, structure: -1, environment: -1};
+                this._selected.set(cellGUID, {
+                    color: color,
+                    current: current,
+                    widget: widget,
+                });
+
+                newGUID.push(cellGUID);
+            }
+        }
+
+        // Force a refresh of the viewer in case the aspect ratio changed
+        for (const widgetData of this._selected.values()) {
+            widgetData.widget.script('refresh');
+        }
+
+        return newGUID;
     }
+
     /*
      * Removes a widget from the structure viewer grid.
      * The parameter force pertains to removing the *only* widget in the grid,
