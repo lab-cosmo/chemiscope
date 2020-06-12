@@ -6,6 +6,7 @@
         "declaration": true,
         "declarationDir": "dist/",
         "downlevelIteration": true,
+        "sourceMap": true,
         "lib": [
             "dom",
             "es5"
