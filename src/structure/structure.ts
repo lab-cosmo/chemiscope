@@ -478,6 +478,10 @@ export class StructureViewer {
                 }
 
                 const newGuid = this._setupGrid(this._viewers.size + 1);
+                if (newGuid.length === 0) {
+                    // no new widget, probably because we already have MAX_WIDGETS
+                    return;
+                }
                 assert(newGuid.length === 1);
                 this.show(index, newGuid[0]);
                 this.onselect(index, newGuid[0]);
