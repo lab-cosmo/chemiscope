@@ -87,6 +87,8 @@ def main():
                         help='chemiscope JSON input that is appended to provide default data')
     parser.add_argument('-o', '--output', type=str, default="",
                         help='output file name. Defaults to chemiscope.html or the name of the JSON')
+    parser.add_argument('-s', '--static', default=False, action='store_true',
+                        help='hide the load file field in a static file.')
     args = parser.parse_args()
     
     html = get_html()
@@ -105,10 +107,15 @@ def main():
             raise ValueError("Only plain-text JSON inputs can be used with the standalone viewer")
         with open(args.input) as fd:
             json_data = fd.read()
+    else:
+        if args.static:
+            raise ValueError("You should provide an input to make a static version of the viewer")
 
     with open(output_name, 'w') as fd:
         fd.write(str(html))
         fd.write('<script type="text/javascript"> for (const element of document.getElementsByClassName("hide-if-standalone") ) { element.style.display = "none"; } </script>')
+        if args.static:
+            fd.write('<script type="text/javascript">  document.getElementById("upload-form").style.display = "none";  </script>')
         fd.write('<script id=standalone-json-data type="application/json">')
         fd.write(json_data)
         
