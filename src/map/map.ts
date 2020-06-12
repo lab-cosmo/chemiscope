@@ -832,7 +832,7 @@ export class PropertiesMap {
         // only used in 3D mode, since it is way slower than moving
         // this._selectedMarker around.
         const selected = {
-            name: '',
+            name: 'selected',
             type: 'scattergl',
 
             x: [NaN],
@@ -844,8 +844,9 @@ export class PropertiesMap {
                 color: colors[1],
                 line: {
                     color: lineColors[1],
-                    width: 1,
+                    width: 2,
                 },
+                opacity: 1,
                 size: sizes[1],
                 sizemode: 'area',
             },
@@ -904,28 +905,26 @@ export class PropertiesMap {
                 return;
             }
 
-            let indexes; // container for the indices
-            let md; // container for the marker data
-
+            let data;
             // if someone has clicked on a selection marker, set to active
             if (event.points[0].data.name === 'selected' ) {
-              let i = 0;
-              for (const [guid, markerData] of this._selected.entries()) {
-                if (i === event.points[0].pointNumber) {
-                    this.active = guid;
-                    md = markerData;
-                    break;
+                let i = 0;
+                for (const [guid, markerData] of this._selected.entries()) {
+                    if (i === event.points[0].pointNumber) {
+                        this.active = guid;
+                        data = markerData;
+                        break;
                     }
-                i++;
-              }
+                    i++;
+                }
             }
-            if (md !== undefined) {
-              indexes = this._indexer.from_environment(md.current);
-            } else {
-              // default if someone has clicked generally on the map or on a
-              // place the selected marker doesn't recognize
-              indexes = this._indexer.from_environment(event.points[0].pointNumber);
-            }
+
+            const indexes = (data !== undefined) ?
+                this._indexer.from_environment(data.current) :
+                // default if someone has clicked generally on the map or on a
+                // place the selected marker doesn't recognize
+                this._indexer.from_environment(event.points[0].pointNumber);
+
             this.select(indexes, this._active);
             this.onselect(indexes, this._active);
         });
@@ -966,8 +965,10 @@ export class PropertiesMap {
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
-              selected.push(values[marker.current]);
-            } else { selected.push(NaN); }
+                selected.push(values[marker.current]);
+            } else {
+                selected.push(NaN);
+            }
         }
         return this._selectTrace(values, selected, trace);
     }
@@ -981,8 +982,10 @@ export class PropertiesMap {
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
-              selected.push(values[marker.current]);
-            } else { selected.push(NaN); }
+                selected.push(values[marker.current]);
+            } else {
+                selected.push(NaN);
+            }
         }
 
         return this._selectTrace(values, selected, trace);
@@ -1009,7 +1012,7 @@ export class PropertiesMap {
      * Get the color values to use with the given plotly `trace`, or all of
      * them if `trace === undefined`
      */
-    private _colors(trace?: number): Array<string | number | number[]> {
+    private _colors(trace?: number): Array<string | string[] | number | number[]> {
         let values;
         if (this._hasColors()) {
             values = this._property(this._settings.color.property.value).values;
@@ -1017,7 +1020,12 @@ export class PropertiesMap {
             values = 0.5;
         }
 
-        return this._selectTrace<string | number | number[]>(values, '#007bff', trace);
+        const selected = [];
+        for (const data of this._selected.values()) {
+            selected.push(data.color);
+        }
+
+        return this._selectTrace<string | string[] | number | number[]>(values, selected, trace);
     }
 
     /**
@@ -1081,23 +1089,17 @@ export class PropertiesMap {
             }
         }
 
-        const selectedValues = [];
+        const selected = [];
         if (this._is3D()) {
-          for (const guid of this._selected.keys()) {
-              if (guid === this._active) {
-                selectedValues.push(4000);
-              } else {selectedValues.push(2000); }
-          }
-        } else {
-          // I have put this in here in case we decide to use the plotly
-          // markers in 2D as well
-          for (const guid of this._selected.keys()) {
-              if (guid === this._active) {
-                selectedValues.push(NaN);
-              } else {selectedValues.push(NaN); }
-          }
+            for (const guid of this._selected.keys()) {
+                if (guid === this._active) {
+                    selected.push(4000);
+                } else {
+                    selected.push(2000);
+                }
+            }
         }
-        return this._selectTrace<number | number[]>(values, selectedValues, trace);
+        return this._selectTrace<number | number[]>(values, selected, trace);
     }
 
     /**
@@ -1238,7 +1240,7 @@ export class PropertiesMap {
             // line width set to 0 ¯\_(ツ)_/¯
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
-            'marker.line.width': [0, 1],
+            'marker.line.width': [0, 2],
             // size change from 2D to 3D
             'marker.size': this._sizes(factor),
             'marker.sizemode': 'area',
@@ -1284,7 +1286,7 @@ export class PropertiesMap {
             // transparency messes with depth sorting in 3D mode
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
-            'marker.line.width': [1, 1],
+            'marker.line.width': [1, 2],
             // size change from 2D to 3D
             'marker.size': this._sizes(factor),
         } as Data, [0, 1]);
@@ -1341,25 +1343,19 @@ export class PropertiesMap {
 
           if (this._is3D()) {
               marker.style.display = 'none';
-              let symbol;
+              let symbols;
               if (this._settings.symbol.value !== '') {
-                  const symbols = this._property(this._settings.symbol.value).values;
-                  symbol = get3DSymbol(symbols[selected]);
+                  const values = this._property(this._settings.symbol.value).values;
+                  symbols = get3DSymbol(values[selected]);
               } else {
-                  symbol = get3DSymbol(0);
-              }
-
-              const markerColors = [];
-              for (const data of this._selected.values()) {
-                  markerColors.push(data.color);
+                  symbols = get3DSymbol(0);
               }
 
               const factor = this._settings.size.factor.value;
               this._restyle({
-                  'marker.color': [markerColors],
+                  'marker.color': this._colors(1),
                   'marker.size': this._sizes(factor, 1),
-                  'marker.symbol': symbol,
-                  'name': 'selected',
+                  'marker.symbol': symbols,
                   'x': this._xValues(1),
                   'y': this._yValues(1),
                   'z': this._zValues(1),
