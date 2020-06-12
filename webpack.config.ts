@@ -6,6 +6,7 @@ import {execSync} from 'child_process';
 const GIT_VERSION = execSync('git describe --tags --dirty').toString().trim();
 
 const config: webpack.Configuration = {
+    devtool: 'inline-source-map',
     entry: {
         'chemiscope': './src/index.ts',
         'jsmol-widget': './src/structure/widget.ts',
