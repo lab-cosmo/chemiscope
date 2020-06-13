@@ -87,8 +87,8 @@ def main():
                         help='chemiscope JSON input that is appended to provide default data')
     parser.add_argument('-o', '--output', type=str, default="",
                         help='output file name. Defaults to chemiscope.html or the name of the JSON')
-    parser.add_argument('-s', '--static', default=False, action='store_true',
-                        help='hide the load file field in a static file.')
+    parser.add_argument('-l', '--loader', default=False, action='store_true',
+                        help='shows a load input box that makes it possible to load new files even if there is an embedded dataset.')
     args = parser.parse_args()
     
     html = get_html()
@@ -101,20 +101,21 @@ def main():
         else:
             output_name = os.path.splitext(args.input)[0] + ".html"
 
+    # show loader by default
+    show_loader = True
     json_data = ""
     if args.input != "":
         if args.input.endswith(".gz"):
             raise ValueError("Only plain-text JSON inputs can be used with the standalone viewer")
         with open(args.input) as fd:
             json_data = fd.read()
-    else:
-        if args.static:
-            raise ValueError("You should provide an input to make a static version of the viewer")
+        # if an input json is provided, check the -l option (wich defaults to False)
+        show_loader = args.loader
 
     with open(output_name, 'w') as fd:
         fd.write(str(html))
         fd.write('<script type="text/javascript"> for (const element of document.getElementsByClassName("hide-if-standalone") ) { element.style.display = "none"; } </script>')
-        if args.static:
+        if not show_loader:
             fd.write('<script type="text/javascript">  document.getElementById("upload-form").style.display = "none";  </script>')
         fd.write('<script id=standalone-json-data type="application/json">')
         fd.write(json_data)
