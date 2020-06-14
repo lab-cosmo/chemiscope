@@ -40,7 +40,10 @@ function setupChemiscope(json) {
         },
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
-        structure: 'chemiscope-structure',
+        structure:  {
+			id:   'chemiscope-structure',
+			presets: (json.presets === undefined ? undefined : json.presets.structure)
+		},
         j2sPath:   J2S_PATH,
     };
 
