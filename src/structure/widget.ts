@@ -8,7 +8,8 @@ import assert from 'assert';
 import {JmolObject, JSmolApplet} from 'jsmol';
 
 import {generateGUID, getByID, makeDraggable} from '../utils';
-import {HTMLSetting, PositioningCallback} from '../utils';
+import {PositioningCallback} from '../utils';
+import {StructurePresets, StructureSettings} from './settings';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
@@ -136,39 +137,7 @@ export class JSmolWidget {
     /// Reference to the JSmol applet to be updated with script calls
     private _applet!: JSmolApplet;
     /// Representation options from the HTML side
-    private _settings!: {
-        // should we show bonds
-        bonds: HTMLSetting<'boolean'>,
-        // should we use space filling representation
-        spaceFilling: HTMLSetting<'boolean'>;
-        // should we show atoms labels
-        atomLabels: HTMLSetting<'boolean'>;
-        // should we show unit cell information and lines
-        unitCell: HTMLSetting<'boolean'>;
-        /// Is the current unit cell displayed as a packed cell?
-        packedCell: HTMLSetting<'boolean'>;
-        /// number of repetitions in the `a/b/c` direction for the supercell
-        supercell: [HTMLSetting<'int'>, HTMLSetting<'int'>, HTMLSetting<'int'>];
-        // should we spin the represenation
-        rotation: HTMLSetting<'boolean'>;
-        // which axis system to use (none, xyz, abc)
-        axes: HTMLSetting<'string'>;
-        // options related to environments
-        environments: {
-            // should we display environments & environments options
-            activated: HTMLSetting<'boolean'>;
-            // automatically center the environment when loading it
-            center: HTMLSetting<'boolean'>;
-            // the cutoff value for spherical environments
-            cutoff: HTMLSetting<'number'>;
-            // which style for atoms not in the environment
-            bgStyle: HTMLSetting<'string'>;
-            // which colors for atoms not in the environment
-            bgColor: HTMLSetting<'string'>;
-        }
-        // keep the orientation constant when loading a new structure if checked
-        keepOrientation: HTMLSetting<'boolean'>;
-    };
+    private _settings!: StructureSettings;
     /// The supercell used to intialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
@@ -209,7 +178,12 @@ export class JSmolWidget {
      * @param guid (optional) unique identifier for the widget
      * @param serverURL URL where to find `jsmol.php`
      */
-    constructor(id: string, j2sPath: string, guid?: string, serverURL: string = DEFAULT_SERVER_URL) {
+    constructor(
+        id: string,
+        j2sPath: string,
+        guid?: string,
+        serverURL: string = DEFAULT_SERVER_URL,
+    ) {
         if (window.Jmol === undefined) {
             throw Error('Jmol is required, load it from your favorite source');
         }
@@ -484,6 +458,20 @@ export class JSmolWidget {
         this._do_load(data, keepOrientation);
     }
 
+    /**
+     * Applies presets, possibly filling in with default values
+     */
+    public applyPresets(presets: Partial<StructurePresets> = {}): void {
+        this._settings.applyPresets(presets);
+    }
+
+    /**
+     * Dumps presets, in a way that can e.g. be serialized to json
+     */
+    public dumpPresets(): StructurePresets {
+        return this._settings.dumpPresets();
+    }
+
     private _reload() {
         if (!this._loaded()) {
             return;
@@ -654,28 +642,7 @@ export class JSmolWidget {
         makeDraggable(modalDialog, '.modal-header');
 
         // Create all the settings with defauls values
-        this._settings = {
-            atomLabels: new HTMLSetting('boolean', false),
-            axes: new HTMLSetting('string', 'off'),
-            bonds: new HTMLSetting('boolean', true),
-            environments: {
-                activated: new HTMLSetting('boolean', false),
-                bgColor: new HTMLSetting('string', 'CPK'),
-                bgStyle: new HTMLSetting('string', 'licorice'),
-                center: new HTMLSetting('boolean', false),
-                cutoff: new HTMLSetting('number', 0),
-            },
-            keepOrientation: new HTMLSetting('boolean', false),
-            packedCell: new HTMLSetting('boolean', false),
-            rotation: new HTMLSetting('boolean', false),
-            spaceFilling: new HTMLSetting('boolean', false),
-            supercell: [
-                new HTMLSetting('int', 1),
-                new HTMLSetting('int', 1),
-                new HTMLSetting('int', 1),
-            ],
-            unitCell: new HTMLSetting('boolean', false),
-        };
+        this._settings = new StructureSettings();
 
         // bind all the settings to corresponding HTML elements
         this._settings.atomLabels.bind(`${this.guid}-atom-labels`, 'checked');

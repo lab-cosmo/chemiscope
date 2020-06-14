@@ -21,7 +21,7 @@
 import {EnvironmentInfo} from './info';
 import {MapPresets, PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
-import {StructureViewer} from './structure';
+import {StructurePresets, StructureViewer} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
 import {addWarningHandler, EnvironmentIndexer, getNextColor} from './utils';
@@ -44,7 +44,11 @@ export interface Config {
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
     info: string;
     /** Id of the DOM element to use for the [[StructureViewer|structure viewer]] */
-    structure: string;
+    structure: {
+        id: string;
+        presets: StructurePresets;
+    };
+
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
     /** Custom structure loading callback, used to set [[StructureViewer.loadStructure]] */
@@ -67,8 +71,8 @@ function validateConfig(o: JsObject) {
         throw Error('missing "info" key in chemiscope config');
     }
 
-    if (!('structure' in o && typeof o.structure === 'string')) {
-        throw Error('missing "structure" key in chemiscope config');
+    if (!('structure' in o && 'id' in (o.structure as JsObject) && typeof (o.structure  as JsObject).id === 'string')) {
+        throw Error('missing "structure.id" key in chemiscope config');
     }
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
