@@ -2,6 +2,7 @@ name: Build website
 on:
   push:
     branches: [master]
+    tags: ['v*']
   pull_request:
     # Check all PR
 
@@ -37,26 +38,28 @@ jobs:
           cp chemiscope_standalone.html gh-pages/
           cp -r docs/_build/html/ gh-pages/docs/
           tar czf gh-pages.tar.gz gh-pages/
-    - name: upload built website archive
+    - name: store website archive
       uses: actions/upload-artifact@v1
       with:
           name: website
           path: gh-pages.tar.gz
 
-  deploy-website:
-    needs: build-website
-    # only deploy if we are in the master branch
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: download build website
-        uses: actions/download-artifact@v2
-        with:
-          name: website
-      - name: extract website
-        run: tar xf gh-pages.tar.gz
-      - name: deploy website to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages/
+    - name: deploy website to gh-pages
+      # only deploy website from master
+      if: github.ref == 'refs/heads/master'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./gh-pages/
+
+    - name: upload minified JS to GitHub release
+      # only upload minified JS from tags
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/chemiscope.d.ts
+          dist/chemiscope.min.js
+          dist/jsmol-widget.min.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
