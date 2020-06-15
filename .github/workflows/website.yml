@@ -37,8 +37,6 @@ jobs:
           cp dist/*.min.js gh-pages/
           cp chemiscope_standalone.html gh-pages/
           cp -r docs/_build/html/ gh-pages/docs/
-          touch gh-pages/.nojekyll
-          echo "chemiscope.org" > gh-pages/CNAME
           rm -f gh-pages/.gitignore
           tar czf gh-pages.tar.gz gh-pages/
     - name: store website archive
@@ -54,6 +52,8 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./gh-pages/
+        cname: chemiscope.org
+        force_orphan: true
 
     - name: upload minified JS to GitHub release
       # only upload minified JS from tags
