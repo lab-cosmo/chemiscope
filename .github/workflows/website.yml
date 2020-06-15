@@ -23,14 +23,18 @@ jobs:
     - name: install npm dependencies
       uses: bahmutov/npm-install@v1
     - name: install python dependencies
-      run: python3 -m pip install -r docs/requirements.txt
+      run: |
+        python3 -m pip install -r docs/requirements.txt
+        python3 -m pip install beautifulsoup4 requests
     - run: npm run build
     - run: npm run download-example-input
     - run: cd docs && make html
+    - run: python3 utils/generate_standalone.py -o chemiscope_standalone.html
     - name: assemble full website
       run: |
           cp -r app/ gh-pages/
           cp dist/*.min.js gh-pages/
+          cp chemiscope_standalone.html gh-pages/
           cp -r docs/_build/html/ gh-pages/docs/
           tar czf gh-pages.tar.gz gh-pages/
     - name: upload built website archive
