@@ -39,7 +39,7 @@ function setupChemiscope(dataset) {
         j2sPath:   J2S_PATH,
     };
 
-    if (DATASET.includes("Azaphenacenes.json.gz")) {
+    if (DATASET !== undefined && DATASET.includes("Azaphenacenes.json.gz")) {
         // example of asynchronous structure loading
         config.loadStructure = loadStructureOnDemand;
     }
