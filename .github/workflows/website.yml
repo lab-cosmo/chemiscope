@@ -37,6 +37,9 @@ jobs:
           cp dist/*.min.js gh-pages/
           cp chemiscope_standalone.html gh-pages/
           cp -r docs/_build/html/ gh-pages/docs/
+          touch gh-pages/.nojekyll
+          echo "chemiscope.org" > gh-pages/CNAME
+          rm -f gh-pages/.gitignore
           tar czf gh-pages.tar.gz gh-pages/
     - name: store website archive
       uses: actions/upload-artifact@v1
