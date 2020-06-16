@@ -71,7 +71,7 @@ environments. This is useful, for instance, to rationalize the relationship
 between structure and atomic properties such as nuclear chemical shieldings
 (Figure 2). This is also useful as a diagnostic tool for the many
 machine-learning schemes that decompose properties into atom-centred
-contributions [@Behler2007, @Bartok2010]
+contributions [@Behler2007; @Bartok2010]
 
 
 ![Database of chemical shielding [@Paruzzo2018] in chemiscope showing the use of a 3D plot and atomic environments highlighting](./screenshot-3d.png)
