@@ -160,6 +160,14 @@ class DefaultVisualizer {
             this.structure.show(indexes, selectedGUID);
         };
 
+        this.structure.onremove = (removedGUID) => {
+          this.map.removeMarker(removedGUID, true);
+        };
+
+        this.map.onremove = (removedGUID) => {
+          this.structure.removeWidget(removedGUID);
+        };
+
         const initial = {environment: 0, structure: 0, atom: 0};
         this.structure.show(initial);
         this.info.show(initial);

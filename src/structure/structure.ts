@@ -84,6 +84,7 @@ interface WidgetGridData {
 export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes, selectedGUID?: string) => void;
+    public onremove: (removedGUID: string) => void;
 
     /**
      * Callback used when a new structure should be loaded
@@ -161,6 +162,7 @@ export class StructureViewer {
         // Initializes with 1 widget upon opening.
         this._viewers = new Map();
         this.onselect = () => {};
+        this.onremove = () => {};
 
         const root = getByID(id);
         this._root = document.createElement('div');
@@ -169,7 +171,8 @@ export class StructureViewer {
         root.appendChild(this._root);
 
         this._setupGrid(1);
-        this._active = this._viewers.keys().next().value;
+        this.active = this._viewers.keys().next().value;
+        this._active = this.active;
 
         // get the 'delay' setting inside the current widget setting
         this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
@@ -292,6 +295,34 @@ export class StructureViewer {
         }
     }
 
+    /*
+     * Removes a widget from the structure viewer grid.
+     * The parameter force pertains to removing the *only* widget in the grid,
+     * which should only be done when changing datasets.
+     */
+    public removeWidget(removedGUID: string, force: boolean = false) {
+        if (this._viewers.size > 1 || force === true) {
+            if (this._viewers.has(removedGUID)) {
+
+              const widgetRoot = getByID(`chsp-${removedGUID}`);
+
+              if (widgetRoot.parentNode !== null) {
+                  widgetRoot.parentNode.removeChild(widgetRoot);
+              }
+
+              const deadCell = getByID(`gi-${removedGUID}`);
+              if (deadCell !== null) {deadCell.remove(); }
+
+              this._viewers.delete(removedGUID);
+              if (this.active === removedGUID) {
+                  assert(this._viewers.size > 0);
+                  this.active = this._viewers.keys().next().value;
+              }
+              this.onremove(removedGUID);
+          }
+        }
+    }
+
     /**
      * Get the structure at the given index in a format JSmol can undertand
      * and load. [[Structure]] already rendered as strings are cached for faster
@@ -327,26 +358,29 @@ export class StructureViewer {
     public set active(guid: string) {
         const old = this.active;
         assert(this._viewers.has(guid));
-        assert(this._viewers.has(old));
+
+        // keep as an if and not an assertion so that we can set an active widget
+        // even if there is not one currently.
+        if (this._viewers.has(old)) {
+                // change tooltip text in the active marker
+                const oldButton = getByID(`chsp-activate-${old}`);
+                oldButton.classList.toggle('chsp-active-structure', false);
+                const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
+                assert(oldTooltip !== null);
+                oldTooltip.innerHTML = 'choose as active';
+
+                // change style of the cell border
+                const oldCell = getByID(`gi-${old}`);
+                oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
+        }
 
         this._active = guid;
-
-        // change tooltip text in the active marker
-        const oldButton = getByID(`chsp-activate-${old}`);
-        oldButton.classList.toggle('chsp-active-structure', false);
-        const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
-        assert(oldTooltip !== null);
-        oldTooltip.innerHTML = 'choose as active';
 
         const newButton = getByID(`chsp-activate-${this.active}`);
         newButton.classList.toggle('chsp-active-structure', true);
         const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
         assert(tooltip !== null);
         tooltip.innerHTML = 'this is the active viewer';
-
-        // change style of the cell border
-        const oldCell = getByID(`gi-${old}`);
-        oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
 
         const newCell = getByID(`gi-${this.active}`);
         newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
@@ -424,7 +458,7 @@ export class StructureViewer {
                 </button>`;
             const close = template.content.firstChild! as HTMLElement;
             close.onclick = () => {
-                this._removeWidget(cellGUID);
+                this.removeWidget(cellGUID);
                 this._setupGrid(this._viewers.size);
             };
             cell.appendChild(close);
@@ -492,7 +526,7 @@ export class StructureViewer {
             let i = 0;
             for (const guid of this._viewers.keys()) {
                 if (i >= nwidgets) {
-                    this._removeWidget(guid);
+                    this.removeWidget(guid);
                 }
                 i += 1;
             }
@@ -569,29 +603,4 @@ export class StructureViewer {
         return newGUID;
     }
 
-    /*
-     * Removes a widget from the structure viewer grid.
-     * The parameter force pertains to removing the *only* widget in the grid,
-     * which should only be done when changing datasets.
-     */
-    private _removeWidget(trashedGUID: string, force: boolean = false) {
-        if (this._viewers.size > 1 || force === true) {
-            const widgetRoot = getByID(`chsp-${trashedGUID}`);
-
-            this.onselect({structure: -1, environment: -1}, trashedGUID);
-            if (widgetRoot.parentNode !== null) {
-                widgetRoot.parentNode.removeChild(widgetRoot);
-            }
-
-            const deadCell = getByID(`gi-${trashedGUID}`);
-            if (deadCell !== null) {deadCell.remove(); }
-
-            this._viewers.delete(trashedGUID);
-
-            if (this.active === trashedGUID) {
-                assert(this._viewers.size > 0);
-                this.active = this._viewers.keys().next().value;
-            }
-        }
-    }
 }

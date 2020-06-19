@@ -200,6 +200,7 @@ interface MarkerData {
 export class PropertiesMap {
     /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes, selectedGUID?: string) => void;
+    public onremove: (removedGUID: string) => void;
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -261,6 +262,7 @@ export class PropertiesMap {
                 ) {
         this._indexer = indexer;
         this.onselect = () => {};
+        this.onremove = () => {};
         this._selected = new Map();
 
         this._root = getByID(id);
@@ -309,33 +311,27 @@ export class PropertiesMap {
         // the update once.
         // https://github.com/plotly/plotly.js/issues/1025
 
-        // this is the indicator that this guid has been removed from the
-        // structure viewer
-        if (indexes.structure < 0 && indexes.environment < 0) {
-            this._removeMarker(selectedGUID, true);
-        } else {
-            /// Checks if marker exists on this map, if not adds it
-            if (!this._selected.has(selectedGUID)) {
-                this._addMarker(selectedGUID, indexes.environment);
+        /// Checks if marker exists on this map, if not adds it
+        if (!this._selected.has(selectedGUID)) {
+            this._addMarker(selectedGUID, indexes.environment);
 
-                const newMarkerData = this._selected.get(selectedGUID);
-                assert(newMarkerData !== undefined);
-                this._updateSelectedMarker(selectedGUID, newMarkerData);
-            }
-
-            // sets this marker to active
-            this.active = selectedGUID;
-
-            const markerData = this._selected.get(selectedGUID);
-            assert(markerData !== undefined);
-
-            /// Sets the active marker on this map
-            if (markerData.current === undefined || indexes.environment !== markerData.current ) {
-                markerData.current = indexes.environment;
-                this._updateSelectedMarker(selectedGUID, markerData);
-            }
-
+            const newMarkerData = this._selected.get(selectedGUID);
+            assert(newMarkerData !== undefined);
+            this._updateSelectedMarker(selectedGUID, newMarkerData);
         }
+
+        // sets this marker to active
+        this.active = selectedGUID;
+
+        const markerData = this._selected.get(selectedGUID);
+        assert(markerData !== undefined);
+
+        /// Sets the active marker on this map
+        if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+            markerData.current = indexes.environment;
+            this._updateSelectedMarker(selectedGUID, markerData);
+        }
+
     }
 
     /**
@@ -389,6 +385,37 @@ export class PropertiesMap {
         this.onselect(indexes, this._active);
     }
 
+    /**
+     * Removes a marker from the map.
+     *
+     * The parameter deleteFromGUIDs pertains to removing the guid from the guid
+     * list. This is *not* the same as the `force` parameter in
+     * `structure._removeWidget`. One may want to remove a marker when switching
+     * from 2D --> 3D but retain the information.
+     *
+     * @param  removedGUID     unique string identifier of the marker to remove
+     * @param  deleteFromGUIDs boolean, if false keep the data of the marker stored
+     */
+    public removeMarker(removedGUID: string, deleteFromGUIDs: boolean = true): void {
+        const marker = document.getElementById(`chsp-selected-${removedGUID}`);
+        if (marker !== null) {
+            if (marker.parentNode !== null) {
+                marker.parentNode.removeChild(marker);
+            }
+
+            // This will be false when going from 2D --> 3D as we want
+            // to remove all markers, but keep their information stored
+            if (deleteFromGUIDs) {
+                this._selected.delete(removedGUID);
+            }
+
+            if (this._active === removedGUID) {
+                assert(this._selected.size > 0);
+                this.active = this._selected.keys().next().value;
+            }
+            this.onremove(removedGUID);
+        }
+    }
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) => setTimeout(() => { throw e; }));
@@ -1228,7 +1255,7 @@ export class PropertiesMap {
 
         const cachedActive = this._active;
         for (const [guid, markerData] of this._selected.entries()) {
-            this._removeMarker(guid, false);
+            this.removeMarker(guid, false);
             this._updateSelectedMarker(guid, markerData);
         }
         this.active = cachedActive;
@@ -1438,37 +1465,6 @@ export class PropertiesMap {
 
         if (this._is3D()) {
           markerData.marker.style.display = 'none';
-        }
-    }
-
-    /**
-     * Removes a marker from the map.
-     *
-     * The parameter deleteFromGUIDs pertains to removing the guid from the guid
-     * list. This is *not* the same as the `force` parameter in
-     * `structure._removeWidget`. One may want to remove a marker when switching
-     * from 2D --> 3D but retain the information.
-     *
-     * @param  trashedGUID     unique string identifier of the marker to remove
-     * @param  deleteFromGUIDs boolean, if false keep the data of the marker stored
-     */
-    private _removeMarker(trashedGUID: string, deleteFromGUIDs: boolean = true): void {
-        const marker = document.getElementById(`chsp-selected-${trashedGUID}`);
-        if (marker !== null) {
-            if (marker.parentNode !== null) {
-                marker.parentNode.removeChild(marker);
-            }
-
-            // This will be false when going from 2D --> 3D as we want
-            // to remove all markers, but keep their information stored
-            if (deleteFromGUIDs) {
-                this._selected.delete(trashedGUID);
-            }
-
-            if (this._active === trashedGUID) {
-                assert(this._selected.size > 0);
-                this.active = this._selected.keys().next().value;
-            }
         }
     }
 }
