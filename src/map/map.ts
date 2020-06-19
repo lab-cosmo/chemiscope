@@ -878,7 +878,7 @@ export class PropertiesMap {
         }
 
         // make a copy of the default layout
-        const layout = {...DEFAULT_LAYOUT};
+        const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
         // and set values speific to the displayed dataset
         layout.xaxis.title = this._settings.x.property.value;
         layout.yaxis.title = this._settings.y.property.value;
