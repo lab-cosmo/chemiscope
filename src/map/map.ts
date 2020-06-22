@@ -329,7 +329,9 @@ export class PropertiesMap {
         assert(markerData !== undefined);
 
         /// Sets the active marker on this map
-        if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+        /// default of markerData.current is -1 so that currents of value 0 are
+        /// still updated
+        if (markerData.current < 0 || indexes.environment !== markerData.current ) {
             markerData.current = indexes.environment;
             this._updateSelectedMarker(selectedGUID, markerData);
         }
@@ -1439,7 +1441,7 @@ export class PropertiesMap {
      * @param  addedGUID unique string identifier of the marker to add
      * @param  index     numeric index of the structure (with respect to dataset) to show
      */
-    private _addMarker(addedGUID: string, index: number = 0): void {
+    private _addMarker(addedGUID: string, index: number= -1): void {
         if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
             const marker = document.createElement('div');
@@ -1454,7 +1456,7 @@ export class PropertiesMap {
             marker.style.backgroundColor = color;
             const newMarkerData = {
                                       color : color,
-                                      current: Math.max(0, index),
+                                      current: index,
                                       marker: marker,
                                   };
             this._selected.set(addedGUID, newMarkerData);
