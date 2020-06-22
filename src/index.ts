@@ -133,8 +133,9 @@ class DefaultVisualizer {
             config.map,
             this._indexer,
             dataset.properties,
-            this.structure.active,
         );
+
+        this.map.active = this.structure.active;
 
         if (config.loadStructure !== undefined) {
             this.structure.loadStructure = config.loadStructure;
