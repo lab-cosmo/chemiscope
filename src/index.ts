@@ -140,8 +140,8 @@ class DefaultVisualizer {
             this.structure.loadStructure = config.loadStructure;
         }
 
-        this.structure.onselect = (indexes, selectedGUID) => {
-            this.map.select(indexes, selectedGUID);
+        this.structure.onselect = (indexes) => {
+            this.map.select(indexes);
             if (indexes.structure > 0 && indexes.environment > 0) {
               this.info.show(indexes);
             }
@@ -155,9 +155,9 @@ class DefaultVisualizer {
         this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
-        this.map.onselect = (indexes, selectedGUID) => {
+        this.map.onselect = (indexes) => {
             this.info.show(indexes);
-            this.structure.show(indexes, selectedGUID);
+            this.structure.show(indexes);
         };
 
         this.structure.onremove = (removedGUID) => {

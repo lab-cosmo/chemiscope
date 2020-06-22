@@ -953,7 +953,7 @@ export class PropertiesMap {
                 this._indexer.from_environment(event.points[0].pointNumber);
 
             this.select(indexes, this._active);
-            this.onselect(indexes, this._active);
+            this.onselect(indexes);
         });
         this._plot.on('plotly_afterplot', () => this._afterplot());
 
@@ -1414,7 +1414,7 @@ export class PropertiesMap {
               marker.style.right = `${plotWidth - x}px`;
           }
           const indexes = this._indexer.from_environment(selected);
-          this.onselect(indexes, selectedGUID);
+          this.onselect(indexes);
     }
 
     private _updateAllMarkers() {

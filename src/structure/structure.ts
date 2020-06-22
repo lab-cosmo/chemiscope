@@ -83,7 +83,7 @@ interface WidgetGridData {
  */
 export class StructureViewer {
     /** Callback used when the user select an environment */
-    public onselect: (indexes: Indexes, selectedGUID?: string) => void;
+    public onselect: (indexes: Indexes) => void;
     public onremove: (removedGUID: string) => void;
 
     /**
@@ -235,7 +235,7 @@ export class StructureViewer {
                 const structure = (current.structure + 1) % this._indexer.structuresCount();
                 const indexes = this._indexer.from_structure_atom(structure, 0);
                 this.show(indexes);
-                this.onselect(indexes, this.active);
+                this.onselect(indexes);
                 // continue playing until the advance callback returns false
                 this.structurePlayback(advance);
 
@@ -258,7 +258,7 @@ export class StructureViewer {
                 const atom = (current.atom! + 1) % this._indexer.atomsCount(structure);
                 const indexes = this._indexer.from_structure_atom(structure, atom);
                 this.show(indexes);
-                this.onselect(indexes, this.active);
+                this.onselect(indexes);
                 // continue playing until the advance callback returns false
                 this.atomPlayback(advance);
             }
@@ -397,7 +397,6 @@ export class StructureViewer {
             const atom = data.current.atom;
             indexes = this._indexer.from_structure_atom(structure, atom);
         }
-        this.onselect(indexes, this.active);
     }
 
     /**
@@ -488,9 +487,9 @@ export class StructureViewer {
                     // no new widget, probably because we already have MAX_WIDGETS
                     return;
                 }
-                assert(newGuid.length === 1);
-                this.show(index, newGuid[0]);
-                this.onselect(index, newGuid[0]);
+                assert(newGUID.length === 1);
+                this.show(index, newGUID[0]);
+                this.onselect(index);
             };
 
             cell.appendChild(duplicate);
@@ -544,6 +543,7 @@ export class StructureViewer {
             } else {
                 cellGUID = mapKeys.next().value;
             }
+
             let color = this._setupCell(cellGUID, colNum, rowNum);
             if (color === '') {
                 color = this._getNextColor();
@@ -577,7 +577,7 @@ export class StructureViewer {
                     assert(data !== undefined);
                     const atom_id = atom % widget.natoms()!;
                     const indexes = this._indexer.from_structure_atom(data.current.structure, atom_id);
-                    this.onselect(indexes, this.active);
+                    this.onselect(indexes);
                 };
 
                 const current = {atom: -1, structure: -1, environment: -1};
