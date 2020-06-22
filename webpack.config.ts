@@ -14,7 +14,7 @@ const config: webpack.Configuration = {
     mode: 'development',
     module: {
         rules: [
-            { test: /\.ts?$/, loader: 'ts-loader' },
+            { test: /\.ts?$/, use: ['ts-loader', './utils/webpack-assert-message.ts'] },
             { test: /\.css?$/, use: ['style-loader', 'css-loader'] },
             { test: /\.html?$/, loader: 'html-loader', options: { minimize: true } },
             { test: /\.svg?$/, loader: 'html-loader', options: { minimize: true } },
