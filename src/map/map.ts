@@ -360,7 +360,9 @@ export class PropertiesMap {
             return;
         }
 
-        assert(this._selected.has(activeGUID));
+        if (!this._selected.has(activeGUID)) {
+          this._addMarker(activeGUID);
+        }
 
         if (!this._is3D()) {
             // if we are in 2D we need to update the visuals
