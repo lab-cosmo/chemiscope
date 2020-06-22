@@ -222,7 +222,7 @@ export class PropertiesMap {
     private _data: MapData;
 
     /// GUID of the currently selected point
-    private _active!: string;
+    private _active?: string;
     /// Map associating currently selected markers GUID to additional data
     private _selected: Map<string, MarkerData>;
 
@@ -308,13 +308,19 @@ export class PropertiesMap {
     }
 
     /** Change the selected environment to the one with the given `indexes` */
-    public select(indexes: Indexes, selectedGUID: string = this._active) {
+    public select(indexes: Indexes, selectedGUID?: string) {
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
         // https://github.com/plotly/plotly.js/issues/1025
 
+        if (selectedGUID === undefined) {
+          if (this.active !== undefined) {
+            selectedGUID = this.active;
+          } else { return; }
+        }
+
         /// Checks if marker exists on this map, if not adds it
-        if (!this._selected.has(selectedGUID)) {
+        if (selectedGUID !== undefined && !this._selected.has(selectedGUID)) {
             this._addMarker(selectedGUID, indexes.environment);
 
             const newMarkerData = this._selected.get(selectedGUID);
@@ -346,6 +352,14 @@ export class PropertiesMap {
         this._settingsModal.remove();
     }
 
+    public get active() {
+      if (this._selected.size > 0) {
+        if (this._active === undefined) {
+        this.active = this._selected.keys().next().value;
+        return this._selected.keys().next().value;
+        } else { return this._active; }
+      } else {return ''; }
+    }
     /**
      * Function to set the active marker for communicating with the structure
      * viewer
@@ -366,7 +380,7 @@ export class PropertiesMap {
 
         if (!this._is3D()) {
             // if we are in 2D we need to update the visuals
-            if (this._selected.has(this._active)) {
+            if (this._active !== undefined && this._selected.has(this._active)) {
                 // this has been left as document.getElementById for when we are
                 // setting a new active because the old one has been deleted.
                 const oldButton = document.getElementById(`chsp-selected-${this._active}`);
@@ -388,7 +402,7 @@ export class PropertiesMap {
         assert(markerData !== undefined);
 
         const indexes = this._indexer.from_environment(markerData.current);
-        this.activate(this.active);
+        this.activate(this._active);
     }
 
     /**
@@ -886,6 +900,7 @@ export class PropertiesMap {
             mode: 'markers',
             showlegend: false,
         };
+
         const traces = [main as Data, selected as Data];
 
         // add empty traces to be able to display the symbols legend
@@ -1144,9 +1159,9 @@ export class PropertiesMap {
             // default to 0 (i.e. circles)
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
-
+        assert(this._selected.size > 0);
         const values = this._property(this._settings.symbol.value).values;
-        const markerData = this._selected.get(this._active);
+        const markerData = this._selected.get(this.active);
         assert(markerData !== undefined);
 
         if (this._is3D()) {
@@ -1259,7 +1274,7 @@ export class PropertiesMap {
             'type': 'scatter3d',
         } as unknown as Data);
 
-        const cachedActive = this._active;
+        const cachedActive = this.active;
         for (const [guid, markerData] of this._selected.entries()) {
             this.removeMarker(guid, false);
             this._updateSelectedMarker(guid, markerData);
@@ -1305,7 +1320,7 @@ export class PropertiesMap {
             'type': 'scattergl',
         } as unknown as Data);
 
-        const cachedActive = this._active;
+        const cachedActive = this.active;
 
         for (const [guid, marker] of this._selected.entries()) {
             this._addMarker(guid, marker.current);
@@ -1424,18 +1439,21 @@ export class PropertiesMap {
     }
 
     private _updateAllMarkers() {
-        // stores info on current active point
-        const active = this._active;
-        const activeMarkerData = this._selected.get(this._active);
-        assert(activeMarkerData !== undefined);
-        const indexes = this._indexer.from_environment(activeMarkerData.current);
+        // check if there are any markers to update
+        if (this._selected.size > 0) {
+          // stores info on current active point
+          const active = this.active;
+          const activeMarkerData = this._selected.get(this.active);
+          assert(activeMarkerData !== undefined);
+          const indexes = this._indexer.from_environment(activeMarkerData.current);
 
-        for (const [guid, markerData] of this._selected.entries()) {
-          this._updateSelectedMarker(guid, markerData);
+          for (const [guid, markerData] of this._selected.entries()) {
+            this._updateSelectedMarker(guid, markerData);
+          }
+
+          // HACK: restores the point that was active before the update
+          this.select(indexes, active);
         }
-
-        // HACK: restores the point that was active before the update
-        this.select(indexes, active);
     }
     /**
      * Function to add a marker with the given GUID string and indices to the map.
