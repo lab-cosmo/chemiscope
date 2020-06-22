@@ -477,8 +477,8 @@ export class StructureViewer {
                     index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
                 }
 
-                const newGuid = this._setupGrid(this._viewers.size + 1);
-                if (newGuid.length === 0) {
+                const newGUID = this._setupGrid(this._viewers.size + 1);
+                if (newGUID.length === 0) {
                     // no new widget, probably because we already have MAX_WIDGETS
                     return;
                 }
