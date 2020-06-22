@@ -9,16 +9,13 @@ import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
-import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
+import {EnvironmentIndexer, Indexes, PositioningCallback, SettingModificationOrigin} from '../utils';
+import {generateGUID, getByID, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
 import {AxisSettings, MapPresets, MapSettings} from './settings';
 
 import {COLOR_MAPS} from './colorscales';
-
-import BARS_SVG from '../static/bars.svg';
-import HTML_SETTINGS from './settings.html';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -182,12 +179,10 @@ export class PropertiesMap {
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
-    /// Store the HTML elements used for settings
-    private _settings!: MapSettings;
+    /// Settings of the map
+    private _settings: MapSettings;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
-    /// The HTML element containing the settings modal
-    private _settingsModal!: HTMLElement;
 
     /**
      * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
@@ -200,9 +195,9 @@ export class PropertiesMap {
      * @param starterGUID if synchronized with a StructureViewer, the GUID of the first structure viewer cell
      */
     constructor(
-        config: { id: string, presets?: MapPresets },
+        config: { id: string, presets: MapPresets },
         indexer: EnvironmentIndexer,
-        properties: {[name: string]: Property},
+        properties: { [name: string]: Property },
         starterGUID?: string,
     ) {
         this._indexer = indexer;
@@ -229,13 +224,15 @@ export class PropertiesMap {
             this.active = this._selected.keys().next().value;
         }
 
-        this._insertSettingsHTML();
+        this._settings = new MapSettings(
+            this._root,
+            this._data[this._indexer.mode],
+            (rect) => this.positionSettingsModal(rect),
+            config.presets,
+        );
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
-        this._setupSettings(config.presets);
         this._connectSettings();
-
-        this._createPlot();
 
         // By default, position the modal for settings on top of the plot,
         // centered horizontally
@@ -246,6 +243,8 @@ export class PropertiesMap {
                 top: rootRect.top + 20,
             };
         };
+
+        this._createPlot();
     }
 
     /** Change the selected environment to the one with the given `indexes` */
@@ -279,7 +278,6 @@ export class PropertiesMap {
                 markerData.current = indexes.environment;
                 this._updateSelectedMarker(selectedGUID, markerData);
             }
-
         }
     }
 
@@ -288,7 +286,7 @@ export class PropertiesMap {
      */
     public remove(): void {
         this._root.innerHTML = '';
-        this._settingsModal.remove();
+        this._settings.remove();
     }
 
     /**
@@ -337,7 +335,7 @@ export class PropertiesMap {
     /**
      * Apply saved settings to the map.
      */
-    public applyPresets(presets?: MapPresets) {
+    public applyPresets(presets: Partial<MapPresets>) {
         this._settings.applyPresets(presets);
     }
 
@@ -356,56 +354,6 @@ export class PropertiesMap {
     /** Forward to Ploty.relayout */
     private _relayout(layout: Partial<Layout>) {
         Plotly.relayout(this._plot, layout).catch((e) => setTimeout(() => { throw e; }));
-    }
-
-    /** Create the settings modal by adding HTML to the page */
-    private _insertSettingsHTML() {
-        // use HTML5 template to generate a DOM object from an HTML string
-        const template = document.createElement('template');
-        template.innerHTML = `<button
-            class="btn btn-light btn-sm chsp-viewer-button"
-            data-target='#chsp-settings'
-            data-toggle="modal"
-            style="top: 4px; left: 5px; opacity: 1;">
-                <div>${BARS_SVG}</div>
-            </button>`;
-        const openSettings = template.content.firstChild!;
-        this._root.append(openSettings);
-
-        // TODO: set unique HTML id in the settings to allow multiple map in
-        // the same page
-        template.innerHTML = HTML_SETTINGS;
-        this._settingsModal = template.content.firstChild! as HTMLElement;
-        document.body.appendChild(this._settingsModal);
-
-        const modalDialog = this._settingsModal.childNodes[1]! as HTMLElement;
-        if (!modalDialog.classList.contains('modal-dialog')) {
-            throw Error('internal error: missing modal-dialog class');
-        }
-        // make the settings modal draggable
-        makeDraggable(modalDialog, '.modal-header');
-
-        // Position modal near the actual viewer
-        openSettings.addEventListener('click', () => {
-            // only set style once, on first open, and keep previous position
-            // on next open to keep the 'draged-to' position
-            if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
-                modalDialog.setAttribute('data-initial-modal-positions-set', 'true');
-
-                // display: block to ensure modalDialog.offsetWidth is non-zero
-                (modalDialog.parentNode as HTMLElement).style.display = 'block';
-
-                const {top, left} = this.positionSettingsModal(modalDialog.getBoundingClientRect());
-
-                // set width first, since setting position can influence it
-                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
-                // unset margins when using position: fixed
-                modalDialog.style.margin = '0';
-                modalDialog.style.position = 'fixed';
-                modalDialog.style.top = `${top}px`;
-                modalDialog.style.left = `${left}px`;
-            }
-        });
     }
 
     /** Add all the required callback to the settings */
@@ -509,6 +457,24 @@ export class PropertiesMap {
         this._settings.z.max.onchange = rangeChange('zaxis', this._settings.z);
 
         // ======= color axis settings
+        // setup initial state of the color settings
+        if (this._settings.color.property.value) {
+            this._settings.color.enable();
+            this._colorReset.disabled = false;
+
+            const values = this._colors(0)[0] as number[];
+            const {min, max} = arrayMaxMin(values);
+
+            this._settings.color.min.value = min;
+            this._settings.color.max.value = max;
+        } else {
+            this._settings.color.min.disable();
+            this._colorReset.disabled = true;
+
+            this._settings.color.min.value = 0;
+            this._settings.color.max.value = 0;
+        }
+
         this._settings.color.property.onchange = () => {
             if (this._settings.color.property.value !== '') {
                 this._settings.color.enable();
@@ -605,122 +571,6 @@ export class PropertiesMap {
             const factor = this._settings.size.factor.value;
             this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
         };
-    }
-
-    /**
-     * Initial setup of the map. Can determine initial settings from the dataset,
-     * or apply saved presets.
-     */
-    private _setupSettings(presets ?: MapPresets) {
-        const properties = Object.keys(this._properties());
-        if (properties.length < 2) {
-            throw Error('we need at least two properties to plot in the map');
-        }
-
-        if (this._settings !== undefined) {
-            // when changing dataset, remove all previous event listeners
-            foreachSetting(this._settings as unknown as SettingGroup, (setting) => {
-                setting.unbindAll();
-            });
-        }
-
-        this._settings = new MapSettings(properties, presets);
-
-        // ============== Setup the map options ==============
-        // ======= data used as x values
-        const selectXProperty = getByID<HTMLSelectElement>('chsp-x');
-        selectXProperty.options.length = 0;
-        for (const key of properties) {
-            selectXProperty.options.add(new Option(key, key));
-        }
-        this._settings.x.property.bind(selectXProperty, 'value');
-        this._settings.x.min.bind('chsp-x-min', 'value');
-        this._settings.x.max.bind('chsp-x-max', 'value');
-        this._settings.x.scale.bind('chsp-x-scale', 'value');
-
-        // ======= data used as y values
-        const selectYProperty = getByID<HTMLSelectElement>('chsp-y');
-        selectYProperty.options.length = 0;
-        for (const key of properties) {
-            selectYProperty.options.add(new Option(key, key));
-        }
-        this._settings.y.property.bind(selectYProperty, 'value');
-        this._settings.y.min.bind('chsp-y-min', 'value');
-        this._settings.y.max.bind('chsp-y-max', 'value');
-        this._settings.y.scale.bind('chsp-y-scale', 'value');
-
-        // ======= data used as z values
-        const selectZProperty = getByID<HTMLSelectElement>('chsp-z');
-        // first option is 'none'
-        selectZProperty.options.length = 0;
-        selectZProperty.options.add(new Option('none', ''));
-        for (const key of properties) {
-            selectZProperty.options.add(new Option(key, key));
-        }
-        this._settings.z.property.bind(selectZProperty, 'value');
-        this._settings.z.min.bind('chsp-z-min', 'value');
-        this._settings.z.max.bind('chsp-z-max', 'value');
-        this._settings.z.scale.bind('chsp-z-scale', 'value');
-
-        // ======= data used as color values
-        const selectColorProperty = getByID<HTMLSelectElement>('chsp-color');
-        // first option is 'none'
-        selectColorProperty.options.length = 0;
-        selectColorProperty.options.add(new Option('none', ''));
-        for (const key of properties) {
-            selectColorProperty.options.add(new Option(key, key));
-        }
-        this._settings.color.property.bind(selectColorProperty, 'value');
-        this._settings.color.min.bind('chsp-color-min', 'value');
-        this._settings.color.max.bind('chsp-color-max', 'value');
-
-        if (this._settings.color.property.value) {
-            this._settings.color.enable();
-            this._colorReset.disabled = false;
-
-            const values = this._colors(0)[0] as number[];
-            const {min, max} = arrayMaxMin(values);
-
-            this._settings.color.min.value = min;
-            this._settings.color.max.value = max;
-        } else {
-            this._settings.color.min.disable();
-            this._colorReset.disabled = true;
-
-            this._settings.color.min.value = 0;
-            this._settings.color.max.value = 0;
-        }
-
-        // ======= color palette
-        const selectPalette = getByID<HTMLSelectElement>('chsp-palette');
-        selectPalette.length = 0;
-        for (const key in COLOR_MAPS) {
-            selectPalette.options.add(new Option(key, key));
-        }
-        this._settings.palette.bind(selectPalette, 'value');
-
-        // ======= marker symbols
-        const selectSymbolProperty = getByID<HTMLSelectElement>('chsp-symbol');
-        // first option is 'default'
-        selectSymbolProperty.options.length = 0;
-        selectSymbolProperty.options.add(new Option('default', ''));
-        for (const key of properties) {
-            if (this._property(key).string !== undefined) {
-                selectSymbolProperty.options.add(new Option(key, key));
-            }
-        }
-        this._settings.symbol.bind(selectSymbolProperty, 'value');
-
-        // ======= marker size
-        const selectSizeProperty = getByID<HTMLSelectElement>('chsp-size');
-        // first option is 'default'
-        selectSizeProperty.options.length = 0;
-        selectSizeProperty.options.add(new Option('default', ''));
-        for (const key of properties) {
-            selectSizeProperty.options.add(new Option(key, key));
-        }
-        this._settings.size.property.bind(selectSizeProperty, 'value');
-        this._settings.size.factor.bind('chsp-size-factor', 'value');
     }
 
     /** Actually create the Plotly plot */
@@ -876,11 +726,6 @@ export class PropertiesMap {
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateAllMarkers();
-    }
-
-    /** Get the currently available properties: either `'atom'` or `'structure'` properties */
-    private _properties(): {[name: string]: NumericProperty} {
-        return this._data[this._indexer.mode];
     }
 
     /** Get the property with the given name */
