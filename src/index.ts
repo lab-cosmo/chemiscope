@@ -168,6 +168,14 @@ class DefaultVisualizer {
           this.structure.removeWidget(removedGUID);
         };
 
+        this.structure.activate = (activeGUID) => {
+          this.map.active = activeGUID;
+        };
+
+        this.map.activate = (activeGUID) => {
+          this.structure.active = activeGUID;
+        };
+
         const initial = {environment: 0, structure: 0, atom: 0};
         this.structure.show(initial);
         this.info.show(initial);

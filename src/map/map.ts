@@ -201,6 +201,7 @@ export class PropertiesMap {
     /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes, selectedGUID?: string) => void;
     public onremove: (removedGUID: string) => void;
+    public activate: (activeGUID: string) => void;
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -263,6 +264,7 @@ export class PropertiesMap {
         this._indexer = indexer;
         this.onselect = () => {};
         this.onremove = () => {};
+        this.activate = () => {};
         this._selected = new Map();
 
         this._root = getByID(id);
@@ -382,7 +384,7 @@ export class PropertiesMap {
         assert(markerData !== undefined);
 
         const indexes = this._indexer.from_environment(markerData.current);
-        this.onselect(indexes, this._active);
+        this.activate(this.active);
     }
 
     /**

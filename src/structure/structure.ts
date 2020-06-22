@@ -85,6 +85,7 @@ export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
     public onremove: (removedGUID: string) => void;
+    public activate: (activeGUID: string) => void;
 
     /**
      * Callback used when a new structure should be loaded
@@ -163,6 +164,7 @@ export class StructureViewer {
         this._viewers = new Map();
         this.onselect = () => {};
         this.onremove = () => {};
+        this.activate = () => {};
 
         const root = getByID(id);
         this._root = document.createElement('div');
@@ -218,7 +220,6 @@ export class StructureViewer {
         }
 
         data.current = indexes;
-        this.active = selectedGUID;
     }
 
     /**
@@ -357,45 +358,39 @@ export class StructureViewer {
      */
     public set active(guid: string) {
         const old = this.active;
-        assert(this._viewers.has(guid));
 
-        // keep as an if and not an assertion so that we can set an active widget
-        // even if there is not one currently.
-        if (this._viewers.has(old)) {
-                // change tooltip text in the active marker
-                const oldButton = getByID(`chsp-activate-${old}`);
-                oldButton.classList.toggle('chsp-active-structure', false);
-                const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
-                assert(oldTooltip !== null);
-                oldTooltip.innerHTML = 'choose as active';
+        // choose *if* over assertion -- there's a weird error that I cannot pin-
+        // point where active is being passed an undefined.
+        if (this._viewers.has(guid)) {
+          // keep as an if and not an assertion so that we can set an active widget
+          // even if there is not one currently.
+          if (this._viewers.has(old)) {
+                  // change tooltip text in the active marker
+                  const oldButton = getByID(`chsp-activate-${old}`);
+                  oldButton.classList.toggle('chsp-active-structure', false);
+                  const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
+                  assert(oldTooltip !== null);
+                  oldTooltip.innerHTML = 'choose as active';
 
-                // change style of the cell border
-                const oldCell = getByID(`gi-${old}`);
-                oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
-        }
+                  // change style of the cell border
+                  const oldCell = getByID(`gi-${old}`);
+                  oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
+          }
 
-        this._active = guid;
+          this._active = guid;
 
-        const newButton = getByID(`chsp-activate-${this.active}`);
-        newButton.classList.toggle('chsp-active-structure', true);
-        const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
-        assert(tooltip !== null);
-        tooltip.innerHTML = 'this is the active viewer';
+          const newButton = getByID(`chsp-activate-${this.active}`);
+          newButton.classList.toggle('chsp-active-structure', true);
+          const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
+          assert(tooltip !== null);
+          tooltip.innerHTML = 'this is the active viewer';
 
-        const newCell = getByID(`gi-${this.active}`);
-        newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
+          const newCell = getByID(`gi-${this.active}`);
+          newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
 
-        this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
+          this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
 
-        const data = this._viewers.get(this.active);
-        assert(data !== undefined);
-        let indexes;
-        if (this._indexer.mode === 'structure') {
-            indexes = this._indexer.from_structure_atom(data.current.structure);
-        } else {
-            const structure = data.current.structure;
-            const atom = data.current.atom;
-            indexes = this._indexer.from_structure_atom(structure, atom);
+          this.activate(this.active);
         }
     }
 
@@ -590,8 +585,8 @@ export class StructureViewer {
                 if (this._positionSettingsModal !== undefined) {
                     widget.positionSettingsModal = this._positionSettingsModal;
                 }
-
                 newGUID.push(cellGUID);
+                this.active = cellGUID;
             }
         }
 
