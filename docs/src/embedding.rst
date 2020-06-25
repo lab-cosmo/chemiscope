@@ -33,7 +33,7 @@ which contains references to
 - `Chemiscope.DefaultVisualizer <DefaultVisualizer_>`_
 - `Chemiscope.addWarningHandler <addWarningHandler_>`_
 - `Chemiscope.MetadataPanel <MetadataPanel_>`_
-- `Chemiscope.StructureViewer <StructureViewer_>`_
+- `Chemiscope.ViewersGrid <ViewersGrid_>`_
 - `Chemiscope.PropertiesMap <PropertiesMap_>`_
 - `Chemiscope.EnvironmentInfo <EnvironmentInfo_>`_
 - `Chemiscope.EnvironmentIndexer <EnvironmentIndexer_>`_
@@ -45,7 +45,7 @@ part of chemiscope can be added upon request.
 
 .. _DefaultVisualizer: api/classes/main.defaultvisualizer.html
 .. _addWarningHandler: api/modules/utils.html#addwarninghandler
-.. _StructureViewer: api/classes/structure.structureviewer.html
+.. _ViewersGrid: api/classes/structure.viewersgrid.html
 .. _PropertiesMap: api/classes/map.propertiesmap.html
 .. _EnvironmentInfo: api/classes/info.environmentinfo.html
 .. _MetadataPanel: api/classes/main.metadatapanel.html

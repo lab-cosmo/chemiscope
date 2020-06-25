@@ -64,7 +64,7 @@ export class EnvironmentInfo {
      * @param properties properties to be displayed
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
-     * @param viewer     [[StructureViewer]] from which we get the playback delay
+     * @param viewer     [[ViewersGrid]] from which we get the playback delay
      */
     constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
         this._root = getByID(id);

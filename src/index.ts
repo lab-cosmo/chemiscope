@@ -4,7 +4,7 @@
  *
  * The default visualization is organized around four panels: the
  * [[MetadataPanel|metadata]] panel; the [[PropertiesMap|map]] (a scatter plot of
- * properties), the [[StructureViewer|structure viewer]], and the general
+ * properties), the [[ViewersGrid|structure viewer]], and the general
  * dataset [[EnvironmentInfo|information]]. Each one of these is defined in a
  * separate module.
  *
@@ -21,7 +21,7 @@
 import {EnvironmentInfo} from './info';
 import {MapPresets, PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
-import {StructurePresets, StructureViewer} from './structure';
+import {StructurePresets, ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
 import {addWarningHandler, EnvironmentIndexer, getNextColor} from './utils';
@@ -43,7 +43,7 @@ export interface Config {
     };
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
     info: string;
-    /** Id of the DOM element to use for the [[StructureViewer|structure viewer]] */
+    /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
     structure: {
         id: string;
         presets: StructurePresets;
@@ -51,7 +51,7 @@ export interface Config {
 
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
-    /** Custom structure loading callback, used to set [[StructureViewer.loadStructure]] */
+    /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: any) => Structure;
 }
 
@@ -114,7 +114,7 @@ class DefaultVisualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
     public meta: MetadataPanel;
-    public structure: StructureViewer;
+    public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
     // Stores raw input input so we can output it as JSON later
@@ -134,7 +134,7 @@ class DefaultVisualizer {
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
         // Structure viewer setup
-        this.structure = new StructureViewer(
+        this.structure = new ViewersGrid(
             config.structure,
             config.j2sPath,
             this._indexer,
@@ -222,7 +222,7 @@ export {
     version,
     MetadataPanel,
     PropertiesMap,
-    StructureViewer,
+    ViewersGrid,
     EnvironmentInfo,
     EnvironmentIndexer,
     DefaultVisualizer,

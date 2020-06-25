@@ -132,7 +132,7 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
 
 /// interface to contain synchronized parameters for marker instances
 interface MarkerData {
-    /// color of the marker, synchronized with the StructureViewer where appropriate
+    /// color of the marker, synchronized with the ViewersGrid where appropriate
     color: string;
     /// index of the currently displayed structure
     current: number;

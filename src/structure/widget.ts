@@ -108,7 +108,7 @@ const DEFAULT_SERVER_URL = 'https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php
 
 /**
  * A light wrapper around JSmol, displaying a single structure. This is kept as
- * a separate class from the [[StructureViewer]] to be easier to use outside of
+ * a separate class from the [[ViewersGrid]] to be easier to use outside of
  * chemiscope.
  */
 export class JSmolWidget {
