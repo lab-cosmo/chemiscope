@@ -9,8 +9,8 @@ import {checkStructure, Environment, JsObject, Structure, UserStructure} from '.
 import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
-import {structure2JSmol} from './jsmol';
 import {StructurePresets} from './settings';
+import {structure2JSmol} from './utils';
 import {JSmolWidget, LoadOptions} from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
