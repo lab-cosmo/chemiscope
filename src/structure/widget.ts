@@ -7,12 +7,9 @@ import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
 
-import {generateGUID, getByID, makeDraggable} from '../utils';
+import {generateGUID, getByID} from '../utils';
 import {PositioningCallback} from '../utils';
 import {StructurePresets, StructureSettings} from './settings';
-
-import BARS_SVG from '../static/bars.svg';
-import HTML_SETTINGS from './settings.html';
 
 // tslint:disable-next-line: no-var-requires
 require('../static/chemiscope.css');
@@ -45,22 +42,22 @@ function createStyleSheet(rules: string[]): CSSStyleSheet {
  * cells both on negative and positive sides.
  */
 function supercell_555(supercell: [number, number, number]): string {
-    const supercellCenter = [
+    const central = [
         Math.floor(supercell[0] / 2),
         Math.floor(supercell[1] / 2),
         Math.floor(supercell[2] / 2),
     ];
 
     const first = [
-        5 - supercellCenter[0],
-        5 - supercellCenter[1],
-        5 - supercellCenter[2],
+        5 - central[0],
+        5 - central[1],
+        5 - central[2],
     ];
 
     const second = [
-        5 + supercell[0] - (supercellCenter[0] + 1),
-        5 + supercell[1] - (supercellCenter[1] + 1),
-        5 + supercell[2] - (supercellCenter[2] + 1),
+        5 + supercell[0] - (central[0] + 1),
+        5 + supercell[1] - (central[1] + 1),
+        5 + supercell[2] - (central[2] + 1),
     ];
 
     return `{${first[0]}${first[1]}${first[2]} ${second[0]}${second[1]}${second[2]} 1}`;
@@ -130,14 +127,12 @@ export class JSmolWidget {
 
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
-    /// The HTML element containing the settings modal
-    private _settingsModal!: HTMLElement;
     /// Reference to the global Jmol variable
     private _Jmol: JmolObject;
     /// Reference to the JSmol applet to be updated with script calls
-    private _applet!: JSmolApplet;
+    private _applet: JSmolApplet;
     /// Representation options from the HTML side
-    private _settings!: StructureSettings;
+    private _settings: StructureSettings;
     /// The supercell used to intialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
@@ -216,9 +211,14 @@ export class JSmolWidget {
         this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
         this._root.appendChild(this._cellInfo);
 
-        this._createOptions();
-        this._createApplet(j2sPath, serverURL);
+        this._settings = new StructureSettings(
+            this._root,
+            this.guid,
+            (rect) => this.positionSettingsModal(rect),
+        );
+        this._connectSettings();
 
+        this._applet = this._createApplet(j2sPath, serverURL);
         if (!isSafari()) {
             // Invert (cf -1 below) wheel zoom direction to match the one in the
             // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
@@ -290,7 +290,7 @@ export class JSmolWidget {
         if (this._root.parentElement !== null) {
             this._root.parentElement.innerHTML = '';
         }
-        this._settingsModal.remove();
+        this._settings.remove();
     }
 
     /**
@@ -388,7 +388,7 @@ export class JSmolWidget {
             keepOrientation = options.keepOrientation;
         }
 
-        const trajectoryOptions = getByID<HTMLElement>(`${this.guid}-trajectory-settings-group`);
+        const trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
         if (options.trajectory === undefined || !options.trajectory) {
             trajectoryOptions.style.display = 'none';
         } else {
@@ -540,7 +540,7 @@ export class JSmolWidget {
         }
     }
 
-    private _createApplet(j2sPath: string, serverURL: string) {
+    private _createApplet(j2sPath: string, serverURL: string): JSmolApplet {
         const width = this._root.clientWidth;
         const height = this._root.clientHeight;
         if (width === 0 || height === 0) {
@@ -564,7 +564,7 @@ export class JSmolWidget {
             hide off;
         `;
         // create the main Jmol applet
-        this._applet = this._Jmol.getApplet(this.guid, {
+        const applet = this._Jmol.getApplet(this.guid, {
             height: '100%',
             width: '100%',
 
@@ -581,91 +581,16 @@ export class JSmolWidget {
         div.style.height = '100%';
         div.style.width = '100%';
         this._root.appendChild(div);
-        div.innerHTML = this._Jmol.getAppletHtml(this._applet);
+        div.innerHTML = this._Jmol.getAppletHtml(applet);
         // Jmol rely on this script being implicitly executed, but this is not
         // the case when using innerHTML (compared to jquery .html()). So let's
         // manually execute it
-        this._applet._cover(false);
+        applet._cover(false);
+
+        return applet;
     }
 
-    private _createOptions() {
-        // use HTML5 template to generate a DOM object from an HTML string
-        const template = document.createElement('template');
-        template.innerHTML = `<button
-            class="btn btn-light btn-sm chsp-viewer-button"
-            data-target="#${this.guid}-settings"
-            data-toggle="modal"
-            style="top: 5px; right: 5px; opacity: 1;">
-                <div>${BARS_SVG}</div>
-            </button>`;
-        const openSettings = template.content.firstChild!;
-        this._root.append(openSettings);
-
-        // replace id to ensure they are unique even if we have mulitple viewers
-        // on a single page
-        template.innerHTML = HTML_SETTINGS
-            .replace(/id=(.*?) /g, (_: string, id: string) => `id=${this.guid}-${id} `)
-            .replace(/for=(.*?) /g, (_: string, id: string) => `for=${this.guid}-${id} `)
-            .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${this.guid}-${id} `);
-
-        this._settingsModal = template.content.firstChild! as HTMLElement;
-        document.body.appendChild(this._settingsModal);
-
-        const modalDialog = this._settingsModal.childNodes[1]! as HTMLElement;
-        if (!modalDialog.classList.contains('modal-dialog')) {
-            throw Error('internal error: missing modal-dialog class');
-        }
-
-        // Position modal near the actual viewer
-        openSettings.addEventListener('click', () => {
-            // only set style once, on first open, and keep previous position
-            // on next open to keep the 'draged-to' position
-            if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
-                modalDialog.setAttribute('data-initial-modal-positions-set', 'true');
-
-                // display: block to ensure modalDialog.offsetWidth is non-zero
-                (modalDialog.parentNode as HTMLElement).style.display = 'block';
-
-                const {top, left} = this.positionSettingsModal(modalDialog.getBoundingClientRect());
-
-                // set width first, since setting position can influence it
-                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
-                // unset margins when using position: fixed
-                modalDialog.style.margin = '0';
-                modalDialog.style.position = 'fixed';
-                modalDialog.style.top = `${top}px`;
-                modalDialog.style.left = `${left}px`;
-            }
-        });
-
-        // make the settings modal draggable
-        makeDraggable(modalDialog, '.modal-header');
-
-        // Create all the settings with defauls values
-        this._settings = new StructureSettings();
-
-        // bind all the settings to corresponding HTML elements
-        this._settings.atomLabels.bind(`${this.guid}-atom-labels`, 'checked');
-        this._settings.spaceFilling.bind(`${this.guid}-space-filling`, 'checked');
-        this._settings.bonds.bind(`${this.guid}-bonds`, 'checked');
-
-        this._settings.rotation.bind(`${this.guid}-rotation`, 'checked');
-        this._settings.unitCell.bind(`${this.guid}-unit-cell`, 'checked');
-        this._settings.packedCell.bind(`${this.guid}-packed-cell`, 'checked');
-
-        this._settings.supercell[0].bind(`${this.guid}-supercell-a`, 'value');
-        this._settings.supercell[1].bind(`${this.guid}-supercell-b`, 'value');
-        this._settings.supercell[2].bind(`${this.guid}-supercell-c`, 'value');
-
-        this._settings.axes.bind(`${this.guid}-axes`, 'value');
-        this._settings.keepOrientation.bind(`${this.guid}-keep-orientation`, 'checked');
-
-        this._settings.environments.activated.bind(`${this.guid}-env-activated`, 'checked');
-        this._settings.environments.bgColor.bind(`${this.guid}-env-bg-color`, 'value');
-        this._settings.environments.bgStyle.bind(`${this.guid}-env-bg-style`, 'value');
-        this._settings.environments.cutoff.bind(`${this.guid}-env-cutoff`, 'value');
-        this._settings.environments.center.bind(`${this.guid}-env-center`, 'checked');
-
+    private _connectSettings() {
         // recursively bind the right update function to HTMLSetting `onchange`
         const bindUpdateState = (object: any) => {
             for (const key in object) {
