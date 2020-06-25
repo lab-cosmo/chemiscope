@@ -7,7 +7,5 @@
  * @preferred
  */
 
-import {PropertiesMap} from './map';
-import {MapPresets} from './settings';
-
-export {PropertiesMap, MapPresets};
+export {PropertiesMap} from './map';
+export {MapPresets} from './settings';

@@ -7,5 +7,4 @@
  * @preferred
  */
 
-import {EnvironmentInfo} from './info';
-export {EnvironmentInfo};
+export {EnvironmentInfo} from './info';

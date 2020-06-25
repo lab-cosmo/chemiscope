@@ -12,7 +12,7 @@ export interface Dataset {
      *
      * The structures can either follow the `Structure` interface, in which
      * case they will be loaded as-defined; or contain any kind of data as a
-     * [[UserStructure]], in which case the [[StructureViewer.loadStructure]]
+     * [[UserStructure]], in which case the [[ViewersGrid.loadStructure]]
      * callback should be set to translate from whatever is stored to a
      * [[Structure]].
      */
@@ -97,7 +97,7 @@ export interface UserStructure {
     /**
      * User-defined data which can be turned into a [[Structure]].
      *
-     * [[StructureViewer.loadStructure]] must be set to be able to load this
+     * [[ViewersGrid.loadStructure]] must be set to be able to load this
      * data.
      */
     data: unknown;

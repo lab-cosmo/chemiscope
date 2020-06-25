@@ -79,10 +79,10 @@ interface WidgetGridData {
 }
 
 /**
- * The [[StructureViewer]] class displays a molecule or a crystal in 3D using
- * [JSmol](http://wiki.jmol.org/index.php/JSmol) for rendering.
+ * The [[ViewersGrid]] class displays a grid of molecule or a crystal viewers
+ * in 3D using [JSmol](http://wiki.jmol.org/index.php/JSmol) for rendering.
  */
-export class StructureViewer {
+export class ViewersGrid {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
     /** Callback fired when a viewer is removed from the grid */
@@ -142,7 +142,7 @@ export class StructureViewer {
     private _positionSettingsModal?: PositioningCallback;
 
     /**
-     * Create a new [[StructureViewer]] inside the HTML element with the given
+     * Create a new [[ViewersGrid]] inside the HTML element with the given
      * `id`
      *
      * @param id           HTML id of the DOM element where the viewer should live
@@ -296,7 +296,7 @@ export class StructureViewer {
     }
 
     /**
-     * Remove all HTML added by this [[StructureViewer]] in the current document
+     * Remove all HTML added by this [[ViewersGrid]] in the current document
      */
     public remove(): void {
         for (const data of this._viewers.values()) {
