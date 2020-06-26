@@ -303,11 +303,10 @@ export class StructureViewer {
 
     /*
      * Removes a widget from the structure viewer grid.
-     * The parameter force pertains to removing the *only* widget in the grid,
-     * which should only be done when changing datasets.
+     * Will not remove a widget if it is the last one in the structure viewer
      */
-    public removeWidget(removedGUID: string, force: boolean = false) {
-        if (this._viewers.size > 1 || force === true) {
+    public removeWidget(removedGUID: string) {
+        if (this._viewers.size > 1) {
             if (this._viewers.has(removedGUID)) {
 
               const widgetRoot = getByID(`chsp-${removedGUID}`);
