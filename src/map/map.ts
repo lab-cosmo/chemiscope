@@ -342,7 +342,7 @@ export class PropertiesMap {
         this._settingsModal.remove();
     }
 
-    public get active() {
+    public get active(): string {
       if (this._selected.size > 0) {
         if (this._active === undefined) {
         this.active = this._selected.keys().next().value;
