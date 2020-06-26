@@ -84,7 +84,9 @@ interface WidgetGridData {
 export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
+    /** Callback fired when a guid is removed from the map */
     public onremove: (removedGUID: string) => void;
+    /** Callback fired when a new active marker is designated */
     public activate: (activeGUID: string) => void;
 
     /**
