@@ -175,6 +175,9 @@ export class StructureViewer {
         root.appendChild(this._root);
 
         this._setupGrid(1);
+
+        // Double check the grid has been made properly
+        assert(this._viewers.size > 0);
         this.active = this._viewers.keys().next().value;
         this._active = this.active;
 
