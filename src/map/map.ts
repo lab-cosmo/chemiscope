@@ -1159,7 +1159,7 @@ export class PropertiesMap {
             // default to 0 (i.e. circles)
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
-        assert(this._selected.size > 0);
+
         const values = this._property(this._settings.symbol.value).values;
         const markerData = this._selected.get(this.active);
         assert(markerData !== undefined);
