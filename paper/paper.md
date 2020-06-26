@@ -55,9 +55,9 @@ directly by chemiscope, but must be obtained from one of the many codes
 implementing such descriptors [@librascal; @QUIP]. Since the most common
 descriptors can be very high dimensional, it can be convenient to apply a
 dimensionality reduction algorithm that maps them to a lower-dimensional space
-for easier visualization. For example the sketchmap algorithm [@Ceriotti2011]
+for easier visualization. For example the sketch-map algorithm [@Ceriotti2011]
 was used with the Smooth Overlap of Atomic Positions descriptor [@Bartok2013] to
-generate the visualization figure 1. The right panel displays the
+generate the visualization in figure 1. The right panel displays the
 three-dimensional structure of the chemical entities, possibly including
 periodic repetition for crystals. Visualizing the chemical structure can help
 finding an intuitive rationalization of the layout of the dataset and the
@@ -77,7 +77,7 @@ contributions [@Behler2007; @Bartok2010]
 ![Database of chemical shieldings [@Paruzzo2018] in chemiscope demonstrating the use of a 3D plot and atomic environments highlighting](./screenshot-3d.png)
 
 Chemiscope took strong inspiration from a previous similar graphical software,
-the interactive sketchmap visualizer [@ISV]. This previous software was used in
+the interactive sketch-map visualizer [@ISV]. This previous software was used in
 multiple research publication, related to the exploration of large-scale
 databases, and the mapping of structure-property relationships [@De2016;
 @De2017; @Musil2018].
