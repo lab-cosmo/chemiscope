@@ -350,10 +350,12 @@ export class PropertiesMap {
     public get active() {
       if (this._selected.size > 0) {
         if (this._active === undefined) {
-        this.active = this._selected.keys().next().value;
-        return this._selected.keys().next().value;
-        } else { return this._active; }
-      } else {return ''; }
+            this.active = this._selected.keys().next().value;
+            return this._selected.keys().next().value;
+        } else {
+            return this._active; }
+      } else {
+            return ''; }
     }
     /**
      * Function to set the active marker for communicating with the structure
