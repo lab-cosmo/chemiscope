@@ -199,8 +199,10 @@ interface MarkerData {
  */
 export class PropertiesMap {
     /** Callback fired when the plot is clicked and a new point is selected */
-    public onselect: (indexes: Indexes, selectedGUID?: string) => void;
+    public onselect: (indexes: Indexes) => void;
+    /** Callback fired when a guid is removed from the map */
     public onremove: (removedGUID: string) => void;
+    /** Callback fired when a new active marker is designated */
     public activate: (activeGUID: string) => void;
 
     /**
