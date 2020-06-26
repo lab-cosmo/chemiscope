@@ -299,7 +299,10 @@ export class PropertiesMap {
         };
     }
 
-    /** Change the selected environment to the one with the given `indexes` */
+    /** Change the environment corresponding to the `selectGUID` in
+     * this._selected to the one with the given `indexes`
+     * if selectedGUID is not defined, it will default to the active GUID, if available
+     */
     public select(indexes: Indexes, selectedGUID?: string) {
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
