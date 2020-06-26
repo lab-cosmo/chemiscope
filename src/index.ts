@@ -162,7 +162,7 @@ class DefaultVisualizer {
         };
 
         this.structure.onremove = (removedGUID) => {
-          this.map.removeMarker(removedGUID, true);
+          this.map.removeMarker(removedGUID);
         };
 
         this.map.onremove = (removedGUID) => {

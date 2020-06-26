@@ -405,26 +405,16 @@ export class PropertiesMap {
     /**
      * Removes a marker from the map.
      *
-     * The parameter deleteFromGUIDs pertains to removing the guid from the guid
-     * list. This is *not* the same as the `force` parameter in
-     * `structure._removeWidget`. One may want to remove a marker when switching
-     * from 2D --> 3D but retain the information.
-     *
      * @param  removedGUID     unique string identifier of the marker to remove
-     * @param  deleteFromGUIDs boolean, if false keep the data of the marker stored
      */
-    public removeMarker(removedGUID: string, deleteFromGUIDs: boolean = true): void {
+    public removeMarker(removedGUID: string): void {
         const marker = document.getElementById(`chsp-selected-${removedGUID}`);
         if (marker !== null) {
             if (marker.parentNode !== null) {
                 marker.parentNode.removeChild(marker);
             }
 
-            // This will be false when going from 2D --> 3D as we want
-            // to remove all markers, but keep their information stored
-            if (deleteFromGUIDs) {
-                this._selected.delete(removedGUID);
-            }
+            this._selected.delete(removedGUID);
 
             if (this._active === removedGUID) {
                 assert(this._selected.size > 0);
@@ -433,6 +423,19 @@ export class PropertiesMap {
             this.onremove(removedGUID);
         }
     }
+
+    /**
+     * Function to hide the marker when switching from 2D to 3D
+     */
+    private _hideMarker(hiddenGUID: string): void {
+      const marker = document.getElementById(`chsp-selected-${hiddenGUID}`);
+      if (marker !== null) {
+          if (marker.parentNode !== null) {
+              marker.parentNode.removeChild(marker);
+          }
+      }
+    }
+
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) => setTimeout(() => { throw e; }));
@@ -1273,7 +1276,7 @@ export class PropertiesMap {
 
         const cachedActive = this.active;
         for (const [guid, markerData] of this._selected.entries()) {
-            this.removeMarker(guid, false);
+            this._hideMarker(guid);
             this._updateSelectedMarker(guid, markerData);
         }
         this.active = cachedActive;
