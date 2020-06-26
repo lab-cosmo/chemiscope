@@ -57,10 +57,10 @@ descriptors can be very high dimensional, it can be convenient to apply a
 dimensionality reduction algorithm that maps them to a lower-dimensional space
 for easier visualization. For example the sketch-map algorithm [@Ceriotti2011]
 was used with the Smooth Overlap of Atomic Positions descriptor [@Bartok2013] to
-generate the visualization in figure 1. The right panel displays the
+generate the visualization in Figure 1. The right panel displays the
 three-dimensional structure of the chemical entities, possibly including
-periodic repetition for crystals. Visualizing the chemical structure can help
-finding an intuitive rationalization of the layout of the dataset and the
+periodic repetition for crystals. Visualizing the chemical structure can help to
+find an intuitive rationalization of the layout of the dataset and the
 structure-property relations.
 
 Whereas similar tools [@Gong2013; @Gutlein2014; @Probst2017; @ISV] only allow
@@ -71,7 +71,7 @@ environments. This is useful, for instance, to rationalize the relationship
 between structure and atomic properties such as nuclear chemical shieldings
 (Figure 2). This is also useful as a diagnostic tool for the many
 machine-learning schemes that decompose properties into atom-centred
-contributions [@Behler2007; @Bartok2010]
+contributions [@Behler2007; @Bartok2010].
 
 
 ![Database of chemical shieldings [@Paruzzo2018] in chemiscope demonstrating the use of a 3D plot and atomic environments highlighting](./screenshot-3d.png)
@@ -97,14 +97,14 @@ The use of web technologies makes chemiscope usable from different operating
 systems without the need to develop, maintain and package the code for each
 operating system. It also means that we can provide an online service at
 http://chemiscope.org allowing users to visualize their own dataset without
-any local installation. Chemiscope is implemented as library of re-usable
+any local installation. Chemiscope is implemented as a library of re-usable
 components linked together via callbacks. This makes it easy to modify the
-default interface to generate more elaborate visualizations: for example
+default interface to generate more elaborate visualizations, for example,
 displaying multiple maps generated with different parameters of a dimensionality
 reduction algorithm. Chemiscope can also be distributed in a standalone mode,
 where the code and a predefined dataset are merged together as a single HTML
-file. This standalone mode is useful for archival purposes, for example as
-supplementary information for a published article; and for use in corporate
+file. This standalone mode is useful for archival purposes, for example, as
+supplementary information for a published article and for use in corporate
 environments with sensitive datasets.
 
 # Acknowledgements
