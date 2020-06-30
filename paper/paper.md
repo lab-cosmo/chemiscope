@@ -10,6 +10,9 @@ authors:
   - name: Guillaume Fraux
     orcid: 0000-0003-4824-6512
     affiliation: 1
+  - name: Rose K. Cersonsky
+    orcid: 0000-0003-4515-3441
+    affiliation: 1
   - name: Michele Ceriotti
     orcid: 0000-0003-2571-2832
     affiliation: 1
@@ -110,7 +113,8 @@ environments with sensitive datasets.
 # Acknowledgements
 
 The development of chemiscope have been funded by the [NCCR
-MARVEL](http://nccr-marvel.ch/) and the [MAX](http://max-centre.eu/) European
-centre of excellence.
+MARVEL](http://nccr-marvel.ch/), the [MAX](http://max-centre.eu/) European
+centre of excellence, and the European Research Council (Horizon 2020 grant
+agreement no. 677013-HBMAP).
 
 # References
