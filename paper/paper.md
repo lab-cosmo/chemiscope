@@ -39,10 +39,10 @@ physically-relevant information and symmetries. The features associated with
 these representations can be used for unsupervised machine learning
 applications, such as clustering or classification of the different structures,
 and high-throughput screening of database for specific properties [@Maier2007;
-@De2017; @Hautier2019]. Unfortunately, The dimensionality of these features (as
+@De2017; @Hautier2019]. Unfortunately, the dimensionality of these features (as
 well as most of other descriptors used in chemical and materials informatics) is
 very high, which makes the resulting classifications, clustering or mapping very
-hard to visualize. Additional dimensionality reduction algorithm
+hard to visualize. Additional dimensionality reduction algorithms
 [@Schlkopf1998; @Ceriotti2011; @McInnes2018] can reduce the number of relevant
 dimensions to a handful, creating 2D or 3D maps of the full database.
 
@@ -50,8 +50,8 @@ dimensions to a handful, creating 2D or 3D maps of the full database.
 
 Chemiscope is a graphical tool for the interactive exploration of materials and
 molecular databases, correlating local and global structural descriptors with
-the physical properties of the different systems. The interface is composed by
-two panels. The left panel consists of a 2D or 3D scatter plot, in which each
+the physical properties of the different systems. The interface consists of
+two panels. The left panel displays a 2D or 3D scatter plot, in which each
 point corresponds to a chemical entity. The axes, color, and style of each point
 can be set to represent a property or a structural descriptor to visualize
 structure-property relations directly. Structural descriptors are not computed
@@ -63,8 +63,8 @@ for easier visualization. For example the sketch-map algorithm [@Ceriotti2011]
 was used with the Smooth Overlap of Atomic Positions representation [@Bartok2013] to
 generate the visualization in Figure 1. The right panel displays the
 three-dimensional structure of the chemical entities, possibly including
-periodic repetition for crystals. Visualizing the chemical structure can help to
-find an intuitive rationalization of the layout of the dataset and the
+periodic repetition for crystals. Visualizing the chemical structure can help
+in finding an intuitive rationalization of the layout of the dataset and the
 structure-property relations.
 
 Whereas similar tools [@Gong2013; @Gutlein2014; @Probst2017; @ISV] only allow
@@ -89,7 +89,7 @@ databases, and the mapping of structure-property relationships [@De2016;
 # Implementation
 
 Chemiscope is implemented using the web platform: HTML5, CSS and WebGL to
-display graphical elements, and TypeScript (compiled to JavaScript) for the
+display graphical elements, and TypeScript (compiled to JavaScript) for
 interactivity. It uses [Plotly.js](https://plot.ly/javascript/) to render and
 animate 2D and 3D plots; and the JavaScript version of [Jmol](http://jmol.org/)
 to display atomic structures. The visualization is fast enough to be used with
@@ -100,7 +100,7 @@ slower, while still handling 100k points easily.
 The use of web technologies makes chemiscope usable from different operating
 systems without the need to develop, maintain and package the code for each
 operating system. It also means that we can provide an online service at
-http://chemiscope.org allowing users to visualize their own dataset without any
+http://chemiscope.org that allows users to visualize their own dataset without any
 local installation. Chemiscope is implemented as a library of re-usable
 components linked together via callbacks. This makes it easy to modify the
 default interface to generate more elaborate visualizations, for example,
