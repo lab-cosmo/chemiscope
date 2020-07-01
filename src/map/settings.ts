@@ -3,10 +3,9 @@
  * @module settings
  */
 
-import assert from 'assert';
-
-import {HTMLSetting, PositioningCallback} from '../utils';
-import {getByID, makeDraggable, settingsValidator} from '../utils';
+import {HTMLSetting, SettingsGroup, SettingsPreset} from '../settings';
+import {settingsValidator} from '../settings';
+import {getByID, makeDraggable, PositioningCallback} from '../utils';
 import {NumericProperties} from './data';
 
 import {COLOR_MAPS} from './colorscales';
@@ -14,66 +13,23 @@ import {COLOR_MAPS} from './colorscales';
 import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
 
-export interface AxisPresets {
-    /// Which property should we use for this axis
-    property: string;
-    /// Which scale (linear/log) should we use
-    scale: string;
-    /// The minimal value for this axis
-    min: number;
-    /// The maximal value for this axis
-    max: number;
-}
-
-const AXIS_DEFAULTS: AxisPresets = {
-     max: 0,
-     min : 0,
-     property : '',
-     scale : 'linear',
-};
-
 /** HTML element holding settings for a given axis (x, y, z, color) */
-export class AxisSettings {
+export class AxisSettings extends SettingsGroup {
     public property: HTMLSetting<'string'>;
     public scale: HTMLSetting<'string'>;
     public min: HTMLSetting<'number'>;
     public max: HTMLSetting<'number'>;
 
     constructor(validProperties: string[]) {
-        this.max = new HTMLSetting('number', AXIS_DEFAULTS.max);
-        this.min = new HTMLSetting('number', AXIS_DEFAULTS.min);
-        this.property = new HTMLSetting('string', AXIS_DEFAULTS.property);
-        this.scale = new HTMLSetting('string', AXIS_DEFAULTS.scale);
+        assert(validProperties.length > 0);
+        super();
+        this.max = new HTMLSetting('number', 0);
+        this.min = new HTMLSetting('number', 0);
+        this.property = new HTMLSetting('string', validProperties[0]);
+        this.scale = new HTMLSetting('string', 'linear');
 
         this.property.validate = settingsValidator(validProperties, 'axis');
         this.scale.validate = settingsValidator(['linear', 'log'], 'axis scale');
-    }
-
-    /**
-     * Applies presets, possibly filling in with default values
-     */
-    public applyPresets(presets: Partial<AxisPresets> = {}): void {
-        const initial: AxisPresets = {
-            ...AXIS_DEFAULTS,
-            ...presets,
-        };
-
-        this.max.value = initial.max;
-        this.min.value = initial.min;
-        this.property.value = initial.property;
-        this.scale.value = initial.scale;
-    }
-
-    /**
-     * Dumps presets, in a way that can e.g. be serialized to json
-     */
-    public dumpPresets(): AxisPresets {
-        return {
-            max: this.max.value,
-            min: this.min.value,
-            property: this.property.value,
-            scale: this.scale.value,
-        };
     }
 
     /** Disable auxiliary settings (min/max/scale) related to this axis */
@@ -91,34 +47,7 @@ export class AxisSettings {
     }
 }
 
-export interface MapPresets {
-    x: Partial<AxisPresets>;
-    y: Partial<AxisPresets>;
-    z: Partial<AxisPresets>;
-    color: Partial<AxisPresets>;
-    palette: string;
-    symbol: string;
-    size: {
-        property?: string,
-        factor?: number,
-    };
-}
-
-const MAP_DEFAULTS: MapPresets = {
-    color: AXIS_DEFAULTS,
-    x: AXIS_DEFAULTS,
-    y: AXIS_DEFAULTS,
-    z: AXIS_DEFAULTS,
-
-    palette: 'inferno',
-    size: {
-        factor: 50.0,
-        property: '',
-    },
-    symbol: '',
-};
-
-export class MapSettings {
+export class MapSettings extends SettingsGroup {
     public x: AxisSettings;
     public y: AxisSettings;
     public z: AxisSettings;
@@ -130,8 +59,6 @@ export class MapSettings {
         factor: HTMLSetting<'number'>;
     };
 
-    /// Default properties used
-    private readonly _defaultProperties: Partial<MapPresets>;
     /// The HTML element containing the settings modal
     private _settingsModal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
@@ -141,20 +68,12 @@ export class MapSettings {
         root: HTMLElement,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        presets: Partial<MapPresets> = {},
+        presets: SettingsPreset = {},
     ) {
+        super();
         const propertiesName = Object.keys(properties);
         if (propertiesName.length < 2) {
             throw Error('we need at least two properties to plot in the map');
-        }
-
-        this._defaultProperties = {
-            x: {property: propertiesName[0]},
-            y: {property: propertiesName[1]},
-        };
-
-        if (propertiesName.length >= 2) {
-            this._defaultProperties.color = {property: propertiesName[2]};
         }
 
         this.x = new AxisSettings(propertiesName);
@@ -186,55 +105,22 @@ export class MapSettings {
             }
         };
 
+        this.x.property.value = propertiesName[0];
+        this.y.property.value = propertiesName[1];
+        this.z.property.value = '';
+
+        if (propertiesName.length >= 2) {
+            this.color.property.value = propertiesName[2];
+        } else {
+            this.color.property.value = '';
+        }
+
         this._positionSettingsModal = positionSettings;
         this._settingsModal = this._insertSettingsHTML(root);
         document.body.appendChild(this._settingsModal);
 
         this._bind(properties);
         this.applyPresets(presets);
-    }
-
-    /**
-     * Applies presets, possibly filling in with default values
-     */
-    public applyPresets(presets: Partial<MapPresets> = {}): void {
-        const initial: MapPresets = {
-            ...MAP_DEFAULTS,
-            ...this._defaultProperties,
-            ...presets,
-        };
-
-        this.x.applyPresets(initial.x);
-        this.y.applyPresets(initial.y);
-        this.z.applyPresets(initial.z);
-        this.color.applyPresets(initial.color);
-
-        this.symbol.value = initial.symbol;
-        this.palette.value = initial.palette;
-
-        assert(initial.size.factor !== undefined);
-        assert(initial.size.property !== undefined);
-        this.size.factor.value = initial.size.factor;
-        this.size.property.value = initial.size.property;
-    }
-
-    /**
-     * Dumps presets, in a way that can e.g. be serialized to json
-     */
-    public dumpPresets(): MapPresets {
-        return {
-            color: this.color.dumpPresets(),
-            x: this.x.dumpPresets(),
-            y: this.y.dumpPresets(),
-            z: this.z.dumpPresets(),
-
-            palette: this.palette.value,
-            size: {
-                factor: this.size.factor.value,
-                property: this.size.property.value,
-            },
-            symbol: this.symbol.value,
-        };
     }
 
     /**

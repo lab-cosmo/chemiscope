@@ -8,4 +8,3 @@
  */
 
 export {PropertiesMap} from './map';
-export {MapPresets} from './settings';

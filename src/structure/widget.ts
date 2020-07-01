@@ -7,9 +7,11 @@ import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
 
+import {SettingsPreset} from '../settings';
 import {generateGUID, getByID} from '../utils';
 import {PositioningCallback} from '../utils';
-import {StructurePresets, StructureSettings} from './settings';
+
+import {StructureSettings} from './settings';
 
 // tslint:disable-next-line: no-var-requires
 require('../static/chemiscope.css');
@@ -461,15 +463,15 @@ export class JSmolWidget {
     /**
      * Applies presets, possibly filling in with default values
      */
-    public applyPresets(presets: Partial<StructurePresets> = {}): void {
+    public applyPresets(presets: SettingsPreset): void {
         this._settings.applyPresets(presets);
     }
 
     /**
      * Dumps presets, in a way that can e.g. be serialized to json
      */
-    public dumpPresets(): StructurePresets {
-        return this._settings.dumpPresets();
+    public dumpSettings(): SettingsPreset {
+        return this._settings.dumpSettings();
     }
 
     private _reload() {

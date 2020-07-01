@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {getByID} from './index';
+import {getByID} from './utils';
 
 /**
  * Possible HTML attributes to attach to a setting
@@ -64,28 +64,6 @@ interface HTMLSettingElement {
     attribute: Attribute;
     /** Store the function used to listen on the element to be able to remove it */
     listener: (e: Event) => void;
-}
-
-/** Multiple settings stored together as (potentially nested) javascript object */
-export interface SettingGroup {
-    [key: string]: HTMLSetting<any> | SettingGroup;
-}
-
-/**
- * Call the given callback on each setting inside the given SettingGroup
- *
- * @param settings group of settings
- * @param callback callback operating on a single setting
- */
-export function foreachSetting(settings: SettingGroup, callback: (s: HTMLSetting<any>) => void): void {
-    for (const key in settings) {
-        const element = settings[key];
-        if (element instanceof HTMLSetting) {
-            callback(element);
-        } else {
-            foreachSetting(element as SettingGroup, callback);
-        }
-    }
 }
 
 /**
@@ -232,5 +210,152 @@ export class HTMLSetting<T extends SettingsType> {
             (bound.element as any)[bound.attribute] = updated;
         }
         this.onchange(updated, origin);
+    }
+}
+
+/**
+ * Type defintion for dumpSettings output: should be a simple object containing
+ * either value, or a nested SettingsPreset.
+ */
+export interface SettingsPreset extends Record<string, string | number | boolean | SettingsPreset> {}
+
+/**
+ * Callback function to use with [[SettingsGroup.foreachSetting]]
+ */
+export type SettingCallback = (keys: string[], setting: HTMLSetting<any>) => void;
+
+/**
+ * Abstract base class to use for a group of settings.
+ *
+ * This class implement saving current settings as a [[SettingsPreset]]; and
+ * applying a setting preset to the setting group.
+ *
+ * # Example
+ *
+ * ```typescript
+ * class MySettings extends SettingsGroup {
+ *     public cats: HTMLSetting<'int'>;
+ *     public dogs: {
+ *          husky: HTMLSetting<'string'>;
+ *          labrador: HTMLSetting<'string'>;
+ *     };
+ *
+ *     constructor() {
+ *         super();
+ *         this.cats = new HTMLSetting('int', 3);
+ *         this.dogs = {
+ *             husky: new HTMLSetting('string', 'a cold dog'),
+ *             labrador: new HTMLSetting('string', 'a long dog'),
+ *         };
+ *     }
+ * }
+ *
+ * const settings = new MySettings();
+ *
+ * settings.dumpSettings();
+ * // {cats: 3, dogs: {husky: 'a cold dog', labrador: 'a long dog'}}
+ *
+ * settings.applyPresets({cats: 66, dogs: {husky: 'a good dog'}});
+ * settings.dumpSettings();
+ * // {cats: 66, dogs: {husky: 'a good dog', labrador: 'a long dog'}}
+ * ```
+ */
+export abstract class SettingsGroup {
+    /**
+     * Save the current values of all HTMLSetting properties of the class,
+     * including nested ones.
+     *
+     * Properties which name starts with an underscore are ignored.
+     *
+     * @return An object with the same structure as this class containing the
+     *         values of all settings.
+     */
+    public dumpSettings(): SettingsPreset {
+        const preset = {};
+        this.foreachSetting((keys, setting) => {
+            assert(keys.length >= 1);
+            const value = setting.value;
+
+            let root = preset as any;
+            for (const key of keys.slice(0, keys.length - 1)) {
+                if (!(key in root)) {
+                    root[key] = {};
+                }
+                root = root[key];
+            }
+            const lastkey = keys[keys.length - 1];
+            root[lastkey] = value;
+        });
+        return preset;
+    }
+
+    /**
+     * Set values from presets to the [[HTMLSetting]] properties of this class,
+     * matching the properties names.
+     *
+     * Properties starting with an underscore are ignored.
+     */
+    public applyPresets(presets: SettingsPreset): void {
+        this.foreachSetting((keys, setting) => {
+            assert(keys.length >= 1);
+            let root = presets as any;
+            for (const key of keys.slice(0, keys.length - 1)) {
+                if (!(key in root)) {
+                    // this key is missing from the presets
+                    return;
+                }
+                root = root[key];
+            }
+            const lastkey = keys[keys.length - 1];
+
+            if (lastkey in root) {
+                setting.value = root[lastkey];
+            }
+        });
+        // TODO: warn on unused keys from presets
+    }
+
+    /**
+     * Call the given callback on each setting inside the given SettingGroup.
+     *
+     * Keys starting with an underscore character are ignored.
+     *
+     * @param settings group of settings
+     * @param callback callback operating on a single setting
+     */
+    protected foreachSetting(callback: SettingCallback): void {
+        foreachSettingImpl(this as Record<string, unknown>, callback, []);
+    }
+}
+
+/**
+ * Recursive implementation of foreachSetting
+ *
+ * This function looks through all properties of `settings`, ignoring the ones
+ * starting with an underscore. If the property is an instance of
+ * [[HTMLSetting]], the `callback` is called on the setting, together with the
+ * keys used to access the property from the root object.
+ *
+ * @param settings object containing the settings
+ * @param callback function to call on each HTMLSetting
+ * @param keys     current keys to access the `settings` object from the root
+ */
+function foreachSettingImpl(settings: Record<string, unknown>, callback: SettingCallback, keys: string[] = []): void {
+    if (keys.length > 10) {
+        throw Error('setting object is too deep');
+    }
+
+    for (const key in settings) {
+        if (key.startsWith('_')) {
+            continue;
+        }
+
+        const currentKeys = keys.concat([key]);
+        const element = settings[key];
+        if (element instanceof HTMLSetting) {
+            callback(currentKeys, element as HTMLSetting<any>);
+        } else if (typeof element === 'object' && element !== null) {
+            foreachSettingImpl(element as Record<string, unknown>, callback, currentKeys);
+        }
     }
 }

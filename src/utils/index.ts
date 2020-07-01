@@ -5,10 +5,9 @@
 
 import assert from 'assert';
 
-import {makeDraggable} from './draggable';
-import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
-import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin, settingsValidator} from './settings';
-import {addWarningHandler, sendWarning} from './warnings';
+export {makeDraggable} from './draggable';
+export {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
+export {addWarningHandler, sendWarning} from './warnings';
 
 /** Callback type to position an HTML element.
  *
@@ -37,7 +36,7 @@ declare const tag: unique symbol;
 export type GUID = string & {readonly [tag]: 'guid'};
 
 /** Generate a new GUID */
-function generateGUID(): GUID {
+export function generateGUID(): GUID {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         // tslint:disable-next-line:no-bitwise
         const r = Math.random() * 16 | 0;
@@ -48,7 +47,7 @@ function generateGUID(): GUID {
 }
 
 /** Get an HTML element by id */
-function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
+export function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
     const e = document.getElementById(id);
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
@@ -92,19 +91,3 @@ export function getFirstKey<K, V>(map: Map<K, V>, excluding?: K): K {
     }
     return first;
 }
-
-export {
-    makeDraggable,
-    sendWarning,
-    addWarningHandler,
-    foreachSetting,
-    generateGUID,
-    getByID,
-    Indexes,
-    DisplayMode,
-    EnvironmentIndexer,
-    HTMLSetting,
-    SettingGroup,
-    SettingModificationOrigin,
-    settingsValidator,
-};

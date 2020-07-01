@@ -349,7 +349,6 @@ function checkEnvironments(o: JsObject[], structures: Structure[]) {
     }
 }
 
-/** @hidden */
-export function isPositiveInteger(number: number): boolean {
+function isPositiveInteger(number: number): boolean {
     return Number.isInteger(number) && number >= 0;
 }

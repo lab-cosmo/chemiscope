@@ -3,53 +3,13 @@
  * @module settings
  */
 
-import {HTMLSetting, PositioningCallback} from '../utils';
-import {makeDraggable} from '../utils';
+import {HTMLSetting, SettingsGroup, SettingsPreset} from '../settings';
+import {makeDraggable, PositioningCallback} from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
 
-interface EnvironmentPresets {
-    activated: boolean;
-    center: boolean;
-    cutoff: number;
-    bgStyle: string;
-    bgColor: string;
-}
-
-export interface StructurePresets {
-    bonds: boolean;
-    spaceFilling: boolean;
-    atomLabels: boolean;
-    unitCell: boolean;
-    packedCell: boolean;
-    supercell: number[];
-    rotation: boolean;
-    axes: string;
-    environments: Partial<EnvironmentPresets>;
-    keepOrientation: boolean;
-}
-
-export const STRUCTURE_DEFAULTS: StructurePresets = {
-    atomLabels: false,
-    axes: 'off',
-    bonds: true,
-    environments: {
-        activated: true,
-        bgColor: 'grey',
-        bgStyle: 'licorice',
-        center: false,
-        cutoff: 4.0,
-    },
-    keepOrientation: false,
-    packedCell: false,
-    rotation: false,
-    spaceFilling: false,
-    supercell: [1, 1, 1],
-    unitCell: false,
-};
-
-export class StructureSettings {
+export class StructureSettings extends SettingsGroup {
     // should we show bonds
     public bonds: HTMLSetting<'boolean'>;
     // should we use space filling representation
@@ -91,30 +51,32 @@ export class StructureSettings {
         root: HTMLElement,
         guid: string,
         positionSettings: PositioningCallback,
-        presets: Partial<StructurePresets> = {},
+        presets: SettingsPreset = {},
     ) {
-        this.bonds = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.bonds);
-        this.spaceFilling = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.spaceFilling);
-        this.atomLabels = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.atomLabels);
-        this.unitCell = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.unitCell);
-        this.packedCell = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.packedCell);
+        super();
+
+        this.bonds = new HTMLSetting('boolean', true);
+        this.spaceFilling = new HTMLSetting('boolean', false);
+        this.atomLabels = new HTMLSetting('boolean', false);
+        this.unitCell = new HTMLSetting('boolean', false);
+        this.packedCell = new HTMLSetting('boolean', false);
+        this.rotation = new HTMLSetting('boolean', false);
+
         this.supercell = [
-            new HTMLSetting('int', STRUCTURE_DEFAULTS.supercell[0]),
-            new HTMLSetting('int', STRUCTURE_DEFAULTS.supercell[1]),
-            new HTMLSetting('int', STRUCTURE_DEFAULTS.supercell[2]),
+            new HTMLSetting('int', 1),
+            new HTMLSetting('int', 1),
+            new HTMLSetting('int', 1),
         ];
 
-        this.rotation = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.rotation);
-        this.axes = new HTMLSetting('string', STRUCTURE_DEFAULTS.axes);
-        this.keepOrientation = new HTMLSetting('boolean', STRUCTURE_DEFAULTS.keepOrientation);
+        this.axes = new HTMLSetting('string', 'off');
+        this.keepOrientation = new HTMLSetting('boolean', false);
 
-        const ENVIRONMENTS_DEFAUT = STRUCTURE_DEFAULTS.environments as EnvironmentPresets;
         this.environments = {
-            activated: new HTMLSetting('boolean', ENVIRONMENTS_DEFAUT.activated),
-            bgColor:  new HTMLSetting('string', ENVIRONMENTS_DEFAUT.bgColor),
-            bgStyle: new HTMLSetting('string', ENVIRONMENTS_DEFAUT.bgStyle),
-            center: new HTMLSetting('boolean', ENVIRONMENTS_DEFAUT.center),
-            cutoff: new HTMLSetting('number', ENVIRONMENTS_DEFAUT.cutoff),
+            activated: new HTMLSetting('boolean', true),
+            bgColor:  new HTMLSetting('string', 'grey'),
+            bgStyle: new HTMLSetting('string', 'licorice'),
+            center: new HTMLSetting('boolean', false),
+            cutoff: new HTMLSetting('number', 4.0),
         };
 
         this._positionSettingsModal = positionSettings;
@@ -124,62 +86,6 @@ export class StructureSettings {
         this._bindSettings(guid);
 
         this.applyPresets(presets);
-    }
-
-    /**
-     * Applies presets, possibly filling in with default values
-     */
-    public applyPresets(presets: Partial<StructurePresets> = {}) {
-        const initial: StructurePresets = {
-            ...STRUCTURE_DEFAULTS,
-            ...presets,
-        };
-        // also complete the "environments" section
-        initial.environments = {
-            ...STRUCTURE_DEFAULTS.environments,
-            ...initial.environments,
-        };
-
-        this.bonds.value = initial.bonds;
-        this.spaceFilling.value = initial.spaceFilling;
-        this.atomLabels.value = initial.atomLabels;
-        this.unitCell.value = initial.unitCell;
-        this.packedCell.value = initial.packedCell;
-        this.supercell[0].value = initial.supercell[0];
-        this.supercell[1].value = initial.supercell[1];
-        this.supercell[2].value = initial.supercell[2];
-        this.rotation.value = initial.rotation;
-        this.axes.value = initial.axes;
-        this.keepOrientation.value = initial.keepOrientation;
-        this.environments.activated.value = initial.environments.activated!;
-        this.environments.center.value = initial.environments.center!;
-        this.environments.cutoff.value = initial.environments.cutoff!;
-        this.environments.bgStyle.value = initial.environments.bgStyle!;
-        this.environments.bgColor.value = initial.environments.bgColor!;
-    }
-
-    /**
-     * Dumps presets, in a way that can e.g. be serialized to json
-     */
-    public dumpPresets(): StructurePresets {
-        return {
-            atomLabels: this.atomLabels.value,
-            axes: this.axes.value,
-            bonds: this.bonds.value,
-            environments: {
-                activated: this.environments.activated.value,
-                bgColor: this.environments.bgColor.value,
-                bgStyle: this.environments.bgStyle.value,
-                center: this.environments.center.value,
-                cutoff: this.environments.cutoff.value,
-            },
-            keepOrientation: this.keepOrientation.value,
-            packedCell: this.packedCell.value,
-            rotation: this.rotation.value,
-            spaceFilling: this.spaceFilling.value,
-            supercell: [ this.supercell[0].value, this.supercell[1].value, this.supercell[2].value],
-            unitCell: this.unitCell.value,
-        };
     }
 
     /**

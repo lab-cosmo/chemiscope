@@ -31,19 +31,13 @@ function loadStructureOnDemand(index, structure) {
 }
 
 function setupChemiscope(json) {
-        
+
     const config = {
-        map:    {
-            id:   'chemiscope-map',
-            // picks presets if present
-            presets:  (json.presets === undefined ? undefined : json.presets.map)
-        },
+        map:       'chemiscope-map',
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
-        structure:  {
-			id:   'chemiscope-structure',
-			presets: (json.presets === undefined ? undefined : json.presets.structure)
-		},
+        structure: 'chemiscope-structure',
+        presets:   json.presets,
         j2sPath:   J2S_PATH,
     };
 
@@ -55,7 +49,7 @@ function setupChemiscope(json) {
     if (VISUALIZER !== undefined) {
         VISUALIZER.remove();
     }
-    
+
     Chemiscope.DefaultVisualizer.load(config, json).then((v) => {
         VISUALIZER = v;
         v.structure.positionSettingsModal = (rect) => {
