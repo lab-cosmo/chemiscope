@@ -42,9 +42,9 @@ and high-throughput screening of database for specific properties [@Maier2007;
 @De2017; @Hautier2019]. Unfortunately, the dimensionality of these features (as
 well as most of other descriptors used in chemical and materials informatics) is
 very high, which makes the resulting classifications, clustering or mapping very
-hard to visualize. Additional dimensionality reduction algorithms
-[@Schlkopf1998; @Ceriotti2011; @McInnes2018] can reduce the number of relevant
-dimensions to a handful, creating 2D or 3D maps of the full database.
+hard to visualize. Dimensionality reduction algorithms [@Schlkopf1998;
+@Ceriotti2011; @McInnes2018] can reduce the number of relevant dimensions to a
+handful, creating 2D or 3D maps of the full database.
 
 ![The Qm7b database [@Montavon2013] visualized with chemiscope](screenshot.png)
 
@@ -78,7 +78,7 @@ machine-learning schemes that decompose properties into atom-centred
 contributions [@Behler2007; @Bartok2010].
 
 
-![Database of chemical shieldings [@Paruzzo2018] in chemiscope demonstrating the use of a 3D plot and atomic environments highlighting](./screenshot-3d.png)
+![Database of chemical shieldings [@Paruzzo2018] in chemiscope demonstrating the use of a 3D plot and highlighting of atomic environments](./screenshot-3d.png)
 
 Chemiscope took strong inspiration from a previous similar graphical software,
 the interactive sketch-map visualizer [@ISV]. This previous software was used in
