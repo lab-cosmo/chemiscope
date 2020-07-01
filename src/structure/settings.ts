@@ -3,7 +3,7 @@
  * @module settings
  */
 
-import {HTMLSetting, SettingsGroup, SettingsPreset} from '../settings';
+import {HTMLSetting, SettingsGroup, SettingsPreset, settingsValidator} from '../settings';
 import {makeDraggable, PositioningCallback} from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
@@ -68,7 +68,17 @@ export class StructureSettings extends SettingsGroup {
             new HTMLSetting('int', 1),
         ];
 
+        const validateSupercell = (value: number) => {
+            if (!(Number.isInteger(value) && value > 0)) {
+                throw Error('supercell count should be a positive integer');
+            }
+        };
+        this.supercell[0].validate = validateSupercell;
+        this.supercell[1].validate = validateSupercell;
+        this.supercell[2].validate = validateSupercell;
+
         this.axes = new HTMLSetting('string', 'off');
+        this.axes.validate = settingsValidator(['off', 'abc', 'xyz'], 'axes');
         this.keepOrientation = new HTMLSetting('boolean', false);
 
         this.environments = {
@@ -77,6 +87,18 @@ export class StructureSettings extends SettingsGroup {
             bgStyle: new HTMLSetting('string', 'licorice'),
             center: new HTMLSetting('boolean', false),
             cutoff: new HTMLSetting('number', 4.0),
+        };
+
+        this.environments.bgColor.validate = settingsValidator(
+            ['grey', 'CPK'], 'background atoms coloring',
+        );
+        this.environments.bgStyle.validate = settingsValidator(
+            ['licorice', 'ball-stick', 'hide'], 'background atoms style',
+        );
+        this.environments.cutoff.validate = (value) => {
+            if (value < 0) {
+                throw Error('cutoff should be a positive number');
+            }
         };
 
         this._positionSettingsModal = positionSettings;
