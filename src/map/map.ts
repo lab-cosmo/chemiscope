@@ -10,12 +10,12 @@ import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatte
 
 import {Property} from '../dataset';
 
-import {EnvironmentIndexer, Indexes} from '../utils';
-import {GUID, PositioningCallback, SettingModificationOrigin} from '../utils';
+import {SettingModificationOrigin, SettingsPreset} from '../settings';
+import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
-import {AxisSettings, MapPresets, MapSettings} from './settings';
+import {AxisSettings, MapSettings} from './settings';
 
 import {COLOR_MAPS} from './colorscales';
 
@@ -203,7 +203,7 @@ export class PropertiesMap {
      * @param properties properties to be displayed
      */
     constructor(
-        config: { id: string, presets: MapPresets },
+        config: { id: string, presets: SettingsPreset },
         indexer: EnvironmentIndexer,
         properties: { [name: string]: Property },
     ) {
@@ -374,15 +374,16 @@ export class PropertiesMap {
     /**
      * Apply saved settings to the map.
      */
-    public applyPresets(presets: Partial<MapPresets>) {
+    public applyPresets(presets: SettingsPreset) {
         this._settings.applyPresets(presets);
     }
 
     /**
-     * Fetches current settings as presets
+     * Dump the values of the current settings in a way that an be used as
+     * presets.
      */
-    public dumpPresets() {
-        return this._settings.dumpPresets();
+    public dumpSettings() {
+        return this._settings.dumpSettings();
     }
 
     /** Forward to Ploty.restyle */

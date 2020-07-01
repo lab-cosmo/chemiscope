@@ -19,9 +19,10 @@
  */
 
 import {EnvironmentInfo} from './info';
-import {MapPresets, PropertiesMap} from './map';
+import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
-import {StructurePresets, ViewersGrid} from './structure';
+import {SettingsPreset} from './settings';
+import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
 import {addWarningHandler, EnvironmentIndexer, getNextColor} from './utils';
@@ -35,24 +36,23 @@ require('./static/chemiscope.css');
 export interface Config {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string;
-    map: {
-        /** Id of the DOM element to use for the [[PropertiesMap|map]] */
-        id: string;
-        /** Presets for map settings */
-        presets: MapPresets;
-    };
+    /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
+    map: string;
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
     info: string;
     /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
-    structure: {
-        id: string;
-        presets: StructurePresets;
-    };
-
+    structure: string;
+    /** Settings preset for the map & structure viewer */
+    presets?: Partial<Presets>;
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: any) => Structure;
+}
+
+interface Presets {
+    map: SettingsPreset;
+    structure: SettingsPreset;
 }
 
 /** @hidden
@@ -63,17 +63,19 @@ function validateConfig(o: JsObject) {
         throw Error('missing "meta" key in chemiscope config');
     }
 
-    if (!('map' in o && 'id' in (o.map as JsObject) && typeof (o.map as JsObject).id === 'string')) {
-        throw Error('missing "map.id" key in chemiscope config');
+    if (!('map' in o && typeof o.map === 'string')) {
+        throw Error('missing "map" key in chemiscope config');
     }
 
     if (!('info' in o && typeof o.info === 'string')) {
         throw Error('missing "info" key in chemiscope config');
     }
 
-    if (!('structure' in o && 'id' in (o.structure as JsObject) && typeof (o.structure  as JsObject).id === 'string')) {
-        throw Error('missing "structure.id" key in chemiscope config');
+    if (!('structure' in o && typeof o.structure === 'string')) {
+        throw Error('missing "structure" key in chemiscope config');
     }
+
+    // TODO: validate presets?
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
         throw Error('missing "j2sPath" key in chemiscope config');
@@ -135,7 +137,7 @@ class DefaultVisualizer {
 
         // Structure viewer setup
         this.structure = new ViewersGrid(
-            config.structure,
+            {id: config.structure, presets: getPresets(config.presets, 'structure')},
             config.j2sPath,
             this._indexer,
             dataset.structures,
@@ -166,7 +168,11 @@ class DefaultVisualizer {
         };
 
         // map setup
-        this.map = new PropertiesMap(config.map, this._indexer, dataset.properties);
+        this.map = new PropertiesMap(
+            {id: config.map, presets: getPresets(config.presets, 'map')},
+            this._indexer,
+            dataset.properties,
+        );
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);
@@ -207,7 +213,7 @@ class DefaultVisualizer {
      * Dumps the dataset and settings as a JSON string
      */
     public dump(): string {
-        const dumpdata = { ...this._dataset, ...{ presets: {map: this.map.dumpPresets()} } };
+        const dumpdata = { ...this._dataset, ...{ presets: {map: this.map.dumpSettings()} } };
         return JSON.stringify(dumpdata);
     }
 }
@@ -215,6 +221,26 @@ class DefaultVisualizer {
 declare const CHEMISCOPE_GIT_VERSION: string;
 function version(): string {
     return CHEMISCOPE_GIT_VERSION;
+}
+
+function getPresets(presets: Partial<Presets> | undefined, key: 'map' | 'structure'): SettingsPreset {
+    if (presets === undefined) {
+        return {};
+    }
+    if (key in presets) {
+        const subPreset = presets[key];
+        if (typeof subPreset === 'object') {
+            if (subPreset === null) {
+                throw Error(`invalid presets for ${key}, should not be null`);
+            } else {
+                return subPreset;
+            }
+        } else {
+            throw Error(`invalid type '${typeof subPreset}' for ${key}, should be an object`);
+        }
+    } else {
+        return {};
+    }
 }
 
 export {

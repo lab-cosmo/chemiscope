@@ -6,10 +6,11 @@
 import assert from 'assert';
 
 import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
+
+import {SettingsPreset} from '../settings';
 import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
-import {StructurePresets} from './settings';
 import {structure2JSmol} from './utils';
 import {JSmolWidget, LoadOptions} from './widget';
 
@@ -133,7 +134,7 @@ export class ViewersGrid {
     // saved for instantiating new Widget instances
     private _j2spath: string;
     // storage for the overall presets
-    private _presets?: StructurePresets;
+    private _presets: SettingsPreset;
     /// GUID of the currently active widget
     private _active: GUID;
     /// Map of Widgets GUIDS to their color, widget, and current structure
@@ -154,7 +155,7 @@ export class ViewersGrid {
      *                     used to highlight the selected environment
      */
     constructor(
-        config: { id: string, presets?: StructurePresets },
+        config: { id: string, presets: SettingsPreset },
         j2sPath: string,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],

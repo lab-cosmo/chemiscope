@@ -9,4 +9,3 @@
  */
 
 export {ViewersGrid} from './grid';
-export {StructurePresets} from './settings';
