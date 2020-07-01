@@ -3,6 +3,8 @@
  * @module settings
  */
 
+import assert from 'assert';
+
 import {HTMLSetting, SettingsGroup, SettingsPreset} from '../settings';
 import {settingsValidator} from '../settings';
 import {getByID, makeDraggable, PositioningCallback} from '../utils';
@@ -152,10 +154,9 @@ export class MapSettings extends SettingsGroup {
         template.innerHTML = HTML_SETTINGS;
         const modal = template.content.firstChild! as HTMLElement;
 
-        const modalDialog = modal.childNodes[1]! as HTMLElement;
-        if (!modalDialog.classList.contains('modal-dialog')) {
-            throw Error('internal error: missing modal-dialog class');
-        }
+        const modalDialog = modal.childNodes[1] as HTMLElement;
+        assert(modalDialog !== undefined);
+        assert(modalDialog.classList.contains('modal-dialog'));
         // make the settings modal draggable
         makeDraggable(modalDialog, '.modal-header');
 

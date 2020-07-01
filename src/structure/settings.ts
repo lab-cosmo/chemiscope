@@ -3,6 +3,8 @@
  * @module settings
  */
 
+import assert from 'assert';
+
 import {HTMLSetting, SettingsGroup, SettingsPreset, settingsValidator} from '../settings';
 import {makeDraggable, PositioningCallback} from '../utils';
 
@@ -149,11 +151,9 @@ export class StructureSettings extends SettingsGroup {
             .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${guid}-${id} `);
 
         const modal = template.content.firstChild! as HTMLElement;
-
-        const modalDialog = modal.childNodes[1]! as HTMLElement;
-        if (!modalDialog.classList.contains('modal-dialog')) {
-            throw Error('internal error: missing modal-dialog class');
-        }
+        const modalDialog = modal.childNodes[1] as HTMLElement;
+        assert(modalDialog !== undefined);
+        assert(modalDialog.classList.contains('modal-dialog'));
 
         // Position modal near the actual viewer
         openSettings.addEventListener('click', () => {
