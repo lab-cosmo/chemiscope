@@ -649,10 +649,7 @@ export class JSmolWidget {
 
         this._resetSupercell = getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`);
         this._resetSupercell.onclick = () => {
-            if (this._initialSupercell === undefined) {
-                throw Error('internal bug: this._initialSupercell is undefined');
-            }
-
+            assert(this._initialSupercell !== undefined);
             this._settings.supercell[0].value = this._initialSupercell[0];
             this._settings.supercell[1].value = this._initialSupercell[1];
             this._settings.supercell[2].value = this._initialSupercell[2];
