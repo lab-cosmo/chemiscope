@@ -6,7 +6,9 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, HTMLSetting, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
+import {EnvironmentIndexer, Indexes} from '../utils';
+import {HTMLSetting, SettingGroup, SettingModificationOrigin} from '../utils';
+import {GUID, PositioningCallback} from '../utils';
 import {foreachSetting, getByID, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
@@ -188,6 +190,7 @@ interface MarkerData {
     /// used instead.
     marker: HTMLElement;
 }
+
 /**
  * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
  * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
@@ -201,9 +204,9 @@ export class PropertiesMap {
     /** Callback fired when the plot is clicked and a new point is selected */
     public onselect: (indexes: Indexes) => void;
     /** Callback fired when a guid is removed from the map */
-    public onremove: (removedGUID: string) => void;
+    public onremove: (guid: GUID) => void;
     /** Callback fired when a new active marker is designated */
-    public activate: (activeGUID: string) => void;
+    public activate: (guid: GUID) => void;
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -224,9 +227,9 @@ export class PropertiesMap {
     private _data: MapData;
 
     /// GUID of the currently selected point
-    private _active?: string;
+    private _active?: GUID;
     /// Map associating currently selected markers GUID to additional data
-    private _selected: Map<string, MarkerData>;
+    private _selected: Map<GUID, MarkerData>;
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
@@ -257,10 +260,11 @@ export class PropertiesMap {
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
      */
-    constructor(id: string,
-                indexer: EnvironmentIndexer,
-                properties: {[name: string]: Property},
-                ) {
+    constructor(
+        id: string,
+        indexer: EnvironmentIndexer,
+        properties: {[name: string]: Property},
+    ) {
         this._indexer = indexer;
         this.onselect = () => {};
         this.onremove = () => {};
@@ -306,23 +310,23 @@ export class PropertiesMap {
      * If selectedGUID is not defined, it will default to the active GUID,
      * if available.
      */
-    public select(indexes: Indexes, selectedGUID?: string) {
-        if (selectedGUID === undefined) {
+    public select(indexes: Indexes, guid?: GUID) {
+        if (guid === undefined) {
             if (this.active !== undefined) {
-                selectedGUID = this.active;
+                guid = this.active;
             } else {
                 return;
             }
         }
 
         // Checks if marker exists on this map, if not adds it
-        let data = this._selected.get(selectedGUID);
+        let data = this._selected.get(guid);
         if (data === undefined) {
-            data = this._addMarker(selectedGUID, indexes.environment);
+            data = this._addMarker(guid, indexes.environment);
             this._updateSelectedMarker(data);
         }
         // sets this marker to active
-        this.active = selectedGUID;
+        this.active = guid;
 
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
@@ -343,32 +347,35 @@ export class PropertiesMap {
         this._settingsModal.remove();
     }
 
-    public get active(): string {
-      if (this._selected.size > 0) {
-        if (this._active === undefined) {
-            this.active = this._selected.keys().next().value;
-            return this._selected.keys().next().value;
+    public get active(): GUID {
+        if (this._selected.size > 0) {
+            if (this._active === undefined) {
+                this.active = this._selected.keys().next().value;
+                return this._selected.keys().next().value;
+            } else {
+                return this._active;
+            }
         } else {
-            return this._active; }
-      } else {
-            return ''; }
+            return '' as GUID;
+        }
     }
+
     /**
      * Function to set the active marker for communicating with the structure
      * viewer
      *
      * @param  activeGUID the GUID of the new active viewer
      */
-    public set active(activeGUID: string) {
-        if (this._active === activeGUID) {
+    public set active(guid: GUID) {
+        if (this._active === guid) {
             // guard against infinite recursion
             // `Structure set active => StructureViewer.show => Map set active
             // => PropertiesMap.select => Structure set active`
             return;
         }
 
-        if (!this._selected.has(activeGUID)) {
-            this._addMarker(activeGUID);
+        if (!this._selected.has(guid)) {
+            this._addMarker(guid);
         }
 
         if (!this._is3D()) {
@@ -381,12 +388,12 @@ export class PropertiesMap {
                     oldButton.classList.toggle('chsp-active-structure', false);
                 }
             }
-            const newButton = getByID(`chsp-selected-${activeGUID}`);
-            this._active = activeGUID;
+            const newButton = getByID(`chsp-selected-${guid}`);
+            this._active = guid;
             newButton.classList.toggle('chsp-active-structure', true);
 
         } else {
-            this._active = activeGUID;
+            this._active = guid;
             this._restyle({'marker.size': this._sizes(1)} as Data, 1);
         }
 
@@ -399,30 +406,30 @@ export class PropertiesMap {
     /**
      * Removes a marker from the map.
      *
-     * @param  removedGUID     unique string identifier of the marker to remove
+     * @param  guid GUID of the marker to remove
      */
-    public removeMarker(removedGUID: string): void {
-        const marker = document.getElementById(`chsp-selected-${removedGUID}`);
+    public removeMarker(guid: GUID): void {
+        const marker = document.getElementById(`chsp-selected-${guid}`);
         if (marker !== null) {
             if (marker.parentNode !== null) {
                 marker.parentNode.removeChild(marker);
             }
 
-            this._selected.delete(removedGUID);
+            this._selected.delete(guid);
 
-            if (this._active === removedGUID) {
+            if (this._active === guid) {
                 assert(this._selected.size > 0);
                 this.active = this._selected.keys().next().value;
             }
-            this.onremove(removedGUID);
+            this.onremove(guid);
         }
     }
 
     /**
      * Function to hide the marker when switching from 2D to 3D
      */
-    private _hideMarker(hiddenGUID: string): void {
-      const marker = document.getElementById(`chsp-selected-${hiddenGUID}`);
+    private _hideMarker(guid: GUID): void {
+      const marker = document.getElementById(`chsp-selected-${guid}`);
       if (marker !== null) {
           if (marker.parentNode !== null) {
               marker.parentNode.removeChild(marker);
@@ -1446,16 +1453,16 @@ export class PropertiesMap {
      * @param  addedGUID unique string identifier of the marker to add
      * @param  index     numeric index of the structure (with respect to dataset) to show
      */
-    private _addMarker(addedGUID: string, index: number= 0): MarkerData {
-        if (!this._selected.has(addedGUID)) {
-            const activeButton = getByID(`chsp-activate-${addedGUID}`);
+    private _addMarker(guid: GUID, index: number = 0): MarkerData {
+        if (!this._selected.has(guid)) {
+            const activeButton = getByID(`chsp-activate-${guid}`);
             const marker = document.createElement('div');
             marker.classList.add('chsp-structure-marker');
-            if (addedGUID === this._active) {
+            if (guid === this._active) {
                 marker.classList.toggle('chsp-active-structure', true);
             }
-            marker.id = `chsp-selected-${addedGUID}`;
-            marker.onclick = () => this.active = addedGUID;
+            marker.id = `chsp-selected-${guid}`;
+            marker.onclick = () => this.active = guid;
 
             const color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
@@ -1464,10 +1471,10 @@ export class PropertiesMap {
                 current: index,
                 marker: marker,
             };
-            this._selected.set(addedGUID, newMarkerData);
+            this._selected.set(guid, newMarkerData);
         }
 
-        const data = this._selected.get(addedGUID);
+        const data = this._selected.get(guid);
         assert(data !== undefined);
 
         this._root.appendChild(data.marker);
