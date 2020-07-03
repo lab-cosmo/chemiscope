@@ -1137,16 +1137,13 @@ export class PropertiesMap {
      * Get the values to use as marker symbol with the given plotly `trace`, or
      * all of them if `trace === undefined`.
      */
-    private _symbols(trace?: number): Array<number | number[] | string | string[]> {
+    private _symbols(trace?: number): Array<string | string[] | number[]> {
         if (this._settings.symbol.value === '') {
             // default to 0 (i.e. circles)
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
 
         const values = this._property(this._settings.symbol.value).values;
-        const markerData = this._selected.get(this.active);
-        assert(markerData !== undefined);
-
         if (this._is3D()) {
             // If we need more symbols than available, we'll send a warning
             // and repeat existing ones
@@ -1154,13 +1151,19 @@ export class PropertiesMap {
               sendWarning(`${this._symbolsCount()} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`);
             }
             const symbols = values.map(get3DSymbol);
-            const symbol = symbols[markerData.current];
-            return this._selectTrace<string | string[]>(symbols, symbol, trace);
+            const selected = [];
+            for (const data of this._selected.values()) {
+                selected.push(symbols[data.current]);
+            }
+            return this._selectTrace<string[]>(symbols, selected, trace);
         } else {
             // in 2D mode, use automatic assignment of symbols from numeric
             // values
-            const value = values[markerData.current];
-            return this._selectTrace<number | number[]>(values, value, trace);
+            const selected = [];
+            for (const data of this._selected.values()) {
+                selected.push(values[data.current]);
+            }
+            return this._selectTrace<number[]>(values, selected, trace);
         }
     }
 
@@ -1371,19 +1374,11 @@ export class PropertiesMap {
           const marker = data.marker;
 
           if (this._is3D()) {
-              marker.style.display = 'none';
-              let symbols;
-              if (this._settings.symbol.value !== '') {
-                  const values = this._property(this._settings.symbol.value).values;
-                  symbols = get3DSymbol(values[selected]);
-              } else {
-                  symbols = get3DSymbol(0);
-              }
-
+              // we have to update all symbols at the same time
               this._restyle({
                   'marker.color': this._colors(1),
                   'marker.size': this._sizes(1),
-                  'marker.symbol': symbols,
+                  'marker.symbol': this._symbols(1),
                   'x': this._xValues(1),
                   'y': this._yValues(1),
                   'z': this._zValues(1),
