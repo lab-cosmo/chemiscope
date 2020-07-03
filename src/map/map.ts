@@ -299,42 +299,38 @@ export class PropertiesMap {
         };
     }
 
-    /** Change the environment corresponding to the `selectGUID` in
+    /**
+     * Change the environment corresponding to the `selectGUID` in
      * this._selected to the one with the given `indexes`
-     * if selectedGUID is not defined, it will default to the active GUID, if available
+     *
+     * If selectedGUID is not defined, it will default to the active GUID,
+     * if available.
      */
     public select(indexes: Indexes, selectedGUID?: string) {
-        // Plotly.restyle fires the plotly_click event, so ensure we only run
-        // the update once.
-        // https://github.com/plotly/plotly.js/issues/1025
-
         if (selectedGUID === undefined) {
-          if (this.active !== undefined) {
-            selectedGUID = this.active;
-          } else { return; }
+            if (this.active !== undefined) {
+                selectedGUID = this.active;
+            } else {
+                return;
+            }
         }
 
-        /// Checks if marker exists on this map, if not adds it
-        if (selectedGUID !== undefined && !this._selected.has(selectedGUID)) {
-            this._addMarker(selectedGUID, indexes.environment);
-
-            const newMarkerData = this._selected.get(selectedGUID);
-            assert(newMarkerData !== undefined);
-            this._updateSelectedMarker(selectedGUID, newMarkerData);
+        // Checks if marker exists on this map, if not adds it
+        let data = this._selected.get(selectedGUID);
+        if (data === undefined) {
+            data = this._addMarker(selectedGUID, indexes.environment);
+            this._updateSelectedMarker(data);
         }
-
         // sets this marker to active
         this.active = selectedGUID;
 
-        const markerData = this._selected.get(selectedGUID);
-        assert(markerData !== undefined);
-
-        /// Sets the active marker on this map
-        /// default of markerData.current is -1 so that currents of value 0 are
-        /// still updated
-        if (markerData.current === 0 || indexes.environment !== markerData.current ) {
-            markerData.current = indexes.environment;
-            this._updateSelectedMarker(selectedGUID, markerData);
+        // Plotly.restyle fires the plotly_click event, so ensure we only run
+        // the update once.
+        // https://github.com/plotly/plotly.js/issues/1025
+        if (data.current === 0 || indexes.environment !== data.current) {
+            data.current = indexes.environment;
+            // Sets the active marker on this map
+            this._updateSelectedMarker(data);
         }
 
     }
@@ -372,7 +368,7 @@ export class PropertiesMap {
         }
 
         if (!this._selected.has(activeGUID)) {
-          this._addMarker(activeGUID);
+            this._addMarker(activeGUID);
         }
 
         if (!this._is3D()) {
@@ -1274,9 +1270,9 @@ export class PropertiesMap {
         } as unknown as Data);
 
         const cachedActive = this.active;
-        for (const [guid, markerData] of this._selected.entries()) {
+        for (const [guid, data] of this._selected.entries()) {
             this._hideMarker(guid);
-            this._updateSelectedMarker(guid, markerData);
+            this._updateSelectedMarker(data);
         }
         this.active = cachedActive;
 
@@ -1382,11 +1378,11 @@ export class PropertiesMap {
      * In 2D mode, these markers are HTML div styled as colored circles that
      * we manually move around, saving a call to `restyle`.
      *
-     * @param selectedGUID unique string identifier of the marker to update
+     * @param data data of the marker to update
      */
-    private _updateSelectedMarker(selectedGUID: string, selectedMarkerData: MarkerData): void {
-          const selected = selectedMarkerData.current;
-          const marker = selectedMarkerData.marker;
+    private _updateSelectedMarker(data: MarkerData): void {
+          const selected = data.current;
+          const marker = data.marker;
 
           if (this._is3D()) {
               marker.style.display = 'none';
@@ -1411,8 +1407,8 @@ export class PropertiesMap {
               const xaxis = this._plot._fullLayout.xaxis;
               const yaxis = this._plot._fullLayout.yaxis;
 
-              const computeX = (data: number) => xaxis.l2p(data) + xaxis._offset;
-              const computeY = (data: number) => yaxis.l2p(data) + yaxis._offset;
+              const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
+              const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
 
               const x = computeX(this._xValues(0)[0][selected]);
               const y = computeY(this._yValues(0)[0][selected]);
@@ -1446,8 +1442,8 @@ export class PropertiesMap {
           assert(activeMarkerData !== undefined);
           const indexes = this._indexer.from_environment(activeMarkerData.current);
 
-          for (const [guid, markerData] of this._selected.entries()) {
-            this._updateSelectedMarker(guid, markerData);
+          for (const data of this._selected.values()) {
+              this._updateSelectedMarker(data);
           }
 
           // HACK: restores the point that was active before the update
@@ -1460,7 +1456,7 @@ export class PropertiesMap {
      * @param  addedGUID unique string identifier of the marker to add
      * @param  index     numeric index of the structure (with respect to dataset) to show
      */
-    private _addMarker(addedGUID: string, index: number= 0): void {
+    private _addMarker(addedGUID: string, index: number= 0): MarkerData {
         if (!this._selected.has(addedGUID)) {
             const activeButton = getByID(`chsp-activate-${addedGUID}`);
             const marker = document.createElement('div');
@@ -1474,20 +1470,22 @@ export class PropertiesMap {
             const color = activeButton.style.backgroundColor;
             marker.style.backgroundColor = color;
             const newMarkerData = {
-                                      color : color,
-                                      current: index,
-                                      marker: marker,
-                                  };
+                color : color,
+                current: index,
+                marker: marker,
+            };
             this._selected.set(addedGUID, newMarkerData);
         }
 
-        const markerData = this._selected.get(addedGUID);
-        assert(markerData !== undefined);
+        const data = this._selected.get(addedGUID);
+        assert(data !== undefined);
 
-        this._root.appendChild(markerData.marker);
+        this._root.appendChild(data.marker);
 
         if (this._is3D()) {
-          markerData.marker.style.display = 'none';
+            data.marker.style.display = 'none';
         }
+
+        return data;
     }
 }
