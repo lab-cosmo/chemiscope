@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import {Property} from '../dataset';
 import {EnvironmentIndexer, HTMLSetting, Indexes, PositioningCallback, SettingGroup, SettingModificationOrigin} from '../utils';
-import {foreachSetting, generateGUID, getByID, makeDraggable, sendWarning} from '../utils';
+import {foreachSetting, getByID, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
@@ -398,7 +398,6 @@ export class PropertiesMap {
         const markerData = this._selected.get(this._active);
         assert(markerData !== undefined);
 
-        const indexes = this._indexer.from_environment(markerData.current);
         this.activate(this._active);
     }
 
