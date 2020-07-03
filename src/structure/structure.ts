@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
-import {EnvironmentIndexer, Indexes, PositioningCallback} from '../utils';
+import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './jsmol';
@@ -17,7 +17,7 @@ import DUPLICATE_SVG from '../static/duplicate.svg';
 
 const MAX_WIDGETS = 9;
 
-/*
+/**
  * Function to return *optimal* arrangement of n widgets.
  * Defaults to a 4 x ? grid. Hardcoded for simplicity.
  */
@@ -85,9 +85,9 @@ export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
     /** Callback fired when a guid is removed from the map */
-    public onremove: (removedGUID: string) => void;
+    public onremove: (guid: GUID) => void;
     /** Callback fired when a new active marker is designated */
-    public activate: (activeGUID: string) => void;
+    public activate: (guid: GUID) => void;
 
     /**
      * Callback used when a new structure should be loaded
@@ -118,10 +118,10 @@ export class StructureViewer {
     // path to the j2s files used by JSmol.
     // saved for instantiating new Widget instances
     private _j2spath: string;
-    /// GUID of the Active Widget
-    private _active: string;
+    /// GUID of the currently active widget
+    private _active: GUID;
     /// Map of Widgets GUIDS to their color, widget, and current structure
-    private _viewers: Map<string, WidgetGridData>;
+    private _viewers: Map<GUID, WidgetGridData>;
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
 
@@ -194,8 +194,8 @@ export class StructureViewer {
      * @param  indexes         structure / atom pair to display
      * @param  selectedGUID   GUID of the widget to show
      */
-    public show(indexes: Indexes, selectedGUID: string = this.active) {
-        const data = this._viewers.get(selectedGUID);
+    public show(indexes: Indexes, selected: GUID = this.active) {
+        const data = this._viewers.get(selected);
         assert(data !== undefined);
 
         const widget = data.widget;
@@ -302,29 +302,29 @@ export class StructureViewer {
     }
 
     /*
-     * Removes a widget from the structure viewer grid.
-     * Will not remove a widget if it is the last one in the structure viewer
-     */
-    public removeWidget(removedGUID: string) {
+    * Removes a widget from the structure viewer grid.
+    * Will not remove a widget if it is the last one in the structure viewer
+    */
+    public removeWidget(remove: GUID) {
         if (this._viewers.size > 1) {
-            if (this._viewers.has(removedGUID)) {
+            if (this._viewers.has(remove)) {
 
-              const widgetRoot = getByID(`chsp-${removedGUID}`);
+                const widgetRoot = getByID(`chsp-${remove}`);
 
-              if (widgetRoot.parentNode !== null) {
-                  widgetRoot.parentNode.removeChild(widgetRoot);
-              }
+                if (widgetRoot.parentNode !== null) {
+                    widgetRoot.parentNode.removeChild(widgetRoot);
+                }
 
-              const deadCell = getByID(`gi-${removedGUID}`);
-              if (deadCell !== null) {deadCell.remove(); }
+                const deadCell = getByID(`gi-${remove}`);
+                if (deadCell !== null) {deadCell.remove(); }
 
-              this._viewers.delete(removedGUID);
-              if (this.active === removedGUID) {
-                  assert(this._viewers.size > 0);
-                  this.active = this._viewers.keys().next().value;
-              }
-              this.onremove(removedGUID);
-          }
+                this._viewers.delete(remove);
+                if (this.active === remove) {
+                    assert(this._viewers.size > 0);
+                    this.active = this._viewers.keys().next().value;
+                }
+                this.onremove(remove);
+            }
         }
     }
 
@@ -353,48 +353,48 @@ export class StructureViewer {
     /**
      * Returns the GUID string corresponding to the selected widget.
      */
-    public get active(): string {
+    public get active(): GUID {
         return this._active;
     }
 
-    /*
+    /**
      * Function to set the active widget for communicating with the map
      */
-    public set active(guid: string) {
+    public set active(guid: GUID) {
         const old = this.active;
 
         // choose *if* over assertion -- there's a weird error that I cannot pin-
         // point where active is being passed an undefined.
         if (this._viewers.has(guid)) {
-          // keep as an if and not an assertion so that we can set an active widget
-          // even if there is not one currently.
-          if (this._viewers.has(old)) {
-                  // change tooltip text in the active marker
-                  const oldButton = getByID(`chsp-activate-${old}`);
-                  oldButton.classList.toggle('chsp-active-structure', false);
-                  const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
-                  assert(oldTooltip !== null);
-                  oldTooltip.innerHTML = 'choose as active';
+            // keep as an if and not an assertion so that we can set an active widget
+            // even if there is not one currently.
+            if (this._viewers.has(old)) {
+                // change tooltip text in the active marker
+                const oldButton = getByID(`chsp-activate-${old}`);
+                oldButton.classList.toggle('chsp-active-structure', false);
+                const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
+                assert(oldTooltip !== null);
+                oldTooltip.innerHTML = 'choose as active';
 
-                  // change style of the cell border
-                  const oldCell = getByID(`gi-${old}`);
-                  oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
-          }
+                // change style of the cell border
+                const oldCell = getByID(`gi-${old}`);
+                oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
+            }
 
-          this._active = guid;
+            this._active = guid;
 
-          const newButton = getByID(`chsp-activate-${this.active}`);
-          newButton.classList.toggle('chsp-active-structure', true);
-          const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
-          assert(tooltip !== null);
-          tooltip.innerHTML = 'this is the active viewer';
+            const newButton = getByID(`chsp-activate-${this.active}`);
+            newButton.classList.toggle('chsp-active-structure', true);
+            const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
+            assert(tooltip !== null);
+            tooltip.innerHTML = 'this is the active viewer';
 
-          const newCell = getByID(`gi-${this.active}`);
-          newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
+            const newCell = getByID(`gi-${this.active}`);
+            newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
 
-          this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
+            this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
 
-          this.activate(this.active);
+            this.activate(this.active);
         }
     }
 
@@ -411,12 +411,12 @@ export class StructureViewer {
         return getNextColor(colors);
     }
 
-    /*
+    /**
      * Function to setup the cell in the structure viewer grid.
      * Will generate a GUID string if one does not exist for the cell
      * and instantiate all necessary buttons.
      */
-    private _setupCell(cellGUID: string, colNum: number, rowNum: number): string {
+    private _setupCell(cellGUID: GUID, colNum: number, rowNum: number): string {
         const cellId = `gi-${cellGUID}`;
         let cell = document.getElementById(cellId);
         let color = '';
@@ -502,13 +502,13 @@ export class StructureViewer {
         }
     }
 
-    /*
+    /**
      * Function to initialize the grid instance for `this._nwidgets` cells and
      * place onto the DOM element mapped in `this._root`. If more cells are
      * needed, this function return the list of new cell GUID
      */
-    private _setupGrid(nwidgets: number): string[] {
-        const newGUID = [] as string[];
+    private _setupGrid(nwidgets: number): GUID[] {
+        const newGUID = [] as GUID[];
         if (nwidgets < 1) {
             sendWarning('Cannot delete last widget.');
             return newGUID;
@@ -536,7 +536,7 @@ export class StructureViewer {
 
         const mapKeys = this._viewers.keys();
         for (let c = 0; c < nwidgets; c++) {
-            let cellGUID: string;
+            let cellGUID: GUID;
             if (c >= this._viewers.size) {
                 cellGUID = generateGUID();
             } else {
@@ -601,5 +601,4 @@ export class StructureViewer {
 
         return newGUID;
     }
-
 }

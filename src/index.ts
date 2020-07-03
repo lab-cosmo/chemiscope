@@ -161,20 +161,20 @@ class DefaultVisualizer {
             this.structure.show(indexes);
         };
 
-        this.structure.onremove = (removedGUID) => {
-          this.map.removeMarker(removedGUID);
+        this.structure.onremove = (guid) => {
+            this.map.removeMarker(guid);
         };
 
-        this.map.onremove = (removedGUID) => {
-          this.structure.removeWidget(removedGUID);
+        this.map.onremove = (guid) => {
+            this.structure.removeWidget(guid);
         };
 
-        this.structure.activate = (activeGUID) => {
-          this.map.active = activeGUID;
+        this.structure.activate = (guid) => {
+            this.map.active = guid;
         };
 
-        this.map.activate = (activeGUID) => {
-          this.structure.active = activeGUID;
+        this.map.activate = (guid) => {
+            this.structure.active = guid;
         };
 
         const initial = {environment: 0, structure: 0, atom: 0};
