@@ -425,18 +425,6 @@ export class PropertiesMap {
         }
     }
 
-    /**
-     * Function to hide the marker when switching from 2D to 3D
-     */
-    private _hideMarker(guid: GUID): void {
-      const marker = document.getElementById(`chsp-selected-${guid}`);
-      if (marker !== null) {
-          if (marker.parentNode !== null) {
-              marker.parentNode.removeChild(marker);
-          }
-      }
-    }
-
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) => setTimeout(() => { throw e; }));
@@ -1270,8 +1258,8 @@ export class PropertiesMap {
         } as unknown as Data);
 
         const cachedActive = this.active;
-        for (const [guid, data] of this._selected.entries()) {
-            this._hideMarker(guid);
+        for (const data of this._selected.values()) {
+            data.marker.style.display = 'none';
             this._updateSelectedMarker(data);
         }
         this.active = cachedActive;
