@@ -3,6 +3,8 @@
  * @module utils
  */
 
+import assert from 'assert';
+
 import {makeDraggable} from './draggable';
 import {DisplayMode, EnvironmentIndexer, Indexes} from './indexer';
 import {foreachSetting, HTMLSetting, SettingGroup, SettingModificationOrigin} from './settings';
@@ -18,10 +20,7 @@ import {addWarningHandler, sendWarning} from './warnings';
 export type PositioningCallback = (rect: DOMRect) => {top: number, left: number};
 
 const STANDARD_COLORS = [
-    'Red', 'Yellow', 'Green', 'Blue',
-    'Orange', 'Aqua', 'Purple', 'Teal',
-    'White', 'Gray', 'Black', 'Maroon',
-    'Olive', 'Silver', 'Lime', 'Navy', 'Fuchsia',
+    'red', 'yellow', 'green', 'blue', 'orange', 'aqua', 'purple', 'teal', 'silver',
 ];
 
 export function getNextColor(alreadyUsedColors: string[]) {
@@ -55,6 +54,43 @@ function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
         throw Error(`unable to get element with id ${id}`);
     }
     return e as unknown as HTMLType;
+}
+
+export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
+    const iterator = function*() {
+        let index = 0;
+        for (const element of iterable) {
+            yield [index, element];
+            index++;
+        }
+    };
+
+    return {
+        [Symbol.iterator]: iterator,
+    } as Iterable<[number, T]>;
+}
+
+/**
+ * Get the first key of a Map, potentially excluding a specific key value.
+ *
+ * If `excluding` is specified and the first key is equal to `excluding`; the
+ * second key will be returned.
+ *
+ * @param map       the map where to look for keys
+ * @param excluding do not use this specific value if it is the first key
+ * @return the first or second key depending on `excluding`
+ */
+export function getFirstKey<K, V>(map: Map<K, V>, excluding?: K): K {
+    assert(map.size >= 1);
+    const keys = map.keys();
+    const first = keys.next().value;
+    if (excluding !== undefined) {
+        if (first === excluding) {
+            assert(map.size >= 2);
+            return keys.next().value;
+        }
+    }
+    return first;
 }
 
 export {

@@ -9,7 +9,7 @@ import {Property} from '../dataset';
 import {EnvironmentIndexer, Indexes} from '../utils';
 import {HTMLSetting, SettingGroup, SettingModificationOrigin} from '../utils';
 import {GUID, PositioningCallback} from '../utils';
-import {foreachSetting, getByID, makeDraggable, sendWarning} from '../utils';
+import {enumerate, foreachSetting, getByID, getFirstKey, makeDraggable, sendWarning} from '../utils';
 
 import Plotly from './plotly/plotly-scatter';
 import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
@@ -201,12 +201,15 @@ interface MarkerData {
  * plot markers.
  */
 export class PropertiesMap {
-    /** Callback fired when the plot is clicked and a new point is selected */
+    /** Callback fired when the plot is clicked and the position of the active marker changes */
     public onselect: (indexes: Indexes) => void;
-    /** Callback fired when a guid is removed from the map */
-    public onremove: (guid: GUID) => void;
-    /** Callback fired when a new active marker is designated */
-    public activate: (guid: GUID) => void;
+    /**
+     * Callback fired when the active marker is changed by clicking on the map
+     *
+     * @param guid GUID of the new active marker
+     * @param indexes index of the environment the new active marker is showing
+     */
+    public activeChanged: (guid: GUID, indexes: Indexes) => void;
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -267,8 +270,7 @@ export class PropertiesMap {
     ) {
         this._indexer = indexer;
         this.onselect = () => {};
-        this.onremove = () => {};
-        this.activate = () => {};
+        this.activeChanged = () => {};
         this._selected = new Map();
 
         this._root = getByID(id);
@@ -304,29 +306,24 @@ export class PropertiesMap {
     }
 
     /**
-     * Change the environment corresponding to the `selectGUID` in
-     * this._selected to the one with the given `indexes`
-     *
-     * If selectedGUID is not defined, it will default to the active GUID,
-     * if available.
+     * Remove all HTML added by this [[PropertiesMap]] in the current document
      */
-    public select(indexes: Indexes, guid?: GUID) {
-        if (guid === undefined) {
-            if (this.active !== undefined) {
-                guid = this.active;
-            } else {
-                return;
-            }
+    public remove(): void {
+        this._root.innerHTML = '';
+        this._settingsModal.remove();
+    }
+
+    /**
+     * Change the environment indicated by the currently active marker to
+     * the one with the given `indexes`
+     */
+    public select(indexes: Indexes) {
+        if (this._active === undefined) {
+            throw Error('tries to update selected environment, but there is no active marker');
         }
 
-        // Checks if marker exists on this map, if not adds it
-        let data = this._selected.get(guid);
-        if (data === undefined) {
-            data = this._addMarker(guid, indexes.environment);
-            this._updateSelectedMarker(data);
-        }
-        // sets this marker to active
-        this.active = guid;
+        const data = this._selected.get(this._active);
+        assert(data !== undefined);
 
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
@@ -336,92 +333,99 @@ export class PropertiesMap {
             // Sets the active marker on this map
             this._updateSelectedMarker(data);
         }
-
     }
 
     /**
-     * Remove all HTML added by this [[PropertiesMap]] in the current document
-     */
-    public remove(): void {
-        this._root.innerHTML = '';
-        this._settingsModal.remove();
-    }
-
-    public get active(): GUID {
-        if (this._selected.size > 0) {
-            if (this._active === undefined) {
-                this.active = this._selected.keys().next().value;
-                return this._selected.keys().next().value;
-            } else {
-                return this._active;
-            }
-        } else {
-            return '' as GUID;
-        }
-    }
-
-    /**
-     * Function to set the active marker for communicating with the structure
-     * viewer
+     * Set the marker with given GUID as the active marker.
      *
-     * @param  activeGUID the GUID of the new active viewer
+     * @param guid the GUID of the new active viewer
      */
-    public set active(guid: GUID) {
-        if (this._active === guid) {
-            // guard against infinite recursion
-            // `Structure set active => StructureViewer.show => Map set active
-            // => PropertiesMap.select => Structure set active`
-            return;
+    public setActive(guid: GUID) {
+        if (this._active !== undefined) {
+            const oldData = this._selected.get(this._active);
+            assert(oldData !== undefined);
+            oldData.marker.classList.toggle('chsp-active-structure', false);
         }
 
-        if (!this._selected.has(guid)) {
-            this._addMarker(guid);
-        }
+        this._active = guid;
+        const data = this._selected.get(this._active);
+        assert(data !== undefined);
+        data.marker.classList.toggle('chsp-active-structure', true);
 
-        if (!this._is3D()) {
-            // if we are in 2D we need to update the visuals
-            if (this._active !== undefined && this._selected.has(this._active)) {
-                // this has been left as document.getElementById for when we are
-                // setting a new active because the old one has been deleted.
-                const oldButton = document.getElementById(`chsp-selected-${this._active}`);
-                if (oldButton !== null) {
-                    oldButton.classList.toggle('chsp-active-structure', false);
-                }
-            }
-            const newButton = getByID(`chsp-selected-${guid}`);
-            this._active = guid;
-            newButton.classList.toggle('chsp-active-structure', true);
-
-        } else {
-            this._active = guid;
+        if (this._is3D()) {
             this._restyle({'marker.size': this._sizes(1)} as Data, 1);
         }
+    }
 
-        const markerData = this._selected.get(this._active);
-        assert(markerData !== undefined);
+    /**
+     * Add a new marker to the map. The new marker is set as the active one
+     *
+     * @param guid GUID of the new marker
+     * @param indexes indexes of the environment that the new marker should show
+     */
+    public addMarker(guid: GUID, color: string, indexes: Indexes): void {
+        assert(!this._selected.has(guid));
 
-        this.activate(this._active);
+        const marker = document.createElement('div');
+        this._root.appendChild(marker);
+        marker.classList.add('chsp-structure-marker');
+        if (guid === this._active) {
+            marker.classList.toggle('chsp-active-structure', true);
+        }
+        marker.id = `chsp-selected-${guid}`;
+        marker.onclick = () => {
+            this.setActive(guid);
+            const activeData = this._selected.get(guid);
+            assert(activeData !== undefined);
+            const activeIndexes = this._indexer.from_environment(activeData.current);
+            this.activeChanged(guid, activeIndexes);
+        };
+        marker.style.backgroundColor = color;
+
+        const data = {
+            color: color,
+            current: indexes.environment,
+            marker: marker,
+        };
+        this._selected.set(guid, data);
+
+        if (this._is3D()) {
+            data.marker.style.display = 'none';
+        } else {
+            this._updateSelectedMarker(data);
+        }
+
+        this.setActive(guid);
     }
 
     /**
      * Removes a marker from the map.
      *
-     * @param  guid GUID of the marker to remove
+     * @param guid GUID of the marker to remove
      */
     public removeMarker(guid: GUID): void {
-        const marker = document.getElementById(`chsp-selected-${guid}`);
-        if (marker !== null) {
-            if (marker.parentNode !== null) {
-                marker.parentNode.removeChild(marker);
+        // If we remove the active marker, let's change which one is active
+        if (this._active === guid) {
+            if (this._selected.size === 1) {
+                // we are removing the last one
+                this._active = undefined;
+            } else {
+                this.setActive(getFirstKey(this._selected, guid));
             }
+        }
 
-            this._selected.delete(guid);
+        // remove HTML marker
+        const data = this._selected.get(guid);
+        assert(data !== undefined);
+        assert(data.marker.parentNode !== null);
+        data.marker.parentNode.removeChild(data.marker);
 
-            if (this._active === guid) {
-                assert(this._selected.size > 0);
-                this.active = this._selected.keys().next().value;
-            }
-            this.onremove(guid);
+        this._selected.delete(guid);
+
+        if (this._is3D()) {
+            // We have to update all markers in 3D mode since we can not
+            // update just the one that we removed
+            this._updateAll3DMarkers();
         }
     }
 
@@ -930,25 +934,27 @@ export class PropertiesMap {
             .catch((e) => setTimeout(() => { throw e; }));
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
-            // don't update selected env on double click, since it is lined to
+            // don't update selected env on double click, since it is bound to
             // 'reset zoom level' in 2D mode.
-            // `event.event` is only set in 2D mode
-
             if (event.event && event.event.detail === 2) {
                 return;
             }
 
             let data;
             // if someone has clicked on a selection marker, set to active
+            // this is only used in 3D mode, since in 2D the HTML marker
+            // directly deal with the click event
             if (event.points[0].data.name === 'selected' ) {
-                let i = 0;
-                for (const [guid, markerData] of this._selected.entries()) {
-                    if (i === event.points[0].pointNumber) {
-                        this.active = guid;
+                for (const [i, [guid, markerData]] of enumerate(this._selected.entries())) {
+                    if (event.points[0].pointNumber === i) {
                         data = markerData;
+
+                        if (this._active !== guid) {
+                            this.setActive(guid);
+                            this.activeChanged(guid, this._indexer.from_environment(data.current));
+                        }
                         break;
                     }
-                    i++;
                 }
             }
 
@@ -958,7 +964,7 @@ export class PropertiesMap {
                 // place the selected marker doesn't recognize
                 this._indexer.from_environment(event.points[0].pointNumber);
 
-            this.select(indexes, this._active);
+            this.select(indexes);
             this.onselect(indexes);
         });
         this._plot.on('plotly_afterplot', () => this._afterplot());
@@ -1260,12 +1266,10 @@ export class PropertiesMap {
             'type': 'scatter3d',
         } as unknown as Data);
 
-        const cachedActive = this.active;
         for (const data of this._selected.values()) {
             data.marker.style.display = 'none';
             this._updateSelectedMarker(data);
         }
-        this.active = cachedActive;
 
         // Change the data that vary between 2D and 3D mode
         this._restyle({
@@ -1276,7 +1280,6 @@ export class PropertiesMap {
             'marker.line.width': [0, 2],
             // size change from 2D to 3D
             'marker.size': this._sizes(),
-            'marker.sizemode': 'area',
         } as Data, [0, 1]);
 
         this._relayout({
@@ -1305,13 +1308,10 @@ export class PropertiesMap {
             'type': 'scattergl',
         } as unknown as Data);
 
-        const cachedActive = this.active;
-
-        for (const [guid, marker] of this._selected.entries()) {
-            this._addMarker(guid, marker.current);
+        // show selected environments markers
+        for (const data of this._selected.values()) {
+            data.marker.style.display = 'block';
         }
-
-        this.active = cachedActive;
 
         // Change the data that vary between 2D and 3D mode
         this._restyle({
@@ -1360,8 +1360,7 @@ export class PropertiesMap {
     }
 
     /**
-     * Update the position of all the markers indicating selected points in the
-     * map.
+     * Update the position of the given marker.
      *
      * In 3D mode, the markers uses the second Plotly trace.
      * In 2D mode, these markers are HTML div styled as colored circles that
@@ -1375,14 +1374,7 @@ export class PropertiesMap {
 
           if (this._is3D()) {
               // we have to update all symbols at the same time
-              this._restyle({
-                  'marker.color': this._colors(1),
-                  'marker.size': this._sizes(1),
-                  'marker.symbol': this._symbols(1),
-                  'x': this._xValues(1),
-                  'y': this._yValues(1),
-                  'z': this._zValues(1),
-              } as Data, 1);
+              this._updateAll3DMarkers();
           } else {
               const xaxis = this._plot._fullLayout.xaxis;
               const yaxis = this._plot._fullLayout.yaxis;
@@ -1409,63 +1401,32 @@ export class PropertiesMap {
               const plotWidth = this._plot.getBoundingClientRect().width;
               marker.style.right = `${plotWidth - x}px`;
           }
-          const indexes = this._indexer.from_environment(selected);
-          this.onselect(indexes);
     }
 
-    private _updateAllMarkers() {
-        // check if there are any markers to update
-        if (this._selected.size > 0) {
-          // stores info on current active point
-          const active = this.active;
-          const activeMarkerData = this._selected.get(this.active);
-          assert(activeMarkerData !== undefined);
-          const indexes = this._indexer.from_environment(activeMarkerData.current);
-
-          for (const data of this._selected.values()) {
-              this._updateSelectedMarker(data);
-          }
-
-          // HACK: restores the point that was active before the update
-          this.select(indexes, active);
-        }
-    }
     /**
-     * Function to add a marker with the given GUID string and indices to the map.
-     *
-     * @param  addedGUID unique string identifier of the marker to add
-     * @param  index     numeric index of the structure (with respect to dataset) to show
+     * Update the position, color & size of all markers in the map
      */
-    private _addMarker(guid: GUID, index: number = 0): MarkerData {
-        if (!this._selected.has(guid)) {
-            const activeButton = getByID(`chsp-activate-${guid}`);
-            const marker = document.createElement('div');
-            marker.classList.add('chsp-structure-marker');
-            if (guid === this._active) {
-                marker.classList.toggle('chsp-active-structure', true);
-            }
-            marker.id = `chsp-selected-${guid}`;
-            marker.onclick = () => this.active = guid;
-
-            const color = activeButton.style.backgroundColor;
-            marker.style.backgroundColor = color;
-            const newMarkerData = {
-                color : color,
-                current: index,
-                marker: marker,
-            };
-            this._selected.set(guid, newMarkerData);
-        }
-
-        const data = this._selected.get(guid);
-        assert(data !== undefined);
-
-        this._root.appendChild(data.marker);
-
+    private _updateAllMarkers(): void {
         if (this._is3D()) {
-            data.marker.style.display = 'none';
+            this._updateAll3DMarkers();
+        } else {
+            for (const data of this._selected.values()) {
+                this._updateSelectedMarker(data);
+            }
         }
+    }
 
-        return data;
+    /**
+     * Update the position, size & color for all markers in 3D mode
+     */
+    private _updateAll3DMarkers(): void {
+        this._restyle({
+            'marker.color': this._colors(1),
+            'marker.size': this._sizes(1),
+            'marker.symbol': this._symbols(1),
+            'x': this._xValues(1),
+            'y': this._yValues(1),
+            'z': this._zValues(1),
+        } as Data, 1);
     }
 }
