@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
 import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
-import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
+import {generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './jsmol';
 import {JSmolWidget, LoadOptions} from './widget';
@@ -84,10 +84,23 @@ interface WidgetGridData {
 export class StructureViewer {
     /** Callback used when the user select an environment */
     public onselect: (indexes: Indexes) => void;
-    /** Callback fired when a guid is removed from the map */
+    /** Callback fired when a viewer is removed from the grid */
     public onremove: (guid: GUID) => void;
-    /** Callback fired when a new active marker is designated */
-    public activate: (guid: GUID) => void;
+    /**
+     * Callback fired when a new viewer is created
+     *
+     * @param guid GUID of the new viewer
+     * @param color GUID of the marker indicating the new viewer
+     * @param indexes environment showed in the new viewer
+     */
+    public oncreate: (guid: GUID, color: string, indexes: Indexes) => void;
+    /**
+     * Callback fired when the active viewer is changed
+     *
+     * @param guid GUID of the new active viewer
+     * @param indexes environment showed in the new active viewer
+     */
+    public activeChanged: (guid: GUID, indexes: Indexes) => void;
 
     /**
      * Callback used when a new structure should be loaded
@@ -166,7 +179,8 @@ export class StructureViewer {
         this._viewers = new Map();
         this.onselect = () => {};
         this.onremove = () => {};
-        this.activate = () => {};
+        this.oncreate = () => {};
+        this.activeChanged = () => {};
 
         const root = getByID(id);
         this._root = document.createElement('div');
@@ -176,26 +190,32 @@ export class StructureViewer {
 
         this._setupGrid(1);
 
-        // Double check the grid has been made properly
-        assert(this._viewers.size > 0);
-        this.active = this._viewers.keys().next().value;
-        this._active = this.active;
+        this._active = getFirstKey(this._viewers);
+        this.setActive(this._active);
 
         // get the 'delay' setting inside the current widget setting
-        this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
+        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
     }
 
     /**
-     * Show a new structure, as identified by `indexes`. This will switch to
-     * the structure at index `indexes.structure`, and if environments where
-     * passed to the constructor and the current display mode is `'atom'`,
-     * highlight the atom-centered environment corresponding to `indexes.atom`.
+     * Get the current active viewer GUID
+     */
+    public get active(): GUID {
+        return this._active;
+    }
+
+    /**
+     * Show a new structure, as identified by `indexes` in the active viewer.
+     *
+     * This will switch to the structure at index `indexes.structure`, and if
+     * environments where passed to the constructor and the current display
+     * mode is `'atom'`, highlight the atom-centered environment corresponding
+     * to `indexes.atom`.
      *
      * @param  indexes         structure / atom pair to display
-     * @param  selectedGUID   GUID of the widget to show
      */
-    public show(indexes: Indexes, selected: GUID = this.active) {
-        const data = this._viewers.get(selected);
+    public show(indexes: Indexes) {
+        const data = this._viewers.get(this._active);
         assert(data !== undefined);
 
         const widget = data.widget;
@@ -234,7 +254,7 @@ export class StructureViewer {
     public structurePlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._viewers.get(this.active);
+                const widgetData = this._viewers.get(this._active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
@@ -256,7 +276,7 @@ export class StructureViewer {
     public atomPlayback(advance: () => boolean) {
         setTimeout(() => {
             if (advance()) {
-                const widgetData = this._viewers.get(this.active);
+                const widgetData = this._viewers.get(this._active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
@@ -285,6 +305,33 @@ export class StructureViewer {
     }
 
     /**
+     * Function to set the active widget for communicating with the map
+     */
+    public setActive(guid: GUID): void {
+        const changeClasses = (toggle: boolean) => {
+            assert(this._viewers.has(this._active));
+            // change tooltip text in the active marker
+            const button = getByID(`chsp-activate-${this._active}`);
+            button.classList.toggle('chsp-active-structure', toggle);
+            const tooltip = button.parentElement!.querySelector('.chsp-tooltip');
+            assert(tooltip !== null);
+            tooltip.innerHTML = toggle ? 'this is the active viewer' : 'choose as active';
+
+            // change style of the cell border
+            const cell = getByID(`gi-${this._active}`);
+            cell.classList.toggle('chsp-structure-viewer-cell-active', toggle);
+        };
+
+        // remove active classes from the previous active
+        changeClasses(false);
+
+        this._active = guid;
+        changeClasses(true);
+
+        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
+    }
+
+    /**
      * Set a callback to get the initial positioning of the settings modal of
      * the viewers. The same callback is used for all viewers in the grid.
      *
@@ -305,27 +352,26 @@ export class StructureViewer {
     * Removes a widget from the structure viewer grid.
     * Will not remove a widget if it is the last one in the structure viewer
     */
-    public removeWidget(remove: GUID) {
-        if (this._viewers.size > 1) {
-            if (this._viewers.has(remove)) {
-
-                const widgetRoot = getByID(`chsp-${remove}`);
-
-                if (widgetRoot.parentNode !== null) {
-                    widgetRoot.parentNode.removeChild(widgetRoot);
-                }
-
-                const deadCell = getByID(`gi-${remove}`);
-                if (deadCell !== null) {deadCell.remove(); }
-
-                this._viewers.delete(remove);
-                if (this.active === remove) {
-                    assert(this._viewers.size > 0);
-                    this.active = this._viewers.keys().next().value;
-                }
-                this.onremove(remove);
-            }
+    private _removeWidget(guid: GUID) {
+        if (this._viewers.size === 1) {
+            return;
         }
+
+        // If we removed the active marker, change the active one
+        if (this._active === guid) {
+            this.setActive(getFirstKey(this._viewers, guid));
+        }
+
+        // remove HTML inserted by the widget
+        const data = this._viewers.get(guid);
+        assert(data !== undefined);
+        data.widget.remove();
+
+        // remove the cell containing the widget
+        const cell = getByID(`gi-${guid}`);
+        cell.remove();
+
+        this._viewers.delete(guid);
     }
 
     /**
@@ -348,54 +394,6 @@ export class StructureViewer {
             this._cachedStructures[index] = structure2JSmol(s);
         }
         return this._cachedStructures[index];
-    }
-
-    /**
-     * Returns the GUID string corresponding to the selected widget.
-     */
-    public get active(): GUID {
-        return this._active;
-    }
-
-    /**
-     * Function to set the active widget for communicating with the map
-     */
-    public set active(guid: GUID) {
-        const old = this.active;
-
-        // choose *if* over assertion -- there's a weird error that I cannot pin-
-        // point where active is being passed an undefined.
-        if (this._viewers.has(guid)) {
-            // keep as an if and not an assertion so that we can set an active widget
-            // even if there is not one currently.
-            if (this._viewers.has(old)) {
-                // change tooltip text in the active marker
-                const oldButton = getByID(`chsp-activate-${old}`);
-                oldButton.classList.toggle('chsp-active-structure', false);
-                const oldTooltip = oldButton.parentElement!.querySelector('.chsp-tooltip');
-                assert(oldTooltip !== null);
-                oldTooltip.innerHTML = 'choose as active';
-
-                // change style of the cell border
-                const oldCell = getByID(`gi-${old}`);
-                oldCell.classList.toggle('chsp-structure-viewer-cell-active', false);
-            }
-
-            this._active = guid;
-
-            const newButton = getByID(`chsp-activate-${this.active}`);
-            newButton.classList.toggle('chsp-active-structure', true);
-            const tooltip = newButton.parentElement!.querySelector('.chsp-tooltip');
-            assert(tooltip !== null);
-            tooltip.innerHTML = 'this is the active viewer';
-
-            const newCell = getByID(`gi-${this.active}`);
-            newCell.classList.toggle('chsp-structure-viewer-cell-active', true);
-
-            this._delay = getByID<HTMLInputElement>(`chsp-${this.active}-playback-delay`);
-
-            this.activate(this.active);
-        }
     }
 
     /**
@@ -443,23 +441,30 @@ export class StructureViewer {
                     ></div>
                     <span class="chsp-tooltip">WILL BE FILLED LATER</span>
                 </div>`;
-            const isActive = template.content.firstChild! as HTMLElement;
-            isActive.onclick = () => {this.active = cellGUID; };
-            cell.appendChild(isActive);
+            const activate = template.content.firstChild! as HTMLElement;
+            activate.onclick = () => {
+                this.setActive(cellGUID);
 
-            // add a button to close the widget
+                const data = this._viewers.get(this._active);
+                assert(data !== undefined);
+                this.activeChanged(cellGUID, data.current);
+            };
+            cell.appendChild(activate);
+
+            // add a button to remove the widget
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
                 style="top: 8px; right: 40px;">
                     <span>${CLOSE_SVG}</span>
                     <span class="chsp-tooltip">remove viewer</span>
                 </button>`;
-            const close = template.content.firstChild! as HTMLElement;
-            close.onclick = () => {
-                this.removeWidget(cellGUID);
+            const remove = template.content.firstChild! as HTMLElement;
+            remove.onclick = () => {
+                this.onremove(cellGUID);
+                this._removeWidget(cellGUID);
                 this._setupGrid(this._viewers.size);
             };
-            cell.appendChild(close);
+            cell.appendChild(remove);
 
             // add a button to duplicate the widget
             template.innerHTML = `<button
@@ -471,24 +476,22 @@ export class StructureViewer {
             const duplicate = template.content.firstChild! as HTMLElement;
 
             duplicate.onclick = () => {
-                const data = this._viewers.get(cellGUID);
-                assert(data !== undefined);
-
-                let index;
-                if (this._indexer.mode === 'structure') {
-                    index = this._indexer.from_structure_atom(data.current.structure);
-                } else {
-                    index = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
-                }
-
                 const newGUID = this._setupGrid(this._viewers.size + 1);
                 if (newGUID.length === 0) {
                     // no new widget, probably because we already have MAX_WIDGETS
                     return;
                 }
                 assert(newGUID.length === 1);
-                this.show(index, newGUID[0]);
-                this.onselect(index);
+                this.setActive(newGUID[0]);
+
+                const data = this._viewers.get(cellGUID);
+                assert(data !== undefined);
+                const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
+                this.show(indexes);
+
+                const newData = this._viewers.get(newGUID[0]);
+                assert(newData !== undefined);
+                this.oncreate(newGUID[0], newData.color, indexes);
             };
 
             cell.appendChild(duplicate);
@@ -524,7 +527,7 @@ export class StructureViewer {
             let i = 0;
             for (const guid of this._viewers.keys()) {
                 if (i >= nwidgets) {
-                    this.removeWidget(guid);
+                    this._removeWidget(guid);
                 }
                 i += 1;
             }
@@ -563,7 +566,7 @@ export class StructureViewer {
                 );
 
                 widget.onselect = (atom: number) => {
-                    if (this._indexer.mode !== 'atom' || this.active !== cellGUID) {
+                    if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
 
@@ -572,14 +575,14 @@ export class StructureViewer {
                     // if the viewer is showing a bigger supercell than [1, 1, 1], the
                     // atom index can be outside of [0, natoms), so make sure it is
                     // inside this range.
-                    const data = this._viewers.get(this.active);
+                    const data = this._viewers.get(this._active);
                     assert(data !== undefined);
                     const atom_id = atom % widget.natoms()!;
                     const indexes = this._indexer.from_structure_atom(data.current.structure, atom_id);
                     this.onselect(indexes);
                 };
 
-                const current = {atom: -1, structure: -1, environment: -1};
+                const current = {atom: undefined, structure: -1, environment: -1};
                 this._viewers.set(cellGUID, {
                     color: color,
                     current: current,
@@ -590,7 +593,6 @@ export class StructureViewer {
                     widget.positionSettingsModal = this._positionSettingsModal;
                 }
                 newGUID.push(cellGUID);
-                this.active = cellGUID;
             }
         }
 

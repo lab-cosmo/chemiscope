@@ -24,7 +24,7 @@ import {MetadataPanel} from './metadata';
 import {StructureViewer} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {addWarningHandler, EnvironmentIndexer} from './utils';
+import {addWarningHandler, EnvironmentIndexer, getNextColor} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
@@ -121,6 +121,7 @@ class DefaultVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
+        // Structure viewer setup
         this.structure = new StructureViewer(
             config.structure,
             config.j2sPath,
@@ -129,25 +130,43 @@ class DefaultVisualizer {
             dataset.environments,
         );
 
-        this.map = new PropertiesMap(
-            config.map,
-            this._indexer,
-            dataset.properties,
-        );
-
-        this.map.active = this.structure.active;
-
         if (config.loadStructure !== undefined) {
             this.structure.loadStructure = config.loadStructure;
         }
 
-        this.structure.onselect = (indexes) => {
-            this.map.select(indexes);
-            if (indexes.structure > 0 && indexes.environment > 0) {
-              this.info.show(indexes);
-            }
+        this.structure.activeChanged = (guid, indexes) => {
+            this.map.setActive(guid);
+            this.info.show(indexes);
         };
 
+        this.structure.onselect = (indexes) => {
+            this.map.select(indexes);
+            this.info.show(indexes);
+        };
+
+        this.structure.onremove = (guid) => {
+            this.map.removeMarker(guid);
+        };
+
+        this.structure.oncreate = (guid, color, indexes) => {
+            this.map.addMarker(guid, color, indexes);
+            this.info.show(indexes);
+        };
+
+        // map setup
+        this.map = new PropertiesMap(config.map, this._indexer, dataset.properties);
+
+        this.map.onselect = (indexes) => {
+            this.info.show(indexes);
+            this.structure.show(indexes);
+        };
+
+        this.map.activeChanged = (guid, indexes) => {
+            this.info.show(indexes);
+            this.structure.setActive(guid);
+        };
+
+        // information table & slider setup
         this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
@@ -156,31 +175,10 @@ class DefaultVisualizer {
         this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
-        this.map.onselect = (indexes) => {
-            this.info.show(indexes);
-            this.structure.show(indexes);
-        };
-
-        this.structure.onremove = (guid) => {
-            this.map.removeMarker(guid);
-        };
-
-        this.map.onremove = (guid) => {
-            this.structure.removeWidget(guid);
-        };
-
-        this.structure.activate = (guid) => {
-            this.map.active = guid;
-        };
-
-        this.map.activate = (guid) => {
-            this.structure.active = guid;
-        };
-
         const initial = {environment: 0, structure: 0, atom: 0};
+        this.map.addMarker(this.structure.active, getNextColor([]), initial);
         this.structure.show(initial);
         this.info.show(initial);
-        this.map.select(initial);
     }
 
     /**
