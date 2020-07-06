@@ -76,7 +76,23 @@ function validateConfig(o: JsObject) {
         throw Error('missing "structure" key in chemiscope config');
     }
 
-    // TODO: validate presets?
+    if ('presets' in o) {
+        if (typeof o.presets !== 'object' || o.presets === null) {
+            throw Error(`"presets" must be an object in chemiscope config`);
+        }
+
+        const presets = o.presets as JsObject;
+
+        for (const key in presets) {
+            if (key === 'map' || key === 'structure') {
+                if (typeof presets[key] !== 'object' || presets[key] === null) {
+                    throw Error(`"presets.${key}" must be an object in chemiscope config`);
+                }
+            } else {
+                throw Error(`invalid "presets.${key}" key in chemiscope config`);
+            }
+        }
+    }
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
         throw Error('missing "j2sPath" key in chemiscope config');
