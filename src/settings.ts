@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {getByID} from './utils';
+import {getByID, sendWarning} from './utils';
 
 /**
  * Possible HTML attributes to attach to a setting
@@ -296,23 +296,40 @@ export abstract class SettingsGroup {
      * Properties starting with an underscore are ignored.
      */
     public applyPresets(presets: SettingsPreset): void {
+        // make a copy of the presets since we will be changing it below
+        const copy = JSON.parse(JSON.stringify(presets));
+
         this.foreachSetting((keys, setting) => {
             assert(keys.length >= 1);
-            let root = presets as any;
+            let root = copy as any;
+            let parent;
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
                     // this key is missing from the presets
                     return;
                 }
+                parent = root;
                 root = root[key];
             }
             const lastkey = keys[keys.length - 1];
 
             if (lastkey in root) {
                 setting.value = root[lastkey];
+
+                // remove used keys from the presets to be able to warn on
+                // unused keys
+                delete root[lastkey];
+                if (parent !== undefined && Object.keys(root).length === 0) {
+                    // if we removed all keys from a sub-object, remove the sub-object
+                    assert(keys.length >= 2);
+                    delete parent[keys[keys.length - 2]];
+                }
             }
         });
-        // TODO: warn on unused keys from presets
+
+        if (Object.keys(copy).length !== 0) {
+            sendWarning(`ignored unkown presets '${JSON.stringify(copy)}'`);
+        }
     }
 
     /**
