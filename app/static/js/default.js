@@ -149,15 +149,16 @@ function setupDefaultChemiscope(j2sPath) {
     }
 }
 
-function download(filename, text) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
+function download(filename, content) {
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = URL.createObjectURL(new Blob([content], {type: 'application/json'}));
+    a.style.display = 'none';
 
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }, 2000);
 }
