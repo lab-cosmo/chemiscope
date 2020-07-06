@@ -10,8 +10,9 @@ import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatte
 
 import {Property} from '../dataset';
 
+import {EnvironmentIndexer, Indexes} from '../indexer';
 import {SettingModificationOrigin, SettingsPreset} from '../settings';
-import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
+import {GUID, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';

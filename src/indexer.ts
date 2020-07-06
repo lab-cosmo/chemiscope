@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Environment, Structure, UserStructure} from '../dataset';
+import {Environment, Structure, UserStructure} from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only

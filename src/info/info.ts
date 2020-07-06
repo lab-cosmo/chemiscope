@@ -6,7 +6,8 @@
 import assert from 'assert';
 
 import {Property} from '../dataset';
-import {EnvironmentIndexer, generateGUID, getByID, Indexes} from '../utils';
+import {EnvironmentIndexer, Indexes} from '../indexer';
+import {generateGUID, getByID} from '../utils';
 
 import {Slider} from './slider';
 import {Table} from './table';

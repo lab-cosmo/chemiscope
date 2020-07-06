@@ -7,8 +7,9 @@ import assert from 'assert';
 
 import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
 
+import {EnvironmentIndexer, Indexes} from '../indexer';
 import {SettingsPreset} from '../settings';
-import {EnvironmentIndexer, GUID, Indexes, PositioningCallback} from '../utils';
+import {GUID, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './utils';
