@@ -18,6 +18,7 @@
  * @preferred
  */
 
+import {EnvironmentIndexer} from './indexer';
 import {EnvironmentInfo} from './info';
 import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
@@ -25,7 +26,7 @@ import {SettingsPreset} from './settings';
 import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {addWarningHandler, EnvironmentIndexer, getNextColor} from './utils';
+import {addWarningHandler, getNextColor} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
