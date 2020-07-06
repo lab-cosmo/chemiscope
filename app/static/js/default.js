@@ -74,8 +74,13 @@ function setupChemiscope(json) {
     }).catch(e => setTimeout(() => {throw e;}));
 }
 
+const IGNORED_JSMOL_ERRORS = [
+    "IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.",
+    "IndexSizeError: Index or size is negative or greater than the allowed amount",
+];
+
 function displayError(error) {
-    if (error.toString() === "IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.") {
+    if (IGNORED_JSMOL_ERRORS.includes(error.toString())) {
         // Ignores mysterious JSMol resize error we really have no clear way to fix.
         return;
     }
