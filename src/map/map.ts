@@ -624,10 +624,12 @@ export class PropertiesMap {
         const y = this._yValues();
         const z = this._zValues();
 
+        const type = this._is3D() ? 'scatter3d' : 'scattergl';
+
         // The main trace, containing default data
         const main = {
             name: '',
-            type: 'scattergl',
+            type: type,
 
             x: x[0],
             y: y[0],
@@ -658,7 +660,7 @@ export class PropertiesMap {
         // this._selectedMarker around.
         const selected = {
             name: 'selected',
-            type: 'scattergl',
+            type: type,
 
             x: [NaN],
             y: [NaN],
@@ -681,12 +683,14 @@ export class PropertiesMap {
 
         const traces = [main as Data, selected as Data];
 
+        const legendNames = this._legendNames().slice(2);
+        const showlegend = this._showlegend().slice(2);
         // add empty traces to be able to display the symbols legend
         // one trace for each possible symbol
         for (let s = 0; s < this._data.maxSymbols; s++) {
             const data = {
-                name: '',
-                type: 'scattergl',
+                name: legendNames[s],
+                type: type,
 
                 x: [NaN],
                 y: [NaN],
@@ -698,7 +702,7 @@ export class PropertiesMap {
                     symbol: s,
                 },
                 mode: 'markers',
-                showlegend: false,
+                showlegend: showlegend[s],
             };
             traces.push(data as Data);
         }
@@ -717,6 +721,7 @@ export class PropertiesMap {
         layout.coloraxis.cmin = this._settings.color.min.value;
         layout.coloraxis.cmax = this._settings.color.max.value;
         layout.coloraxis.colorbar.title.text = this._settings.color.property.value;
+        layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout as Partial<Layout>, DEFAULT_CONFIG as Config)
@@ -757,12 +762,9 @@ export class PropertiesMap {
             this.onselect(indexes);
         });
 
-        // check if we need to go to 3D mode
-        if (this._settings.z.property.value !== '') {
-            this._switch3D();
-        }
-        // trigger update of the plot symbol to conditionally show legend
-        this._settings.symbol.value = this._settings.symbol.value;
+        // TODO
+        // // trigger update of the plot symbol to conditionally show legend
+        // this._settings.symbol.value = this._settings.symbol.value;
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateAllMarkers();
