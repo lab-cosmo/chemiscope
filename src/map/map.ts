@@ -240,6 +240,7 @@ export class PropertiesMap {
         symbol: HTMLSetting<'string'>;
         size: {
             property: HTMLSetting<'string'>;
+            mode: HTMLSetting<'string'>;
             factor: HTMLSetting<'number'>;
         };
     };
@@ -717,6 +718,7 @@ export class PropertiesMap {
 
             palette: new HTMLSetting('string', 'inferno'),
             size: {
+                mode: new HTMLSetting('string', ''),
                 factor: new HTMLSetting('number', 50),
                 property: new HTMLSetting('string', ''),
             },
@@ -829,6 +831,7 @@ export class PropertiesMap {
         }
         this._settings.size.property.bind(selectSizeProperty, 'value');
         this._settings.size.factor.bind('chsp-size-factor', 'value');
+        this._settings.size.mode.bind('chsp-size-mode', 'value');
     }
 
     /** Actually create the Plotly plot */
