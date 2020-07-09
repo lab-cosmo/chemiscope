@@ -1140,9 +1140,23 @@ export class PropertiesMap {
             const defaultSize = this._is3D() ? 2000 : 150;
             values = sizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
-                const scaled = userFactor * (v + 0.05 - min) / (max - min);
+                let scaled;
+                switch (scaleMode) {
+                  case 'inverse':
+                    scaled = (max - v + 0.05) / (max - min);
+                    break;
+                  case 'log':
+                    scaled = Math.log((max - v + 0.05) / (max - min));
+                    break;
+                  case 'sqrt':
+                    scaled = Math.sqrt((v + 0.05 - min) / (max - min));
+                    break;
+                  default:
+                    scaled = (v + 0.05 - min) / (max - min);
+                    break;
+                }
                 // since we are using scalemode: 'area', square the scaled value
-                return defaultSize * scaled * scaled;
+                return defaultSize * scaled * scaled * userFactor * userFactor;
             });
         } else {
             // we need to use an array instead of a single value because of
