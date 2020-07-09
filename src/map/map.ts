@@ -393,7 +393,8 @@ export class PropertiesMap {
         } else {
             this._active = activeGUID;
             const factor = this._settings.size.factor.value;
-            this._restyle({'marker.size': this._sizes(factor, 1)} as Data, 1);
+            const scaleMode = this._settings.size.mode.value;
+            this._restyle({'marker.size': this._sizes(factor, scaleMode, 1)} as Data, 1);
         }
 
         const markerData = this._selected.get(this._active);
@@ -683,13 +684,28 @@ export class PropertiesMap {
 
         // ======= markers size
         this._settings.size.property.onchange = () => {
+            if (this._settings.size.property.value !== '') {
+              this._settings.size.mode.enable();
+            } else {
+              this._settings.size.mode.value = '';
+              this._settings.size.mode.disable();
+            }
             const factor = this._settings.size.factor.value;
-            this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
+            const scaleMode = this._settings.size.mode.value;
+
+            this._restyle({ 'marker.size': this._sizes(factor, scaleMode, 0) } as Data, 0);
         };
 
         this._settings.size.factor.onchange = () => {
             const factor = this._settings.size.factor.value;
-            this._restyle({ 'marker.size': this._sizes(factor, 0) } as Data, 0);
+            const scaleMode = this._settings.size.mode.value;
+            this._restyle({ 'marker.size': this._sizes(factor, scaleMode, 0) } as Data, 0);
+        };
+
+        this._settings.size.mode.onchange = () => {
+            const factor = this._settings.size.factor.value;
+            const scaleMode = this._settings.size.mode.value;
+            this._restyle({ 'marker.size': this._sizes(factor, scaleMode, 0) } as Data, 0);
         };
     }
 
@@ -1101,7 +1117,7 @@ export class PropertiesMap {
      *
      * The size scaling parameter should be given in `sizeSliderValue`.
      */
-    private _sizes(sizeSliderValue: number, trace?: number): Array<number | number[]> {
+    private _sizes(sizeSliderValue: number, scaleMode?: string, trace?: number): Array<number | number[]> {
         // Transform the linear value from the slider into a logarithmic scale
         const logSlider = (value: number) => {
             const min_slider = 1;
@@ -1285,6 +1301,7 @@ export class PropertiesMap {
 
         // Change the data that vary between 2D and 3D mode
         const factor = this._settings.size.factor.value;
+        const scaleMode = this._settings.size.mode.value;
         this._restyle({
             // transparency messes with depth sorting in 3D mode, even with
             // line width set to 0 ¯\_(ツ)_/¯
@@ -1292,7 +1309,7 @@ export class PropertiesMap {
             'marker.line.color': this._lineColors(),
             'marker.line.width': [0, 2],
             // size change from 2D to 3D
-            'marker.size': this._sizes(factor),
+            'marker.size': this._sizes(factor, scaleMode),
             'marker.sizemode': 'area',
         } as Data, [0, 1]);
 
@@ -1332,13 +1349,14 @@ export class PropertiesMap {
 
         // Change the data that vary between 2D and 3D mode
         const factor = this._settings.size.factor.value;
+        const scaleMode = this._settings.size.mode.value;
         this._restyle({
             // transparency messes with depth sorting in 3D mode
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
             'marker.line.width': [1, 2],
             // size change from 2D to 3D
-            'marker.size': this._sizes(factor),
+            'marker.size': this._sizes(factor, scaleMode),
         } as Data, [0, 1]);
 
         this._relayout({
@@ -1402,9 +1420,10 @@ export class PropertiesMap {
               }
 
               const factor = this._settings.size.factor.value;
+              const scaleMode = this._settings.size.mode.value;
               this._restyle({
                   'marker.color': this._colors(1),
-                  'marker.size': this._sizes(factor, 1),
+                  'marker.size': this._sizes(factor, scaleMode, 1),
                   'marker.symbol': symbols,
                   'x': this._xValues(1),
                   'y': this._yValues(1),
