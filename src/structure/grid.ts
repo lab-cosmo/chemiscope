@@ -10,7 +10,7 @@ import {checkStructure, Environment, JsObject, Structure, UserStructure} from '.
 import {EnvironmentIndexer, Indexes} from '../indexer';
 import {SettingsPreset} from '../settings';
 import {GUID, PositioningCallback} from '../utils';
-import {generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
+import {enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './utils';
 import {JSmolWidget, LoadOptions} from './widget';
@@ -134,8 +134,6 @@ export class ViewersGrid {
     // path to the j2s files used by JSmol.
     // saved for instantiating new Widget instances
     private _j2spath: string;
-    // storage for the overall presets
-    private _presets: SettingsPreset;
     /// GUID of the currently active widget
     private _active: GUID;
     /// Map of Widgets GUIDS to their color, widget, and current structure
@@ -167,7 +165,6 @@ export class ViewersGrid {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._j2spath = j2sPath;
-        this._presets = config.presets;
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
@@ -198,6 +195,10 @@ export class ViewersGrid {
 
         this._active = getFirstKey(this._viewers);
         this.setActive(this._active);
+
+        const data = this._viewers.get(this.active);
+        assert(data !== undefined);
+        data.widget.applyPresets(config.presets);
 
         // get the 'delay' setting inside the current widget setting
         this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
@@ -354,6 +355,40 @@ export class ViewersGrid {
         }
     }
 
+    /**
+     * Apply the given setting preset to all viewers in the grid.
+     *
+     * The presets must be given in viewer creation order.
+     *
+     * @param presets settings presets for all viewers in the grid
+     */
+    public applyPresets(presets: SettingsPreset[]): void {
+        if (presets.length === 0) {
+            return;
+        }
+
+        assert(presets.length === this._viewers.size);
+        for (const [i, data] of enumerate(this._viewers.values())) {
+            data.widget.applyPresets(presets[i]);
+        }
+    }
+
+    /**
+     * Get the current values of settings for all viewers in the grid.
+     *
+     * The presets are given in viewer creation order.
+     *
+     * @return the viewers settings in an array, suitable to be used with
+     *         [[applyPresets]]
+     */
+    public dumpSettings(): SettingsPreset[] {
+        const presets = [];
+        for (const data of this._viewers.values()) {
+            presets.push(data.widget.dumpSettings());
+        }
+        return presets;
+    }
+
     /*
     * Removes a widget from the structure viewer grid.
     * Will not remove a widget if it is the last one in the structure viewer
@@ -492,11 +527,16 @@ export class ViewersGrid {
 
                 const data = this._viewers.get(cellGUID);
                 assert(data !== undefined);
-                const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
-                this.show(indexes);
 
                 const newData = this._viewers.get(newGUID[0]);
                 assert(newData !== undefined);
+
+                // use the same settings as the duplicated widget
+                newData.widget.applyPresets(data.widget.dumpSettings());
+
+                const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
+                this.show(indexes);
+
                 this.oncreate(newGUID[0], newData.color, indexes);
             };
 
@@ -570,7 +610,6 @@ export class ViewersGrid {
                     this._j2spath,
                     cellGUID,
                 );
-                widget.applyPresets(this._presets);
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {

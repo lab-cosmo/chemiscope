@@ -53,7 +53,7 @@ export interface Config {
 
 interface Presets {
     map: SettingsPreset;
-    structure: SettingsPreset;
+    structure: SettingsPreset[];
 }
 
 /** @hidden
@@ -153,8 +153,9 @@ class DefaultVisualizer {
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
         // Structure viewer setup
+        const structuresPreset = getPresetsArray(config.presets, 'structure');
         this.structure = new ViewersGrid(
-            {id: config.structure, presets: getPresets(config.presets, 'structure')},
+            {id: config.structure, presets: structuresPreset.length > 0 ? structuresPreset[0] : {}},
             config.j2sPath,
             this._indexer,
             dataset.structures,
@@ -227,6 +228,33 @@ class DefaultVisualizer {
     }
 
     /**
+     * Get the current values of settings for all panels in the visualizer
+     *
+     * @return the viewers settings, suitable to be used with [[applyPresets]]
+     */
+    public dumpSettings(): Presets {
+        return {
+            map: this.map.dumpSettings(),
+            structure: this.structure.dumpSettings(),
+        };
+    }
+
+    /**
+     * Apply the given setting preset to all panels in the visualizer
+     *
+     * @param presets settings presets for all panels
+     */
+    public applyPresets(presets: Partial<Presets>): void {
+        if (presets.map !== undefined) {
+            this.map.applyPresets(presets.map);
+        }
+
+        if (presets.structure !== undefined) {
+            this.structure.applyPresets(presets.structure);
+        }
+    }
+
+    /**
      * Dumps the dataset and settings as a JSON string
      */
     public dump(): string {
@@ -240,7 +268,7 @@ function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
 
-function getPresets(presets: Partial<Presets> | undefined, key: 'map' | 'structure'): SettingsPreset {
+function getPresets(presets: Partial<Presets> | undefined, key: 'map'): SettingsPreset {
     if (presets === undefined) {
         return {};
     }
@@ -257,6 +285,22 @@ function getPresets(presets: Partial<Presets> | undefined, key: 'map' | 'struc
         }
     } else {
         return {};
+    }
+}
+
+function getPresetsArray(presets: Partial<Presets> | undefined, key: 'structure'): SettingsPreset[] {
+    if (presets === undefined) {
+        return [];
+    }
+    if (key in presets) {
+        const subPreset = presets[key];
+        if (Array.isArray(subPreset)) {
+            return subPreset;
+        } else {
+            throw Error(`invalid type '${typeof subPreset}' for ${key}, should be an array`);
+        }
+    } else {
+        return [];
     }
 }
 
