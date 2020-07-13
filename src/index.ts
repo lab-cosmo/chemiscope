@@ -18,6 +18,8 @@
  * @preferred
  */
 
+import assert from 'assert';
+
 import {EnvironmentIndexer} from './indexer';
 import {EnvironmentInfo} from './info';
 import {PropertiesMap} from './map';
@@ -26,7 +28,7 @@ import {SettingsPreset} from './settings';
 import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {addWarningHandler, getNextColor} from './utils';
+import {addWarningHandler, getNextColor, GUID} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
@@ -54,6 +56,7 @@ export interface Config {
 interface Presets {
     map: SettingsPreset;
     structure: SettingsPreset[];
+    pinned: number[];
 }
 
 /** @hidden
@@ -81,17 +84,7 @@ function validateConfig(o: JsObject) {
             throw Error(`"presets" must be an object in chemiscope config`);
         }
 
-        const presets = o.presets as JsObject;
-
-        for (const key in presets) {
-            if (key === 'map' || key === 'structure') {
-                if (typeof presets[key] !== 'object' || presets[key] === null) {
-                    throw Error(`"presets.${key}" must be an object in chemiscope config`);
-                }
-            } else {
-                throw Error(`invalid "presets.${key}" key in chemiscope config`);
-            }
-        }
+        validatePresets(o.presets as JsObject);
     }
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
@@ -105,6 +98,40 @@ function validateConfig(o: JsObject) {
 
     if ('loadStructure' in o && o.loadStructure !== undefined && !isFunction(o.loadStructure)) {
         throw Error('"loadStructure" should be a function in chemiscope config');
+    }
+}
+
+function validatePresets(presets: JsObject) {
+    const checkObject = (key: string, o: unknown) => {
+        if (typeof o !== 'object' || o === null) {
+            throw Error(`"presets.${key}" must be an object`);
+        }
+    };
+
+    const checkArray = (key: string, o: unknown) => {
+        if (!Array.isArray(o)) {
+            throw Error(`"presets.${key}" must be an array`);
+        }
+    };
+
+    for (const key in presets) {
+        if (key === 'map') {
+            checkObject(key, presets.map);
+        } else if (key === 'structure') {
+            checkArray(key, presets.structure);
+            for (const value of presets.structure as unknown[]) {
+                checkObject('structure entry', value);
+            }
+        } else if (key === 'pinned') {
+            checkArray(key, presets.pinned);
+            for (const value of presets.pinned as unknown[]) {
+                if (!(Number.isInteger(value) && value as number >= 0)) {
+                    throw Error('"presets.pinned" must be an array of number');
+                }
+            }
+        } else {
+            throw Error(`invalid "presets.${key}" key in chemiscope config`);
+        }
     }
 }
 
@@ -136,8 +163,10 @@ class DefaultVisualizer {
     public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
-    // Stores raw input input so we can output it as JSON later
+    // Stores raw input input so we can give it back later
     private _dataset: Dataset;
+    // Keep the list of pinned environments around to be able to apply presets
+    private _pinned: GUID[];
 
     // the constructor is private because the main entry point is the static
     // `load` function
@@ -146,6 +175,7 @@ class DefaultVisualizer {
         validateDataset(dataset as unknown as JsObject);
 
         this._dataset = dataset;
+        this._pinned = [];
 
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
@@ -178,11 +208,17 @@ class DefaultVisualizer {
 
         this.structure.onremove = (guid) => {
             this.map.removeMarker(guid);
+
+            // remove the guid from this._pinned
+            const index = this._pinned.indexOf(guid);
+            assert(index > -1);
+            this._pinned.splice(index, 1);
         };
 
         this.structure.oncreate = (guid, color, indexes) => {
             this.map.addMarker(guid, color, indexes);
             this.info.show(indexes);
+            this._pinned.push(guid);
         };
 
         // map setup
@@ -212,7 +248,9 @@ class DefaultVisualizer {
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
         const initial = {environment: 0, structure: 0, atom: 0};
-        this.map.addMarker(this.structure.active, getNextColor([]), initial);
+        const firstGUID = this.structure.active;
+        this.map.addMarker(firstGUID, getNextColor([]), initial);
+        this._pinned.push(firstGUID);
         this.structure.show(initial);
         this.info.show(initial);
     }
@@ -235,6 +273,7 @@ class DefaultVisualizer {
     public dumpSettings(): Presets {
         return {
             map: this.map.dumpSettings(),
+            pinned: this.structure.pinned().map((value) => value.environment),
             structure: this.structure.dumpSettings(),
         };
     }
@@ -245,8 +284,45 @@ class DefaultVisualizer {
      * @param presets settings presets for all panels
      */
     public applyPresets(presets: Partial<Presets>): void {
+        validatePresets(presets);
+
         if (presets.map !== undefined) {
             this.map.applyPresets(presets.map);
+        }
+
+        if (presets.pinned !== undefined) {
+            // remove all viewers except from the first one and start fresh
+            for (const guid of this._pinned.slice(1)) {
+                this.map.removeMarker(guid);
+                this.structure.removeViewer(guid);
+            }
+            this._pinned = [this._pinned[0]];
+
+            // Change the first viewer/marker
+            assert(presets.pinned.length > 0);
+            const indexes = this._indexer.from_environment(presets.pinned[0]);
+            this.map.select(indexes);
+            this.structure.show(indexes);
+            this.info.show(indexes);
+
+            // Add new viewers as needed
+            for (const environment of presets.pinned.slice(1)) {
+                // tslint:disable-next-line: no-shadowed-variable
+                const indexes = this._indexer.from_environment(environment);
+                const data = this.structure.duplicate(this._pinned[0]);
+                if (data === undefined) {
+                    throw Error('too many environments in \'pinned\' preset');
+                }
+                const [guid, color] = data;
+                this.map.addMarker(guid, color, indexes);
+                this.map.setActive(guid);
+                this._pinned.push(guid);
+
+                this.structure.setActive(guid);
+                this.structure.show(indexes);
+
+                this.info.show(indexes);
+            }
         }
 
         if (presets.structure !== undefined) {

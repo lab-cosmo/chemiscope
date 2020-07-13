@@ -212,6 +212,17 @@ export class ViewersGrid {
     }
 
     /**
+     * Get the current list of environments showed inside the different viewer
+     */
+    public pinned(): Indexes[] {
+        const result = [];
+        for (const data of this._viewers.values()) {
+            result.push(data.current);
+        }
+        return result;
+    }
+
+    /**
      * Show a new structure, as identified by `indexes` in the active viewer.
      *
      * This will switch to the structure at index `indexes.structure`, and if
@@ -222,36 +233,7 @@ export class ViewersGrid {
      * @param  indexes         structure / atom pair to display
      */
     public show(indexes: Indexes) {
-        const data = this._viewers.get(this._active);
-        assert(data !== undefined);
-
-        const widget = data.widget;
-        if (data.current.structure !== indexes.structure) {
-            const options: Partial<LoadOptions> = {
-                packed: false,
-                trajectory: true,
-            };
-            assert(indexes.structure < this._structures.length);
-
-            if (this._environments !== undefined) {
-                options.environments = this._environments[indexes.structure];
-                if (this._indexer.mode === 'atom') {
-                    options.highlight = indexes.atom;
-                }
-            }
-
-            widget.load(`inline '${this._structureForJSmol(indexes.structure)}'`, options);
-        }
-
-        if (this._indexer.mode === 'atom') {
-            if (data.current.atom !== indexes.atom) {
-                widget.highlight(indexes.atom);
-            }
-        } else {
-            widget.highlight(undefined);
-        }
-
-        data.current = indexes;
+        this._showInViewer(this.active, indexes);
     }
 
     /**
@@ -259,12 +241,10 @@ export class ViewersGrid {
      * `initial` GUID.
      *
      * @param  initial GUID of the viewer to duplicate
-     * @param  presets settings presets to use for the new viewer; default to
-     *                 using the same settings as the duplicated viewer
-     * @return the guid of the new viewer, or `undefined` if we already reached
-     *         the viewer limit.
+     * @return `undefined` if we already reached the viewer limit, or a 2-array
+     *          containing the GUID and color of the new viewer.
      */
-    public duplicate(initial: GUID, presets?: SettingsPreset): GUID | undefined {
+    public duplicate(initial: GUID): [GUID, string] | undefined {
         const newGUIDs = this._setupGrid(this._viewers.size + 1);
         if (newGUIDs.length === 0) {
             // no new widget, probably because we already have MAX_WIDGETS
@@ -279,15 +259,12 @@ export class ViewersGrid {
         assert(newData !== undefined);
 
         // use the same settings as the duplicated widget
-        newData.widget.applyPresets(
-            presets === undefined ? data.widget.dumpSettings() : presets,
-        );
+        newData.widget.applyPresets(data.widget.dumpSettings());
 
         // show the same structure/environment
-        const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
-        this.show(indexes);
+        this._showInViewer(newGUID, data.current);
 
-        return newGUID;
+        return [newGUID, newData.color];
     }
 
     /**
@@ -474,6 +451,39 @@ export class ViewersGrid {
         return this._cachedStructures[index];
     }
 
+    private _showInViewer(guid: GUID, indexes: Indexes): void {
+        const data = this._viewers.get(guid);
+        assert(data !== undefined);
+
+        const widget = data.widget;
+        if (data.current.structure !== indexes.structure) {
+            const options: Partial<LoadOptions> = {
+                packed: false,
+                trajectory: true,
+            };
+            assert(indexes.structure < this._structures.length);
+
+            if (this._environments !== undefined) {
+                options.environments = this._environments[indexes.structure];
+                if (this._indexer.mode === 'atom') {
+                    options.highlight = indexes.atom;
+                }
+            }
+
+            widget.load(`inline '${this._structureForJSmol(indexes.structure)}'`, options);
+        }
+
+        if (this._indexer.mode === 'atom') {
+            if (data.current.atom !== indexes.atom) {
+                widget.highlight(indexes.atom);
+            }
+        } else {
+            widget.highlight(undefined);
+        }
+
+        data.current = indexes;
+    }
+
     /**
      * Get an unused color to identify a viewer
      *
@@ -554,12 +564,14 @@ export class ViewersGrid {
             const duplicate = template.content.firstChild! as HTMLElement;
 
             duplicate.onclick = () => {
-                const guid = this.duplicate(cellGUID);
-                if (guid === undefined) {
+                const duplicated = this.duplicate(cellGUID);
+                if (duplicated === undefined) {
                     return;
                 }
 
+                const guid = duplicated[0];
                 this.setActive(guid);
+
                 const data = this._viewers.get(this.active);
                 assert(data !== undefined);
                 this.oncreate(this.active, data.color, data.current);
