@@ -255,6 +255,69 @@ export class ViewersGrid {
     }
 
     /**
+     * Add a new structure viewer to the grid as a copy of the viewer with the
+     * `initial` GUID.
+     *
+     * @param  initial GUID of the viewer to duplicate
+     * @param  presets settings presets to use for the new viewer; default to
+     *                 using the same settings as the duplicated viewer
+     * @return the guid of the new viewer, or `undefined` if we already reached
+     *         the viewer limit.
+     */
+    public duplicate(initial: GUID, presets?: SettingsPreset): GUID | undefined {
+        const newGUIDs = this._setupGrid(this._viewers.size + 1);
+        if (newGUIDs.length === 0) {
+            // no new widget, probably because we already have MAX_WIDGETS
+            return undefined;
+        }
+        assert(newGUIDs.length === 1);
+        const newGUID = newGUIDs[0];
+
+        const data = this._viewers.get(initial);
+        assert(data !== undefined);
+        const newData = this._viewers.get(newGUID);
+        assert(newData !== undefined);
+
+        // use the same settings as the duplicated widget
+        newData.widget.applyPresets(
+            presets === undefined ? data.widget.dumpSettings() : presets,
+        );
+
+        // show the same structure/environment
+        const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
+        this.show(indexes);
+
+        return newGUID;
+    }
+
+    /**
+     * Removes the viewer wiith the given `guid` from the viewer grid.
+     *
+     * @param guid GUID of the viewer to remove
+     */
+    public removeViewer(guid: GUID): void {
+        if (this._viewers.size === 1) {
+            sendWarning('can not remove the last viewer from the grid');
+        }
+
+        // If we removed the active marker, change the active one
+        if (this._active === guid) {
+            this.setActive(getFirstKey(this._viewers, guid));
+        }
+
+        // remove HTML inserted by the widget
+        const data = this._viewers.get(guid);
+        assert(data !== undefined);
+        data.widget.remove();
+
+        // remove the cell containing the widget
+        const cell = getByID(`gi-${guid}`);
+        cell.remove();
+
+        this._viewers.delete(guid);
+    }
+
+    /**
      * Start playing the trajectory of structures in this dataset, until
      * `advance` returns false
      */
@@ -389,32 +452,6 @@ export class ViewersGrid {
         return presets;
     }
 
-    /*
-    * Removes a widget from the structure viewer grid.
-    * Will not remove a widget if it is the last one in the structure viewer
-    */
-    private _removeWidget(guid: GUID) {
-        if (this._viewers.size === 1) {
-            return;
-        }
-
-        // If we removed the active marker, change the active one
-        if (this._active === guid) {
-            this.setActive(getFirstKey(this._viewers, guid));
-        }
-
-        // remove HTML inserted by the widget
-        const data = this._viewers.get(guid);
-        assert(data !== undefined);
-        data.widget.remove();
-
-        // remove the cell containing the widget
-        const cell = getByID(`gi-${guid}`);
-        cell.remove();
-
-        this._viewers.delete(guid);
-    }
-
     /**
      * Get the structure at the given index in a format JSmol can undertand
      * and load. [[Structure]] already rendered as strings are cached for faster
@@ -502,7 +539,7 @@ export class ViewersGrid {
             const remove = template.content.firstChild! as HTMLElement;
             remove.onclick = () => {
                 this.onremove(cellGUID);
-                this._removeWidget(cellGUID);
+                this.removeViewer(cellGUID);
                 this._setupGrid(this._viewers.size);
             };
             cell.appendChild(remove);
@@ -517,27 +554,15 @@ export class ViewersGrid {
             const duplicate = template.content.firstChild! as HTMLElement;
 
             duplicate.onclick = () => {
-                const newGUID = this._setupGrid(this._viewers.size + 1);
-                if (newGUID.length === 0) {
-                    // no new widget, probably because we already have MAX_WIDGETS
+                const guid = this.duplicate(cellGUID);
+                if (guid === undefined) {
                     return;
                 }
-                assert(newGUID.length === 1);
-                this.setActive(newGUID[0]);
 
-                const data = this._viewers.get(cellGUID);
+                this.setActive(guid);
+                const data = this._viewers.get(this.active);
                 assert(data !== undefined);
-
-                const newData = this._viewers.get(newGUID[0]);
-                assert(newData !== undefined);
-
-                // use the same settings as the duplicated widget
-                newData.widget.applyPresets(data.widget.dumpSettings());
-
-                const indexes = this._indexer.from_structure_atom(data.current.structure, data.current.atom);
-                this.show(indexes);
-
-                this.oncreate(newGUID[0], newData.color, indexes);
+                this.oncreate(this.active, data.color, data.current);
             };
 
             cell.appendChild(duplicate);
@@ -573,7 +598,7 @@ export class ViewersGrid {
             let i = 0;
             for (const guid of this._viewers.keys()) {
                 if (i >= nwidgets) {
-                    this._removeWidget(guid);
+                    this.removeViewer(guid);
                 }
                 i += 1;
             }
