@@ -45,7 +45,7 @@ export class StructureSettings extends SettingsGroup {
     };
 
     /// The HTML element containing the settings modal
-    private _settingsModal: HTMLElement;
+    private _modal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
@@ -105,8 +105,8 @@ export class StructureSettings extends SettingsGroup {
 
         this._positionSettingsModal = positionSettings;
 
-        this._settingsModal = this._insertHTML(root, guid);
-        document.body.appendChild(this._settingsModal);
+        this._modal = this._insertHTML(root, guid);
+        document.body.appendChild(this._modal);
         this._bindSettings(guid);
 
         this.applyPresets(presets);
@@ -117,7 +117,12 @@ export class StructureSettings extends SettingsGroup {
      * document
      */
     public remove(): void {
-        this._settingsModal.remove();
+        if (this._modal.classList.contains('show')) {
+            const close = this._modal.querySelector('.close');
+            assert(close !== null);
+            (close as HTMLElement).click();
+        }
+        this._modal.remove();
     }
 
     /**
