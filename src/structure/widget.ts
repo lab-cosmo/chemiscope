@@ -455,6 +455,10 @@ export class JSmolWidget {
             // once we are done, disable the callback to prevent it from firing
             // on restyle/reload
             this._loadedCallback = undefined;
+
+            // make sure any change to the setting before the structure is fully
+            // loaded are applied
+            this._updateState();
         };
 
         this._do_load(data, keepOrientation);
@@ -596,6 +600,9 @@ export class JSmolWidget {
         // recursively bind the right update function to HTMLSetting `onchange`
         const bindUpdateState = (object: any) => {
             for (const key in object) {
+                if (key.startsWith('_')) {
+                    continue;
+                }
                 const setting = Reflect.get(object, key);
                 if ('onchange' in setting) {
                     // if any setting changes, update the full state of JSmol
