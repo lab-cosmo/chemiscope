@@ -3,7 +3,9 @@
  * @module main
  */
 
-import {default as markdown} from 'markdown-it';
+import assert from 'assert';
+import markdown from 'markdown-it';
+
 import {Metadata} from './dataset';
 import {generateGUID, getByID} from './utils';
 
@@ -109,6 +111,11 @@ export class MetadataPanel {
      */
     public remove(): void {
         this._name.innerHTML = '';
+        if (this._modal.classList.contains('show')) {
+            const close = this._modal.querySelector('.close');
+            assert(close !== null);
+            (close as HTMLElement).click();
+        }
         this._modal.remove();
     }
 }

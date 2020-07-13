@@ -62,7 +62,7 @@ export class MapSettings extends SettingsGroup {
     };
 
     /// The HTML element containing the settings modal
-    private _settingsModal: HTMLElement;
+    private _modal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
@@ -118,8 +118,8 @@ export class MapSettings extends SettingsGroup {
         }
 
         this._positionSettingsModal = positionSettings;
-        this._settingsModal = this._insertSettingsHTML(root);
-        document.body.appendChild(this._settingsModal);
+        this._modal = this._insertSettingsHTML(root);
+        document.body.appendChild(this._modal);
 
         this._bind(properties);
         this.applyPresets(presets);
@@ -129,7 +129,12 @@ export class MapSettings extends SettingsGroup {
      * Remove all HTML added by this [[MapSettings]] in the current document
      */
     public remove(): void {
-        this._settingsModal.remove();
+        if (this._modal.classList.contains('show')) {
+            const close = this._modal.querySelector('.close');
+            assert(close !== null);
+            (close as HTMLElement).click();
+        }
+        this._modal.remove();
     }
 
     /**
