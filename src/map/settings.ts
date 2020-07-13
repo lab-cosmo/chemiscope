@@ -93,7 +93,7 @@ export class MapSettings extends SettingsGroup {
         }
         this.symbol.validate = settingsValidator(validSymbols, 'symbol');
 
-        this.palette = new HTMLSetting('string', '');
+        this.palette = new HTMLSetting('string', 'inferno');
         this.palette.validate = settingsValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.size = {
