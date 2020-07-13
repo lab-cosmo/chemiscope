@@ -331,11 +331,25 @@ class DefaultVisualizer {
     }
 
     /**
-     * Dumps the dataset and settings as a JSON string
+     * Get the dataset used to create the current visualization
+     *
+     * If the dataset is using user-specified structures and a loading callback
+     * [[Config.loadStructure]]; you can request all structure to be fully
+     * resolved and placed inside the dataset.
+     *
+     * @param  getStructures should all [[UserStructure]] resolved and placed
+     *                       inside the dataset?
+     * @return the dataset currently visualized
      */
-    public dump(): string {
-        const dumpdata = { ...this._dataset, ...{ presets: {map: this.map.dumpSettings()} } };
-        return JSON.stringify(dumpdata);
+    public dataset(getStructures: boolean = false): Dataset {
+        const copy = JSON.parse(JSON.stringify(this._dataset));
+        if (getStructures) {
+            copy.structures = [];
+            for (let i = 0; i < this._dataset.structures.length; i++) {
+                copy.structures.push(this.structure.loadStructure(i, this._dataset.structures[i]));
+            }
+        }
+        return copy;
     }
 }
 

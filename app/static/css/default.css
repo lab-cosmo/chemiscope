@@ -93,6 +93,10 @@ main .embed-responsive-item {
 
 }
 
+.clickable {
+    cursor: pointer;
+}
+
 #chemiscope-meta {
     position: absolute;
     top: 0;
@@ -111,4 +115,33 @@ main .embed-responsive-item {
 #chemiscope-info {
     flex: 0 1 auto;
     width: 100%;
+}
+
+#upload {
+    width: 280px;
+}
+
+#open-save-menu {
+    background-color: #e2e6ea;
+    border-color: #ced4da;
+}
+
+#open-save-menu:hover {
+    background-color: #f8f9fa;
+}
+
+.grid {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+}
+
+.grid-1-1 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-2-1 {
+    grid-template-columns: 2fr 1fr;
 }

@@ -1,4 +1,5 @@
-function toJson(path, buffer) {
+/// Read JSON or gzipped JSON and return the parsed object
+function readJSON(path, buffer) {
     let text;
     if (path.endsWith(".gz")) {
         text = pako.inflate(buffer, {to: "string"});
@@ -17,6 +18,7 @@ function toJson(path, buffer) {
 let VISUALIZER = undefined;
 let DATASET = undefined;
 let J2S_PATH = undefined;
+let HIDE_ON_DEMAND_STRUCTURES = undefined;
 
 function loadStructureOnDemand(index, structure) {
     /**
@@ -31,19 +33,21 @@ function loadStructureOnDemand(index, structure) {
 }
 
 function setupChemiscope(json) {
-
     const config = {
         map:       'chemiscope-map',
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
         structure: 'chemiscope-structure',
-        presets:   json.presets,
+        presets:   json.presets || {},
         j2sPath:   J2S_PATH,
     };
 
     if (DATASET !== undefined && DATASET.includes("Azaphenacenes.json.gz")) {
         // example of asynchronous structure loading
         config.loadStructure = loadStructureOnDemand;
+        HIDE_ON_DEMAND_STRUCTURES.disabled = true;
+    } else {
+        HIDE_ON_DEMAND_STRUCTURES.disabled = false;
     }
 
     if (VISUALIZER !== undefined) {
@@ -127,7 +131,7 @@ function loadExample(url) {
                 return response.arrayBuffer();
             }
         })
-        .then(buffer => toJson(url, buffer))
+        .then(buffer => readJSON(url, buffer))
         .then(json => setupChemiscope(json))
         .catch(e => setTimeout(() => {throw e;}));
 }
@@ -140,23 +144,57 @@ function setupDefaultChemiscope(j2sPath) {
         displayError(error);
     }
 
-    const upload = document.getElementById('upload');
-    upload.onchange = () => {
+    HIDE_ON_DEMAND_STRUCTURES = document.createElement('style');
+    HIDE_ON_DEMAND_STRUCTURES.type = 'text/css';
+    document.head.appendChild(HIDE_ON_DEMAND_STRUCTURES);
+    HIDE_ON_DEMAND_STRUCTURES.sheet.insertRule('.hide-on-demand-structures {display: none}');
+    HIDE_ON_DEMAND_STRUCTURES.disabled = false;
+
+    const loadDataset = document.getElementById('load-dataset');
+    loadDataset.onchange = () => {
         startLoading();
-        const name = upload.files[0].name;
-        DATASET = `user-loaded: ${name}`;
+        const file = loadDataset.files[0];
+        DATASET = `user-loaded: ${file.name}`;
         const reader = new FileReader();
         reader.onload = () => {
-            const json = toJson(name, reader.result);
-            setupChemiscope(json);
+            const dataset = readJSON(file.name, reader.result);
+            setupChemiscope(dataset);
         }
-        reader.readAsArrayBuffer(upload.files[0]);
+        reader.readAsArrayBuffer(file);
+    }
+
+    const saveDataset = document.getElementById('save-dataset');
+    const includePresets = document.getElementById('save-dataset-presets');
+    const includeStructures = document.getElementById('save-dataset-structures');
+    saveDataset.onclick = () => {
+        const dataset = VISUALIZER.dataset(includeStructures.checked);
+        console.log(includePresets.checked);
+        if (includePresets.checked) {
+            dataset.presets = VISUALIZER.dumpSettings();
+        }
+        startDownload(JSON.stringify(dataset));
+    }
+
+    const loadPresets = document.getElementById('load-presets');
+    loadPresets.onchange = () => {
+        const file = loadPresets.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            const presets = readJSON(file.name, reader.result);
+            VISUALIZER.applyPresets(presets);
+        }
+        reader.readAsArrayBuffer(file);
+    }
+
+    const savePresets = document.getElementById('save-presets');
+    savePresets.onclick = () => {
+        startDownload(JSON.stringify(VISUALIZER.dumpSettings()));
     }
 }
 
-function download(filename, content) {
+function startDownload(content) {
     const a = document.createElement('a');
-    a.download = filename;
+    a.download = '';
     a.href = URL.createObjectURL(new Blob([content], {type: 'application/json'}));
     a.style.display = 'none';
 
