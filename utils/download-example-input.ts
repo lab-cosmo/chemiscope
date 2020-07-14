@@ -14,7 +14,7 @@ childProcess.execSync(
     ' --depth=1 ' + ' --branch=gh-pages ' + tmpdir.name,
 );
 
-for (const file of ['CSD-500.json.gz', 'Arginine-Dipeptide.json.gz', 'Qm7b.json.gz', 'Azaphenacenes.json.gz', 'Zeolites.json.gz']) {
+for (const file of ['CSD-1000R.json.gz', 'Arginine-Dipeptide.json.gz', 'Qm7b.json.gz', 'Azaphenacenes.json.gz', 'Zeolites.json.gz']) {
     fs.renameSync(`${tmpdir.name}/${file}`, `./app/${file}`);
 }
 

@@ -253,6 +253,12 @@ class DefaultVisualizer {
         this._pinned.push(firstGUID);
         this.structure.show(initial);
         this.info.show(initial);
+
+        // setup pinned values from the preset if needed
+        if (config.presets !== undefined) {
+            delete config.presets.map;
+            this.applyPresets(config.presets);
+        }
     }
 
     /**
@@ -342,7 +348,13 @@ class DefaultVisualizer {
      * @return the dataset currently visualized
      */
     public dataset(getStructures: boolean = false): Dataset {
-        const copy = JSON.parse(JSON.stringify(this._dataset));
+        // preserve NaN values in the copy
+        const copy = JSON.parse(
+            JSON.stringify(this._dataset, (_, value) => {
+                return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
+            }),
+            (_, value) => value === '***NaN***' ? NaN : value,
+        );
         if (getStructures) {
             copy.structures = [];
             for (let i = 0; i < this._dataset.structures.length; i++) {
