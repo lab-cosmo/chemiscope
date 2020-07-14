@@ -68,7 +68,14 @@
                             <label style="display: inline;" class="custom-file-label" for=upload>Load your own dataset</label>
                         </div>
                     </div>
-                </div>
+
+                    <ul class="navbar-nav mr-auto">
+                    <li class="nav-item" onclick="download('chemiscope.json', VISUALIZER.dump())" style="cursor:pointer">
+                        <a class="nav-link">
+                            <i class="fa fa-save"></i> Save
+                        </a>
+                    </li>
+                    </ul>
             </nav>
         </header>
 
@@ -162,7 +169,9 @@
                     <a href="https://cosmo.epfl.ch">COSMO lab</a> at EPFL, with
                     support from the <a href="http://nccr-marvel.ch">NCCR
                     MARVEL</a> and <a href="http://max-centre.eu">MAX</a>
-                    european center of excellence.
+                    european center of excellence. Early development was 
+                    influenced by the <a href="https://github.com/cosmo-epfl/isv">
+                    Interactive Sketch-map Visualizer</a>
                 </p>
 
                 <h5>References</h5>
@@ -213,7 +222,6 @@
                     </a> of the standard viewer, which you can use to
                     display locally datasets prepared in the chemiscope
                     JSON format.
-
                 </p>
               </div>
             </div>

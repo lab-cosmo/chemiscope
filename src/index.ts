@@ -10,8 +10,8 @@
  *
  * Other organization of the visualization are possible by using the classes
  * responsible for each sub-panel separately, instead of using the
- * [[DefaultVisualizer]]. In this case, users should make sure to finish the
- * plumbing by setting the right callbacks on each element used.
+ * [[DefaultVisualizer]]. In this case, developers should make sure to finish
+ * the plumbing by setting the right callbacks on each element used.
  *
  * @packageDocumentation
  * @module main
@@ -19,9 +19,9 @@
  */
 
 import {EnvironmentInfo} from './info';
-import {PropertiesMap} from './map';
+import {MapPresets, PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
-import {StructureViewer} from './structure';
+import {StructurePresets, StructureViewer} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
 import {addWarningHandler, EnvironmentIndexer} from './utils';
@@ -35,12 +35,20 @@ require('./static/chemiscope.css');
 export interface Config {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string;
-    /** Id of the DOM element to use for the [[PropertiesMap|map]] */
-    map: string;
+    map: {
+        /** Id of the DOM element to use for the [[PropertiesMap|map]] */
+        id: string;
+        /** Presets for map settings */
+        presets: MapPresets;
+    };
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
     info: string;
     /** Id of the DOM element to use for the [[StructureViewer|structure viewer]] */
-    structure: string;
+    structure: {
+        id: string;
+        presets: StructurePresets;
+    };
+
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
     /** Custom structure loading callback, used to set [[StructureViewer.loadStructure]] */
@@ -55,16 +63,16 @@ function validateConfig(o: JsObject) {
         throw Error('missing "meta" key in chemiscope config');
     }
 
-    if (!('map' in o && typeof o.map === 'string')) {
-        throw Error('missing "map" key in chemiscope config');
+    if (!('map' in o && 'id' in (o.map as JsObject) && typeof (o.map as JsObject).id === 'string')) {
+        throw Error('missing "map.id" key in chemiscope config');
     }
 
     if (!('info' in o && typeof o.info === 'string')) {
         throw Error('missing "info" key in chemiscope config');
     }
 
-    if (!('structure' in o && typeof o.structure === 'string')) {
-        throw Error('missing "structure" key in chemiscope config');
+    if (!('structure' in o && 'id' in (o.structure as JsObject) && typeof (o.structure  as JsObject).id === 'string')) {
+        throw Error('missing "structure.id" key in chemiscope config');
     }
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
@@ -93,7 +101,7 @@ class DefaultVisualizer {
      * the browser while everything is loading.
      *
      * @param  config  configuration of the visualizer
-     * @param  dataset dataset to load
+     * @param  dataset visualizer input, containing a dataset and optional visualization presets
      * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
     public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
@@ -109,12 +117,16 @@ class DefaultVisualizer {
     public structure: StructureViewer;
 
     private _indexer: EnvironmentIndexer;
+    // Stores raw input input so we can output it as JSON later
+    private _dataset: Dataset;
 
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: Config, dataset: Dataset) {
         validateConfig(config as unknown as JsObject);
         validateDataset(dataset as unknown as JsObject);
+
+        this._dataset = dataset;
 
         const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
@@ -133,9 +145,8 @@ class DefaultVisualizer {
             config.map,
             this._indexer,
             dataset.properties,
+            this.structure.active,
         );
-
-        this.map.active = this.structure.active;
 
         if (config.loadStructure !== undefined) {
             this.structure.loadStructure = config.loadStructure;
@@ -191,6 +202,14 @@ class DefaultVisualizer {
         this.meta.remove();
         this.info.remove();
         this.structure.remove();
+    }
+
+    /**
+     * Dumps the dataset and settings as a JSON string
+     */
+    public dump(): string {
+        const dumpdata = { ...this._dataset, ...{ presets: {map: this.map.dumpPresets()} } };
+        return JSON.stringify(dumpdata);
     }
 }
 

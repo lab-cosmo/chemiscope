@@ -8,4 +8,6 @@
  */
 
 import {PropertiesMap} from './map';
-export {PropertiesMap};
+import {MapPresets} from './settings';
+
+export {PropertiesMap, MapPresets};

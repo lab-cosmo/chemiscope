@@ -9,4 +9,6 @@
  */
 
 import {StructureViewer} from './structure';
-export {StructureViewer};
+import {StructurePresets} from './settings';
+
+export {StructureViewer, StructurePresets};

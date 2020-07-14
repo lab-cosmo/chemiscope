@@ -27,9 +27,7 @@ export interface Dataset {
      * For atomic properties, the `values` array of the property should have
      * the same size as the [[Dataset.environments|environments list]].
      */
-    properties: {
-        [name: string]: Property;
-    };
+    properties: { [name: string]: Property };
     /**
      * List of atom-centered environments in the dataset.
      *

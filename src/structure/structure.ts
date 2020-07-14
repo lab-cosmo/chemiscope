@@ -10,6 +10,7 @@ import {EnvironmentIndexer, Indexes, PositioningCallback} from '../utils';
 import {generateGUID, getByID, getNextColor, sendWarning} from '../utils';
 
 import {structure2JSmol} from './jsmol';
+import {StructurePresets} from './settings';
 import {JSmolWidget, LoadOptions} from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
@@ -118,6 +119,8 @@ export class StructureViewer {
     // path to the j2s files used by JSmol.
     // saved for instantiating new Widget instances
     private _j2spath: string;
+    // storage for the overall presets
+    private _presets?: StructurePresets;
     /// GUID of the Active Widget
     private _active: string;
     /// Map of Widgets GUIDS to their color, widget, and current structure
@@ -138,7 +141,7 @@ export class StructureViewer {
      *                     used to highlight the selected environment
      */
     constructor(
-        id: string,
+        config: { id: string, presets?: StructurePresets },
         j2sPath: string,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
@@ -149,6 +152,7 @@ export class StructureViewer {
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._j2spath = j2sPath;
+        this._presets = config.presets;
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
@@ -168,7 +172,7 @@ export class StructureViewer {
         this.onremove = () => {};
         this.activate = () => {};
 
-        const root = getByID(id);
+        const root = getByID(config.id);
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
@@ -561,6 +565,7 @@ export class StructureViewer {
                     this._j2spath,
                     cellGUID,
                 );
+                widget.applyPresets(this._presets);
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this.active !== cellGUID) {

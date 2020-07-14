@@ -104,6 +104,10 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
     }
 }
 
+export interface NumericProperties {
+    [name: string]: NumericProperty;
+}
+
 /** @hidden
  * Data storage for maps, differenciating between numeric/string and
  * structure/atom properties
@@ -114,15 +118,9 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
  */
 export class MapData {
     /** Structure properties */
-    public structure: {
-        [name: string]: NumericProperty;
-    };
-
+    public structure: NumericProperties;
     /** Atomic properties */
-    public atom: {
-        [name: string]: NumericProperty;
-    };
-
+    public atom: NumericProperties;
     /** Maximal number of symbols (i.e. different values in string properties) in this dataset */
     public maxSymbols: number;
 
