@@ -174,10 +174,11 @@ export class MapSettings {
 
         this.size = {
             factor : new HTMLSetting('number', 0),
-            property : new HTMLSetting('string', ''),
             mode : new HTMLSetting('string', ''),
+            property : new HTMLSetting('string', ''),
         };
         this.size.property.validate = settingsValidator(propertiesName.concat(['']), 'size');
+        this.size.mode.validate = settingsValidator(['linear', 'log', 'inverse', 'sqrt', ''], 'size');
         this.size.factor.validate = (value) => {
             if (value < 0 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
