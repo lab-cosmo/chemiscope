@@ -685,6 +685,17 @@ export class PropertiesMap {
 
         const legendNames = this._legendNames().slice(2);
         const showlegend = this._showlegend().slice(2);
+        assert(legendNames.length === showlegend.length);
+        const currentLength = legendNames.length;
+
+        if (this._data.maxSymbols > 0) {
+            // resize & fill arrays
+            legendNames.length = this._data.maxSymbols;
+            legendNames.fill('', currentLength);
+            showlegend.length = this._data.maxSymbols;
+            showlegend.fill(false, currentLength);
+        }
+
         // add empty traces to be able to display the symbols legend
         // one trace for each possible symbol
         for (let s = 0; s < this._data.maxSymbols; s++) {
@@ -699,7 +710,7 @@ export class PropertiesMap {
                 marker: {
                     color: 'black',
                     size: 10,
-                    symbol: s,
+                    symbol: this._is3D() ? get3DSymbol(s) : s,
                 },
                 mode: 'markers',
                 showlegend: showlegend[s],
@@ -1070,7 +1081,7 @@ export class PropertiesMap {
             // line width set to 0 ¯\_(ツ)_/¯
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
-            'marker.line.width': [0, 2],
+            'marker.line.width': [1, 2],
             // size change from 2D to 3D
             'marker.size': this._sizes(),
         } as Data, [0, 1]);
