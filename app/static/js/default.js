@@ -164,6 +164,7 @@ function setupDefaultChemiscope(j2sPath) {
     }
 
     const saveDataset = document.getElementById('save-dataset');
+    const saveDatasetName = document.getElementById('save-dataset-name');
     const includePresets = document.getElementById('save-dataset-presets');
     const includeStructures = document.getElementById('save-dataset-structures');
     saveDataset.onclick = () => {
@@ -172,7 +173,7 @@ function setupDefaultChemiscope(j2sPath) {
         if (includePresets.checked) {
             dataset.presets = VISUALIZER.dumpSettings();
         }
-        startDownload(JSON.stringify(dataset));
+        startDownload(saveDatasetName.value, JSON.stringify(dataset));
     }
 
     const loadPresets = document.getElementById('load-presets');
@@ -187,14 +188,15 @@ function setupDefaultChemiscope(j2sPath) {
     }
 
     const savePresets = document.getElementById('save-presets');
+    const savePresetsName = document.getElementById('save-presets-name');
     savePresets.onclick = () => {
-        startDownload(JSON.stringify(VISUALIZER.dumpSettings()));
+        startDownload(savePresetsName.value, JSON.stringify(VISUALIZER.dumpSettings()));
     }
 }
 
-function startDownload(content) {
+function startDownload(filename, content) {
     const a = document.createElement('a');
-    a.download = '';
+    a.download = filename;
     a.href = URL.createObjectURL(new Blob([content], {type: 'application/json'}));
     a.style.display = 'none';
 
