@@ -624,8 +624,8 @@ export class JSmolWidget {
         this._settings.supercell[2].onchange = () => this._reload();
 
         // Deal with activation/de-activation of environments
-        this._settings.environments.activated.onchange = () => {
-            this._toggleEnvironmentSettings();
+        this._settings.environments.activated.onchange = (value) => {
+            this._enableEnvironmentSettings(value);
             this._updateState();
         };
 
