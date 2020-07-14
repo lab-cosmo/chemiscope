@@ -130,18 +130,20 @@ main .embed-responsive-item {
     background-color: #f8f9fa;
 }
 
-.grid {
+.grid-1-1 {
     display: grid;
     align-items: center;
     justify-content: center;
     align-content: start;
     grid-gap: 1em;
-}
-
-.grid-1-1 {
     grid-template-columns: 1fr 1fr;
 }
 
-.grid-2-1 {
-    grid-template-columns: 2fr 1fr;
+.width-10em {
+    width: 10em;
+}
+
+.btn-outline-secondary-less-hover:hover {
+    color: inherit;
+    background-color: #f2f2f2;
 }
