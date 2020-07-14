@@ -284,7 +284,7 @@ export class PropertiesMap {
         /// Sets the active marker on this map
         /// default of markerData.current is -1 so that currents of value 0 are
         /// still updated
-        if (markerData.current === undefined || indexes.environment !== markerData.current ) {
+        if (markerData.current === 0 || indexes.environment !== markerData.current ) {
             markerData.current = indexes.environment;
             this._updateSelectedMarker(selectedGUID, markerData);
         }
