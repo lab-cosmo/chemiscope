@@ -377,18 +377,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Function to hide the marker when switching from 2D to 3D
-     */
-    private _hideMarker(hiddenGUID: string): void {
-      const marker = document.getElementById(`chsp-selected-${hiddenGUID}`);
-      if (marker !== null) {
-          if (marker.parentNode !== null) {
-              marker.parentNode.removeChild(marker);
-          }
-      }
-    }
-
-    /**
      * Apply saved settings to the map.
      */
     public applyPresets(presets: Partial<MapPresets>) {
@@ -400,6 +388,18 @@ export class PropertiesMap {
      */
     public dumpPresets() {
         return this._settings.dumpPresets();
+    }
+
+    /**
+     * Function to hide the marker when switching from 2D to 3D
+     */
+    private _hideMarker(hiddenGUID: string): void {
+      const marker = document.getElementById(`chsp-selected-${hiddenGUID}`);
+      if (marker !== null) {
+          if (marker.parentNode !== null) {
+              marker.parentNode.removeChild(marker);
+          }
+      }
     }
 
     /** Forward to Ploty.restyle */
