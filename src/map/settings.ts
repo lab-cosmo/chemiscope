@@ -114,8 +114,8 @@ const MAP_DEFAULTS: MapPresets = {
     palette: 'inferno',
     size: {
         factor: 50.0,
-        property: '',
         mode: '',
+        property: '',
     },
     symbol: '',
 };
@@ -231,8 +231,8 @@ export class MapSettings {
             palette: this.palette.value,
             size: {
                 factor: this.size.factor.value,
-                property: this.size.property.value,
                 mode: this.size.mode.value,
+                property: this.size.property.value,
             },
             symbol: this.symbol.value,
         };
@@ -380,6 +380,6 @@ export class MapSettings {
         }
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind('chsp-size-factor', 'value');
--       this.size.mode.bind('chsp-size-mode', 'value');
+        this.size.mode.bind('chsp-size-mode', 'value');
     }
 }
