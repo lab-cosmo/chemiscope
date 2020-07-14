@@ -1,3 +1,21 @@
+/**
+ * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+ * module output them, and they can be useful.
+ */
+function parseJSONwithNaN(text) {
+    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
+        return value === "***NaN***" ? NaN : value;
+    });
+}
+
+/** Write NaN in the JSON file. */
+function stringifyJSONwithNaN(object) {
+    const string = JSON.stringify(object, (key, value) => {
+        return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
+    })
+    return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
+}
+
 /// Read JSON or gzipped JSON and return the parsed object
 function readJSON(path, buffer) {
     let text;
@@ -7,12 +25,7 @@ function readJSON(path, buffer) {
         const decoder = new TextDecoder("utf-8");
         text = decoder.decode(buffer);
     }
-
-    // Allow NaN in the JSON file. They are not part of the spec, but
-    // Python's json module output them, and they can be useful.
-    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), function(key, value) {
-        return value === "***NaN***" ? NaN : value;
-    });
+    return parseJSONwithNaN(text);
 }
 
 let VISUALIZER = undefined;
@@ -169,11 +182,10 @@ function setupDefaultChemiscope(j2sPath) {
     const includeStructures = document.getElementById('save-dataset-structures');
     saveDataset.onclick = () => {
         const dataset = VISUALIZER.dataset(includeStructures.checked);
-        console.log(includePresets.checked);
         if (includePresets.checked) {
             dataset.presets = VISUALIZER.dumpSettings();
         }
-        startDownload(saveDatasetName.value, JSON.stringify(dataset));
+        startDownload(saveDatasetName.value, stringifyJSONwithNaN(dataset));
     }
 
     const loadPresets = document.getElementById('load-presets');
