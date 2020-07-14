@@ -271,7 +271,7 @@ export class PropertiesMap {
         // Plotly.restyle fires the plotly_click event, so ensure we only run
         // the update once.
         // https://github.com/plotly/plotly.js/issues/1025
-        if (data.current === 0 || indexes.environment !== data.current) {
+        if (data.current !== indexes.environment) {
             data.current = indexes.environment;
             // Sets the active marker on this map
             this._updateSelectedMarker(data);
@@ -745,15 +745,14 @@ export class PropertiesMap {
                 return;
             }
 
-            let data;
-            // if someone has clicked on a selection marker, set to active
-            // this is only used in 3D mode, since in 2D the HTML marker
-            // directly deal with the click event
-            if (event.points[0].data.name === 'selected' ) {
-                for (const [i, [guid, markerData]] of enumerate(this._selected.entries())) {
+            let environment = event.points[0].pointNumber;
+            if (this._is3D() && event.points[0].data.name === 'selected') {
+                // if someone has clicked on a selection marker, set to active
+                // this is only used in 3D mode, since in 2D the HTML marker
+                // directly deal with the click event
+                for (const [i, [guid, data]] of enumerate(this._selected.entries())) {
                     if (event.points[0].pointNumber === i) {
-                        data = markerData;
-
+                        environment = data.current;
                         if (this._active !== guid) {
                             this.setActive(guid);
                             this.activeChanged(guid, this._indexer.from_environment(data.current));
@@ -763,19 +762,11 @@ export class PropertiesMap {
                 }
             }
 
-            const indexes = (data !== undefined) ?
-                this._indexer.from_environment(data.current) :
-                // default if someone has clicked generally on the map or on a
-                // place the selected marker doesn't recognize
-                this._indexer.from_environment(event.points[0].pointNumber);
+            const indexes = this._indexer.from_environment(environment);
 
             this.select(indexes);
             this.onselect(indexes);
         });
-
-        // TODO
-        // // trigger update of the plot symbol to conditionally show legend
-        // this._settings.symbol.value = this._settings.symbol.value;
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateAllMarkers();
