@@ -1113,7 +1113,7 @@ export class PropertiesMap {
             // transparency messes with depth sorting in 3D mode
             // https://github.com/plotly/plotly.js/issues/4111
             'marker.line.color': this._lineColors(),
-            'marker.line.width': [1, 2],
+            'marker.line.width': [1, 0],
             // size change from 2D to 3D
             'marker.size': this._sizes(),
         } as Data, [0, 1]);
