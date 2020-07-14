@@ -228,8 +228,6 @@ export class PropertiesMap {
             this._addMarker(generateGUID());
             this.active = this._selected.keys().next().value;
         }
-        console.log(this.active)
-
         this._settings = new MapSettings(
             this._root,
             this._data[this._indexer.mode],
