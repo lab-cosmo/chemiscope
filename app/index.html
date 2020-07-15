@@ -269,7 +269,7 @@
                       </div>
                   </div>
 
-                  <div class="grid grid-1-1" style="margin-top: 1em">
+                  <div class="grid-1-1" style="margin-top: 1em">
                       <div class="custom-control custom-switch">
                           <input class="custom-control-input" id=save-dataset-settings type="checkbox" checked>
                           <label class="custom-control-label" for=save-dataset-settings>include visualization state</label>
@@ -309,6 +309,21 @@
                           <button class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em" type="button" name="button" id=save-settings>
                               <i class="fa fa-download"></i> save settings
                           </button>
+                      </div>
+
+                      <div class="grid-1-1" style="margin-top: 1em">
+                          <div class="custom-control custom-switch align-middle">
+                              <input class="custom-control-input" id=save-settings-map type="checkbox" checked>
+                              <label class="custom-control-label" for=save-settings-map>include map settings</label>
+                          </div>
+                          <div class="custom-control custom-switch align-middle">
+                              <input class="custom-control-input" id=save-settings-structure type="checkbox" checked>
+                              <label class="custom-control-label" for=save-settings-structure>include structure settings</label>
+                          </div>
+                      </div>
+                      <div class="custom-control custom-switch">
+                          <input class="custom-control-input" id=save-settings-selected type="checkbox" checked>
+                          <label class="custom-control-label" for=save-settings-selected>include selected environments</label>
                       </div>
                   </div>
               </div>
