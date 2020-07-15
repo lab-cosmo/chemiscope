@@ -347,10 +347,20 @@ The default chemiscope interface lives online, at https://chemiscope.org/. But
 there are some cases where you do not want to use an online tool for your own
 dataset, such as scientific article supplementation information. For these use
 cases, a standalone, mostly offline visualizer exists that uses the same input
-file format as the default interface.
+file format as the default interface. You can download the latest version of the
+standalone viewer at
+:download:`https://chemiscope.org/chemiscope_standalone.html`.
 
-To create a standalone visualizer with your own dataset, please follow the steps
-below:
+This file contains all the required HTML and JavaScript code for chemiscope.
+You can then add your own dataset by adding the corresponding JSON file at the
+end of the ``chemiscope_standalone.html`` file.
+
+.. code-block:: bash
+
+    cat chemiscope_standalone.html my-dataset.json > my-dataset.html
+
+To re-build the ``chemiscope_standalone.html`` file from sources, please follow
+the steps below:
 
 .. code-block:: bash
 
@@ -359,11 +369,3 @@ below:
     npm install
     npm run build
     python3 ./utils/generate_standalone.py
-
-This will create a ``standalone.html`` file containing all the required HTML and
-javascript. You can then add your own dataset by adding the corresponding JSON
-file at the end of the ``standalone.html`` file.
-
-.. code-block:: bash
-
-    cat standalone.html my-dataset.json > my-dataset.html
