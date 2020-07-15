@@ -16,7 +16,26 @@ function stringifyJSONwithNaN(object) {
     return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
 }
 
-/// Read JSON or gzipped JSON and return the parsed object
+/**
+ * Read a `file` with FileReader, and use `callback` once loaded.
+ *
+ * The callback should take a single ArrayBuffer parameter.
+ *
+ * @param  {File}     file     user-provided file to read
+ * @param  {Function} callback callback to use once the file is read
+ */
+function readFile(file, callback) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        if (reader.error) {
+            throw Error(`could not read ${file.name}: ${reader.error}`);
+        }
+        callback(reader.result);
+    }
+    reader.readAsArrayBuffer(file);
+}
+
+/** Read JSON or gzipped JSON and return the parsed object */
 function readJSON(path, buffer) {
     let text;
     if (path.endsWith(".gz")) {
@@ -168,12 +187,7 @@ function setupDefaultChemiscope(j2sPath) {
         startLoading();
         const file = loadDataset.files[0];
         DATASET = `user-loaded: ${file.name}`;
-        const reader = new FileReader();
-        reader.onload = () => {
-            const dataset = readJSON(file.name, reader.result);
-            setupChemiscope(dataset);
-        }
-        reader.readAsArrayBuffer(file);
+        readFile(file, (result) => setupChemiscope(readJSON(file.name, result)));
     }
 
     const saveDataset = document.getElementById('save-dataset');
@@ -191,12 +205,7 @@ function setupDefaultChemiscope(j2sPath) {
     const loadSettings = document.getElementById('load-settings');
     loadSettings.onchange = () => {
         const file = loadSettings.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-            const settings = readJSON(file.name, reader.result);
-            VISUALIZER.applySettings(settings);
-        }
-        reader.readAsArrayBuffer(file);
+        readFile(file, (result) => VISUALIZER.applySettings(readJSON(file.name, result)));
     }
 
     const saveSettings = document.getElementById('save-settings');
