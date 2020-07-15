@@ -248,7 +248,7 @@
                   <div class="input-group">
                       <label for=load-dataset class="form-control">
                           pick a file
-                          <input id=load-dataset type="file" accept=".json,.gz" style="display: none;"/>
+                          <input id=load-dataset type="file" accept=".json,.gz" class="hidden-input-file"/>
                       </label>
                       <div class="input-group-append">
                           <button class="btn btn-primary width-10em" type="button" name="button" onclick="document.getElementById('load-dataset').click()">
@@ -291,7 +291,7 @@
                   <div class="input-group">
                       <label for=load-presets class="form-control">
                           pick a file
-                          <input id=load-presets type="file" accept=".json" style="display: none;"/>
+                          <input id=load-presets type="file" accept=".json" class="hidden-input-file"/>
                       </label>
                       <div class="input-group-append">
                           <button class="btn btn-secondary width-10em" type="button" name="button" onclick="document.getElementById('load-presets').click()">
