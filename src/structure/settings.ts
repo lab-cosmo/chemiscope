@@ -12,23 +12,23 @@ import BARS_SVG from '../static/bars.svg';
 import HTML_SETTINGS from './settings.html';
 
 export class StructureSettings extends SettingsGroup {
-    // should we show bonds
+    /// should we show bonds
     public bonds: HTMLSetting<'boolean'>;
-    // should we use space filling representation
+    /// should we use space filling representation
     public spaceFilling: HTMLSetting<'boolean'>;
-    // should we show atoms labels
+    /// should we show atoms labels
     public atomLabels: HTMLSetting<'boolean'>;
-    // should we show unit cell information and lines
+    /// should we show unit cell information and lines
     public unitCell: HTMLSetting<'boolean'>;
     /// Is the current unit cell displayed as a packed cell?
     public packedCell: HTMLSetting<'boolean'>;
     /// number of repetitions in the `a/b/c` direction for the supercell
     public supercell: [HTMLSetting<'int'>, HTMLSetting<'int'>, HTMLSetting<'int'>];
-    // should we spin the represenation
+    // should we spin the representation
     public rotation: HTMLSetting<'boolean'>;
     // which axis system to use (none, xyz, abc)
     public axes: HTMLSetting<'string'>;
-    // keep the orientation constant when loading a new structure if checked
+    // keep the orientation constant when loading a new structure
     public keepOrientation: HTMLSetting<'boolean'>;
     // options related to environments
     public environments: {
