@@ -102,7 +102,7 @@ export class MapSettings extends SettingsGroup {
         };
         this.size.property.validate = settingsValidator(propertiesName.concat(['']), 'size');
         this.size.factor.validate = (value) => {
-            if (value < 0 || value > 100) {
+            if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
