@@ -139,6 +139,15 @@ main .embed-responsive-item {
     grid-template-columns: 1fr 1fr;
 }
 
+.grid-1-1-1 {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
 .width-10em {
     width: 10em;
 }

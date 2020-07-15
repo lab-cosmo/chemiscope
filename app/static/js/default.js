@@ -210,8 +210,21 @@ function setupDefaultChemiscope(j2sPath) {
 
     const saveSettings = document.getElementById('save-settings');
     const saveSettingsName = document.getElementById('save-settings-name');
+    const saveSettingsMap = document.getElementById('save-settings-map');
+    const saveSettingsStructure = document.getElementById('save-settings-structure');
+    const saveSettingsSelected = document.getElementById('save-settings-selected');
     saveSettings.onclick = () => {
-        startDownload(saveSettingsName.value, JSON.stringify(VISUALIZER.saveSettings()));
+        const settings = VISUALIZER.saveSettings();
+        if (!saveSettingsMap.checked) {
+            delete settings.map;
+        }
+        if (!saveSettingsStructure.checked) {
+            delete settings.structure;
+        }
+        if (!saveSettingsSelected.checked) {
+            delete settings.pinned;
+        }
+        startDownload(saveSettingsName.value, JSON.stringify(settings));
     }
 }
 
