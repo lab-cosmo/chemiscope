@@ -8,7 +8,7 @@ import assert from 'assert';
 import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
 
 import {EnvironmentIndexer, Indexes} from '../indexer';
-import {SettingsPreset} from '../settings';
+import {SavedSettings} from '../options';
 import {GUID, PositioningCallback} from '../utils';
 import {enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
 
@@ -154,7 +154,7 @@ export class ViewersGrid {
      *                     used to highlight the selected environment
      */
     constructor(
-        config: { id: string, presets: SettingsPreset },
+        config: { id: string, settings: SavedSettings },
         j2sPath: string,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
@@ -198,7 +198,7 @@ export class ViewersGrid {
 
         const data = this._viewers.get(this.active);
         assert(data !== undefined);
-        data.widget.applyPresets(config.presets);
+        data.widget.applySettings(config.settings);
 
         // get the 'delay' setting inside the current widget setting
         this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
@@ -259,7 +259,7 @@ export class ViewersGrid {
         assert(newData !== undefined);
 
         // use the same settings as the duplicated widget
-        newData.widget.applyPresets(data.widget.dumpSettings());
+        newData.widget.applySettings(data.widget.saveSettings());
 
         // show the same structure/environment
         this._showInViewer(newGUID, data.current);
@@ -396,37 +396,36 @@ export class ViewersGrid {
     }
 
     /**
-     * Apply the given setting preset to all viewers in the grid.
+     * Apply the given saved setting to all viewers in the grid.
      *
-     * The presets must be given in viewer creation order.
+     * The settings must be in viewer creation order.
      *
-     * @param presets settings presets for all viewers in the grid
+     * @param settings settings for all viewers in the grid
      */
-    public applyPresets(presets: SettingsPreset[]): void {
-        if (presets.length === 0) {
+    public applySettings(settings: SavedSettings[]): void {
+        if (settings.length === 0) {
             return;
         }
 
-        assert(presets.length === this._viewers.size);
+        assert(settings.length === this._viewers.size);
         for (const [i, data] of enumerate(this._viewers.values())) {
-            data.widget.applyPresets(presets[i]);
+            data.widget.applySettings(settings[i]);
         }
     }
 
     /**
      * Get the current values of settings for all viewers in the grid.
      *
-     * The presets are given in viewer creation order.
+     * The settings are given in viewer creation order.
      *
-     * @return the viewers settings in an array, suitable to be used with
-     *         [[applyPresets]]
+     * @return the settings in an array, suitable to be used with [[applySettings]]
      */
-    public dumpSettings(): SettingsPreset[] {
-        const presets = [];
+    public saveSettings(): SavedSettings[] {
+        const settings = [];
         for (const data of this._viewers.values()) {
-            presets.push(data.widget.dumpSettings());
+            settings.push(data.widget.saveSettings());
         }
-        return presets;
+        return settings;
     }
 
     /**

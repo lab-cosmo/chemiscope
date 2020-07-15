@@ -24,7 +24,7 @@ import {EnvironmentIndexer} from './indexer';
 import {EnvironmentInfo} from './info';
 import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
-import {SettingsPreset} from './settings';
+import {SavedSettings} from './options';
 import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
@@ -45,17 +45,17 @@ export interface Config {
     info: string;
     /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
     structure: string;
-    /** Settings preset for the map & structure viewer */
-    presets?: Partial<Presets>;
+    /** Settings for the map & structure viewer */
+    settings?: Partial<Settings>;
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: any) => Structure;
 }
 
-interface Presets {
-    map: SettingsPreset;
-    structure: SettingsPreset[];
+interface Settings {
+    map: SavedSettings;
+    structure: SavedSettings[];
     pinned: number[];
 }
 
@@ -79,12 +79,12 @@ function validateConfig(o: JsObject) {
         throw Error('missing "structure" key in chemiscope config');
     }
 
-    if ('presets' in o) {
-        if (typeof o.presets !== 'object' || o.presets === null) {
-            throw Error(`"presets" must be an object in chemiscope config`);
+    if ('settings' in o) {
+        if (typeof o.settings !== 'object' || o.settings === null) {
+            throw Error(`"settings" must be an object in chemiscope config`);
         }
 
-        validatePresets(o.presets as JsObject);
+        validateSettings(o.settings as JsObject);
     }
 
     if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
@@ -101,36 +101,36 @@ function validateConfig(o: JsObject) {
     }
 }
 
-function validatePresets(presets: JsObject) {
+function validateSettings(settings: JsObject) {
     const checkObject = (key: string, o: unknown) => {
         if (typeof o !== 'object' || o === null) {
-            throw Error(`"presets.${key}" must be an object`);
+            throw Error(`"settings.${key}" must be an object`);
         }
     };
 
     const checkArray = (key: string, o: unknown) => {
         if (!Array.isArray(o)) {
-            throw Error(`"presets.${key}" must be an array`);
+            throw Error(`"settings.${key}" must be an array`);
         }
     };
 
-    for (const key in presets) {
+    for (const key in settings) {
         if (key === 'map') {
-            checkObject(key, presets.map);
+            checkObject(key, settings.map);
         } else if (key === 'structure') {
-            checkArray(key, presets.structure);
-            for (const value of presets.structure as unknown[]) {
+            checkArray(key, settings.structure);
+            for (const value of settings.structure as unknown[]) {
                 checkObject('structure entry', value);
             }
         } else if (key === 'pinned') {
-            checkArray(key, presets.pinned);
-            for (const value of presets.pinned as unknown[]) {
+            checkArray(key, settings.pinned);
+            for (const value of settings.pinned as unknown[]) {
                 if (!(Number.isInteger(value) && value as number >= 0)) {
-                    throw Error('"presets.pinned" must be an array of number');
+                    throw Error('"settings.pinned" must be an array of number');
                 }
             }
         } else {
-            throw Error(`invalid "presets.${key}" key in chemiscope config`);
+            throw Error(`invalid "settings.${key}" key in chemiscope config`);
         }
     }
 }
@@ -147,7 +147,7 @@ class DefaultVisualizer {
      * the browser while everything is loading.
      *
      * @param  config  configuration of the visualizer
-     * @param  dataset visualizer input, containing a dataset and optional visualization presets
+     * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
     public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
@@ -165,7 +165,7 @@ class DefaultVisualizer {
     private _indexer: EnvironmentIndexer;
     // Stores raw input input so we can give it back later
     private _dataset: Dataset;
-    // Keep the list of pinned environments around to be able to apply presets
+    // Keep the list of pinned environments around to be able to apply settings
     private _pinned: GUID[];
 
     // the constructor is private because the main entry point is the static
@@ -183,9 +183,9 @@ class DefaultVisualizer {
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
         // Structure viewer setup
-        const structuresPreset = getPresetsArray(config.presets, 'structure');
+        const structuresSettings = getStructureSettings(config.settings);
         this.structure = new ViewersGrid(
-            {id: config.structure, presets: structuresPreset.length > 0 ? structuresPreset[0] : {}},
+            {id: config.structure, settings: structuresSettings.length > 0 ? structuresSettings[0] : {}},
             config.j2sPath,
             this._indexer,
             dataset.structures,
@@ -223,7 +223,7 @@ class DefaultVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            {id: config.map, presets: getPresets(config.presets, 'map')},
+            {id: config.map, settings: getMapSettings(config.settings)},
             this._indexer,
             dataset.properties,
         );
@@ -254,10 +254,10 @@ class DefaultVisualizer {
         this.structure.show(initial);
         this.info.show(initial);
 
-        // setup pinned values from the preset if needed
-        if (config.presets !== undefined) {
-            delete config.presets.map;
-            this.applyPresets(config.presets);
+        // setup pinned values from the settings if needed
+        if (config.settings !== undefined) {
+            delete config.settings.map;
+            this.applySettings(config.settings);
         }
     }
 
@@ -274,29 +274,29 @@ class DefaultVisualizer {
     /**
      * Get the current values of settings for all panels in the visualizer
      *
-     * @return the viewers settings, suitable to be used with [[applyPresets]]
+     * @return the viewers settings, suitable to be used with [[applySettings]]
      */
-    public dumpSettings(): Presets {
+    public saveSettings(): Settings {
         return {
-            map: this.map.dumpSettings(),
+            map: this.map.saveSettings(),
             pinned: this.structure.pinned().map((value) => value.environment),
-            structure: this.structure.dumpSettings(),
+            structure: this.structure.saveSettings(),
         };
     }
 
     /**
-     * Apply the given setting preset to all panels in the visualizer
+     * Apply the given settings to all panels in the visualizer
      *
-     * @param presets settings presets for all panels
+     * @param settings settings for all panels
      */
-    public applyPresets(presets: Partial<Presets>): void {
-        validatePresets(presets);
+    public applySettings(settings: Partial<Settings>): void {
+        validateSettings(settings);
 
-        if (presets.map !== undefined) {
-            this.map.applyPresets(presets.map);
+        if (settings.map !== undefined) {
+            this.map.applySettings(settings.map);
         }
 
-        if (presets.pinned !== undefined) {
+        if (settings.pinned !== undefined) {
             // remove all viewers except from the first one and start fresh
             for (const guid of this._pinned.slice(1)) {
                 this.map.removeMarker(guid);
@@ -305,19 +305,19 @@ class DefaultVisualizer {
             this._pinned = [this._pinned[0]];
 
             // Change the first viewer/marker
-            assert(presets.pinned.length > 0);
-            const indexes = this._indexer.from_environment(presets.pinned[0]);
+            assert(settings.pinned.length > 0);
+            const indexes = this._indexer.from_environment(settings.pinned[0]);
             this.map.select(indexes);
             this.structure.show(indexes);
             this.info.show(indexes);
 
             // Add new viewers as needed
-            for (const environment of presets.pinned.slice(1)) {
+            for (const environment of settings.pinned.slice(1)) {
                 // tslint:disable-next-line: no-shadowed-variable
                 const indexes = this._indexer.from_environment(environment);
                 const data = this.structure.duplicate(this._pinned[0]);
                 if (data === undefined) {
-                    throw Error('too many environments in \'pinned\' preset');
+                    throw Error('too many environments in \'pinned\' setting');
                 }
                 const [guid, color] = data;
                 this.map.addMarker(guid, color, indexes);
@@ -331,8 +331,8 @@ class DefaultVisualizer {
             }
         }
 
-        if (presets.structure !== undefined) {
-            this.structure.applyPresets(presets.structure);
+        if (settings.structure !== undefined) {
+            this.structure.applySettings(settings.structure);
         }
     }
 
@@ -370,36 +370,36 @@ function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
 
-function getPresets(presets: Partial<Presets> | undefined, key: 'map'): SettingsPreset {
-    if (presets === undefined) {
+function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings {
+    if (settings === undefined) {
         return {};
     }
-    if (key in presets) {
-        const subPreset = presets[key];
-        if (typeof subPreset === 'object') {
-            if (subPreset === null) {
-                throw Error(`invalid presets for ${key}, should not be null`);
+    if ('map' in settings) {
+        const map = settings.map;
+        if (typeof map === 'object') {
+            if (map === null) {
+                throw Error(`invalid settings for map, should not be null`);
             } else {
-                return subPreset;
+                return map;
             }
         } else {
-            throw Error(`invalid type '${typeof subPreset}' for ${key}, should be an object`);
+            throw Error(`invalid type '${typeof map}' for map, should be an object`);
         }
     } else {
         return {};
     }
 }
 
-function getPresetsArray(presets: Partial<Presets> | undefined, key: 'structure'): SettingsPreset[] {
-    if (presets === undefined) {
+function getStructureSettings(settings: Partial<Settings> | undefined): SavedSettings[] {
+    if (settings === undefined) {
         return [];
     }
-    if (key in presets) {
-        const subPreset = presets[key];
-        if (Array.isArray(subPreset)) {
-            return subPreset;
+    if ('structure' in settings) {
+        const structure = settings.structure;
+        if (Array.isArray(structure)) {
+            return structure;
         } else {
-            throw Error(`invalid type '${typeof subPreset}' for ${key}, should be an array`);
+            throw Error(`invalid type '${typeof structure}' for structure, should be an array`);
         }
     } else {
         return [];

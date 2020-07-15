@@ -51,7 +51,7 @@ function setupChemiscope(json) {
         info:      'chemiscope-info',
         meta:      'chemiscope-meta',
         structure: 'chemiscope-structure',
-        presets:   json.presets || {},
+        settings:   json.settings || {},
         j2sPath:   J2S_PATH,
     };
 
@@ -178,31 +178,31 @@ function setupDefaultChemiscope(j2sPath) {
 
     const saveDataset = document.getElementById('save-dataset');
     const saveDatasetName = document.getElementById('save-dataset-name');
-    const includePresets = document.getElementById('save-dataset-presets');
+    const includeSettings = document.getElementById('save-dataset-settings');
     const includeStructures = document.getElementById('save-dataset-structures');
     saveDataset.onclick = () => {
         const dataset = VISUALIZER.dataset(includeStructures.checked);
-        if (includePresets.checked) {
-            dataset.presets = VISUALIZER.dumpSettings();
+        if (includeSettings.checked) {
+            dataset.settings = VISUALIZER.saveSettings();
         }
         startDownload(saveDatasetName.value, stringifyJSONwithNaN(dataset));
     }
 
-    const loadPresets = document.getElementById('load-presets');
-    loadPresets.onchange = () => {
-        const file = loadPresets.files[0];
+    const loadSettings = document.getElementById('load-settings');
+    loadSettings.onchange = () => {
+        const file = loadSettings.files[0];
         const reader = new FileReader();
         reader.onload = () => {
-            const presets = readJSON(file.name, reader.result);
-            VISUALIZER.applyPresets(presets);
+            const settings = readJSON(file.name, reader.result);
+            VISUALIZER.applySettings(settings);
         }
         reader.readAsArrayBuffer(file);
     }
 
-    const savePresets = document.getElementById('save-presets');
-    const savePresetsName = document.getElementById('save-presets-name');
-    savePresets.onclick = () => {
-        startDownload(savePresetsName.value, JSON.stringify(VISUALIZER.dumpSettings()));
+    const saveSettings = document.getElementById('save-settings');
+    const saveSettingsName = document.getElementById('save-settings-name');
+    saveSettings.onclick = () => {
+        startDownload(saveSettingsName.value, JSON.stringify(VISUALIZER.saveSettings()));
     }
 }
 

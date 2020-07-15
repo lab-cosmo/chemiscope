@@ -11,12 +11,12 @@ import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatte
 import {Property} from '../dataset';
 
 import {EnvironmentIndexer, Indexes} from '../indexer';
-import {SettingModificationOrigin, SettingsPreset} from '../settings';
+import {OptionModificationOrigin, SavedSettings} from '../options';
 import {GUID, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
-import {AxisSettings, MapSettings} from './settings';
+import {AxisOptions, MapOptions} from './options';
 
 import {COLOR_MAPS} from './colorscales';
 
@@ -190,7 +190,7 @@ export class PropertiesMap {
     /// environment indexer
     private _indexer: EnvironmentIndexer;
     /// Settings of the map
-    private _settings: MapSettings;
+    private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
 
@@ -204,7 +204,7 @@ export class PropertiesMap {
      * @param properties properties to be displayed
      */
     constructor(
-        config: { id: string, presets: SettingsPreset },
+        config: { id: string, settings: SavedSettings },
         indexer: EnvironmentIndexer,
         properties: { [name: string]: Property },
     ) {
@@ -225,11 +225,11 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
-        this._settings = new MapSettings(
+        this._options = new MapOptions(
             this._root,
             this._data[this._indexer.mode],
             (rect) => this.positionSettingsModal(rect),
-            config.presets,
+            config.settings,
         );
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
@@ -253,7 +253,7 @@ export class PropertiesMap {
      */
      public remove(): void {
          this._root.innerHTML = '';
-         this._settings.remove();
+         this._options.remove();
      }
 
     /**
@@ -375,16 +375,16 @@ export class PropertiesMap {
     /**
      * Apply saved settings to the map.
      */
-    public applyPresets(presets: SettingsPreset) {
-        this._settings.applyPresets(presets);
+    public applySettings(settings: SavedSettings) {
+        this._options.applySettings(settings);
     }
 
     /**
-     * Dump the values of the current settings in a way that an be used as
-     * presets.
+     * Save the values of the current settings in a way that an be used with
+     * [[applySettings]] or saved to JSON.
      */
-    public dumpSettings() {
-        return this._settings.dumpSettings();
+    public saveSettings(): SavedSettings {
+        return this._options.saveSettings();
     }
 
     /** Forward to Ploty.restyle */
@@ -400,29 +400,29 @@ export class PropertiesMap {
     /** Add all the required callback to the settings */
     private _connectSettings() {
         // ======= x axis settings
-        this._settings.x.property.onchange = () => {
+        this._options.x.property.onchange = () => {
             const values = this._xValues();
             this._restyle({ x: values }, [0, 1]);
             this._relayout({
-                'scene.xaxis.title': this._settings.x.property.value,
-                'xaxis.title': this._settings.x.property.value,
+                'scene.xaxis.title': this._options.x.property.value,
+                'xaxis.title': this._options.x.property.value,
             } as unknown as Layout);
         };
 
-        this._settings.x.scale.onchange = () => {
+        this._options.x.scale.onchange = () => {
             if (this._is3D()) {
                 this._relayout({
-                    'scene.xaxis.type': this._settings.x.scale.value,
+                    'scene.xaxis.type': this._options.x.scale.value,
                 } as unknown as Layout);
             } else {
-                this._relayout({ 'xaxis.type': this._settings.x.scale.value as Plotly.AxisType });
+                this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
             }
         };
 
         // function creating a function to be used as onchange callback
         // for <axis>.min and <axis>.max
-        const rangeChange = (name: string, axis: AxisSettings) => {
-            return (_: number, origin: SettingModificationOrigin) => {
+        const rangeChange = (name: string, axis: AxisOptions) => {
+            return (_: number, origin: OptionModificationOrigin) => {
                 if (origin === 'JS') {
                     // prevent recursion: this function calls relayout, which then
                     // calls _afterplot, which reset the min/max values.
@@ -440,36 +440,36 @@ export class PropertiesMap {
             };
         };
 
-        this._settings.x.min.onchange = rangeChange('xaxis', this._settings.x);
-        this._settings.x.max.onchange = rangeChange('xaxis', this._settings.x);
+        this._options.x.min.onchange = rangeChange('xaxis', this._options.x);
+        this._options.x.max.onchange = rangeChange('xaxis', this._options.x);
 
         // ======= y axis settings
-        this._settings.y.property.onchange = () => {
+        this._options.y.property.onchange = () => {
             const values = this._yValues();
             this._restyle({ y:  values}, [0, 1]);
             this._relayout({
-                'scene.yaxis.title': this._settings.y.property.value,
-                'yaxis.title': this._settings.y.property.value,
+                'scene.yaxis.title': this._options.y.property.value,
+                'yaxis.title': this._options.y.property.value,
             } as unknown as Layout);
         };
 
-        this._settings.y.scale.onchange = () => {
+        this._options.y.scale.onchange = () => {
             if (this._is3D()) {
                 this._relayout({
-                    'scene.yaxis.type': this._settings.y.scale.value,
+                    'scene.yaxis.type': this._options.y.scale.value,
                 } as unknown as Layout);
             } else {
-                this._relayout({ 'yaxis.type': this._settings.y.scale.value as Plotly.AxisType });
+                this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
             }
         };
 
-        this._settings.y.min.onchange = rangeChange('yaxis', this._settings.y);
-        this._settings.y.max.onchange = rangeChange('yaxis', this._settings.y);
+        this._options.y.min.onchange = rangeChange('yaxis', this._options.y);
+        this._options.y.max.onchange = rangeChange('yaxis', this._options.y);
 
         // ======= z axis settings
-        this._settings.z.property.onchange = () => {
+        this._options.z.property.onchange = () => {
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
-            if (this._settings.z.property.value === '') {
+            if (this._options.z.property.value === '') {
                 if (was3D) {
                     this._switch2D();
                 }
@@ -482,62 +482,62 @@ export class PropertiesMap {
             const values = this._zValues();
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout({
-                'scene.zaxis.title': this._settings.z.property.value,
+                'scene.zaxis.title': this._options.z.property.value,
             } as unknown as Layout);
         };
 
-        this._settings.z.scale.onchange = () => {
-            if (this._settings.z.property.value !== '') {
+        this._options.z.scale.onchange = () => {
+            if (this._options.z.property.value !== '') {
                 this._relayout({
-                    'scene.zaxis.type': this._settings.z.scale.value,
+                    'scene.zaxis.type': this._options.z.scale.value,
                 } as unknown as Layout);
             }
         };
 
-        this._settings.z.min.onchange = rangeChange('zaxis', this._settings.z);
-        this._settings.z.max.onchange = rangeChange('zaxis', this._settings.z);
+        this._options.z.min.onchange = rangeChange('zaxis', this._options.z);
+        this._options.z.max.onchange = rangeChange('zaxis', this._options.z);
 
         // ======= color axis settings
         // setup initial state of the color settings
-        if (this._settings.color.property.value) {
-            this._settings.color.enable();
+        if (this._options.color.property.value) {
+            this._options.color.enable();
             this._colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
 
-            this._settings.color.min.value = min;
-            this._settings.color.max.value = max;
+            this._options.color.min.value = min;
+            this._options.color.max.value = max;
         } else {
-            this._settings.color.min.disable();
+            this._options.color.min.disable();
             this._colorReset.disabled = true;
 
-            this._settings.color.min.value = 0;
-            this._settings.color.max.value = 0;
+            this._options.color.min.value = 0;
+            this._options.color.max.value = 0;
         }
 
-        this._settings.color.property.onchange = () => {
-            if (this._settings.color.property.value !== '') {
-                this._settings.color.enable();
+        this._options.color.property.onchange = () => {
+            if (this._options.color.property.value !== '') {
+                this._options.color.enable();
                 this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
                 const {min, max} = arrayMaxMin(values);
 
-                this._settings.color.min.value = min;
-                this._settings.color.max.value = max;
+                this._options.color.min.value = min;
+                this._options.color.max.value = max;
 
                 this._relayout({
-                    'coloraxis.colorbar.title.text': this._settings.color.property.value,
+                    'coloraxis.colorbar.title.text': this._options.color.property.value,
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
             } else {
-                this._settings.color.disable();
+                this._options.color.disable();
                 this._colorReset.disabled = true;
 
-                this._settings.color.min.value = 0;
-                this._settings.color.max.value = 0;
+                this._options.color.min.value = 0;
+                this._options.color.max.value = 0;
 
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
@@ -552,8 +552,8 @@ export class PropertiesMap {
         };
 
         const colorRangeChange = () => {
-            const min = this._settings.color.min.value;
-            const max = this._settings.color.max.value;
+            const min = this._options.color.min.value;
+            const max = this._options.color.max.value;
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -565,14 +565,14 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
-        this._settings.color.min.onchange = colorRangeChange;
-        this._settings.color.max.onchange = colorRangeChange;
+        this._options.color.min.onchange = colorRangeChange;
+        this._options.color.max.onchange = colorRangeChange;
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
             const {min, max} = arrayMaxMin(values);
-            this._settings.color.min.value = min;
-            this._settings.color.max.value = max;
+            this._options.color.min.value = min;
+            this._options.color.max.value = max;
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -582,14 +582,14 @@ export class PropertiesMap {
         };
 
         // ======= color palette
-        this._settings.palette.onchange = () => {
+        this._options.palette.onchange = () => {
             this._relayout({
                 'coloraxis.colorscale': this._colorScale(),
             } as unknown as Layout);
         };
 
         // ======= markers symbols
-        this._settings.symbol.onchange = () => {
+        this._options.symbol.onchange = () => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
 
             this._restyle({
@@ -607,8 +607,8 @@ export class PropertiesMap {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
 
-        this._settings.size.property.onchange = sizeChange;
-        this._settings.size.factor.onchange = sizeChange;
+        this._options.size.property.onchange = sizeChange;
+        this._options.size.factor.onchange = sizeChange;
     }
 
     /** Actually create the Plotly plot */
@@ -721,17 +721,17 @@ export class PropertiesMap {
         // make a copy of the default layout
         const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
         // and set values speific to the displayed dataset
-        layout.xaxis.title = this._settings.x.property.value;
-        layout.yaxis.title = this._settings.y.property.value;
-        layout.xaxis.type = this._settings.x.scale.value;
-        layout.yaxis.type = this._settings.y.scale.value;
-        layout.scene.xaxis.title = this._settings.x.property.value;
-        layout.scene.yaxis.title = this._settings.y.property.value;
-        layout.scene.zaxis.title = this._settings.z.property.value;
+        layout.xaxis.title = this._options.x.property.value;
+        layout.yaxis.title = this._options.y.property.value;
+        layout.xaxis.type = this._options.x.scale.value;
+        layout.yaxis.type = this._options.y.scale.value;
+        layout.scene.xaxis.title = this._options.x.property.value;
+        layout.scene.yaxis.title = this._options.y.property.value;
+        layout.scene.zaxis.title = this._options.z.property.value;
         layout.coloraxis.colorscale = this._colorScale();
-        layout.coloraxis.cmin = this._settings.color.min.value;
-        layout.coloraxis.cmax = this._settings.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._settings.color.property.value;
+        layout.coloraxis.cmin = this._options.color.min.value;
+        layout.coloraxis.cmax = this._options.color.max.value;
+        layout.coloraxis.colorbar.title.text = this._options.color.property.value;
         layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
@@ -784,7 +784,7 @@ export class PropertiesMap {
     /** Get the plotly hovertemplate depending on `this._current.color` */
     private _hovertemplate(): string {
         if (this._hasColors()) {
-            return this._settings.color.property.value + ': %{marker.color:.2f}<extra></extra>';
+            return this._options.color.property.value + ': %{marker.color:.2f}<extra></extra>';
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
@@ -795,7 +795,7 @@ export class PropertiesMap {
      * or all of them if `trace === undefined`
      */
     private _xValues(trace?: number): number[][] {
-        const values = this._property(this._settings.x.property.value).values;
+        const values = this._property(this._options.x.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
@@ -812,7 +812,7 @@ export class PropertiesMap {
      * or all of them if `trace === undefined`
      */
     private _yValues(trace?: number): number[][] {
-        const values = this._property(this._settings.y.property.value).values;
+        const values = this._property(this._options.y.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
@@ -834,7 +834,7 @@ export class PropertiesMap {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._property(this._settings.z.property.value).values;
+        const values = this._property(this._options.z.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
             selected.push(values[marker.current]);
@@ -849,7 +849,7 @@ export class PropertiesMap {
     private _colors(trace?: number): Array<string | string[] | number | number[]> {
         let values;
         if (this._hasColors()) {
-            values = this._property(this._settings.color.property.value).values;
+            values = this._property(this._options.color.property.value).values;
         } else {
             values = 0.5;
         }
@@ -876,7 +876,7 @@ export class PropertiesMap {
 
     /** Get the colorscale to use for markers in the main plotly trace */
     private _colorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this._settings.palette.value];
+        return COLOR_MAPS[this._options.palette.value];
     }
 
     /**
@@ -897,11 +897,11 @@ export class PropertiesMap {
             return Math.exp(min_value + tmp * (value - min_slider));
         };
 
-        const userFactor = logSlider(this._settings.size.factor.value);
+        const userFactor = logSlider(this._options.size.factor.value);
 
         let values;
-        if (this._settings.size.property.value !== '') {
-            const sizes = this._property(this._settings.size.property.value).values;
+        if (this._options.size.property.value !== '') {
+            const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
             values = sizes.map((v: number) => {
@@ -939,12 +939,12 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _symbols(trace?: number): Array<string | string[] | number[]> {
-        if (this._settings.symbol.value === '') {
+        if (this._options.symbol.value === '') {
             // default to 0 (i.e. circles)
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
 
-        const values = this._property(this._settings.symbol.value).values;
+        const values = this._property(this._options.symbol.value).values;
         if (this._is3D()) {
             // If we need more symbols than available, we'll send a warning
             // and repeat existing ones
@@ -972,7 +972,7 @@ export class PropertiesMap {
     private _showlegend(): boolean[] {
         const result = [false, false];
 
-        if (this._settings.symbol.value !== '') {
+        if (this._options.symbol.value !== '') {
             for (let i = 0; i < this._symbolsCount()!; i++) {
                 result.push(true);
             }
@@ -989,8 +989,8 @@ export class PropertiesMap {
     private _legendNames(): string[] {
         const result = ['', ''];
 
-        if (this._settings.symbol.value !== '') {
-            const names = this._property(this._settings.symbol.value).string!.strings();
+        if (this._options.symbol.value !== '') {
+            const names = this._property(this._options.symbol.value).string!.strings();
             for (const name of names) {
                 result.push(name);
             }
@@ -1021,8 +1021,8 @@ export class PropertiesMap {
 
     /** How many different symbols are being displayed */
     private _symbolsCount(): number {
-        if (this._settings.symbol.value !== '') {
-            return this._property(this._settings.symbol.value).string!.strings().length;
+        if (this._options.symbol.value !== '') {
+            return this._property(this._options.symbol.value).string!.strings().length;
         } else {
             return 0;
         }
@@ -1037,18 +1037,18 @@ export class PropertiesMap {
 
     /** Does the current plot use color values? */
     private _hasColors(): boolean {
-        return this._settings.color.property.value !== '';
+        return this._options.color.property.value !== '';
     }
 
     /** Is the the current plot a 3D plot? */
     private _is3D(): boolean {
-        return this._settings !== undefined && this._settings.z.property.value !== '';
+        return this._options !== undefined && this._options.z.property.value !== '';
     }
 
     /** Switch current plot from 2D to 3D */
     private _switch3D() {
         assert(this._is3D());
-        this._settings.z.enable();
+        this._options.z.enable();
 
         const symbols = this._symbols();
         for (let s = 0; s < this._data.maxSymbols; s++) {
@@ -1081,16 +1081,16 @@ export class PropertiesMap {
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
-            'scene.xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
-            'scene.yaxis.type': this._settings.y.scale.value as Plotly.AxisType,
-            'scene.zaxis.type': this._settings.z.scale.value as Plotly.AxisType,
+            'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
+            'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
+            'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
         } as unknown as Layout);
     }
 
     /** Switch current plot from 3D back to 2D */
     private _switch2D() {
         assert(!this._is3D());
-        this._settings.z.disable();
+        this._options.z.disable();
 
         const symbols = this._symbols();
         for (let sym = 0; sym < this._data.maxSymbols; sym++) {
@@ -1122,8 +1122,8 @@ export class PropertiesMap {
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
-            'xaxis.type': this._settings.x.scale.value as Plotly.AxisType,
-            'yaxis.type': this._settings.y.scale.value as Plotly.AxisType,
+            'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
+            'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
         } as unknown as Layout);
     }
 
@@ -1135,20 +1135,20 @@ export class PropertiesMap {
         // HACK: this is not public, so it might break
         const layout = this._plot._fullLayout;
         if (this._is3D()) {
-            this._settings.x.min.value = layout.scene.xaxis.range[0];
-            this._settings.x.max.value = layout.scene.xaxis.range[1];
+            this._options.x.min.value = layout.scene.xaxis.range[0];
+            this._options.x.max.value = layout.scene.xaxis.range[1];
 
-            this._settings.y.min.value = layout.scene.yaxis.range[0];
-            this._settings.y.max.value = layout.scene.yaxis.range[1];
+            this._options.y.min.value = layout.scene.yaxis.range[0];
+            this._options.y.max.value = layout.scene.yaxis.range[1];
 
-            this._settings.z.min.value = layout.scene.zaxis.range[0];
-            this._settings.z.max.value = layout.scene.zaxis.range[1];
+            this._options.z.min.value = layout.scene.zaxis.range[0];
+            this._options.z.max.value = layout.scene.zaxis.range[1];
         } else {
-            this._settings.x.min.value = layout.xaxis.range[0];
-            this._settings.x.max.value = layout.xaxis.range[1];
+            this._options.x.min.value = layout.xaxis.range[0];
+            this._options.x.max.value = layout.xaxis.range[1];
 
-            this._settings.y.min.value = layout.yaxis.range[0];
-            this._settings.y.max.value = layout.yaxis.range[1];
+            this._options.y.min.value = layout.yaxis.range[0];
+            this._options.y.max.value = layout.yaxis.range[1];
 
             this._updateAllMarkers();
         }

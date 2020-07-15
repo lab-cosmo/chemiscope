@@ -5,43 +5,44 @@
 
 import assert from 'assert';
 
-import {HTMLSetting, SettingsGroup, SettingsPreset, settingsValidator} from '../settings';
+import {HTMLOption, OptionsGroup} from '../options';
+import {optionValidator} from '../options';
 import {makeDraggable, PositioningCallback} from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
-import HTML_SETTINGS from './settings.html';
+import HTML_OPTIONS from './options.html';
 
-export class StructureSettings extends SettingsGroup {
+export class StructureOptions extends OptionsGroup {
     /// should we show bonds
-    public bonds: HTMLSetting<'boolean'>;
+    public bonds: HTMLOption<'boolean'>;
     /// should we use space filling representation
-    public spaceFilling: HTMLSetting<'boolean'>;
+    public spaceFilling: HTMLOption<'boolean'>;
     /// should we show atoms labels
-    public atomLabels: HTMLSetting<'boolean'>;
+    public atomLabels: HTMLOption<'boolean'>;
     /// should we show unit cell information and lines
-    public unitCell: HTMLSetting<'boolean'>;
+    public unitCell: HTMLOption<'boolean'>;
     /// Is the current unit cell displayed as a packed cell?
-    public packedCell: HTMLSetting<'boolean'>;
+    public packedCell: HTMLOption<'boolean'>;
     /// number of repetitions in the `a/b/c` direction for the supercell
-    public supercell: [HTMLSetting<'int'>, HTMLSetting<'int'>, HTMLSetting<'int'>];
+    public supercell: [HTMLOption<'int'>, HTMLOption<'int'>, HTMLOption<'int'>];
     // should we spin the representation
-    public rotation: HTMLSetting<'boolean'>;
+    public rotation: HTMLOption<'boolean'>;
     // which axis system to use (none, xyz, abc)
-    public axes: HTMLSetting<'string'>;
+    public axes: HTMLOption<'string'>;
     // keep the orientation constant when loading a new structure
-    public keepOrientation: HTMLSetting<'boolean'>;
+    public keepOrientation: HTMLOption<'boolean'>;
     // options related to environments
     public environments: {
         // should we display environments & environments options
-        activated: HTMLSetting<'boolean'>;
+        activated: HTMLOption<'boolean'>;
         // automatically center the environment when loading it
-        center: HTMLSetting<'boolean'>;
+        center: HTMLOption<'boolean'>;
         // the cutoff value for spherical environments
-        cutoff: HTMLSetting<'number'>;
+        cutoff: HTMLOption<'number'>;
         // which style for atoms not in the environment
-        bgStyle: HTMLSetting<'string'>;
+        bgStyle: HTMLOption<'string'>;
         // which colors for atoms not in the environment
-        bgColor: HTMLSetting<'string'>;
+        bgColor: HTMLOption<'string'>;
     };
 
     /// The HTML element containing the settings modal
@@ -53,21 +54,20 @@ export class StructureSettings extends SettingsGroup {
         root: HTMLElement,
         guid: string,
         positionSettings: PositioningCallback,
-        presets: SettingsPreset = {},
     ) {
         super();
 
-        this.bonds = new HTMLSetting('boolean', true);
-        this.spaceFilling = new HTMLSetting('boolean', false);
-        this.atomLabels = new HTMLSetting('boolean', false);
-        this.unitCell = new HTMLSetting('boolean', false);
-        this.packedCell = new HTMLSetting('boolean', false);
-        this.rotation = new HTMLSetting('boolean', false);
+        this.bonds = new HTMLOption('boolean', true);
+        this.spaceFilling = new HTMLOption('boolean', false);
+        this.atomLabels = new HTMLOption('boolean', false);
+        this.unitCell = new HTMLOption('boolean', false);
+        this.packedCell = new HTMLOption('boolean', false);
+        this.rotation = new HTMLOption('boolean', false);
 
         this.supercell = [
-            new HTMLSetting('int', 1),
-            new HTMLSetting('int', 1),
-            new HTMLSetting('int', 1),
+            new HTMLOption('int', 1),
+            new HTMLOption('int', 1),
+            new HTMLOption('int', 1),
         ];
 
         const validateSupercell = (value: number) => {
@@ -79,22 +79,22 @@ export class StructureSettings extends SettingsGroup {
         this.supercell[1].validate = validateSupercell;
         this.supercell[2].validate = validateSupercell;
 
-        this.axes = new HTMLSetting('string', 'off');
-        this.axes.validate = settingsValidator(['off', 'abc', 'xyz'], 'axes');
-        this.keepOrientation = new HTMLSetting('boolean', false);
+        this.axes = new HTMLOption('string', 'off');
+        this.axes.validate = optionValidator(['off', 'abc', 'xyz'], 'axes');
+        this.keepOrientation = new HTMLOption('boolean', false);
 
         this.environments = {
-            activated: new HTMLSetting('boolean', true),
-            bgColor:  new HTMLSetting('string', 'grey'),
-            bgStyle: new HTMLSetting('string', 'licorice'),
-            center: new HTMLSetting('boolean', false),
-            cutoff: new HTMLSetting('number', 4.0),
+            activated: new HTMLOption('boolean', true),
+            bgColor:  new HTMLOption('string', 'grey'),
+            bgStyle: new HTMLOption('string', 'licorice'),
+            center: new HTMLOption('boolean', false),
+            cutoff: new HTMLOption('number', 4.0),
         };
 
-        this.environments.bgColor.validate = settingsValidator(
+        this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK'], 'background atoms coloring',
         );
-        this.environments.bgStyle.validate = settingsValidator(
+        this.environments.bgStyle.validate = optionValidator(
             ['licorice', 'ball-stick', 'hide'], 'background atoms style',
         );
         this.environments.cutoff.validate = (value) => {
@@ -107,9 +107,7 @@ export class StructureSettings extends SettingsGroup {
 
         this._modal = this._insertHTML(root, guid);
         document.body.appendChild(this._modal);
-        this._bindSettings(guid);
-
-        this.applyPresets(presets);
+        this._bind(guid);
     }
 
     /**
@@ -150,7 +148,7 @@ export class StructureSettings extends SettingsGroup {
 
         // replace id to ensure they are unique even if we have mulitple viewers
         // on a single page
-        template.innerHTML = HTML_SETTINGS
+        template.innerHTML = HTML_OPTIONS
             .replace(/id=(.*?) /g, (_: string, id: string) => `id=${guid}-${id} `)
             .replace(/for=(.*?) /g, (_: string, id: string) => `for=${guid}-${id} `)
             .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${guid}-${id} `);
@@ -188,8 +186,8 @@ export class StructureSettings extends SettingsGroup {
         return modal;
     }
 
-    private _bindSettings(guid: string): void {
-        // bind all the settings to corresponding HTML elements
+    /** Bind all options to the corresponding HTML elements */
+    private _bind(guid: string): void {
         this.atomLabels.bind(`${guid}-atom-labels`, 'checked');
         this.spaceFilling.bind(`${guid}-space-filling`, 'checked');
         this.bonds.bind(`${guid}-bonds`, 'checked');
