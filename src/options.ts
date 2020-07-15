@@ -13,11 +13,11 @@ import {getByID, sendWarning} from './utils';
 // this is mostly to catch typo early. Feel free to add more!
 type Attribute = 'value' | 'checked' | 'innerText';
 
-/// Type mapping for settings
-interface SettingsTypeMap {
+/// Type mapping for options
+interface OptionsTypeMap {
     // I would really like to use `'string': string` here as the mapping, but
     // this is forbidden by the typescript compiler (for reasons unclear to me,
-    // it thinks that `SettingsTypeMap[T extends keyof SettingsTypeMap]` is
+    // it thinks that `OptionsTypeMap[T extends keyof OptionsTypeMap]` is
     // `never`). https://github.com/microsoft/TypeScript/issues/33014 seems to
     // be related.
     //
@@ -28,10 +28,10 @@ interface SettingsTypeMap {
     'number': [number];
     'boolean': [boolean];
 }
-type SettingsType = keyof SettingsTypeMap;
-type SettingsValue<T extends SettingsType> = SettingsTypeMap[T][0];
+type OptionsType = keyof OptionsTypeMap;
+type OptionsValue<T extends OptionsType> = OptionsTypeMap[T][0];
 
-function parse<T extends SettingsType>(type: T, value: string): SettingsValue<T> {
+function parse<T extends OptionsType>(type: T, value: string): OptionsValue<T> {
     if (type === 'string') {
         return value;
     } else if (type === 'int') {
@@ -53,11 +53,11 @@ function parse<T extends SettingsType>(type: T, value: string): SettingsValue<T>
     throw Error(`unknown type '${type}' passed to parse`);
 }
 
-/** Possible origins of a setting change: from JS code, or from DOM interaction */
-export type SettingModificationOrigin = 'JS' | 'DOM';
+/** Possible origins of a option change: from JS code, or from DOM interaction */
+export type OptionModificationOrigin = 'JS' | 'DOM';
 
 /** A single DOM element that will be synchronized with the javascript value of a setting */
-interface HTMLSettingElement {
+interface HTMLOptionElement {
     /** The DOM element that we should check for changes */
     element: HTMLElement;
     /** Which atrribute of the element should we check */
@@ -67,15 +67,15 @@ interface HTMLSettingElement {
 }
 
 /**
- * Creates a valitating function that checks value against a list of valid
+ * Creates a validating function that checks value against a list of valid
  * entries. This is intended to be used as a `validate` callback on an
- * [[HTMLSetting]].
+ * [[HTMLOption]].
  *
  * @param  valid list of valid values for the setting
  * @param  name  name of the setting for better error messages
  * @return       a function that can be used to validate a new setting value
  */
-export function settingsValidator<T>(valid: T[], name = ''): (value: T) => void {
+export function optionValidator<T>(valid: T[], name = ''): (value: T) => void {
     return (value: T) => {
         if (valid.includes(value)) {
             return;
@@ -91,31 +91,31 @@ export function settingsValidator<T>(valid: T[], name = ''): (value: T) => void 
  * Whenever the value is changed from javascript code, or updated in any of the
  * linked HTML element, it is automatically updated everywhere.
  */
-export class HTMLSetting<T extends SettingsType> {
+export class HTMLOption<T extends OptionsType> {
     /** the type of the value stored by this setting */
     public readonly type: T;
     /** Callback to validate the new value before propagating changes. */
-    public validate: (value: SettingsValue<T>) => void;
+    public validate: (value: OptionsValue<T>) => void;
     /** Additional callback to run whenever the setting value changes */
-    public onchange: (value: SettingsValue<T>, origin: SettingModificationOrigin) => void;
+    public onchange: (value: OptionsValue<T>, origin: OptionModificationOrigin) => void;
 
     // storage of the actual value, this is separated from this.value to allow
     // intercepting set
-    private _value: SettingsValue<T>;
+    private _value: OptionsValue<T>;
     // list of bound HTML elements: any update to the setting `value` or any of
     // the element will change both the settting value and all of the linked
     // elements
-    private _boundList: HTMLSettingElement[];
+    private _boundList: HTMLOptionElement[];
 
     /**
-     * Create a new [[HTMLSetting]] containing a value of the given type.
-     * Possible type/values combinations are described in the [[SettingsTypeMap]]
+     * Create a new [[HTMLOption]] containing a value of the given type.
+     * Possible type/values combinations are described in the [[OptionsTypeMap]]
      * interface.
      *
      * @param type  type of the setting
      * @param value initial value of the setting
      */
-    constructor(type: T, value: SettingsValue<T>) {
+    constructor(type: T, value: OptionsValue<T>) {
         this.type = type;
         this._value = value;
         this._boundList = [];
@@ -126,12 +126,12 @@ export class HTMLSetting<T extends SettingsType> {
     }
 
     /** Get the value of this setting */
-    public get value(): SettingsValue<T> {
+    public get value(): OptionsValue<T> {
         return this._value;
     }
 
     /** Set a new value for this setting */
-    public set value(v: SettingsValue<T>) {
+    public set value(v: OptionsValue<T>) {
         this._update(v.toString(), 'JS');
     }
 
@@ -201,7 +201,7 @@ export class HTMLSetting<T extends SettingsType> {
     // Actually perform the update of the value and all linked elements. The
     // value is passed around as a string, since that's the easiest way to merge
     // different data types coming from the DOM.
-    private _update(value: string, origin: SettingModificationOrigin) {
+    private _update(value: string, origin: OptionModificationOrigin) {
         const updated = parse<T>(this.type, value);
         this.validate(updated);
 
@@ -214,55 +214,55 @@ export class HTMLSetting<T extends SettingsType> {
 }
 
 /**
- * Type defintion for dumpSettings output: should be a simple object containing
- * either value, or a nested SettingsPreset.
+ * Type defintion for saveSettings output: should be a simple object containing
+ * either value, or a nested SavedSettings.
  */
-export interface SettingsPreset extends Record<string, string | number | boolean | SettingsPreset> {}
+export interface SavedSettings extends Record<string, string | number | boolean | SavedSettings> {}
 
 /**
- * Callback function to use with [[SettingsGroup.foreachSetting]]
+ * Callback function to use with [[OptionsGroup.foreachSetting]]
  */
-export type SettingCallback = (keys: string[], setting: HTMLSetting<any>) => void;
+export type OptionsCallback = (keys: string[], setting: HTMLOption<any>) => void;
 
 /**
  * Abstract base class to use for a group of settings.
  *
- * This class implement saving current settings as a [[SettingsPreset]]; and
- * applying a setting preset to the setting group.
+ * This class implement saving current settings as [[SavedSettings]]; and
+ * applying saved settings to the setting group.
  *
  * # Example
  *
  * ```typescript
- * class MySettings extends SettingsGroup {
- *     public cats: HTMLSetting<'int'>;
+ * class MyOptions extends OptionsGroup {
+ *     public cats: HTMLOption<'int'>;
  *     public dogs: {
- *          husky: HTMLSetting<'string'>;
- *          labrador: HTMLSetting<'string'>;
+ *          husky: HTMLOption<'string'>;
+ *          labrador: HTMLOption<'string'>;
  *     };
  *
  *     constructor() {
  *         super();
- *         this.cats = new HTMLSetting('int', 3);
+ *         this.cats = new HTMLOption('int', 3);
  *         this.dogs = {
- *             husky: new HTMLSetting('string', 'a cold dog'),
- *             labrador: new HTMLSetting('string', 'a long dog'),
+ *             husky: new HTMLOption('string', 'a cold dog'),
+ *             labrador: new HTMLOption('string', 'a long dog'),
  *         };
  *     }
  * }
  *
- * const settings = new MySettings();
+ * const settings = new MyOptions();
  *
- * settings.dumpSettings();
+ * settings.saveSettings();
  * // {cats: 3, dogs: {husky: 'a cold dog', labrador: 'a long dog'}}
  *
- * settings.applyPresets({cats: 66, dogs: {husky: 'a good dog'}});
- * settings.dumpSettings();
+ * settings.applySettings({cats: 66, dogs: {husky: 'a good dog'}});
+ * settings.saveSettings();
  * // {cats: 66, dogs: {husky: 'a good dog', labrador: 'a long dog'}}
  * ```
  */
-export abstract class SettingsGroup {
+export abstract class OptionsGroup {
     /**
-     * Save the current values of all HTMLSetting properties of the class,
+     * Save the current values of all HTMLOption properties of the class,
      * including nested ones.
      *
      * Properties which name starts with an underscore are ignored.
@@ -270,13 +270,13 @@ export abstract class SettingsGroup {
      * @return An object with the same structure as this class containing the
      *         values of all settings.
      */
-    public dumpSettings(): SettingsPreset {
-        const preset = {};
-        this.foreachSetting((keys, setting) => {
+    public saveSettings(): SavedSettings {
+        const settings = {};
+        this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
-            const value = setting.value;
+            const value = option.value;
 
-            let root = preset as any;
+            let root = settings as any;
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
                     root[key] = {};
@@ -286,26 +286,26 @@ export abstract class SettingsGroup {
             const lastkey = keys[keys.length - 1];
             root[lastkey] = value;
         });
-        return preset;
+        return settings;
     }
 
     /**
-     * Set values from presets to the [[HTMLSetting]] properties of this class,
+     * Set values from `settings` to the [[HTMLOption]] properties of this class,
      * matching the properties names.
      *
      * Properties starting with an underscore are ignored.
      */
-    public applyPresets(presets: SettingsPreset): void {
-        // make a copy of the presets since we will be changing it below
-        const copy = JSON.parse(JSON.stringify(presets));
+    public applySettings(settings: SavedSettings): void {
+        // make a copy of the settings since we will be changing it below
+        const copy = JSON.parse(JSON.stringify(settings));
 
-        this.foreachSetting((keys, setting) => {
+        this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
             let root = copy as any;
             let parent;
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
-                    // this key is missing from the presets
+                    // this key is missing from the settings
                     return;
                 }
                 parent = root;
@@ -314,9 +314,9 @@ export abstract class SettingsGroup {
             const lastkey = keys[keys.length - 1];
 
             if (lastkey in root) {
-                setting.value = root[lastkey];
+                option.value = root[lastkey];
 
-                // remove used keys from the presets to be able to warn on
+                // remove used keys from the settings to be able to warn on
                 // unused keys
                 delete root[lastkey];
                 if (parent !== undefined && Object.keys(root).length === 0) {
@@ -328,7 +328,7 @@ export abstract class SettingsGroup {
         });
 
         if (Object.keys(copy).length !== 0) {
-            sendWarning(`ignored unkown presets '${JSON.stringify(copy)}'`);
+            sendWarning(`ignored unkown settings '${JSON.stringify(copy)}'`);
         }
     }
 
@@ -340,39 +340,39 @@ export abstract class SettingsGroup {
      * @param settings group of settings
      * @param callback callback operating on a single setting
      */
-    protected foreachSetting(callback: SettingCallback): void {
-        foreachSettingImpl(this as Record<string, unknown>, callback, []);
+    protected foreachOption(callback: OptionsCallback): void {
+        foreachOptionImpl(this as Record<string, unknown>, callback, []);
     }
 }
 
 /**
- * Recursive implementation of foreachSetting
+ * Recursive implementation of foreachOption
  *
- * This function looks through all properties of `settings`, ignoring the ones
+ * This function looks through all properties of `options`, ignoring the ones
  * starting with an underscore. If the property is an instance of
- * [[HTMLSetting]], the `callback` is called on the setting, together with the
+ * [[HTMLOption]], the `callback` is called on the option, together with the
  * keys used to access the property from the root object.
  *
- * @param settings object containing the settings
- * @param callback function to call on each HTMLSetting
+ * @param options  object containing the options
+ * @param callback function to call on each HTMLOption
  * @param keys     current keys to access the `settings` object from the root
  */
-function foreachSettingImpl(settings: Record<string, unknown>, callback: SettingCallback, keys: string[] = []): void {
+function foreachOptionImpl(options: Record<string, unknown>, callback: OptionsCallback, keys: string[] = []): void {
     if (keys.length > 10) {
         throw Error('setting object is too deep');
     }
 
-    for (const key in settings) {
+    for (const key in options) {
         if (key.startsWith('_')) {
             continue;
         }
 
         const currentKeys = keys.concat([key]);
-        const element = settings[key];
-        if (element instanceof HTMLSetting) {
-            callback(currentKeys, element as HTMLSetting<any>);
+        const element = options[key];
+        if (element instanceof HTMLOption) {
+            callback(currentKeys, element as HTMLOption<any>);
         } else if (typeof element === 'object' && element !== null) {
-            foreachSettingImpl(element as Record<string, unknown>, callback, currentKeys);
+            foreachOptionImpl(element as Record<string, unknown>, callback, currentKeys);
         }
     }
 }

@@ -7,11 +7,11 @@ import assert from 'assert';
 
 import {JmolObject, JSmolApplet} from 'jsmol';
 
-import {SettingsPreset} from '../settings';
+import {SavedSettings} from '../options';
 import {generateGUID, getByID} from '../utils';
 import {PositioningCallback} from '../utils';
 
-import {StructureSettings} from './settings';
+import {StructureOptions} from './options';
 
 // tslint:disable-next-line: no-var-requires
 require('../static/chemiscope.css');
@@ -134,7 +134,7 @@ export class JSmolWidget {
     /// Reference to the JSmol applet to be updated with script calls
     private _applet: JSmolApplet;
     /// Representation options from the HTML side
-    private _settings: StructureSettings;
+    private _options: StructureOptions;
     /// The supercell used to intialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
@@ -213,7 +213,7 @@ export class JSmolWidget {
         this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
         this._root.appendChild(this._cellInfo);
 
-        this._settings = new StructureSettings(
+        this._options = new StructureOptions(
             this._root,
             this.guid,
             (rect) => this.positionSettingsModal(rect),
@@ -292,7 +292,7 @@ export class JSmolWidget {
         if (this._root.parentElement !== null) {
             this._root.parentElement.innerHTML = '';
         }
-        this._settings.remove();
+        this._options.remove();
     }
 
     /**
@@ -361,16 +361,16 @@ export class JSmolWidget {
             // keep pre-existing supercell settings, default to [1, 1, 1] from
             // settings.html
             supercell = [
-                this._settings.supercell[0].value,
-                this._settings.supercell[1].value,
-                this._settings.supercell[2].value,
+                this._options.supercell[0].value,
+                this._options.supercell[1].value,
+                this._options.supercell[2].value,
             ];
         } else {
             supercell = options.supercell;
         }
 
         if (options.packed !== undefined) {
-            this._settings.packedCell.value = options.packed;
+            this._options.packedCell.value = options.packed;
         }
 
         if (options === undefined) {
@@ -378,14 +378,14 @@ export class JSmolWidget {
         } else {
             this._environments = options.environments;
             if (this._environments !== undefined) {
-                this._settings.environments.activated.value = true;
+                this._options.environments.activated.value = true;
             }
         }
 
         let keepOrientation: boolean;
         if (options.keepOrientation === undefined) {
             // keep pre-existting settings if any
-            keepOrientation = this._settings.keepOrientation.value;
+            keepOrientation = this._options.keepOrientation.value;
         } else {
             keepOrientation = options.keepOrientation;
         }
@@ -418,9 +418,9 @@ export class JSmolWidget {
             this._initialSupercell = supercell;
             this._resetSupercell.innerHTML = `reset ${a}x${b}x${c} supercell`;
         }
-        this._settings.supercell[0].value = a;
-        this._settings.supercell[1].value = b;
-        this._settings.supercell[2].value = c;
+        this._options.supercell[0].value = a;
+        this._options.supercell[1].value = b;
+        this._options.supercell[2].value = c;
         this._setCellInfo();
 
         /// JSmol overwite the Error object, using `.caller` to get stacktraces.
@@ -439,9 +439,9 @@ export class JSmolWidget {
                 this._noCellStyle.disabled = true;
             }
 
-            const repeat = this._settings.supercell[0].value *
-                           this._settings.supercell[1].value *
-                           this._settings.supercell[2].value;
+            const repeat = this._options.supercell[0].value *
+                           this._options.supercell[1].value *
+                           this._options.supercell[2].value;
             this._natoms = parseInt(this.evaluate('{*}.size'), 10) / repeat;
             if (this._environments !== undefined && this._environments.length !== this._natoms) {
                 let message = 'invalid number of environments for this structure ';
@@ -465,17 +465,18 @@ export class JSmolWidget {
     }
 
     /**
-     * Applies presets, possibly filling in with default values
+     * Applies saved settings, possibly filling in with default values
      */
-    public applyPresets(presets: SettingsPreset): void {
-        this._settings.applyPresets(presets);
+    public applySettings(settings: SavedSettings): void {
+        this._options.applySettings(settings);
     }
 
     /**
-     * Dumps presets, in a way that can e.g. be serialized to json
+     * Save the values of the current settings in a way that an be used with
+     * [[applySettings]] or saved to JSON.
      */
-    public dumpSettings(): SettingsPreset {
-        return this._settings.dumpSettings();
+    public saveSettings(): SavedSettings {
+        return this._options.saveSettings();
     }
 
     private _reload() {
@@ -493,7 +494,7 @@ export class JSmolWidget {
             throw Error('invalid \'packed\' in  JSmolWidget.load');
         }
 
-        const packed = this._settings.packedCell.value ? ' packed' : '';
+        const packed = this._options.packedCell.value ? ' packed' : '';
 
         const saveOrientation = keepOrientation ? `save orientation "${this.guid}"` : '';
         const restoreOrientation = keepOrientation ? `restore orientation "${this.guid}"` : '';
@@ -501,9 +502,9 @@ export class JSmolWidget {
         this._setCellInfo();
 
         const supercell = supercell_555([
-            this._settings.supercell[0].value,
-            this._settings.supercell[1].value,
-            this._settings.supercell[2].value,
+            this._options.supercell[0].value,
+            this._options.supercell[1].value,
+            this._options.supercell[2].value,
         ]);
 
         const commands = `
@@ -517,9 +518,9 @@ export class JSmolWidget {
 
     private _changeHighlighted(environment?: number) {
         if (environment !== undefined) {
-            const repeat = this._settings.supercell[0].value *
-                           this._settings.supercell[1].value *
-                           this._settings.supercell[2].value;
+            const repeat = this._options.supercell[0].value *
+                           this._options.supercell[1].value *
+                           this._options.supercell[2].value;
             if (this._natoms !== undefined && environment >= this._natoms * repeat) {
                 let message = 'selected environment is out of bounds: ';
                 message += `got ${environment}, we have ${this._natoms * repeat} atoms in the current structure`;
@@ -535,13 +536,13 @@ export class JSmolWidget {
 
         if (this._highlighted === undefined) {
             this._enableEnvironmentSettings(false);
-            this._settings.environments.cutoff.value = 0;
+            this._options.environments.cutoff.value = 0;
         } else {
             this._enableEnvironmentSettings(true);
 
             // keep user defined cutoff, if any
-            if (this._settings.environments.cutoff.value <= 0) {
-                this._settings.environments.cutoff.value = this._currentDefaultCutoff();
+            if (this._options.environments.cutoff.value <= 0) {
+                this._options.environments.cutoff.value = this._currentDefaultCutoff();
             }
         }
     }
@@ -614,17 +615,17 @@ export class JSmolWidget {
                 }
             }
         };
-        bindUpdateState(this._settings);
+        bindUpdateState(this._options);
 
         // For changes to the cell, we have to reload the structure.
         // This override the function set above
-        this._settings.packedCell.onchange = () => this._reload();
-        this._settings.supercell[0].onchange = () => this._reload();
-        this._settings.supercell[1].onchange = () => this._reload();
-        this._settings.supercell[2].onchange = () => this._reload();
+        this._options.packedCell.onchange = () => this._reload();
+        this._options.supercell[0].onchange = () => this._reload();
+        this._options.supercell[1].onchange = () => this._reload();
+        this._options.supercell[2].onchange = () => this._reload();
 
         // Deal with activation/de-activation of environments
-        this._settings.environments.activated.onchange = (value) => {
+        this._options.environments.activated.onchange = (value) => {
             this._enableEnvironmentSettings(value);
             this._updateState();
         };
@@ -632,7 +633,7 @@ export class JSmolWidget {
         // Setup various buttons
         this._resetEnvCutof = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);
         this._resetEnvCutof.onclick = () => {
-            this._settings.environments.cutoff.value = this._currentDefaultCutoff();
+            this._options.environments.cutoff.value = this._currentDefaultCutoff();
             this._updateState();
         };
 
@@ -657,9 +658,9 @@ export class JSmolWidget {
         this._resetSupercell = getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`);
         this._resetSupercell.onclick = () => {
             assert(this._initialSupercell !== undefined);
-            this._settings.supercell[0].value = this._initialSupercell[0];
-            this._settings.supercell[1].value = this._initialSupercell[1];
-            this._settings.supercell[2].value = this._initialSupercell[2];
+            this._options.supercell[0].value = this._initialSupercell[0];
+            this._options.supercell[1].value = this._initialSupercell[1];
+            this._options.supercell[2].value = this._initialSupercell[2];
             this._reload();
         };
     }
@@ -697,7 +698,7 @@ export class JSmolWidget {
 
     /// Get the commands to run to update the visualization state
     private _updateStateCommands(): string {
-        const settings = this._settings;
+        const settings = this._options;
         const wireframe = `wireframe ${settings.bonds.value ? '0.15' : 'off'}`;
         const spacefill = `spacefill ${settings.spaceFilling.value ? '80%' : '23%'}`;
 
@@ -747,11 +748,11 @@ export class JSmolWidget {
     }
 
     private _setCellInfo() {
-        const a = this._settings.supercell[0].value;
-        const b = this._settings.supercell[1].value;
-        const c = this._settings.supercell[2].value;
+        const a = this._options.supercell[0].value;
+        const b = this._options.supercell[1].value;
+        const c = this._options.supercell[2].value;
 
-        this._cellInfo.innerText = this._settings.packedCell.value ? 'packed' : 'standard';
+        this._cellInfo.innerText = this._options.packedCell.value ? 'packed' : 'standard';
         if (a !== 1 || b !== 1 || c !== 1) {
             this._cellInfo.innerText += ` ${a}x${b}x${c} supercell`;
         } else {
@@ -763,8 +764,8 @@ export class JSmolWidget {
     private _backgroundStyle(): string {
         let commands = '';
 
-        const wireframe = `wireframe ${this._settings.bonds.value ? '0.15' : 'off'}`;
-        const style = this._settings.environments.bgStyle.value;
+        const wireframe = `wireframe ${this._options.bonds.value ? '0.15' : 'off'}`;
+        const style = this._options.environments.bgStyle.value;
         if (style === 'licorice') {
             commands += `hide none; dots off; ${wireframe}; spacefill off;`;
         } else if (style === 'ball-stick') {
@@ -775,7 +776,7 @@ export class JSmolWidget {
             throw Error(`invalid background atoms style '${style}'`);
         }
 
-        const color = this._settings.environments.bgColor.value;
+        const color = this._options.environments.bgColor.value;
         if (color === 'CPK') {
             commands += 'color atoms cpk;';
             commands += 'color atoms translucent 0.8;';
@@ -802,23 +803,23 @@ export class JSmolWidget {
             reset.disabled = false;
             toggle.nodeValue = 'Disable';
 
-            this._settings.environments.cutoff.enable();
-            this._settings.environments.bgStyle.enable();
-            this._settings.environments.bgColor.enable();
+            this._options.environments.cutoff.enable();
+            this._options.environments.bgStyle.enable();
+            this._options.environments.bgColor.enable();
 
             // Can not have both environments and packed cell
-            this._settings.packedCell.value = false;
-            this._settings.packedCell.disable();
+            this._options.packedCell.value = false;
+            this._options.packedCell.disable();
             this._setCellInfo();
         } else {
             reset.disabled = true;
             toggle.nodeValue = 'Enable';
 
-            this._settings.environments.cutoff.disable();
-            this._settings.environments.bgStyle.disable();
-            this._settings.environments.bgColor.disable();
+            this._options.environments.cutoff.disable();
+            this._options.environments.bgStyle.disable();
+            this._options.environments.bgColor.disable();
 
-            this._settings.packedCell.enable();
+            this._options.packedCell.enable();
             this._setCellInfo();
         }
     }

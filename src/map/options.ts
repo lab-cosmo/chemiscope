@@ -5,33 +5,33 @@
 
 import assert from 'assert';
 
-import {HTMLSetting, SettingsGroup, SettingsPreset} from '../settings';
-import {settingsValidator} from '../settings';
+import {HTMLOption, OptionsGroup, SavedSettings} from '../options';
+import {optionValidator} from '../options';
 import {getByID, makeDraggable, PositioningCallback} from '../utils';
 import {NumericProperties} from './data';
 
 import {COLOR_MAPS} from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
-import HTML_SETTINGS from './settings.html';
+import HTML_OPTIONS from './options.html';
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
-export class AxisSettings extends SettingsGroup {
-    public property: HTMLSetting<'string'>;
-    public scale: HTMLSetting<'string'>;
-    public min: HTMLSetting<'number'>;
-    public max: HTMLSetting<'number'>;
+export class AxisOptions extends OptionsGroup {
+    public property: HTMLOption<'string'>;
+    public scale: HTMLOption<'string'>;
+    public min: HTMLOption<'number'>;
+    public max: HTMLOption<'number'>;
 
     constructor(validProperties: string[]) {
         assert(validProperties.length > 0);
         super();
-        this.max = new HTMLSetting('number', 0);
-        this.min = new HTMLSetting('number', 0);
-        this.property = new HTMLSetting('string', validProperties[0]);
-        this.scale = new HTMLSetting('string', 'linear');
+        this.max = new HTMLOption('number', 0);
+        this.min = new HTMLOption('number', 0);
+        this.property = new HTMLOption('string', validProperties[0]);
+        this.scale = new HTMLOption('string', 'linear');
 
-        this.property.validate = settingsValidator(validProperties, 'axis');
-        this.scale.validate = settingsValidator(['linear', 'log'], 'axis scale');
+        this.property.validate = optionValidator(validProperties, 'axis');
+        this.scale.validate = optionValidator(['linear', 'log'], 'axis scale');
     }
 
     /** Disable auxiliary settings (min/max/scale) related to this axis */
@@ -49,16 +49,16 @@ export class AxisSettings extends SettingsGroup {
     }
 }
 
-export class MapSettings extends SettingsGroup {
-    public x: AxisSettings;
-    public y: AxisSettings;
-    public z: AxisSettings;
-    public color: AxisSettings;
-    public palette: HTMLSetting<'string'>;
-    public symbol: HTMLSetting<'string'>;
+export class MapOptions extends OptionsGroup {
+    public x: AxisOptions;
+    public y: AxisOptions;
+    public z: AxisOptions;
+    public color: AxisOptions;
+    public palette: HTMLOption<'string'>;
+    public symbol: HTMLOption<'string'>;
     public size: {
-        property: HTMLSetting<'string'>;
-        factor: HTMLSetting<'number'>;
+        property: HTMLOption<'string'>;
+        factor: HTMLOption<'number'>;
     };
 
     /// The HTML element containing the settings modal
@@ -70,7 +70,7 @@ export class MapSettings extends SettingsGroup {
         root: HTMLElement,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        presets: SettingsPreset = {},
+        settings: SavedSettings = {},
     ) {
         super();
         const propertiesName = Object.keys(properties);
@@ -78,29 +78,29 @@ export class MapSettings extends SettingsGroup {
             throw Error('we need at least two properties to plot in the map');
         }
 
-        this.x = new AxisSettings(propertiesName);
-        this.y = new AxisSettings(propertiesName);
+        this.x = new AxisOptions(propertiesName);
+        this.y = new AxisOptions(propertiesName);
         // For z and color, '' is a valid value
-        this.z = new AxisSettings(propertiesName.concat(['']));
-        this.color = new AxisSettings(propertiesName.concat(['']));
+        this.z = new AxisOptions(propertiesName.concat(['']));
+        this.color = new AxisOptions(propertiesName.concat(['']));
 
-        this.symbol = new HTMLSetting('string', '');
+        this.symbol = new HTMLOption('string', '');
         const validSymbols = [''];
         for (const key in properties) {
             if (properties[key].string !== undefined) {
                 validSymbols.push(key);
             }
         }
-        this.symbol.validate = settingsValidator(validSymbols, 'symbol');
+        this.symbol.validate = optionValidator(validSymbols, 'symbol');
 
-        this.palette = new HTMLSetting('string', 'inferno');
-        this.palette.validate = settingsValidator(Object.keys(COLOR_MAPS), 'palette');
+        this.palette = new HTMLOption('string', 'inferno');
+        this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.size = {
-            factor : new HTMLSetting('number', 50),
-            property : new HTMLSetting('string', ''),
+            factor : new HTMLOption('number', 50),
+            property : new HTMLOption('string', ''),
         };
-        this.size.property.validate = settingsValidator(propertiesName.concat(['']), 'size');
+        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
@@ -122,7 +122,7 @@ export class MapSettings extends SettingsGroup {
         document.body.appendChild(this._modal);
 
         this._bind(properties);
-        this.applyPresets(presets);
+        this.applySettings(settings);
     }
 
     /**
@@ -156,7 +156,7 @@ export class MapSettings extends SettingsGroup {
 
         // TODO: set unique HTML id in the settings to allow multiple map in
         // the same page
-        template.innerHTML = HTML_SETTINGS;
+        template.innerHTML = HTML_OPTIONS;
         const modal = template.content.firstChild! as HTMLElement;
 
         const modalDialog = modal.childNodes[1] as HTMLElement;
@@ -190,9 +190,7 @@ export class MapSettings extends SettingsGroup {
         return modal;
     }
 
-    /**
-     * Bind all settings to the corresponding HTML elements
-     */
+    /** Bind all options to the corresponding HTML elements */
     private _bind(properties: NumericProperties): void {
         // ======= data used as x values
         const selectXProperty = getByID<HTMLSelectElement>('chsp-x');

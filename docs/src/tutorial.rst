@@ -226,13 +226,13 @@ values:
             ...
         ]
 
-        // OPTIONAL: preset values for settings
+        // OPTIONAL: setting for each panel
         //
         // Adding these values allow to setup how a given dataset should be
         // visualized in chemiscope.
         //
-        // Each value inside the preset group is optional
-        "presets": {
+        // Each value inside the settings group is optional
+        "settings": {
             // settings related to the map
             "map": {
                 // x axis settings
