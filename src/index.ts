@@ -20,7 +20,7 @@
 
 import assert from 'assert';
 
-import {EnvironmentIndexer} from './indexer';
+import {EnvironmentIndexer, Indexes} from './indexer';
 import {EnvironmentInfo} from './info';
 import {PropertiesMap} from './map';
 import {MetadataPanel} from './metadata';
@@ -28,7 +28,7 @@ import {SavedSettings} from './options';
 import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {addWarningHandler, getNextColor, GUID} from './utils';
+import {addWarningHandler, enumerate, getNextColor, GUID} from './utils';
 
 // tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
@@ -109,8 +109,8 @@ function validateSettings(settings: JsObject) {
     };
 
     const checkArray = (key: string, o: unknown) => {
-        if (!Array.isArray(o)) {
-            throw Error(`"settings.${key}" must be an array`);
+        if (!(Array.isArray(o) && o.length > 0)) {
+            throw Error(`"settings.${key}" must be an array containing at least one element`);
         }
     };
 
@@ -247,14 +247,18 @@ class DefaultVisualizer {
         this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
-        const initial = {environment: 0, structure: 0, atom: 0};
+        let initial: Indexes = {environment: 0, structure: 0, atom: 0};
+        if (config.settings && config.settings.pinned) {
+            initial = this._indexer.from_environment(config.settings.pinned[0]);
+        }
+
         const firstGUID = this.structure.active;
         this.map.addMarker(firstGUID, getNextColor([]), initial);
         this._pinned.push(firstGUID);
         this.structure.show(initial);
         this.info.show(initial);
 
-        // setup pinned values from the settings if needed
+        // setup additional pinned values from the settings if needed
         if (config.settings !== undefined) {
             delete config.settings.map;
             this.applySettings(config.settings);
@@ -308,30 +312,42 @@ class DefaultVisualizer {
             assert(settings.pinned.length > 0);
             const indexes = this._indexer.from_environment(settings.pinned[0]);
             this.map.select(indexes);
-            this.structure.show(indexes);
             this.info.show(indexes);
+            // this is done below in the setTimeout
+            // this.structure.show(indexes);
 
-            // Add new viewers as needed
+            // Create additional viewers as needed
             for (const environment of settings.pinned.slice(1)) {
-                // tslint:disable-next-line: no-shadowed-variable
-                const indexes = this._indexer.from_environment(environment);
                 const data = this.structure.duplicate(this._pinned[0]);
                 if (data === undefined) {
                     throw Error('too many environments in \'pinned\' setting');
                 }
                 const [guid, color] = data;
+                // tslint:disable-next-line: no-shadowed-variable
+                const indexes = this._indexer.from_environment(environment);
+
                 this.map.addMarker(guid, color, indexes);
                 this.map.setActive(guid);
                 this._pinned.push(guid);
-
-                this.structure.setActive(guid);
-                this.structure.show(indexes);
-
                 this.info.show(indexes);
+            }
+
+            if (settings.structure !== undefined) {
+                this.structure.applySettings(settings.structure);
+            }
+
+            for (const [i, environment] of enumerate(settings.pinned)) {
+                // HACK: loading multiple structures in a rapid succession with
+                // JSmol fails (the same structure is loaded multiple time), so
+                // we introduce a delay when loading them
+                setTimeout(() => {
+                    this.structure.setActive(this._pinned[i]);
+                    this.structure.show(this._indexer.from_environment(environment));
+                }, 1000 * i);
             }
         }
 
-        if (settings.structure !== undefined) {
+        if (settings.pinned === undefined && settings.structure !== undefined) {
             this.structure.applySettings(settings.structure);
         }
     }
