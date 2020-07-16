@@ -130,7 +130,7 @@ function validateSettings(settings: JsObject) {
                 }
             }
         } else {
-            throw Error(`invalid "settings.${key}" key in chemiscope config`);
+            throw Error(`invalid key "${key}" in settings`);
         }
     }
 }
