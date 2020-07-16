@@ -183,11 +183,19 @@ function setupDefaultChemiscope(j2sPath) {
     HIDE_ON_DEMAND_STRUCTURES.disabled = false;
 
     const loadDataset = document.getElementById('load-dataset');
+    const loadSaveModal = document.getElementById('load-save');
+    const closeLoadSaveModal = document.getElementById('close-load-save-modal');
     loadDataset.onchange = () => {
+        // remove closing animation on the modal to close it with JS
+        loadSaveModal.classList.remove('fade');
+        closeLoadSaveModal.click();
         startLoading();
         const file = loadDataset.files[0];
         DATASET = `user-loaded: ${file.name}`;
-        readFile(file, (result) => setupChemiscope(readJSON(file.name, result)));
+        readFile(file, (result) => {
+            setupChemiscope(readJSON(file.name, result));
+            loadSaveModal.classList.add('fade');
+        });
     }
 
     const saveDataset = document.getElementById('save-dataset');
@@ -200,12 +208,20 @@ function setupDefaultChemiscope(j2sPath) {
             dataset.settings = VISUALIZER.saveSettings();
         }
         startDownload(saveDatasetName.value, stringifyJSONwithNaN(dataset));
+        closeLoadSaveModal.click();
     }
 
     const loadSettings = document.getElementById('load-settings');
     loadSettings.onchange = () => {
+        loadSaveModal.classList.remove('fade');
+        closeLoadSaveModal.click();
+        startLoading();
         const file = loadSettings.files[0];
-        readFile(file, (result) => VISUALIZER.applySettings(readJSON(file.name, result)));
+        readFile(file, (result) => {
+            VISUALIZER.applySettings(readJSON(file.name, result));
+            stopLoading();
+            loadSaveModal.classList.add('fade');
+        });
     }
 
     const saveSettings = document.getElementById('save-settings');
@@ -225,6 +241,7 @@ function setupDefaultChemiscope(j2sPath) {
             delete settings.pinned;
         }
         startDownload(saveSettingsName.value, JSON.stringify(settings));
+        closeLoadSaveModal.click();
     }
 }
 
