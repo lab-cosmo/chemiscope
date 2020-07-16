@@ -80,7 +80,7 @@ export function optionValidator<T>(valid: T[], name = ''): (value: T) => void {
         if (valid.includes(value)) {
             return;
         }
-        throw Error(`invalid property '${value}' for ${name}`);
+        throw Error(`invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`);
     };
 }
 
