@@ -28,9 +28,8 @@ import {SavedSettings} from './options';
 import {ViewersGrid} from './structure';
 
 import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {addWarningHandler, enumerate, getNextColor, GUID} from './utils';
+import {GUID, addWarningHandler, enumerate, getNextColor} from './utils';
 
-// tslint:disable-next-line: no-var-requires
 require('./static/chemiscope.css');
 
 /**
@@ -50,7 +49,7 @@ export interface Config {
     /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
     j2sPath: string;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
-    loadStructure?: (index: number, structure: any) => Structure;
+    loadStructure?: (index: number, structure: unknown) => Structure;
 }
 
 interface Settings {
@@ -81,7 +80,7 @@ function validateConfig(o: JsObject) {
 
     if ('settings' in o) {
         if (typeof o.settings !== 'object' || o.settings === null) {
-            throw Error(`"settings" must be an object in chemiscope config`);
+            throw Error('"settings" must be an object in chemiscope config');
         }
 
         validateSettings(o.settings as JsObject);
@@ -92,7 +91,9 @@ function validateConfig(o: JsObject) {
     }
 
     // from underscore.js / https://stackoverflow.com/a/6000016
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isFunction = (obj: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return !!(obj && obj.constructor && obj.call && obj.apply);
     };
 
@@ -151,7 +152,7 @@ class DefaultVisualizer {
      * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
     public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
-        return new Promise((resolve, _) => {
+        return new Promise((resolve) => {
             const visualizer = new DefaultVisualizer(config, dataset);
             resolve(visualizer);
         });
@@ -177,7 +178,7 @@ class DefaultVisualizer {
         this._dataset = dataset;
         this._pinned = [];
 
-        const mode = (dataset.environments === undefined) ? 'structure' : 'atom';
+        const mode = dataset.environments === undefined ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
@@ -323,7 +324,6 @@ class DefaultVisualizer {
                     throw Error('too many environments in \'pinned\' setting');
                 }
                 const [guid, color] = data;
-                // tslint:disable-next-line: no-shadowed-variable
                 const indexes = this._indexer.from_environment(environment);
 
                 this.map.addMarker(guid, color, indexes);
@@ -367,12 +367,15 @@ class DefaultVisualizer {
         // preserve NaN values in the copy
         const copy = JSON.parse(
             JSON.stringify(this._dataset, (_, value) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
             }),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             (_, value) => value === '***NaN***' ? NaN : value,
-        );
+        ) as Dataset;
+
         if (getStructures) {
-            copy.structures = [];
+            copy.structures = [] as Structure[];
             for (let i = 0; i < this._dataset.structures.length; i++) {
                 copy.structures.push(this.structure.loadStructure(i, this._dataset.structures[i]));
             }
@@ -386,7 +389,7 @@ function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
 
-function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings {
+function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings {
     if (settings === undefined) {
         return {};
     }
@@ -394,7 +397,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings
         const map = settings.map;
         if (typeof map === 'object') {
             if (map === null) {
-                throw Error(`invalid settings for map, should not be null`);
+                throw Error('invalid settings for map, should not be null');
             } else {
                 return map;
             }
@@ -406,7 +409,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings
     }
 }
 
-function getStructureSettings(settings: Partial<Settings> | undefined): SavedSettings[] {
+function getStructureSettings(settings: Partial<Settings> | undefined): SavedSettings[] {
     if (settings === undefined) {
         return [];
     }

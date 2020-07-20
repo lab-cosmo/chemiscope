@@ -1,5 +1,5 @@
 export * from 'plotly.js';
-import {PlotlyHTMLElement, LayoutAxis} from 'plotly.js';
+import {LayoutAxis, PlotlyHTMLElement} from 'plotly.js';
 
 interface ScatterAxis extends LayoutAxis {
     l2p(linear: number): number;

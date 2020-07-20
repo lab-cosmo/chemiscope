@@ -5,7 +5,6 @@
 
 import {ColorScale} from './plotly/plotly-scatter';
 
-// tslint:disable-next-line:array-type
 type RGBColorMap = [number, [number, number, number]][];
 
 function rgb_to_plotly(colormap: RGBColorMap): ColorScale {
@@ -688,7 +687,7 @@ interface ColorMaps {
     [key: string]: ColorScale;
 }
 
-// tslint:disable:object-literal-sort-keys
+/* eslint-disable sort-keys */
 /** @hidden */
 export const COLOR_MAPS: ColorMaps = {
     'inferno': rgb_to_plotly(INFERNO),

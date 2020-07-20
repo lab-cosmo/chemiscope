@@ -8,20 +8,20 @@ export type WarningHandler = (message: string) => void;
 
 /** List of registered warnings handlers */
 const WARNINGS_HANDLERS: WarningHandler[] = [
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     (message) => console.warn(message),
 ];
 
 /** @hidden
  * Send a warning to the user with the given `message`
  */
-export function sendWarning(message: string) {
+export function sendWarning(message: string): void {
     for (const cb of WARNINGS_HANDLERS) {
         cb(message);
     }
 }
 
 /** Register the `handler` function to be called when a warning is emitted */
-export function addWarningHandler(handler: WarningHandler) {
+export function addWarningHandler(handler: WarningHandler): void {
     WARNINGS_HANDLERS.push(handler);
 }

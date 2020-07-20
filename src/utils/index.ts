@@ -21,7 +21,7 @@ const STANDARD_COLORS = [
     'red', 'yellow', 'green', 'blue', 'orange', 'aqua', 'purple', 'teal', 'silver',
 ];
 
-export function getNextColor(alreadyUsedColors: string[]) {
+export function getNextColor(alreadyUsedColors: string[]): string {
     for (const color of STANDARD_COLORS) {
         if (!alreadyUsedColors.includes(color)) {
             return color;
@@ -37,10 +37,8 @@ export type GUID = string & {readonly [tag]: 'guid'};
 /** Generate a new GUID */
 export function generateGUID(): GUID {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        // tslint:disable-next-line:no-bitwise
         const r = Math.random() * 16 | 0;
-        // tslint:disable-next-line:no-bitwise
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const v = c === 'x' ? r : r & 0x3 | 0x8;
         return v.toString(16);
     }) as GUID;
 }
@@ -81,11 +79,11 @@ export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
 export function getFirstKey<K, V>(map: Map<K, V>, excluding?: K): K {
     assert(map.size >= 1);
     const keys = map.keys();
-    const first = keys.next().value;
+    const first = keys.next().value as K;
     if (excluding !== undefined) {
         if (first === excluding) {
             assert(map.size >= 2);
-            return keys.next().value;
+            return keys.next().value as K;
         }
     }
     return first;
