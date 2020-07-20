@@ -63,7 +63,7 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
     } else if (prop_type === 'string') {
         const interner = new StringInterner();
         const values = [];
-        for (const value of (property as string[])) {
+        for (const value of property as string[]) {
             const numeric = interner.get(value);
             values.push(numeric);
             // string properties are assumed to be categories, and each one of
@@ -99,7 +99,7 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
         }
 
         if (properties[key].values.length !== size) {
-            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial}': expected ${size}, got ${properties[key].values.length}`);
+            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial as string}': expected ${size}, got ${properties[key].values.length}`);
         }
     }
 }
@@ -135,7 +135,7 @@ export class MapData {
             try {
                 property = propertyToNumeric(name, properties[name].values);
             } catch (e) {
-                sendWarning(`warning: ${e.message}`);
+                sendWarning(`warning: ${(e as Error).message}`);
                 continue;
             }
             this[properties[name].target][name] = property;

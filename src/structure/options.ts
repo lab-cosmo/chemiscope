@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import {HTMLOption, OptionsGroup} from '../options';
 import {optionValidator} from '../options';
-import {makeDraggable, PositioningCallback} from '../utils';
+import {PositioningCallback, makeDraggable} from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -143,7 +143,7 @@ export class StructureOptions extends OptionsGroup {
             style="top: 5px; right: 5px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
-        const openSettings = template.content.firstChild!;
+        const openSettings = template.content.firstChild as HTMLElement;
         root.append(openSettings);
 
         // replace id to ensure they are unique even if we have mulitple viewers
@@ -153,7 +153,7 @@ export class StructureOptions extends OptionsGroup {
             .replace(/for=(.*?) /g, (_: string, id: string) => `for=${guid}-${id} `)
             .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${guid}-${id} `);
 
-        const modal = template.content.firstChild! as HTMLElement;
+        const modal = template.content.firstChild as HTMLElement;
         const modalDialog = modal.childNodes[1] as HTMLElement;
         assert(modalDialog !== undefined);
         assert(modalDialog.classList.contains('modal-dialog'));

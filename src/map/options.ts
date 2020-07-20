@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import {HTMLOption, OptionsGroup, SavedSettings} from '../options';
 import {optionValidator} from '../options';
-import {getByID, makeDraggable, PositioningCallback} from '../utils';
+import {PositioningCallback, getByID, makeDraggable} from '../utils';
 import {NumericProperties} from './data';
 
 import {COLOR_MAPS} from './colorscales';
@@ -35,14 +35,14 @@ export class AxisOptions extends OptionsGroup {
     }
 
     /** Disable auxiliary settings (min/max/scale) related to this axis */
-    public disable() {
+    public disable(): void {
         this.max.disable();
         this.min.disable();
         this.scale.disable();
     }
 
     /** Enable auxiliary settings (min/max/scale) related to this axis */
-    public enable() {
+    public enable(): void {
         this.max.enable();
         this.min.enable();
         this.scale.enable();
@@ -111,8 +111,7 @@ export class MapOptions extends OptionsGroup {
             }
         };
         this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
-        this.size.reverse.validate = optionValidator([false, true], 'size');
-
+       
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
         this.z.property.value = '';
@@ -175,13 +174,13 @@ export class MapOptions extends OptionsGroup {
             style="top: 4px; left: 5px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
-        const openSettings = template.content.firstChild!;
+        const openSettings = template.content.firstChild as HTMLElement;
         root.append(openSettings);
 
         // TODO: set unique HTML id in the settings to allow multiple map in
         // the same page
         template.innerHTML = HTML_OPTIONS;
-        const modal = template.content.firstChild! as HTMLElement;
+        const modal = template.content.firstChild as HTMLElement;
 
         const modalDialog = modal.childNodes[1] as HTMLElement;
         assert(modalDialog !== undefined);

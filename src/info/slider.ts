@@ -34,11 +34,11 @@ export class Slider {
             </div>
             <input class="form-control custom-range chsp-${target}-slider" type='range' min=0 value=0 step=1></input>
         </div>`;
-        const group = template.content.firstChild! as HTMLElement;
+        const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
 
-        this._slider = group.querySelector('input')! as HTMLInputElement;
-        this._play = group.querySelector('.chsp-play-button')! as HTMLElement;
+        this._slider = group.querySelector('input') as HTMLInputElement;
+        this._play = group.querySelector('.chsp-play-button') as HTMLElement;
 
         this._play.onclick = () => {
             this._play.classList.toggle('chsp-playing');
@@ -55,7 +55,7 @@ export class Slider {
     /**
      * Reset the slider to 0, and update the maximal value to `max`
      */
-    public reset(max: number) {
+    public reset(max: number): void {
         this._slider.value = '0';
         this._slider.max = max.toString();
     }
@@ -63,7 +63,7 @@ export class Slider {
     /**
      * Update the slider, changing its value to the given one.
      */
-    public update(value: number) {
+    public update(value: number): void {
         this._slider.value = value.toString();
     }
 

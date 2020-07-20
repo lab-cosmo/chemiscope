@@ -39,14 +39,14 @@ export class Table {
                 <tbody></tbody>
             </table>
         </div></div>`;
-        const group = template.content.firstChild! as HTMLElement;
+        const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
 
-        this._header = group.querySelector('th')!;
+        this._header = group.querySelector('th') as HTMLTableHeaderCellElement;
         this._target = target;
         this._properties = [];
 
-        const tbody = group.querySelector('tbody')!;
+        const tbody = group.querySelector('tbody') as HTMLTableSectionElement;
         for (const name in properties) {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
@@ -69,7 +69,7 @@ export class Table {
      * Show the properties for the given `environment`, corresponding to the
      * given structure/atom `indexes`
      */
-    public show(indexes: Indexes) {
+    public show(indexes: Indexes): void {
         let displayId;
         let index;
         if (this._target === 'structure') {
@@ -78,7 +78,7 @@ export class Table {
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
-            displayId = indexes.atom! + 1;
+            displayId = indexes.atom + 1;
             index = indexes.environment;
         }
 

@@ -148,7 +148,7 @@ export type JsObject = Record<string, unknown>;
  * Check that the given object, potentially comming from javascript, has all
  * required properties to be a dataset.
  */
-export function validateDataset(o: JsObject) {
+export function validateDataset(o: JsObject): void {
     if (!('meta' in o)) {
         throw Error('missing "meta" key in the dataset');
     } else if (!(typeof o.meta === 'object' && o.meta !== null)) {
@@ -158,7 +158,7 @@ export function validateDataset(o: JsObject) {
 
     if (!('structures' in o)) {
         throw Error('missing "structures" key in the dataset');
-    } else if (!(Array.isArray(o.structures))) {
+    } else if (!Array.isArray(o.structures)) {
         throw Error('"structures" must be an array in the dataset');
     }
     const [structureCount, envCount] = checkStructures(o.structures);
@@ -252,15 +252,15 @@ export function checkStructure(s: JsObject): string {
 
     for (const key of ['names', 'x', 'y', 'z']) {
         if (!(key in s)) {
-            return `missing "${name}"`;
+            return `missing "${key}"`;
         }
         const array = s[key];
         if (!Array.isArray(array)) {
-            return `"${name}" must be an array`;
+            return `"${key}" must be an array`;
         }
 
         if (array.length !== s.size) {
-            return `wrong size for "${name}", expected ${s.size}, got ${array.length}`;
+            return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
         }
     }
 
@@ -290,13 +290,11 @@ function checkProperties(properties: Record<string, JsObject>, structureCount: n
         }
 
         // check size if possible
-        let expected;
+        let expected = 0;
         if (property.target === 'atom') {
             expected = envCount;
         } else if (property.target === 'structure') {
             expected = structureCount;
-        } else {
-            throw Error(`invalid property target: ${property.target}`);
         }
 
         if (property.values.length !== expected) {

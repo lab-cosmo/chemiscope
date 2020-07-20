@@ -211,7 +211,7 @@ export class PropertiesMap {
         this._indexer = indexer;
         this.onselect = () => {};
         this.activeChanged = () => {};
-        this._selected = new Map();
+        this._selected = new Map<GUID, MarkerData>();
 
         this._root = getByID(config.id);
         if (this._root.style.position === '') {
@@ -260,7 +260,7 @@ export class PropertiesMap {
      * Change the environment indicated by the currently active marker to
      * the one with the given `indexes`
      */
-    public select(indexes: Indexes) {
+    public select(indexes: Indexes): void {
         if (this._active === undefined) {
             throw Error('tries to update selected environment, but there is no active marker');
         }
@@ -283,7 +283,7 @@ export class PropertiesMap {
      *
      * @param guid the GUID of the new active viewer
      */
-    public setActive(guid: GUID) {
+    public setActive(guid: GUID): void {
         if (this._active !== undefined) {
             const oldData = this._selected.get(this._active);
             assert(oldData !== undefined);
@@ -375,7 +375,7 @@ export class PropertiesMap {
     /**
      * Apply saved settings to the map.
      */
-    public applySettings(settings: SavedSettings) {
+    public applySettings(settings: SavedSettings): void {
         this._options.applySettings(settings);
     }
 
@@ -468,6 +468,7 @@ export class PropertiesMap {
 
         // ======= z axis settings
         this._options.z.property.onchange = () => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
                 if (was3D) {
@@ -735,7 +736,7 @@ export class PropertiesMap {
         }
 
         // make a copy of the default layout
-        const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+        const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
         // and set values speific to the displayed dataset
         layout.xaxis.title = this._options.x.property.value;
         layout.yaxis.title = this._options.y.property.value;
@@ -885,7 +886,6 @@ export class PropertiesMap {
         if (this._options.size.mode.value !== 'constant') {
             const scaleMode = this._options.size.mode.value;
             const reversed = this._options.size.reverse.value;
-            console.log(this._options.size.reverse);
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
@@ -906,9 +906,10 @@ export class PropertiesMap {
                     scaled = Math.sqrt(scaled);
                     break;
                   case 'linear':
-                    scaled = scaled;
+                    /* nothing to do */
                     break;
-                  default: // corresponds to 'constant'
+                  default:
+                    assert(scaleMode === 'constant');
                     scaled = 1.0;
                     break;
                 }
@@ -978,7 +979,7 @@ export class PropertiesMap {
         const result = [false, false];
 
         if (this._options.symbol.value !== '') {
-            for (let i = 0; i < this._symbolsCount()!; i++) {
+            for (let i = 0; i < this._symbolsCount(); i++) {
                 result.push(true);
             }
             return result;
@@ -995,8 +996,9 @@ export class PropertiesMap {
         const result = ['', ''];
 
         if (this._options.symbol.value !== '') {
-            const names = this._property(this._options.symbol.value).string!.strings();
-            for (const name of names) {
+            const property = this._property(this._options.symbol.value);
+            assert(property.string !== undefined);
+            for (const name of property.string.strings()) {
                 result.push(name);
             }
             return result;
@@ -1027,7 +1029,9 @@ export class PropertiesMap {
     /** How many different symbols are being displayed */
     private _symbolsCount(): number {
         if (this._options.symbol.value !== '') {
-            return this._property(this._options.symbol.value).string!.strings().length;
+            const property = this._property(this._options.symbol.value);
+            assert(property.string !== undefined);
+            return property.string.strings().length;
         } else {
             return 0;
         }
@@ -1140,20 +1144,20 @@ export class PropertiesMap {
         // HACK: this is not public, so it might break
         const layout = this._plot._fullLayout;
         if (this._is3D()) {
-            this._options.x.min.value = layout.scene.xaxis.range[0];
-            this._options.x.max.value = layout.scene.xaxis.range[1];
+            this._options.x.min.value = layout.scene.xaxis.range[0] as number;
+            this._options.x.max.value = layout.scene.xaxis.range[1] as number;
 
-            this._options.y.min.value = layout.scene.yaxis.range[0];
-            this._options.y.max.value = layout.scene.yaxis.range[1];
+            this._options.y.min.value = layout.scene.yaxis.range[0] as number;
+            this._options.y.max.value = layout.scene.yaxis.range[1] as number;
 
-            this._options.z.min.value = layout.scene.zaxis.range[0];
-            this._options.z.max.value = layout.scene.zaxis.range[1];
+            this._options.z.min.value = layout.scene.zaxis.range[0] as number;
+            this._options.z.max.value = layout.scene.zaxis.range[1] as number;
         } else {
-            this._options.x.min.value = layout.xaxis.range[0];
-            this._options.x.max.value = layout.xaxis.range[1];
+            this._options.x.min.value = layout.xaxis.range[0] as number;
+            this._options.x.max.value = layout.xaxis.range[1] as number;
 
-            this._options.y.min.value = layout.yaxis.range[0];
-            this._options.y.max.value = layout.yaxis.range[1];
+            this._options.y.min.value = layout.yaxis.range[0] as number;
+            this._options.y.max.value = layout.yaxis.range[1] as number;
 
             this._updateAllMarkers();
         }
