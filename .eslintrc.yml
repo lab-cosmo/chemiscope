@@ -13,6 +13,7 @@ ignorePatterns:
 
 plugins:
   - '@typescript-eslint'
+  - prettier
 
 env:
   es6: true
@@ -21,10 +22,10 @@ extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
   - plugin:@typescript-eslint/recommended-requiring-type-checking
+  - prettier
 
 rules:
   # Extra rules
-  '@typescript-eslint/no-extra-parens': error
   arrow-parens: error
   eqeqeq: error
   grouped-accessor-pairs: error
@@ -37,11 +38,10 @@ rules:
   no-unused-expressions: error
   no-useless-concat: error
   no-var: error
-  quotes: [error, single]
   radix: error
   semi: error
   # only sort inside groups, not between separate import lines
-  sort-imports: [error, {ignoreDeclarationSort: true}]
+  sort-imports: [error, { ignoreDeclarationSort: true }]
   # sort-keys: [error, asc, {minKeys: 4}]
   # disabled until https://github.com/eslint/eslint/issues/12759 is implemented
   sort-keys: off
