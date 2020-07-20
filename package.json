@@ -23,7 +23,8 @@
     "jsmol-widget-dts": "dts-bundle-generator -o dist/jsmol-widget.d.ts dist/src/structure/widget.d.ts",
     "merge-dts": "npm run chemiscope-dts && npm run jsmol-widget-dts",
     "prepublishOnly": "rm -rf dist && npm run build && npm run merge-dts",
-    "lint": "eslint src"
+    "lint": "eslint src && prettier --check src",
+    "pretty": "prettier --write src"
   },
   "devDependencies": {
     "@types/markdown-it": "^10.0.1",
@@ -37,10 +38,13 @@
     "css-loader": "^3.6.0",
     "dts-bundle-generator": "^5.1.0",
     "eslint": "^7.5.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "html-loader": "^1.1.0",
     "ify-loader": "^1.1.0",
     "markdown-it": "^11.0.0",
     "plotly.js": "^1.54.6",
+    "prettier": "2.0.5",
     "style-loader": "^1.2.1",
     "tmp": "^0.2.1",
     "ts-loader": "^8.0.1",
