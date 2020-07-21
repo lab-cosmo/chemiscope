@@ -335,7 +335,10 @@ export class PropertiesMap {
         if (this._is3D()) {
             data.marker.style.display = 'none';
         } else {
-            this._updateSelectedMarker(data);
+            this._active = guid;
+            const factor = this._options.size.factor.value;
+            const scaleMode = this._options.size.mode.value;
+            this._restyle({'marker.size': this._sizes(1)} as Data, 1);
         }
 
         this.setActive(guid);
@@ -603,12 +606,23 @@ export class PropertiesMap {
         };
 
         // ======= markers size
-        const sizeChange = () => {
+        this._options.size.property.onchange = () => {
+            if (this._options.size.property.value !== '') {
+              this._options.size.mode.enable();
+            } else {
+              this._options.size.mode.value = '';
+              this._options.size.mode.disable();
+            }
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
 
-        this._options.size.property.onchange = sizeChange;
-        this._options.size.factor.onchange = sizeChange;
+        this._options.size.factor.onchange = () => {
+            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        };
+
+        this._options.size.mode.onchange = () => {
+            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        };
     }
 
     /** Actually create the Plotly plot */
@@ -901,14 +915,29 @@ export class PropertiesMap {
 
         let values;
         if (this._options.size.property.value !== '') {
+            const scaleMode = this._options.size.mode.value;
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
             values = sizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
-                const scaled = userFactor * (v + 0.05 - min) / (max - min);
+                let scaled;
+                switch (scaleMode) {
+                  case 'inverse':
+                    scaled = (max - v + 0.05) / (max - min);
+                    break;
+                  case 'log':
+                    scaled = Math.log((max - v + 0.05) / (max - min));
+                    break;
+                  case 'sqrt':
+                    scaled = Math.sqrt((v + 0.05 - min) / (max - min));
+                    break;
+                  default:
+                    scaled = (v + 0.05 - min) / (max - min);
+                    break;
+                }
                 // since we are using scalemode: 'area', square the scaled value
-                return defaultSize * scaled * scaled;
+                return defaultSize * scaled * scaled * userFactor * userFactor;
             });
         } else {
             // we need to use an array instead of a single value because of
@@ -1075,6 +1104,7 @@ export class PropertiesMap {
             'marker.line.width': [1, 2],
             // size change from 2D to 3D
             'marker.size': this._sizes(),
+            'marker.sizemode': 'area',
         } as Data, [0, 1]);
 
         this._relayout({
@@ -1108,7 +1138,6 @@ export class PropertiesMap {
             data.marker.style.display = 'block';
         }
 
-        // Change the data that vary between 2D and 3D mode
         this._restyle({
             // transparency messes with depth sorting in 3D mode
             // https://github.com/plotly/plotly.js/issues/4111
