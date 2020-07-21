@@ -1,11 +1,29 @@
 # Chemiscope: interactive structure-property explorer for materials and molecules
 
+![tests](https://github.com/cosmo-epfl/chemiscope/workflows/Tests%20&%20Lints/badge.svg)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02117/status.svg)](https://doi.org/10.21105/joss.02117)
+
 Chemiscope is an graphical tool for the interactive exploration of materials and
 molecular databases, correlating local and global structural descriptors with
 the physical properties of the different systems; as well as a library of
 re-usable components useful to create new interfaces.
 
 ![Default interface of chemiscope](paper/screenshot.png)
+
+## Citing chemiscope
+
+Chemiscope is distributed under an open-source license, and you are welcome to
+use it and incorporate it into your own research and software projects. 
+If you find it useful, we would appreciate a citation to the chemiscope 
+[paper](https://doi.org/10.21105/joss.02117):
+
+> G. Fraux, R. K. Cersonsky, M. Ceriotti, *Chemiscope: Interactive
+> Structure-Property Explorer for Materials and Molecules.* **Journal of Open
+> Source Software** 5 (51), 2117 (2020)
+
+If you incorporate chemiscope components into a software project, a link back to
+the chemiscope homepage (https://chemiscope.org) is the preferred form of
+acknowledgement. 
 
 ## [Documentation](https://chemiscope.org/docs/)
 
