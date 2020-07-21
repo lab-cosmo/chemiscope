@@ -604,21 +604,23 @@ export class PropertiesMap {
         };
 
         // ======= markers size
-        this._options.size.property.onchange = () => {
-            if (this._options.size.property.value !== '') {
-              this._options.size.mode.enable();
-            } else {
-              this._options.size.mode.value = '';
-              this._options.size.mode.disable();
-            }
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
 
         this._options.size.factor.onchange = () => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
 
         this._options.size.mode.onchange = () => {
+            if (this._options.size.mode.value !== 'constant') {
+              this._options.size.property.enable();
+              // hacky default to first plotted parameter
+              this._options.size.property.value = this._options.x.property.value;
+            } else {
+              this._options.size.property.value = '';
+              this._options.size.property.disable();
+            }
+            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        };
+        this._options.size.property.onchange = () => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
     }

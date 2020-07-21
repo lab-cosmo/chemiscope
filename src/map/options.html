@@ -168,12 +168,16 @@
                     <div></div>
 
                     <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for=chsp-size>size:</label>
-                        </div>
-                        <select id=chsp-size class="custom-select">
-                            <option value="">default</option>
-                        </select>
+                      <div class="input-group-prepend">
+                          <label class="input-group-text" for=chsp-size-mode>size scale:</label>
+                      </div>
+                      <select id=chsp-size-mode class="custom-select" enabled>
+                          <option value="constant">constant</option>
+                          <option value="linear">linear</option>
+                          <option value="log">log</option>
+                          <option value="sqrt">sqrt</option>
+                          <option value="inverse">inverse</option>
+                      </select>
                     </div>
 
                     <button class="btn btn-sm btn-secondary chsp-extra-options-btn" type="button" data-toggle="collapse" data-target="#chsp-extra-size" id=chsp-size-more>
@@ -182,16 +186,11 @@
 
                     <div class="collapse chsp-map-extra-options" id=chsp-extra-size>
                       <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for=chsp-size-mode>scale:</label>
-                            </div>
-                            <select id=chsp-size-mode class="custom-select" disabled>
-                                <option value="constant">constant</option>
-                                <option value="linear">linear</option>
-                                <option value="log">log</option>
-                                <option value="sqrt">sqrt</option>
-                                <option value="inverse">inverse</option>
-                            </select>
+                          <div class="input-group-prepend">
+                              <label class="input-group-text" for=chsp-size>size:</label>
+                          </div>
+                          <select id=chsp-size class="custom-select" disabled>
+                          </select>
                       </div>
                       <div class="input-group input-group-sm" style="grid-column: auto / span 2">
                           <div class="input-group-prepend">
