@@ -336,9 +336,7 @@ export class PropertiesMap {
             data.marker.style.display = 'none';
         } else {
             this._active = guid;
-            const factor = this._options.size.factor.value;
-            const scaleMode = this._options.size.mode.value;
-            this._restyle({'marker.size': this._sizes(1)} as Data, 1);
+            this._updateSelectedMarker(data);
         }
 
         this.setActive(guid);
