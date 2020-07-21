@@ -919,21 +919,22 @@ export class PropertiesMap {
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
+            const bottomLimit = 0.1; // lower limit to prevent size of 0
             values = sizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
                 let scaled;
                 switch (scaleMode) {
                   case 'inverse':
-                    scaled = (max - v + 0.05) / (max - min);
+                    scaled = (max - v + bottomLimit) / (max - min);
                     break;
                   case 'log':
-                    scaled = Math.log((max - v + 0.05) / (max - min));
+                    scaled = Math.log((max - v + bottomLimit) / (max - min));
                     break;
                   case 'sqrt':
-                    scaled = Math.sqrt((v + 0.05 - min) / (max - min));
+                    scaled = Math.sqrt((v + bottomLimit - min) / (max - min));
                     break;
                   default:
-                    scaled = (v + 0.05 - min) / (max - min);
+                    scaled = (v + bottomLimit - min) / (max - min);
                     break;
                 }
                 // since we are using scalemode: 'area', square the scaled value
