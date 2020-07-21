@@ -99,7 +99,7 @@ export class MapOptions extends OptionsGroup {
 
         this.size = {
             factor : new HTMLOption('number', 50),
-            mode : new HTMLOption('string', ''),
+            mode : new HTMLOption('string', 'constant'),
             property : new HTMLOption('string', ''),
         };
         this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
@@ -108,7 +108,7 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
-        this.size.mode.validate = optionValidator(['', 'linear', 'log', 'sqrt', 'inverse'], 'size');
+        this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];

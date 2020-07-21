@@ -933,8 +933,11 @@ export class PropertiesMap {
                   case 'sqrt':
                     scaled = Math.sqrt((v + bottomLimit - min) / (max - min));
                     break;
-                  default:
+                  case 'linear':
                     scaled = (v + bottomLimit - min) / (max - min);
+                    break;
+                  default: // corresponds to 'constant'
+                    scaled = 1.0;
                     break;
                 }
                 // since we are using scalemode: 'area', square the scaled value
