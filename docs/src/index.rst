@@ -20,6 +20,22 @@ different manners to create visualization adapted to different kinds of data. Th
 second part of this documentation explains how to build the code and use it in
 your own website to create new interfaces.
 
+Citing chemiscope
+-----------------
+
+Chemiscope is distributed under an open-source license, and you are welcome to
+use it and incorporate it into your own research and software projects. 
+If you find it useful, we would appreciate a citation to the chemiscope 
+`paper`_:
+
+G. Fraux, R. K. Cersonsky, M. Ceriotti, *Chemiscope: Interactive
+Structure-Property Explorer for Materials and Molecules.* **Journal of Open
+Source Software** 5 (51), 2117 (2020)
+
+If you incorporate chemiscope components into a software project, a link
+back to the `chemiscope`_ homepage is the preferred form of acknowledgement. 
+
+
 What's in this documentation?
 -----------------------------
 
@@ -31,4 +47,5 @@ What's in this documentation?
 
 
 .. _chemiscope: https://chemiscope.org
+.. _paper: https://doi.org/10.21105/joss.02117
 .. _Qm7b: https://doi.org/10.1088/1367-2630/15/9/095003

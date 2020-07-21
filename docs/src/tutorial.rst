@@ -134,14 +134,17 @@ file. This script assumes you use the `ase`_ Python module to read the
 structures.
 
 If all the properties you want to include into chemiscope are already stored
-in an  `ase`_-readable ifle, you can also use the chemiscope_input`_ script
-from the command line.
+in an  `ase`_-readable file, you can also use the `chemiscope_input`_ script
+from the command line. Note that chemiscope does not compute structural 
+representations or dimensionality reduction. The `ASAP`_ structural analysis
+package can directly generate an output in chemiscope format. 
 
 .. autofunction:: chemiscope_input::write_chemiscope_input
 
 .. _chemiscope_input: https://github.com/cosmo-epfl/chemiscope/blob/master/utils/chemiscope_input.py
 .. _github: https://github.com/cosmo-epfl/chemiscope
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
+.. _ASAP: https://github.com/BingqingCheng/ASAP
 
 Input file structure
 --------------------
