@@ -176,11 +176,28 @@
                         </select>
                     </div>
 
-                    <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for=chsp-size-factor>size factor:</label>
-                        </div>
-                        <input type="range" min=1 max=100 step=1 class="form-control custom-range" id=chsp-size-factor>
+                    <button class="btn btn-sm btn-secondary chsp-extra-options-btn" type="button" data-toggle="collapse" data-target="#chsp-extra-size" id=chsp-size-more>
+                        more options
+                    </button>
+
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-size>
+                      <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-size-mode>scale:</label>
+                            </div>
+                            <select id=chsp-size-mode class="custom-select" disabled>
+                                <option value="linear">linear</option>
+                                <option value="log">log</option>
+                                <option value="sqrt">sqrt</option>
+                                <option value="inverse">inverse</option>
+                            </select>
+                      </div>
+                      <div class="input-group input-group-sm">
+                          <div class="input-group-prepend">
+                              <label class="input-group-text" for=chsp-size-factor>size factor:</label>
+                          </div>
+                          <input type="range" min=1 max=100 step=1 class="form-control custom-range" id=chsp-size-factor>
+                      </div>
                     </div>
 
                     <div class="input-group input-group-sm">

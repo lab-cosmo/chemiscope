@@ -57,8 +57,9 @@ export class MapOptions extends OptionsGroup {
     public palette: HTMLOption<'string'>;
     public symbol: HTMLOption<'string'>;
     public size: {
-        property: HTMLOption<'string'>;
         factor: HTMLOption<'number'>;
+        mode: HTMLOption<'string'>;
+        property: HTMLOption<'string'>;
     };
 
     /// The HTML element containing the settings modal
@@ -98,6 +99,7 @@ export class MapOptions extends OptionsGroup {
 
         this.size = {
             factor : new HTMLOption('number', 50),
+            mode : new HTMLOption('string', ''),
             property : new HTMLOption('string', ''),
         };
         this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
@@ -106,6 +108,7 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
+        this.size.mode.validate = optionValidator(['', 'linear', 'log', 'sqrt', 'inverse'], 'size');
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
@@ -269,5 +272,6 @@ export class MapOptions extends OptionsGroup {
         }
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind('chsp-size-factor', 'value');
+        this.size.mode.bind('chsp-size-mode', 'value');
     }
 }
