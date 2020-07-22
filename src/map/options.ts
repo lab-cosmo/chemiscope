@@ -57,8 +57,10 @@ export class MapOptions extends OptionsGroup {
     public palette: HTMLOption<'string'>;
     public symbol: HTMLOption<'string'>;
     public size: {
-        property: HTMLOption<'string'>;
         factor: HTMLOption<'number'>;
+        mode: HTMLOption<'string'>;
+        property: HTMLOption<'string'>;
+        reverse: HTMLOption<'boolean'>;
     };
 
     /// The HTML element containing the settings modal
@@ -98,14 +100,18 @@ export class MapOptions extends OptionsGroup {
 
         this.size = {
             factor : new HTMLOption('number', 50),
-            property : new HTMLOption('string', ''),
+            mode : new HTMLOption('string', 'constant'),
+            property : new HTMLOption('string', propertiesName[0]),
+            reverse : new HTMLOption('boolean', false)
         };
-        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
+        this.size.property.validate = optionValidator(propertiesName, 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
+        this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
+        this.size.reverse.validate = optionValidator([false, true], 'size');
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
@@ -123,6 +129,24 @@ export class MapOptions extends OptionsGroup {
 
         this._bind(properties);
         this.applySettings(settings);
+    }
+
+    /**
+     * Apply saved settings to all the map options
+     *
+     * @param settings settings for all panels
+     */
+    public applySettings(settings: SavedSettings): void {
+        // deal with backward compatibility: size.property === '' used to mean
+        // "use a constant scaling"
+        if ('size' in settings) {
+            const size = settings.size as SavedSettings;
+            if ('property' in size && size.property === '') {
+                delete size.property;
+                size.mode = 'constant';
+            }
+        }
+        super.applySettings(settings);
     }
 
     /**
@@ -261,13 +285,13 @@ export class MapOptions extends OptionsGroup {
 
         // ======= marker size
         const selectSizeProperty = getByID<HTMLSelectElement>('chsp-size');
-        // first option is 'default'
         selectSizeProperty.options.length = 0;
-        selectSizeProperty.options.add(new Option('default', ''));
         for (const key in properties) {
             selectSizeProperty.options.add(new Option(key, key));
         }
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind('chsp-size-factor', 'value');
+        this.size.mode.bind('chsp-size-mode', 'value');
+        this.size.reverse.bind('chsp-size-reverse', 'checked');
     }
 }
