@@ -277,11 +277,18 @@ values:
                     // scaling factor for the axis, between 1 and 100
                     "factor": 55,
                     // mode to scale the markers with respect to the properties
-                    "mode": "constant" | "inverse" | "linear" | "log" | "sqrt",
+                      // `constant`: all markers are same size, scaled by `factor`
+                      // `linear`: markers are directly proportional to the property
+                      // `log`: markers are proportional to the logarithm of the property
+                      // `sqrt`: markers are proportional to the square root of the property
+                      // `inverse`: markers are inversely proportional to the property
+                    "mode": "constant" | "linear" | "log" | "sqrt | "inverse"",
                     // name of the property to use for the markers size, this
                     // must be one of the key from the root `properties` table.
                     "property": "<name>",
-                    // whether to reverse the marker scaling
+                    // if false, markers scale from smallest to largest property value
+                    // if true, marker scale from largest to smallest property value
+                    // in the case of `inverse` scaling, this is reversed.
                     "reversed": false | true,
                 },
             },
