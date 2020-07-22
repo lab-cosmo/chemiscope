@@ -12,7 +12,7 @@ import {Property} from '../dataset';
 
 import {EnvironmentIndexer, Indexes} from '../indexer';
 import {OptionModificationOrigin, SavedSettings} from '../options';
-import {GUID, PositioningCallback} from '../utils';
+import {arrayMaxMin, GUID, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
@@ -114,22 +114,6 @@ const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
 
 function get3DSymbol(i: number): string {
     return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
-}
-
-// get the max/min of an array. Math.min(...array) fails with very large arrays
-function arrayMaxMin(values: number[]): {max: number, min: number} {
-    let max = Number.NEGATIVE_INFINITY;
-    let min = Number.POSITIVE_INFINITY;
-    for (const value of values) {
-        if (value > max) {
-            max = value;
-        }
-        if (value < min) {
-            min = value;
-        }
-    }
-    assert(isFinite(min) && isFinite(max));
-    return {max, min};
 }
 
 /**
@@ -505,7 +489,7 @@ export class PropertiesMap {
             }
 
             this._restyle({
-                'hovertemplate': this._hovertemplate(),
+                'hovertemplate': this._options.hovertemplate(),
                 'marker.color': this._colors(0),
             } as Data, 0);
         };
@@ -610,7 +594,7 @@ export class PropertiesMap {
             y: y[0],
             z: z[0],
 
-            hovertemplate: this._hovertemplate(),
+            hovertemplate: this._options.hovertemplate(),
             marker: {
                 color: colors[0],
                 coloraxis: 'coloraxis',
@@ -756,15 +740,6 @@ export class PropertiesMap {
         return result;
     }
 
-    /** Get the plotly hovertemplate depending on `this._current.color` */
-    private _hovertemplate(): string {
-        if (this._hasColors()) {
-            return this._options.color.property.value + ': %{marker.color:.2f}<extra></extra>';
-        } else {
-            return '%{x:.2f}, %{y:.2f}<extra></extra>';
-        }
-    }
-
     private _coordinates(coordinate: AxisOptions, trace?: number): Array<undefined | number[]> {
         // this will be flagged when the coordinate is the z values and we are 2D
         if (coordinate.property.value === '') {
@@ -789,7 +764,7 @@ export class PropertiesMap {
      */
     private _colors(trace?: number): Array<string | string[] | number | number[]> {
         let values;
-        if (this._hasColors()) {
+        if (this._options.hasColors()) {
             values = this._property(this._options.color.property.value).values;
         } else {
             values = 0.5;
@@ -825,65 +800,9 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _sizes(trace?: number): Array<number | number[]> {
-        // Transform the linear value from the slider into a logarithmic scale
-        const logSlider = (value: number) => {
-            const min_slider = 1;
-            const max_slider = 100;
 
-            // go from 1/6th of the size to 6 time the size
-            const min_value = Math.log(1.0 / 6.0);
-            const max_value = Math.log(6.0);
-
-            const tmp = (max_value - min_value) / (max_slider - min_slider);
-            return Math.exp(min_value + tmp * (value - min_slider));
-        };
-
-        const userFactor = logSlider(this._options.size.factor.value);
-
-        let values;
-        if (this._options.size.mode.value !== 'constant') {
-            const scaleMode = this._options.size.mode.value;
-            const reversed = this._options.size.reverse.value;
-            const sizes = this._property(this._options.size.property.value).values;
-            const {min, max} = arrayMaxMin(sizes);
-            const defaultSize = this._is3D() ? 2000 : 150;
-            const bottomLimit = 0.1; // lower limit to prevent size of 0
-
-            values = sizes.map((v: number) => {
-                // normalize between 0 and 1, then scale by the user provided value
-                let scaled = (v + bottomLimit - min) / (max - min);
-                if (reversed) { scaled = 1.0 + bottomLimit - scaled; }
-                switch (scaleMode) {
-                  case 'inverse':
-                    scaled = 1.0 / scaled;
-                    break;
-                  case 'log':
-                    scaled = Math.log(scaled);
-                    break;
-                  case 'sqrt':
-                    scaled = Math.sqrt(scaled);
-                    break;
-                  case 'linear':
-                    scaled = scaled;
-                    break;
-                  default: // corresponds to 'constant'
-                    scaled = 1.0;
-                    break;
-                }
-                // since we are using scalemode: 'area', square the scaled value
-                return defaultSize * scaled * scaled * userFactor * userFactor;
-            });
-        } else {
-            // we need to use an array instead of a single value because of
-            // https://github.com/plotly/plotly.js/issues/2735
-            values = new Array(this._indexer.environmentsCount());
-            if (this._is3D()) {
-                values.fill(500 * userFactor);
-            } else {
-                values.fill(50 * userFactor);
-            }
-        }
-
+        const sizes = this._property(this._options.size.property.value).values;
+        const values = this._options.calculateSizes(sizes);
         const selected = [];
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
@@ -998,15 +917,8 @@ export class PropertiesMap {
         return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount();
     }
 
-    /** Does the current plot use color values? */
-    private _hasColors(): boolean {
-        return this._options.color.property.value !== '';
-    }
-
     /** Is the the current plot a 3D plot? */
-    private _is3D(): boolean {
-        return this._options !== undefined && this._options.z.property.value !== '';
-    }
+    private _is3D(): boolean {return this._options.is3D()}
 
     /** Switch current plot from 2D to 3D */
     private _switch3D() {
