@@ -8,4 +8,4 @@
  * @preferred
  */
 
-export {ViewersGrid} from './grid';
+export { ViewersGrid } from './grid';

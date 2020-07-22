@@ -1,76 +1,71 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Chemiscope basic example</title>
+    <head>
+        <meta charset="utf-8" />
+        <title>Chemiscope basic example</title>
 
-    <!-- Load all dependencies -->
-    <!-- jquery -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
-      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
-      integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
-      crossorigin="anonymous"
-    ></script>
+        <!-- Load all dependencies -->
+        <!-- jquery -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
+            crossorigin="anonymous"
+        ></script>
 
-    <!-- bootstrap -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css"
-      integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y="
-      crossorigin="anonymous"
-    />
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"
-      integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg="
-      crossorigin="anonymous"
-    ></script>
+        <!-- bootstrap -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css"
+            integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y="
+            crossorigin="anonymous"
+        />
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"
+            integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg="
+            crossorigin="anonymous"
+        ></script>
 
-    <!-- JSmol -->
-    <script
-      type="text/javascript"
-      src="https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/JSmol.min.nojq.js"
-    ></script>
+        <!-- JSmol -->
+        <script type="text/javascript" src="https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/JSmol.min.nojq.js"></script>
 
-    <!-- Chemiscope code and default viewer code -->
-    <script defer type="text/javascript" src="chemiscope.min.js"></script>
-  </head>
+        <!-- Chemiscope code and default viewer code -->
+        <script defer type="text/javascript" src="chemiscope.min.js"></script>
+    </head>
 
-  <body>
-    <!-- Create basic DOM element for the different panels to live in -->
-    <div id="meta"></div>
-    <div id="map"></div>
-    <div id="structure"></div>
-    <div id="info"></div>
-    <!-- We appreciate a citation back to the main chemiscope website -->
-    <span style="font-size: x-small; float: right;">
-      powered by <a href="https://chemiscope.org">chemiscope</a>
-    </span>
-  </body>
+    <body>
+        <!-- Create basic DOM element for the different panels to live in -->
+        <div id="meta"></div>
+        <div id="map"></div>
+        <div id="structure"></div>
+        <div id="info"></div>
+        <!-- We appreciate a citation back to the main chemiscope website -->
+        <span style="font-size: x-small; float: right;"> powered by <a href="https://chemiscope.org">chemiscope</a> </span>
+    </body>
 
-  <script type="text/javascript">
-    // load data from anywhere
-    const dataset = {
-        meta: // to be loaded
-        structures: // to be loaded
-        properties: // to be loaded
-        environments: // to be loaded (optional)
-    }
+    <script type="text/javascript">
+        // load data from anywhere
+        const dataset = {
+            meta: // to be loaded
+            structures: // to be loaded
+            properties: // to be loaded
+            environments: // to be loaded (optional)
+        }
 
-    const config = {
-      // id of the different elements
-      map: "map",
-      meta: "meta",
-      info: "info",
-      structure: "structure",
-      // path to load J2S files for JSmol
-      j2sPath: "https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/",
-    };
+        const config = {
+          // id of the different elements
+          map: "map",
+          meta: "meta",
+          info: "info",
+          structure: "structure",
+          // path to load J2S files for JSmol
+          j2sPath: "https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/",
+        };
 
-    Chemiscope.DefaultVisualizer.load(config, dataset);
-  </script>
+        Chemiscope.DefaultVisualizer.load(config, dataset);
+    </script>
 </html>

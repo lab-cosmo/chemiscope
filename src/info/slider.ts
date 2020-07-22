@@ -3,7 +3,7 @@
  * @module info
  */
 
-import {Target} from '../dataset';
+import { Target } from '../dataset';
 
 /** @hidden
  * A simple slider to select an environment / play the trajectory

@@ -5,8 +5,8 @@
 
 import assert from 'assert';
 
-import {Property, Target} from '../dataset';
-import {Indexes} from '../indexer';
+import { Property, Target } from '../dataset';
+import { Indexes } from '../indexer';
 
 interface TableProperty {
     values: number[] | string[];
@@ -30,7 +30,12 @@ export class Table {
      * @param collapseID HTML id to use for the root div with class=collapse
      * @param properties properties to display in this table.
      */
-    constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}) {
+    constructor(
+        root: HTMLElement,
+        target: Target,
+        collapseID: string,
+        properties: { [name: string]: Property }
+    ) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-parent='#info-tables'>
         <div class="chsp-properties-table">
@@ -62,7 +67,7 @@ export class Table {
             });
         }
 
-        this.show({environment: 0, structure: 0, atom: 0});
+        this.show({ environment: 0, structure: 0, atom: 0 });
     }
 
     /**

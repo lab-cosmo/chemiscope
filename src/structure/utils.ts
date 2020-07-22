@@ -5,7 +5,7 @@
 
 import * as linalg from './linalg';
 
-import {Structure} from '../dataset';
+import { Structure } from '../dataset';
 
 /** @hidden
  * A UnitCell, usable to convert between cartesian and fractional coordinates
@@ -77,7 +77,9 @@ export function structure2JSmol(structure: Structure): string {
         const natoms = structure.names.length;
         buffer.push(`${natoms}\n\n`);
         for (let i = 0; i < natoms; i++) {
-            buffer.push(`${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`);
+            buffer.push(
+                `${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`
+            );
         }
     } else {
         // use BCS format

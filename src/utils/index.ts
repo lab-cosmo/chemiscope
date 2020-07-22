@@ -5,8 +5,8 @@
 
 import assert from 'assert';
 
-export {makeDraggable} from './draggable';
-export {addWarningHandler, sendWarning} from './warnings';
+export { makeDraggable } from './draggable';
+export { addWarningHandler, sendWarning } from './warnings';
 
 /** Callback type to position an HTML element.
  *
@@ -15,10 +15,18 @@ export {addWarningHandler, sendWarning} from './warnings';
  * should return top and left positions in pixels, used with `position:
  * fixed`.
  */
-export type PositioningCallback = (rect: DOMRect) => {top: number, left: number};
+export type PositioningCallback = (rect: DOMRect) => { top: number; left: number };
 
 const STANDARD_COLORS = [
-    'red', 'yellow', 'green', 'blue', 'orange', 'aqua', 'purple', 'teal', 'silver',
+    'red',
+    'yellow',
+    'green',
+    'blue',
+    'orange',
+    'aqua',
+    'purple',
+    'teal',
+    'silver',
 ];
 
 export function getNextColor(alreadyUsedColors: string[]): string {
@@ -32,13 +40,13 @@ export function getNextColor(alreadyUsedColors: string[]): string {
 
 /** Type to separate generic strings from GUID */
 declare const tag: unique symbol;
-export type GUID = string & {readonly [tag]: 'guid'};
+export type GUID = string & { readonly [tag]: 'guid' };
 
 /** Generate a new GUID */
 export function generateGUID(): GUID {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : r & 0x3 | 0x8;
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     }) as GUID;
 }
@@ -49,11 +57,11 @@ export function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
     }
-    return e as unknown as HTMLType;
+    return (e as unknown) as HTMLType;
 }
 
 export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
-    const iterator = function*() {
+    const iterator = function* () {
         let index = 0;
         for (const element of iterable) {
             yield [index, element];

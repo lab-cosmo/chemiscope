@@ -4,7 +4,7 @@
  */
 function parseJSONwithNaN(text) {
     return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
-        return value === "***NaN***" ? NaN : value;
+        return value === '***NaN***' ? NaN : value;
     });
 }
 
@@ -12,7 +12,7 @@ function parseJSONwithNaN(text) {
 function stringifyJSONwithNaN(object) {
     const string = JSON.stringify(object, (key, value) => {
         return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
-    })
+    });
     return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
 }
 
@@ -31,17 +31,17 @@ function readFile(file, callback) {
             throw Error(`could not read ${file.name}: ${reader.error}`);
         }
         callback(reader.result);
-    }
+    };
     reader.readAsArrayBuffer(file);
 }
 
 /** Read JSON or gzipped JSON and return the parsed object */
 function readJSON(path, buffer) {
     let text;
-    if (path.endsWith(".gz")) {
-        text = pako.inflate(buffer, {to: "string"});
+    if (path.endsWith('.gz')) {
+        text = pako.inflate(buffer, { to: 'string' });
     } else {
-        const decoder = new TextDecoder("utf-8");
+        const decoder = new TextDecoder('utf-8');
         text = decoder.decode(buffer);
     }
     return parseJSONwithNaN(text);
@@ -55,26 +55,28 @@ let HIDE_ON_DEMAND_STRUCTURES = undefined;
 function loadStructureOnDemand(index, structure) {
     /**
      * An example of a loadStructure callback to load structures from an URL on demand
-    */
-    return JSON.parse($.ajax({
-        type: "GET",
-        url: structure.data,
-        // this is getting deprecated, but the best option for now
-        async: false
-    }).responseText);
+     */
+    return JSON.parse(
+        $.ajax({
+            type: 'GET',
+            url: structure.data,
+            // this is getting deprecated, but the best option for now
+            async: false,
+        }).responseText
+    );
 }
 
 function setupChemiscope(json) {
     const config = {
-        map:       'chemiscope-map',
-        info:      'chemiscope-info',
-        meta:      'chemiscope-meta',
+        map: 'chemiscope-map',
+        info: 'chemiscope-info',
+        meta: 'chemiscope-meta',
         structure: 'chemiscope-structure',
-        settings:   json.settings || {},
-        j2sPath:   J2S_PATH,
+        settings: json.settings || {},
+        j2sPath: J2S_PATH,
     };
 
-    if (DATASET !== undefined && DATASET.includes("Azaphenacenes.json.gz")) {
+    if (DATASET !== undefined && DATASET.includes('Azaphenacenes.json.gz')) {
         // example of asynchronous structure loading
         config.loadStructure = loadStructureOnDemand;
         HIDE_ON_DEMAND_STRUCTURES.disabled = true;
@@ -86,33 +88,41 @@ function setupChemiscope(json) {
         VISUALIZER.remove();
     }
 
-    Chemiscope.DefaultVisualizer.load(config, json).then((v) => {
-        VISUALIZER = v;
-        v.structure.positionSettingsModal = (rect) => {
-            const structureRect = document.getElementById('chemiscope-structure').getBoundingClientRect();
+    Chemiscope.DefaultVisualizer.load(config, json)
+        .then((v) => {
+            VISUALIZER = v;
+            v.structure.positionSettingsModal = (rect) => {
+                const structureRect = document
+                    .getElementById('chemiscope-structure')
+                    .getBoundingClientRect();
 
-            return {
-                top: structureRect.top,
-                left: structureRect.left - rect.width - 25,
+                return {
+                    top: structureRect.top,
+                    left: structureRect.left - rect.width - 25,
+                };
             };
-        };
 
-        v.map.positionSettingsModal = (rect) => {
-            const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
+            v.map.positionSettingsModal = (rect) => {
+                const mapRect = document.getElementById('chemiscope-map').getBoundingClientRect();
 
-            return {
-                top: mapRect.top,
-                left: mapRect.left + mapRect.width + 25,
+                return {
+                    top: mapRect.top,
+                    left: mapRect.left + mapRect.width + 25,
+                };
             };
-        };
 
-        stopLoading();
-    }).catch(e => setTimeout(() => {throw e;}));
+            stopLoading();
+        })
+        .catch((e) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
 }
 
 const IGNORED_JSMOL_ERRORS = [
     "IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.",
-    "IndexSizeError: Index or size is negative or greater than the allowed amount",
+    'IndexSizeError: Index or size is negative or greater than the allowed amount',
 ];
 
 function displayError(error) {
@@ -124,7 +134,7 @@ function displayError(error) {
     document.getElementById('loading').style.display = 'none';
 
     const display = document.getElementById('error-display');
-    display.style.display = "block";
+    display.style.display = 'block';
     display.getElementsByTagName('p')[0].innerText = error.toString();
     const backtrace = display.getElementsByTagName('details')[0];
     backtrace.getElementsByTagName('p')[0].innerText = error.stack;
@@ -132,7 +142,7 @@ function displayError(error) {
 
 function displayWarning(message) {
     const display = document.getElementById('warning-display');
-    display.style.display = "block";
+    display.style.display = 'block';
     display.getElementsByTagName('p')[0].innerText = message;
 }
 
@@ -156,16 +166,20 @@ function loadExample(url) {
     startLoading();
     DATASET = url;
     fetch(url)
-        .then(response => {
+        .then((response) => {
             if (!response.ok) {
-                throw Error(`unable to load file at ${url}`)
+                throw Error(`unable to load file at ${url}`);
             } else {
                 return response.arrayBuffer();
             }
         })
-        .then(buffer => readJSON(url, buffer))
-        .then(json => setupChemiscope(json))
-        .catch(e => setTimeout(() => {throw e;}));
+        .then((buffer) => readJSON(url, buffer))
+        .then((json) => setupChemiscope(json))
+        .catch((e) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
 }
 
 function setupDefaultChemiscope(j2sPath) {
@@ -174,7 +188,7 @@ function setupDefaultChemiscope(j2sPath) {
 
     window.onerror = (msg, url, line, col, error) => {
         displayError(error);
-    }
+    };
 
     HIDE_ON_DEMAND_STRUCTURES = document.createElement('style');
     HIDE_ON_DEMAND_STRUCTURES.type = 'text/css';
@@ -196,7 +210,7 @@ function setupDefaultChemiscope(j2sPath) {
             setupChemiscope(readJSON(file.name, result));
             loadSaveModal.classList.add('fade');
         });
-    }
+    };
 
     const saveDataset = document.getElementById('save-dataset');
     const saveDatasetName = document.getElementById('save-dataset-name');
@@ -209,7 +223,7 @@ function setupDefaultChemiscope(j2sPath) {
         }
         startDownload(saveDatasetName.value, stringifyJSONwithNaN(dataset));
         closeLoadSaveModal.click();
-    }
+    };
 
     const loadSettings = document.getElementById('load-settings');
     loadSettings.onchange = () => {
@@ -222,7 +236,7 @@ function setupDefaultChemiscope(j2sPath) {
             stopLoading();
             loadSaveModal.classList.add('fade');
         });
-    }
+    };
 
     const saveSettings = document.getElementById('save-settings');
     const saveSettingsName = document.getElementById('save-settings-name');
@@ -242,13 +256,13 @@ function setupDefaultChemiscope(j2sPath) {
         }
         startDownload(saveSettingsName.value, JSON.stringify(settings));
         closeLoadSaveModal.click();
-    }
+    };
 }
 
 function startDownload(filename, content) {
     const a = document.createElement('a');
     a.download = filename;
-    a.href = URL.createObjectURL(new Blob([content], {type: 'application/json'}));
+    a.href = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
     a.style.display = 'none';
 
     document.body.appendChild(a);

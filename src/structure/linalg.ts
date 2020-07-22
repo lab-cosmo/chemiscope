@@ -56,7 +56,7 @@ function vec_dot(lhs: Vector3D, rhs: Vector3D): number {
 
 export function angle(lhs: Vector3D, rhs: Vector3D): number {
     const PI = 3.141592653589793;
-    return Math.acos(vec_dot(lhs, rhs) / (norm(lhs) * norm(rhs))) * 180 / PI;
+    return (Math.acos(vec_dot(lhs, rhs) / (norm(lhs) * norm(rhs))) * 180) / PI;
 }
 
 export function norm(vector: Vector3D): number {

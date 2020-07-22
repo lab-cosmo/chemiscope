@@ -6,8 +6,8 @@
 import assert from 'assert';
 import markdown from 'markdown-it';
 
-import {Metadata} from './dataset';
-import {generateGUID, getByID} from './utils';
+import { Metadata } from './dataset';
+import { generateGUID, getByID } from './utils';
 
 function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">

@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import {getByID, sendWarning} from './utils';
+import { getByID, sendWarning } from './utils';
 
 /**
  * Possible HTML attributes to attach to a setting
@@ -23,10 +23,10 @@ interface OptionsTypeMap {
     //
     // Using a tuple/array type (`[string]`) seems to trick the compiler/improve
     // the way it performs type inference.
-    'string': [string];
-    'int': [number];
-    'number': [number];
-    'boolean': [boolean];
+    string: [string];
+    int: [number];
+    number: [number];
+    boolean: [boolean];
 }
 type OptionsType = keyof OptionsTypeMap;
 type OptionsValue<T extends OptionsType> = OptionsTypeMap[T][0];
@@ -80,7 +80,9 @@ export function optionValidator(valid: string[], name = ''): (value: string) => 
         if (valid.includes(value)) {
             return;
         }
-        throw Error(`invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`);
+        throw Error(
+            `invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`
+        );
     };
 }
 
@@ -160,7 +162,7 @@ export class HTMLOption<T extends OptionsType> {
         (element as any)[attribute] = this._value;
         element.addEventListener('change', listener);
 
-        this._boundList.push({element, attribute, listener});
+        this._boundList.push({ element, attribute, listener });
     }
 
     /**
@@ -170,7 +172,7 @@ export class HTMLOption<T extends OptionsType> {
      */
     public disable(): void {
         for (const bound of this._boundList) {
-            const element = bound.element as unknown as Record<string, unknown>;
+            const element = (bound.element as unknown) as Record<string, unknown>;
             if ('disabled' in element) {
                 element.disabled = true;
             }
@@ -184,7 +186,7 @@ export class HTMLOption<T extends OptionsType> {
      */
     public enable(): void {
         for (const bound of this._boundList) {
-            const element = bound.element as unknown as Record<string, unknown>;
+            const element = (bound.element as unknown) as Record<string, unknown>;
             if ('disabled' in element) {
                 element.disabled = false;
             }
@@ -368,7 +370,11 @@ export abstract class OptionsGroup {
  * @param callback function to call on each HTMLOption
  * @param keys     current keys to access the `settings` object from the root
  */
-function foreachOptionImpl(options: Record<string, unknown>, callback: OptionsCallback, keys: string[] = []): void {
+function foreachOptionImpl(
+    options: Record<string, unknown>,
+    callback: OptionsCallback,
+    keys: string[] = []
+): void {
     if (keys.length > 10) {
         throw Error('setting object is too deep');
     }

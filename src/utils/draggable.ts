@@ -43,19 +43,23 @@ export function makeDraggable(element: DraggableElement, handle_query: string): 
     };
 
     // on mouse down, register mouseup & mousemove events
-    handle.addEventListener('mousedown', (e: Event) => {
-        const event = e as MouseEvent;
-        element.dragOffset = {
-            x: event.clientX - element.offsetLeft,
-            y: event.clientY - element.offsetTop,
-        };
-        element.style.left = `${element.offsetLeft}px`;
-        element.style.top = `${element.offsetTop}px`;
-        element.style.width = `${element.offsetWidth}px`;
-        element.style.margin = '0';
-        element.style.position = 'absolute';
+    handle.addEventListener(
+        'mousedown',
+        (e: Event) => {
+            const event = e as MouseEvent;
+            element.dragOffset = {
+                x: event.clientX - element.offsetLeft,
+                y: event.clientY - element.offsetTop,
+            };
+            element.style.left = `${element.offsetLeft}px`;
+            element.style.top = `${element.offsetTop}px`;
+            element.style.width = `${element.offsetWidth}px`;
+            element.style.margin = '0';
+            element.style.position = 'absolute';
 
-        document.addEventListener('mousemove', mousemove, false);
-        document.addEventListener('mouseup', mouseup, false);
-    }, false);
+            document.addEventListener('mousemove', mousemove, false);
+            document.addEventListener('mouseup', mouseup, false);
+        },
+        false
+    );
 }

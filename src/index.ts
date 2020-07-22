@@ -20,15 +20,15 @@
 
 import assert from 'assert';
 
-import {EnvironmentIndexer, Indexes} from './indexer';
-import {EnvironmentInfo} from './info';
-import {PropertiesMap} from './map';
-import {MetadataPanel} from './metadata';
-import {SavedSettings} from './options';
-import {ViewersGrid} from './structure';
+import { EnvironmentIndexer, Indexes } from './indexer';
+import { EnvironmentInfo } from './info';
+import { PropertiesMap } from './map';
+import { MetadataPanel } from './metadata';
+import { SavedSettings } from './options';
+import { ViewersGrid } from './structure';
 
-import {Dataset, JsObject, Structure, validateDataset} from './dataset';
-import {GUID, addWarningHandler, enumerate, getNextColor} from './utils';
+import { Dataset, JsObject, Structure, validateDataset } from './dataset';
+import { GUID, addWarningHandler, enumerate, getNextColor } from './utils';
 
 require('./static/chemiscope.css');
 
@@ -126,7 +126,7 @@ function validateSettings(settings: JsObject) {
         } else if (key === 'pinned') {
             checkArray(key, settings.pinned);
             for (const value of settings.pinned as unknown[]) {
-                if (!(Number.isInteger(value) && value as number >= 0)) {
+                if (!(Number.isInteger(value) && (value as number) >= 0)) {
                     throw Error('"settings.pinned" must be an array of number');
                 }
             }
@@ -172,8 +172,8 @@ class DefaultVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: Config, dataset: Dataset) {
-        validateConfig(config as unknown as JsObject);
-        validateDataset(dataset as unknown as JsObject);
+        validateConfig((config as unknown) as JsObject);
+        validateDataset((dataset as unknown) as JsObject);
 
         this._dataset = dataset;
         this._pinned = [];
@@ -186,11 +186,14 @@ class DefaultVisualizer {
         // Structure viewer setup
         const structuresSettings = getStructureSettings(config.settings);
         this.structure = new ViewersGrid(
-            {id: config.structure, settings: structuresSettings.length > 0 ? structuresSettings[0] : {}},
+            {
+                id: config.structure,
+                settings: structuresSettings.length > 0 ? structuresSettings[0] : {},
+            },
             config.j2sPath,
             this._indexer,
             dataset.structures,
-            dataset.environments,
+            dataset.environments
         );
 
         if (config.loadStructure !== undefined) {
@@ -224,9 +227,9 @@ class DefaultVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            {id: config.map, settings: getMapSettings(config.settings)},
+            { id: config.map, settings: getMapSettings(config.settings) },
             this._indexer,
-            dataset.properties,
+            dataset.properties
         );
 
         this.map.onselect = (indexes) => {
@@ -248,7 +251,7 @@ class DefaultVisualizer {
         this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
         this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
 
-        let initial: Indexes = {environment: 0, structure: 0, atom: 0};
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
         if (config.settings && config.settings.pinned) {
             initial = this._indexer.from_environment(config.settings.pinned[0]);
         }
@@ -321,7 +324,7 @@ class DefaultVisualizer {
             for (const environment of settings.pinned.slice(1)) {
                 const data = this.structure.duplicate(this._pinned[0]);
                 if (data === undefined) {
-                    throw Error('too many environments in \'pinned\' setting');
+                    throw Error("too many environments in 'pinned' setting");
                 }
                 const [guid, color] = data;
                 const indexes = this._indexer.from_environment(environment);
@@ -371,7 +374,7 @@ class DefaultVisualizer {
                 return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
             }),
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            (_, value) => value === '***NaN***' ? NaN : value,
+            (_, value) => (value === '***NaN***' ? NaN : value)
         ) as Dataset;
 
         if (getStructures) {

@@ -6,19 +6,19 @@
 import assert from 'assert';
 
 import Plotly from './plotly/plotly-scatter';
-import {Config, Data, Layout, PlotlyScatterElement} from './plotly/plotly-scatter';
+import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scatter';
 
-import {Property} from '../dataset';
+import { Property } from '../dataset';
 
-import {EnvironmentIndexer, Indexes} from '../indexer';
-import {OptionModificationOrigin, SavedSettings} from '../options';
-import {GUID, PositioningCallback} from '../utils';
-import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
+import { EnvironmentIndexer, Indexes } from '../indexer';
+import { OptionModificationOrigin, SavedSettings } from '../options';
+import { GUID, PositioningCallback } from '../utils';
+import { enumerate, getByID, getFirstKey, sendWarning } from '../utils';
 
-import {MapData, NumericProperty} from './data';
-import {AxisOptions, MapOptions} from './options';
+import { MapData, NumericProperty } from './data';
+import { AxisOptions, MapOptions } from './options';
 
-import {COLOR_MAPS} from './colorscales';
+import { COLOR_MAPS } from './colorscales';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -29,7 +29,7 @@ const DEFAULT_LAYOUT = {
             len: 1,
             thickness: 20,
             title: {
-                text: '' as (undefined | string),
+                text: '' as undefined | string,
             },
             y: 0,
             yanchor: 'bottom',
@@ -67,7 +67,7 @@ const DEFAULT_LAYOUT = {
         },
         zaxis: {
             showspikes: false,
-            title: '' as (undefined | string),
+            title: '' as undefined | string,
         },
     },
     showlegend: true,
@@ -116,7 +116,7 @@ function get3DSymbol(i: number): string {
 }
 
 // get the max/min of an array. Math.min(...array) fails with very large arrays
-function arrayMaxMin(values: number[]): {max: number, min: number} {
+function arrayMaxMin(values: number[]): { max: number; min: number } {
     let max = Number.NEGATIVE_INFINITY;
     let min = Number.POSITIVE_INFINITY;
     for (const value of values) {
@@ -128,7 +128,7 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
         }
     }
     assert(isFinite(min) && isFinite(max));
-    return {max, min};
+    return { max, min };
 }
 
 /// interface to contain synchronized parameters for marker instances
@@ -204,9 +204,9 @@ export class PropertiesMap {
      * @param properties properties to be displayed
      */
     constructor(
-        config: { id: string, settings: SavedSettings },
+        config: { id: string; settings: SavedSettings },
         indexer: EnvironmentIndexer,
-        properties: { [name: string]: Property },
+        properties: { [name: string]: Property }
     ) {
         this._indexer = indexer;
         this.onselect = () => {};
@@ -218,7 +218,7 @@ export class PropertiesMap {
             this._root.style.position = 'relative';
         }
 
-        this._plot = document.createElement('div') as unknown as PlotlyScatterElement;
+        this._plot = (document.createElement('div') as unknown) as PlotlyScatterElement;
         this._plot.style.width = '100%';
         this._plot.style.height = '100%';
         this._root.appendChild(this._plot);
@@ -229,7 +229,7 @@ export class PropertiesMap {
             this._root,
             this._data[this._indexer.mode],
             (rect) => this.positionSettingsModal(rect),
-            config.settings,
+            config.settings
         );
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
@@ -251,10 +251,10 @@ export class PropertiesMap {
     /**
      * Remove all HTML added by this [[PropertiesMap]] in the current document
      */
-     public remove(): void {
-         this._root.innerHTML = '';
-         this._options.remove();
-     }
+    public remove(): void {
+        this._root.innerHTML = '';
+        this._options.remove();
+    }
 
     /**
      * Change the environment indicated by the currently active marker to
@@ -296,7 +296,7 @@ export class PropertiesMap {
         data.marker.classList.toggle('chsp-active-structure', true);
 
         if (this._is3D()) {
-            this._restyle({'marker.size': this._sizes(1)} as Data, 1);
+            this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
         }
     }
 
@@ -389,12 +389,20 @@ export class PropertiesMap {
 
     /** Forward to Ploty.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
-        Plotly.restyle(this._plot, data, traces).catch((e) => setTimeout(() => { throw e; }));
+        Plotly.restyle(this._plot, data, traces).catch((e) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
     }
 
     /** Forward to Ploty.relayout */
     private _relayout(layout: Partial<Layout>) {
-        Plotly.relayout(this._plot, layout).catch((e) => setTimeout(() => { throw e; }));
+        Plotly.relayout(this._plot, layout).catch((e) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
     }
 
     /** Add all the required callback to the settings */
@@ -403,17 +411,17 @@ export class PropertiesMap {
         this._options.x.property.onchange = () => {
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
-            this._relayout({
+            this._relayout(({
                 'scene.xaxis.title': this._options.x.property.value,
                 'xaxis.title': this._options.x.property.value,
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         this._options.x.scale.onchange = () => {
             if (this._is3D()) {
-                this._relayout({
+                this._relayout(({
                     'scene.xaxis.type': this._options.x.scale.value,
-                } as unknown as Layout);
+                } as unknown) as Layout);
             } else {
                 this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
             }
@@ -431,9 +439,9 @@ export class PropertiesMap {
                 const min = axis.min.value;
                 const max = axis.max.value;
                 if (this._is3D()) {
-                    this._relayout({
+                    this._relayout(({
                         [`scene.${name}.range`]: [min, max],
-                    } as unknown as Layout);
+                    } as unknown) as Layout);
                 } else {
                     this._relayout({ [`${name}.range`]: [min, max] });
                 }
@@ -446,18 +454,18 @@ export class PropertiesMap {
         // ======= y axis settings
         this._options.y.property.onchange = () => {
             const values = this._coordinates(this._options.y) as number[][];
-            this._restyle({ y:  values}, [0, 1]);
-            this._relayout({
+            this._restyle({ y: values }, [0, 1]);
+            this._relayout(({
                 'scene.yaxis.title': this._options.y.property.value,
                 'yaxis.title': this._options.y.property.value,
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         this._options.y.scale.onchange = () => {
             if (this._is3D()) {
-                this._relayout({
+                this._relayout(({
                     'scene.yaxis.type': this._options.y.scale.value,
-                } as unknown as Layout);
+                } as unknown) as Layout);
             } else {
                 this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
             }
@@ -482,16 +490,16 @@ export class PropertiesMap {
 
             const values = this._coordinates(this._options.z);
             this._restyle({ z: values } as Data, [0, 1]);
-            this._relayout({
+            this._relayout(({
                 'scene.zaxis.title': this._options.z.property.value,
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         this._options.z.scale.onchange = () => {
             if (this._options.z.property.value !== '') {
-                this._relayout({
+                this._relayout(({
                     'scene.zaxis.type': this._options.z.scale.value,
-                } as unknown as Layout);
+                } as unknown) as Layout);
             }
         };
 
@@ -505,7 +513,7 @@ export class PropertiesMap {
             this._colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
-            const {min, max} = arrayMaxMin(values);
+            const { min, max } = arrayMaxMin(values);
 
             this._options.color.min.value = min;
             this._options.color.max.value = max;
@@ -523,16 +531,15 @@ export class PropertiesMap {
                 this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
-                const {min, max} = arrayMaxMin(values);
+                const { min, max } = arrayMaxMin(values);
 
                 this._options.color.min.value = min;
                 this._options.color.max.value = max;
 
-                this._relayout({
+                this._relayout(({
                     'coloraxis.colorbar.title.text': this._options.color.property.value,
                     'coloraxis.showscale': true,
-                } as unknown as Layout);
-
+                } as unknown) as Layout);
             } else {
                 this._options.color.disable();
                 this._colorReset.disabled = true;
@@ -540,22 +547,25 @@ export class PropertiesMap {
                 this._options.color.min.value = 0;
                 this._options.color.max.value = 0;
 
-                this._relayout({
+                this._relayout(({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
-                } as unknown as Layout);
+                } as unknown) as Layout);
             }
 
-            this._restyle({
-                'hovertemplate': this._hovertemplate(),
-                'marker.color': this._colors(0),
-            } as Data, 0);
+            this._restyle(
+                {
+                    hovertemplate: this._hovertemplate(),
+                    'marker.color': this._colors(0),
+                } as Data,
+                0
+            );
         };
 
         const colorRangeChange = () => {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
-            this._relayout({
+            this._relayout(({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
@@ -564,43 +574,43 @@ export class PropertiesMap {
                 // seems to do the trick. This is possiblely a Ploty bug, we
                 // would need to investiguate a bit more.
                 'coloraxis.colorscale': this._colorScale(),
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
         this._options.color.max.onchange = colorRangeChange;
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
-            const {min, max} = arrayMaxMin(values);
+            const { min, max } = arrayMaxMin(values);
             this._options.color.min.value = min;
             this._options.color.max.value = max;
-            this._relayout({
+            this._relayout(({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // same as above regarding update of the points color
                 'coloraxis.colorscale': this._colorScale(),
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         // ======= color palette
         this._options.palette.onchange = () => {
-            this._relayout({
+            this._relayout(({
                 'coloraxis.colorscale': this._colorScale(),
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         // ======= markers symbols
         this._options.symbol.onchange = () => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
 
-            this._restyle({
+            this._restyle(({
                 name: this._legendNames(),
                 showlegend: this._showlegend(),
-            } as unknown as Data);
+            } as unknown) as Data);
 
-            this._relayout({
+            this._relayout(({
                 'coloraxis.colorbar.len': this._colorbarLen(),
-            } as unknown as Layout);
+            } as unknown) as Layout);
         };
 
         // ======= markers size
@@ -752,8 +762,16 @@ export class PropertiesMap {
         layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
-        Plotly.newPlot(this._plot, traces, layout as Partial<Layout>, DEFAULT_CONFIG as Config)
-            .catch((e) => setTimeout(() => { throw e; }));
+        Plotly.newPlot(
+            this._plot,
+            traces,
+            layout as Partial<Layout>,
+            DEFAULT_CONFIG as Config
+        ).catch((e) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
             // don't update selected env on double click, since it is bound to
@@ -887,31 +905,33 @@ export class PropertiesMap {
             const scaleMode = this._options.size.mode.value;
             const reversed = this._options.size.reverse.value;
             const sizes = this._property(this._options.size.property.value).values;
-            const {min, max} = arrayMaxMin(sizes);
+            const { min, max } = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
             const bottomLimit = 0.1; // lower limit to prevent size of 0
 
             values = sizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
                 let scaled = (v + bottomLimit - min) / (max - min);
-                if (reversed) { scaled = 1.0 + bottomLimit - scaled; }
+                if (reversed) {
+                    scaled = 1.0 + bottomLimit - scaled;
+                }
                 switch (scaleMode) {
-                  case 'inverse':
-                    scaled = 1.0 / scaled;
-                    break;
-                  case 'log':
-                    scaled = Math.log(scaled);
-                    break;
-                  case 'sqrt':
-                    scaled = Math.sqrt(scaled);
-                    break;
-                  case 'linear':
-                    /* nothing to do */
-                    break;
-                  default:
-                    assert(scaleMode === 'constant');
-                    scaled = 1.0;
-                    break;
+                    case 'inverse':
+                        scaled = 1.0 / scaled;
+                        break;
+                    case 'log':
+                        scaled = Math.log(scaled);
+                        break;
+                    case 'sqrt':
+                        scaled = Math.sqrt(scaled);
+                        break;
+                    case 'linear':
+                        /* nothing to do */
+                        break;
+                    default:
+                        assert(scaleMode === 'constant');
+                        scaled = 1.0;
+                        break;
                 }
                 // since we are using scalemode: 'area', square the scaled value
                 return defaultSize * scaled * scaled * userFactor * userFactor;
@@ -955,7 +975,11 @@ export class PropertiesMap {
             // If we need more symbols than available, we'll send a warning
             // and repeat existing ones
             if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
-              sendWarning(`${this._symbolsCount()} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`);
+                sendWarning(
+                    `${this._symbolsCount()} symbols are required, but we only have ${
+                        POSSIBLE_SYMBOLS_IN_3D.length
+                    }. Some symbols will be repeated`
+                );
             }
             const symbols = values.map(get3DSymbol);
             const selected = [];
@@ -1065,10 +1089,10 @@ export class PropertiesMap {
         }
 
         // switch all traces to 3D mode
-        this._restyle({
+        this._restyle(({
             'marker.symbol': symbols,
-            'type': 'scatter3d',
-        } as unknown as Data);
+            type: 'scatter3d',
+        } as unknown) as Data);
 
         for (const data of this._selected.values()) {
             data.marker.style.display = 'none';
@@ -1076,25 +1100,28 @@ export class PropertiesMap {
         }
 
         // Change the data that vary between 2D and 3D mode
-        this._restyle({
-            // transparency messes with depth sorting in 3D mode, even with
-            // line width set to 0 ¯\_(ツ)_/¯
-            // https://github.com/plotly/plotly.js/issues/4111
-            'marker.line.color': this._lineColors(),
-            'marker.line.width': [1, 2],
-            // size change from 2D to 3D
-            'marker.size': this._sizes(),
-            'marker.sizemode': 'area',
-        } as Data, [0, 1]);
+        this._restyle(
+            {
+                // transparency messes with depth sorting in 3D mode, even with
+                // line width set to 0 ¯\_(ツ)_/¯
+                // https://github.com/plotly/plotly.js/issues/4111
+                'marker.line.color': this._lineColors(),
+                'marker.line.width': [1, 2],
+                // size change from 2D to 3D
+                'marker.size': this._sizes(),
+                'marker.sizemode': 'area',
+            } as Data,
+            [0, 1]
+        );
 
-        this._relayout({
+        this._relayout(({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
-        } as unknown as Layout);
+        } as unknown) as Layout);
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -1108,32 +1135,35 @@ export class PropertiesMap {
         }
 
         // switch all traces to 2D mode
-        this._restyle({
+        this._restyle(({
             'marker.symbol': symbols,
-            'type': 'scattergl',
-        } as unknown as Data);
+            type: 'scattergl',
+        } as unknown) as Data);
 
         // show selected environments markers
         for (const data of this._selected.values()) {
             data.marker.style.display = 'block';
         }
 
-        this._restyle({
-            // transparency messes with depth sorting in 3D mode
-            // https://github.com/plotly/plotly.js/issues/4111
-            'marker.line.color': this._lineColors(),
-            'marker.line.width': [1, 0],
-            // size change from 2D to 3D
-            'marker.size': this._sizes(),
-        } as Data, [0, 1]);
+        this._restyle(
+            {
+                // transparency messes with depth sorting in 3D mode
+                // https://github.com/plotly/plotly.js/issues/4111
+                'marker.line.color': this._lineColors(),
+                'marker.line.width': [1, 0],
+                // size change from 2D to 3D
+                'marker.size': this._sizes(),
+            } as Data,
+            [0, 1]
+        );
 
-        this._relayout({
+        this._relayout(({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-        } as unknown as Layout);
+        } as unknown) as Layout);
     }
 
     /**
@@ -1173,41 +1203,41 @@ export class PropertiesMap {
      * @param data data of the marker to update
      */
     private _updateSelectedMarker(data: MarkerData): void {
-          const selected = data.current;
-          const marker = data.marker;
+        const selected = data.current;
+        const marker = data.marker;
 
-          if (this._is3D()) {
-              // we have to update all symbols at the same time
-              this._updateAll3DMarkers();
-          } else {
-              const xaxis = this._plot._fullLayout.xaxis;
-              const yaxis = this._plot._fullLayout.yaxis;
+        if (this._is3D()) {
+            // we have to update all symbols at the same time
+            this._updateAll3DMarkers();
+        } else {
+            const xaxis = this._plot._fullLayout.xaxis;
+            const yaxis = this._plot._fullLayout.yaxis;
 
-              const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
-              const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
+            const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
+            const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
 
-              const rawX = this._coordinates(this._options.x, 0) as number[][];
-              const rawY = this._coordinates(this._options.y, 0) as number[][];
+            const rawX = this._coordinates(this._options.x, 0) as number[][];
+            const rawY = this._coordinates(this._options.y, 0) as number[][];
 
-              const x = computeX(rawX[0][selected]);
-              const y = computeY(rawY[0][selected]);
+            const x = computeX(rawX[0][selected]);
+            const y = computeY(rawY[0][selected]);
 
-              // hide the point if it is outside the plot, allow for up to 10px
-              // overflow (for points just on the border)
-              const minX = computeX(xaxis.range[0]) - 10;
-              const maxX = computeX(xaxis.range[1]) + 10;
-              const minY = computeY(yaxis.range[1]) - 10;
-              const maxY = computeY(yaxis.range[0]) + 10;
-              if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
-                  marker.style.display = 'none';
-              } else {
-                  marker.style.display = 'block';
-              }
+            // hide the point if it is outside the plot, allow for up to 10px
+            // overflow (for points just on the border)
+            const minX = computeX(xaxis.range[0]) - 10;
+            const maxX = computeX(xaxis.range[1]) + 10;
+            const minY = computeY(yaxis.range[1]) - 10;
+            const maxY = computeY(yaxis.range[0]) + 10;
+            if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
+                marker.style.display = 'none';
+            } else {
+                marker.style.display = 'block';
+            }
 
-              marker.style.top = `${y}px`;
-              const plotWidth = this._plot.getBoundingClientRect().width;
-              marker.style.right = `${plotWidth - x}px`;
-          }
+            marker.style.top = `${y}px`;
+            const plotWidth = this._plot.getBoundingClientRect().width;
+            marker.style.right = `${plotWidth - x}px`;
+        }
     }
 
     /**
@@ -1227,13 +1257,16 @@ export class PropertiesMap {
      * Update the position, size & color for all markers in 3D mode
      */
     private _updateAll3DMarkers(): void {
-        this._restyle({
-            'marker.color': this._colors(1),
-            'marker.size': this._sizes(1),
-            'marker.symbol': this._symbols(1),
-            'x': this._coordinates(this._options.x, 1),
-            'y': this._coordinates(this._options.y, 1),
-            'z': this._coordinates(this._options.z, 1),
-        } as Data, 1);
+        this._restyle(
+            {
+                'marker.color': this._colors(1),
+                'marker.size': this._sizes(1),
+                'marker.symbol': this._symbols(1),
+                x: this._coordinates(this._options.x, 1),
+                y: this._coordinates(this._options.y, 1),
+                z: this._coordinates(this._options.z, 1),
+            } as Data,
+            1
+        );
     }
 }

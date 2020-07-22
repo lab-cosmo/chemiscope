@@ -5,12 +5,12 @@
 
 import assert from 'assert';
 
-import {HTMLOption, OptionsGroup, SavedSettings} from '../options';
-import {optionValidator} from '../options';
-import {PositioningCallback, getByID, makeDraggable} from '../utils';
-import {NumericProperties} from './data';
+import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
+import { optionValidator } from '../options';
+import { PositioningCallback, getByID, makeDraggable } from '../utils';
+import { NumericProperties } from './data';
 
-import {COLOR_MAPS} from './colorscales';
+import { COLOR_MAPS } from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -72,7 +72,7 @@ export class MapOptions extends OptionsGroup {
         root: HTMLElement,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        settings: SavedSettings = {},
+        settings: SavedSettings = {}
     ) {
         super();
         const propertiesName = Object.keys(properties);
@@ -99,10 +99,10 @@ export class MapOptions extends OptionsGroup {
         this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.size = {
-            factor : new HTMLOption('number', 50),
-            mode : new HTMLOption('string', 'constant'),
-            property : new HTMLOption('string', propertiesName[0]),
-            reverse : new HTMLOption('boolean', false)
+            factor: new HTMLOption('number', 50),
+            mode: new HTMLOption('string', 'constant'),
+            property: new HTMLOption('string', propertiesName[0]),
+            reverse: new HTMLOption('boolean', false),
         };
         this.size.property.validate = optionValidator(propertiesName, 'size');
         this.size.factor.validate = (value) => {
@@ -110,8 +110,11 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
-        this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
-       
+        this.size.mode.validate = optionValidator(
+            ['constant', 'linear', 'log', 'sqrt', 'inverse'],
+            'size'
+        );
+
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
         this.z.property.value = '';
@@ -198,7 +201,9 @@ export class MapOptions extends OptionsGroup {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const {top, left} = this._positionSettingsModal(modalDialog.getBoundingClientRect());
+                const { top, left } = this._positionSettingsModal(
+                    modalDialog.getBoundingClientRect()
+                );
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;
