@@ -12,7 +12,7 @@ The first and best way to contribute to chemiscope is to use it and advertise it
 to other potential users. Other than that, you can help with:
 
 -   documentation: correcting typos, making various documentation clearer;
--   bug fixes and improvement to existing code;
+-   bug fixes and improvements to existing code;
 -   and many more …
 
 All these contributions are very welcome. We accept contributions via Github
@@ -39,7 +39,7 @@ Every item in this list is explained in the next section
 -   [ ] Add code / correct typos / ...;
 -   [ ] Check that the code passes lint checks;
 -   [ ] Push to Github;
--   [ ] Create a Pull-Request;
+-   [ ] Create a Pull Request;
 -   [ ] Discuss your changes with the reviewers;
 -   [ ] Have your code merged
 -   [ ] Celebrate! :tada: :cake: :tada:
@@ -78,7 +78,7 @@ Run tests and lints (we use `tslint` to ensure a consistent coding style):
 npm test
 ```
 
-Finally, you can push your code to Github, and create a [Pull-Request][pr] to
+Finally, you can push your code to Github, and create a [Pull Request][pr] to
 the `cosmo-epfl/chemiscope` repository.
 
 ```bash
