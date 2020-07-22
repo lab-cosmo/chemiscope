@@ -173,10 +173,10 @@
                       </div>
                       <select id=chsp-size-mode class="custom-select" enabled>
                           <option value="constant">constant</option>
-                          <option value="inverse">inverse</option>
-                          <option value="linear">linear</option>
+                          <option value="linear">linear</option>                          
                           <option value="log">log</option>
                           <option value="sqrt">sqrt</option>
+                          <option value="inverse">inverse</option>
                       </select>
                     </div>
 
@@ -184,24 +184,24 @@
                         more options
                     </button>
 
-                    <div class="collapse chsp-map-extra-options" id=chsp-extra-size>
-                      <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
-                          <label class="input-group-text" for=chsp-size-factor>factor:</label>
+                    <div class="collapse chsp-map-extra-options" id=chsp-extra-size style="grid-template-columns: 1fr 1fr;">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for=chsp-size>property:</label>
+                            </div>
+                            <select id=chsp-size class="custom-select" disabled>
+                            </select>
                         </div>
-                        <input type="range" min=1 max=100 step=1 class="form-control custom-range" id=chsp-size-factor>
-                      </div>
-                      <div class="input-group input-group-sm">
-                          <div class="input-group-prepend">
-                              <label class="input-group-text" for=chsp-size>property:</label>
-                          </div>
-                          <select id=chsp-size class="custom-select" disabled>
-                          </select>
-                      </div>
-                      <div class="custom-control custom-switch">
-                          <input class="custom-control-input" id=chsp-size-reverse type="checkbox" disabled>
-                          <label class="custom-control-label" for=chsp-size-reverse title="reverse sizes">reverse sizes</label>
-                      </div>
+                        <div class="custom-switch">
+                            <input class="custom-control-input" id=chsp-size-reverse type="checkbox" disabled>
+                            <label class="custom-control-label" for=chsp-size-reverse title="reverse sizes">reverse sizes</label>
+                        </div>
+                        <div class="input-group input-group-sm" style="grid-column: auto / span 2">
+                            <div class="input-group-prepend">
+                            <label class="input-group-text" for=chsp-size-factor>factor:</label>
+                            </div>
+                            <input type="range" min=1 max=100 step=1 class="form-control custom-range" id=chsp-size-factor>
+                        </div>
                     </div>
 
                     <div class="input-group input-group-sm">
