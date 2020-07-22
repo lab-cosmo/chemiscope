@@ -286,7 +286,7 @@ values:
                     // if false, markers scale from smallest to largest property value
                     // if true, marker scale from largest to smallest property value
                     // in the case of `inverse` scaling, this is reversed.
-                    "reversed": false | true,
+                    "reverse": false | true,
                 },
             },
             // Settings related to the structure viewers grid. This is an array
