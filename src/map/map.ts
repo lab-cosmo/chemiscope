@@ -401,7 +401,7 @@ export class PropertiesMap {
     private _connectSettings() {
         // ======= x axis settings
         this._options.x.property.onchange = () => {
-            const values = this._xValues();
+            const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
             this._relayout({
                 'scene.xaxis.title': this._options.x.property.value,
@@ -445,7 +445,7 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange = () => {
-            const values = this._yValues();
+            const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y:  values}, [0, 1]);
             this._relayout({
                 'scene.yaxis.title': this._options.y.property.value,
@@ -479,7 +479,7 @@ export class PropertiesMap {
                 }
             }
 
-            const values = this._zValues();
+            const values = this._coordinates(this._options.z);
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout({
                 'scene.zaxis.title': this._options.z.property.value,
@@ -620,9 +620,9 @@ export class PropertiesMap {
         const sizes = this._sizes();
         const symbols = this._symbols();
 
-        const x = this._xValues();
-        const y = this._yValues();
-        const z = this._zValues();
+        const x = this._coordinates(this._options.x);
+        const y = this._coordinates(this._options.y);
+        const z = this._coordinates(this._options.z);
 
         const type = this._is3D() ? 'scatter3d' : 'scattergl';
 
@@ -790,54 +790,20 @@ export class PropertiesMap {
         }
     }
 
-    /**
-     * Get the values to use for the x axis with the given plotly `trace`,
-     * or all of them if `trace === undefined`
-     */
-    private _xValues(trace?: number): number[][] {
-        const values = this._property(this._options.x.property.value).values;
-        const selected = [];
-        for (const marker of this._selected.values()) {
-            if (this._is3D()) {
-                selected.push(values[marker.current]);
-            } else {
-                selected.push(NaN);
-            }
-        }
-        return this._selectTrace(values, selected, trace);
-    }
-
-    /**
-     * Get the values to use for the y axis with the given plotly `trace`,
-     * or all of them if `trace === undefined`
-     */
-    private _yValues(trace?: number): number[][] {
-        const values = this._property(this._options.y.property.value).values;
-        const selected = [];
-        for (const marker of this._selected.values()) {
-            if (this._is3D()) {
-                selected.push(values[marker.current]);
-            } else {
-                selected.push(NaN);
-            }
-        }
-
-        return this._selectTrace(values, selected, trace);
-    }
-
-    /**
-     * Get the values to use for the z axis with the given plotly `trace`,
-     * or all of them if `trace === undefined`
-     */
-    private _zValues(trace?: number): Array<undefined | number[]> {
-        if (!this._is3D()) {
+    private _coordinates(coordinate: AxisOptions, trace?: number): Array<undefined | number[]> {
+        // this will be flagged when the coordinate is the z values and we are 2D
+        if (coordinate.property.value === '') {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._property(this._options.z.property.value).values;
+        const values = this._property(coordinate.property.value).values;
         const selected = [];
         for (const marker of this._selected.values()) {
-            selected.push(values[marker.current]);
+            if (this._is3D()) {
+                selected.push(values[marker.current]);
+            } else {
+                selected.push(NaN);
+            }
         }
         return this._selectTrace(values, selected, trace);
     }
@@ -1177,8 +1143,11 @@ export class PropertiesMap {
               const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
               const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
 
-              const x = computeX(this._xValues(0)[0][selected]);
-              const y = computeY(this._yValues(0)[0][selected]);
+              const rawX = this._coordinates(this._options.x, 0) as number[][];
+              const rawY = this._coordinates(this._options.y, 0) as number[][];
+
+              const x = computeX(rawX[0][selected]);
+              const y = computeY(rawY[0][selected]);
 
               // hide the point if it is outside the plot, allow for up to 10px
               // overflow (for points just on the border)
@@ -1219,9 +1188,9 @@ export class PropertiesMap {
             'marker.color': this._colors(1),
             'marker.size': this._sizes(1),
             'marker.symbol': this._symbols(1),
-            'x': this._xValues(1),
-            'y': this._yValues(1),
-            'z': this._zValues(1),
+            'x': this._coordinates(this._options.x, 1),
+            'y': this._coordinates(this._options.y, 1),
+            'z': this._coordinates(this._options.z, 1),
         } as Data, 1);
     }
 }
