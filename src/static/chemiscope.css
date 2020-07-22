@@ -129,7 +129,6 @@
 }
 
 .chsp-map-options {
-    font-weight: bold;
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: center;
@@ -139,11 +138,13 @@
 }
 
 .chsp-map-options label {
-    min-width: 5em;
+    min-width: 6em;
 }
 
 .chsp-map-extra-options {
     display: grid;
+    align-items: center;
+    justify-items: center;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 1em;
     margin-bottom: 1.5em;
