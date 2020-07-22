@@ -132,6 +132,24 @@ export class MapOptions extends OptionsGroup {
     }
 
     /**
+     * Apply saved settings to all the map options
+     *
+     * @param settings settings for all panels
+     */
+    public applySettings(settings: SavedSettings): void {
+        // deal with backward compatibility: size.property === '' used to mean
+        // "use a constant scaling"
+        if ('size' in settings) {
+            const size = settings.size as SavedSettings;
+            if ('property' in size && size.property === '') {
+                delete size.property;
+                size.mode = 'constant';
+            }
+        }
+        super.applySettings(settings);
+    }
+
+    /**
      * Remove all HTML added by this [[MapSettings]] in the current document
      */
     public remove(): void {
