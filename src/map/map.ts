@@ -613,14 +613,21 @@ export class PropertiesMap {
             if (this._options.size.mode.value !== 'constant') {
               if (this._options.size.property.disabled()) {
                 this._options.size.property.enable();
-                this._options.size.property.value = this._options.x.property.value;
+              }
+              if (this._options.size.reverse.disabled()) {
+                this._options.size.reverse.enable();
               }
             } else {
               this._options.size.property.disable();
+              this._options.size.reverse.disable();
             }
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
         this._options.size.property.onchange = () => {
+            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        };
+
+        this._options.size.reverse.onchange = () => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
     }
@@ -916,25 +923,29 @@ export class PropertiesMap {
         let values;
         if (this._options.size.mode.value !== 'constant') {
             const scaleMode = this._options.size.mode.value;
+            const reversed = this._options.size.reverse.value;
+            console.log(this._options.size.reverse);
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
             const bottomLimit = 0.1; // lower limit to prevent size of 0
+
             values = sizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
-                let scaled;
+                let scaled = (v + bottomLimit - min) / (max - min);
+                if (reversed) { scaled = 1.0 + bottomLimit - scaled; }
                 switch (scaleMode) {
                   case 'inverse':
-                    scaled = (max - v + bottomLimit) / (max - min);
+                    scaled = 1.0 / scaled;
                     break;
                   case 'log':
-                    scaled = Math.log((max - v + bottomLimit) / (max - min));
+                    scaled = Math.log(scaled);
                     break;
                   case 'sqrt':
-                    scaled = Math.sqrt((v + bottomLimit - min) / (max - min));
+                    scaled = Math.sqrt(scaled);
                     break;
                   case 'linear':
-                    scaled = (v + bottomLimit - min) / (max - min);
+                    scaled = scaled;
                     break;
                   default: // corresponds to 'constant'
                     scaled = 1.0;
