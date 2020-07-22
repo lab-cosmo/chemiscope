@@ -60,6 +60,7 @@ export class MapOptions extends OptionsGroup {
         factor: HTMLOption<'number'>;
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
+        reverse: HTMLOption<'boolean'>;
     };
 
     /// The HTML element containing the settings modal
@@ -101,6 +102,7 @@ export class MapOptions extends OptionsGroup {
             factor : new HTMLOption('number', 50),
             mode : new HTMLOption('string', 'constant'),
             property : new HTMLOption('string', propertiesName[0]),
+            reverse : new HTMLOption('boolean', false)
         };
         this.size.property.validate = optionValidator(propertiesName, 'size');
         this.size.factor.validate = (value) => {
@@ -109,6 +111,7 @@ export class MapOptions extends OptionsGroup {
             }
         };
         this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
+        this.size.reverse.validate = optionValidator([false, true], 'size');
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
@@ -271,5 +274,6 @@ export class MapOptions extends OptionsGroup {
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind('chsp-size-factor', 'value');
         this.size.mode.bind('chsp-size-mode', 'value');
+        this.size.reverse.bind('chsp-size-reverse', 'checked');
     }
 }
