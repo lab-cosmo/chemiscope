@@ -95,12 +95,6 @@ def main():
         default="",
         help="output file name. Defaults to chemiscope.html or the name of the JSON",
     )
-    parser.add_argument(
-        "--loader",
-        default=False,
-        action="store_true",
-        help="shows a load input box that makes it possible to load new files even if there is an embedded dataset.",
-    )
     args = parser.parse_args()
 
     html = get_html()
