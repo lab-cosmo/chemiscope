@@ -274,11 +274,13 @@ values:
                 "palette": "cividis",
                 // settings related to the markers sizes
                 "size": {
+                    // scaling factor for the axis, between 1 and 100
+                    "factor": 55,
+                    // mode to scale the markers with respect to the properties
+                    "scale": "constant" | "inverse" | "linear" | "log" | "sqrt",
                     // name of the property to use for the markers size, this
                     // must be one of the key from the root `properties` table.
                     "property": "<name>",
-                    // scaling factor for the axis, between 1 and 100
-                    "factor": 55,
                 },
             },
             // Settings related to the structure viewers grid. This is an array
