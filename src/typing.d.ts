@@ -23,7 +23,7 @@ declare module 'jsmol' {
         serverURL: string;
         height: number | string;
         width: number | string;
-        color: string | [number, number , number];
+        color: string | [number, number, number];
         script: string;
         disableInitialConsole: boolean;
         disableJ2SLoadMonitor: boolean;

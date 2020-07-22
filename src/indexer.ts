@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Environment, Structure, UserStructure} from './dataset';
+import { Environment, Structure, UserStructure } from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
@@ -58,7 +58,11 @@ export class EnvironmentIndexer {
      * @param structures   structures used in the current dataset
      * @param environments environments used in the current dataset
      */
-    constructor(mode: DisplayMode, structures: Structure[] | UserStructure[], environments?: Environment[]) {
+    constructor(
+        mode: DisplayMode,
+        structures: Structure[] | UserStructure[],
+        environments?: Environment[]
+    ) {
         this.mode = mode;
         this._structures = structures;
         this._environments = environments;

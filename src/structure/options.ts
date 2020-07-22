@@ -5,9 +5,9 @@
 
 import assert from 'assert';
 
-import {HTMLOption, OptionsGroup} from '../options';
-import {optionValidator} from '../options';
-import {PositioningCallback, makeDraggable} from '../utils';
+import { HTMLOption, OptionsGroup } from '../options';
+import { optionValidator } from '../options';
+import { PositioningCallback, makeDraggable } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -50,11 +50,7 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(
-        root: HTMLElement,
-        guid: string,
-        positionSettings: PositioningCallback,
-    ) {
+    constructor(root: HTMLElement, guid: string, positionSettings: PositioningCallback) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -85,17 +81,19 @@ export class StructureOptions extends OptionsGroup {
 
         this.environments = {
             activated: new HTMLOption('boolean', true),
-            bgColor:  new HTMLOption('string', 'grey'),
+            bgColor: new HTMLOption('string', 'grey'),
             bgStyle: new HTMLOption('string', 'licorice'),
             center: new HTMLOption('boolean', false),
             cutoff: new HTMLOption('number', 4.0),
         };
 
         this.environments.bgColor.validate = optionValidator(
-            ['grey', 'CPK'], 'background atoms coloring',
+            ['grey', 'CPK'],
+            'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
-            ['licorice', 'ball-stick', 'hide'], 'background atoms style',
+            ['licorice', 'ball-stick', 'hide'],
+            'background atoms style'
         );
         this.environments.cutoff.validate = (value) => {
             if (value < 0) {
@@ -148,10 +146,15 @@ export class StructureOptions extends OptionsGroup {
 
         // replace id to ensure they are unique even if we have mulitple viewers
         // on a single page
-        template.innerHTML = HTML_OPTIONS
-            .replace(/id=(.*?) /g, (_: string, id: string) => `id=${guid}-${id} `)
+        template.innerHTML = HTML_OPTIONS.replace(
+            /id=(.*?) /g,
+            (_: string, id: string) => `id=${guid}-${id} `
+        )
             .replace(/for=(.*?) /g, (_: string, id: string) => `for=${guid}-${id} `)
-            .replace(/data-target=#(.*?) /g, (_: string, id: string) => `data-target=#${guid}-${id} `);
+            .replace(
+                /data-target=#(.*?) /g,
+                (_: string, id: string) => `data-target=#${guid}-${id} `
+            );
 
         const modal = template.content.firstChild as HTMLElement;
         const modalDialog = modal.childNodes[1] as HTMLElement;
@@ -168,7 +171,9 @@ export class StructureOptions extends OptionsGroup {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const {top, left} = this._positionSettingsModal(modalDialog.getBoundingClientRect());
+                const { top, left } = this._positionSettingsModal(
+                    modalDialog.getBoundingClientRect()
+                );
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;

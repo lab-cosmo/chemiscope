@@ -222,7 +222,13 @@ function checkStructures(o: JsObject[]): [number, number] {
     let envCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
-        if (!('size' in structure && typeof structure.size === 'number' && isPositiveInteger(structure.size))) {
+        if (
+            !(
+                'size' in structure &&
+                typeof structure.size === 'number' &&
+                isPositiveInteger(structure.size)
+            )
+        ) {
             throw Error(`missing 'size' for structure ${i}`);
         }
         envCount += structure.size;
@@ -273,7 +279,11 @@ export function checkStructure(s: JsObject): string {
     return '';
 }
 
-function checkProperties(properties: Record<string, JsObject>, structureCount: number, envCount: number) {
+function checkProperties(
+    properties: Record<string, JsObject>,
+    structureCount: number,
+    envCount: number
+) {
     for (const key in properties) {
         const property = properties[key];
 
@@ -298,7 +308,9 @@ function checkProperties(properties: Record<string, JsObject>, structureCount: n
         }
 
         if (property.values.length !== expected) {
-            throw Error(`wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`);
+            throw Error(
+                `wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`
+            );
         }
 
         const initial = typeof property.values[0];
@@ -325,7 +337,7 @@ function checkEnvironments(o: JsObject[], structures: Structure[]) {
         if (!isPositiveInteger(env.structure) || env.structure >= structures.length) {
             throw Error(
                 `out of bounds 'structure' for environment ${i}: index is \
-                ${env.structure}, we have ${structures.length} structures`,
+                ${env.structure}, we have ${structures.length} structures`
             );
         }
 
@@ -337,7 +349,7 @@ function checkEnvironments(o: JsObject[], structures: Structure[]) {
         if (!isPositiveInteger(env.center) || env.center >= size) {
             throw Error(
                 `out of bounds 'center' for environment ${i}: index is \
-                ${env.center}, we have ${size} atoms in structure ${env.structure}`,
+                ${env.center}, we have ${size} atoms in structure ${env.structure}`
             );
         }
 

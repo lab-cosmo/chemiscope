@@ -1,24 +1,24 @@
 ---
 title: 'Chemiscope: interactive structure-property explorer for materials and molecules'
 tags:
-  - TypeScript
-  - JavaScript
-  - chemistry
-  - material science
-  - machine learning
+    - TypeScript
+    - JavaScript
+    - chemistry
+    - material science
+    - machine learning
 authors:
-  - name: Guillaume Fraux
-    orcid: 0000-0003-4824-6512
-    affiliation: 1
-  - name: Rose K. Cersonsky
-    orcid: 0000-0003-4515-3441
-    affiliation: 1
-  - name: Michele Ceriotti
-    orcid: 0000-0003-2571-2832
-    affiliation: 1
+    - name: Guillaume Fraux
+      orcid: 0000-0003-4824-6512
+      affiliation: 1
+    - name: Rose K. Cersonsky
+      orcid: 0000-0003-4515-3441
+      affiliation: 1
+    - name: Michele Ceriotti
+      orcid: 0000-0003-2571-2832
+      affiliation: 1
 affiliations:
- - name: Laboratory of Computational Science and Modeling, IMX, École Polytechnique Fédérale de Lausanne, 1015 Lausanne, Switzerland
-   index: 1
+    - name: Laboratory of Computational Science and Modeling, IMX, École Polytechnique Fédérale de Lausanne, 1015 Lausanne, Switzerland
+      index: 1
 date: 30 January 2020
 bibliography: paper.bib
 ---
@@ -31,9 +31,9 @@ Computational chemistry can be used to generate databases containing billions of
 potential structures [@Ruddigkeit2012], and predict some of the associated
 properties [@Montavon2013; @Ramakrishnan2014]. Unfortunately, the very large
 number of structures makes exploring such database — to understand
-structure-property relations or find the *best* structure for a given
+structure-property relations or find the _best_ structure for a given
 application — a daunting task. In recent years, multiple molecular
-*representations* [@Behler2007; @Bartok2013; @Willatt2019] have been developed
+_representations_ [@Behler2007; @Bartok2013; @Willatt2019] have been developed
 to compute structural similarities between materials or molecules, incorporating
 physically-relevant information and symmetries. The features associated with
 these representations can be used for unsupervised machine learning
@@ -69,14 +69,13 @@ structure-property relations.
 
 Whereas similar tools [@Gong2013; @Gutlein2014; @Probst2017; @ISV] only allow
 visualizing maps and structures in which each data point corresponds to a
-molecule, or a crystal  structure, a distinctive feature of chemiscope is the
+molecule, or a crystal structure, a distinctive feature of chemiscope is the
 possibility of visualizing maps in which points correspond to atom-centred
 environments. This is useful, for instance, to rationalize the relationship
 between structure and atomic properties such as nuclear chemical shieldings
 (Figure 2). This is also useful as a diagnostic tool for the many
 machine-learning schemes that decompose properties into atom-centred
 contributions [@Behler2007; @Bartok2010].
-
 
 ![Database of chemical shieldings [@Paruzzo2018] in chemiscope demonstrating the use of a 3D plot and highlighting of atomic environments](./screenshot-3d.png)
 

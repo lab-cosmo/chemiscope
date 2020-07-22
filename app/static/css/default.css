@@ -90,7 +90,6 @@ main .embed-responsive-item {
         /* set the width to fit the vertical space, and the height will be set automatically */
         max-width: calc(100vh - 4em - 120px);
     }
-
 }
 
 .clickable {

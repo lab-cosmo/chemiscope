@@ -5,13 +5,13 @@
 
 import assert from 'assert';
 
-import {JSmolApplet, JmolObject} from 'jsmol';
+import { JSmolApplet, JmolObject } from 'jsmol';
 
-import {SavedSettings} from '../options';
-import {generateGUID, getByID} from '../utils';
-import {PositioningCallback} from '../utils';
+import { SavedSettings } from '../options';
+import { generateGUID, getByID } from '../utils';
+import { PositioningCallback } from '../utils';
 
-import {StructureOptions} from './options';
+import { StructureOptions } from './options';
 
 require('../static/chemiscope.css');
 
@@ -51,11 +51,7 @@ function supercell_555(supercell: [number, number, number]): string {
         Math.floor(supercell[2] / 2),
     ];
 
-    const first = [
-        5 - central[0],
-        5 - central[1],
-        5 - central[2],
-    ];
+    const first = [5 - central[0], 5 - central[1], 5 - central[2]];
 
     const second = [
         5 + supercell[0] - (central[0] + 1),
@@ -180,7 +176,7 @@ export class JSmolWidget {
         id: string,
         j2sPath: string,
         guid?: string,
-        serverURL: string = DEFAULT_SERVER_URL,
+        serverURL: string = DEFAULT_SERVER_URL
     ) {
         if (window.Jmol === undefined) {
             throw Error('Jmol is required, load it from your favorite source');
@@ -211,13 +207,16 @@ export class JSmolWidget {
         this._root.style.height = '100%';
 
         this._cellInfo = document.createElement('span');
-        this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
+        this._cellInfo.classList.add(
+            'chsp-cell-info',
+            'chsp-hide-if-no-cell',
+            'badge',
+            'badge-light'
+        );
         this._root.appendChild(this._cellInfo);
 
-        this._options = new StructureOptions(
-            this._root,
-            this.guid,
-            (rect) => this.positionSettingsModal(rect),
+        this._options = new StructureOptions(this._root, this.guid, (rect) =>
+            this.positionSettingsModal(rect)
         );
         this._connectSettings();
 
@@ -238,9 +237,16 @@ export class JSmolWidget {
         // for JSmol. This function will then call the callback inside this
         // instance of the viewer
         const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback';
-        const window_as_map = window as unknown as Record<string, unknown>;
-        
-        window_as_map[name] = (_a: unknown, _b: unknown, _c: unknown, _d: unknown, _e: unknown, status: unknown) => {
+        const window_as_map = (window as unknown) as Record<string, unknown>;
+
+        window_as_map[name] = (
+            _a: unknown,
+            _b: unknown,
+            _c: unknown,
+            _d: unknown,
+            _e: unknown,
+            status: unknown
+        ) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             if ((status as any).valueOf() === 3 && this._loadedCallback !== undefined) {
                 this._loadedCallback();
@@ -353,7 +359,7 @@ export class JSmolWidget {
      * @param options options for the new structure
      */
     public load(data: string, options: Partial<LoadOptions> = {}): void {
-        if (data === '\'\'' || data === '""') {
+        if (data === "''" || data === '""') {
             throw Error('invalid use of JSmolWidget.load to reload data');
         }
 
@@ -442,9 +448,10 @@ export class JSmolWidget {
                 this._noCellStyle.disabled = true;
             }
 
-            const repeat = this._options.supercell[0].value *
-                           this._options.supercell[1].value *
-                           this._options.supercell[2].value;
+            const repeat =
+                this._options.supercell[0].value *
+                this._options.supercell[1].value *
+                this._options.supercell[2].value;
             this._natoms = parseInt(this.evaluate('{*}.size') as string, 10) / repeat;
             if (this._environments !== undefined && this._environments.length !== this._natoms) {
                 let message = 'invalid number of environments for this structure ';
@@ -491,10 +498,10 @@ export class JSmolWidget {
 
     private _do_load(data: string, keepOrientation: boolean) {
         if (data.includes(';')) {
-            throw Error('invalid \';\' in  JSmolWidget.load');
+            throw Error("invalid ';' in  JSmolWidget.load");
         }
         if (data.includes('packed')) {
-            throw Error('invalid \'packed\' in  JSmolWidget.load');
+            throw Error("invalid 'packed' in  JSmolWidget.load");
         }
 
         const packed = this._options.packedCell.value ? ' packed' : '';
@@ -521,12 +528,15 @@ export class JSmolWidget {
 
     private _changeHighlighted(environment?: number) {
         if (environment !== undefined) {
-            const repeat = this._options.supercell[0].value *
-                           this._options.supercell[1].value *
-                           this._options.supercell[2].value;
+            const repeat =
+                this._options.supercell[0].value *
+                this._options.supercell[1].value *
+                this._options.supercell[2].value;
             if (this._natoms !== undefined && environment >= this._natoms * repeat) {
                 let message = 'selected environment is out of bounds: ';
-                message += `got ${environment}, we have ${this._natoms * repeat} atoms in the current structure`;
+                message += `got ${environment}, we have ${
+                    this._natoms * repeat
+                } atoms in the current structure`;
                 throw Error(message);
             }
 
@@ -559,7 +569,7 @@ export class JSmolWidget {
             // eslint-disable-next-line no-console
             console.error(
                 `JSmolWidget: width (=${width}px) or heigh (=${height}px) ` +
-                `of #${parentId} is zero, you will not see the molecules`,
+                    `of #${parentId} is zero, you will not see the molecules`
             );
         }
 
@@ -619,7 +629,7 @@ export class JSmolWidget {
                 }
             }
         };
-        bindUpdateState(this._options as unknown as Record<string, unknown>);
+        bindUpdateState((this._options as unknown) as Record<string, unknown>);
 
         // For changes to the cell, we have to reload the structure.
         // This override the function set above
@@ -678,25 +688,25 @@ export class JSmolWidget {
 
     private _showAxesCommands(axes: string): string {
         switch (axes) {
-        case 'xyz':
-            return `
+            case 'xyz':
+                return `
                 axes off;
                 draw xaxis '>X' vector {0 0 0} {2 0 0} color red width 0.15;
                 draw yaxis '>Y' vector {0 0 0} {0 2 0} color green width 0.15;
                 draw zaxis '>Z' vector {0 0 0} {0 0 2} color blue width 0.15;
             `;
-        case 'abc':
-            return `
+            case 'abc':
+                return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 set axesUnitcell ON; axes 5;
             `;
-        case 'off':
-            return `
+            case 'off':
+                return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 axes off;
             `;
-        default:
-            throw Error(`unkown axes selected: '${axes}'`);
+            default:
+                throw Error(`unkown axes selected: '${axes}'`);
         }
     }
 
@@ -805,7 +815,7 @@ export class JSmolWidget {
         assert(toggleGroup.parentElement !== null);
         const toggle = toggleGroup.parentElement.lastChild;
         assert(toggle !== null);
-        
+
         const reset = this._resetEnvCutof;
         if (reset.disabled) {
             reset.disabled = false;
@@ -837,7 +847,7 @@ export class JSmolWidget {
     /// a value smaller than the number of atoms in the structure passed to
     /// `JSmolWidget.load`.
     private _environment(): number | undefined {
-        if (this._highlighted === undefined ||  this._environments === undefined) {
+        if (this._highlighted === undefined || this._environments === undefined) {
             return undefined;
         }
 

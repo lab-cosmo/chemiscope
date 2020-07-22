@@ -1,13 +1,13 @@
 import path from 'path';
 import webpack from 'webpack';
 
-import {execSync} from 'child_process';
+import { execSync } from 'child_process';
 
 const GIT_VERSION = execSync('git describe --tags --dirty').toString().trim();
 
 const config: webpack.Configuration = {
     entry: {
-        'chemiscope': './src/index.ts',
+        chemiscope: './src/index.ts',
         'jsmol-widget': './src/structure/widget.ts',
     },
     module: {

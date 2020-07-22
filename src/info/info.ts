@@ -5,14 +5,17 @@
 
 import assert from 'assert';
 
-import {Property} from '../dataset';
-import {EnvironmentIndexer, Indexes} from '../indexer';
-import {generateGUID, getByID} from '../utils';
+import { Property } from '../dataset';
+import { EnvironmentIndexer, Indexes } from '../indexer';
+import { generateGUID, getByID } from '../utils';
 
-import {Slider} from './slider';
-import {Table} from './table';
+import { Slider } from './slider';
+import { Table } from './table';
 
-function filter<T extends Record<string, Property>>(obj: T, predicate: (o: Property) => boolean): Record<string, Property> {
+function filter<T extends Record<string, Property>>(
+    obj: T,
+    predicate: (o: Property) => boolean
+): Record<string, Property> {
     const result: Record<string, Property> = {};
     for (const key in obj) {
         if (Object.hasOwnProperty.call(obj, key) && predicate(obj[key])) {
@@ -67,7 +70,7 @@ export class EnvironmentInfo {
      *                   environments index to structure/atom indexes
      * @param viewer     [[ViewersGrid]] from which we get the playback delay
      */
-    constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
+    constructor(id: string, properties: { [name: string]: Property }, indexer: EnvironmentIndexer) {
         this._root = getByID(id);
         this._indexer = indexer;
         this.onchange = () => {};
@@ -128,7 +131,9 @@ export class EnvironmentInfo {
         if (indexes.atom !== undefined) {
             if (this._atom === undefined) {
                 if (indexes.atom !== 0) {
-                    throw Error('Invalid state: got an atomic number to update, but I am displaying only structures');
+                    throw Error(
+                        'Invalid state: got an atomic number to update, but I am displaying only structures'
+                    );
                 }
             } else {
                 this._atom.number.value = `${indexes.atom + 1}`;
@@ -146,7 +151,7 @@ export class EnvironmentInfo {
     }
 
     /** Create the structure slider and table */
-    private _createStructure(id: string, properties: {[name: string]: Property}): Info {
+    private _createStructure(id: string, properties: { [name: string]: Property }): Info {
         const slider = new Slider(this._root, 'structure');
         const n_structures = this._indexer.structuresCount();
         slider.reset(n_structures - 1);
@@ -175,7 +180,9 @@ export class EnvironmentInfo {
             this.onchange(indexes);
         };
 
-        const number = this._root.querySelector('.chsp-info-structure-btn .chsp-info-number') as HTMLInputElement;
+        const number = this._root.querySelector(
+            '.chsp-info-structure-btn .chsp-info-number'
+        ) as HTMLInputElement;
         number.max = this._indexer.structuresCount().toString();
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
@@ -207,7 +214,7 @@ export class EnvironmentInfo {
     }
 
     /** Create the atom slider and table */
-    private _createAtom(id: string, properties: {[name: string]: Property}) {
+    private _createAtom(id: string, properties: { [name: string]: Property }) {
         const slider = new Slider(this._root, 'atom');
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
         slider.reset(n_atoms - 1);
@@ -225,7 +232,9 @@ export class EnvironmentInfo {
         assert(tableRoot.tagName.toLowerCase() === 'div');
         const table = new Table(tableRoot, 'atom', id, properties);
 
-        const number = this._root.querySelector('.chsp-info-atom-btn .chsp-info-number') as HTMLInputElement;
+        const number = this._root.querySelector(
+            '.chsp-info-atom-btn .chsp-info-number'
+        ) as HTMLInputElement;
         number.max = n_atoms.toString();
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();

@@ -1,24 +1,21 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "target": "es5",
-        "esModuleInterop": true,
-        "declaration": true,
-        "declarationDir": "dist/",
-        "downlevelIteration": true,
-        "sourceMap": true,
-        "lib": [
-            "dom",
-            "es5"
-        ]
-    },
-    "typedocOptions": {
-        "mode": "module",
-        "inputFiles": "src",
-        "out": "docs/_build/html/api/",
-        "excludePrivate": true,
-        "excludeNotExported": true,
-        "hideGenerator": true,
-        "readme": "none"
-    }
+  "compilerOptions": {
+    "strict": true,
+    "target": "es5",
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationDir": "dist/",
+    "downlevelIteration": true,
+    "sourceMap": true,
+    "lib": ["dom", "es5"]
+  },
+  "typedocOptions": {
+    "mode": "module",
+    "inputFiles": "src",
+    "out": "docs/_build/html/api/",
+    "excludePrivate": true,
+    "excludeNotExported": true,
+    "hideGenerator": true,
+    "readme": "none"
+  }
 }
