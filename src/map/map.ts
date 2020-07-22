@@ -16,6 +16,7 @@ import {GUID, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
+import {MarkerData} from './markers';
 import {AxisOptions, MapOptions} from './options';
 
 import {COLOR_MAPS} from './colorscales';
@@ -129,19 +130,6 @@ function arrayMaxMin(values: number[]): {max: number, min: number} {
     }
     assert(isFinite(min) && isFinite(max));
     return {max, min};
-}
-
-/// interface to contain synchronized parameters for marker instances
-interface MarkerData {
-    /// color of the marker, synchronized with the ViewersGrid where appropriate
-    color: string;
-    /// index of the currently displayed structure
-    current: number;
-    /// Marker indicating the position of the point in 2D mode
-    /// Using an HTML element is much faster than using Plolty to restyle the full plot,
-    /// especially with more than 100k points. In 3D mode, a separate trace is
-    /// used instead.
-    marker: HTMLElement;
 }
 
 /**
