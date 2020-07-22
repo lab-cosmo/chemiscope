@@ -16,7 +16,7 @@ import {GUID, PositioningCallback} from '../utils';
 import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
 
 import {MapData, NumericProperty} from './data';
-import {MarkerData} from './markers';
+import {MarkerData} from './marker';
 import {AxisOptions, MapOptions} from './options';
 
 import {COLOR_MAPS} from './colorscales';
@@ -255,15 +255,8 @@ export class PropertiesMap {
 
         const data = this._selected.get(this._active);
         assert(data !== undefined);
+        data.select(indexes);
 
-        // Plotly.restyle fires the plotly_click event, so ensure we only run
-        // the update once.
-        // https://github.com/plotly/plotly.js/issues/1025
-        if (data.current !== indexes.environment) {
-            data.current = indexes.environment;
-            // Sets the active marker on this map
-            this._updateSelectedMarker(data);
-        }
     }
 
     /**
@@ -272,20 +265,26 @@ export class PropertiesMap {
      * @param guid the GUID of the new active viewer
      */
     public setActive(guid: GUID) {
+
         if (this._active !== undefined) {
             const oldData = this._selected.get(this._active);
             assert(oldData !== undefined);
-            oldData.marker.classList.toggle('chsp-active-structure', false);
+            oldData.deactivate();
         }
 
         this._active = guid;
         const data = this._selected.get(this._active);
         assert(data !== undefined);
-        data.marker.classList.toggle('chsp-active-structure', true);
+        data.activate();
 
         if (this._is3D()) {
             this._restyle({'marker.size': this._sizes(1)} as Data, 1);
         }
+
+        const activeData = this._selected.get(guid);
+        assert(activeData !== undefined);
+        const activeIndexes = this._indexer.from_environment(activeData.current);
+        this.activeChanged(guid, activeIndexes);
     }
 
     /**
@@ -297,35 +296,13 @@ export class PropertiesMap {
     public addMarker(guid: GUID, color: string, indexes: Indexes): void {
         assert(!this._selected.has(guid));
 
-        const marker = document.createElement('div');
-        this._root.appendChild(marker);
-        marker.classList.add('chsp-structure-marker');
-        if (guid === this._active) {
-            marker.classList.toggle('chsp-active-structure', true);
-        }
-        marker.id = `chsp-selected-${guid}`;
-        marker.onclick = () => {
+        const data = new MarkerData(guid, color, indexes.environment);
+        this._root.appendChild(data.marker);
+        data.marker.onclick = () => {
             this.setActive(guid);
-            const activeData = this._selected.get(guid);
-            assert(activeData !== undefined);
-            const activeIndexes = this._indexer.from_environment(activeData.current);
-            this.activeChanged(guid, activeIndexes);
-        };
-        marker.style.backgroundColor = color;
-
-        const data = {
-            color: color,
-            current: indexes.environment,
-            marker: marker,
         };
         this._selected.set(guid, data);
-
-        if (this._is3D()) {
-            data.marker.style.display = 'none';
-        } else {
-            this._updateSelectedMarker(data);
-        }
-
+        this._updateMarkers([data]);
         this.setActive(guid);
     }
 
@@ -348,16 +325,10 @@ export class PropertiesMap {
         // remove HTML marker
         const data = this._selected.get(guid);
         assert(data !== undefined);
-        assert(data.marker.parentNode !== null);
-        data.marker.parentNode.removeChild(data.marker);
+        data.remove();
 
         this._selected.delete(guid);
-
-        if (this._is3D()) {
-            // We have to update all markers in 3D mode since we can not
-            // update just the one that we removed
-            this._updateAll3DMarkers();
-        }
+        this._updateMarkers();
     }
 
     /**
@@ -773,7 +744,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
-        this._updateAllMarkers();
+        this._updateMarkers();
     }
 
     /** Get the property with the given name */
@@ -873,7 +844,6 @@ export class PropertiesMap {
         if (this._options.size.mode.value !== 'constant') {
             const scaleMode = this._options.size.mode.value;
             const reversed = this._options.size.reverse.value;
-            console.log(this._options.size.reverse);
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
             const defaultSize = this._is3D() ? 2000 : 150;
@@ -1055,9 +1025,9 @@ export class PropertiesMap {
         } as unknown as Data);
 
         for (const data of this._selected.values()) {
-            data.marker.style.display = 'none';
-            this._updateSelectedMarker(data);
+            data.toggleVisible(false);
         }
+        this._updateAll3DMarkers();
 
         // Change the data that vary between 2D and 3D mode
         this._restyle({
@@ -1099,7 +1069,7 @@ export class PropertiesMap {
 
         // show selected environments markers
         for (const data of this._selected.values()) {
-            data.marker.style.display = 'block';
+            data.toggleVisible(true);
         }
 
         this._restyle({
@@ -1126,84 +1096,53 @@ export class PropertiesMap {
      */
     private _afterplot() {
         // HACK: this is not public, so it might break
-        const layout = this._plot._fullLayout;
+        let layout;
         if (this._is3D()) {
-            this._options.x.min.value = layout.scene.xaxis.range[0];
-            this._options.x.max.value = layout.scene.xaxis.range[1];
+            layout = this._plot._fullLayout.scene;
 
-            this._options.y.min.value = layout.scene.yaxis.range[0];
-            this._options.y.max.value = layout.scene.yaxis.range[1];
+            this._options.z.min.value = layout.zaxis.range[0];
+            this._options.z.max.value = layout.zaxis.range[1];
+        } else {layout = this._plot._fullLayout; }
 
-            this._options.z.min.value = layout.scene.zaxis.range[0];
-            this._options.z.max.value = layout.scene.zaxis.range[1];
-        } else {
-            this._options.x.min.value = layout.xaxis.range[0];
-            this._options.x.max.value = layout.xaxis.range[1];
+        this._options.x.min.value = layout.xaxis.range[0];
+        this._options.x.max.value = layout.xaxis.range[1];
 
-            this._options.y.min.value = layout.yaxis.range[0];
-            this._options.y.max.value = layout.yaxis.range[1];
+        this._options.y.min.value = layout.yaxis.range[0];
+        this._options.y.max.value = layout.yaxis.range[1];
 
-            this._updateAllMarkers();
-        }
-    }
-
-    /**
-     * Update the position of the given marker.
-     *
-     * In 3D mode, the markers uses the second Plotly trace.
-     * In 2D mode, these markers are HTML div styled as colored circles that
-     * we manually move around, saving a call to `restyle`.
-     *
-     * @param data data of the marker to update
-     */
-    private _updateSelectedMarker(data: MarkerData): void {
-          const selected = data.current;
-          const marker = data.marker;
-
-          if (this._is3D()) {
-              // we have to update all symbols at the same time
-              this._updateAll3DMarkers();
-          } else {
-              const xaxis = this._plot._fullLayout.xaxis;
-              const yaxis = this._plot._fullLayout.yaxis;
-
-              const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
-              const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
-
-              const rawX = this._coordinates(this._options.x, 0) as number[][];
-              const rawY = this._coordinates(this._options.y, 0) as number[][];
-
-              const x = computeX(rawX[0][selected]);
-              const y = computeY(rawY[0][selected]);
-
-              // hide the point if it is outside the plot, allow for up to 10px
-              // overflow (for points just on the border)
-              const minX = computeX(xaxis.range[0]) - 10;
-              const maxX = computeX(xaxis.range[1]) + 10;
-              const minY = computeY(yaxis.range[1]) - 10;
-              const maxY = computeY(yaxis.range[0]) + 10;
-              if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
-                  marker.style.display = 'none';
-              } else {
-                  marker.style.display = 'block';
-              }
-
-              marker.style.top = `${y}px`;
-              const plotWidth = this._plot.getBoundingClientRect().width;
-              marker.style.right = `${plotWidth - x}px`;
-          }
+        if (!this._is3D()) {this._updateMarkers(); }
     }
 
     /**
      * Update the position, color & size of all markers in the map
      */
-    private _updateAllMarkers(): void {
+    private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
+            for (const datum of data) {
+                datum.toggleVisible(false);
+            }
             this._updateAll3DMarkers();
         } else {
-            for (const data of this._selected.values()) {
-                this._updateSelectedMarker(data);
-            }
+          const xaxis = this._plot._fullLayout.xaxis;
+          const yaxis = this._plot._fullLayout.yaxis;
+
+          const compute = (value: number, axis: any) => axis.l2p(value) + axis._offset;
+
+          const rawX = this._coordinates(this._options.x, 0) as number[][];
+          const rawY = this._coordinates(this._options.y, 0) as number[][];
+
+          // hide the point if it is outside the plot, allow for up to 10px
+          // overflow (for points just on the border)
+          const minX = compute(xaxis.range[0], xaxis) - 10;
+          const maxX = compute(xaxis.range[1], xaxis) + 10;
+          const minY = compute(yaxis.range[1], yaxis) - 10;
+          const maxY = compute(yaxis.range[0], yaxis) + 10;
+
+          for (const datum of data) {
+              const x = compute(rawX[0][datum.current], xaxis);
+              const y = compute(rawY[0][datum.current], yaxis);
+              datum.update(x, y, [[minX, maxX], [minY, minY]]);
+          }
         }
     }
 
