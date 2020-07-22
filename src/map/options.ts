@@ -100,9 +100,9 @@ export class MapOptions extends OptionsGroup {
         this.size = {
             factor : new HTMLOption('number', 50),
             mode : new HTMLOption('string', 'constant'),
-            property : new HTMLOption('string', ''),
+            property : new HTMLOption('string', propertiesName[0]),
         };
-        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
+        this.size.property.validate = optionValidator(propertiesName, 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
@@ -264,9 +264,7 @@ export class MapOptions extends OptionsGroup {
 
         // ======= marker size
         const selectSizeProperty = getByID<HTMLSelectElement>('chsp-size');
-        // first option is 'default'
         selectSizeProperty.options.length = 0;
-        selectSizeProperty.options.add(new Option('default', ''));
         for (const key in properties) {
             selectSizeProperty.options.add(new Option(key, key));
         }
