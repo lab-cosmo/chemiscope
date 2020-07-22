@@ -611,12 +611,11 @@ export class PropertiesMap {
 
         this._options.size.mode.onchange = () => {
             if (this._options.size.mode.value !== 'constant') {
-              this._options.size.property.enable();
-              if (this._options.size.property.value === '') {
+              if (this._options.size.property.disabled()) {
+                this._options.size.property.enable();
                 this._options.size.property.value = this._options.x.property.value;
               }
             } else {
-              this._options.size.property.value = '';
               this._options.size.property.disable();
             }
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
