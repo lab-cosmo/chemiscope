@@ -914,7 +914,7 @@ export class PropertiesMap {
         const userFactor = logSlider(this._options.size.factor.value);
 
         let values;
-        if (this._options.size.property.value !== 'constant') {
+        if (this._options.size.mode.value !== 'constant') {
             const scaleMode = this._options.size.mode.value;
             const sizes = this._property(this._options.size.property.value).values;
             const {min, max} = arrayMaxMin(sizes);
