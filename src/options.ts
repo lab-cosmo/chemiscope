@@ -161,39 +161,6 @@ export class HTMLOption<T extends OptionsType> {
         this._boundList.push({element, attribute, listener});
     }
 
-
-    /**
-     * Check if HTML element linked to this are enabled.
-     * Default behavior is to check if *any* are enabled, but can also
-     * be checked if *all* are disabled (checkAll = true)
-     */
-    public enabled(checkAll: boolean = false) {
-      for (const bound of this._boundList) {
-          if ('disabled' in bound.element) {
-            const disableFlag = (bound.element as any).disabled;
-            // if checkAll === disableFlag === true then not all elements are enabled
-            // if checkAll === disableFlag === false then we have found an enabled element
-            if (checkAll === disableFlag) {
-              return !checkAll
-            }
-          }
-        }
-      // if the loop has not been exited, then either
-      // checkAll = false and no enabled elements have been found or
-      // checkAll = true and no disabled elements have been found
-      return checkAll;
-    }
-
-    /**
-     * Check if HTML element linked to this are disabled.
-     * Uses behavior of enabled() given that you can check if all elements are
-     * disabled when not (any elements are enabled) and any element is disabled
-     * if not all elements are enabled
-     */
-    public disabled(checkAll: boolean = false) {
-      return !this.enabled(!checkAll);
-    }
-
     /**
      * Disable all HTML elements linked to this by setting the `disabled`
      * attribute to `true` if it exists on the element. This should only

@@ -335,7 +335,6 @@ export class PropertiesMap {
         if (this._is3D()) {
             data.marker.style.display = 'none';
         } else {
-            this._active = guid;
             this._updateSelectedMarker(data);
         }
 
@@ -604,25 +603,21 @@ export class PropertiesMap {
         };
 
         // ======= markers size
+        this._options.size.mode.onchange = () => {
+            if (this._options.size.mode.value !== 'constant') {
+                this._options.size.property.enable();
+                this._options.size.reverse.enable();
+            } else {
+                this._options.size.property.disable();
+                this._options.size.reverse.disable();
+            }
+            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        };
 
         this._options.size.factor.onchange = () => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
 
-        this._options.size.mode.onchange = () => {
-            if (this._options.size.mode.value !== 'constant') {
-              if (this._options.size.property.disabled()) {
-                this._options.size.property.enable();
-              }
-              if (this._options.size.reverse.disabled()) {
-                this._options.size.reverse.enable();
-              }
-            } else {
-              this._options.size.property.disable();
-              this._options.size.reverse.disable();
-            }
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
         this._options.size.property.onchange = () => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         };
