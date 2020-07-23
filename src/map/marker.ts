@@ -2,7 +2,7 @@ import assert from 'assert';
 
 import {EnvironmentIndexer, Indexes} from '../indexer';
 
-/// interface to contain synchronized parameters for marker instances
+/// Data associated with markers on the map indicating selected environments/structures
 export class MarkerData {
     /// color of the marker, synchronized with the ViewersGrid where appropriate
     public color: string;
