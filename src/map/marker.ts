@@ -37,8 +37,7 @@ export class MarkerData {
               this.toggleVisible(false);
           } else if (x < bounds[0][0] || x > bounds[0][1] || y < bounds[1][0] || y > bounds[1][1]) {
               this.toggleVisible(false);
-          }
-            else {
+          } else {
               this.toggleVisible(true);
           }
           this.marker.style.top = `${y}px`;

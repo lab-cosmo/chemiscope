@@ -3,7 +3,7 @@
 :tada: First off, thanks for taking the time to contribute to chemiscope! :tada:
 
 If you want to contribute but feel a bit lost, do not hesitate to
-[contact][Gitter] us and ask your questions! We will happily mentor you through
+[contact][gitter] us and ask your questions! We will happily mentor you through
 your first contributions.
 
 ## Area of contributions
@@ -11,15 +11,14 @@ your first contributions.
 The first and best way to contribute to chemiscope is to use it and advertise it
 to other potential users. Other than that, you can help with:
 
-- documentation: correcting typos, making various documentation clearer;
-- bug fixes and improvement to existing code;
-- and many more …
+-   documentation: correcting typos, making various documentation clearer;
+-   bug fixes and improvements to existing code;
+-   and many more …
 
 All these contributions are very welcome. We accept contributions via Github
-pull request (have a look [here][PR] for Github model of pull request). If you
+pull request (have a look [here][pr] for Github model of pull request). If you
 want to work on the code and pick something easy to get started, have a look at
 the [first good issues][easy-issues].
-
 
 ## Bug reports and feature requests
 
@@ -35,15 +34,15 @@ we can discuss it, and you have more chances to see your changes incorporated.
 
 Every item in this list is explained in the next section
 
-- [ ] Fork chemiscope;
-- [ ] Create a local branch;
-- [ ] Add code / correct typos / ...;
-- [ ] Check that the code passes lint checks;
-- [ ] Push to Github;
-- [ ] Create a Pull-Request;
-- [ ] Discuss your changes with the reviewers;
-- [ ] Have your code merged
-- [ ] Celebrate! :tada: :cake: :tada:
+-   [ ] Fork chemiscope;
+-   [ ] Create a local branch;
+-   [ ] Add code / correct typos / ...;
+-   [ ] Check that the code passes lint checks;
+-   [ ] Push to Github;
+-   [ ] Create a Pull Request;
+-   [ ] Discuss your changes with the reviewers;
+-   [ ] Have your code merged
+-   [ ] Celebrate! :tada: :cake: :tada:
 
 ### Contribution tutorial
 
@@ -79,7 +78,7 @@ Run tests and lints (we use `tslint` to ensure a consistent coding style):
 npm test
 ```
 
-Finally, you can push your code to Github, and create a [Pull-Request][PR] to
+Finally, you can push your code to Github, and create a [Pull Request][pr] to
 the `cosmo-epfl/chemiscope` repository.
 
 ```bash
@@ -87,7 +86,7 @@ git commit  # ask for help if you don't know how to use git
 git push -u origin <new-branch>
 ```
 
-[PR]: https://help.github.com/articles/using-pull-requests/
+[pr]: https://help.github.com/articles/using-pull-requests/
 [easy-issues]: https://github.com/cosmo-epfl/chemiscope/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [fork]: https://help.github.com/articles/fork-a-repo/
 [issue]: https://github.com/cosmo-epfl/chemiscope/issues/new

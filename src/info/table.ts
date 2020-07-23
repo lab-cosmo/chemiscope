@@ -5,8 +5,8 @@
 
 import assert from 'assert';
 
-import {Property, Target} from '../dataset';
-import {Indexes} from '../indexer';
+import { Property, Target } from '../dataset';
+import { Indexes } from '../indexer';
 
 interface TableProperty {
     values: number[] | string[];
@@ -30,7 +30,12 @@ export class Table {
      * @param collapseID HTML id to use for the root div with class=collapse
      * @param properties properties to display in this table.
      */
-    constructor(root: HTMLElement, target: Target, collapseID: string, properties: {[name: string]: Property}) {
+    constructor(
+        root: HTMLElement,
+        target: Target,
+        collapseID: string,
+        properties: { [name: string]: Property }
+    ) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-parent='#info-tables'>
         <div class="chsp-properties-table">
@@ -39,14 +44,14 @@ export class Table {
                 <tbody></tbody>
             </table>
         </div></div>`;
-        const group = template.content.firstChild! as HTMLElement;
+        const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
 
-        this._header = group.querySelector('th')!;
+        this._header = group.querySelector('th') as HTMLTableHeaderCellElement;
         this._target = target;
         this._properties = [];
 
-        const tbody = group.querySelector('tbody')!;
+        const tbody = group.querySelector('tbody') as HTMLTableSectionElement;
         for (const name in properties) {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
@@ -62,14 +67,14 @@ export class Table {
             });
         }
 
-        this.show({environment: 0, structure: 0, atom: 0});
+        this.show({ environment: 0, structure: 0, atom: 0 });
     }
 
     /**
      * Show the properties for the given `environment`, corresponding to the
      * given structure/atom `indexes`
      */
-    public show(indexes: Indexes) {
+    public show(indexes: Indexes): void {
         let displayId;
         let index;
         if (this._target === 'structure') {
@@ -78,7 +83,7 @@ export class Table {
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
-            displayId = indexes.atom! + 1;
+            displayId = indexes.atom + 1;
             index = indexes.environment;
         }
 

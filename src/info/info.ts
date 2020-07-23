@@ -5,17 +5,20 @@
 
 import assert from 'assert';
 
-import {Property} from '../dataset';
-import {EnvironmentIndexer, Indexes} from '../indexer';
-import {generateGUID, getByID} from '../utils';
+import { Property } from '../dataset';
+import { EnvironmentIndexer, Indexes } from '../indexer';
+import { generateGUID, getByID } from '../utils';
 
-import {Slider} from './slider';
-import {Table} from './table';
+import { Slider } from './slider';
+import { Table } from './table';
 
-function filter<T extends object>(obj: T, predicate: (o: any) => boolean): T {
-    const result: any = {};
+function filter<T extends Record<string, Property>>(
+    obj: T,
+    predicate: (o: Property) => boolean
+): Record<string, Property> {
+    const result: Record<string, Property> = {};
     for (const key in obj) {
-        if (obj.hasOwnProperty(key) && predicate(obj[key])) {
+        if (Object.hasOwnProperty.call(obj, key) && predicate(obj[key])) {
             result[key] = obj[key];
         }
     }
@@ -67,15 +70,15 @@ export class EnvironmentInfo {
      *                   environments index to structure/atom indexes
      * @param viewer     [[ViewersGrid]] from which we get the playback delay
      */
-    constructor(id: string, properties: {[name: string]: Property}, indexer: EnvironmentIndexer) {
+    constructor(id: string, properties: { [name: string]: Property }, indexer: EnvironmentIndexer) {
         this._root = getByID(id);
         this._indexer = indexer;
         this.onchange = () => {};
         this.startStructurePlayback = () => {};
         this.startAtomPlayback = () => {};
 
-        const structureId = 'chsp-' + generateGUID();
-        const atomId = 'chsp-' + generateGUID();
+        const structureId = `chsp-${generateGUID()}`;
+        const atomId = `chsp-${generateGUID()}`;
 
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {
@@ -103,15 +106,17 @@ export class EnvironmentInfo {
             ${atomButton}
         </div>`;
 
-        this._structure = this._createStructure(structureId, filter(properties, (p) => p.target === 'structure'));
+        const structureProperties = filter(properties, (p) => p.target === 'structure');
+        this._structure = this._createStructure(structureId, structureProperties);
 
         if (this._indexer.mode === 'atom') {
-            this._atom = this._createAtom(atomId, filter(properties, (p) => p.target === 'atom'));
+            const atomProperties = filter(properties, (p) => p.target === 'atom');
+            this._atom = this._createAtom(atomId, atomProperties);
         }
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
-    public show(indexes: Indexes) {
+    public show(indexes: Indexes): void {
         this._structure.number.value = `${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
@@ -126,7 +131,9 @@ export class EnvironmentInfo {
         if (indexes.atom !== undefined) {
             if (this._atom === undefined) {
                 if (indexes.atom !== 0) {
-                    throw Error('Invalid state: got an atomic number to update, but I am displaying only structures');
+                    throw Error(
+                        'Invalid state: got an atomic number to update, but I am displaying only structures'
+                    );
                 }
             } else {
                 this._atom.number.value = `${indexes.atom + 1}`;
@@ -144,7 +151,7 @@ export class EnvironmentInfo {
     }
 
     /** Create the structure slider and table */
-    private _createStructure(id: string, properties: {[name: string]: Property}): Info {
+    private _createStructure(id: string, properties: { [name: string]: Property }): Info {
         const slider = new Slider(this._root, 'structure');
         const n_structures = this._indexer.structuresCount();
         slider.reset(n_structures - 1);
@@ -173,7 +180,9 @@ export class EnvironmentInfo {
             this.onchange(indexes);
         };
 
-        const number = this._root.querySelector('.chsp-info-structure-btn .chsp-info-number') as HTMLInputElement;
+        const number = this._root.querySelector(
+            '.chsp-info-structure-btn .chsp-info-number'
+        ) as HTMLInputElement;
         number.max = this._indexer.structuresCount().toString();
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
@@ -205,15 +214,17 @@ export class EnvironmentInfo {
     }
 
     /** Create the atom slider and table */
-    private _createAtom(id: string, properties: {[name: string]: Property}) {
+    private _createAtom(id: string, properties: { [name: string]: Property }) {
         const slider = new Slider(this._root, 'atom');
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
         slider.reset(n_atoms - 1);
         slider.startPlayback = (advance) => this.startAtomPlayback(advance);
         slider.onchange = () => {
+            assert(this._atom !== undefined);
             const indexes = this._indexes();
-            this._atom!.table.show(indexes);
-            this._atom!.number.value = `${indexes.atom! + 1}`;
+            assert(indexes.atom !== undefined);
+            this._atom.table.show(indexes);
+            this._atom.number.value = `${indexes.atom + 1}`;
             this.onchange(indexes);
         };
 
@@ -221,19 +232,22 @@ export class EnvironmentInfo {
         assert(tableRoot.tagName.toLowerCase() === 'div');
         const table = new Table(tableRoot, 'atom', id, properties);
 
-        const number = this._root.querySelector('.chsp-info-atom-btn .chsp-info-number') as HTMLInputElement;
+        const number = this._root.querySelector(
+            '.chsp-info-atom-btn .chsp-info-number'
+        ) as HTMLInputElement;
         number.max = n_atoms.toString();
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
         number.onchange = () => {
+            assert(this._atom !== undefined);
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value
-                number.value = `${this._atom!.slider.value() + 1}`;
+                number.value = `${this._atom.slider.value() + 1}`;
             } else {
-                this._atom!.slider.update(value);
+                this._atom.slider.update(value);
                 const indexes = this._indexes();
-                this._atom!.table.show(indexes);
+                this._atom.table.show(indexes);
 
                 this.onchange(indexes);
             }

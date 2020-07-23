@@ -6,13 +6,12 @@
 // the resulting minified JS. Without this, chemiscope.min.js is ~3.5 Mib, with
 // this it is only 1.6 Mib.
 
+/* eslint-disable */
+
 'use strict';
 
-var Plotly = require('plotly.js/lib/core');
+const Plotly = require('plotly.js/lib/core');
 
-Plotly.register([
-    require('plotly.js/lib/scattergl'),
-    require('plotly.js/lib/scatter3d'),
-]);
+Plotly.register([require('plotly.js/lib/scattergl'), require('plotly.js/lib/scatter3d')]);
 
 module.exports = Plotly;

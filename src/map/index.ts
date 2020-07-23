@@ -7,4 +7,4 @@
  * @preferred
  */
 
-export {PropertiesMap} from './map';
+export { PropertiesMap } from './map';

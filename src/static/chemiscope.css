@@ -198,7 +198,8 @@
     min-width: 400px;
 }
 
-.chsp-properties-table td, .chsp-properties-table th {
+.chsp-properties-table td,
+.chsp-properties-table th {
     width: 50%;
     border-top: none;
 }
@@ -248,9 +249,9 @@
 }
 
 .chsp-info-number {
-    -moz-appearance:textfield;
+    -moz-appearance: textfield;
     border: none;
-    transition: background-color .15s;
+    transition: background-color 0.15s;
     background-color: #ebedf0;
     padding-left: 2px;
     padding-right: 2px;
@@ -312,15 +313,15 @@
 }
 
 .chsp-atom-slider:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
 .chsp-atom-slider:focus::-moz-range-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
 .chsp-atom-slider:focus::-ms-thumb {
-  box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25);
 }
 
 .chsp-settings-representation {

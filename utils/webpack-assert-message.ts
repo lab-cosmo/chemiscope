@@ -14,7 +14,7 @@
  * instead of a full AST, but it should be good enough to work with simple,
  * single line assertions.
  */
-export default function(source: string): string {
+export default function (source: string): string {
     return source.replace(/assert\((.*)\)/g, (_, expr) => {
         const escaped = expr.replace(/"/g, '\\"');
         return `assert(${expr}, "${escaped}")`;

@@ -5,22 +5,23 @@
 
 import assert from 'assert';
 
-import {JmolObject, JSmolApplet} from 'jsmol';
+import { JSmolApplet, JmolObject } from 'jsmol';
 
-import {SavedSettings} from '../options';
-import {generateGUID, getByID} from '../utils';
-import {PositioningCallback} from '../utils';
+import { SavedSettings } from '../options';
+import { generateGUID, getByID } from '../utils';
+import { PositioningCallback } from '../utils';
 
-import {StructureOptions} from './options';
+import { StructureOptions } from './options';
 
-// tslint:disable-next-line: no-var-requires
 require('../static/chemiscope.css');
 
 function isSafari(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     const s = (window as any).safari;
     if (!s) {
         return false;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     return s.pushNotification.toString() === '[object SafariRemoteNotification]';
 }
 
@@ -50,11 +51,7 @@ function supercell_555(supercell: [number, number, number]): string {
         Math.floor(supercell[2] / 2),
     ];
 
-    const first = [
-        5 - central[0],
-        5 - central[1],
-        5 - central[2],
-    ];
+    const first = [5 - central[0], 5 - central[1], 5 - central[2]];
 
     const second = [
         5 + supercell[0] - (central[0] + 1),
@@ -179,7 +176,7 @@ export class JSmolWidget {
         id: string,
         j2sPath: string,
         guid?: string,
-        serverURL: string = DEFAULT_SERVER_URL,
+        serverURL: string = DEFAULT_SERVER_URL
     ) {
         if (window.Jmol === undefined) {
             throw Error('Jmol is required, load it from your favorite source');
@@ -210,13 +207,16 @@ export class JSmolWidget {
         this._root.style.height = '100%';
 
         this._cellInfo = document.createElement('span');
-        this._cellInfo.classList.add('chsp-cell-info', 'chsp-hide-if-no-cell', 'badge', 'badge-light');
+        this._cellInfo.classList.add(
+            'chsp-cell-info',
+            'chsp-hide-if-no-cell',
+            'badge',
+            'badge-light'
+        );
         this._root.appendChild(this._cellInfo);
 
-        this._options = new StructureOptions(
-            this._root,
-            this.guid,
-            (rect) => this.positionSettingsModal(rect),
+        this._options = new StructureOptions(this._root, this.guid, (rect) =>
+            this.positionSettingsModal(rect)
         );
         this._connectSettings();
 
@@ -237,9 +237,18 @@ export class JSmolWidget {
         // for JSmol. This function will then call the callback inside this
         // instance of the viewer
         const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback';
-        const window_as_map = window as { [key: string]: any };
-        window_as_map[name] = (_a: any, _b: any, _c: any, _d: any, _e: any, status: any) => {
-            if (status.valueOf() === 3 && this._loadedCallback !== undefined) {
+        const window_as_map = (window as unknown) as Record<string, unknown>;
+
+        window_as_map[name] = (
+            _a: unknown,
+            _b: unknown,
+            _c: unknown,
+            _d: unknown,
+            _e: unknown,
+            status: unknown
+        ) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            if ((status as any).valueOf() === 3 && this._loadedCallback !== undefined) {
                 this._loadedCallback();
             }
         };
@@ -309,7 +318,7 @@ export class JSmolWidget {
      * Run the given `commands` for this viewer. `load` commands should use the
      * [[JSmolWidget.load|corresponding function]].
      */
-    public script(commands: string) {
+    public script(commands: string): void {
         if (commands.includes('load ')) {
             throw Error('Do not use JSmolWidget.script to load a structure, but JSmolWidget.load');
         }
@@ -320,7 +329,7 @@ export class JSmolWidget {
      * Evaluate the given commands using JSmol and return the corresponding
      * value. This calls `Jmol.evaluateVar` behind the scenes.
      */
-    public evaluate(commands: string): any {
+    public evaluate(commands: string): unknown {
         return this._Jmol.evaluateVar(this._applet, commands);
     }
 
@@ -334,7 +343,7 @@ export class JSmolWidget {
      * @param atom index of the central atom in the environment to show,
      *             or `undefined` to disable highlighting.
      */
-    public highlight(environment?: number) {
+    public highlight(environment?: number): void {
         this._changeHighlighted(environment);
         this._updateState();
     }
@@ -349,8 +358,8 @@ export class JSmolWidget {
      *             command](https://chemapps.stolaf.edu/jmol/docs/#load).
      * @param options options for the new structure
      */
-    public load(data: string, options: Partial<LoadOptions> = {}) {
-        if (data === '\'\'' || data === '""') {
+    public load(data: string, options: Partial<LoadOptions> = {}): void {
+        if (data === "''" || data === '""') {
             throw Error('invalid use of JSmolWidget.load to reload data');
         }
 
@@ -439,16 +448,17 @@ export class JSmolWidget {
                 this._noCellStyle.disabled = true;
             }
 
-            const repeat = this._options.supercell[0].value *
-                           this._options.supercell[1].value *
-                           this._options.supercell[2].value;
-            this._natoms = parseInt(this.evaluate('{*}.size'), 10) / repeat;
+            const repeat =
+                this._options.supercell[0].value *
+                this._options.supercell[1].value *
+                this._options.supercell[2].value;
+            this._natoms = parseInt(this.evaluate('{*}.size') as string, 10) / repeat;
             if (this._environments !== undefined && this._environments.length !== this._natoms) {
                 let message = 'invalid number of environments for this structure ';
                 message += `got ${this._environments.length} environments, there are ${this._natoms} atoms`;
                 // We can not throw an error here, since it seems to be caught
                 // by JSmol.
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 console.error(message);
             }
 
@@ -488,10 +498,10 @@ export class JSmolWidget {
 
     private _do_load(data: string, keepOrientation: boolean) {
         if (data.includes(';')) {
-            throw Error('invalid \';\' in  JSmolWidget.load');
+            throw Error("invalid ';' in  JSmolWidget.load");
         }
         if (data.includes('packed')) {
-            throw Error('invalid \'packed\' in  JSmolWidget.load');
+            throw Error("invalid 'packed' in  JSmolWidget.load");
         }
 
         const packed = this._options.packedCell.value ? ' packed' : '';
@@ -518,12 +528,15 @@ export class JSmolWidget {
 
     private _changeHighlighted(environment?: number) {
         if (environment !== undefined) {
-            const repeat = this._options.supercell[0].value *
-                           this._options.supercell[1].value *
-                           this._options.supercell[2].value;
+            const repeat =
+                this._options.supercell[0].value *
+                this._options.supercell[1].value *
+                this._options.supercell[2].value;
             if (this._natoms !== undefined && environment >= this._natoms * repeat) {
                 let message = 'selected environment is out of bounds: ';
-                message += `got ${environment}, we have ${this._natoms * repeat} atoms in the current structure`;
+                message += `got ${environment}, we have ${
+                    this._natoms * repeat
+                } atoms in the current structure`;
                 throw Error(message);
             }
 
@@ -551,11 +564,12 @@ export class JSmolWidget {
         const width = this._root.clientWidth;
         const height = this._root.clientHeight;
         if (width === 0 || height === 0) {
-            const parentId = this._root.parentElement!.id;
-            // tslint:disable-next-line:no-console
+            assert(this._root.parentElement !== null);
+            const parentId = this._root.parentElement.id;
+            // eslint-disable-next-line no-console
             console.error(
                 `JSmolWidget: width (=${width}px) or heigh (=${height}px) ` +
-                `of #${parentId} is zero, you will not see the molecules`,
+                    `of #${parentId} is zero, you will not see the molecules`
             );
         }
 
@@ -599,12 +613,12 @@ export class JSmolWidget {
 
     private _connectSettings() {
         // recursively bind the right update function to HTMLSetting `onchange`
-        const bindUpdateState = (object: any) => {
+        const bindUpdateState = (object: Record<string, unknown>) => {
             for (const key in object) {
                 if (key.startsWith('_')) {
                     continue;
                 }
-                const setting = Reflect.get(object, key);
+                const setting = object[key] as Record<string, unknown>;
                 if ('onchange' in setting) {
                     // if any setting changes, update the full state of JSmol
                     // this is not the most efficient thing to do, but some
@@ -615,7 +629,7 @@ export class JSmolWidget {
                 }
             }
         };
-        bindUpdateState(this._options);
+        bindUpdateState((this._options as unknown) as Record<string, unknown>);
 
         // For changes to the cell, we have to reload the structure.
         // This override the function set above
@@ -674,25 +688,25 @@ export class JSmolWidget {
 
     private _showAxesCommands(axes: string): string {
         switch (axes) {
-        case 'xyz':
-            return `
+            case 'xyz':
+                return `
                 axes off;
                 draw xaxis '>X' vector {0 0 0} {2 0 0} color red width 0.15;
                 draw yaxis '>Y' vector {0 0 0} {0 2 0} color green width 0.15;
                 draw zaxis '>Z' vector {0 0 0} {0 0 2} color blue width 0.15;
             `;
-        case 'abc':
-            return `
+            case 'abc':
+                return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 set axesUnitcell ON; axes 5;
             `;
-        case 'off':
-            return `
+            case 'off':
+                return `
                 draw xaxis delete; draw yaxis delete; draw zaxis delete;
                 axes off;
             `;
-        default:
-            throw Error(`unkown axes selected: '${axes}'`);
+            default:
+                throw Error(`unkown axes selected: '${axes}'`);
         }
     }
 
@@ -797,8 +811,12 @@ export class JSmolWidget {
     }
 
     private _toggleEnvironmentSettings() {
+        const toggleGroup = getByID(`${this.guid}-env-activated`);
+        assert(toggleGroup.parentElement !== null);
+        const toggle = toggleGroup.parentElement.lastChild;
+        assert(toggle !== null);
+
         const reset = this._resetEnvCutof;
-        const toggle = getByID(`${this.guid}-env-activated`).parentElement!.lastChild!;
         if (reset.disabled) {
             reset.disabled = false;
             toggle.nodeValue = 'Disable';
@@ -829,7 +847,7 @@ export class JSmolWidget {
     /// a value smaller than the number of atoms in the structure passed to
     /// `JSmolWidget.load`.
     private _environment(): number | undefined {
-        if (this._highlighted === undefined ||  this._environments === undefined) {
+        if (this._highlighted === undefined || this._environments === undefined) {
             return undefined;
         }
 
@@ -854,7 +872,8 @@ export class JSmolWidget {
         if (i === undefined) {
             throw Error('no environments defined when calling _currentCutoff');
         } else {
-            return this._environments![i].cutoff;
+            assert(this._environments !== undefined);
+            return this._environments[i].cutoff;
         }
     }
 

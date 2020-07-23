@@ -5,8 +5,8 @@
 
 import assert from 'assert';
 
-export {makeDraggable} from './draggable';
-export {addWarningHandler, sendWarning} from './warnings';
+export { makeDraggable } from './draggable';
+export { addWarningHandler, sendWarning } from './warnings';
 
 /** Callback type to position an HTML element.
  *
@@ -15,13 +15,21 @@ export {addWarningHandler, sendWarning} from './warnings';
  * should return top and left positions in pixels, used with `position:
  * fixed`.
  */
-export type PositioningCallback = (rect: DOMRect) => {top: number, left: number};
+export type PositioningCallback = (rect: DOMRect) => { top: number; left: number };
 
 const STANDARD_COLORS = [
-    'red', 'yellow', 'green', 'blue', 'orange', 'aqua', 'purple', 'teal', 'silver',
+    'red',
+    'yellow',
+    'green',
+    'blue',
+    'orange',
+    'aqua',
+    'purple',
+    'teal',
+    'silver',
 ];
 
-export function getNextColor(alreadyUsedColors: string[]) {
+export function getNextColor(alreadyUsedColors: string[]): string {
     for (const color of STANDARD_COLORS) {
         if (!alreadyUsedColors.includes(color)) {
             return color;
@@ -32,15 +40,13 @@ export function getNextColor(alreadyUsedColors: string[]) {
 
 /** Type to separate generic strings from GUID */
 declare const tag: unique symbol;
-export type GUID = string & {readonly [tag]: 'guid'};
+export type GUID = string & { readonly [tag]: 'guid' };
 
 /** Generate a new GUID */
 export function generateGUID(): GUID {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        // tslint:disable-next-line:no-bitwise
-        const r = Math.random() * 16 | 0;
-        // tslint:disable-next-line:no-bitwise
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     }) as GUID;
 }
@@ -51,11 +57,11 @@ export function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
     }
-    return e as unknown as HTMLType;
+    return (e as unknown) as HTMLType;
 }
 
 export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
-    const iterator = function*() {
+    const iterator = function* () {
         let index = 0;
         for (const element of iterable) {
             yield [index, element];
@@ -81,11 +87,11 @@ export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
 export function getFirstKey<K, V>(map: Map<K, V>, excluding?: K): K {
     assert(map.size >= 1);
     const keys = map.keys();
-    const first = keys.next().value;
+    const first = keys.next().value as K;
     if (excluding !== undefined) {
         if (first === excluding) {
             assert(map.size >= 2);
-            return keys.next().value;
+            return keys.next().value as K;
         }
     }
     return first;

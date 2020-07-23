@@ -1,16 +1,33 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
     <head>
-        <meta charset="utf-8">
+        <meta charset="utf-8" />
         <title>JSmol widget example</title>
 
         <!-- jquery -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
+            crossorigin="anonymous"
+        ></script>
 
         <!-- bootstrap -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y=" crossorigin="anonymous" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg=" crossorigin="anonymous"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css"
+            integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y="
+            crossorigin="anonymous"
+        />
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"
+            integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg="
+            crossorigin="anonymous"
+        ></script>
 
         <!-- JSmol -->
         <script type="text/javascript" src="static/js/jsmol/JSmol.min.nojq.js"></script>
@@ -44,8 +61,7 @@
         </div>
         <div id="crystal" class="viewer"></div>
         <div class="card description">
-            Example of a crystal structure (see the options related to
-            the unit cell) with atom centered environments.
+            Example of a crystal structure (see the options related to the unit cell) with atom centered environments.
         </div>
 
         <div style="width: 600px; margin: auto;">
@@ -60,14 +76,16 @@
     <script type="text/javascript">
         let crystal;
         let molecule;
-        const crystal_data = 'inline \'1\n2.4729 4.63183 4.63183 90 90 90\n8\nC 0 - 0.16009172226940027 0.3376334429372408 0.9717346081354454\nC 1 - 0.16009172226940027 0.6623665570627594 0.028265391864554616\nC 2 - 0.6600917222694003 0.9717346081354454 0.6623665570627594\nC 3 - 0.6600917222694003 0.028265391864554616 0.3376334429372408\nC 4 - 0.16009172226940027 0.18153175094940877 0.25663958521793767\nC 5 - 0.16009172226940027 0.8184682490505913 0.7433604147820624\nC 6 - 0.6600917222694003 0.25663958521793767 0.8184682490505913\nC 7 - 0.6600917222694003 0.7433604147820624 0.18153175094940877\'';
-        const molecule_data = 'inline \'{"mol": {"a": [{"l": "C", "x": -1.8, "y": 3.7, "z": 0.6}, {"l": "C", "x": -1.4, "y": 3.0, "z": 1.9}, {"l": "O", "x": -0.5, "y": 3.5, "z": 2.6}, {"l": "H", "x": -2.1, "y": 4.7, "z": 0.8}, {"l": "H", "x": -2.6, "y": 3.1, "z": 0.1}, {"l": "H", "x": -0.9, "y": 3.8, "z": -0.1}, {"l": "N", "x": -2.0, "y": 1.8, "z": 2.2}, {"l": "C", "x": -1.6, "y": 1.0, "z": 3.3}, {"l": "C", "x": -1.4, "y": -0.4, "z": 2.8}, {"l": "O", "x": -2.1, "y": -0.9, "z": 1.8}, {"l": "H", "x": -2.6, "y": 1.4, "z": 1.5}, {"l": "H", "x": -0.6, "y": 1.4, "z": 3.6}, {"l": "C", "x": -2.6, "y": 1.0, "z": 4.5}, {"l": "C", "x": -2.7, "y": 2.3, "z": 5.3}, {"l": "C", "x": -1.5, "y": 2.5, "z": 6.3}, {"l": "N", "x": -0.2, "y": 2.7, "z": 5.8}, {"l": "C", "x": 0.7, "y": 1.7, "z": 5.4}, {"l": "N", "x": 1.6, "y": 2.1, "z": 4.4}, {"l": "N", "x": 0.7, "y": 0.5, "z": 5.8}, {"l": "H", "x": -2.4, "y": 0.2, "z": 5.1}, {"l": "H", "x": -3.6, "y": 0.8, "z": 4.0}, {"l": "H", "x": -3.6, "y": 2.3, "z": 5.9}, {"l": "H", "x": -2.7, "y": 3.2, "z": 4.6}, {"l": "H", "x": -1.5, "y": 1.6, "z": 7.0}, {"l": "H", "x": -1.8, "y": 3.3, "z": 7.0}, {"l": "H", "x": -0.1, "y": 3.6, "z": 5.3}, {"l": "H", "x": 2.2, "y": 1.4, "z": 4.1}, {"l": "H", "x": 1.2, "y": 2.7, "z": 3.7}, {"l": "H", "x": 0.0, "y": 0.3, "z": 6.6}, {"l": "N", "x": -0.5, "y": -1.1, "z": 3.5}, {"l": "C", "x": -0.2, "y": -2.5, "z": 3.2}, {"l": "H", "x": -0.0, "y": -0.7, "z": 4.3}, {"l": "H", "x": -0.8, "y": -2.8, "z": 2.3}, {"l": "H", "x": -0.5, "y": -3.2, "z": 4.1}, {"l": "H", "x": 0.9, "y": -2.7, "z": 3.0}]}}\''
+        const crystal_data =
+            "inline '1\n2.4729 4.63183 4.63183 90 90 90\n8\nC 0 - 0.16009172226940027 0.3376334429372408 0.9717346081354454\nC 1 - 0.16009172226940027 0.6623665570627594 0.028265391864554616\nC 2 - 0.6600917222694003 0.9717346081354454 0.6623665570627594\nC 3 - 0.6600917222694003 0.028265391864554616 0.3376334429372408\nC 4 - 0.16009172226940027 0.18153175094940877 0.25663958521793767\nC 5 - 0.16009172226940027 0.8184682490505913 0.7433604147820624\nC 6 - 0.6600917222694003 0.25663958521793767 0.8184682490505913\nC 7 - 0.6600917222694003 0.7433604147820624 0.18153175094940877'";
+        const molecule_data =
+            'inline \'{"mol": {"a": [{"l": "C", "x": -1.8, "y": 3.7, "z": 0.6}, {"l": "C", "x": -1.4, "y": 3.0, "z": 1.9}, {"l": "O", "x": -0.5, "y": 3.5, "z": 2.6}, {"l": "H", "x": -2.1, "y": 4.7, "z": 0.8}, {"l": "H", "x": -2.6, "y": 3.1, "z": 0.1}, {"l": "H", "x": -0.9, "y": 3.8, "z": -0.1}, {"l": "N", "x": -2.0, "y": 1.8, "z": 2.2}, {"l": "C", "x": -1.6, "y": 1.0, "z": 3.3}, {"l": "C", "x": -1.4, "y": -0.4, "z": 2.8}, {"l": "O", "x": -2.1, "y": -0.9, "z": 1.8}, {"l": "H", "x": -2.6, "y": 1.4, "z": 1.5}, {"l": "H", "x": -0.6, "y": 1.4, "z": 3.6}, {"l": "C", "x": -2.6, "y": 1.0, "z": 4.5}, {"l": "C", "x": -2.7, "y": 2.3, "z": 5.3}, {"l": "C", "x": -1.5, "y": 2.5, "z": 6.3}, {"l": "N", "x": -0.2, "y": 2.7, "z": 5.8}, {"l": "C", "x": 0.7, "y": 1.7, "z": 5.4}, {"l": "N", "x": 1.6, "y": 2.1, "z": 4.4}, {"l": "N", "x": 0.7, "y": 0.5, "z": 5.8}, {"l": "H", "x": -2.4, "y": 0.2, "z": 5.1}, {"l": "H", "x": -3.6, "y": 0.8, "z": 4.0}, {"l": "H", "x": -3.6, "y": 2.3, "z": 5.9}, {"l": "H", "x": -2.7, "y": 3.2, "z": 4.6}, {"l": "H", "x": -1.5, "y": 1.6, "z": 7.0}, {"l": "H", "x": -1.8, "y": 3.3, "z": 7.0}, {"l": "H", "x": -0.1, "y": 3.6, "z": 5.3}, {"l": "H", "x": 2.2, "y": 1.4, "z": 4.1}, {"l": "H", "x": 1.2, "y": 2.7, "z": 3.7}, {"l": "H", "x": 0.0, "y": 0.3, "z": 6.6}, {"l": "N", "x": -0.5, "y": -1.1, "z": 3.5}, {"l": "C", "x": -0.2, "y": -2.5, "z": 3.2}, {"l": "H", "x": -0.0, "y": -0.7, "z": 4.3}, {"l": "H", "x": -0.8, "y": -2.8, "z": 2.3}, {"l": "H", "x": -0.5, "y": -3.2, "z": 4.1}, {"l": "H", "x": 0.9, "y": -2.7, "z": 3.0}]}}\'';
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener('DOMContentLoaded', () => {
             crystal = new Chemiscope.JSmolWidget('crystal', 'static/js/jsmol/j2s/');
             crystal.load(crystal_data, {
                 supercell: [2, 2, 2],
-                environments: Array(8).fill({cutoff: 2.5}),
+                environments: Array(8).fill({ cutoff: 2.5 }),
             });
             crystal.highlight(2);
             crystal.onselect = (index) => crystal.highlight(index);

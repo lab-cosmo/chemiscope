@@ -3,6 +3,8 @@
  * @module utils
  */
 
+import assert from 'assert';
+
 interface DraggableElement extends HTMLElement {
     dragOffset?: {
         x: number;
@@ -16,7 +18,7 @@ interface DraggableElement extends HTMLElement {
  * @param  handle_query query (used in element.querySelector(handle_query))
  *                      for the drag handle
  */
-export function makeDraggable(element: DraggableElement, handle_query: string) {
+export function makeDraggable(element: DraggableElement, handle_query: string): void {
     // adapted from https://stackoverflow.com/a/41737171
     const handle = element.querySelector(handle_query);
     if (handle === null) {
@@ -25,11 +27,13 @@ export function makeDraggable(element: DraggableElement, handle_query: string) {
 
     // on mouse move, change the position of the element
     const mousemove = (e: MouseEvent) => {
-        const left = e.clientX - element.dragOffset!.x;
-        const top = e.clientY - element.dragOffset!.y;
+        const offset = element.dragOffset;
+        assert(offset !== undefined);
+        const left = e.clientX - offset.x;
+        const top = e.clientY - offset.y;
 
-        element.style.left = left + 'px';
-        element.style.top = top + 'px';
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
     };
 
     // on mouse up, remove all registered events
@@ -39,19 +43,23 @@ export function makeDraggable(element: DraggableElement, handle_query: string) {
     };
 
     // on mouse down, register mouseup & mousemove events
-    handle.addEventListener('mousedown', (e: any) => {
-        const event = e as MouseEvent;
-        element.dragOffset = {
-            x: event.clientX - element.offsetLeft,
-            y: event.clientY - element.offsetTop,
-        };
-        element.style.left = element.offsetLeft + 'px';
-        element.style.top = element.offsetTop + 'px';
-        element.style.width = element.offsetWidth + 'px';
-        element.style.margin = '0';
-        element.style.position = 'absolute';
+    handle.addEventListener(
+        'mousedown',
+        (e: Event) => {
+            const event = e as MouseEvent;
+            element.dragOffset = {
+                x: event.clientX - element.offsetLeft,
+                y: event.clientY - element.offsetTop,
+            };
+            element.style.left = `${element.offsetLeft}px`;
+            element.style.top = `${element.offsetTop}px`;
+            element.style.width = `${element.offsetWidth}px`;
+            element.style.margin = '0';
+            element.style.position = 'absolute';
 
-        document.addEventListener('mousemove', mousemove, false);
-        document.addEventListener('mouseup', mouseup, false);
-    }, false);
+            document.addEventListener('mousemove', mousemove, false);
+            document.addEventListener('mouseup', mouseup, false);
+        },
+        false
+    );
 }

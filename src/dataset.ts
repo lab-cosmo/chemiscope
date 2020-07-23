@@ -148,7 +148,7 @@ export type JsObject = Record<string, unknown>;
  * Check that the given object, potentially comming from javascript, has all
  * required properties to be a dataset.
  */
-export function validateDataset(o: JsObject) {
+export function validateDataset(o: JsObject): void {
     if (!('meta' in o)) {
         throw Error('missing "meta" key in the dataset');
     } else if (!(typeof o.meta === 'object' && o.meta !== null)) {
@@ -158,7 +158,7 @@ export function validateDataset(o: JsObject) {
 
     if (!('structures' in o)) {
         throw Error('missing "structures" key in the dataset');
-    } else if (!(Array.isArray(o.structures))) {
+    } else if (!Array.isArray(o.structures)) {
         throw Error('"structures" must be an array in the dataset');
     }
     const [structureCount, envCount] = checkStructures(o.structures);
@@ -222,7 +222,13 @@ function checkStructures(o: JsObject[]): [number, number] {
     let envCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
-        if (!('size' in structure && typeof structure.size === 'number' && isPositiveInteger(structure.size))) {
+        if (
+            !(
+                'size' in structure &&
+                typeof structure.size === 'number' &&
+                isPositiveInteger(structure.size)
+            )
+        ) {
             throw Error(`missing 'size' for structure ${i}`);
         }
         envCount += structure.size;
@@ -252,15 +258,15 @@ export function checkStructure(s: JsObject): string {
 
     for (const key of ['names', 'x', 'y', 'z']) {
         if (!(key in s)) {
-            return `missing "${name}"`;
+            return `missing "${key}"`;
         }
         const array = s[key];
         if (!Array.isArray(array)) {
-            return `"${name}" must be an array`;
+            return `"${key}" must be an array`;
         }
 
         if (array.length !== s.size) {
-            return `wrong size for "${name}", expected ${s.size}, got ${array.length}`;
+            return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
         }
     }
 
@@ -273,7 +279,11 @@ export function checkStructure(s: JsObject): string {
     return '';
 }
 
-function checkProperties(properties: Record<string, JsObject>, structureCount: number, envCount: number) {
+function checkProperties(
+    properties: Record<string, JsObject>,
+    structureCount: number,
+    envCount: number
+) {
     for (const key in properties) {
         const property = properties[key];
 
@@ -290,17 +300,17 @@ function checkProperties(properties: Record<string, JsObject>, structureCount: n
         }
 
         // check size if possible
-        let expected;
+        let expected = 0;
         if (property.target === 'atom') {
             expected = envCount;
         } else if (property.target === 'structure') {
             expected = structureCount;
-        } else {
-            throw Error(`invalid property target: ${property.target}`);
         }
 
         if (property.values.length !== expected) {
-            throw Error(`wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`);
+            throw Error(
+                `wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`
+            );
         }
 
         const initial = typeof property.values[0];
@@ -327,7 +337,7 @@ function checkEnvironments(o: JsObject[], structures: Structure[]) {
         if (!isPositiveInteger(env.structure) || env.structure >= structures.length) {
             throw Error(
                 `out of bounds 'structure' for environment ${i}: index is \
-                ${env.structure}, we have ${structures.length} structures`,
+                ${env.structure}, we have ${structures.length} structures`
             );
         }
 
@@ -339,7 +349,7 @@ function checkEnvironments(o: JsObject[], structures: Structure[]) {
         if (!isPositiveInteger(env.center) || env.center >= size) {
             throw Error(
                 `out of bounds 'center' for environment ${i}: index is \
-                ${env.center}, we have ${size} atoms in structure ${env.structure}`,
+                ${env.center}, we have ${size} atoms in structure ${env.structure}`
             );
         }
 

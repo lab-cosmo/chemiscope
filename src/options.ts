@@ -5,13 +5,13 @@
 
 import assert from 'assert';
 
-import {getByID, sendWarning} from './utils';
+import { getByID, sendWarning } from './utils';
 
 /**
  * Possible HTML attributes to attach to a setting
  */
 // this is mostly to catch typo early. Feel free to add more!
-type Attribute = 'value' | 'checked' | 'innerText';
+type Attribute = 'value' | 'checked' | 'innerText';
 
 /// Type mapping for options
 interface OptionsTypeMap {
@@ -23,10 +23,10 @@ interface OptionsTypeMap {
     //
     // Using a tuple/array type (`[string]`) seems to trick the compiler/improve
     // the way it performs type inference.
-    'string': [string];
-    'int': [number];
-    'number': [number];
-    'boolean': [boolean];
+    string: [string];
+    int: [number];
+    number: [number];
+    boolean: [boolean];
 }
 type OptionsType = keyof OptionsTypeMap;
 type OptionsValue<T extends OptionsType> = OptionsTypeMap[T][0];
@@ -54,7 +54,7 @@ function parse<T extends OptionsType>(type: T, value: string): OptionsValue<T> {
 }
 
 /** Possible origins of a option change: from JS code, or from DOM interaction */
-export type OptionModificationOrigin = 'JS' | 'DOM';
+export type OptionModificationOrigin = 'JS' | 'DOM';
 
 /** A single DOM element that will be synchronized with the javascript value of a setting */
 interface HTMLOptionElement {
@@ -75,12 +75,14 @@ interface HTMLOptionElement {
  * @param  name  name of the setting for better error messages
  * @return       a function that can be used to validate a new setting value
  */
-export function optionValidator<T>(valid: T[], name = ''): (value: T) => void {
-    return (value: T) => {
+export function optionValidator(valid: string[], name = ''): (value: string) => void {
+    return (value: string) => {
         if (valid.includes(value)) {
             return;
         }
-        throw Error(`invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`);
+        throw Error(
+            `invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`
+        );
     };
 }
 
@@ -152,13 +154,15 @@ export class HTMLOption<T extends OptionsType> {
 
         const listener = (event: Event) => {
             assert(event.target !== null);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
             this._update((event.target as any)[attribute].toString(), 'DOM');
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (element as any)[attribute] = this._value;
         element.addEventListener('change', listener);
 
-        this._boundList.push({element, attribute, listener});
+        this._boundList.push({ element, attribute, listener });
     }
 
     /**
@@ -168,8 +172,9 @@ export class HTMLOption<T extends OptionsType> {
      */
     public disable(): void {
         for (const bound of this._boundList) {
-            if ('disabled' in bound.element) {
-                (bound.element as any).disabled = true;
+            const element = (bound.element as unknown) as Record<string, unknown>;
+            if ('disabled' in element) {
+                element.disabled = true;
             }
         }
     }
@@ -181,8 +186,9 @@ export class HTMLOption<T extends OptionsType> {
      */
     public enable(): void {
         for (const bound of this._boundList) {
-            if ('disabled' in bound.element) {
-                (bound.element as any).disabled = false;
+            const element = (bound.element as unknown) as Record<string, unknown>;
+            if ('disabled' in element) {
+                element.disabled = false;
             }
         }
     }
@@ -207,6 +213,7 @@ export class HTMLOption<T extends OptionsType> {
 
         this._value = updated;
         for (const bound of this._boundList) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             (bound.element as any)[bound.attribute] = updated;
         }
         this.onchange(updated, origin);
@@ -217,11 +224,13 @@ export class HTMLOption<T extends OptionsType> {
  * Type defintion for saveSettings output: should be a simple object containing
  * either value, or a nested SavedSettings.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SavedSettings extends Record<string, string | number | boolean | SavedSettings> {}
 
 /**
  * Callback function to use with [[OptionsGroup.foreachSetting]]
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type OptionsCallback = (keys: string[], setting: HTMLOption<any>) => void;
 
 /**
@@ -272,6 +281,7 @@ export abstract class OptionsGroup {
      */
     public saveSettings(): SavedSettings {
         const settings = {};
+        /* eslint-disable */
         this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
             const value = option.value;
@@ -286,6 +296,7 @@ export abstract class OptionsGroup {
             const lastkey = keys[keys.length - 1];
             root[lastkey] = value;
         });
+        /* eslint-enable */
         return settings;
     }
 
@@ -297,9 +308,10 @@ export abstract class OptionsGroup {
      */
     public applySettings(settings: SavedSettings): void {
         // make a copy of the settings since we will be changing it below
-        const copy = JSON.parse(JSON.stringify(settings));
+        const copy = JSON.parse(JSON.stringify(settings)) as SavedSettings;
 
         this.foreachOption((keys, option) => {
+            /* eslint-disable */
             assert(keys.length >= 1);
             let root = copy as any;
             let parent;
@@ -325,6 +337,7 @@ export abstract class OptionsGroup {
                     delete parent[keys[keys.length - 2]];
                 }
             }
+            /* eslint-enable */
         });
 
         if (Object.keys(copy).length !== 0) {
@@ -357,7 +370,11 @@ export abstract class OptionsGroup {
  * @param callback function to call on each HTMLOption
  * @param keys     current keys to access the `settings` object from the root
  */
-function foreachOptionImpl(options: Record<string, unknown>, callback: OptionsCallback, keys: string[] = []): void {
+function foreachOptionImpl(
+    options: Record<string, unknown>,
+    callback: OptionsCallback,
+    keys: string[] = []
+): void {
     if (keys.length > 10) {
         throw Error('setting object is too deep');
     }
@@ -370,7 +387,7 @@ function foreachOptionImpl(options: Record<string, unknown>, callback: OptionsCa
         const currentKeys = keys.concat([key]);
         const element = options[key];
         if (element instanceof HTMLOption) {
-            callback(currentKeys, element as HTMLOption<any>);
+            callback(currentKeys, element);
         } else if (typeof element === 'object' && element !== null) {
             foreachOptionImpl(element as Record<string, unknown>, callback, currentKeys);
         }

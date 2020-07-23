@@ -11,14 +11,22 @@ const tmpdir = tmp.dirSync({
 
 childProcess.execSync(
     'git clone https://github.com/cosmo-epfl/chemiscope' +
-    ' --depth=1 ' + ' --branch=gh-pages ' + tmpdir.name,
+        ' --depth=1 ' +
+        ' --branch=gh-pages ' +
+        tmpdir.name
 );
 
-for (const file of ['CSD-1000R.json.gz', 'Arginine-Dipeptide.json.gz', 'Qm7b.json.gz', 'Azaphenacenes.json.gz', 'Zeolites.json.gz']) {
+for (const file of [
+    'CSD-1000R.json.gz',
+    'Arginine-Dipeptide.json.gz',
+    'Qm7b.json.gz',
+    'Azaphenacenes.json.gz',
+    'Zeolites.json.gz',
+]) {
     fs.renameSync(`${tmpdir.name}/${file}`, `./app/${file}`);
 }
 
-fs.mkdirSync('./app/structures/', {recursive: true});
+fs.mkdirSync('./app/structures/', { recursive: true });
 for (let i = 0; i < 523; i++) {
     const file = `Azaphenacenes-${i}.json`;
     fs.renameSync(`${tmpdir.name}/structures/${file}`, `./app/structures/${file}`);

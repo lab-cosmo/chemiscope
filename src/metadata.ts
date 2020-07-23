@@ -6,8 +6,8 @@
 import assert from 'assert';
 import markdown from 'markdown-it';
 
-import {Metadata} from './dataset';
-import {generateGUID, getByID} from './utils';
+import { Metadata } from './dataset';
+import { generateGUID, getByID } from './utils';
 
 function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">
@@ -94,7 +94,7 @@ export class MetadataPanel {
         metadata.name = metadata.name.replace(/</g, '&lt;');
         metadata.name = metadata.name.replace(/>/g, '&gt;');
 
-        this._guid = 'chsp-' + generateGUID();
+        this._guid = `chsp-${generateGUID()}`;
 
         this._name = getByID(id);
         this._name.innerHTML = generateName(this._guid, metadata.name);
@@ -102,7 +102,7 @@ export class MetadataPanel {
 
         const template = document.createElement('template');
         template.innerHTML = generateModal(this._guid, metadata);
-        this._modal = template.content.firstChild! as HTMLElement;
+        this._modal = template.content.firstChild as HTMLElement;
         document.body.appendChild(this._modal);
     }
 

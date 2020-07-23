@@ -3,8 +3,8 @@
  * @module map
  */
 
-import {Property} from '../dataset';
-import {sendWarning} from '../utils';
+import { Property } from '../dataset';
+import { sendWarning } from '../utils';
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
@@ -63,7 +63,7 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
     } else if (prop_type === 'string') {
         const interner = new StringInterner();
         const values = [];
-        for (const value of (property as string[])) {
+        for (const value of property as string[]) {
             const numeric = interner.get(value);
             values.push(numeric);
             // string properties are assumed to be categories, and each one of
@@ -73,7 +73,7 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
             if (numeric > 20) {
                 throw Error(
                     `the '${name}' property contains more than 50 different values, \
-                    it can not be interpreted as categories`,
+                    it can not be interpreted as categories`
                 );
             }
         }
@@ -99,7 +99,11 @@ function checkSize(name: string, properties: { [key: string]: NumericProperty })
         }
 
         if (properties[key].values.length !== size) {
-            throw Error(`${name} property '${key}' do not have the same size as the first property '${initial}': expected ${size}, got ${properties[key].values.length}`);
+            throw Error(
+                `${name} property '${key}' do not have the same size as the first property '${
+                    initial as string
+                }': expected ${size}, got ${properties[key].values.length}`
+            );
         }
     }
 }
@@ -125,7 +129,7 @@ export class MapData {
     public maxSymbols: number;
 
     /** Create a new [[MapData]] containing values from the given properties */
-    constructor(properties: {[name: string]: Property}) {
+    constructor(properties: { [name: string]: Property }) {
         this.structure = {};
         this.atom = {};
         this.maxSymbols = -1;
@@ -135,7 +139,7 @@ export class MapData {
             try {
                 property = propertyToNumeric(name, properties[name].values);
             } catch (e) {
-                sendWarning(`warning: ${e.message}`);
+                sendWarning(`warning: ${(e as Error).message}`);
                 continue;
             }
             this[properties[name].target][name] = property;

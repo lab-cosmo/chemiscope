@@ -5,15 +5,15 @@
 
 import assert from 'assert';
 
-import {checkStructure, Environment, JsObject, Structure, UserStructure} from '../dataset';
+import { Environment, JsObject, Structure, UserStructure, checkStructure } from '../dataset';
 
-import {EnvironmentIndexer, Indexes} from '../indexer';
-import {SavedSettings} from '../options';
-import {GUID, PositioningCallback} from '../utils';
-import {enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning} from '../utils';
+import { EnvironmentIndexer, Indexes } from '../indexer';
+import { SavedSettings } from '../options';
+import { GUID, PositioningCallback } from '../utils';
+import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
-import {structure2JSmol} from './utils';
-import {JSmolWidget, LoadOptions} from './widget';
+import { structure2JSmol } from './utils';
+import { JSmolWidget, LoadOptions } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -26,21 +26,21 @@ const MAX_WIDGETS = 9;
  */
 function bestGridArrangement(n: number) {
     switch (n) {
-    case 1:
-    case 2:
-        return {rows: n, columns: 1};
-    case 3:
-    case 4:
-        return {rows: 2, columns: 2};
-    case 5:
-    case 6:
-        return {rows: 3, columns: 2};
-    case 8:
-    case 7:
-    case 9:
-        return {rows: 3, columns: 3};
-    default:
-        throw Error(`Can not create a grid with more than ${MAX_WIDGETS} elements`);
+        case 1:
+        case 2:
+            return { rows: n, columns: 1 };
+        case 3:
+        case 4:
+            return { rows: 2, columns: 2 };
+        case 5:
+        case 6:
+            return { rows: 3, columns: 2 };
+        case 8:
+        case 7:
+        case 9:
+            return { rows: 3, columns: 3 };
+        default:
+            throw Error(`Can not create a grid with more than ${MAX_WIDGETS} elements`);
     }
 }
 
@@ -57,7 +57,10 @@ function bestGridArrangement(n: number) {
  *
  * @return              The list of environments grouped by structure
  */
-function groupByStructure(n_structures: number, environments?: Environment[]): Environment[][] | undefined {
+function groupByStructure(
+    n_structures: number,
+    environments?: Environment[]
+): Environment[][] | undefined {
     if (environments === undefined) {
         return undefined;
     }
@@ -154,14 +157,14 @@ export class ViewersGrid {
      *                     used to highlight the selected environment
      */
     constructor(
-        config: { id: string, settings: SavedSettings },
+        config: { id: string; settings: SavedSettings },
         j2sPath: string,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
-        environments?: Environment[],
+        environments?: Environment[]
     ) {
         this._structures = structures;
-        this._cachedStructures = new Array(structures.length);
+        this._cachedStructures = new Array<string>(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
         this._j2spath = j2sPath;
@@ -171,7 +174,7 @@ export class ViewersGrid {
             if (checkStructure(s as JsObject) !== '') {
                 throw Error(
                     'got custom data for this structure, but no custom loadStructure callback\n' +
-                    `the object was ${JSON.stringify(s)}`,
+                        `the object was ${JSON.stringify(s)}`
                 );
             } else {
                 return s as Structure;
@@ -179,7 +182,7 @@ export class ViewersGrid {
         };
 
         // Initializes with 1 widget upon opening.
-        this._viewers = new Map();
+        this._viewers = new Map<GUID, WidgetGridData>();
         this.onselect = () => {};
         this.onremove = () => {};
         this.oncreate = () => {};
@@ -232,7 +235,7 @@ export class ViewersGrid {
      *
      * @param  indexes         structure / atom pair to display
      */
-    public show(indexes: Indexes) {
+    public show(indexes: Indexes): void {
         this._showInViewer(this.active, indexes);
     }
 
@@ -298,7 +301,7 @@ export class ViewersGrid {
      * Start playing the trajectory of structures in this dataset, until
      * `advance` returns false
      */
-    public structurePlayback(advance: () => boolean) {
+    public structurePlayback(advance: () => boolean): void {
         setTimeout(() => {
             if (advance()) {
                 const widgetData = this._viewers.get(this._active);
@@ -311,7 +314,6 @@ export class ViewersGrid {
                 this.onselect(indexes);
                 // continue playing until the advance callback returns false
                 this.structurePlayback(advance);
-
             }
         }, parseFloat(this._delay.value) * 100);
     }
@@ -320,15 +322,16 @@ export class ViewersGrid {
      * Start playing the 'trajectory' of atoms in the current structure, until
      * `advance` returns false
      */
-    public atomPlayback(advance: () => boolean) {
+    public atomPlayback(advance: () => boolean): void {
         setTimeout(() => {
             if (advance()) {
                 const widgetData = this._viewers.get(this._active);
                 assert(widgetData !== undefined);
 
                 const current = widgetData.current;
+                assert(current.atom !== undefined);
                 const structure = current.structure;
-                const atom = (current.atom! + 1) % this._indexer.atomsCount(structure);
+                const atom = current.atom + (1 % this._indexer.atomsCount(structure));
                 const indexes = this._indexer.from_structure_atom(structure, atom);
                 this.show(indexes);
                 this.onselect(indexes);
@@ -360,7 +363,8 @@ export class ViewersGrid {
             // change tooltip text in the active marker
             const button = getByID(`chsp-activate-${this._active}`);
             button.classList.toggle('chsp-active-structure', toggle);
-            const tooltip = button.parentElement!.querySelector('.chsp-tooltip');
+            assert(button.parentElement !== null);
+            const tooltip = button.parentElement.querySelector('.chsp-tooltip');
             assert(tooltip !== null);
             tooltip.innerHTML = toggle ? 'this is the active viewer' : 'choose as active';
 
@@ -438,11 +442,11 @@ export class ViewersGrid {
     private _structureForJSmol(index: number): string {
         if (this._cachedStructures[index] === undefined) {
             const s = this.loadStructure(index, this._structures[index]);
-            const check = checkStructure(s as unknown as JsObject);
+            const check = checkStructure((s as unknown) as JsObject);
             if (check !== '') {
                 throw Error(
-                    `got invalid object as structure: ${check}` + '\n' +
-                    `the object was ${JSON.stringify(s)}`,
+                    `got invalid object as structure: ${check}
+the object was ${JSON.stringify(s)}`
                 );
             }
             this._cachedStructures[index] = structure2JSmol(s);
@@ -528,7 +532,7 @@ export class ViewersGrid {
                     ></div>
                     <span class="chsp-tooltip">WILL BE FILLED LATER</span>
                 </div>`;
-            const activate = template.content.firstChild! as HTMLElement;
+            const activate = template.content.firstChild as HTMLElement;
             activate.onclick = () => {
                 this.setActive(cellGUID);
 
@@ -545,7 +549,7 @@ export class ViewersGrid {
                     <span>${CLOSE_SVG}</span>
                     <span class="chsp-tooltip">remove viewer</span>
                 </button>`;
-            const remove = template.content.firstChild! as HTMLElement;
+            const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
                 this.onremove(cellGUID);
                 this.removeViewer(cellGUID);
@@ -560,7 +564,7 @@ export class ViewersGrid {
                     <span>${DUPLICATE_SVG}</span>
                     <span class="chsp-tooltip">duplicate viewer</span>
                 </button>`;
-            const duplicate = template.content.firstChild! as HTMLElement;
+            const duplicate = template.content.firstChild as HTMLElement;
 
             duplicate.onclick = () => {
                 const duplicated = this.duplicate(cellGUID);
@@ -597,7 +601,7 @@ export class ViewersGrid {
         if (nwidgets < 1) {
             sendWarning('Cannot delete last widget.');
             return newGUID;
-        } else if (nwidgets > MAX_WIDGETS ) {
+        } else if (nwidgets > MAX_WIDGETS) {
             sendWarning(`Viewer grid cannot contain more than ${MAX_WIDGETS} widgets.`);
             return newGUID;
         }
@@ -625,7 +629,7 @@ export class ViewersGrid {
             if (c >= this._viewers.size) {
                 cellGUID = generateGUID();
             } else {
-                cellGUID = mapKeys.next().value;
+                cellGUID = mapKeys.next().value as GUID;
             }
 
             let color = this._setupCell(cellGUID, colNum, rowNum);
@@ -641,14 +645,10 @@ export class ViewersGrid {
 
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
-                const widget = new JSmolWidget(
-                    `gi-${cellGUID}`,
-                    this._j2spath,
-                    cellGUID,
-                );
+                const widget = new JSmolWidget(`gi-${cellGUID}`, this._j2spath, cellGUID);
 
                 widget.onselect = (atom: number) => {
-                    if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
+                    if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
 
@@ -659,12 +659,16 @@ export class ViewersGrid {
                     // inside this range.
                     const data = this._viewers.get(this._active);
                     assert(data !== undefined);
-                    const atom_id = atom % widget.natoms()!;
-                    const indexes = this._indexer.from_structure_atom(data.current.structure, atom_id);
+                    const natoms = widget.natoms();
+                    assert(natoms !== undefined);
+                    const indexes = this._indexer.from_structure_atom(
+                        data.current.structure,
+                        atom % natoms
+                    );
                     this.onselect(indexes);
                 };
 
-                const current = {atom: undefined, structure: -1, environment: -1};
+                const current = { atom: undefined, structure: -1, environment: -1 };
                 this._viewers.set(cellGUID, {
                     color: color,
                     current: current,

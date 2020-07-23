@@ -5,7 +5,7 @@
 
 import * as linalg from './linalg';
 
-import {Structure} from '../dataset';
+import { Structure } from '../dataset';
 
 /** @hidden
  * A UnitCell, usable to convert between cartesian and fractional coordinates
@@ -21,7 +21,7 @@ class UnitCell {
      */
     constructor(data: number[]) {
         if (data.length !== 9) {
-            throw Error('invalid length for cell: expected 9, got ' + data.length);
+            throw Error(`invalid length for cell: expected 9, got ${data.length}`);
         }
 
         const vx = data.slice(0, 3) as linalg.Vector3D;
@@ -71,18 +71,20 @@ class UnitCell {
  * @return a string representing the structure that JSmol is able to read
  */
 export function structure2JSmol(structure: Structure): string {
-    const buffer = new Array();
+    const buffer = new Array<string>();
     if (structure.cell === undefined) {
         // use XYZ format
         const natoms = structure.names.length;
         buffer.push(`${natoms}\n\n`);
         for (let i = 0; i < natoms; i++) {
-            buffer.push(`${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`);
+            buffer.push(
+                `${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`
+            );
         }
     } else {
         // use BCS format
         const cell = new UnitCell(structure.cell);
-        buffer.push(`1\n`);
+        buffer.push('1\n');
         const [a, b, c] = cell.lengths();
         const [alpha, beta, gamma] = cell.angles();
         buffer.push(`${a} ${b} ${c} ${alpha} ${beta} ${gamma}\n`);

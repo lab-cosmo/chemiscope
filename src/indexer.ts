@@ -4,7 +4,7 @@
  */
 
 import assert from 'assert';
-import {Environment, Structure, UserStructure} from './dataset';
+import { Environment, Structure, UserStructure } from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
@@ -58,7 +58,11 @@ export class EnvironmentIndexer {
      * @param structures   structures used in the current dataset
      * @param environments environments used in the current dataset
      */
-    constructor(mode: DisplayMode, structures: Structure[] | UserStructure[], environments?: Environment[]) {
+    constructor(
+        mode: DisplayMode,
+        structures: Structure[] | UserStructure[],
+        environments?: Environment[]
+    ) {
         this.mode = mode;
         this._structures = structures;
         this._environments = environments;
@@ -91,7 +95,7 @@ export class EnvironmentIndexer {
             assert(this.mode === 'atom');
             assert(this._environments !== undefined);
 
-            const env = this._environments![environment];
+            const env = this._environments[environment];
             return {
                 atom: env.center,
                 environment: environment,
@@ -117,12 +121,13 @@ export class EnvironmentIndexer {
         } else {
             assert(this.mode === 'atom');
             assert(this._environments !== undefined);
+            assert(atom !== undefined);
 
             // assume that environments are ordered structure by structure, then
             // by atom in the structure.
-            const environment = this._atomsBefore[structure] + atom!;
-            assert(this._environments![environment].center === atom);
-            assert(this._environments![environment].structure === structure);
+            const environment = this._atomsBefore[structure] + atom;
+            assert(this._environments[environment].center === atom);
+            assert(this._environments[environment].structure === structure);
             return {
                 atom: atom,
                 environment: environment,
@@ -134,7 +139,8 @@ export class EnvironmentIndexer {
     /** Get the total number of environments currently being displayed */
     public environmentsCount(): number {
         if (this.mode === 'atom') {
-            return this._environments!.length;
+            assert(this._environments !== undefined);
+            return this._environments.length;
         } else {
             return this._structures.length;
         }

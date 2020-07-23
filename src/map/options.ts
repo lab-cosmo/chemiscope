@@ -10,7 +10,7 @@ import {optionValidator} from '../options';
 import {arrayMaxMin, getByID, makeDraggable, PositioningCallback} from '../utils';
 import {NumericProperties} from './data';
 
-import {COLOR_MAPS} from './colorscales';
+import { COLOR_MAPS } from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -35,14 +35,14 @@ export class AxisOptions extends OptionsGroup {
     }
 
     /** Disable auxiliary settings (min/max/scale) related to this axis */
-    public disable() {
+    public disable(): void {
         this.max.disable();
         this.min.disable();
         this.scale.disable();
     }
 
     /** Enable auxiliary settings (min/max/scale) related to this axis */
-    public enable() {
+    public enable(): void {
         this.max.enable();
         this.min.enable();
         this.scale.enable();
@@ -72,7 +72,7 @@ export class MapOptions extends OptionsGroup {
         root: HTMLElement,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        settings: SavedSettings = {},
+        settings: SavedSettings = {}
     ) {
         super();
         const propertiesName = Object.keys(properties);
@@ -99,10 +99,10 @@ export class MapOptions extends OptionsGroup {
         this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.size = {
-            factor : new HTMLOption('number', 50),
-            mode : new HTMLOption('string', 'constant'),
-            property : new HTMLOption('string', propertiesName[0]),
-            reverse : new HTMLOption('boolean', false)
+            factor: new HTMLOption('number', 50),
+            mode: new HTMLOption('string', 'constant'),
+            property: new HTMLOption('string', propertiesName[0]),
+            reverse: new HTMLOption('boolean', false),
         };
         this.size.property.validate = optionValidator(propertiesName, 'size');
         this.size.factor.validate = (value) => {
@@ -110,8 +110,10 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
-        this.size.mode.validate = optionValidator(['constant', 'linear', 'log', 'sqrt', 'inverse'], 'size');
-        this.size.reverse.validate = optionValidator([false, true], 'size');
+        this.size.mode.validate = optionValidator(
+            ['constant', 'linear', 'log', 'sqrt', 'inverse'],
+            'size'
+        );
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
@@ -254,13 +256,13 @@ export class MapOptions extends OptionsGroup {
             style="top: 4px; left: 5px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
-        const openSettings = template.content.firstChild!;
+        const openSettings = template.content.firstChild as HTMLElement;
         root.append(openSettings);
 
         // TODO: set unique HTML id in the settings to allow multiple map in
         // the same page
         template.innerHTML = HTML_OPTIONS;
-        const modal = template.content.firstChild! as HTMLElement;
+        const modal = template.content.firstChild as HTMLElement;
 
         const modalDialog = modal.childNodes[1] as HTMLElement;
         assert(modalDialog !== undefined);
@@ -278,7 +280,9 @@ export class MapOptions extends OptionsGroup {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const {top, left} = this._positionSettingsModal(modalDialog.getBoundingClientRect());
+                const { top, left } = this._positionSettingsModal(
+                    modalDialog.getBoundingClientRect()
+                );
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;
