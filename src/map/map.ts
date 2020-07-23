@@ -946,7 +946,7 @@ export class PropertiesMap {
     }
 
     /** Switch current plot from 2D to 3D */
-    private _switch3D() {
+    private _switch3D(): void {
         assert(this._is3D());
         this._options.z.enable();
 
@@ -992,7 +992,7 @@ export class PropertiesMap {
     }
 
     /** Switch current plot from 3D back to 2D */
-    private _switch2D() {
+    private _switch2D(): void {
         assert(!this._is3D());
         this._options.z.disable();
 
@@ -1037,7 +1037,7 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private _afterplot() {
+    private _afterplot(): void {
         // HACK: this is not public, so it might break
         let layout;
         if (this._is3D()) {
