@@ -98,7 +98,7 @@ export function getFirstKey<K, V>(map: Map<K, V>, excluding?: K): K {
 }
 
 // get the max/min of an array. Math.min(...array) fails with very large arrays
-export function arrayMaxMin(values: number[]): {max: number, min: number} {
+export function arrayMaxMin(values: number[]): { max: number; min: number } {
     let max = Number.NEGATIVE_INFINITY;
     let min = Number.POSITIVE_INFINITY;
     for (const value of values) {
@@ -110,5 +110,5 @@ export function arrayMaxMin(values: number[]): {max: number, min: number} {
         }
     }
     assert(isFinite(min) && isFinite(max));
-    return {max, min};
+    return { max, min };
 }

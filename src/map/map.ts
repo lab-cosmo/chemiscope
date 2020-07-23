@@ -10,16 +10,16 @@ import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scat
 
 import { Property } from '../dataset';
 
-import {EnvironmentIndexer, Indexes} from '../indexer';
-import {OptionModificationOrigin, SavedSettings} from '../options';
-import {arrayMaxMin, GUID, PositioningCallback} from '../utils';
-import {enumerate, getByID, getFirstKey, sendWarning} from '../utils';
+import { EnvironmentIndexer, Indexes } from '../indexer';
+import { OptionModificationOrigin, SavedSettings } from '../options';
+import { arrayMaxMin, GUID, PositioningCallback } from '../utils';
+import { enumerate, getByID, getFirstKey, sendWarning } from '../utils';
 
-import {MapData, NumericProperty} from './data';
-import {MarkerData} from './marker';
-import {AxisOptions, MapOptions} from './options';
+import { MapData, NumericProperty } from './data';
+import { MarkerData } from './marker';
+import { AxisOptions, MapOptions } from './options';
 
-import { COLOR_MAPS } from './colorscales'
+import { COLOR_MAPS } from './colorscales';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -240,7 +240,6 @@ export class PropertiesMap {
         const data = this._selected.get(this._active);
         assert(data !== undefined);
         data.select(indexes);
-
     }
 
     /**
@@ -249,7 +248,6 @@ export class PropertiesMap {
      * @param guid the GUID of the new active viewer
      */
     public setActive(guid: GUID): void {
-
         if (this._active !== undefined) {
             const oldData = this._selected.get(this._active);
             assert(oldData !== undefined);
@@ -496,10 +494,13 @@ export class PropertiesMap {
                 } as unknown) as Layout);
             }
 
-            this._restyle({
-                'hovertemplate': this._options.hovertemplate(),
-                'marker.color': this._colors(0),
-            } as Data, 0);
+            this._restyle(
+                {
+                    hovertemplate: this._options.hovertemplate(),
+                    'marker.color': this._colors(0),
+                } as Data,
+                0
+            );
         };
 
         const colorRangeChange = () => {
@@ -816,7 +817,6 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _sizes(trace?: number): Array<number | number[]> {
-
         const sizes = this._property(this._options.size.property.value).values;
         const values = this._options.calculateSizes(sizes);
         const selected = [];
@@ -941,7 +941,9 @@ export class PropertiesMap {
     }
 
     /** Is the the current plot a 3D plot? */
-    private _is3D(): boolean {return this._options.is3D()}
+    private _is3D(): boolean {
+        return this._options.is3D();
+    }
 
     /** Switch current plot from 2D to 3D */
     private _switch3D() {
@@ -1043,7 +1045,9 @@ export class PropertiesMap {
 
             this._options.z.min.value = layout.zaxis.range[0];
             this._options.z.max.value = layout.zaxis.range[1];
-        } else {layout = this._plot._fullLayout; }
+        } else {
+            layout = this._plot._fullLayout;
+        }
 
         this._options.x.min.value = layout.xaxis.range[0];
         this._options.x.max.value = layout.xaxis.range[1];
@@ -1051,7 +1055,9 @@ export class PropertiesMap {
         this._options.y.min.value = layout.yaxis.range[0];
         this._options.y.max.value = layout.yaxis.range[1];
 
-        if (!this._is3D()) {this._updateMarkers(); }
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
     }
 
     /**
@@ -1059,29 +1065,32 @@ export class PropertiesMap {
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
-            data.forEach((d) => d.toggleVisible(false))
+            data.forEach((d) => d.toggleVisible(false));
             this._updateAll3DMarkers();
         } else {
-          const xaxis = this._plot._fullLayout.xaxis;
-          const yaxis = this._plot._fullLayout.yaxis;
+            const xaxis = this._plot._fullLayout.xaxis;
+            const yaxis = this._plot._fullLayout.yaxis;
 
-          const compute = (value: number, axis: any) => axis.l2p(value) + axis._offset;
+            const compute = (value: number, axis: any) => axis.l2p(value) + axis._offset;
 
-          const rawX = this._coordinates(this._options.x, 0) as number[][];
-          const rawY = this._coordinates(this._options.y, 0) as number[][];
+            const rawX = this._coordinates(this._options.x, 0) as number[][];
+            const rawY = this._coordinates(this._options.y, 0) as number[][];
 
-          // hide the point if it is outside the plot, allow for up to 10px
-          // overflow (for points just on the border)
-          const minX = compute(xaxis.range[0], xaxis) - 10;
-          const maxX = compute(xaxis.range[1], xaxis) + 10;
-          const minY = compute(yaxis.range[1], yaxis) - 10;
-          const maxY = compute(yaxis.range[0], yaxis) + 10;
+            // hide the point if it is outside the plot, allow for up to 10px
+            // overflow (for points just on the border)
+            const minX = compute(xaxis.range[0], xaxis) - 10;
+            const maxX = compute(xaxis.range[1], xaxis) + 10;
+            const minY = compute(yaxis.range[1], yaxis) - 10;
+            const maxY = compute(yaxis.range[0], yaxis) + 10;
 
-          for (const datum of data) {
-              const x = compute(rawX[0][datum.current], xaxis);
-              const y = compute(rawY[0][datum.current], yaxis);
-              datum.update(x, y, [[minX, maxX], [minY, minY]]);
-          }
+            for (const datum of data) {
+                const x = compute(rawX[0][datum.current], xaxis);
+                const y = compute(rawY[0][datum.current], yaxis);
+                datum.update(x, y, [
+                    [minX, maxX],
+                    [minY, minY],
+                ]);
+            }
         }
     }
 

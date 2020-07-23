@@ -5,10 +5,10 @@
 
 import assert from 'assert';
 
-import {HTMLOption, OptionsGroup, SavedSettings} from '../options';
-import {optionValidator} from '../options';
-import {arrayMaxMin, getByID, makeDraggable, PositioningCallback} from '../utils';
-import {NumericProperties} from './data';
+import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
+import { optionValidator } from '../options';
+import { arrayMaxMin, getByID, makeDraggable, PositioningCallback } from '../utils';
+import { NumericProperties } from './data';
 
 import { COLOR_MAPS } from './colorscales';
 
@@ -164,7 +164,7 @@ export class MapOptions extends OptionsGroup {
     }
 
     public is3D(): boolean {
-      return this.z.property.value !== '';
+        return this.z.property.value !== '';
     }
     /** Does the current plot use color values? */
     public hasColors(): boolean {
@@ -185,61 +185,64 @@ export class MapOptions extends OptionsGroup {
      * all of them if `trace === undefined`.
      */
     public calculateSizes(sizes: number[]): number[] {
-      const logSlider = (value: number) => {
-          const min_slider = 1;
-          const max_slider = 100;
+        const logSlider = (value: number) => {
+            const min_slider = 1;
+            const max_slider = 100;
 
-          // go from 1/6th of the size to 6 time the size
-          const min_value = Math.log(1.0 / 6.0);
-          const max_value = Math.log(6.0);
+            // go from 1/6th of the size to 6 time the size
+            const min_value = Math.log(1.0 / 6.0);
+            const max_value = Math.log(6.0);
 
-          const tmp = (max_value - min_value) / (max_slider - min_slider);
-          return Math.exp(min_value + tmp * (value - min_slider));
-      };
+            const tmp = (max_value - min_value) / (max_slider - min_slider);
+            return Math.exp(min_value + tmp * (value - min_slider));
+        };
 
-      const userFactor = logSlider(this.size.factor.value);
+        const userFactor = logSlider(this.size.factor.value);
 
-      let values;
-      if (this.size.mode.value !== 'constant') {
-          const scaleMode = this.size.mode.value;
-          const reversed = this.size.reverse.value;
-          const {min, max} = arrayMaxMin(sizes);
-          const defaultSize = this.is3D() ? 2000 : 150;
-          const bottomLimit = 0.1; // lower limit to prevent size of 0
+        let values;
+        if (this.size.mode.value !== 'constant') {
+            const scaleMode = this.size.mode.value;
+            const reversed = this.size.reverse.value;
+            const { min, max } = arrayMaxMin(sizes);
+            const defaultSize = this.is3D() ? 2000 : 150;
+            const bottomLimit = 0.1; // lower limit to prevent size of 0
 
-          values = sizes.map((v: number) => {
-              // normalize between 0 and 1, then scale by the user provided value
-              let scaled = (v + bottomLimit - min) / (max - min);
-              if (reversed) { scaled = 1.0 + bottomLimit - scaled; }
-              switch (scaleMode) {
-                case 'inverse':
-                  scaled = 1.0 / scaled;
-                  break;
-                case 'log':
-                  scaled = Math.log(scaled);
-                  break;
-                case 'sqrt':
-                  scaled = Math.sqrt(scaled);
-                  break;
-                case 'linear':
-                  scaled = scaled;
-                  break;
-                default: // corresponds to 'constant'
-                  scaled = 1.0;
-                  break;
-              }
-              // since we are using scalemode: 'area', square the scaled value
-              return defaultSize * scaled * scaled * userFactor * userFactor;
-          });
-      } else {
-          // we need to use an array instead of a single value because of
-          // https://github.com/plotly/plotly.js/issues/2735
-          const defaultSize = this.is3D() ? 500 : 50;
-          values = sizes.map((v: number) => {
-              return defaultSize * userFactor;
-          });
-      }
-      return values;
+            values = sizes.map((v: number) => {
+                // normalize between 0 and 1, then scale by the user provided value
+                let scaled = (v + bottomLimit - min) / (max - min);
+                if (reversed) {
+                    scaled = 1.0 + bottomLimit - scaled;
+                }
+                switch (scaleMode) {
+                    case 'inverse':
+                        scaled = 1.0 / scaled;
+                        break;
+                    case 'log':
+                        scaled = Math.log(scaled);
+                        break;
+                    case 'sqrt':
+                        scaled = Math.sqrt(scaled);
+                        break;
+                    case 'linear':
+                        scaled = scaled;
+                        break;
+                    default:
+                        // corresponds to 'constant'
+                        scaled = 1.0;
+                        break;
+                }
+                // since we are using scalemode: 'area', square the scaled value
+                return defaultSize * scaled * scaled * userFactor * userFactor;
+            });
+        } else {
+            // we need to use an array instead of a single value because of
+            // https://github.com/plotly/plotly.js/issues/2735
+            const defaultSize = this.is3D() ? 500 : 50;
+            values = sizes.map((v: number) => {
+                return defaultSize * userFactor;
+            });
+        }
+        return values;
     }
 
     /**
