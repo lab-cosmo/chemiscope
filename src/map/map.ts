@@ -19,7 +19,6 @@ import {MapData, NumericProperty} from './data';
 import {MarkerData} from './marker';
 import {AxisOptions, MapOptions} from './options';
 
-import {COLOR_MAPS} from './colorscales';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
