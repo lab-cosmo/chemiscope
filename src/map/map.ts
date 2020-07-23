@@ -1059,9 +1059,7 @@ export class PropertiesMap {
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
-            for (const datum of data) {
-                datum.toggleVisible(false);
-            }
+            data.forEach((d) => d.toggleVisible(false))
             this._updateAll3DMarkers();
         } else {
           const xaxis = this._plot._fullLayout.xaxis;
