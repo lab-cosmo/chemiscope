@@ -1055,7 +1055,7 @@ export class PropertiesMap {
     }
 
     /**
-     * Update the position, color & size of all markers in the map
+     * Update the position, color & size of markers within the data array
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
