@@ -1003,27 +1003,26 @@ export class PropertiesMap {
      */
     private _afterplot(): void {
         // HACK: this is not public, so it might break
-        let layout;
-        if (this._is3D()) {
-            layout = this._plot._fullLayout.scene;
+      const bounds = this._getRange();
 
-            this._options.z.min.value = layout.zaxis.range[0];
-            this._options.z.max.value = layout.zaxis.range[1];
-        } else {
-            layout = this._plot._fullLayout;
-        }
+      const xbound = bounds.get('x');
+      const ybound = bounds.get('y');
+      const zbound = bounds.get('z');
 
-        this._options.x.min.value = layout.xaxis.range[0];
-        this._options.x.max.value = layout.xaxis.range[1];
+      assert (xbound!==undefined && ybound!==undefined);
+      this._options.x.min.value = xbound[0];
+      this._options.x.max.value = xbound[1];
+      this._options.y.min.value = ybound[0];
+      this._options.y.max.value = ybound[1];
+      if (zbound!==undefined) {
+         this._options.z.min.value = zbound[0];
+         this._options.z.max.value = zbound[1];
+      }
 
-        this._options.y.min.value = layout.yaxis.range[0];
-        this._options.y.max.value = layout.yaxis.range[1];
-
-        if (!this._is3D()) {
-            this._updateMarkers();
-        }
+      if (!this._is3D()) {
+          this._updateMarkers();
+      }
     }
-
     /**
      * Update the position, color & size of markers within the data array
      */
@@ -1032,28 +1031,20 @@ export class PropertiesMap {
             data.forEach((d) => d.toggleVisible(false));
             this._updateAll3DMarkers();
         } else {
-            const xaxis = this._plot._fullLayout.xaxis;
-            const yaxis = this._plot._fullLayout.yaxis;
 
-            const compute = (value: number, axis: any) => axis.l2p(value) + axis._offset;
-
-            const rawX = this._coordinates(this._options.x, 0) as number[][];
-            const rawY = this._coordinates(this._options.y, 0) as number[][];
-
-            // hide the point if it is outside the plot, allow for up to 10px
-            // overflow (for points just on the border)
-            const minX = compute(xaxis.range[0], xaxis) - 10;
-            const maxX = compute(xaxis.range[1], xaxis) + 10;
-            const minY = compute(yaxis.range[1], yaxis) - 10;
-            const maxY = compute(yaxis.range[0], yaxis) + 10;
+            const allX = this._coordinates(this._options.x, 0) as number[][];
+            const allY = this._coordinates(this._options.y, 0) as number[][];
+            const xLim = this._getRange().get('x') as number[];
+            const plotWidth = this._computeRSCoord(xLim[1], 'x') - this._computeRSCoord(xLim[0], 'x');
 
             for (const datum of data) {
-                const x = compute(rawX[0][datum.current], xaxis);
-                const y = compute(rawY[0][datum.current], yaxis);
-                datum.update(x, y, [
-                    [minX, maxX],
-                    [minY, minY],
-                ]);
+                const rawX = allX[0][datum.current];
+                const rawY = allY[0][datum.current];
+                if(this._insidePlot(rawX, rawY)) {
+                  const x = plotWidth - this._computeRSCoord(rawX, 'x');
+                  const y = this._computeRSCoord(rawY, 'y');
+                  datum.update(x, y);
+                } else {datum.toggleVisible();}
             }
         }
     }
@@ -1073,5 +1064,49 @@ export class PropertiesMap {
             } as Data,
             1
         );
+    }
+    private _getRange(): Map<string, number[]>{
+      const bounds = new Map<string, number[]>();
+      let layout;
+      if(this._is3D()) {
+        layout = this._plot._fullLayout.scene;
+        bounds.set('x', layout.xaxis.range as number[]);
+        bounds.set('y', layout.yaxis.range as number[]);
+        bounds.set('z', layout.zaxis.range as number[]);
+      } else {
+        layout = this._plot._fullLayout;
+        bounds.set('x', layout.xaxis.range as number[]);
+        bounds.set('y', layout.yaxis.range as number[]);
+      }
+      return bounds;
+    }
+
+    private _computeRSCoord(value: number, axisName: string): number {
+      assert (axisName === 'x' || axisName === 'y');
+      assert (! this._is3D());
+      let axis;
+      switch (axisName) {
+        case 'x':
+          axis = this._plot._fullLayout.xaxis;
+          break;
+        case 'y':
+          axis = this._plot._fullLayout.xaxis;
+          break;
+      }
+      return (axis.l2p(value) + axis._offset);
+    }
+
+    private _checkBounds(value: number, axis: string, buffer: number=10): boolean {
+      const bounds = this._getRange().get(axis);
+      assert (bounds !== undefined);
+      return value > bounds[0] - buffer && value < bounds[1] + buffer;
+    }
+
+    private _insidePlot(x: number, y: number, z?: number, buffer: number=10): boolean {
+      const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
+      if(z !== undefined) {
+        return this._checkBounds(z, 'z', buffer) && check;
+      }
+      return check;
     }
 }

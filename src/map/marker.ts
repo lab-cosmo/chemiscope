@@ -27,18 +27,13 @@ export class MarkerData {
         this.current = environment;
     }
 
-    public update(x: number, y: number, bounds: number[][]) {
+    public update(x: number, y: number): void {
         if (!isFinite(x) || !isFinite(y)) {
             this.toggleVisible(false);
-        } else if (x < bounds[0][0] || x > bounds[0][1] || y < bounds[1][0] || y > bounds[1][1]) {
-            this.toggleVisible(false);
-        } else {
-            this.toggleVisible(true);
+            return;
         }
         this.marker.style.top = `${y}px`;
-        // const plotWidth = this._plot.getBoundingClientRect().width;
-        const plotWidth = bounds[0][1] - bounds[0][0];
-        this.marker.style.right = `${plotWidth - x}px`;
+        this.marker.style.right = `${x}px`;
     }
     public select(indexes: Indexes): void {
         if (this.current !== indexes.environment) {
