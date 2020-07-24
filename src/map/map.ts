@@ -766,7 +766,7 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace(values, selected, trace);
+        return this._selectTrace<number[]>(values, selected, trace);
     }
 
     /**
