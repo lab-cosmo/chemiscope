@@ -932,7 +932,7 @@ export class PropertiesMap {
         for (const data of this._selected.values()) {
             data.toggleVisible(false);
         }
-        this._updateAll3DMarkers();
+        this._updateMarkers();
 
         // Change the data that vary between 2D and 3D mode
         this._restyle(
@@ -1027,13 +1027,24 @@ export class PropertiesMap {
             this._updateMarkers();
         }
     }
+
     /**
      * Update the position, color & size of markers within the data array
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
             data.forEach((d) => d.toggleVisible(false));
-            this._updateAll3DMarkers();
+            this._restyle(
+                {
+                    'marker.color': this._colors(1),
+                    'marker.size': this._sizes(1),
+                    'marker.symbol': this._symbols(1),
+                    x: this._coordinates(this._options.x, 1),
+                    y: this._coordinates(this._options.y, 1),
+                    z: this._coordinates(this._options.z, 1),
+                } as Data,
+                1
+            );
         } else {
             const allX = this._coordinates(this._options.x, 0) as number[][];
             const allY = this._coordinates(this._options.y, 0) as number[][];
@@ -1053,22 +1064,7 @@ export class PropertiesMap {
         }
     }
 
-    /**
-     * Update the position, size & color for all markers in 3D mode
-     */
-    private _updateAll3DMarkers(): void {
-        this._restyle(
-            {
-                'marker.color': this._colors(1),
-                'marker.size': this._sizes(1),
-                'marker.symbol': this._symbols(1),
-                x: this._coordinates(this._options.x, 1),
-                y: this._coordinates(this._options.y, 1),
-                z: this._coordinates(this._options.z, 1),
-            } as Data,
-            1
-        );
-    }
+    // Get the current boundaries. Returns map of 'x' | 'y' | 'z' --> limits
     private _getRange(): Map<string, number[]> {
         const bounds = new Map<string, number[]>();
         let layout;
