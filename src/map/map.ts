@@ -17,9 +17,7 @@ import { enumerate, getByID, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
-import { AxisOptions, MapOptions } from './options';
-
-import { COLOR_MAPS } from './colorscales';
+import { AxisOptions, MapOptions, get3DSymbol } from './options';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -106,15 +104,6 @@ const DEFAULT_CONFIG = {
         'resetCameraLastSave3d',
     ],
 };
-
-// in 3D mode, only strings are supported for 'marker.symbol', and only very few
-// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
-// issue tracking more symbols in 3D mode.
-const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
-
-function get3DSymbol(i: number): string {
-    return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
-}
 
 /**
  * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of

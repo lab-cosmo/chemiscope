@@ -7,13 +7,22 @@ import assert from 'assert';
 
 import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
 import { optionValidator } from '../options';
-import { arrayMaxMin, getByID, makeDraggable, PositioningCallback } from '../utils';
-import { NumericProperties } from './data';
+import { PositioningCallback, arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
+import { NumericProperties, NumericProperty } from './data';
 
 import { COLOR_MAPS } from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
+
+// in 3D mode, only strings are supported for 'marker.symbol', and only very few
+// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
+// issue tracking more symbols in 3D mode.
+const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
+
+export function get3DSymbol(i: number): string {
+    return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
+}
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
 export class AxisOptions extends OptionsGroup {
