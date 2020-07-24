@@ -1025,7 +1025,6 @@ export class PropertiesMap {
 
       if (!this._is3D()) {
 
-        console.log("AP 2")
         this._updateMarkers();
       }
     }
@@ -1033,11 +1032,9 @@ export class PropertiesMap {
      * Update the position, color & size of markers within the data array
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
-        console.log("UPDATING 1");
         if (this._is3D()) {
             data.forEach((d) => d.toggleVisible(false));
             this._updateAll3DMarkers();
-            console.log("UPDATING 3D DONE");
         } else {
 
             const allX = this._coordinates(this._options.x, 0) as number[][];
