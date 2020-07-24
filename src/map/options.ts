@@ -193,7 +193,7 @@ export class MapOptions extends OptionsGroup {
      * Get the values to use as marker size with the given plotly `trace`, or
      * all of them if `trace === undefined`.
      */
-    public calculateSizes(sizes: number[]): number[] {
+    public calculateSizes(rawSizes: number[]): number[] {
         const logSlider = (value: number) => {
             const min_slider = 1;
             const max_slider = 100;
@@ -212,11 +212,11 @@ export class MapOptions extends OptionsGroup {
         if (this.size.mode.value !== 'constant') {
             const scaleMode = this.size.mode.value;
             const reversed = this.size.reverse.value;
-            const { min, max } = arrayMaxMin(sizes);
+            const { min, max } = arrayMaxMin(rawSizes);
             const defaultSize = this.is3D() ? 2000 : 150;
             const bottomLimit = 0.1; // lower limit to prevent size of 0
 
-            values = sizes.map((v: number) => {
+            values = rawSizes.map((v: number) => {
                 // normalize between 0 and 1, then scale by the user provided value
                 let scaled = (v + bottomLimit - min) / (max - min);
                 if (reversed) {
@@ -247,7 +247,7 @@ export class MapOptions extends OptionsGroup {
             // we need to use an array instead of a single value because of
             // https://github.com/plotly/plotly.js/issues/2735
             const defaultSize = this.is3D() ? 500 : 50;
-            values = Array(sizes.length).fill(defaultSize * userFactor) as number[];
+            values = Array(rawSizes.length).fill(defaultSize * userFactor) as number[];
         }
         return values;
     }
