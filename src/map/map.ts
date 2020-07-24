@@ -12,8 +12,8 @@ import { Property } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
-import { arrayMaxMin, GUID, PositioningCallback } from '../utils';
-import { enumerate, getByID, getFirstKey, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin } from '../utils';
+import { enumerate, getByID, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';

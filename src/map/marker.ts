@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-import { EnvironmentIndexer, Indexes } from '../indexer';
+import { Indexes } from '../indexer';
 
 /// Data associated with markers on the map indicating selected environments/structures
 export class MarkerData {
@@ -46,18 +46,18 @@ export class MarkerData {
             // this.update();
         }
     }
-    public activate() {
+    public activate(): void {
         this.marker.classList.toggle('chsp-active-structure', true);
     }
-    public deactivate() {
+    public deactivate(): void {
         this.marker.classList.toggle('chsp-active-structure', false);
     }
-    public remove() {
+    public remove(): void {
         assert(this.marker.parentNode !== null);
         this.marker.parentNode.removeChild(this.marker);
     }
 
-    public toggleVisible(visible: boolean = false) {
+    public toggleVisible(visible: boolean = false): void {
         if (visible) {
             this.marker.style.display = 'block';
         } else {

@@ -224,7 +224,7 @@ export class MapOptions extends OptionsGroup {
                         scaled = Math.sqrt(scaled);
                         break;
                     case 'linear':
-                        scaled = scaled;
+                        scaled = 1.0 * scaled;
                         break;
                     default:
                         // corresponds to 'constant'
