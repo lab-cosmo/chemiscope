@@ -27,6 +27,8 @@ export class MarkerData {
         this.current = environment;
     }
 
+    // Updates the location of the marker on top of the plot
+    // x and y should be in absolute coordinates with respect to the plot
     public update(x: number, y: number): void {
         if (!isFinite(x) || !isFinite(y)) {
             this.toggleVisible(false);
@@ -35,6 +37,10 @@ export class MarkerData {
         this.marker.style.top = `${y}px`;
         this.marker.style.right = `${x}px`;
     }
+
+    // Changes the current environment if it is not already at the target
+    // Returns true | false to mark if the current was changed to prevent
+    // infinite recursion.
     public select(indexes: Indexes): boolean {
         if (this.current !== indexes.environment) {
             this.current = indexes.environment;
@@ -43,17 +49,24 @@ export class MarkerData {
             return false;
         }
     }
+
+    // Changes the marker properties to active marker properties
     public activate(): void {
         this.marker.classList.toggle('chsp-active-structure', true);
     }
+
+    // Changes the marker properties to inactive marker properties
     public deactivate(): void {
         this.marker.classList.toggle('chsp-active-structure', false);
     }
+
+    // Remove this marker
     public remove(): void {
         assert(this.marker.parentNode !== null);
         this.marker.parentNode.removeChild(this.marker);
     }
 
+    // Turn the visibility of the marker on/off for 2D/3D plots
     public toggleVisible(visible: boolean = false): void {
         if (visible) {
             this.marker.style.display = 'block';
