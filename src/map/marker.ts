@@ -38,7 +38,7 @@ export class MarkerData {
     public select(indexes: Indexes): boolean {
         if (this.current !== indexes.environment) {
             this.current = indexes.environment;
-            return true
+            return true;
         } else {return false; }
     }
     public activate(): void {
