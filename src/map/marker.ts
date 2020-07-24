@@ -35,11 +35,11 @@ export class MarkerData {
         this.marker.style.top = `${y}px`;
         this.marker.style.right = `${x}px`;
     }
-    public select(indexes: Indexes): void {
+    public select(indexes: Indexes): boolean {
         if (this.current !== indexes.environment) {
             this.current = indexes.environment;
-            // this.update();
-        }
+            return true
+        } else {return false; }
     }
     public activate(): void {
         this.marker.classList.toggle('chsp-active-structure', true);

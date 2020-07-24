@@ -228,7 +228,11 @@ export class PropertiesMap {
 
         const data = this._selected.get(this._active);
         assert(data !== undefined);
-        data.select(indexes);
+        // this prevents infinite recursion
+        // will return false if the data already corresponds to this index
+        if(data.select(indexes)) {
+          this._updateMarkers();
+        }
     }
 
     /**
@@ -1020,22 +1024,25 @@ export class PropertiesMap {
       }
 
       if (!this._is3D()) {
-          this._updateMarkers();
+
+        console.log("AP 2")
+        this._updateMarkers();
       }
     }
     /**
      * Update the position, color & size of markers within the data array
      */
     private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
+        console.log("UPDATING 1");
         if (this._is3D()) {
             data.forEach((d) => d.toggleVisible(false));
             this._updateAll3DMarkers();
+            console.log("UPDATING 3D DONE");
         } else {
 
             const allX = this._coordinates(this._options.x, 0) as number[][];
             const allY = this._coordinates(this._options.y, 0) as number[][];
-            const xLim = this._getRange().get('x') as number[];
-            const plotWidth = this._computeRSCoord(xLim[1], 'x') - this._computeRSCoord(xLim[0], 'x');
+            const plotWidth = this._plot.getBoundingClientRect().width;
 
             for (const datum of data) {
                 const rawX = allX[0][datum.current];
@@ -1090,7 +1097,7 @@ export class PropertiesMap {
           axis = this._plot._fullLayout.xaxis;
           break;
         case 'y':
-          axis = this._plot._fullLayout.xaxis;
+          axis = this._plot._fullLayout.yaxis;
           break;
       }
       return (axis.l2p(value) + axis._offset);
