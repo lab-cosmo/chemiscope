@@ -230,8 +230,8 @@ export class PropertiesMap {
         assert(data !== undefined);
         // this prevents infinite recursion
         // will return false if the data already corresponds to this index
-        if(data.select(indexes)) {
-          this._updateMarkers();
+        if (data.select(indexes)) {
+            this._updateMarkers();
         }
     }
 
@@ -1007,26 +1007,25 @@ export class PropertiesMap {
      */
     private _afterplot(): void {
         // HACK: this is not public, so it might break
-      const bounds = this._getRange();
+        const bounds = this._getRange();
 
-      const xbound = bounds.get('x');
-      const ybound = bounds.get('y');
-      const zbound = bounds.get('z');
+        const xbound = bounds.get('x');
+        const ybound = bounds.get('y');
+        const zbound = bounds.get('z');
 
-      assert (xbound!==undefined && ybound!==undefined);
-      this._options.x.min.value = xbound[0];
-      this._options.x.max.value = xbound[1];
-      this._options.y.min.value = ybound[0];
-      this._options.y.max.value = ybound[1];
-      if (zbound!==undefined) {
-         this._options.z.min.value = zbound[0];
-         this._options.z.max.value = zbound[1];
-      }
+        assert(xbound !== undefined && ybound !== undefined);
+        this._options.x.min.value = xbound[0];
+        this._options.x.max.value = xbound[1];
+        this._options.y.min.value = ybound[0];
+        this._options.y.max.value = ybound[1];
+        if (zbound !== undefined) {
+            this._options.z.min.value = zbound[0];
+            this._options.z.max.value = zbound[1];
+        }
 
-      if (!this._is3D()) {
-
-        this._updateMarkers();
-      }
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
     }
     /**
      * Update the position, color & size of markers within the data array
@@ -1036,7 +1035,6 @@ export class PropertiesMap {
             data.forEach((d) => d.toggleVisible(false));
             this._updateAll3DMarkers();
         } else {
-
             const allX = this._coordinates(this._options.x, 0) as number[][];
             const allY = this._coordinates(this._options.y, 0) as number[][];
             const plotWidth = this._plot.getBoundingClientRect().width;
@@ -1044,11 +1042,13 @@ export class PropertiesMap {
             for (const datum of data) {
                 const rawX = allX[0][datum.current];
                 const rawY = allY[0][datum.current];
-                if(this._insidePlot(rawX, rawY)) {
-                  const x = plotWidth - this._computeRSCoord(rawX, 'x');
-                  const y = this._computeRSCoord(rawY, 'y');
-                  datum.update(x, y);
-                } else {datum.toggleVisible();}
+                if (this._insidePlot(rawX, rawY)) {
+                    const x = plotWidth - this._computeRSCoord(rawX, 'x');
+                    const y = this._computeRSCoord(rawY, 'y');
+                    datum.update(x, y);
+                } else {
+                    datum.toggleVisible();
+                }
             }
         }
     }
@@ -1069,48 +1069,48 @@ export class PropertiesMap {
             1
         );
     }
-    private _getRange(): Map<string, number[]>{
-      const bounds = new Map<string, number[]>();
-      let layout;
-      if(this._is3D()) {
-        layout = this._plot._fullLayout.scene;
-        bounds.set('x', layout.xaxis.range as number[]);
-        bounds.set('y', layout.yaxis.range as number[]);
-        bounds.set('z', layout.zaxis.range as number[]);
-      } else {
-        layout = this._plot._fullLayout;
-        bounds.set('x', layout.xaxis.range as number[]);
-        bounds.set('y', layout.yaxis.range as number[]);
-      }
-      return bounds;
+    private _getRange(): Map<string, number[]> {
+        const bounds = new Map<string, number[]>();
+        let layout;
+        if (this._is3D()) {
+            layout = this._plot._fullLayout.scene;
+            bounds.set('x', layout.xaxis.range as number[]);
+            bounds.set('y', layout.yaxis.range as number[]);
+            bounds.set('z', layout.zaxis.range as number[]);
+        } else {
+            layout = this._plot._fullLayout;
+            bounds.set('x', layout.xaxis.range as number[]);
+            bounds.set('y', layout.yaxis.range as number[]);
+        }
+        return bounds;
     }
 
     private _computeRSCoord(value: number, axisName: string): number {
-      assert (axisName === 'x' || axisName === 'y');
-      assert (! this._is3D());
-      let axis;
-      switch (axisName) {
-        case 'x':
-          axis = this._plot._fullLayout.xaxis;
-          break;
-        case 'y':
-          axis = this._plot._fullLayout.yaxis;
-          break;
-      }
-      return (axis.l2p(value) + axis._offset);
+        assert(axisName === 'x' || axisName === 'y');
+        assert(!this._is3D());
+        let axis;
+        switch (axisName) {
+            case 'x':
+                axis = this._plot._fullLayout.xaxis;
+                break;
+            case 'y':
+                axis = this._plot._fullLayout.yaxis;
+                break;
+        }
+        return axis.l2p(value) + axis._offset;
     }
 
-    private _checkBounds(value: number, axis: string, buffer: number=10): boolean {
-      const bounds = this._getRange().get(axis);
-      assert (bounds !== undefined);
-      return value > bounds[0] - buffer && value < bounds[1] + buffer;
+    private _checkBounds(value: number, axis: string, buffer: number = 10): boolean {
+        const bounds = this._getRange().get(axis);
+        assert(bounds !== undefined);
+        return value > bounds[0] - buffer && value < bounds[1] + buffer;
     }
 
-    private _insidePlot(x: number, y: number, z?: number, buffer: number=10): boolean {
-      const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
-      if(z !== undefined) {
-        return this._checkBounds(z, 'z', buffer) && check;
-      }
-      return check;
+    private _insidePlot(x: number, y: number, z?: number, buffer: number = 10): boolean {
+        const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
+        if (z !== undefined) {
+            return this._checkBounds(z, 'z', buffer) && check;
+        }
+        return check;
     }
 }

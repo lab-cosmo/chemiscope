@@ -39,7 +39,9 @@ export class MarkerData {
         if (this.current !== indexes.environment) {
             this.current = indexes.environment;
             return true;
-        } else {return false; }
+        } else {
+            return false;
+        }
     }
     public activate(): void {
         this.marker.classList.toggle('chsp-active-structure', true);

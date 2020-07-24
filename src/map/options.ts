@@ -253,26 +253,23 @@ export class MapOptions extends OptionsGroup {
     }
 
     public getSymbols(property: NumericProperty): number[] | string[] {
+        /** How many different symbols are being displayed */
+        assert(property.string !== undefined);
+        const symbolsCount = property.string.strings().length;
 
-      /** How many different symbols are being displayed */
-      assert(property.string !== undefined);
-      const symbolsCount = property.string.strings().length;
-
-      if (this.is3D()) {
-          // If we need more symbols than available, we'll send a warning
-          // and repeat existing ones
-          if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
-              sendWarning(
-                  `${symbolsCount} symbols are required, but we only have ${
-                      POSSIBLE_SYMBOLS_IN_3D.length
-                  }. Some symbols will be repeated`
-              );
-          }
-          const symbols = property.values.map(get3DSymbol);
-          return symbols;
-      } else {
-          return property.values;
-      }
+        if (this.is3D()) {
+            // If we need more symbols than available, we'll send a warning
+            // and repeat existing ones
+            if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
+                sendWarning(
+                    `${symbolsCount} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`
+                );
+            }
+            const symbols = property.values.map(get3DSymbol);
+            return symbols;
+        } else {
+            return property.values;
+        }
     }
 
     /**
@@ -413,6 +410,6 @@ export class MapOptions extends OptionsGroup {
 
     /** Get the colorscale to use for markers in the main plotly trace */
     public colorScale(): Plotly.ColorScale {
-      return COLOR_MAPS[this.palette.value];
+        return COLOR_MAPS[this.palette.value];
     }
 }
