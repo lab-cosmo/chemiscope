@@ -247,9 +247,7 @@ export class MapOptions extends OptionsGroup {
             // we need to use an array instead of a single value because of
             // https://github.com/plotly/plotly.js/issues/2735
             const defaultSize = this.is3D() ? 500 : 50;
-            values = sizes.map((v: number) => {
-                return defaultSize * userFactor;
-            });
+            values = Array(sizes.length).fill(defaultSize * userFactor) as number[];
         }
         return values;
     }
