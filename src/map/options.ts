@@ -172,9 +172,11 @@ export class MapOptions extends OptionsGroup {
         this._modal.remove();
     }
 
+    /** Is the current plot in 3D mode? */
     public is3D(): boolean {
         return this.z.property.value !== '';
     }
+
     /** Does the current plot use color values? */
     public hasColors(): boolean {
         return this.color.property.value !== '';
@@ -252,6 +254,7 @@ export class MapOptions extends OptionsGroup {
         return values;
     }
 
+    /** Given the property, return the symbols */
     public getSymbols(property: NumericProperty): number[] | string[] {
         /** How many different symbols are being displayed */
         assert(property.string !== undefined);

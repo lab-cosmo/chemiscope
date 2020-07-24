@@ -750,6 +750,7 @@ export class PropertiesMap {
         return result;
     }
 
+    /** Returns the plot coordinates of the traces given */
     private _coordinates(coordinate: AxisOptions, trace?: number): Array<undefined | number[]> {
         // this will be flagged when the coordinate is the z values and we are 2D
         if (coordinate.property.value === '') {
@@ -903,6 +904,7 @@ export class PropertiesMap {
         return this._options.is3D();
     }
 
+    /** How many symbols are on this plot?*/
     private _symbolsCount(): number {
         if (this._options.symbol.value !== '') {
             const property = this._property(this._options.symbol.value);
@@ -1081,6 +1083,7 @@ export class PropertiesMap {
         return bounds;
     }
 
+    // Computes the real space coordinate of a value on the plot
     private _computeRSCoord(value: number, axisName: string): number {
         assert(axisName === 'x' || axisName === 'y');
         assert(!this._is3D());
@@ -1096,12 +1099,14 @@ export class PropertiesMap {
         return axis.l2p(value) + axis._offset;
     }
 
+    // Checks if a point is in the visible plot for a *single* axis
     private _checkBounds(value: number, axis: string, buffer: number = 10): boolean {
         const bounds = this._getRange().get(axis);
         assert(bounds !== undefined);
         return value > bounds[0] - buffer && value < bounds[1] + buffer;
     }
 
+    // Checks if a point is in the visible plot
     private _insidePlot(x: number, y: number, z?: number, buffer: number = 10): boolean {
         const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
         if (z !== undefined) {
