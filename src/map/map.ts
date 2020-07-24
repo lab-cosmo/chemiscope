@@ -503,7 +503,7 @@ export class PropertiesMap {
                 // the colorbar). Asking for an update of 'coloraxis.colorscale'
                 // seems to do the trick. This is possiblely a Ploty bug, we
                 // would need to investiguate a bit more.
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
@@ -518,14 +518,14 @@ export class PropertiesMap {
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // same as above regarding update of the points color
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
 
         // ======= color palette
         this._options.palette.onchange = () => {
             this._relayout(({
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
 
@@ -685,7 +685,7 @@ export class PropertiesMap {
         layout.scene.xaxis.title = this._options.x.property.value;
         layout.scene.yaxis.title = this._options.y.property.value;
         layout.scene.zaxis.title = this._options.z.property.value;
-        layout.coloraxis.colorscale = this._colorScale();
+        layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
         layout.coloraxis.colorbar.title.text = this._options.color.property.value;
@@ -794,11 +794,6 @@ export class PropertiesMap {
         } else {
             return this._selectTrace<string>('rgba(1, 1, 1, 0.3)', 'black', trace);
         }
-    }
-
-    /** Get the colorscale to use for markers in the main plotly trace */
-    private _colorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this._options.palette.value];
     }
 
     /**

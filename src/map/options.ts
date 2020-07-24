@@ -389,4 +389,9 @@ export class MapOptions extends OptionsGroup {
         this.size.mode.bind('chsp-size-mode', 'value');
         this.size.reverse.bind('chsp-size-reverse', 'checked');
     }
+
+    /** Get the colorscale to use for markers in the main plotly trace */
+    public colorScale(): Plotly.ColorScale {
+      return COLOR_MAPS[this.palette.value];
+    }
 }
