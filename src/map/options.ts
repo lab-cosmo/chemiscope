@@ -254,6 +254,29 @@ export class MapOptions extends OptionsGroup {
         return values;
     }
 
+    public getSymbols(property: NumericProperty): number[] | string[] {
+
+      /** How many different symbols are being displayed */
+      assert(property.string !== undefined);
+      const symbolsCount = property.string.strings().length;
+
+      if (this.is3D()) {
+          // If we need more symbols than available, we'll send a warning
+          // and repeat existing ones
+          if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
+              sendWarning(
+                  `${symbolsCount} symbols are required, but we only have ${
+                      POSSIBLE_SYMBOLS_IN_3D.length
+                  }. Some symbols will be repeated`
+              );
+          }
+          const symbols = property.values.map(get3DSymbol);
+          return symbols;
+      } else {
+          return property.values;
+      }
+    }
+
     /**
      * Create the settings modal by adding HTML to the page
      * @param  root root element in which the 'open settings' button will be placed

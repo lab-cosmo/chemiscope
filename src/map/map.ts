@@ -826,32 +826,13 @@ export class PropertiesMap {
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
 
-        const values = this._property(this._options.symbol.value).values;
-        if (this._is3D()) {
-            // If we need more symbols than available, we'll send a warning
-            // and repeat existing ones
-            if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
-                sendWarning(
-                    `${this._symbolsCount()} symbols are required, but we only have ${
-                        POSSIBLE_SYMBOLS_IN_3D.length
-                    }. Some symbols will be repeated`
-                );
-            }
-            const symbols = values.map(get3DSymbol);
-            const selected = [];
-            for (const data of this._selected.values()) {
-                selected.push(symbols[data.current]);
-            }
-            return this._selectTrace<string[]>(symbols, selected, trace);
-        } else {
-            // in 2D mode, use automatic assignment of symbols from numeric
-            // values
-            const selected = [];
-            for (const data of this._selected.values()) {
-                selected.push(values[data.current]);
-            }
-            return this._selectTrace<number[]>(values, selected, trace);
+        const property = this._property(this._options.symbol.value);
+        const symbols = this._options.getSymbols(property);
+        const selected = [];
+        for (const data of this._selected.values()) {
+            selected.push(symbols[data.current]);
         }
+        return this._selectTrace<typeof symbols>(symbols, selected as typeof symbols, trace);
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -906,17 +887,6 @@ export class PropertiesMap {
         }
     }
 
-    /** How many different symbols are being displayed */
-    private _symbolsCount(): number {
-        if (this._options.symbol.value !== '') {
-            const property = this._property(this._options.symbol.value);
-            assert(property.string !== undefined);
-            return property.string.strings().length;
-        } else {
-            return 0;
-        }
-    }
-
     /** Get the length of the colorbar to accomodate for the legend */
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
@@ -927,6 +897,16 @@ export class PropertiesMap {
     /** Is the the current plot a 3D plot? */
     private _is3D(): boolean {
         return this._options.is3D();
+    }
+
+    private _symbolsCount(): number {
+        if (this._options.symbol.value !== '') {
+            const property = this._property(this._options.symbol.value);
+            assert(property.string !== undefined);
+            return property.string.strings().length;
+        } else {
+            return 0;
+        }
     }
 
     /** Switch current plot from 2D to 3D */
