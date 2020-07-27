@@ -111,6 +111,7 @@ function setupChemiscope(json) {
                 };
             };
 
+            updateChspInfoHeight();
             stopLoading();
         })
         .catch((e) =>
@@ -190,12 +191,21 @@ function setupDefaultChemiscope(j2sPath) {
         displayError(error);
     };
 
+    setupLoadSaveMenu();
+    window.addEventListener('resize', updateChspInfoHeight);
+}
+
+/**
+ * Setup all callbacks & style related to the Load/Save menu
+ */
+function setupLoadSaveMenu() {
     HIDE_ON_DEMAND_STRUCTURES = document.createElement('style');
     HIDE_ON_DEMAND_STRUCTURES.type = 'text/css';
     document.head.appendChild(HIDE_ON_DEMAND_STRUCTURES);
     HIDE_ON_DEMAND_STRUCTURES.sheet.insertRule('.hide-on-demand-structures {display: none}');
     HIDE_ON_DEMAND_STRUCTURES.disabled = false;
 
+    // Loading new dataset
     const loadDataset = document.getElementById('load-dataset');
     const loadSaveModal = document.getElementById('load-save');
     const closeLoadSaveModal = document.getElementById('close-load-save-modal');
@@ -212,6 +222,7 @@ function setupDefaultChemiscope(j2sPath) {
         });
     };
 
+    // Saving the current dataset
     const saveDataset = document.getElementById('save-dataset');
     const saveDatasetName = document.getElementById('save-dataset-name');
     const includeSettings = document.getElementById('save-dataset-settings');
@@ -225,6 +236,7 @@ function setupDefaultChemiscope(j2sPath) {
         closeLoadSaveModal.click();
     };
 
+    // loading saved settings
     const loadSettings = document.getElementById('load-settings');
     loadSettings.onchange = () => {
         loadSaveModal.classList.remove('fade');
@@ -238,6 +250,7 @@ function setupDefaultChemiscope(j2sPath) {
         });
     };
 
+    // Saving the current settings values
     const saveSettings = document.getElementById('save-settings');
     const saveSettingsName = document.getElementById('save-settings-name');
     const saveSettingsMap = document.getElementById('save-settings-map');
@@ -257,6 +270,21 @@ function setupDefaultChemiscope(j2sPath) {
         startDownload(saveSettingsName.value, JSON.stringify(settings));
         closeLoadSaveModal.click();
     };
+}
+
+/**
+ * Ensure that the height of the property table is set up in a compatible way
+ * with the use of embed-responsive. embed-responsive is used to ensure no
+ * vertical or horizontal scroll bar appear on the whole page while keeping
+ * know aspect ratio for the main panels.
+ */
+function updateChspInfoHeight() {
+    // max height for the chsp-info-table elements is the height of the
+    // structure viewer
+    const height = document.getElementById('chemiscope-structure').getBoundingClientRect().height;
+    for (const element of document.getElementsByClassName('chsp-info-table')) {
+        element.style.maxHeight = `${height}px`;
+    }
 }
 
 function startDownload(filename, content) {

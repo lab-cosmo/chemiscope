@@ -195,7 +195,6 @@
     height: 100%;
     width: 80%;
     margin: auto;
-    min-width: 400px;
 }
 
 .chsp-properties-table td,
@@ -285,6 +284,12 @@
     right: 0;
     z-index: 10;
     background-color: white;
+    /* max-height is set in JavaScript */
+    overflow: auto;
+}
+
+.chsp-info-table table {
+    margin: 0;
 }
 
 /* Change the atoms slider thumb color to green, to match jsmol highlight */
