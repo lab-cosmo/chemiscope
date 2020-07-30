@@ -255,11 +255,6 @@ export class PropertiesMap {
         if (this._is3D()) {
             this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
         }
-
-        const activeData = this._selected.get(guid);
-        assert(activeData !== undefined);
-        const activeIndexes = this._indexer.from_environment(activeData.current);
-        this.activeChanged(guid, activeIndexes);
     }
 
     /**
@@ -275,6 +270,7 @@ export class PropertiesMap {
         this._root.appendChild(data.marker);
         data.marker.onclick = () => {
             this.setActive(guid);
+            this.activeChanged(guid, this._indexer.from_environment(data.current));
         };
         this._selected.set(guid, data);
         this._updateMarkers([data]);
