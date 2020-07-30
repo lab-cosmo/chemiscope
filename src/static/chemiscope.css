@@ -288,6 +288,10 @@
     overflow: auto;
 }
 
+.chsp-info-table.collapsing {
+    overflow: hidden;
+}
+
 .chsp-info-table table {
     margin: 0;
 }
