@@ -746,14 +746,23 @@ export class PropertiesMap {
         return result;
     }
 
-    /** Returns the plot coordinates of the traces given */
-    private _coordinates(coordinate: AxisOptions, trace?: number): Array<undefined | number[]> {
-        // this will be flagged when the coordinate is the z values and we are 2D
-        if (coordinate.property.value === '') {
+    /**
+     * Get the values associated with the given `axis`, to use with the given
+     * plotly `trace`, or all of them if `trace === undefined`
+     *
+     * @param  axis   Options of the axis we need coordinates for
+     * @param  trace  plotly trace for which we require coordinate
+     * @return        data usable with Plotly.restyle
+     */
+    private _coordinates(axis: AxisOptions, trace?: number): Array<undefined | number[]> {
+        // this happen for the z axis in 2D mode
+        if (axis.property.value === '') {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._property(coordinate.property.value).values;
+        const values = this._property(axis.property.value).values;
+        // in 2d mode, set all selected markers coordinates to NaN since we are
+        // using HTML markers instead.
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
