@@ -6,6 +6,9 @@
   "license": "BSD-3-Clause",
   "main": "dist/chemiscope.min.js",
   "types": "dist/chemiscope.d.ts",
+  "engines": {
+    "npm": "^6"
+  },
   "files": [
     "dist/**/*"
   ],
