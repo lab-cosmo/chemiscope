@@ -7,13 +7,22 @@ import assert from 'assert';
 
 import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, getByID, makeDraggable } from '../utils';
-import { NumericProperties } from './data';
+import { PositioningCallback, arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
+import { NumericProperties, NumericProperty } from './data';
 
 import { COLOR_MAPS } from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
+
+// in 3D mode, only strings are supported for 'marker.symbol', and only very few
+// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
+// issue tracking more symbols in 3D mode.
+const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
+
+export function get3DSymbol(i: number): string {
+    return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
+}
 
 /** HTML element holding settings for a given axis (x, y, z, color) */
 export class AxisOptions extends OptionsGroup {
@@ -163,6 +172,109 @@ export class MapOptions extends OptionsGroup {
         this._modal.remove();
     }
 
+    /** Is the current plot in 3D mode? */
+    public is3D(): boolean {
+        return this.z.property.value !== '';
+    }
+
+    /** Does the current plot use color values? */
+    public hasColors(): boolean {
+        return this.color.property.value !== '';
+    }
+
+    /** Get the plotly hovertemplate depending on `this._current.color` */
+    public hovertemplate(): string {
+        if (this.hasColors()) {
+            return this.color.property.value + ': %{marker.color:.2f}<extra></extra>';
+        } else {
+            return '%{x:.2f}, %{y:.2f}<extra></extra>';
+        }
+    }
+
+    /**
+     * Get the values to use as marker size with the given plotly `trace`, or
+     * all of them if `trace === undefined`.
+     */
+    public calculateSizes(rawSizes: number[]): number[] {
+        const logSlider = (value: number) => {
+            const min_slider = 1;
+            const max_slider = 100;
+
+            // go from 1/6th of the size to 6 time the size
+            const min_value = Math.log(1.0 / 6.0);
+            const max_value = Math.log(6.0);
+
+            const tmp = (max_value - min_value) / (max_slider - min_slider);
+            return Math.exp(min_value + tmp * (value - min_slider));
+        };
+
+        const userFactor = logSlider(this.size.factor.value);
+
+        let values;
+        if (this.size.mode.value !== 'constant') {
+            const scaleMode = this.size.mode.value;
+            const reversed = this.size.reverse.value;
+            const { min, max } = arrayMaxMin(rawSizes);
+            const defaultSize = this.is3D() ? 2000 : 150;
+            const bottomLimit = 0.1; // lower limit to prevent size of 0
+
+            values = rawSizes.map((v: number) => {
+                // normalize between 0 and 1, then scale by the user provided value
+                let scaled = (v + bottomLimit - min) / (max - min);
+                if (reversed) {
+                    scaled = 1.0 + bottomLimit - scaled;
+                }
+                switch (scaleMode) {
+                    case 'inverse':
+                        scaled = 1.0 / scaled;
+                        break;
+                    case 'log':
+                        scaled = Math.log(scaled);
+                        break;
+                    case 'sqrt':
+                        scaled = Math.sqrt(scaled);
+                        break;
+                    case 'linear':
+                        scaled = 1.0 * scaled;
+                        break;
+                    default:
+                        // corresponds to 'constant'
+                        scaled = 1.0;
+                        break;
+                }
+                // since we are using scalemode: 'area', square the scaled value
+                return defaultSize * scaled * scaled * userFactor * userFactor;
+            });
+        } else {
+            // we need to use an array instead of a single value because of
+            // https://github.com/plotly/plotly.js/issues/2735
+            const defaultSize = this.is3D() ? 500 : 50;
+            values = Array(rawSizes.length).fill(defaultSize * userFactor) as number[];
+        }
+        return values;
+    }
+
+    /** Given the property, return the symbols */
+    public getSymbols(property: NumericProperty): number[] | string[] {
+        /** How many different symbols are being displayed */
+        assert(property.string !== undefined);
+        const symbolsCount = property.string.strings().length;
+
+        if (this.is3D()) {
+            // If we need more symbols than available, we'll send a warning
+            // and repeat existing ones
+            if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
+                sendWarning(
+                    `${symbolsCount} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`
+                );
+            }
+            const symbols = property.values.map(get3DSymbol);
+            return symbols;
+        } else {
+            return property.values;
+        }
+    }
+
     /**
      * Create the settings modal by adding HTML to the page
      * @param  root root element in which the 'open settings' button will be placed
@@ -297,5 +409,10 @@ export class MapOptions extends OptionsGroup {
         this.size.factor.bind('chsp-size-factor', 'value');
         this.size.mode.bind('chsp-size-mode', 'value');
         this.size.reverse.bind('chsp-size-reverse', 'checked');
+    }
+
+    /** Get the colorscale to use for markers in the main plotly trace */
+    public colorScale(): Plotly.ColorScale {
+        return COLOR_MAPS[this.palette.value];
     }
 }

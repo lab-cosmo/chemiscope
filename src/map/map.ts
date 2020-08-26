@@ -12,13 +12,12 @@ import { Property } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
-import { GUID, PositioningCallback } from '../utils';
-import { enumerate, getByID, getFirstKey, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin } from '../utils';
+import { enumerate, getByID, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
-import { AxisOptions, MapOptions } from './options';
-
-import { COLOR_MAPS } from './colorscales';
+import { MarkerData } from './marker';
+import { AxisOptions, MapOptions, get3DSymbol } from './options';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -105,44 +104,6 @@ const DEFAULT_CONFIG = {
         'resetCameraLastSave3d',
     ],
 };
-
-// in 3D mode, only strings are supported for 'marker.symbol', and only very few
-// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
-// issue tracking more symbols in 3D mode.
-const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
-
-function get3DSymbol(i: number): string {
-    return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
-}
-
-// get the max/min of an array. Math.min(...array) fails with very large arrays
-function arrayMaxMin(values: number[]): { max: number; min: number } {
-    let max = Number.NEGATIVE_INFINITY;
-    let min = Number.POSITIVE_INFINITY;
-    for (const value of values) {
-        if (value > max) {
-            max = value;
-        }
-        if (value < min) {
-            min = value;
-        }
-    }
-    assert(isFinite(min) && isFinite(max));
-    return { max, min };
-}
-
-/// interface to contain synchronized parameters for marker instances
-interface MarkerData {
-    /// color of the marker, synchronized with the ViewersGrid where appropriate
-    color: string;
-    /// index of the currently displayed structure
-    current: number;
-    /// Marker indicating the position of the point in 2D mode
-    /// Using an HTML element is much faster than using Plolty to restyle the full plot,
-    /// especially with more than 100k points. In 3D mode, a separate trace is
-    /// used instead.
-    marker: HTMLElement;
-}
 
 /**
  * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
@@ -267,14 +228,10 @@ export class PropertiesMap {
 
         const data = this._selected.get(this._active);
         assert(data !== undefined);
-
-        // Plotly.restyle fires the plotly_click event, so ensure we only run
-        // the update once.
-        // https://github.com/plotly/plotly.js/issues/1025
-        if (data.current !== indexes.environment) {
-            data.current = indexes.environment;
-            // Sets the active marker on this map
-            this._updateSelectedMarker(data);
+        // this prevents infinite recursion
+        // will return false if the data already corresponds to this index
+        if (data.select(indexes)) {
+            this._updateMarkers();
         }
     }
 
@@ -287,13 +244,13 @@ export class PropertiesMap {
         if (this._active !== undefined) {
             const oldData = this._selected.get(this._active);
             assert(oldData !== undefined);
-            oldData.marker.classList.toggle('chsp-active-structure', false);
+            oldData.deactivate();
         }
 
         this._active = guid;
         const data = this._selected.get(this._active);
         assert(data !== undefined);
-        data.marker.classList.toggle('chsp-active-structure', true);
+        data.activate();
 
         if (this._is3D()) {
             this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
@@ -309,35 +266,14 @@ export class PropertiesMap {
     public addMarker(guid: GUID, color: string, indexes: Indexes): void {
         assert(!this._selected.has(guid));
 
-        const marker = document.createElement('div');
-        this._root.appendChild(marker);
-        marker.classList.add('chsp-structure-marker');
-        if (guid === this._active) {
-            marker.classList.toggle('chsp-active-structure', true);
-        }
-        marker.id = `chsp-selected-${guid}`;
-        marker.onclick = () => {
+        const data = new MarkerData(guid, color, indexes.environment);
+        this._root.appendChild(data.marker);
+        data.marker.onclick = () => {
             this.setActive(guid);
-            const activeData = this._selected.get(guid);
-            assert(activeData !== undefined);
-            const activeIndexes = this._indexer.from_environment(activeData.current);
-            this.activeChanged(guid, activeIndexes);
-        };
-        marker.style.backgroundColor = color;
-
-        const data = {
-            color: color,
-            current: indexes.environment,
-            marker: marker,
+            this.activeChanged(guid, this._indexer.from_environment(data.current));
         };
         this._selected.set(guid, data);
-
-        if (this._is3D()) {
-            data.marker.style.display = 'none';
-        } else {
-            this._updateSelectedMarker(data);
-        }
-
+        this._updateMarkers([data]);
         this.setActive(guid);
     }
 
@@ -360,16 +296,10 @@ export class PropertiesMap {
         // remove HTML marker
         const data = this._selected.get(guid);
         assert(data !== undefined);
-        assert(data.marker.parentNode !== null);
-        data.marker.parentNode.removeChild(data.marker);
+        data.remove();
 
         this._selected.delete(guid);
-
-        if (this._is3D()) {
-            // We have to update all markers in 3D mode since we can not
-            // update just the one that we removed
-            this._updateAll3DMarkers();
-        }
+        this._updateMarkers();
     }
 
     /**
@@ -555,7 +485,7 @@ export class PropertiesMap {
 
             this._restyle(
                 {
-                    hovertemplate: this._hovertemplate(),
+                    hovertemplate: this._options.hovertemplate(),
                     'marker.color': this._colors(0),
                 } as Data,
                 0
@@ -573,7 +503,7 @@ export class PropertiesMap {
                 // the colorbar). Asking for an update of 'coloraxis.colorscale'
                 // seems to do the trick. This is possiblely a Ploty bug, we
                 // would need to investiguate a bit more.
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
@@ -588,14 +518,14 @@ export class PropertiesMap {
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // same as above regarding update of the points color
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
 
         // ======= color palette
         this._options.palette.onchange = () => {
             this._relayout(({
-                'coloraxis.colorscale': this._colorScale(),
+                'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
         };
 
@@ -662,7 +592,7 @@ export class PropertiesMap {
             y: y[0],
             z: z[0],
 
-            hovertemplate: this._hovertemplate(),
+            hovertemplate: this._options.hovertemplate(),
             marker: {
                 color: colors[0],
                 coloraxis: 'coloraxis',
@@ -755,7 +685,7 @@ export class PropertiesMap {
         layout.scene.xaxis.title = this._options.x.property.value;
         layout.scene.yaxis.title = this._options.y.property.value;
         layout.scene.zaxis.title = this._options.z.property.value;
-        layout.coloraxis.colorscale = this._colorScale();
+        layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
         layout.coloraxis.colorbar.title.text = this._options.color.property.value;
@@ -804,7 +734,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
-        this._updateAllMarkers();
+        this._updateMarkers();
     }
 
     /** Get the property with the given name */
@@ -816,22 +746,23 @@ export class PropertiesMap {
         return result;
     }
 
-    /** Get the plotly hovertemplate depending on `this._current.color` */
-    private _hovertemplate(): string {
-        if (this._hasColors()) {
-            return this._options.color.property.value + ': %{marker.color:.2f}<extra></extra>';
-        } else {
-            return '%{x:.2f}, %{y:.2f}<extra></extra>';
-        }
-    }
-
-    private _coordinates(coordinate: AxisOptions, trace?: number): Array<undefined | number[]> {
-        // this will be flagged when the coordinate is the z values and we are 2D
-        if (coordinate.property.value === '') {
+    /**
+     * Get the values associated with the given `axis`, to use with the given
+     * plotly `trace`, or all of them if `trace === undefined`
+     *
+     * @param  axis   Options of the axis we need coordinates for
+     * @param  trace  plotly trace for which we require coordinate
+     * @return        data usable with Plotly.restyle
+     */
+    private _coordinates(axis: AxisOptions, trace?: number): Array<undefined | number[]> {
+        // this happen for the z axis in 2D mode
+        if (axis.property.value === '') {
             return this._selectTrace(undefined, undefined, trace);
         }
 
-        const values = this._property(coordinate.property.value).values;
+        const values = this._property(axis.property.value).values;
+        // in 2d mode, set all selected markers coordinates to NaN since we are
+        // using HTML markers instead.
         const selected = [];
         for (const marker of this._selected.values()) {
             if (this._is3D()) {
@@ -840,7 +771,7 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace(values, selected, trace);
+        return this._selectTrace<number[]>(values, selected, trace);
     }
 
     /**
@@ -849,7 +780,7 @@ export class PropertiesMap {
      */
     private _colors(trace?: number): Array<string | string[] | number | number[]> {
         let values;
-        if (this._hasColors()) {
+        if (this._options.hasColors()) {
             values = this._property(this._options.color.property.value).values;
         } else {
             values = 0.5;
@@ -875,78 +806,13 @@ export class PropertiesMap {
         }
     }
 
-    /** Get the colorscale to use for markers in the main plotly trace */
-    private _colorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this._options.palette.value];
-    }
-
     /**
      * Get the values to use as marker size with the given plotly `trace`, or
      * all of them if `trace === undefined`.
      */
     private _sizes(trace?: number): Array<number | number[]> {
-        // Transform the linear value from the slider into a logarithmic scale
-        const logSlider = (value: number) => {
-            const min_slider = 1;
-            const max_slider = 100;
-
-            // go from 1/6th of the size to 6 time the size
-            const min_value = Math.log(1.0 / 6.0);
-            const max_value = Math.log(6.0);
-
-            const tmp = (max_value - min_value) / (max_slider - min_slider);
-            return Math.exp(min_value + tmp * (value - min_slider));
-        };
-
-        const userFactor = logSlider(this._options.size.factor.value);
-
-        let values;
-        if (this._options.size.mode.value !== 'constant') {
-            const scaleMode = this._options.size.mode.value;
-            const reversed = this._options.size.reverse.value;
-            const sizes = this._property(this._options.size.property.value).values;
-            const { min, max } = arrayMaxMin(sizes);
-            const defaultSize = this._is3D() ? 2000 : 150;
-            const bottomLimit = 0.1; // lower limit to prevent size of 0
-
-            values = sizes.map((v: number) => {
-                // normalize between 0 and 1, then scale by the user provided value
-                let scaled = (v + bottomLimit - min) / (max - min);
-                if (reversed) {
-                    scaled = 1.0 + bottomLimit - scaled;
-                }
-                switch (scaleMode) {
-                    case 'inverse':
-                        scaled = 1.0 / scaled;
-                        break;
-                    case 'log':
-                        scaled = Math.log(scaled);
-                        break;
-                    case 'sqrt':
-                        scaled = Math.sqrt(scaled);
-                        break;
-                    case 'linear':
-                        /* nothing to do */
-                        break;
-                    default:
-                        assert(scaleMode === 'constant');
-                        scaled = 1.0;
-                        break;
-                }
-                // since we are using scalemode: 'area', square the scaled value
-                return defaultSize * scaled * scaled * userFactor * userFactor;
-            });
-        } else {
-            // we need to use an array instead of a single value because of
-            // https://github.com/plotly/plotly.js/issues/2735
-            values = new Array(this._indexer.environmentsCount());
-            if (this._is3D()) {
-                values.fill(500 * userFactor);
-            } else {
-                values.fill(50 * userFactor);
-            }
-        }
-
+        const sizes = this._property(this._options.size.property.value).values;
+        const values = this._options.calculateSizes(sizes);
         const selected = [];
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
@@ -970,32 +836,13 @@ export class PropertiesMap {
             return this._selectTrace<string | string[]>('circle', 'circle', trace);
         }
 
-        const values = this._property(this._options.symbol.value).values;
-        if (this._is3D()) {
-            // If we need more symbols than available, we'll send a warning
-            // and repeat existing ones
-            if (this._symbolsCount() > POSSIBLE_SYMBOLS_IN_3D.length) {
-                sendWarning(
-                    `${this._symbolsCount()} symbols are required, but we only have ${
-                        POSSIBLE_SYMBOLS_IN_3D.length
-                    }. Some symbols will be repeated`
-                );
-            }
-            const symbols = values.map(get3DSymbol);
-            const selected = [];
-            for (const data of this._selected.values()) {
-                selected.push(symbols[data.current]);
-            }
-            return this._selectTrace<string[]>(symbols, selected, trace);
-        } else {
-            // in 2D mode, use automatic assignment of symbols from numeric
-            // values
-            const selected = [];
-            for (const data of this._selected.values()) {
-                selected.push(values[data.current]);
-            }
-            return this._selectTrace<number[]>(values, selected, trace);
+        const property = this._property(this._options.symbol.value);
+        const symbols = this._options.getSymbols(property);
+        const selected = [];
+        for (const data of this._selected.values()) {
+            selected.push(symbols[data.current]);
         }
+        return this._selectTrace<typeof symbols>(symbols, selected as typeof symbols, trace);
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -1050,7 +897,19 @@ export class PropertiesMap {
         }
     }
 
-    /** How many different symbols are being displayed */
+    /** Get the length of the colorbar to accomodate for the legend */
+    private _colorbarLen(): number {
+        /// Heigh of a legend item in plot unit
+        const LEGEND_ITEM_HEIGH = 0.045;
+        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount();
+    }
+
+    /** Is the the current plot a 3D plot? */
+    private _is3D(): boolean {
+        return this._options.is3D();
+    }
+
+    /** How many symbols are on this plot?*/
     private _symbolsCount(): number {
         if (this._options.symbol.value !== '') {
             const property = this._property(this._options.symbol.value);
@@ -1061,25 +920,8 @@ export class PropertiesMap {
         }
     }
 
-    /** Get the length of the colorbar to accomodate for the legend */
-    private _colorbarLen(): number {
-        /// Heigh of a legend item in plot unit
-        const LEGEND_ITEM_HEIGH = 0.045;
-        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount();
-    }
-
-    /** Does the current plot use color values? */
-    private _hasColors(): boolean {
-        return this._options.color.property.value !== '';
-    }
-
-    /** Is the the current plot a 3D plot? */
-    private _is3D(): boolean {
-        return this._options !== undefined && this._options.z.property.value !== '';
-    }
-
     /** Switch current plot from 2D to 3D */
-    private _switch3D() {
+    private _switch3D(): void {
         assert(this._is3D());
         this._options.z.enable();
 
@@ -1095,9 +937,9 @@ export class PropertiesMap {
         } as unknown) as Data);
 
         for (const data of this._selected.values()) {
-            data.marker.style.display = 'none';
-            this._updateSelectedMarker(data);
+            data.toggleVisible(false);
         }
+        this._updateMarkers();
 
         // Change the data that vary between 2D and 3D mode
         this._restyle(
@@ -1125,7 +967,7 @@ export class PropertiesMap {
     }
 
     /** Switch current plot from 3D back to 2D */
-    private _switch2D() {
+    private _switch2D(): void {
         assert(!this._is3D());
         this._options.z.disable();
 
@@ -1142,7 +984,7 @@ export class PropertiesMap {
 
         // show selected environments markers
         for (const data of this._selected.values()) {
-            data.marker.style.display = 'block';
+            data.toggleVisible(true);
         }
 
         this._restyle(
@@ -1170,103 +1012,111 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private _afterplot() {
+    private _afterplot(): void {
         // HACK: this is not public, so it might break
-        const layout = this._plot._fullLayout;
-        if (this._is3D()) {
-            this._options.x.min.value = layout.scene.xaxis.range[0] as number;
-            this._options.x.max.value = layout.scene.xaxis.range[1] as number;
+        const bounds = this._getRange();
 
-            this._options.y.min.value = layout.scene.yaxis.range[0] as number;
-            this._options.y.max.value = layout.scene.yaxis.range[1] as number;
+        const xbound = bounds.get('x');
+        const ybound = bounds.get('y');
+        const zbound = bounds.get('z');
 
-            this._options.z.min.value = layout.scene.zaxis.range[0] as number;
-            this._options.z.max.value = layout.scene.zaxis.range[1] as number;
-        } else {
-            this._options.x.min.value = layout.xaxis.range[0] as number;
-            this._options.x.max.value = layout.xaxis.range[1] as number;
+        assert(xbound !== undefined && ybound !== undefined);
+        this._options.x.min.value = xbound[0];
+        this._options.x.max.value = xbound[1];
+        this._options.y.min.value = ybound[0];
+        this._options.y.max.value = ybound[1];
+        if (zbound !== undefined) {
+            this._options.z.min.value = zbound[0];
+            this._options.z.max.value = zbound[1];
+        }
 
-            this._options.y.min.value = layout.yaxis.range[0] as number;
-            this._options.y.max.value = layout.yaxis.range[1] as number;
-
-            this._updateAllMarkers();
+        if (!this._is3D()) {
+            this._updateMarkers();
         }
     }
 
     /**
-     * Update the position of the given marker.
-     *
-     * In 3D mode, the markers uses the second Plotly trace.
-     * In 2D mode, these markers are HTML div styled as colored circles that
-     * we manually move around, saving a call to `restyle`.
-     *
-     * @param data data of the marker to update
+     * Update the position, color & size of markers within the data array
      */
-    private _updateSelectedMarker(data: MarkerData): void {
-        const selected = data.current;
-        const marker = data.marker;
-
+    private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
         if (this._is3D()) {
-            // we have to update all symbols at the same time
-            this._updateAll3DMarkers();
+            data.forEach((d) => d.toggleVisible(false));
+            this._restyle(
+                {
+                    'marker.color': this._colors(1),
+                    'marker.size': this._sizes(1),
+                    'marker.symbol': this._symbols(1),
+                    x: this._coordinates(this._options.x, 1),
+                    y: this._coordinates(this._options.y, 1),
+                    z: this._coordinates(this._options.z, 1),
+                } as Data,
+                1
+            );
         } else {
-            const xaxis = this._plot._fullLayout.xaxis;
-            const yaxis = this._plot._fullLayout.yaxis;
-
-            const computeX = (value: number) => xaxis.l2p(value) + xaxis._offset;
-            const computeY = (value: number) => yaxis.l2p(value) + yaxis._offset;
-
-            const rawX = this._coordinates(this._options.x, 0) as number[][];
-            const rawY = this._coordinates(this._options.y, 0) as number[][];
-
-            const x = computeX(rawX[0][selected]);
-            const y = computeY(rawY[0][selected]);
-
-            // hide the point if it is outside the plot, allow for up to 10px
-            // overflow (for points just on the border)
-            const minX = computeX(xaxis.range[0]) - 10;
-            const maxX = computeX(xaxis.range[1]) + 10;
-            const minY = computeY(yaxis.range[1]) - 10;
-            const maxY = computeY(yaxis.range[0]) + 10;
-            if (!isFinite(x) || !isFinite(y) || x < minX || x > maxX || y < minY || y > maxY) {
-                marker.style.display = 'none';
-            } else {
-                marker.style.display = 'block';
-            }
-
-            marker.style.top = `${y}px`;
+            const allX = this._coordinates(this._options.x, 0) as number[][];
+            const allY = this._coordinates(this._options.y, 0) as number[][];
             const plotWidth = this._plot.getBoundingClientRect().width;
-            marker.style.right = `${plotWidth - x}px`;
-        }
-    }
 
-    /**
-     * Update the position, color & size of all markers in the map
-     */
-    private _updateAllMarkers(): void {
-        if (this._is3D()) {
-            this._updateAll3DMarkers();
-        } else {
-            for (const data of this._selected.values()) {
-                this._updateSelectedMarker(data);
+            for (const datum of data) {
+                const rawX = allX[0][datum.current];
+                const rawY = allY[0][datum.current];
+                if (this._insidePlot(rawX, rawY)) {
+                    const x = plotWidth - this._computeRSCoord(rawX, 'x');
+                    const y = this._computeRSCoord(rawY, 'y');
+                    datum.update(x, y);
+                } else {
+                    datum.toggleVisible();
+                }
             }
         }
     }
 
-    /**
-     * Update the position, size & color for all markers in 3D mode
-     */
-    private _updateAll3DMarkers(): void {
-        this._restyle(
-            {
-                'marker.color': this._colors(1),
-                'marker.size': this._sizes(1),
-                'marker.symbol': this._symbols(1),
-                x: this._coordinates(this._options.x, 1),
-                y: this._coordinates(this._options.y, 1),
-                z: this._coordinates(this._options.z, 1),
-            } as Data,
-            1
-        );
+    // Get the current boundaries. Returns map of 'x' | 'y' | 'z' --> limits
+    private _getRange(): Map<string, number[]> {
+        const bounds = new Map<string, number[]>();
+        let layout;
+        if (this._is3D()) {
+            layout = this._plot._fullLayout.scene;
+            bounds.set('x', layout.xaxis.range as number[]);
+            bounds.set('y', layout.yaxis.range as number[]);
+            bounds.set('z', layout.zaxis.range as number[]);
+        } else {
+            layout = this._plot._fullLayout;
+            bounds.set('x', layout.xaxis.range as number[]);
+            bounds.set('y', layout.yaxis.range as number[]);
+        }
+        return bounds;
+    }
+
+    // Computes the real space coordinate of a value on the plot
+    private _computeRSCoord(value: number, axisName: string): number {
+        assert(axisName === 'x' || axisName === 'y');
+        assert(!this._is3D());
+        let axis;
+        switch (axisName) {
+            case 'x':
+                axis = this._plot._fullLayout.xaxis;
+                break;
+            case 'y':
+                axis = this._plot._fullLayout.yaxis;
+                break;
+        }
+        return axis.l2p(value) + axis._offset;
+    }
+
+    // Checks if a point is in the visible plot for a *single* axis
+    private _checkBounds(value: number, axis: string, buffer: number = 10): boolean {
+        const bounds = this._getRange().get(axis);
+        assert(bounds !== undefined);
+        return value > bounds[0] - buffer && value < bounds[1] + buffer;
+    }
+
+    // Checks if a point is in the visible plot
+    private _insidePlot(x: number, y: number, z?: number, buffer: number = 10): boolean {
+        const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
+        if (z !== undefined) {
+            return this._checkBounds(z, 'z', buffer) && check;
+        }
+        return check;
     }
 }
