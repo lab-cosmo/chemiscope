@@ -72,6 +72,8 @@ export class MapOptions extends OptionsGroup {
         reverse: HTMLOption<'boolean'>;
     };
 
+    /// The HTML buttom to open the settings modal
+    private _openSettings: HTMLElement;
     /// The HTML element containing the settings modal
     private _modal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
@@ -142,7 +144,11 @@ export class MapOptions extends OptionsGroup {
         }
 
         this._positionSettingsModal = positionSettings;
-        this._modal = this._insertSettingsHTML(root);
+
+        const { openSettings, modal } = this._createSettingsHTML();
+        this._modal = modal;
+        this._openSettings = openSettings;
+        root.appendChild(this._openSettings);
         document.body.appendChild(this._modal);
 
         this._bind(properties);
@@ -177,6 +183,7 @@ export class MapOptions extends OptionsGroup {
             (close as HTMLElement).click();
         }
         this._modal.remove();
+        this._openSettings.remove();
     }
 
     /** Is the current plot in 3D mode? */
@@ -287,7 +294,7 @@ export class MapOptions extends OptionsGroup {
      * @param  root root element in which the 'open settings' button will be placed
      * @return      the modal HTML element, not yet inserted in the document
      */
-    private _insertSettingsHTML(root: HTMLElement): HTMLElement {
+    private _createSettingsHTML(): { openSettings: HTMLElement; modal: HTMLElement } {
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-viewer-button"
@@ -297,7 +304,6 @@ export class MapOptions extends OptionsGroup {
                 <div>${BARS_SVG}</div>
             </button>`;
         const openSettings = template.content.firstChild as HTMLElement;
-        root.append(openSettings);
 
         // TODO: set unique HTML id in the settings to allow multiple map in
         // the same page
@@ -334,7 +340,7 @@ export class MapOptions extends OptionsGroup {
             }
         });
 
-        return modal;
+        return { openSettings, modal };
     }
 
     /** Bind all options to the corresponding HTML elements */

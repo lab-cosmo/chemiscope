@@ -21,6 +21,7 @@ jobs:
       - uses: bahmutov/npm-install@v1
       - run: npm run build
       - run: npm test
+
   # Python unit tests
   python-test:
     runs-on: ubuntu-latest
