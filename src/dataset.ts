@@ -54,7 +54,7 @@ export interface Structure {
     /** Number of atoms in the structure */
     size: number;
     /** Names of all atoms in the structure */
-    names: number[];
+    names: string[];
     /**
      * x position (cartesian coordinate) of all atoms in the structure
      *
