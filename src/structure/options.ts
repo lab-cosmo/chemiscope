@@ -150,7 +150,7 @@ export class StructureOptions extends OptionsGroup {
         template.innerHTML = HTML_OPTIONS
             .replace(/id="(.*?)"/g, (_: string, id: string) => `id="${guid}-${id}"`)
             .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${guid}-${id}"`)
-            .replace(/data-target=#(.*?)/g, (_: string, id: string) => `data-target=#${guid}-${id}`);
+            .replace(/data-target="#(.*?)"/g, (_: string, id: string) => `data-target="#${guid}-${id}"`);
 
         const modal = template.content.firstChild as HTMLElement;
         const modalDialog = modal.childNodes[1] as HTMLElement;
