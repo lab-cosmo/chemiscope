@@ -3,13 +3,23 @@
  * @module map
  */
 
+import assert from 'assert';
+
 import { ColorScale } from './plotly/plotly-scatter';
 
 type RGBColorMap = [number, [number, number, number]][];
 
+type RGBAColorMap = [number, [number, number, number, number]][];
+
 function rgb_to_plotly(colormap: RGBColorMap): ColorScale {
     return colormap.map((c) => {
         return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`] as [number, string];
+    });
+}
+
+function rgba_to_plotly(colormap: RGBAColorMap): ColorScale {
+    return colormap.map((c) => {
+        return [c[0], `rgba(${c[1][0]}, ${c[1][1]}, ${c[1][2]}, ${c[1][3]})`] as [number, string];
     });
 }
 
@@ -684,20 +694,69 @@ const BRG: RGBColorMap = [
 ];
 
 interface ColorMaps {
-    [key: string]: ColorScale;
+    [key: string]: RGBColorMap;
 }
 
 /* eslint-disable sort-keys */
 /** @hidden */
 export const COLOR_MAPS: ColorMaps = {
-    inferno: rgb_to_plotly(INFERNO),
-    magma: rgb_to_plotly(MAGMA),
-    plasma: rgb_to_plotly(PLASMA),
-    viridis: rgb_to_plotly(VIRIDIS),
-    cividis: rgb_to_plotly(CIVIDIS),
-    seismic: rgb_to_plotly(SEISMIC),
-    brg: rgb_to_plotly(BRG),
-    'twilight (periodic)': rgb_to_plotly(TWILIGHT),
-    'twilight dark (periodic)': rgb_to_plotly(TWILIGHT_SHIFTED),
-    'hsv (periodic)': rgb_to_plotly(HSV),
+    inferno: INFERNO,
+    magma: MAGMA,
+    plasma: PLASMA,
+    viridis: VIRIDIS,
+    cividis: CIVIDIS,
+    seismic: SEISMIC,
+    brg: BRG,
+    'twilight (periodic)': TWILIGHT,
+    'twilight dark (periodic)': TWILIGHT_SHIFTED,
+    'hsv (periodic)': HSV,
 };
+
+export function getColorMap(colormap: string): ColorScale {
+    const cmap = COLOR_MAPS[colormap];
+    assert(cmap !== undefined);
+
+    return rgb_to_plotly(cmap);
+}
+
+export function getFilteredColorMap(
+    colormap: string,
+    opacity: number[] = [1.0],
+    withColor: boolean[] = [true]
+): ColorScale {
+    const cmap1D = COLOR_MAPS[colormap];
+    assert(cmap1D !== undefined);
+    assert(opacity.length === withColor.length);
+
+    let cmap: RGBAColorMap = [];
+    let offset = 0.0;
+
+    for (let i = 0; i < opacity.length; i++) {
+        let new_addition: RGBAColorMap;
+        if (withColor[i]) {
+            new_addition = cmap1D.map((c) => [
+                c[0] / opacity.length + offset,
+                [c[1][0], c[1][1], c[1][2], opacity[i]],
+            ]);
+        } else {
+            new_addition = cmap1D.map((c) => [
+                c[0] / opacity.length + offset,
+                [opacity[i], opacity[i], opacity[i], opacity[i]],
+            ]);
+        }
+        offset += 1.0 / opacity.length;
+        cmap = cmap.concat(new_addition);
+    }
+
+    return rgba_to_plotly(cmap);
+}
+
+// This function solely serves to demonstrate multiple opacities in the same trace
+export function get2DColorMap(colormap: string): ColorScale {
+    const cmap1D = COLOR_MAPS[colormap];
+    assert(cmap1D !== undefined);
+
+    const cmap2D: RGBAColorMap = cmap1D.map((c) => [c[0], [c[1][0], c[1][1], c[1][2], c[0]]]);
+
+    return rgba_to_plotly(cmap2D);
+}

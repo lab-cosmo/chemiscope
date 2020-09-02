@@ -32,6 +32,23 @@ const DEFAULT_LAYOUT = {
             },
             y: 0,
             yanchor: 'bottom',
+            x: 1,
+            xanchor: 'right',
+        },
+        colorscale: [] as Plotly.ColorScale,
+        showscale: false,
+    },
+    coloraxis2: {
+        cmax: 0,
+        cmin: 0,
+        colorbar: {
+            len: 1,
+            thickness: 20,
+            title: {
+                text: '' as undefined | string,
+            },
+            y: 0,
+            yanchor: 'bottom',
         },
         colorscale: [] as Plotly.ColorScale,
         showscale: true,
@@ -467,10 +484,10 @@ export class PropertiesMap {
                 this._options.color.max.value = max;
 
                 this._relayout(({
-                    'coloraxis.colorbar.title.text': this._title(
+                    'coloraxis2.colorbar.title.text': this._title(
                         this._options.color.property.value
                     ),
-                    'coloraxis.showscale': true,
+                    'coloraxis2.showscale': true,
                 } as unknown) as Layout);
             } else {
                 this._options.color.disable();
@@ -480,8 +497,8 @@ export class PropertiesMap {
                 this._options.color.max.value = 0;
 
                 this._relayout(({
-                    'coloraxis.colorbar.title.text': undefined,
-                    'coloraxis.showscale': false,
+                    'coloraxis2.colorbar.title.text': undefined,
+                    'coloraxis2.showscale': false,
                 } as unknown) as Layout);
             }
 
@@ -499,13 +516,23 @@ export class PropertiesMap {
             const max = this._options.color.max.value;
             this._relayout(({
                 'coloraxis.cmax': max,
-                'coloraxis.cmin': min,
+                'coloraxis.cmin': min - (max - min),
                 // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
                 // not update the color of the points (although it does change
                 // the colorbar). Asking for an update of 'coloraxis.colorscale'
                 // seems to do the trick. This is possiblely a Ploty bug, we
                 // would need to investiguate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown) as Layout);
+            this._relayout(({
+                'coloraxis2.cmax': max,
+                'coloraxis2.cmin': min,
+                // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
+                // not update the color of the points (although it does change
+                // the colorbar). Asking for an update of 'coloraxis.colorscale'
+                // seems to do the trick. This is possiblely a Ploty bug, we
+                // would need to investiguate a bit more.
+                'coloraxis2.colorscale': this._options.colorBarScale(),
             } as unknown) as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
@@ -518,14 +545,117 @@ export class PropertiesMap {
             this._options.color.max.value = max;
             this._relayout(({
                 'coloraxis.cmax': max,
-                'coloraxis.cmin': min,
+                'coloraxis.cmin': min - (max - min),
                 // same as above regarding update of the points color
                 'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown) as Layout);
+            this._relayout(({
+                'coloraxis2.cmax': max,
+                'coloraxis2.cmin': min,
+                // same as above regarding update of the points color
+                'coloraxis2.colorscale': this._options.colorBarScale(),
             } as unknown) as Layout);
         };
 
         // ======= color palette
         this._options.palette.onchange = () => {
+            this._relayout(({
+                'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown) as Layout);
+            this._relayout(({
+                'coloraxis2.colorscale': this._options.colorBarScale(),
+            } as unknown) as Layout);
+        };
+
+        // ======= opacity
+        this._options.opacity.mode.onchange = () => {
+            if (this._options.opacity.mode.value === 'filter') {
+                this._options.opacity.enableColors.enable();
+                this._options.opacity.filter.property.enable();
+                this._options.opacity.filter.cutoff.enable();
+                this._options.opacity.filter.operator.enable();
+            } else {
+                this._options.opacity.enableColors.disable();
+                this._options.opacity.filter.property.disable();
+                this._options.opacity.filter.cutoff.disable();
+                this._options.opacity.filter.operator.disable();
+            }
+            if (this._options.opacity.mode.value === 'constant') {
+                this._options.opacity.minimum.disable();
+            } else {
+                this._options.opacity.minimum.enable();
+                this._options.opacity.minimum.value = Math.max(
+                    0.0,
+                    Math.min(
+                        this._options.opacity.minimum.value,
+                        this._options.opacity.maximum.value - 0.5
+                    )
+                );
+            }
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                } as Data,
+                0
+            );
+        };
+
+        this._options.opacity.filter.property.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                    'marker.line.color': this._lineColors(0),
+                } as Data,
+                0
+            );
+        };
+
+        this._options.opacity.filter.operator.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                    'marker.line.color': this._lineColors(0),
+                } as Data,
+                0
+            );
+        };
+
+        this._options.opacity.filter.cutoff.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                    'marker.line.color': this._lineColors(0),
+                } as Data,
+                0
+            );
+        };
+
+        this._options.opacity.minimum.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                    'marker.line.color': this._lineColors(0),
+                } as Data,
+                0
+            );
+            this._relayout(({
+                'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown) as Layout);
+        };
+        this._options.opacity.maximum.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(0),
+                    'marker.line.color': this._lineColors(0),
+                } as Data,
+                0
+            );
+            this._relayout(({
+                'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown) as Layout);
+        };
+
+        this._options.opacity.enableColors.onchange = () => {
             this._relayout(({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown) as Layout);
@@ -541,7 +671,7 @@ export class PropertiesMap {
             } as unknown) as Data);
 
             this._relayout(({
-                'coloraxis.colorbar.len': this._colorbarLen(),
+                'coloraxis2.colorbar.len': this._colorbarLen(),
             } as unknown) as Layout);
         };
 
@@ -630,7 +760,34 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        const traces = [main as Data, selected as Data];
+        // The main trace, containing default data
+        const main2 = {
+            name: '',
+            type: type,
+
+            x: [0],
+            y: [0],
+            z: [0],
+
+            hovertemplate: this._options.hovertemplate(),
+            marker: {
+                color: [0],
+                coloraxis: 'coloraxis2',
+                line: {
+                    color: [0],
+                    width: 1,
+                },
+                // prevent plolty from messing with opacity when doing bubble
+                // style charts (different sizes for each point)
+                opacity: 0,
+                size: [0],
+                sizemode: 'area',
+                symbol: [0],
+            },
+            mode: 'markers',
+            showlegend: false,
+        };
+        const traces = [main as Data, selected as Data, main2 as Data];
 
         const legendNames = this._legendNames().slice(2);
         const showlegend = this._showlegend().slice(2);
@@ -681,10 +838,13 @@ export class PropertiesMap {
         layout.scene.yaxis.title = this._title(this._options.y.property.value);
         layout.scene.zaxis.title = this._title(this._options.z.property.value);
         layout.coloraxis.colorscale = this._options.colorScale();
-        layout.coloraxis.cmin = this._options.color.min.value;
+        layout.coloraxis.cmin = 2 * this._options.color.min.value - this._options.color.max.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._title(this._options.color.property.value);
-        layout.coloraxis.colorbar.len = this._colorbarLen();
+        layout.coloraxis2.colorscale = this._options.colorBarScale();
+        layout.coloraxis2.cmin = this._options.color.min.value;
+        layout.coloraxis2.cmax = this._options.color.max.value;
+        layout.coloraxis2.colorbar.title.text = this._title(this._options.color.property.value);
+        layout.coloraxis2.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
@@ -786,7 +946,12 @@ export class PropertiesMap {
     private _colors(trace?: number): Array<string | string[] | number | number[]> {
         let values;
         if (this._options.hasColors()) {
-            values = this._property(this._options.color.property.value).values;
+            values = this._property(this._options.color.property.value).values.slice();
+            const lowerOpacity = this._filterForOpacity();
+            for (const i of lowerOpacity) {
+                values[i] -= (this._options.color.max.value -
+                    this._options.color.min.value) as number;
+            }
         } else {
             values = 0.5;
         }
@@ -799,15 +964,46 @@ export class PropertiesMap {
         return this._selectTrace<string | string[] | number | number[]>(values, selected, trace);
     }
 
+    private _filterForOpacity(): number[] {
+        let lowerOpacity: number[] = [];
+        if (this._options.opacity.mode.value === 'filter') {
+            const filter_property = this._property(this._options.opacity.filter.property.value)
+                .values;
+            const filter_cutoff = this._options.opacity.filter.cutoff.value;
+            const op = this._options.opacity.filter.operator.value;
+            for (let i = 0; i < filter_property.length; i++) {
+                if (op === '=' && filter_property[i] !== filter_cutoff) {
+                    lowerOpacity.push(i);
+                } else if (op === '<' && filter_property[i] >= filter_cutoff) {
+                    lowerOpacity.push(i);
+                } else if (op === '>' && filter_property[i] <= filter_cutoff) {
+                    lowerOpacity.push(i);
+                }
+            }
+        }
+        return lowerOpacity;
+    }
     /**
      * Get the **line** color values to use with the given plotly `trace`, or
      * all of them if `trace === undefined`
      */
-    private _lineColors(trace?: number): string[] {
+    private _lineColors(trace?: number): Array<string | string[]> {
         if (this._is3D()) {
             return this._selectTrace<string>('black', 'black', trace);
         } else {
-            return this._selectTrace<string>('rgba(1, 1, 1, 0.3)', 'black', trace);
+            const defaultColor = `rgba(1, 1, 1, ${0.3 * this._options.opacity.maximum.value})`;
+            const mainColors = Array(this._colors(0).length).fill(defaultColor) as string[];
+
+            if (this._options.opacity.mode.value === 'constant') {
+                return this._selectTrace<string | string[]>(mainColors, mainColors, trace);
+            } else {
+                const lighterColor = `rgba(1, 1, 1, ${0.3 * this._options.opacity.minimum.value})`;
+                const lowerOpacity = this._filterForOpacity();
+                for (const i of lowerOpacity) {
+                    mainColors[i] = lighterColor;
+                }
+                return this._selectTrace<string | string[]>(mainColors, mainColors, trace);
+            }
         }
     }
 
@@ -963,7 +1159,7 @@ export class PropertiesMap {
 
         this._relayout(({
             // change colorbar length to accomodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
+            'coloraxis2.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
@@ -1006,7 +1202,7 @@ export class PropertiesMap {
 
         this._relayout(({
             // change colorbar length to accomodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
+            'coloraxis2.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
