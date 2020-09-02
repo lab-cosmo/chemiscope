@@ -191,10 +191,64 @@
 
                     <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="chsp-size">size:</label>
+                            <label class="input-group-text" for="chsp-opacity-mode">opacity:</label>
                         </div>
-                        <select id="chsp-size" class="custom-select">
-                            <option value="">fixed</option>
+                        <select id="chsp-opacity-mode" class="custom-select" enabled>
+                            <option value="constant">constant</option>
+                            <option value="filter">filter</option>
+                        </select>
+                    </div>
+
+                    <button
+                        class="btn btn-sm btn-secondary chsp-extra-options-btn"
+                        type="button"
+                        data-toggle="collapse"
+                        data-target="#chsp-extra-opacity"
+                        id="chsp-opacity-more"
+                    >
+                        more options
+                    </button>
+
+                    <div class="collapse chsp-map-extra-options" id="chsp-extra-opacity">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="chsp-opacity-minimum">min:</label>
+                            </div>
+                            <input id="chsp-opacity-minimum" min="0" max="1" step="0.05" class="form-control custom-range" type="number" step="any" />
+                        </div>
+
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="chsp-opacity-maximum">max:</label>
+                            </div>
+                            <input id="chsp-opacity-maximum" min="0" max="1" step="0.05" class="form-control custom-range" type="number" step="any" />
+                        </div>
+                        <div class="custom-switch">
+                            <input class="custom-control-input" id="chsp-opacity-greyed" type="checkbox" disabled checked />
+                            <label class="custom-control-label" for="chsp-opacity-greyed" title="grey-translucent">Color Background Points?</label>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="chsp-opacity-property">property:</label>
+                            </div>
+                            <select id="chsp-opacity-property" class="custom-select" disabled></select>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <select id="chsp-opacity-operator" class="custom-select" disabled>
+                                <option value="<">&lt</option>
+                                <option value=">">&gt</option>
+                                <option value="=">=</option>
+                            </select>
+                            <input id="chsp-opacity-cutoff" class="form-control" type="number" step="any" />
+                        </div>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="chsp-size-mode">size scale:</label>
+                        </div>
+                        <select id="chsp-size" class="custom-select" enabled>
+                            <option value="fixed">fixed</option>
                         </select>
                     </div>
 

@@ -3,6 +3,7 @@
  * @module map
  */
 
+import assert from 'assert';
 import { ColorScale } from './plotly/plotly-scatter';
 
 type RGBColorMap = [number, [number, number, number]][];
@@ -684,20 +685,27 @@ const BRG: RGBColorMap = [
 ];
 
 interface ColorMaps {
-    [key: string]: ColorScale;
+    [key: string]: RGBColorMap;
 }
 
 /* eslint-disable sort-keys */
 /** @hidden */
 export const COLOR_MAPS: ColorMaps = {
-    inferno: rgb_to_plotly(INFERNO),
-    magma: rgb_to_plotly(MAGMA),
-    plasma: rgb_to_plotly(PLASMA),
-    viridis: rgb_to_plotly(VIRIDIS),
-    cividis: rgb_to_plotly(CIVIDIS),
-    seismic: rgb_to_plotly(SEISMIC),
-    brg: rgb_to_plotly(BRG),
-    'twilight (periodic)': rgb_to_plotly(TWILIGHT),
-    'twilight dark (periodic)': rgb_to_plotly(TWILIGHT_SHIFTED),
-    'hsv (periodic)': rgb_to_plotly(HSV),
+    inferno: INFERNO,
+    magma: MAGMA,
+    plasma: PLASMA,
+    viridis: VIRIDIS,
+    cividis: CIVIDIS,
+    seismic: SEISMIC,
+    brg: BRG,
+    'twilight (periodic)': TWILIGHT,
+    'twilight dark (periodic)': TWILIGHT_SHIFTED,
+    'hsv (periodic)': HSV,
 };
+
+export function getColorMap(colormap: string): ColorScale {
+    const cmap = COLOR_MAPS[colormap];
+    assert(cmap !== undefined);
+
+    return rgb_to_plotly(cmap);
+}

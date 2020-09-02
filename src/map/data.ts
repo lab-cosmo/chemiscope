@@ -5,6 +5,7 @@
 
 import { Property } from '../dataset';
 import { sendWarning } from '../utils';
+import { DisplayMode } from '../indexer';
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
@@ -155,5 +156,9 @@ export class MapData {
         // sanity checks
         checkSize('structure', this.structure);
         checkSize('atom', this.atom);
+    }
+
+    public length(mode: DisplayMode): number {
+        return this[mode][Object.keys(this[mode])[0]].values.length;
     }
 }

@@ -39,6 +39,21 @@ const DEFAULT_LAYOUT = {
         colorscale: [] as Plotly.ColorScale,
         showscale: true,
     },
+    coloraxis2: {
+        cmax: 0,
+        cmin: 0,
+        colorbar: {
+            len: 1,
+            thickness: 20,
+            title: {
+                text: '' as undefined | string,
+            },
+            y: 0,
+            yanchor: 'bottom',
+        },
+        colorscale: [] as Plotly.ColorScale,
+        showscale: false,
+    },
     hovermode: 'closest',
     legend: {
         itemclick: false,
@@ -156,6 +171,10 @@ const DEFAULT_CONFIG = {
     ],
 };
 
+const MAIN_TRACE: number = 0;
+const SELECTED_TRACE: number = 1;
+const BACKGROUND_TRACE: number = 2;
+const ALL_TRACES: number[] = [MAIN_TRACE, SELECTED_TRACE, BACKGROUND_TRACE];
 /**
  * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
  * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
@@ -193,6 +212,9 @@ export class PropertiesMap {
     private _plot!: PlotlyScatterElement;
     /// All known properties
     private _data: MapData;
+
+    /// Separation of Data into Foreground / Background
+    private _is_foreground: Array<boolean>;
 
     /// GUID of the currently selected point
     private _active?: GUID;
@@ -247,6 +269,7 @@ export class PropertiesMap {
         );
         this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
 
+        this._is_foreground = Array<boolean>(this._data.length(this._indexer.mode)).fill(true);
         this._connectSettings();
 
         // By default, position the modal for settings on top of the plot,
@@ -306,7 +329,7 @@ export class PropertiesMap {
         data.activate();
 
         if (this._is3D()) {
-            this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
+            this._restyle({ 'marker.size': this._sizes(SELECTED_TRACE) } as Data, SELECTED_TRACE);
         }
     }
 
@@ -408,7 +431,7 @@ export class PropertiesMap {
         this._options.x.property.onchange = () => {
             negativeLogWarning(this._options.x);
             const values = this._coordinates(this._options.x) as number[][];
-            this._restyle({ x: values }, [0, 1]);
+            this._restyle({ x: values }, ALL_TRACES);
             this._relayout({
                 'scene.xaxis.title': this._title(this._options.x.property.value),
                 'xaxis.title': this._title(this._options.x.property.value),
@@ -469,7 +492,7 @@ export class PropertiesMap {
         this._options.y.property.onchange = () => {
             negativeLogWarning(this._options.y);
             const values = this._coordinates(this._options.y) as number[][];
-            this._restyle({ y: values }, [0, 1]);
+            this._restyle({ y: values }, ALL_TRACES);
             this._relayout({
                 'scene.yaxis.title': this._title(this._options.y.property.value),
                 'yaxis.title': this._title(this._options.y.property.value),
@@ -526,7 +549,7 @@ export class PropertiesMap {
             }
 
             const values = this._coordinates(this._options.z);
-            this._restyle({ z: values } as Data, [0, 1]);
+            this._restyle({ z: values } as Data, ALL_TRACES);
             this._relayout({
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
@@ -561,11 +584,19 @@ export class PropertiesMap {
             this._options.color.enable();
             this._colorReset.disabled = false;
 
-            const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
+            const mainValues = this._colors(MAIN_TRACE)[0] as number[];
+            const mainExt = arrayMaxMin(mainValues);
 
-            this._options.color.min.value = min;
-            this._options.color.max.value = max;
+            const bgValues = this._colors(BACKGROUND_TRACE)[0] as number[];
+
+            if (bgValues.length > 0) {
+                const bgExt = arrayMaxMin(bgValues);
+                this._options.color.min.value = Math.min(mainExt.min, bgExt.min);
+                this._options.color.max.value = Math.max(mainExt.max, bgExt.max);
+            } else {
+                this._options.color.min.value = mainExt.min;
+                this._options.color.max.value = mainExt.max;
+            }
         }
 
         this._options.color.property.onchange = () => {
@@ -573,12 +604,19 @@ export class PropertiesMap {
                 this._options.color.enable();
                 this._colorReset.disabled = false;
 
-                const values = this._colors(0)[0] as number[];
-                const { min, max } = arrayMaxMin(values);
+                const mainValues = this._colors(MAIN_TRACE)[0] as number[];
+                const mainExt = arrayMaxMin(mainValues);
 
-                this._options.color.min.value = min;
-                this._options.color.max.value = max;
+                const bgValues = this._colors(BACKGROUND_TRACE)[0] as number[];
 
+                if (bgValues.length > 0) {
+                    const bgExt = arrayMaxMin(bgValues);
+                    this._options.color.min.value = Math.min(mainExt.min, bgExt.min);
+                    this._options.color.max.value = Math.max(mainExt.max, bgExt.max);
+                } else {
+                    this._options.color.min.value = mainExt.min;
+                    this._options.color.max.value = mainExt.max;
+                }
                 this._relayout({
                     'coloraxis.colorbar.title.text': this._title(
                         this._options.color.property.value
@@ -601,9 +639,16 @@ export class PropertiesMap {
             this._restyle(
                 {
                     hovertemplate: this._options.hovertemplate(),
-                    'marker.color': this._colors(0),
+                    'marker.color': this._colors(MAIN_TRACE),
                 } as Data,
-                0
+                MAIN_TRACE
+            );
+            this._restyle(
+                {
+                    hovertemplate: this._options.hovertemplate(),
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
             );
         };
 
@@ -620,13 +665,30 @@ export class PropertiesMap {
                 // would need to investigate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+            this._relayout({
+                'coloraxis2.cmax': max,
+                'coloraxis2.cmin': min,
+                // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
+                // not update the color of the points (although it does change
+                // the colorbar). Asking for an update of 'coloraxis.colorscale'
+                // seems to do the trick. This is possiblely a Ploty bug, we
+                // would need to investiguate a bit more.
+                'coloraxis2.colorscale': this._options.colorScale(),
+            } as unknown as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
         this._options.color.max.onchange = colorRangeChange;
 
         this._colorReset.onclick = () => {
-            const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
+            const mainValues = this._colors(MAIN_TRACE)[0] as number[];
+            const mainExt = arrayMaxMin(mainValues);
+
+            const bgValues = this._colors(BACKGROUND_TRACE)[0] as number[];
+            const bgExt = arrayMaxMin(bgValues);
+
+            const min = Math.min(mainExt.min, bgExt.min);
+            const max = Math.max(mainExt.max, bgExt.max);
+
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._relayout({
@@ -635,6 +697,12 @@ export class PropertiesMap {
                 // same as above regarding update of the points color
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+            this._relayout({
+                'coloraxis2.cmax': max,
+                'coloraxis2.cmin': min,
+                // same as above regarding update of the points color
+                'coloraxis2.colorscale': this._options.colorScale(),
+            } as unknown as Layout);
         };
 
         // ======= color palette
@@ -642,11 +710,184 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+            this._relayout({
+                'coloraxis2.colorscale': this._options.colorScale(),
+            } as unknown as Layout);
+        };
+
+        // ======= opacity
+        this._options.opacity.mode.onchange = () => {
+            if (this._options.opacity.mode.value === 'filter') {
+                this._options.opacity.enableColors.enable();
+                this._options.opacity.filter.property.enable();
+                this._options.opacity.filter.cutoff.enable();
+                this._options.opacity.filter.operator.enable();
+            } else {
+                this._options.opacity.enableColors.disable();
+                this._options.opacity.filter.property.disable();
+                this._options.opacity.filter.cutoff.disable();
+                this._options.opacity.filter.operator.disable();
+            }
+
+            this._updateTrace();
+
+            if (this._options.opacity.mode.value === 'constant') {
+                this._options.opacity.minimum.disable();
+            } else {
+                this._options.opacity.minimum.enable();
+                this._options.opacity.minimum.value = Math.max(
+                    0.0,
+                    Math.min(
+                        this._options.opacity.minimum.value,
+                        this._options.opacity.maximum.value - 0.5
+                    )
+                );
+                this._restyle(
+                    {
+                        'marker.opacity': this._options.opacity.minimum.value,
+                    } as Data,
+                    BACKGROUND_TRACE
+                );
+            }
+            this._restyle(
+                {
+                    'marker.color': this._colors(MAIN_TRACE),
+                    'marker.size': this._sizes(MAIN_TRACE),
+                    'marker.symbol': this._symbols(MAIN_TRACE),
+                    'marker.line.color': this._lineColors(MAIN_TRACE),
+                    x: this._coordinates(this._options.x, MAIN_TRACE),
+                    y: this._coordinates(this._options.y, MAIN_TRACE),
+                    z: this._coordinates(this._options.z, MAIN_TRACE),
+                } as Data,
+                0
+            );
+            this._restyle(
+                {
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                    'marker.size': this._sizes(BACKGROUND_TRACE),
+                    'marker.symbol': this._symbols(BACKGROUND_TRACE),
+                    'marker.line.color': this._lineColors(BACKGROUND_TRACE),
+                    x: this._coordinates(this._options.x, BACKGROUND_TRACE),
+                    y: this._coordinates(this._options.y, BACKGROUND_TRACE),
+                    z: this._coordinates(this._options.z, BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
+            );
+        };
+
+        this._options.opacity.filter.property.onchange = () => {
+            this._updateTrace();
+            this._restyle(
+                {
+                    'marker.color': this._colors(MAIN_TRACE),
+                    'marker.size': this._sizes(MAIN_TRACE),
+                    'marker.symbol': this._symbols(MAIN_TRACE),
+                    'marker.line.color': this._lineColors(MAIN_TRACE),
+                    x: this._coordinates(this._options.x, MAIN_TRACE),
+                    y: this._coordinates(this._options.y, MAIN_TRACE),
+                    z: this._coordinates(this._options.z, MAIN_TRACE),
+                } as Data,
+                MAIN_TRACE
+            );
+            this._restyle(
+                {
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                    'marker.size': this._sizes(BACKGROUND_TRACE),
+                    'marker.symbol': this._symbols(BACKGROUND_TRACE),
+                    'marker.line.color': this._lineColors(BACKGROUND_TRACE),
+                    x: this._coordinates(this._options.x, BACKGROUND_TRACE),
+                    y: this._coordinates(this._options.y, BACKGROUND_TRACE),
+                    z: this._coordinates(this._options.z, BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
+            );
+        };
+
+        this._options.opacity.filter.operator.onchange = () => {
+            this._updateTrace();
+            this._restyle(
+                {
+                    'marker.color': this._colors(MAIN_TRACE),
+                    'marker.size': this._sizes(MAIN_TRACE),
+                    'marker.symbol': this._symbols(MAIN_TRACE),
+                    'marker.line.color': this._lineColors(MAIN_TRACE),
+                    x: this._coordinates(this._options.x, MAIN_TRACE),
+                    y: this._coordinates(this._options.y, MAIN_TRACE),
+                    z: this._coordinates(this._options.z, MAIN_TRACE),
+                } as Data,
+                MAIN_TRACE
+            );
+            this._restyle(
+                {
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                    'marker.size': this._sizes(BACKGROUND_TRACE),
+                    'marker.symbol': this._symbols(BACKGROUND_TRACE),
+                    'marker.line.color': this._lineColors(BACKGROUND_TRACE),
+                    x: this._coordinates(this._options.x, BACKGROUND_TRACE),
+                    y: this._coordinates(this._options.y, BACKGROUND_TRACE),
+                    z: this._coordinates(this._options.z, BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
+            );
+        };
+
+        this._options.opacity.filter.cutoff.onchange = () => {
+            this._updateTrace();
+            this._restyle(
+                {
+                    'marker.color': this._colors(MAIN_TRACE),
+                    'marker.size': this._sizes(MAIN_TRACE),
+                    'marker.symbol': this._symbols(MAIN_TRACE),
+                    'marker.line.color': this._lineColors(MAIN_TRACE),
+                    x: this._coordinates(this._options.x, MAIN_TRACE),
+                    y: this._coordinates(this._options.y, MAIN_TRACE),
+                    z: this._coordinates(this._options.z, MAIN_TRACE),
+                } as Data,
+                MAIN_TRACE
+            );
+            this._restyle(
+                {
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                    'marker.size': this._sizes(BACKGROUND_TRACE),
+                    'marker.symbol': this._symbols(BACKGROUND_TRACE),
+                    'marker.line.color': this._lineColors(BACKGROUND_TRACE),
+                    x: this._coordinates(this._options.x, BACKGROUND_TRACE),
+                    y: this._coordinates(this._options.y, BACKGROUND_TRACE),
+                    z: this._coordinates(this._options.z, BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
+            );
+        };
+
+        this._options.opacity.minimum.onchange = () => {
+            this._restyle(
+                {
+                    'marker.opacity': this._options.opacity.minimum.value,
+                } as Data,
+                BACKGROUND_TRACE
+            );
+        };
+        this._options.opacity.maximum.onchange = () => {
+            this._restyle(
+                {
+                    'marker.opacity': this._options.opacity.maximum.value,
+                } as Data,
+                MAIN_TRACE
+            );
+        };
+
+        this._options.opacity.enableColors.onchange = () => {
+            this._restyle(
+                {
+                    'marker.color': this._colors(BACKGROUND_TRACE),
+                } as Data,
+                BACKGROUND_TRACE
+            );
         };
 
         // ======= markers symbols
         this._options.symbol.onchange = () => {
-            this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
+            this._restyle({ 'marker.symbol': this._symbols() }, ALL_TRACES);
 
             this._restyle({
                 name: this._legendNames(),
@@ -676,19 +917,35 @@ export class PropertiesMap {
                 this._options.size.mode.disable();
                 this._options.size.reverse.disable();
             }
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+            this._restyle({ 'marker.size': this._sizes(MAIN_TRACE) } as Data, MAIN_TRACE);
+            this._restyle(
+                { 'marker.size': this._sizes(BACKGROUND_TRACE) } as Data,
+                BACKGROUND_TRACE
+            );
         };
 
         this._options.size.factor.onchange = () => {
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+            this._restyle({ 'marker.size': this._sizes(MAIN_TRACE) } as Data, MAIN_TRACE);
+            this._restyle(
+                { 'marker.size': this._sizes(BACKGROUND_TRACE) } as Data,
+                BACKGROUND_TRACE
+            );
         };
 
         this._options.size.mode.onchange = () => {
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+            this._restyle({ 'marker.size': this._sizes(MAIN_TRACE) } as Data, MAIN_TRACE);
+            this._restyle(
+                { 'marker.size': this._sizes(BACKGROUND_TRACE) } as Data,
+                BACKGROUND_TRACE
+            );
         };
 
         this._options.size.reverse.onchange = () => {
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+            this._restyle({ 'marker.size': this._sizes(MAIN_TRACE) } as Data, MAIN_TRACE);
+            this._restyle(
+                { 'marker.size': this._sizes(BACKGROUND_TRACE) } as Data,
+                BACKGROUND_TRACE
+            );
         };
     }
 
@@ -702,24 +959,24 @@ export class PropertiesMap {
             name: '',
             type: type,
 
-            x: this._coordinates(this._options.x, 0)[0],
-            y: this._coordinates(this._options.y, 0)[0],
-            z: this._coordinates(this._options.z, 0)[0],
+            x: this._coordinates(this._options.x, MAIN_TRACE)[0],
+            y: this._coordinates(this._options.y, MAIN_TRACE)[0],
+            z: this._coordinates(this._options.z, MAIN_TRACE)[0],
 
             hovertemplate: this._options.hovertemplate(),
             marker: {
-                color: this._colors(0)[0],
+                color: this._colors(MAIN_TRACE)[0],
                 coloraxis: 'coloraxis',
                 line: {
-                    color: this._lineColors(0)[0],
+                    color: this._lineColors(MAIN_TRACE)[0],
                     width: 1,
                 },
                 // prevent plolty from messing with opacity when doing bubble
                 // style charts (different sizes for each point)
                 opacity: 1,
-                size: this._sizes(0)[0],
+                size: this._sizes(MAIN_TRACE)[0],
                 sizemode: 'area',
-                symbol: this._symbols(0)[0],
+                symbol: this._symbols(MAIN_TRACE)[0],
             },
             mode: 'markers',
             showlegend: false,
@@ -752,7 +1009,34 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        const traces = [main as Data, selected as Data];
+        // The backgraound trace, containing transparent data
+        const main2 = {
+            name: '',
+            type: type,
+
+            x: [0],
+            y: [0],
+            z: [0],
+
+            hovertemplate: this._options.hovertemplate(),
+            marker: {
+                color: [0],
+                coloraxis: 'coloraxis2',
+                line: {
+                    color: [0],
+                    width: 1,
+                },
+                // prevent plolty from messing with opacity when doing bubble
+                // style charts (different sizes for each point)
+                opacity: 0,
+                size: [0],
+                sizemode: 'area',
+                symbol: [0],
+            },
+            mode: 'markers',
+            showlegend: false,
+        };
+        const traces = [main as Data, selected as Data, main2 as Data];
 
         const legendNames = this._legendNames().slice(2);
         const showlegend = this._showlegend().slice(2);
@@ -807,6 +1091,9 @@ export class PropertiesMap {
         layout.coloraxis.cmax = this._options.color.max.value;
         layout.coloraxis.colorbar.title.text = this._title(this._options.color.property.value);
         layout.coloraxis.colorbar.len = this._colorbarLen();
+        layout.coloraxis2.colorscale = this._options.colorScale();
+        layout.coloraxis2.cmin = this._options.color.min.value;
+        layout.coloraxis2.cmax = this._options.color.max.value;
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
@@ -883,7 +1170,7 @@ export class PropertiesMap {
     private _coordinates(axis: AxisOptions, trace?: number): Array<undefined | number[]> {
         // this happen for the z axis in 2D mode
         if (axis.property.value === '') {
-            return this._selectTrace(undefined, undefined, trace);
+            return this._selectTrace(undefined, undefined, undefined, trace);
         }
 
         const values = this._property(axis.property.value).values;
@@ -897,7 +1184,8 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace<number[]>(values, selected, trace);
+        const [main, background] = this._filterForOpacity<number>(values);
+        return this._selectTrace<number[]>(main, selected, background, trace);
     }
 
     private _title(name: string): string {
@@ -922,23 +1210,77 @@ export class PropertiesMap {
             values = 0.5;
         }
 
+        let main, background;
+        if (!this._options.opacity.enableColors.value) {
+            [main, background] = this._filterForOpacity<number>(values as number[]);
+            const a = 0.3 * this._options.opacity.minimum.value;
+            background = `rgba(${a}, ${a}, ${a}, ${a})`;
+        } else {
+            [main, background] = this._filterForOpacity<number>(values as number[]);
+        }
+
         const selected = [];
         for (const data of this._selected.values()) {
             selected.push(data.color);
         }
 
-        return this._selectTrace<string | string[] | number | number[]>(values, selected, trace);
+        return this._selectTrace<string | string[] | number | number[]>(
+            main,
+            selected,
+            background,
+            trace
+        );
+    }
+
+    private _filterForOpacity<T>(values: Array<T>): Array<T[]> {
+        const foreground: Array<T> = [];
+        const background: Array<T> = [];
+
+        assert(values.length === this._is_foreground.length);
+        for (let i = 0; i < this._is_foreground.length; i++) {
+            if (this._is_foreground[i]) {
+                foreground.push(values[i]);
+            } else {
+                background.push(values[i]);
+            }
+        }
+        return [foreground, background];
+    }
+
+    private _updateTrace(): void {
+        if (this._options.opacity.mode.value === 'filter') {
+            const filter_property = this._property(
+                this._options.opacity.filter.property.value
+            ).values;
+            const filter_cutoff = this._options.opacity.filter.cutoff.value;
+            const op = this._options.opacity.filter.operator.value;
+            for (let i = 0; i < filter_property.length; i++) {
+                if (op === '=' && filter_property[i] !== filter_cutoff) {
+                    this._is_foreground[i] = false;
+                } else if (op === '<' && filter_property[i] >= filter_cutoff) {
+                    this._is_foreground[i] = false;
+                } else if (op === '>' && filter_property[i] <= filter_cutoff) {
+                    this._is_foreground[i] = false;
+                } else {
+                    this._is_foreground[i] = true;
+                }
+            }
+        } else {
+            this._is_foreground = Array<boolean>(this._data.length(this._indexer.mode)).fill(true);
+        }
     }
 
     /**
      * Get the **line** color values to use with the given plotly `trace`, or
      * all of them if `trace === undefined`
      */
-    private _lineColors(trace?: number): string[] {
+    private _lineColors(trace?: number): Array<string | string[]> {
         if (this._is3D()) {
-            return this._selectTrace<string>('black', 'black', trace);
+            return this._selectTrace<string>('black', 'black', 'rgba(0,0,0,0)', trace);
         } else {
-            return this._selectTrace<string>('rgba(1, 1, 1, 0.3)', 'black', trace);
+            const defaultColor = `rgba(1, 1, 1, ${0.3 * this._options.opacity.maximum.value})`;
+            const lighterColor = `rgba(1, 1, 1, ${0.3 * this._options.opacity.minimum.value})`;
+            return this._selectTrace<string>(defaultColor, defaultColor, lighterColor, trace);
         }
     }
 
@@ -956,6 +1298,8 @@ export class PropertiesMap {
             );
         }
         const values = this._options.calculateSizes(sizes);
+        const [main, background] = this._filterForOpacity<number>(values);
+
         const selected = [];
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
@@ -966,7 +1310,7 @@ export class PropertiesMap {
                 }
             }
         }
-        return this._selectTrace<number | number[]>(values, selected, trace);
+        return this._selectTrace<number | number[]>(main, selected, background, trace);
     }
 
     /**
@@ -976,16 +1320,22 @@ export class PropertiesMap {
     private _symbols(trace?: number): Array<string | string[] | number[]> {
         if (this._options.symbol.value === '') {
             // default to 0 (i.e. circles)
-            return this._selectTrace<string | string[]>('circle', 'circle', trace);
+            return this._selectTrace<string | string[]>('circle', 'circle', 'circle', trace);
         }
 
         const property = this._property(this._options.symbol.value);
         const symbols = this._options.getSymbols(property);
+        const [main, background] = this._filterForOpacity<string>(symbols as string[]);
         const selected = [];
         for (const data of this._selected.values()) {
             selected.push(symbols[data.current]);
         }
-        return this._selectTrace<typeof symbols>(symbols, selected as typeof symbols, trace);
+        return this._selectTrace<typeof symbols>(
+            main,
+            selected as typeof symbols,
+            background,
+            trace
+        );
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -1028,13 +1378,22 @@ export class PropertiesMap {
      * Select either main, selected or both depending on `trace`, and return
      * them in a mode usable with `Plotly.restyle`/[[PropertiesMap._restyle]]
      */
-    private _selectTrace<T>(main: T, selected: T, trace?: number): T[] {
-        if (trace === 0) {
+    private _selectTrace<T>(main: T, selected: T, background?: T, trace?: number): T[] {
+        if (background === undefined) {
+            if (Array.isArray(main)) {
+                [main, background] = this._filterForOpacity<typeof main[0]>(main) as unknown as T[];
+            } else {
+                background = main;
+            }
+        }
+        if (trace === MAIN_TRACE) {
             return [main];
-        } else if (trace === 1) {
+        } else if (trace === SELECTED_TRACE) {
             return [selected];
+        } else if (trace === BACKGROUND_TRACE) {
+            return [background];
         } else if (trace === undefined) {
-            return [main, selected];
+            return [main, selected, background];
         } else {
             throw Error('internal error: invalid trace number');
         }
@@ -1091,16 +1450,27 @@ export class PropertiesMap {
                 // line width set to 0 ¯\_(ツ)_/¯
                 // https://github.com/plotly/plotly.js/issues/4111
                 'marker.line.color': this._lineColors(),
-                'marker.line.width': [1, 2],
+                'marker.line.width': [1, 2, 1],
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
                 'marker.sizemode': 'area',
             } as Data,
-            [0, 1]
+            ALL_TRACES
         );
 
+        if (
+            this._options.opacity.minimum.value !== 0.0 ||
+            this._options.opacity.maximum.value !== 1.0
+        ) {
+            sendWarning('In 3D all markers must be either transparent or opaque.');
+        }
+        this._options.opacity.minimum.disable();
+        this._options.opacity.maximum.disable();
+        this._options.opacity.enableColors.disable();
+        this._restyle({ opacity: 0 } as Data, [BACKGROUND_TRACE]);
+
         this._relayout({
-            // change colorbar length to accommodate for symbols legend
+            // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
@@ -1130,16 +1500,34 @@ export class PropertiesMap {
             data.toggleVisible(true);
         }
 
+        if (
+            this._options.opacity.minimum.value !== 0.0 ||
+            this._options.opacity.maximum.value !== 1.0
+        ) {
+            sendWarning('Resetting original maximum and minimum opacities.');
+        }
+        this._options.opacity.minimum.enable();
+        this._options.opacity.maximum.enable();
+        this._options.opacity.enableColors.enable();
+        this._restyle(
+            { opacity: 1, 'marker.opacity': this._options.opacity.maximum.value } as Data,
+            [MAIN_TRACE]
+        );
+        this._restyle(
+            { opacity: 1, 'marker.opacity': this._options.opacity.minimum.value } as Data,
+            [BACKGROUND_TRACE]
+        );
+
         this._restyle(
             {
                 // transparency messes with depth sorting in 3D mode
                 // https://github.com/plotly/plotly.js/issues/4111
                 'marker.line.color': this._lineColors(),
-                'marker.line.width': [1, 0],
+                'marker.line.width': [1, 0, 1],
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
             } as Data,
-            [0, 1]
+            ALL_TRACES
         );
 
         this._relayout({
@@ -1180,18 +1568,18 @@ export class PropertiesMap {
             data.forEach((d) => d.toggleVisible(false));
             this._restyle(
                 {
-                    'marker.color': this._colors(1),
-                    'marker.size': this._sizes(1),
-                    'marker.symbol': this._symbols(1),
-                    x: this._coordinates(this._options.x, 1),
-                    y: this._coordinates(this._options.y, 1),
-                    z: this._coordinates(this._options.z, 1),
+                    'marker.color': this._colors(SELECTED_TRACE),
+                    'marker.size': this._sizes(SELECTED_TRACE),
+                    'marker.symbol': this._symbols(SELECTED_TRACE),
+                    x: this._coordinates(this._options.x, SELECTED_TRACE),
+                    y: this._coordinates(this._options.y, SELECTED_TRACE),
+                    z: this._coordinates(this._options.z, SELECTED_TRACE),
                 } as Data,
-                1
+                SELECTED_TRACE
             );
         } else {
-            const allX = this._coordinates(this._options.x, 0) as number[][];
-            const allY = this._coordinates(this._options.y, 0) as number[][];
+            const allX = this._coordinates(this._options.x, MAIN_TRACE) as number[][];
+            const allY = this._coordinates(this._options.y, MAIN_TRACE) as number[][];
             const plotWidth = this._plot.getBoundingClientRect().width;
 
             for (const datum of data) {
