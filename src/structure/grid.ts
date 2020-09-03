@@ -240,32 +240,22 @@ export class ViewersGrid {
     }
 
     /**
-     * Add a new structure viewer to the grid as a copy of the viewer with the
-     * `initial` GUID.
+     * Add a new empty viewer to the grid
      *
-     * @param  initial GUID of the viewer to duplicate
-     * @return `undefined` if we already reached the viewer limit, or a 2-array
-     *          containing the GUID and color of the new viewer.
+     * @return a 2-array containing the GUID and color of the new viewer, the
+     *         GUID is `undefined` if we already reached the viewer limit.
      */
-    public duplicate(initial: GUID): [GUID, string] | undefined {
+    public addViewer(): [GUID | undefined, string] {
         const newGUIDs = this._setupGrid(this._viewers.size + 1);
         if (newGUIDs.length === 0) {
             // no new widget, probably because we already have MAX_WIDGETS
-            return undefined;
+            return [undefined, ''];
         }
         assert(newGUIDs.length === 1);
         const newGUID = newGUIDs[0];
 
-        const data = this._viewers.get(initial);
-        assert(data !== undefined);
         const newData = this._viewers.get(newGUID);
         assert(newData !== undefined);
-
-        // use the same settings as the duplicated widget
-        newData.widget.applySettings(data.widget.saveSettings());
-
-        // show the same structure/environment
-        this._showInViewer(newGUID, data.current);
 
         return [newGUID, newData.color];
     }
@@ -433,6 +423,31 @@ export class ViewersGrid {
     }
 
     /**
+     * Add a new structure viewer to the grid as a copy of the viewer with the
+     * `initial` GUID. The new structure viewer is set as the active one.
+     *
+     * @param  initial GUID of the viewer to duplicate
+     * @return the GUID of the new viewer, or `undefined` if we already
+     *         reached the viewer limit.
+     */
+    private _duplicate(initial: GUID): WidgetGridData | undefined {
+        const data = this._viewers.get(initial);
+        assert(data !== undefined);
+
+        const newGUID = this.addViewer()[0];
+        if (newGUID === undefined) {
+            return undefined;
+        }
+        const newData = this._viewers.get(newGUID);
+        assert(newData !== undefined);
+
+        newData.widget.applySettings(data.widget.saveSettings());
+        this._showInViewer(newGUID, data.current);
+        this.setActive(newGUID);
+        return newData;
+    }
+
+    /**
      * Get the structure at the given index in a format JSmol can undertand
      * and load. [[Structure]] already rendered as strings are cached for faster
      * subsequent access.
@@ -567,16 +582,10 @@ the object was ${JSON.stringify(s)}`
             const duplicate = template.content.firstChild as HTMLElement;
 
             duplicate.onclick = () => {
-                const duplicated = this.duplicate(cellGUID);
-                if (duplicated === undefined) {
+                const data = this._duplicate(cellGUID);
+                if (data === undefined) {
                     return;
                 }
-
-                const guid = duplicated[0];
-                this.setActive(guid);
-
-                const data = this._viewers.get(this.active);
-                assert(data !== undefined);
                 this.oncreate(this.active, data.color, data.current);
             };
 
