@@ -146,8 +146,9 @@ export function assignBonds(atoms: AtomSpec[]): void {
     for (let i = 0, n = atoms.length; i < n; i++) {
         // Don't reindex if atoms are  already indexed
         if (!atoms[i].index) atoms[i].index = i;
-        if (atoms[i].bonds === undefined) atoms[i].bonds = [];
-        if (atoms[i].bondOrder === undefined) atoms[i].bondOrder = [];
+
+        atoms[i].bonds = [];
+        atoms[i].bondOrder = [];
     }
 
     const grid: Record<number, Record<number, Record<number, AtomSpec[]>>> = {};

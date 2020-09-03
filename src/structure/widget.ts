@@ -6,6 +6,7 @@
 import assert from 'assert';
 
 import { default as $3Dmol } from './3dmol';
+import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
 import { generateGUID, getByID, sendWarning, unreachable } from '../utils';
@@ -279,6 +280,14 @@ export class MoleculeViewer {
             structure: structure,
         };
         $3DmolStructure(this._current.model, structure);
+        this._viewer.replicateUnitCell(
+            this._options.supercell[0].value,
+            this._options.supercell[1].value,
+            this._options.supercell[2].value,
+            this._current.model
+        );
+
+        assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
         this._current.model.addAtomSpecs(['index']);
 
         this._viewer.setClickable({}, true, (atom) => this._atomSelected(atom));
@@ -391,6 +400,7 @@ export class MoleculeViewer {
                 this._options.supercell[2].value,
                 this._current.model
             );
+            assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
 
             if (this._highlighted !== undefined) {
                 this._changeHighlighted(this._highlighted.center);
