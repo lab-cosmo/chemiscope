@@ -5,27 +5,17 @@
 
 import assert from 'assert';
 
-import { JSmolApplet, JmolObject } from 'jsmol';
+import { default as $3Dmol } from './3dmol';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID } from '../utils';
+import { generateGUID, getByID, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
+import { Structure } from '../dataset';
 
 import { StructureOptions } from './options';
+import { $3DmolStructure } from './utils';
 
 require('../static/chemiscope.css');
-
-function invertedZoom(): boolean {
-    // both safari and chrome include `Safari/` in their user agent, Firefox
-    // does not
-    const safariOrChrome = window.navigator.userAgent.includes('Safari/');
-    // TODO: update this condition when ARM mac comes out
-    if (safariOrChrome && window.navigator.platform === 'MacIntel') {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 /** @hidden
  * Create a stylesheet in the main `document` with the given `rules`
@@ -41,29 +31,6 @@ function createStyleSheet(rules: string[]): CSSStyleSheet {
     return sheet;
 }
 
-/**
- * @hidden
- * Get the "555" style supercell description. This allows to put the extra
- * cells both on negative and positive sides.
- */
-function supercell_555(supercell: [number, number, number]): string {
-    const central = [
-        Math.floor(supercell[0] / 2),
-        Math.floor(supercell[1] / 2),
-        Math.floor(supercell[2] / 2),
-    ];
-
-    const first = [5 - central[0], 5 - central[1], 5 - central[2]];
-
-    const second = [
-        5 + supercell[0] - (central[0] + 1),
-        5 + supercell[1] - (central[1] + 1),
-        5 + supercell[2] - (central[2] + 1),
-    ];
-
-    return `{${first[0]}${first[1]}${first[2]} ${second[0]}${second[1]}${second[2]} 1}`;
-}
-
 /** A spherical atom-centered environment */
 export interface Environment {
     /**
@@ -75,20 +42,10 @@ export interface Environment {
     cutoff: number;
 }
 
-/** Position of the setting in the page, using 'position: fixed'. */
-export interface Position {
-    /** number of pixels from the top of the page */
-    top: number;
-    /** number of pixels from the left of the page */
-    left: number;
-}
-
 /** Possible options passed to `JSmolWidget.load` */
 export interface LoadOptions {
     /** Supercell to display (default: [1, 1, 1]) */
     supercell: [number, number, number];
-    /** Should we display a packed cell (default: false) */
-    packed: boolean;
     /** Should preserve we the current camera orientation (default: false) */
     keepOrientation: boolean;
     /** Are we loading a file part of a trajectory (default: false) */
@@ -102,14 +59,7 @@ export interface LoadOptions {
     highlight: number;
 }
 
-const DEFAULT_SERVER_URL = 'https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php';
-
-/**
- * A light wrapper around JSmol, displaying a single structure. This is kept as
- * a separate class from the [[ViewersGrid]] to be easier to use outside of
- * chemiscope.
- */
-export class JSmolWidget {
+export class MoleculeViewer {
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
     /**
@@ -128,10 +78,17 @@ export class JSmolWidget {
 
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
-    /// Reference to the global Jmol variable
-    private _Jmol: JmolObject;
-    /// Reference to the JSmol applet to be updated with script calls
-    private _applet: JSmolApplet;
+
+    private _viewer: $3Dmol.GLViewer;
+    private _current?: {
+        structure: Structure;
+        model: $3Dmol.GLModel;
+    };
+    private _highlighted?: {
+        center: number;
+        model: $3Dmol.GLModel;
+    };
+
     /// Representation options from the HTML side
     private _options: StructureOptions;
     /// The supercell used to intialize the viewer
@@ -142,29 +99,18 @@ export class JSmolWidget {
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
-    /// Dynamic CSS used to hide options related to the unit cell if there is no
-    /// unit cell in the current structure
-    private _noCellStyle: CSSStyleSheet;
-    /// Dynamic CSS used to hide options related to environments if there are
-    /// environments for the current structure
-    private _noEnvsStyle: CSSStyleSheet;
-    /// callback called on successfull (re)loading of a file
-    private _loadedCallback?: () => void;
-    /// Number of atoms in the currenly loaded structure 1x1x1 supercell.
-    ///
-    /// If another supercell is displayed, there are na x nb x nc x natoms atoms
-    /// in the displayed structure
-    ///
-    /// This is set to `undefined` until a structure is actually loaded
-    private _natoms?: number;
+
+    /// Dynamic CSS used to hide options as needed
+    private _styles: {
+        /// hide options related to unit cell if there is no unit cell in the
+        /// current structure
+        noCell: CSSStyleSheet;
+        /// hide options related to environments if there are no environments
+        /// for the current structure
+        noEnvs: CSSStyleSheet;
+    };
     /// List of atom-centered environments for the current structure
     private _environments?: Environment[];
-    /// Index of the central atom to highlight, if any. This requires
-    /// `_environments` to be defined.
-    private _highlighted?: number;
-    /// caching the last selected atom to prevent calling onselect multiple
-    /// time with the same atom number
-    private _lastSelected: number;
 
     /**
      * Create a new JSmolWidget inside the HTML DOM element with the given `id`.
@@ -174,16 +120,7 @@ export class JSmolWidget {
      * @param guid (optional) unique identifier for the widget
      * @param serverURL URL where to find `jsmol.php`
      */
-    constructor(
-        id: string,
-        j2sPath: string,
-        guid?: string,
-        serverURL: string = DEFAULT_SERVER_URL
-    ) {
-        if (window.Jmol === undefined) {
-            throw Error('Jmol is required, load it from your favorite source');
-        }
-
+    constructor(id: string, guid?: string) {
         if (guid === undefined) {
             guid = generateGUID();
         }
@@ -192,12 +129,6 @@ export class JSmolWidget {
         // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
         // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
         this.guid = 'chsp-' + guid;
-        this._lastSelected = -1;
-
-        // store a reference to the global Jmol and the HTML root
-        this._Jmol = window.Jmol;
-        // Do not insert new applets automatically
-        this._Jmol.setDocument(false);
 
         this._root = document.createElement('div');
         const root = getByID(id);
@@ -207,6 +138,18 @@ export class JSmolWidget {
         this._root.id = this.guid;
         this._root.style.width = '100%';
         this._root.style.height = '100%';
+
+        const viewer = $3Dmol.createViewer(this._root, {
+            antialias: true,
+            defaultcolors: $3Dmol.elementColors.Jmol,
+            disableFog: true,
+            orthographic: true,
+        });
+        if (viewer === undefined) {
+            throw Error('unable to create WebGL canvas');
+        }
+        this._viewer = viewer;
+        this.onselect = () => {};
 
         this._cellInfo = document.createElement('span');
         this._cellInfo.classList.add(
@@ -220,50 +163,18 @@ export class JSmolWidget {
         this._options = new StructureOptions(this._root, this.guid, (rect) =>
             this.positionSettingsModal(rect)
         );
-        this._connectSettings();
 
-        this._applet = this._createApplet(j2sPath, serverURL);
-        if (!invertedZoom()) {
-            // Invert (cf -1 below) wheel zoom direction to match the one in the
-            // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
-            // direction.
-            //
-            // For some reason, safari & chrome on OsX are already reversed,
-            // and binding a callback to WHEEL though jsmol is very slow, so
-            // don't reverse in this case
-            this.script('bind "WHEEL" "zoom *@{1.15 ** (-1 * _DELTAY)}";');
-        }
+        this._connectOptions();
 
-        this._loadedCallback = undefined;
-        // create a global function with unique name and install it as callback
-        // for JSmol. This function will then call the callback inside this
-        // instance of the viewer
-        const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback';
-        const window_as_map = window as unknown as Record<string, unknown>;
-
-        window_as_map[name] = (
-            _a: unknown,
-            _b: unknown,
-            _c: unknown,
-            _d: unknown,
-            _e: unknown,
-            status: unknown
-        ) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            if ((status as any).valueOf() === 3 && this._loadedCallback !== undefined) {
-                this._loadedCallback();
-            }
+        this._styles = {
+            noCell: createStyleSheet([
+                `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
+                `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`,
+            ]),
+            noEnvs: createStyleSheet([
+                `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`,
+            ]),
         };
-        this.script(`set LoadStructCallback "${name}"`);
-
-        this._noCellStyle = createStyleSheet([
-            `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
-            `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`,
-        ]);
-
-        this._noEnvsStyle = createStyleSheet([
-            `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`,
-        ]);
 
         // By default, position the modal for settings on top of the viewer,
         // centered horizontally
@@ -273,26 +184,6 @@ export class JSmolWidget {
                 left: rootRect.left + rootRect.width / 2 - rect.width / 2,
                 top: rootRect.top + 20,
             };
-        };
-
-        this.onselect = () => {};
-        this._root.onclick = () => {
-            // picked is 0-based
-            const picked = this.evaluate('_atomPicked');
-
-            if (picked === '') {
-                return;
-            } else {
-                assert(typeof picked === 'number');
-            }
-
-            if (picked === this._lastSelected) {
-                return;
-            } else {
-                this._lastSelected = picked;
-            }
-
-            this.onselect(picked);
         };
     }
 
@@ -306,6 +197,10 @@ export class JSmolWidget {
         this._options.remove();
     }
 
+    public resize(): void {
+        this._viewer.resize();
+    }
+
     /**
      * Get the number of atoms in the structure, or `undefined` if no structure
      * is currenly loaded
@@ -313,26 +208,96 @@ export class JSmolWidget {
      * @return the number of atoms in the currenly loaded structure
      */
     public natoms(): number | undefined {
-        return this._natoms;
-    }
-
-    /**
-     * Run the given `commands` for this viewer. `load` commands should use the
-     * [[JSmolWidget.load|corresponding function]].
-     */
-    public script(commands: string): void {
-        if (commands.includes('load ')) {
-            throw Error('Do not use JSmolWidget.script to load a structure, but JSmolWidget.load');
+        if (this._current === undefined) {
+            return undefined;
+        } else {
+            return this._current.structure.size;
         }
-        this._Jmol.script(this._applet, commands);
     }
 
     /**
-     * Evaluate the given commands using JSmol and return the corresponding
-     * value. This calls `Jmol.evaluateVar` behind the scenes.
+     * Load the given `structure` in this viewer.
+     *
+     * @param structure structure to load
+     * @param options options for the new structure
      */
-    public evaluate(commands: string): unknown {
-        return this._Jmol.evaluateVar(this._applet, commands);
+    public load(structure: Structure, options: Partial<LoadOptions> = {}): void {
+        // if the canvas size changed since last structure, make sure we update
+        // everything
+        this.resize();
+
+        // Deal with loading options
+        this._environments = options.environments;
+
+        // TODO
+        let keepOrientation: boolean;
+        if (options.keepOrientation === undefined) {
+            // keep pre-existting settings if any
+            keepOrientation = this._options.keepOrientation.value;
+        } else {
+            keepOrientation = options.keepOrientation;
+        }
+
+        let a, b, c;
+        if (options.supercell === undefined) {
+            // keep pre-existing supercell settings, default to [1, 1, 1] from
+            // settings.html
+            [a, b, c] = [
+                this._options.supercell[0].value,
+                this._options.supercell[1].value,
+                this._options.supercell[2].value,
+            ];
+        } else {
+            [a, b, c] = options.supercell;
+            this._options.supercell[0].value = a;
+            this._options.supercell[1].value = b;
+            this._options.supercell[2].value = c;
+        }
+        if (this._initialSupercell === undefined) {
+            this._initialSupercell = [a, b, c];
+            this._resetSupercell.innerHTML = `reset ${a}x${b}x${c} supercell`;
+        }
+
+        if (structure.cell === undefined) {
+            this._styles.noCell.disabled = false;
+        } else {
+            this._styles.noCell.disabled = true;
+        }
+        this._showSupercellInfo();
+
+        const trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
+        if (options.trajectory === undefined || !options.trajectory) {
+            trajectoryOptions.style.display = 'none';
+        } else {
+            trajectoryOptions.style.display = 'block';
+        }
+
+        // Actual loading
+        this._viewer.removeAllModels();
+        this._current = {
+            model: this._viewer.addModel(),
+            structure: structure,
+        };
+        $3DmolStructure(this._current.model, structure);
+        this._current.model.addAtomSpecs(['index']);
+
+        this._viewer.setClickable({}, true, (atom) => this._atomSelected(atom));
+
+        if (this._environments === undefined) {
+            this._styles.noEnvs.disabled = false;
+            this._changeHighlighted(undefined);
+        } else {
+            this._styles.noEnvs.disabled = true;
+            this._changeHighlighted(options.highlight === undefined ? 0 : options.highlight);
+        }
+
+        this._updateStyle();
+
+        if (!keepOrientation) {
+            this._resetView(this._options.environments.center.value);
+        }
+
+        this._viewer.render();
     }
 
     /**
@@ -342,138 +307,19 @@ export class JSmolWidget {
      * function accept indexes larger than the result of `natoms()`, and will
      * then highlight atoms outside of the central image.
      *
-     * @param atom index of the central atom in the environment to show,
-     *             or `undefined` to disable highlighting.
+     * @param center index of the central atom in the environment to show,
+     *               or `undefined` to disable highlighting.
      */
-    public highlight(environment?: number): void {
-        this._changeHighlighted(environment);
-        this._updateState();
-    }
+    public highlight(center?: number): void {
+        this._changeHighlighted(center);
+        this._updateStyle();
 
-    /**
-     * Load `data` in this viewer.
-     *
-     * This function can take any value used in a `load XXX` script in Jmol:
-     * inline data, path to a file, $\<molecules\>, etc.
-     *
-     * @param data molecule to load, in a format supported by Jmol [load
-     *             command](https://chemapps.stolaf.edu/jmol/docs/#load).
-     * @param options options for the new structure
-     */
-    public load(data: string, options: Partial<LoadOptions> = {}): void {
-        if (data === "''" || data === '""') {
-            throw Error('invalid use of JSmolWidget.load to reload data');
+        const centerView = this._options.environments.center.value;
+        if (this._highlighted !== undefined && centerView) {
+            this._resetView(centerView);
         }
 
-        this._natoms = undefined;
-
-        let supercell: [number, number, number];
-        if (options.supercell === undefined) {
-            // keep pre-existing supercell settings, default to [1, 1, 1] from
-            // settings.html
-            supercell = [
-                this._options.supercell[0].value,
-                this._options.supercell[1].value,
-                this._options.supercell[2].value,
-            ];
-        } else {
-            supercell = options.supercell;
-        }
-
-        if (options.packed !== undefined) {
-            this._options.packedCell.value = options.packed;
-        }
-
-        if (options === undefined) {
-            this._environments = undefined;
-        } else {
-            this._environments = options.environments;
-            if (this._environments !== undefined) {
-                this._options.environments.activated.value = true;
-            }
-        }
-
-        let keepOrientation: boolean;
-        if (options.keepOrientation === undefined) {
-            // keep pre-existting settings if any
-            keepOrientation = this._options.keepOrientation.value;
-        } else {
-            keepOrientation = options.keepOrientation;
-        }
-
-        const trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
-        if (options.trajectory === undefined || !options.trajectory) {
-            trajectoryOptions.style.display = 'none';
-        } else {
-            trajectoryOptions.style.display = 'block';
-        }
-
-        if (this._environments === undefined) {
-            this._noEnvsStyle.disabled = false;
-            this._changeHighlighted(undefined);
-        } else {
-            if (options.packed !== undefined && options.packed) {
-                throw Error('Can not have both packed cell and environments');
-            }
-
-            this._noEnvsStyle.disabled = true;
-            if (options.highlight !== undefined) {
-                this._changeHighlighted(options.highlight);
-            } else {
-                this._changeHighlighted(0);
-            }
-        }
-
-        const [a, b, c] = supercell;
-        if (this._initialSupercell === undefined) {
-            this._initialSupercell = supercell;
-            this._resetSupercell.innerHTML = `reset ${a}x${b}x${c} supercell`;
-        }
-        this._options.supercell[0].value = a;
-        this._options.supercell[1].value = b;
-        this._options.supercell[2].value = c;
-        this._setCellInfo();
-
-        /// JSmol overwite the Error object, using `.caller` to get stacktraces.
-        /// This fails in modern browsers if any code other code try to throw an
-        /// error, since the JSmol Error object will try to get the stack here
-        /// too. So we save and reset the global Error object when loading a new
-        /// structure.
-        const savedError = window.Error;
-
-        this._loadedCallback = () => {
-            window.Error = savedError;
-
-            if (this.evaluate('@{unitcell("conventional")}') === 'ERROR') {
-                this._noCellStyle.disabled = false;
-            } else {
-                this._noCellStyle.disabled = true;
-            }
-
-            const repeat =
-                this._options.supercell[0].value *
-                this._options.supercell[1].value *
-                this._options.supercell[2].value;
-            this._natoms = parseInt(this.evaluate('{*}.size') as string, 10) / repeat;
-            if (this._environments !== undefined && this._environments.length !== this._natoms) {
-                let message = 'invalid number of environments for this structure ';
-                message += `got ${this._environments.length} environments, there are ${this._natoms} atoms`;
-                // We can not throw an error here, since it seems to be caught
-                // by JSmol.
-                // eslint-disable-next-line no-console
-                console.error(message);
-            }
-
-            // once we are done, disable the callback to prevent it from firing
-            // on restyle/reload
-            this._loadedCallback = undefined;
-
-            // make sure any change to the setting before the structure is fully
-            // loaded are applied
-            this._updateState();
-        };
-
-        this._do_load(data, keepOrientation);
+        this._viewer.render();
     }
 
     /**
@@ -491,185 +337,114 @@ export class JSmolWidget {
         return this._options.saveSettings();
     }
 
-    private _reload() {
-        if (!this._loaded()) {
-            return;
-        }
-        this._do_load('""', true);
-    }
+    private _connectOptions(): void {
+        const restyleAndRender = () => {
+            this._updateStyle();
+            this._viewer.render();
+        };
 
-    private _do_load(data: string, keepOrientation: boolean) {
-        if (data.includes(';')) {
-            throw Error("invalid ';' in  JSmolWidget.load");
-        }
-        if (data.includes('packed')) {
-            throw Error("invalid 'packed' in  JSmolWidget.load");
-        }
+        this._options.atomLabels.onchange = restyleAndRender;
+        this._options.spaceFilling.onchange = restyleAndRender;
+        this._options.bonds.onchange = restyleAndRender;
 
-        const packed = this._options.packedCell.value ? ' packed' : '';
+        this._options.axes.onchange = () => sendWarning('TODO: axes settings');
 
-        const saveOrientation = keepOrientation ? `save orientation "${this.guid}"` : '';
-        const restoreOrientation = keepOrientation ? `restore orientation "${this.guid}"` : '';
-
-        this._setCellInfo();
-
-        const supercell = supercell_555([
-            this._options.supercell[0].value,
-            this._options.supercell[1].value,
-            this._options.supercell[2].value,
-        ]);
-
-        const commands = `
-            ${saveOrientation};
-            load ${data} ${supercell} ${packed};
-            ${this._updateStateCommands()};
-            ${restoreOrientation};
-        `;
-        this._Jmol.script(this._applet, commands);
-    }
-
-    private _changeHighlighted(environment?: number) {
-        if (environment !== undefined) {
-            const repeat =
-                this._options.supercell[0].value *
-                this._options.supercell[1].value *
-                this._options.supercell[2].value;
-            if (this._natoms !== undefined && environment >= this._natoms * repeat) {
-                let message = 'selected environment is out of bounds: ';
-                message += `got ${environment}, we have ${
-                    this._natoms * repeat
-                } atoms in the current structure`;
-                throw Error(message);
-            }
-
-            if (this._environments === undefined) {
-                throw Error('no environments defined for the current structure');
-            }
-        }
-
-        this._highlighted = environment;
-
-        if (this._highlighted === undefined) {
-            this._enableEnvironmentSettings(false);
-            this._options.environments.cutoff.value = 0;
-        } else {
-            this._enableEnvironmentSettings(true);
-
-            // keep user defined cutoff, if any
-            if (this._options.environments.cutoff.value <= 0) {
-                this._options.environments.cutoff.value = this._currentDefaultCutoff();
-            }
-        }
-    }
-
-    private _createApplet(j2sPath: string, serverURL: string): JSmolApplet {
-        const width = this._root.clientWidth;
-        const height = this._root.clientHeight;
-        if (width === 0 || height === 0) {
-            assert(this._root.parentElement !== null);
-            const parentId = this._root.parentElement.id;
-            // eslint-disable-next-line no-console
-            console.error(
-                `JSmolWidget: width (=${width}px) or heigh (=${height}px) ` +
-                    `of #${parentId} is zero, you will not see the molecules`
-            );
-        }
-
-        const INITIAL_SCRIPT = `
-            // use anti-aliasing
-            set antialiasdisplay;
-            // remove jmol logo
-            set frank off;
-            // use the smaller of height/width when setting zoom level
-            set zoomlarge false;
-            // Allow sending script commands while moveto is executing
-            set waitformoveto off;
-            hide off;
-        `;
-        // create the main Jmol applet
-        const applet = this._Jmol.getApplet(this.guid, {
-            height: '100%',
-            width: '100%',
-
-            disableInitialConsole: true,
-            disableJ2SLoadMonitor: true,
-            j2sPath: j2sPath,
-            script: INITIAL_SCRIPT,
-            serverURL: serverURL,
-            use: 'HTML5',
-            zIndexBase: 1,
-        });
-
-        const div = document.createElement('div');
-        div.style.height = '100%';
-        div.style.width = '100%';
-        this._root.appendChild(div);
-        div.innerHTML = this._Jmol.getAppletHtml(applet);
-        // Jmol rely on this script being implicitly executed, but this is not
-        // the case when using innerHTML (compared to jquery .html()). So let's
-        // manually execute it
-        applet._cover(false);
-
-        return applet;
-    }
-
-    private _connectSettings() {
-        // recursively bind the right update function to HTMLSetting `onchange`
-        const bindUpdateState = (object: Record<string, unknown>) => {
-            for (const key in object) {
-                if (key.startsWith('_')) {
-                    continue;
-                }
-                const setting = object[key] as Record<string, unknown>;
-                if ('onchange' in setting) {
-                    // if any setting changes, update the full state of JSmol
-                    // this is not the most efficient thing to do, but some
-                    // settings have dependencies on one another.
-                    setting.onchange = () => this._updateState();
-                } else {
-                    bindUpdateState(setting);
-                }
+        this._options.rotation.onchange = (rotate) => {
+            if (rotate) {
+                this._viewer.spin('vy');
+            } else {
+                this._viewer.spin(false);
             }
         };
-        bindUpdateState(this._options as unknown as Record<string, unknown>);
 
-        // For changes to the cell, we have to reload the structure.
-        // This override the function set above
-        this._options.packedCell.onchange = () => this._reload();
-        this._options.supercell[0].onchange = () => this._reload();
-        this._options.supercell[1].onchange = () => this._reload();
-        this._options.supercell[2].onchange = () => this._reload();
+        this._options.unitCell.onchange = (add) => {
+            if (this._current === undefined) {
+                return;
+            }
+
+            if (add) {
+                this._viewer.addUnitCell(this._current.model, {
+                    box: { color: 'black' },
+                    astyle: { hidden: true },
+                    bstyle: { hidden: true },
+                    cstyle: { hidden: true },
+                });
+            } else {
+                this._viewer.removeUnitCell(this._current.model);
+            }
+            this._viewer.render();
+        };
+
+        const changedSuperCell = () => {
+            this._showSupercellInfo();
+            if (this._current === undefined) {
+                return;
+            }
+
+            // remove the atoms previously added by `replicateUnitCell`
+            const atoms = this._current.model.selectedAtoms({});
+            this._current.model.removeAtoms(atoms.splice(this._current.structure.size));
+
+            this._viewer.replicateUnitCell(
+                this._options.supercell[0].value,
+                this._options.supercell[1].value,
+                this._options.supercell[2].value,
+                this._current.model
+            );
+
+            if (this._highlighted !== undefined) {
+                this._changeHighlighted(this._highlighted.center);
+            }
+            this._updateStyle();
+            this._viewer.render();
+        };
+        this._options.supercell[0].onchange = changedSuperCell;
+        this._options.supercell[1].onchange = changedSuperCell;
+        this._options.supercell[2].onchange = changedSuperCell;
+
+        this._options.environments.bgColor.onchange = restyleAndRender;
+        this._options.environments.bgStyle.onchange = restyleAndRender;
+        this._options.environments.cutoff.onchange = () => {
+            if (this._highlighted !== undefined) {
+                this._changeHighlighted(this._highlighted.center);
+            }
+            restyleAndRender();
+        };
+        this._options.environments.center.onchange = (center) => {
+            this._resetView(center);
+            this._viewer.render();
+        };
 
         // Deal with activation/de-activation of environments
         this._options.environments.activated.onchange = (value) => {
             this._enableEnvironmentSettings(value);
-            this._updateState();
+            restyleAndRender();
         };
 
         // Setup various buttons
         this._resetEnvCutof = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);
         this._resetEnvCutof.onclick = () => {
             this._options.environments.cutoff.value = this._currentDefaultCutoff();
-            this._updateState();
+            restyleAndRender();
         };
 
         const alignX = getByID<HTMLButtonElement>(`${this.guid}-align-x`);
-        alignX.onclick = () => this.script('moveto 1 axis x');
+        alignX.onclick = () => sendWarning('TODO: camera change');
 
         const alignY = getByID<HTMLButtonElement>(`${this.guid}-align-y`);
-        alignY.onclick = () => this.script('moveto 1 axis y');
+        alignY.onclick = () => sendWarning('TODO: camera change');
 
         const alignZ = getByID<HTMLButtonElement>(`${this.guid}-align-z`);
-        alignZ.onclick = () => this.script('moveto 1 axis z');
+        alignZ.onclick = () => sendWarning('TODO: camera change');
 
         const alignA = getByID<HTMLButtonElement>(`${this.guid}-align-a`);
-        alignA.onclick = () => this.script('moveto 1 axis a');
+        alignA.onclick = () => sendWarning('TODO: camera change');
 
         const alignB = getByID<HTMLButtonElement>(`${this.guid}-align-b`);
-        alignB.onclick = () => this.script('moveto 1 axis b');
+        alignB.onclick = () => sendWarning('TODO: camera change');
 
         const alignC = getByID<HTMLButtonElement>(`${this.guid}-align-c`);
-        alignC.onclick = () => this.script('moveto 1 axis c');
+        alignC.onclick = () => sendWarning('TODO: camera change');
 
         this._resetSupercell = getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`);
         this._resetSupercell.onclick = () => {
@@ -677,142 +452,127 @@ export class JSmolWidget {
             this._options.supercell[0].value = this._initialSupercell[0];
             this._options.supercell[1].value = this._initialSupercell[1];
             this._options.supercell[2].value = this._initialSupercell[2];
-            this._reload();
         };
     }
 
-    private _updateState() {
-        if (!this._loaded()) {
+    private _atomSelected(atom: Partial<$3Dmol.AtomSpec>): void {
+        // use atom.serial instead of atom.index to ensure we are getting the
+        // id of the atom inside the central cell when using a supercell
+        assert(atom.serial !== undefined);
+
+        if (this._environments !== undefined) {
+            this.highlight(atom.serial);
+        }
+
+        this.onselect(atom.serial);
+    }
+
+    private _updateStyle(): void {
+        if (this._current === undefined) {
             return;
         }
-        this.script(this._updateStateCommands());
-    }
 
-    private _showAxesCommands(axes: string): string {
-        switch (axes) {
-            case 'xyz':
-                return `
-                axes off;
-                draw xaxis '>X' vector {0 0 0} {2 0 0} color red width 0.15;
-                draw yaxis '>Y' vector {0 0 0} {0 2 0} color green width 0.15;
-                draw zaxis '>Z' vector {0 0 0} {0 0 2} color blue width 0.15;
-            `;
-            case 'abc':
-                return `
-                draw xaxis delete; draw yaxis delete; draw zaxis delete;
-                set axesUnitcell ON; axes 5;
-            `;
-            case 'off':
-                return `
-                draw xaxis delete; draw yaxis delete; draw zaxis delete;
-                axes off;
-            `;
-            default:
-                throw Error(`unkown axes selected: '${axes}'`);
+        if (this._highlighted === undefined) {
+            this._current.model.setStyle({}, this._mainStyle());
+            this._viewer.render();
+            return;
         }
+
+        this._current.model.setStyle({}, this._hiddenStyle());
+        this._current.model.setStyle(
+            { index: this._highlighted.center },
+            this._centralStyle(),
+            /* add: */ true
+        );
+
+        this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
-    /// Get the commands to run to update the visualization state
-    private _updateStateCommands(): string {
-        const settings = this._options;
-        const wireframe = `wireframe ${settings.bonds.value ? '0.15' : 'off'}`;
-        const spacefill = `spacefill ${settings.spaceFilling.value ? '80%' : '23%'}`;
+    private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        const style: Partial<$3Dmol.AtomStyleSpec> = {
+            sphere: {
+                scale: this._options.spaceFilling.value ? 1.0 : 0.3,
+            },
+        };
+        if (this._options.bonds.value) {
+            style.stick = {
+                radius: 0.15,
+            };
+        }
 
-        let commands = '';
-        if (this._highlighted === undefined || !settings.environments.activated.value) {
-            commands += 'select all;';
-            commands += 'centerAt average;';
-            commands += 'hide none;';
-            commands += 'color atoms cpk; color atoms opaque;';
-            commands += `dots off; ${wireframe}; ${spacefill};`;
-        } else {
-            // center of the environment (or structure)
-            if (settings.environments.center.value) {
-                commands += `select @${this._highlighted + 1};`;
-            } else {
-                commands += 'select all;';
+        return style;
+    }
+
+    private _hiddenStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        const style: Partial<$3Dmol.AtomStyleSpec> = {};
+
+        const bgStyle = this._options.environments.bgStyle.value;
+        if (bgStyle === 'hide') {
+            // nothing to do
+        } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
+            style.stick = {
+                radius: 0.15,
+                opacity: 0.7,
+                hidden: !this._options.bonds.value,
+            };
+
+            if (bgStyle === 'ball-stick') {
+                style.sphere = {
+                    scale: 0.3,
+                    opacity: 0.7,
+                };
             }
-            commands += 'centerAt average;';
-
-            // Atoms not in the environment
-            commands += 'select all;';
-            commands += this._backgroundStyle();
-
-            // atoms in the environment
-            const cutoff = settings.environments.cutoff.value;
-            commands += `select within(${cutoff}, false, @${this._highlighted + 1});`;
-            commands += 'hide hidden and not selected;';
-            commands += 'color atoms cpk; color atoms opaque;';
-            commands += `dots off; ${wireframe}; ${spacefill};`;
-
-            // central atom
-            commands += `select @${this._highlighted + 1};`;
-            commands += 'hide hidden and not selected;';
-            commands += 'color atoms cpk; color atoms opaque;';
-            commands += `wireframe off; ${spacefill};`;
-            commands += 'color dots green; dots 0.6;';
+        } else {
+            unreachable();
         }
 
-        commands += `
-            select all;
-            label ${settings.atomLabels.value ? '%a' : 'off'};
-            unitcell ${settings.unitCell.value ? '2' : 'off'};
-            spin ${settings.rotation.value ? 'on' : 'off'};
-        `;
+        const bgColor = this._options.environments.bgColor.value;
+        if (bgColor === 'CPK') {
+            // nothing to do
+        } else if (bgColor === 'grey') {
+            if (style.stick !== undefined) {
+                style.stick.color = 'grey';
+            }
 
-        return commands + this._showAxesCommands(settings.axes.value);
+            if (style.sphere !== undefined) {
+                style.sphere.color = 'grey';
+            }
+        } else {
+            unreachable();
+        }
+
+        return style;
     }
 
-    private _setCellInfo() {
+    private _centralStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        return {
+            sphere: {
+                scale: 0.4,
+                color: 'green',
+                opacity: 0.7,
+            },
+        };
+    }
+
+    private _showSupercellInfo(): void {
         const a = this._options.supercell[0].value;
         const b = this._options.supercell[1].value;
         const c = this._options.supercell[2].value;
 
-        this._cellInfo.innerText = this._options.packedCell.value ? 'packed' : 'standard';
         if (a !== 1 || b !== 1 || c !== 1) {
-            this._cellInfo.innerText += ` ${a}x${b}x${c} supercell`;
+            this._cellInfo.innerText = `${a}x${b}x${c} supercell`;
         } else {
-            this._cellInfo.innerText += ' cell';
+            this._cellInfo.innerText = '';
         }
     }
 
-    /// Background *atoms*
-    private _backgroundStyle(): string {
-        let commands = '';
-
-        const wireframe = `wireframe ${this._options.bonds.value ? '0.15' : 'off'}`;
-        const style = this._options.environments.bgStyle.value;
-        if (style === 'licorice') {
-            commands += `hide none; dots off; ${wireframe}; spacefill off;`;
-        } else if (style === 'ball-stick') {
-            commands += `hide none; dots off; ${wireframe}; spacefill 23%;`;
-        } else if (style === 'hide') {
-            commands += 'hide *;';
-        } else {
-            throw Error(`invalid background atoms style '${style}'`);
-        }
-
-        const color = this._options.environments.bgColor.value;
-        if (color === 'CPK') {
-            commands += 'color atoms cpk;';
-            commands += 'color atoms translucent 0.8;';
-        } else if (color === 'grey') {
-            commands += 'color atoms [xa0a0a0];';
-            commands += 'color atoms translucent 0.8;';
-        } else {
-            throw Error(`invalid background atoms color '${color}'`);
-        }
-
-        return commands;
-    }
-
-    private _enableEnvironmentSettings(show: boolean) {
+    private _enableEnvironmentSettings(show: boolean): void {
         if (this._resetEnvCutof.disabled === show) {
             this._toggleEnvironmentSettings();
         }
     }
 
-    private _toggleEnvironmentSettings() {
+    private _toggleEnvironmentSettings(): void {
         const toggleGroup = getByID(`${this.guid}-env-activated`);
         assert(toggleGroup.parentElement !== null);
         const toggle = toggleGroup.parentElement.lastChild;
@@ -826,11 +586,6 @@ export class JSmolWidget {
             this._options.environments.cutoff.enable();
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
-
-            // Can not have both environments and packed cell
-            this._options.packedCell.value = false;
-            this._options.packedCell.disable();
-            this._setCellInfo();
         } else {
             reset.disabled = true;
             toggle.nodeValue = 'Enable';
@@ -838,49 +593,59 @@ export class JSmolWidget {
             this._options.environments.cutoff.disable();
             this._options.environments.bgStyle.disable();
             this._options.environments.bgColor.disable();
-
-            this._options.packedCell.enable();
-            this._setCellInfo();
         }
-    }
-
-    /// Get the current displayed environment, if any. This function deals with
-    /// JSmol adding new atoms when loading a supercell, and will always return
-    /// a value smaller than the number of atoms in the structure passed to
-    /// `JSmolWidget.load`.
-    private _environment(): number | undefined {
-        if (this._highlighted === undefined || this._environments === undefined) {
-            return undefined;
-        }
-
-        // `this._natoms ?? 1` is needed because this code might be called
-        // before the loading of the structure finishes.
-        //
-        // In this case, this._highlighted is assumed to be inside [0,
-        // this._environments.length). This should be fine since
-        // this._highlighted is only set in two places: in this.highlight, and
-        // the user should give valid input, or through this.onSelected, and
-        // then the structure should be fully loaded
-        const natoms = this._natoms ?? 1;
-
-        // % is used to deal with supercell, which create atom indexe
-        // outside of [0, this._environments.length)
-        return this._highlighted % natoms;
     }
 
     /// Get the default cutoff for the currently displayed environment
     private _currentDefaultCutoff(): number {
-        const i = this._environment();
-        if (i === undefined) {
-            throw Error('no environments defined when calling _currentCutoff');
+        if (this._highlighted === undefined) {
+            throw Error('no central environments defined when calling _currentCutoff');
         } else {
             assert(this._environments !== undefined);
-            return this._environments[i].cutoff;
+            return this._environments[this._highlighted.center].cutoff;
         }
     }
 
-    /// do we have at least one loaded structure?
-    private _loaded(): boolean {
-        return this._natoms !== undefined;
+    private _changeHighlighted(center?: number): void {
+        if (this._highlighted !== undefined) {
+            this._viewer.removeModel(this._highlighted.model);
+        }
+
+        if (center === undefined) {
+            this._enableEnvironmentSettings(false);
+            this._options.environments.cutoff.value = 0;
+            this._highlighted = undefined;
+        } else {
+            this._enableEnvironmentSettings(true);
+            // keep user defined cutoff, if any
+            if (this._options.environments.cutoff.value <= 0) {
+                this._options.environments.cutoff.value = this._currentDefaultCutoff();
+            }
+
+            // We need to create a separate model to have different opacity
+            // in the background & highlighted atoms
+            // https://github.com/3dmol/3Dmol.js/issues/166
+            // prettier-ignore
+            const selection = { or: [
+                    { index: center },
+                    { within: { distance: this._options.environments.cutoff.value, sel: { index: center } } },
+                ],
+            };
+            this._highlighted = {
+                model: this._viewer.createModelFrom(selection),
+                center: center,
+            };
+        }
+    }
+
+    private _resetView(center: boolean): void {
+        if (center && this._highlighted !== undefined) {
+            this._viewer.zoomTo({ serial: this._highlighted.center });
+        } else {
+            this._viewer.zoomTo();
+        }
+
+        this._viewer.zoom(2);
+        this._viewer.setSlab(-1000, 1000);
     }
 }

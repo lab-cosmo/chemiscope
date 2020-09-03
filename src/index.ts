@@ -28,7 +28,7 @@ import { SavedSettings } from './options';
 import { ViewersGrid } from './structure';
 
 import { Dataset, JsObject, Structure, validateDataset } from './dataset';
-import { GUID, addWarningHandler, enumerate, getNextColor } from './utils';
+import { GUID, addWarningHandler, getNextColor } from './utils';
 
 require('./static/chemiscope.css');
 
@@ -184,13 +184,8 @@ class DefaultVisualizer {
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
         // Structure viewer setup
-        const structuresSettings = getStructureSettings(config.settings);
         this.structure = new ViewersGrid(
-            {
-                id: config.structure,
-                settings: structuresSettings.length > 0 ? structuresSettings[0] : {},
-            },
-            config.j2sPath,
+            config.structure,
             this._indexer,
             dataset.structures,
             dataset.environments
@@ -317,8 +312,7 @@ class DefaultVisualizer {
             const indexes = this._indexer.from_environment(settings.pinned[0]);
             this.map.select(indexes);
             this.info.show(indexes);
-            // this is done below in the setTimeout
-            // this.structure.show(indexes);
+            this.structure.show(indexes);
 
             // Create additional viewers as needed
             for (const environment of settings.pinned.slice(1)) {
@@ -332,24 +326,12 @@ class DefaultVisualizer {
                 this.map.setActive(guid);
                 this._pinned.push(guid);
                 this.info.show(indexes);
-            }
-
-            if (settings.structure !== undefined) {
-                this.structure.applySettings(settings.structure);
-            }
-
-            for (const [i, environment] of enumerate(settings.pinned)) {
-                // HACK: loading multiple structures in a rapid succession with
-                // JSmol fails (the same structure is loaded multiple time), so
-                // we introduce a delay when loading them
-                setTimeout(() => {
-                    this.structure.setActive(this._pinned[i]);
-                    this.structure.show(this._indexer.from_environment(environment));
-                }, 1000 * i);
+                this.structure.setActive(guid);
+                this.structure.show(indexes);
             }
         }
 
-        if (settings.pinned === undefined && settings.structure !== undefined) {
+        if (settings.structure !== undefined) {
             this.structure.applySettings(settings.structure);
         }
     }
@@ -408,22 +390,6 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
         }
     } else {
         return {};
-    }
-}
-
-function getStructureSettings(settings: Partial<Settings> | undefined): SavedSettings[] {
-    if (settings === undefined) {
-        return [];
-    }
-    if ('structure' in settings) {
-        const structure = settings.structure;
-        if (Array.isArray(structure)) {
-            return structure;
-        } else {
-            throw Error(`invalid type '${typeof structure}' for structure, should be an array`);
-        }
-    } else {
-        return [];
     }
 }
 

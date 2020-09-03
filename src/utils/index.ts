@@ -112,3 +112,8 @@ export function arrayMaxMin(values: number[]): { max: number; min: number } {
     assert(isFinite(min) && isFinite(max));
     return { max, min };
 }
+
+/** unreachable marker for cases that REALLY should not happen */
+export function unreachable(): never {
+    throw Error('unreachable code entered, this is a bug');
+}

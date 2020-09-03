@@ -4,6 +4,8 @@
  */
 
 import * as linalg from './linalg';
+import { default as $3Dmol } from './3dmol';
+import { assignBonds } from './3Dmol/assignBonds';
 
 import { Structure } from '../dataset';
 
@@ -64,36 +66,38 @@ class UnitCell {
 }
 
 /** @hidden
- * Convert a `structure` to a format that JSmol can read: XYZ if there is no cell
- * data, and BCS if there is cell data
+ * Add data from the `structure` to the `model`
  *
+ * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
- * @return a string representing the structure that JSmol is able to read
  */
-export function structure2JSmol(structure: Structure): string {
-    const buffer = new Array<string>();
-    if (structure.cell === undefined) {
-        // use XYZ format
-        const natoms = structure.names.length;
-        buffer.push(`${natoms}\n\n`);
-        for (let i = 0; i < natoms; i++) {
-            buffer.push(
-                `${structure.names[i]} ${structure.x[i]} ${structure.y[i]} ${structure.z[i]}\n`
-            );
-        }
-    } else {
-        // use BCS format
+export function $3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
+    const rotation: linalg.Matrix = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+    ];
+    if (structure.cell !== undefined) {
         const cell = new UnitCell(structure.cell);
-        buffer.push('1\n');
         const [a, b, c] = cell.lengths();
         const [alpha, beta, gamma] = cell.angles();
-        buffer.push(`${a} ${b} ${c} ${alpha} ${beta} ${gamma}\n`);
-        const natoms = structure.names.length;
-        buffer.push(`${natoms}\n`);
-        for (let i = 0; i < natoms; i++) {
-            const [x, y, z] = cell.fractional([structure.x[i], structure.y[i], structure.z[i]]);
-            buffer.push(`${structure.names[i]} ${i} - ${x} ${y} ${z}\n`);
-        }
+        model.setCrystData(a, b, c, alpha, beta, gamma);
+        // TODO: deal with the case where the cell matrix is not upper
+        // triangular by computing the right rotation to align along x/y/z
     }
-    return buffer.join('');
+
+    const atoms = [];
+    for (let i = 0; i < structure.size; i++) {
+        const [x, y, z] = linalg.dot(rotation, [structure.x[i], structure.y[i], structure.z[i]]);
+        atoms.push({
+            serial: i,
+            elem: structure.names[i],
+            x: x,
+            y: y,
+            z: z,
+        });
+    }
+    assignBonds(atoms as $3Dmol.AtomSpec[]);
+
+    model.addAtoms(atoms);
 }

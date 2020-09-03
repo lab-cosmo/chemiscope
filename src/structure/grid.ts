@@ -12,8 +12,7 @@ import { SavedSettings } from '../options';
 import { GUID, PositioningCallback } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
-import { structure2JSmol } from './utils';
-import { JSmolWidget, LoadOptions } from './widget';
+import { LoadOptions, MoleculeViewer } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -78,7 +77,7 @@ function groupByStructure(
 }
 
 interface WidgetGridData {
-    widget: JSmolWidget;
+    widget: MoleculeViewer;
     color: string;
     current: Indexes;
 }
@@ -128,15 +127,12 @@ export class ViewersGrid {
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
     /// Cached string representation of structures
-    private _cachedStructures: string[];
+    private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
     private _environments?: Environment[][];
     /// The indexer translating between environments indexes and structure/atom
     /// indexes
     private _indexer: EnvironmentIndexer;
-    // path to the j2s files used by JSmol.
-    // saved for instantiating new Widget instances
-    private _j2spath: string;
     /// GUID of the currently active widget
     private _active: GUID;
     /// Map of Widgets GUIDS to their color, widget, and current structure
@@ -157,17 +153,15 @@ export class ViewersGrid {
      *                     used to highlight the selected environment
      */
     constructor(
-        config: { id: string; settings: SavedSettings },
-        j2sPath: string,
+        id: string,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
         environments?: Environment[]
     ) {
         this._structures = structures;
-        this._cachedStructures = new Array<string>(structures.length);
+        this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures.length, environments);
         this._indexer = indexer;
-        this._j2spath = j2sPath;
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
@@ -188,7 +182,7 @@ export class ViewersGrid {
         this.oncreate = () => {};
         this.activeChanged = () => {};
 
-        const root = getByID(config.id);
+        const root = getByID(id);
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
@@ -201,7 +195,6 @@ export class ViewersGrid {
 
         const data = this._viewers.get(this.active);
         assert(data !== undefined);
-        data.widget.applySettings(config.settings);
 
         // get the 'delay' setting inside the current widget setting
         this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
@@ -453,19 +446,19 @@ export class ViewersGrid {
      * @param  index index of the structure
      * @return       a string that can be passed to JSmol `load INLINE` command
      */
-    private _structureForJSmol(index: number): string {
-        if (this._cachedStructures[index] === undefined) {
+    private _structure(index: number): Structure {
+        if (this._resolvedStructures[index] === undefined) {
             const s = this.loadStructure(index, this._structures[index]);
             const check = checkStructure(s as unknown as JsObject);
             if (check !== '') {
                 throw Error(
                     `got invalid object as structure: ${check}
-the object was ${JSON.stringify(s)}`
+    the object was ${JSON.stringify(s)}`
                 );
             }
-            this._cachedStructures[index] = structure2JSmol(s);
+            this._resolvedStructures[index] = s;
         }
-        return this._cachedStructures[index];
+        return this._resolvedStructures[index];
     }
 
     private _showInViewer(guid: GUID, indexes: Indexes): void {
@@ -475,7 +468,6 @@ the object was ${JSON.stringify(s)}`
         const widget = data.widget;
         if (data.current.structure !== indexes.structure) {
             const options: Partial<LoadOptions> = {
-                packed: false,
                 trajectory: true,
             };
             assert(indexes.structure < this._structures.length);
@@ -487,7 +479,8 @@ the object was ${JSON.stringify(s)}`
                 }
             }
 
-            widget.load(`inline '${this._structureForJSmol(indexes.structure)}'`, options);
+            widget.load(this._structure(indexes.structure), options);
+            data.current = indexes;
         }
 
         if (this._indexer.mode === 'atom') {
@@ -658,7 +651,7 @@ the object was ${JSON.stringify(s)}`
 
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
-                const widget = new JSmolWidget(`gi-${cellGUID}`, this._j2spath, cellGUID);
+                const widget = new MoleculeViewer(`gi-${cellGUID}`, cellGUID);
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
@@ -697,7 +690,7 @@ the object was ${JSON.stringify(s)}`
 
         // Force a refresh of the viewer in case the aspect ratio changed
         for (const widgetData of this._viewers.values()) {
-            widgetData.widget.script('refresh');
+            widgetData.widget.resize();
         }
 
         return newGUID;
