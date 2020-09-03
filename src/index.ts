@@ -322,11 +322,10 @@ class DefaultVisualizer {
 
             // Create additional viewers as needed
             for (const environment of settings.pinned.slice(1)) {
-                const data = this.structure.duplicate(this._pinned[0]);
-                if (data === undefined) {
+                const [guid, color] = this.structure.addViewer();
+                if (guid === undefined) {
                     throw Error("too many environments in 'pinned' setting");
                 }
-                const [guid, color] = data;
                 const indexes = this._indexer.from_environment(environment);
 
                 this.map.addMarker(guid, color, indexes);
