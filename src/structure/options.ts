@@ -5,9 +5,9 @@
 
 import assert from 'assert';
 
-import { HTMLOption, OptionsGroup } from '../options';
+import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, makeDraggable } from '../utils';
+import { PositioningCallback, makeDraggable, sendWarning } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -21,8 +21,6 @@ export class StructureOptions extends OptionsGroup {
     public atomLabels: HTMLOption<'boolean'>;
     /// should we show unit cell information and lines
     public unitCell: HTMLOption<'boolean'>;
-    /// Is the current unit cell displayed as a packed cell?
-    public packedCell: HTMLOption<'boolean'>;
     /// number of repetitions in the `a/b/c` direction for the supercell
     public supercell: [HTMLOption<'int'>, HTMLOption<'int'>, HTMLOption<'int'>];
     // should we spin the representation
@@ -57,7 +55,6 @@ export class StructureOptions extends OptionsGroup {
         this.spaceFilling = new HTMLOption('boolean', false);
         this.atomLabels = new HTMLOption('boolean', false);
         this.unitCell = new HTMLOption('boolean', false);
-        this.packedCell = new HTMLOption('boolean', false);
         this.rotation = new HTMLOption('boolean', false);
 
         this.supercell = [
@@ -82,7 +79,7 @@ export class StructureOptions extends OptionsGroup {
         this.environments = {
             activated: new HTMLOption('boolean', true),
             bgColor: new HTMLOption('string', 'grey'),
-            bgStyle: new HTMLOption('string', 'licorice'),
+            bgStyle: new HTMLOption('string', 'ball-stick'),
             center: new HTMLOption('boolean', false),
             cutoff: new HTMLOption('number', 4.0),
         };
@@ -92,7 +89,7 @@ export class StructureOptions extends OptionsGroup {
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
-            ['licorice', 'ball-stick', 'hide'],
+            ['ball-stick', 'licorice', 'hide'],
             'background atoms style'
         );
         this.environments.cutoff.validate = (value) => {
@@ -119,6 +116,24 @@ export class StructureOptions extends OptionsGroup {
             (close as HTMLElement).click();
         }
         this._modal.remove();
+    }
+
+    /**
+     * Applies saved settings, possibly filling in with default values
+     */
+    public applySettings(settings: SavedSettings): void {
+        // don't warn for packedCell setting if is was set to false, which is
+        // now the only possible way of doing it
+        if ('packedCell' in settings) {
+            if (settings.packedCell !== false) {
+                sendWarning(
+                    'packedCell option has been removed, but it is set to true in the settings'
+                );
+            }
+            delete settings.packedCell;
+        }
+
+        super.applySettings(settings);
     }
 
     /**
@@ -195,7 +210,6 @@ export class StructureOptions extends OptionsGroup {
 
         this.rotation.bind(`${guid}-rotation`, 'checked');
         this.unitCell.bind(`${guid}-unit-cell`, 'checked');
-        this.packedCell.bind(`${guid}-packed-cell`, 'checked');
 
         this.supercell[0].bind(`${guid}-supercell-a`, 'value');
         this.supercell[1].bind(`${guid}-supercell-b`, 'value');
