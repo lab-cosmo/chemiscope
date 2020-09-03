@@ -5,7 +5,6 @@
 
 import * as linalg from './linalg';
 import { default as $3Dmol } from './3dmol';
-import { assignBonds } from './3Dmol/assignBonds';
 
 import { Structure } from '../dataset';
 
@@ -97,7 +96,6 @@ export function $3DmolStructure(model: $3Dmol.GLModel, structure: Structure): vo
             z: z,
         });
     }
-    assignBonds(atoms as $3Dmol.AtomSpec[]);
 
     model.addAtoms(atoms);
 }
