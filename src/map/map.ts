@@ -572,40 +572,30 @@ export class PropertiesMap {
     private _createPlot() {
         this._plot.innerHTML = '';
 
-        const colors = this._colors();
-        const lineColors = this._lineColors();
-        const sizes = this._sizes();
-        const symbols = this._symbols();
-
-        const x = this._coordinates(this._options.x);
-        const y = this._coordinates(this._options.y);
-        const z = this._coordinates(this._options.z);
-
         const type = this._is3D() ? 'scatter3d' : 'scattergl';
-
         // The main trace, containing default data
         const main = {
             name: '',
             type: type,
 
-            x: x[0],
-            y: y[0],
-            z: z[0],
+            x: this._coordinates(this._options.x, 0)[0],
+            y: this._coordinates(this._options.y, 0)[0],
+            z: this._coordinates(this._options.z, 0)[0],
 
             hovertemplate: this._options.hovertemplate(),
             marker: {
-                color: colors[0],
+                color: this._colors(0)[0],
                 coloraxis: 'coloraxis',
                 line: {
-                    color: lineColors[0],
+                    color: this._lineColors(0)[0],
                     width: 1,
                 },
                 // prevent plolty from messing with opacity when doing bubble
                 // style charts (different sizes for each point)
                 opacity: 1,
-                size: sizes[0],
+                size: this._sizes(0)[0],
                 sizemode: 'area',
-                symbol: symbols[0],
+                symbol: this._symbols(0)[0],
             },
             mode: 'markers',
             showlegend: false,
@@ -619,19 +609,19 @@ export class PropertiesMap {
             name: 'selected',
             type: type,
 
-            x: [NaN],
-            y: [NaN],
-            z: [NaN],
+            x: [],
+            y: [],
+            z: [],
 
             hoverinfo: 'none',
             marker: {
-                color: colors[1],
+                color: [],
                 line: {
-                    color: lineColors[1],
+                    color: [],
                     width: 2,
                 },
                 opacity: 1,
-                size: sizes[1],
+                size: [],
                 sizemode: 'area',
             },
             mode: 'markers',
@@ -660,6 +650,9 @@ export class PropertiesMap {
                 name: legendNames[s],
                 type: type,
 
+                // We need to add a dummy point to force plotly to display the
+                // associated legend; but we don't want to see the point in the
+                // map. Setting the coordinates to NaN acheive this.
                 x: [NaN],
                 y: [NaN],
                 z: [NaN],
