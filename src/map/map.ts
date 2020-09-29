@@ -342,8 +342,8 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
             this._relayout(({
-                'scene.xaxis.title': this._options.x.property.value,
-                'xaxis.title': this._options.x.property.value,
+                'scene.xaxis.title': this._title(this._options.x.property.value),
+                'xaxis.title': this._title(this._options.x.property.value),
             } as unknown) as Layout);
         };
 
@@ -386,8 +386,8 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y: values }, [0, 1]);
             this._relayout(({
-                'scene.yaxis.title': this._options.y.property.value,
-                'yaxis.title': this._options.y.property.value,
+                'scene.yaxis.title': this._title(this._options.y.property.value),
+                'yaxis.title': this._title(this._options.y.property.value),
             } as unknown) as Layout);
         };
 
@@ -421,7 +421,7 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.z);
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout(({
-                'scene.zaxis.title': this._options.z.property.value,
+                'scene.zaxis.title': this._title(this._options.z.property.value),
             } as unknown) as Layout);
         };
 
@@ -678,13 +678,13 @@ export class PropertiesMap {
         // make a copy of the default layout
         const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
         // and set values speific to the displayed dataset
-        layout.xaxis.title = this._options.x.property.value;
-        layout.yaxis.title = this._options.y.property.value;
+        layout.xaxis.title = this._title(this._options.x.property.value);
+        layout.yaxis.title = this._title(this._options.y.property.value);
         layout.xaxis.type = this._options.x.scale.value;
         layout.yaxis.type = this._options.y.scale.value;
-        layout.scene.xaxis.title = this._options.x.property.value;
-        layout.scene.yaxis.title = this._options.y.property.value;
-        layout.scene.zaxis.title = this._options.z.property.value;
+        layout.scene.xaxis.title = this._title(this._options.x.property.value);
+        layout.scene.yaxis.title = this._title(this._options.y.property.value);
+        layout.scene.zaxis.title = this._options.z.property.value; // using this._title(this._options.z.property.value) here seems to cause troubles
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
@@ -774,6 +774,16 @@ export class PropertiesMap {
         return this._selectTrace<number[]>(values, selected, trace);
     }
 
+    /** Prepare a title of an axis with potential units */
+    private _title(name: string): string{
+        let title = name;
+        let units = this._property(title).units;
+            if (units !== undefined){
+                title += ` [${units}]`;
+            }
+        return title;
+    }
+    
     /**
      * Get the color values to use with the given plotly `trace`, or all of
      * them if `trace === undefined`
