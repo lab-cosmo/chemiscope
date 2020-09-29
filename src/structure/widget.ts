@@ -15,14 +15,16 @@ import { StructureOptions } from './options';
 
 require('../static/chemiscope.css');
 
-function isSafari(): boolean {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    const s = (window as any).safari;
-    if (!s) {
+function invertedZoom(): boolean {
+    // both safari and chrome include `Safari/` in their user agent, Firefox
+    // does not
+    const safariOrChrome = window.navigator.userAgent.includes('Safari/');
+    // TODO: update this condition when ARM mac comes out
+    if (safariOrChrome && window.navigator.platform === 'MacIntel') {
+        return true;
+    } else {
         return false;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    return s.pushNotification.toString() === '[object SafariRemoteNotification]';
 }
 
 /** @hidden
@@ -221,14 +223,14 @@ export class JSmolWidget {
         this._connectSettings();
 
         this._applet = this._createApplet(j2sPath, serverURL);
-        if (!isSafari()) {
+        if (!invertedZoom()) {
             // Invert (cf -1 below) wheel zoom direction to match the one in the
             // map. _DELTAY is replaced by 1 or -1 depending on the wheel/scroll
             // direction.
             //
-            // For some reason, safari is already reversed, and binding a
-            // callback to WHEEL though jsmol is very slow, so don't reverse
-            // in this case
+            // For some reason, safari & chrome on OsX are already reversed,
+            // and binding a callback to WHEEL though jsmol is very slow, so
+            // don't reverse in this case
             this.script('bind "WHEEL" "zoom *@{1.15 ** (-1 * _DELTAY)}";');
         }
 
