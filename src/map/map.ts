@@ -774,16 +774,16 @@ export class PropertiesMap {
         return this._selectTrace<number[]>(values, selected, trace);
     }
 
-    /** Prepare a title of an axis with potential units */
-    private _title(name: string): string{
-        let title = name;
-        let units = this._property(title).units;
-            if (units !== undefined){
-                title += ` [${units}]`;
+    private _title(name: string): string {
+        if (name !== '') {
+            const units = this._property(name).units;
+            if (units !== undefined) {
+                return name + ` [${units}]`;
             }
-        return title;
+        }
+        return name;
     }
-    
+
     /**
      * Get the color values to use with the given plotly `trace`, or all of
      * them if `trace === undefined`

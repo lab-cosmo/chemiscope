@@ -125,9 +125,9 @@ export interface Property {
      * or "C"); and numeric values should be use for everything else.
      */
     values: string[] | number[];
-    /** string containing the description of the property */
+    /** user-facing description of the property */
     description?: string;
-    /** string containing the units of the property */
+    /** unit of the property values */
     units?: string;
 }
 
@@ -328,13 +328,13 @@ function checkProperties(
             }
         }
 
-        // check the meta is valid
+        // check that units & description are valid
         if ('description' in property && typeof property.description !== 'string') {
-            throw Error(`'properties['${key}'].description' should contain string`);
+            throw Error(`'properties['${key}'].description' should contain a string`);
         }
 
         if ('units' in property && typeof property.units !== 'string') {
-            throw Error(`'properties['${key}'].units' should contain string`);
+            throw Error(`'properties['${key}'].units' should contain a string`);
         }
     }
 }

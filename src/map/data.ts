@@ -1,5 +1,3 @@
-import { getUnpackedSettings } from 'http2';
-import { PropertiesMap } from '..';
 /**
  * @packageDocumentation
  * @module map
@@ -16,7 +14,7 @@ export interface NumericProperty {
     values: number[];
     /** string interner if the property was a string-valued property */
     string?: StringInterner;
-    /** add units as optinal*/
+    /** unit of the property */
     units?: string;
 }
 
