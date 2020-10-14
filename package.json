@@ -46,7 +46,7 @@
     "html-loader": "^1.1.0",
     "ify-loader": "^1.1.0",
     "markdown-it": "^11.0.0",
-    "plotly.js": "^1.54.6",
+    "plotly.js": "1.54",
     "prettier": "2.0.5",
     "style-loader": "^1.2.1",
     "tmp": "^0.2.1",
