@@ -684,7 +684,7 @@ export class PropertiesMap {
         layout.yaxis.type = this._options.y.scale.value;
         layout.scene.xaxis.title = this._title(this._options.x.property.value);
         layout.scene.yaxis.title = this._title(this._options.y.property.value);
-        layout.scene.zaxis.title = this._options.z.property.value; // using this._title(this._options.z.property.value) here seems to cause troubles
+        layout.scene.zaxis.title = this._title(this._options.z.property.value);
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;

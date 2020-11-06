@@ -57,7 +57,6 @@ export class StringInterner {
 
 /** Transform a property to a numeric property */
 function propertyToNumeric(name: string, property: Property): NumericProperty {
-    //console.log(name, property.units);
     const prop_type = typeof property.values[0];
     if (prop_type === 'number') {
         return {

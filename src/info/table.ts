@@ -68,6 +68,7 @@ export class Table {
             const description = properties[name].description;
             if (description !== undefined) {
                 td.style.borderBottom = '1px dotted #00f';
+                td.style.cursor = "help"
                 td.style.display = 'inline';
                 td.title = description;
             }
