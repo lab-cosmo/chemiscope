@@ -467,7 +467,9 @@ export class PropertiesMap {
                 this._options.color.max.value = max;
 
                 this._relayout(({
-                    'coloraxis.colorbar.title.text': this._options.color.property.value,
+                    'coloraxis.colorbar.title.text': this._title(
+                        this._options.color.property.value
+                    ),
                     'coloraxis.showscale': true,
                 } as unknown) as Layout);
             } else {
@@ -688,7 +690,7 @@ export class PropertiesMap {
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._options.color.property.value;
+        layout.coloraxis.colorbar.title.text = this._title(this._options.color.property.value);
         layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
