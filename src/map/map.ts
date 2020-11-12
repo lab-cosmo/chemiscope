@@ -780,7 +780,7 @@ export class PropertiesMap {
         if (name !== '') {
             const units = this._property(name).units;
             if (units !== undefined) {
-                return name + ` [${units}]`;
+                return name + `/${units}`;
             }
         }
         return name;

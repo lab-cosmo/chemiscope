@@ -60,7 +60,7 @@ export class Table {
             const units = properties[name].units;
             let title = name;
             if (units !== undefined) {
-                title += ` [${units}]`;
+                title += `/${units}`;
             }
             td.innerText = title;
 
