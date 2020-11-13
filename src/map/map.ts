@@ -342,8 +342,8 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
             this._relayout(({
-                'scene.xaxis.title': this._options.x.property.value,
-                'xaxis.title': this._options.x.property.value,
+                'scene.xaxis.title': this._title(this._options.x.property.value),
+                'xaxis.title': this._title(this._options.x.property.value),
             } as unknown) as Layout);
         };
 
@@ -386,8 +386,8 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y: values }, [0, 1]);
             this._relayout(({
-                'scene.yaxis.title': this._options.y.property.value,
-                'yaxis.title': this._options.y.property.value,
+                'scene.yaxis.title': this._title(this._options.y.property.value),
+                'yaxis.title': this._title(this._options.y.property.value),
             } as unknown) as Layout);
         };
 
@@ -421,7 +421,7 @@ export class PropertiesMap {
             const values = this._coordinates(this._options.z);
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout(({
-                'scene.zaxis.title': this._options.z.property.value,
+                'scene.zaxis.title': this._title(this._options.z.property.value),
             } as unknown) as Layout);
         };
 
@@ -467,7 +467,9 @@ export class PropertiesMap {
                 this._options.color.max.value = max;
 
                 this._relayout(({
-                    'coloraxis.colorbar.title.text': this._options.color.property.value,
+                    'coloraxis.colorbar.title.text': this._title(
+                        this._options.color.property.value
+                    ),
                     'coloraxis.showscale': true,
                 } as unknown) as Layout);
             } else {
@@ -671,17 +673,17 @@ export class PropertiesMap {
         // make a copy of the default layout
         const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
         // and set values speific to the displayed dataset
-        layout.xaxis.title = this._options.x.property.value;
-        layout.yaxis.title = this._options.y.property.value;
+        layout.xaxis.title = this._title(this._options.x.property.value);
+        layout.yaxis.title = this._title(this._options.y.property.value);
         layout.xaxis.type = this._options.x.scale.value;
         layout.yaxis.type = this._options.y.scale.value;
-        layout.scene.xaxis.title = this._options.x.property.value;
-        layout.scene.yaxis.title = this._options.y.property.value;
-        layout.scene.zaxis.title = this._options.z.property.value;
+        layout.scene.xaxis.title = this._title(this._options.x.property.value);
+        layout.scene.yaxis.title = this._title(this._options.y.property.value);
+        layout.scene.zaxis.title = this._title(this._options.z.property.value);
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._options.color.property.value;
+        layout.coloraxis.colorbar.title.text = this._title(this._options.color.property.value);
         layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
@@ -765,6 +767,16 @@ export class PropertiesMap {
             }
         }
         return this._selectTrace<number[]>(values, selected, trace);
+    }
+
+    private _title(name: string): string {
+        if (name !== '') {
+            const units = this._property(name).units;
+            if (units !== undefined) {
+                return name + `/${units}`;
+            }
+        }
+        return name;
     }
 
     /**

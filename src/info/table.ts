@@ -55,7 +55,24 @@ export class Table {
         for (const name in properties) {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
-            td.innerText = name;
+
+            //  add the units to the property if it exists, this is identical to the _title in ../map/map.ts
+            const units = properties[name].units;
+            let title = name;
+            if (units !== undefined) {
+                title += `/${units}`;
+            }
+            td.innerText = title;
+
+            // add a tooltip containing the description of the property and underline if it exists
+            const description = properties[name].description;
+            if (description !== undefined) {
+                td.style.borderBottom = '1px dotted #00f';
+                td.style.cursor = 'help';
+                td.style.display = 'inline';
+                td.title = description;
+            }
+
             tr.appendChild(td);
             const cell = document.createElement('td');
             tr.appendChild(cell);

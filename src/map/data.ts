@@ -14,6 +14,8 @@ export interface NumericProperty {
     values: number[];
     /** string interner if the property was a string-valued property */
     string?: StringInterner;
+    /** unit of the property */
+    units?: string;
 }
 
 /** @hidden
@@ -54,16 +56,17 @@ export class StringInterner {
 }
 
 /** Transform a property to a numeric property */
-function propertyToNumeric(name: string, property: number[] | string[]): NumericProperty {
-    const prop_type = typeof property[0];
+function propertyToNumeric(name: string, property: Property): NumericProperty {
+    const prop_type = typeof property.values[0];
     if (prop_type === 'number') {
         return {
-            values: property as number[],
+            values: property.values as number[],
+            units: property.units,
         };
     } else if (prop_type === 'string') {
         const interner = new StringInterner();
         const values = [];
-        for (const value of property as string[]) {
+        for (const value of property.values as string[]) {
             const numeric = interner.get(value);
             values.push(numeric);
             // string properties are assumed to be categories, and each one of
@@ -81,6 +84,7 @@ function propertyToNumeric(name: string, property: number[] | string[]): Numeric
         return {
             string: interner,
             values: values,
+            units: property.units,
         };
     } else {
         throw Error(`unexpected property type '${prop_type}'`);
@@ -137,7 +141,7 @@ export class MapData {
         for (const name in properties) {
             let property;
             try {
-                property = propertyToNumeric(name, properties[name].values);
+                property = propertyToNumeric(name, properties[name]);
             } catch (e) {
                 sendWarning(`warning: ${(e as Error).message}`);
                 continue;
