@@ -135,9 +135,9 @@ structures.
 
 If all the properties you want to include into chemiscope are already stored
 in an  `ase`_-readable file, you can also use the `chemiscope_input`_ script
-from the command line. Note that chemiscope does not compute structural 
+from the command line. Note that chemiscope does not compute structural
 representations or dimensionality reduction. The `ASAP`_ structural analysis
-package can directly generate an output in chemiscope format. 
+package can directly generate an output in chemiscope format.
 
 .. autofunction:: chemiscope_input::write_chemiscope_input
 
@@ -149,7 +149,7 @@ package can directly generate an output in chemiscope format.
 Input file structure
 --------------------
 
-If you can not or do not want to use the script mentionned above, you can also
+If you can not or do not want to use the script mentioned above, you can also
 directly write the JSON file conforming to the schema described here. The input
 file follows closely the `Dataset`_ typescript interface used in the library.
 Using a pseudo-JSON format, the file should contains the following fields and
@@ -176,7 +176,8 @@ values:
 
         // list of properties in this dataset
         "properties": {
-            // each property have a name, a target and some values
+            // Each property have at least a name, a target and some values.
+            // Optional entries for the units and descriptions can also be added.
             <name>: {
                 // the property target: is it defined per atom or for the full
                 // structures
@@ -184,7 +185,12 @@ values:
                 // values of the properties can either be numbers or strings.
                 // string properties are assumed to represent categories of
                 // data.
-                "values": [1, 2, 3, ...] | ["first", "second", "first", ...]
+                "values": [1, 2, 3, ...] | ["first", "second", "first", ...],
+
+                // OPTIONAL: units of the property' value
+                "units": "A/fs^2",
+                // OPTIONAL: free-form description of the property as a string
+                "description": "acceleration of the atoms in the structure ...",
             }
         }
 
@@ -212,7 +218,7 @@ values:
             ...
         ],
 
-        // OPTIONAL: atom-centered environments descrptions
+        // OPTIONAL: atom-centered environments descriptions
         //
         // If present, there should be one environment for each atom in each
         // structure.

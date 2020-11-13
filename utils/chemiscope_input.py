@@ -130,7 +130,11 @@ def write_chemiscope_input(filename, frames, meta=None, extra=None, cutoff=None)
         extra = {
             'cheese': {
                 'target': 'atom',
-                'values': np.zeros((300, 4))
+                'values': np.zeros((300, 4)),
+                # optional: property unit
+                'unit': 'random / fs',
+                # optional: property description
+                'description': 'a random property for example',
             }
         }
 
@@ -226,10 +230,10 @@ def main():
     ASE.
     """
 
-    # command-line execution. requires ASE IO module
     import argparse
 
     try:
+        # command-line execution. requires ASE IO module
         import ase.io as ase_io
     except ImportError:
         raise ImportError(
