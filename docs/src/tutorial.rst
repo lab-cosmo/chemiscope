@@ -126,23 +126,20 @@ compressed with gzip.
 Creating an input file
 ----------------------
 
-The easiest way to create a JSON input file is to use the `chemiscope_input`_
-Python 3 script that lives inside chemiscope's `github`_ repository. Download
-the script and place it somewhere it can be imported by Python. Then, in your
-own script, run the ``write_chemiscope_input`` function to generate the JSON
-file. This script assumes you use the `ase`_ Python module to read the
-structures.
+The easiest way to create a JSON input file is to use the ``chemiscope``
+package. Install the package with ``pip install chemiscope``, and use
+:py:func:`chemiscope.write_input` in your own script to generate the JSON file. This
+script assumes you use the `ase`_ Python module to read the structures.
 
-If all the properties you want to include into chemiscope are already stored
-in an  `ase`_-readable file, you can also use the `chemiscope_input`_ script
-from the command line. Note that chemiscope does not compute structural
-representations or dimensionality reduction. The `ASAP`_ structural analysis
-package can directly generate an output in chemiscope format.
+If all the properties you want to include into chemiscope are already stored in
+an `ase`_-readable file, the ``chemiscope`` python package also install a
+``chemiscope-input`` command line script Note that chemiscope does not compute
+structural representations or dimensionality reduction. The `ASAP`_ structural
+analysis package is another tool that can directly generate an output in
+chemiscope format.
 
-.. autofunction:: chemiscope_input::write_chemiscope_input
+.. autofunction:: chemiscope.write_input
 
-.. _chemiscope_input: https://github.com/cosmo-epfl/chemiscope/blob/master/utils/chemiscope_input.py
-.. _github: https://github.com/cosmo-epfl/chemiscope
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
 
