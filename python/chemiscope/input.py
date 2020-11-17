@@ -42,11 +42,17 @@ def _linearize(name, property):
                 "values": _typetransform(list(property["values"])),
             }
         elif len(property["values"].shape) == 2:
-            for i in range(property["values"].shape[1]):
-                data[f"{name}[{i + 1}]"] = {
+            if property["values"].shape[1] == 1:
+                data[name] = {
                     "target": property["target"],
-                    "values": _typetransform(list(property["values"][:, i])),
+                    "values": _typetransform(list(property["values"])),
                 }
+            else:
+                for i in range(property["values"].shape[1]):
+                    data[f"{name}[{i + 1}]"] = {
+                        "target": property["target"],
+                        "values": _typetransform(list(property["values"][:, i])),
+                    }
         else:
             raise Exception("unsupported ndarray property")
     else:
