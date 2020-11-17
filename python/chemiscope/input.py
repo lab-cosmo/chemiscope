@@ -8,7 +8,7 @@ import gzip
 
 import numpy as np
 
-IGNORED_ASE_ARRAYS = ["positions", "numbers"]
+from .adapters import frames_to_json, atom_properties, structure_properties
 
 
 def _typetransform(data):
@@ -55,20 +55,6 @@ def _linearize(name, property):
     return data
 
 
-def _frame_to_json(frame):
-    data = {}
-    data["size"] = len(frame)
-    data["names"] = list(frame.symbols)
-    data["x"] = [float(value) for value in frame.positions[:, 0]]
-    data["y"] = [float(value) for value in frame.positions[:, 1]]
-    data["z"] = [float(value) for value in frame.positions[:, 2]]
-
-    if (frame.cell.lengths() != [0.0, 0.0, 0.0]).all():
-        data["cell"] = list(np.concatenate(frame.cell))
-
-    return data
-
-
 def _generate_environments(frames, cutoff):
     environments = []
     for frame_id, frame in enumerate(frames):
@@ -86,8 +72,8 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
 
     :param str path: name of the file to use to save the json data. If it
                      ends with '.gz', a gzip compressed file will be written
-    :param list frames: list of `ase.Atoms`_ objects containing all the
-                        structures
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
+                        objects are supported
     :param dict meta: optional metadata of the dataset, see below
     :param dict extra: optional dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
@@ -174,38 +160,15 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
         for name, value in extra.items():
             properties.update(_linearize(name, value))
 
-    # Read properties coming from the ase.Atoms objects
-    from_frames = {}
+    # Read properties coming from the frames
+    for name, value in atom_properties(frames):
+        properties.update(_linearize(name, value))
 
-    # target: structure properties
-    from_frames.update(
-        {name: {"target": "structure", "values": []} for name in frames[0].info.keys()}
-    )
-    for frame in frames:
-        for name, value in frame.info.items():
-            from_frames[name]["values"].append(value)
-
-    # target: atom properties
-    from_frames.update(
-        {
-            name: {"target": "atom", "values": value}
-            for name, value in frames[0].arrays.items()
-            if name not in IGNORED_ASE_ARRAYS
-        }
-    )
-    for frame in frames[1:]:
-        for name, value in frame.arrays.items():
-            if name in IGNORED_ASE_ARRAYS:
-                continue
-            from_frames[name]["values"] = np.concatenate(
-                [from_frames[name]["values"], value]
-            )
-
-    for name, value in from_frames.items():
+    for name, value in structure_properties(frames):
         properties.update(_linearize(name, value))
 
     data["properties"] = properties
-    data["structures"] = [_frame_to_json(frame) for frame in frames]
+    data["structures"] = frames_to_json(frames)
 
     if cutoff is not None:
         data["environments"] = _generate_environments(frames, cutoff)
