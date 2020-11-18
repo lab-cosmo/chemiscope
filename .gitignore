@@ -1,4 +1,7 @@
 node_modules/
 dist/
 standalone.html
+
+__pycache__
 *.pyc
+*.egg-info
