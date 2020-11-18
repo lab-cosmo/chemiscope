@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-# this is a shim file to allow `python setup.py develop`/`pip install -e` to
-# work
 from setuptools import setup
+import json
+import os
 
 if __name__ == "__main__":
-    setup()
+    # get the version directly from the package.json file
+    package_json = os.path.join(os.path.dirname(__file__), "..", "package.json")
+    version = json.load(open(package_json))["version"]
+    setup(version=version)
