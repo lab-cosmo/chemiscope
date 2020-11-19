@@ -6,7 +6,8 @@ on:
     # Check all PR
 
 jobs:
-  test:
+  # Javascript tests and linting
+  npm-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,3 +21,48 @@ jobs:
       - uses: bahmutov/npm-install@v1
       - run: npm run build
       - run: npm test
+  # Python unit tests
+  python-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Run tests
+        run: |
+          cd python
+          tox -e py
+
+  # Python linting
+  python-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black
+      - name: Lint with flake8
+        run: |
+          # ignore formatting, it will be checked by black
+          export FORMATTING_RULES="E101,E111,E114,E115,E116,E117,E12,E13,E2,E3,E401,E5,E70,W1,W2,W3,W5"
+          flake8 --ignore=$FORMATTING_RULES .
+      - name: Lint with black
+        run: |
+          black --check .
