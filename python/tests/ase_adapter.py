@@ -70,6 +70,56 @@ class TestASEAdapter(unittest.TestCase):
         self.assertEqual(data["properties"]["bar"].get("units"), None)
         self.assertEqual(data["properties"]["bar"].get("description"), None)
 
+    def test_different_arrays(self):
+        frame = BASE_FRAME.copy()
+        frame.arrays["bar"] = [4, 5, 6]
+        frame.arrays["foo"] = [4, 5, 6]
+
+        frame2 = BASE_FRAME.copy()
+        frame2.arrays["bar"] = [-1, 2, 3]
+        frame2.arrays["baz"] = [33, 44, 55]
+
+        with self.assertWarns(UserWarning) as cm:
+            data = create_input([frame, frame2])
+        self.assertEqual(
+            cm.warning.args,
+            (
+                "the following atomic properties properties are only defined "
+                + "for a subset of frames: ['baz', 'foo']; they will be ignored",
+            ),
+        )
+
+        self.assertEqual(len(data["properties"].keys()), 1)
+        self.assertEqual(data["properties"]["bar"]["target"], "atom")
+        self.assertEqual(data["properties"]["bar"]["values"], [4, 5, 6, -1, 2, 3])
+        self.assertEqual(data["properties"]["bar"].get("units"), None)
+        self.assertEqual(data["properties"]["bar"].get("description"), None)
+
+    def test_different_info(self):
+        frame = BASE_FRAME.copy()
+        frame.info["bar"] = 4
+        frame.info["foo"] = False
+
+        frame2 = BASE_FRAME.copy()
+        frame2.info["bar"] = -1
+        frame2.info["baz"] = "test"
+
+        with self.assertWarns(UserWarning) as cm:
+            data = create_input([frame, frame2])
+        self.assertEqual(
+            cm.warning.args,
+            (
+                "the following structure properties properties are only defined "
+                + "for a subset of frames: ['baz', 'foo']; they will be ignored",
+            ),
+        )
+
+        self.assertEqual(len(data["properties"].keys()), 1)
+        self.assertEqual(data["properties"]["bar"]["target"], "structure")
+        self.assertEqual(data["properties"]["bar"]["values"], [4, -1])
+        self.assertEqual(data["properties"]["bar"].get("units"), None)
+        self.assertEqual(data["properties"]["bar"].get("description"), None)
+
 
 if __name__ == "__main__":
     unittest.main()
