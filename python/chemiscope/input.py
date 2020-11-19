@@ -12,66 +12,6 @@ import numpy as np
 from .adapters import frames_to_json, atom_properties, structure_properties
 
 
-def _typetransform(data):
-    assert isinstance(data, list) and len(data) > 0
-    if isinstance(data[0], str):
-        return list(map(str, data))
-    elif isinstance(data[0], bytes):
-        return list(map(lambda u: u.decode("utf8"), data))
-    else:
-        try:
-            return [float(value) for value in data]
-        except ValueError:
-            raise Exception("unsupported type in property")
-
-
-def _linearize(name, property):
-    """
-    Transform 2D arrays in multiple 1D arrays, converting types to fit json as
-    needed.
-    """
-    data = {}
-    if isinstance(property["values"], list):
-        data[name] = {
-            "target": property["target"],
-            "values": _typetransform(property["values"]),
-        }
-    elif isinstance(property["values"], np.ndarray):
-        if len(property["values"].shape) == 1:
-            data[name] = {
-                "target": property["target"],
-                "values": _typetransform(list(property["values"])),
-            }
-        elif len(property["values"].shape) == 2:
-            if property["values"].shape[1] == 1:
-                data[name] = {
-                    "target": property["target"],
-                    "values": _typetransform(list(property["values"])),
-                }
-            else:
-                for i in range(property["values"].shape[1]):
-                    data[f"{name}[{i + 1}]"] = {
-                        "target": property["target"],
-                        "values": _typetransform(list(property["values"][:, i])),
-                    }
-        else:
-            raise Exception("unsupported ndarray property")
-    else:
-        raise Exception(f"unknown type for property {name}")
-
-    return data
-
-
-def _generate_environments(frames, cutoff):
-    environments = []
-    for frame_id, frame in enumerate(frames):
-        for center in range(len(frame)):
-            environments.append(
-                {"structure": frame_id, "center": center, "cutoff": cutoff}
-            )
-    return environments
-
-
 def create_input(frames, meta=None, properties=None, cutoff=None):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -152,25 +92,29 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
 
         for key in meta.keys():
             if key not in ["name", "description", "authors", "references"]:
-                warnings.warn("ignoring unexpected metadata: {}".format(key))
+                warnings.warn(f"ignoring unexpected metadata: {key}")
 
     if "name" not in data["meta"] or not data["meta"]["name"]:
         data["meta"]["name"] = "<unknown>"
 
-    properties = {}
+    data["structures"] = frames_to_json(frames)
+    n_structures = len(data["structures"])
+    n_atoms = sum(s["size"] for s in data["structures"])
+
+    data["properties"] = {}
     if properties is not None:
         for name, value in properties.items():
-            properties.update(_linearize(name, value))
+            _validate_property(name, value)
+            data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
     # Read properties coming from the frames
-    for name, value in atom_properties(frames):
-        properties.update(_linearize(name, value))
+    for name, value in atom_properties(frames).items():
+        _validate_property(name, value)
+        data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
-    for name, value in structure_properties(frames):
-        properties.update(_linearize(name, value))
-
-    data["properties"] = properties
-    data["structures"] = frames_to_json(frames)
+    for name, value in structure_properties(frames).items():
+        _validate_property(name, value)
+        data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
     if cutoff is not None:
         data["environments"] = _generate_environments(frames, cutoff)
@@ -210,3 +154,120 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
     else:
         with open(path, "w") as file:
             json.dump(data, file)
+
+
+def _typetransform(data, name):
+    assert isinstance(data, list) and len(data) > 0
+    if isinstance(data[0], str):
+        return list(map(str, data))
+    elif isinstance(data[0], bytes):
+        return list(map(lambda u: u.decode("utf8"), data))
+    else:
+        try:
+            return [float(value) for value in data]
+        except Exception:
+            raise Exception(
+                f"unsupported type in property '{name}' values: "
+                + "should be string or number"
+            )
+
+
+def _linearize(name, property, n_structures, n_atoms):
+    """
+    Transform 2D arrays in multiple 1D arrays, converting types to fit json as
+    needed.
+    """
+    data = {}
+    if isinstance(property["values"], list):
+        data[name] = {
+            "target": property["target"],
+            "values": _typetransform(property["values"], name),
+        }
+    elif isinstance(property["values"], np.ndarray):
+        if len(property["values"].shape) == 1:
+            data[name] = {
+                "target": property["target"],
+                "values": _typetransform(list(property["values"]), name),
+            }
+        elif len(property["values"].shape) == 2:
+            if property["values"].shape[1] == 1:
+                data[name] = {
+                    "target": property["target"],
+                    "values": _typetransform(list(property["values"]), name),
+                }
+            else:
+                for i in range(property["values"].shape[1]):
+                    data[f"{name}[{i + 1}]"] = {
+                        "target": property["target"],
+                        "values": _typetransform(list(property["values"][:, i]), name),
+                    }
+        else:
+            raise Exception("unsupported ndarray property")
+    else:
+        raise Exception(
+            f"unknown type ({type(property['values'])}) for property '{name}'"
+        )
+
+    if "units" in property:
+        for item in data.values():
+            item["units"] = str(property["units"])
+
+    if "description" in property:
+        for i, item in enumerate(data.values()):
+            # add [component XX] to the description if values was a ndarray
+            extra = f" [component {i + 1}]" if len(data) > 1 else ""
+            item["description"] = str(property["description"]) + extra
+
+    for prop in data.values():
+        if prop["target"] == "atom" and len(prop["values"]) != n_atoms:
+            raise Exception(
+                f"wrong size for the property '{name}' with target=='atom': "
+                + f"expected {n_atoms} values, got {len(prop['values'])}"
+            )
+
+        if prop["target"] == "structure" and len(prop["values"]) != n_structures:
+            raise Exception(
+                f"wrong size for the property '{name}' with target=='structure': "
+                + f"expected {n_structures} values, got {len(prop['values'])}"
+            )
+
+    return data
+
+
+def _generate_environments(frames, cutoff):
+    if not isinstance(cutoff, float):
+        raise Exception(
+            f"cutoff must be a float, got '{cutoff}' of type {type(cutoff)}"
+        )
+
+    environments = []
+    for frame_id, frame in enumerate(frames):
+        for center in range(len(frame)):
+            environments.append(
+                {"structure": frame_id, "center": center, "cutoff": cutoff}
+            )
+    return environments
+
+
+def _validate_property(name, property):
+    if name == "":
+        raise Exception("the name of a property can not be the empty string")
+    elif not isinstance(name, str):
+        raise Exception(
+            "the name of a property name must be a string, "
+            + f"got '{name}' of type {type(name)}"
+        )
+
+    if "target" not in property:
+        raise Exception(f"missing 'target' for the '{name}' property")
+    elif property["target"] not in ["atom", "structure"]:
+        raise Exception(
+            f"the target must be 'atom' or 'structure' for the '{name}' property"
+        )
+
+    if "values" not in property:
+        raise Exception(f"missing 'values' for the '{name}' property")
+
+    for key in property.keys():
+        if key not in ["target", "values", "description", "units"]:
+            warnings.warn(f"ignoring unexpected property key: {key}")
