@@ -128,8 +128,9 @@ Creating an input file
 
 The easiest way to create a JSON input file is to use the ``chemiscope``
 package. Install the package with ``pip install chemiscope``, and use
-:py:func:`chemiscope.write_input` in your own script to generate the JSON file. This
-script assumes you use the `ase`_ Python module to read the structures.
+:py:func:`chemiscope.write_input` or :py:func:`chemiscope.create_input` in your
+own script to generate the JSON file. This script assumes you use the `ase`_
+Python module to read the structures.
 
 If all the properties you want to include into chemiscope are already stored in
 an `ase`_-readable file, the ``chemiscope`` python package also install a
@@ -139,6 +140,8 @@ analysis package is another tool that can directly generate an output in
 chemiscope format.
 
 .. autofunction:: chemiscope.write_input
+
+.. autofunction:: chemiscope.create_input
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP

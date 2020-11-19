@@ -5,6 +5,7 @@ Generate JSON input files for the default chemiscope visualizer.
 import warnings
 import json
 import gzip
+import os
 
 import numpy as np
 
@@ -71,13 +72,11 @@ def _generate_environments(frames, cutoff):
     return environments
 
 
-def write_input(path, frames, meta=None, extra=None, cutoff=None):
+def create_input(frames, meta=None, extra=None, cutoff=None):
     """
-    Create the input JSON file used by the default chemiscope visualizer, and
-    save it to the given ``path``.
+    Create a dictionary that can be saved to JSON using the format used by
+    the default chemiscope visualizer.
 
-    :param str path: name of the file to use to save the json data. If it
-                     ends with '.gz', a gzip compressed file will be written
     :param list frames: list of atomic structures. For now, only `ase.Atoms`_
                         objects are supported
     :param dict meta: optional metadata of the dataset, see below
@@ -101,7 +100,7 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
             ],
         }
 
-    The written JSON file will contain all the properties defined on the
+    The returned dictionary will contain all the properties defined on the
     `ase.Atoms`_ objects. Values in ``ase.Atoms.arrays`` are mapped to
     ``target = "atom"`` properties; while values in ``ase.Atoms.info`` are
     mapped to ``target = "structure"`` properties. The only exception is
@@ -136,9 +135,6 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
 
-    if not (path.endswith(".json") or path.endswith(".json.gz")):
-        raise Exception("path should end with .json or .json.gz")
-
     data = {"meta": {}}
 
     if meta is not None:
@@ -159,7 +155,7 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
                 warnings.warn("ignoring unexpected metadata: {}".format(key))
 
     if "name" not in data["meta"] or not data["meta"]["name"]:
-        data["meta"]["name"] = path
+        data["meta"]["name"] = "<unknown>"
 
     properties = {}
     if extra is not None:
@@ -178,6 +174,35 @@ def write_input(path, frames, meta=None, extra=None, cutoff=None):
 
     if cutoff is not None:
         data["environments"] = _generate_environments(frames, cutoff)
+
+    return data
+
+
+def write_input(path, frames, meta=None, extra=None, cutoff=None):
+    """
+    Create the input JSON file used by the default chemiscope visualizer, and
+    save it to the given ``path``.
+
+    :param str path: name of the file to use to save the json data. If it
+                     ends with '.gz', a gzip compressed file will be written
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
+                        objects are supported
+    :param dict meta: optional metadata of the dataset
+    :param dict extra: optional dictionary of additional properties
+    :param float cutoff: optional. If present, will be used to generate
+                         atom-centered environments
+
+    This function uses :py:func:`create_input` to generate the input data, see
+    the documentation of this function for more information.
+    """
+
+    if not (path.endswith(".json") or path.endswith(".json.gz")):
+        raise Exception("path should end with .json or .json.gz")
+
+    data = create_input(frames, meta, extra, cutoff)
+
+    if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
+        data["meta"]["name"] = os.path.basename(path).split(".")[0]
 
     if path.endswith(".gz"):
         with gzip.open(path, "w", 9) as file:
