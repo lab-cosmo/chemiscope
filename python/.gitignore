@@ -1,0 +1,5 @@
+.tox/
+__pycache__/
+*.pyc
+*.egg-info
+LICENSE
