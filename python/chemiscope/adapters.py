@@ -14,6 +14,12 @@ def frames_to_json(frames):
 
     if HAVE_ASE and isinstance(frames[0], ase.Atoms):
         return [_ase_to_json(frame) for frame in frames]
+    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
+        raise Exception(
+            "expected ase.Atoms, got ase.Atom. "
+            + "Try passing a list of frames instead of a single frame "
+            + "(`[frame]` instead of `frame`)"
+        )
     else:
         raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
 
@@ -22,7 +28,13 @@ def atom_properties(frames):
     frames = list(frames)
 
     if HAVE_ASE and isinstance(frames[0], ase.Atoms):
-        return [_ase_atom_properties(frame) for frame in frames]
+        return _ase_atom_properties(frames)
+    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
+        raise Exception(
+            "expected ase.Atoms, got ase.Atom. "
+            + "Try passing a list of frames instead of a single frame "
+            + "(`[frame]` instead of `frame`)"
+        )
     else:
         raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
 
@@ -31,7 +43,13 @@ def structure_properties(frames):
     frames = list(frames)
 
     if HAVE_ASE and isinstance(frames[0], ase.Atoms):
-        return [_ase_structure_properties(frame) for frame in frames]
+        return _ase_structure_properties(frames)
+    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
+        raise Exception(
+            "expected ase.Atoms, got ase.Atom. "
+            + "Try passing a list of frames instead of a single frame "
+            + "(`[frame]` instead of `frame`)"
+        )
     else:
         raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
 
