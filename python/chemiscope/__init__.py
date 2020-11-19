@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .input import write_input
+from .input import create_input, write_input
 
 
 # Get the version from setuptools metadata (which took it from package.json)
