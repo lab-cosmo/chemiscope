@@ -11,51 +11,69 @@ except ImportError:
 
 
 def frames_to_json(frames):
-    frames = list(frames)
+    """
+    Convert the given ``frames`` to the JSON structure used by chemiscope.
 
-    if HAVE_ASE and isinstance(frames[0], ase.Atoms):
-        return [_ase_to_json(frame) for frame in frames]
-    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
-        raise Exception(
-            "expected ase.Atoms, got ase.Atom. "
-            + "Try passing a list of frames instead of a single frame "
-            + "(`[frame]` instead of `frame`)"
-        )
+    This function is a shim calling specialized implementations for all the
+    supported frame types. Currently only `ase.Atoms` frames are supported.
+
+    :param frames: iterable over structures (typically a list of frames)
+    """
+    frames_list = list(frames)
+
+    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
+        return [_ase_to_json(frame) for frame in frames_list]
+    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
+        # deal with the user passing a single frame
+        return frames_to_json([frames])
     else:
-        raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
+        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
 
 
 def atom_properties(frames):
-    frames = list(frames)
+    """
+    Extract "atom" properties from the given ``frames``, and give them as a
+    dictionary compatible with :py:func:`create_input`.
 
-    if HAVE_ASE and isinstance(frames[0], ase.Atoms):
-        return _ase_atom_properties(frames)
-    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
-        raise Exception(
-            "expected ase.Atoms, got ase.Atom. "
-            + "Try passing a list of frames instead of a single frame "
-            + "(`[frame]` instead of `frame`)"
-        )
+    This function is a shim calling specialized implementations for all the
+    supported frame types. Currently only `ase.Atoms` frames are supported.
+
+    :param frames: iterable over structures (typically a list of frames)
+    """
+    frames_list = list(frames)
+
+    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
+        return _ase_atom_properties(frames_list)
+    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
+        # deal with the user passing a single frame
+        return atom_properties([frames])
     else:
-        raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
+        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
 
 
 def structure_properties(frames):
-    frames = list(frames)
+    """
+    Extract "structure" properties from the given ``frames``, and give them as a
+    dictionary compatible with :py:func:`create_input`.
 
-    if HAVE_ASE and isinstance(frames[0], ase.Atoms):
-        return _ase_structure_properties(frames)
-    elif HAVE_ASE and isinstance(frames[0], ase.Atom):
-        raise Exception(
-            "expected ase.Atoms, got ase.Atom. "
-            + "Try passing a list of frames instead of a single frame "
-            + "(`[frame]` instead of `frame`)"
-        )
+    This function is a shim calling specialized implementations for all the
+    supported frame types. Currently only `ase.Atoms` frames are supported.
+
+    :param frames: iterable over structures (typically a list of frames)
+    """
+    frames_list = list(frames)
+
+    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
+        return _ase_structure_properties(frames_list)
+    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
+        # deal with the user passing a single frame
+        return structure_properties([frames])
     else:
-        raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
+        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
 
 
 def _ase_to_json(frame):
+    """Implementation of frame_to_json for ase.Atoms"""
     data = {}
     data["size"] = len(frame)
     data["names"] = list(frame.symbols)
@@ -69,10 +87,9 @@ def _ase_to_json(frame):
     return data
 
 
-IGNORED_ASE_ARRAYS = ["positions", "numbers"]
-
-
 def _ase_atom_properties(frames):
+    """Implementation of atom_properties for ase.Atoms"""
+    IGNORED_ASE_ARRAYS = ["positions", "numbers"]
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
@@ -118,10 +135,13 @@ def _ase_atom_properties(frames):
             properties[name]["values"] = np.concatenate(
                 [properties[name]["values"], value]
             )
+
+    _remove_invalid_properties(properties, "ASE")
     return properties
 
 
 def _ase_structure_properties(frames):
+    """Implementation of structure_properties for ase.Atoms"""
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
@@ -156,4 +176,44 @@ def _ase_structure_properties(frames):
             if name in all_names:
                 properties[name]["values"].append(value)
 
+    _remove_invalid_properties(properties, "ASE")
+
     return properties
+
+
+def _remove_invalid_properties(properties, origin):
+    """
+    Remove invalid properties from the ``properties`` dictionary. ``origin`` is
+    used in error messages as the property origin
+    """
+    to_remove = []
+    for name, property in properties.items():
+        for value in property["values"]:
+            if not _is_convertible_to_property(value):
+                warnings.warn(
+                    f"value '{value}' of type '{type(value)}' for the '{name}' "
+                    + f"property from {origin} is not convertible to float or "
+                    + "string, this property will be ignored."
+                )
+                to_remove.append(name)
+                break
+
+    for name in to_remove:
+        del properties[name]
+
+
+def _is_convertible_to_property(value):
+    """
+    Check whether a value is convertible to a chemiscope property, i.e. if it is
+    a string or something convertible to float.
+    """
+    if isinstance(value, (bytes, str)):
+        # string types
+        return True
+    else:
+        # everything convertible to float
+        try:
+            float(value)
+            return True
+        except Exception:
+            return False
