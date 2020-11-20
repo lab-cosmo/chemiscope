@@ -157,6 +157,13 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
 
 
 def _typetransform(data, name):
+    """
+    Transform the given data to either a list of string or a list of floats.
+
+    :param data: list of unknown type to be converted
+    :param name: name of the property related to this data, to be used in
+                 error messages
+    """
     assert isinstance(data, list) and len(data) > 0
     if isinstance(data[0], str):
         return list(map(str, data))
@@ -174,8 +181,19 @@ def _typetransform(data, name):
 
 def _linearize(name, property, n_structures, n_atoms):
     """
-    Transform 2D arrays in multiple 1D arrays, converting types to fit json as
-    needed.
+    Transform a property dict (containing "value", "target", "units",
+    "description") with potential multi-dimensional "values" key to data that
+    chemiscope can load.
+
+    Multi-dimensional "value" generate multiple properties named "XXX [1]", "XXX
+    [2]", "XXX [3]", etc. Data in "values" are converted to either string or
+    float, to ensure it is compatible with JSON.
+
+    :param name: name of the property related to this data, to be used in error
+                 messages
+    :param property: dictionary containing the property data and metadata
+    :param n_structures: total number of structures, to validate the array sizes
+    :param n_atoms: total number of atoms, to validate the array sizes
     """
     data = {}
     if isinstance(property["values"], list):
@@ -208,6 +226,7 @@ def _linearize(name, property, n_structures, n_atoms):
             f"unknown type ({type(property['values'])}) for property '{name}'"
         )
 
+    # get property metadata
     if "units" in property:
         for item in data.values():
             item["units"] = str(property["units"])
@@ -218,6 +237,7 @@ def _linearize(name, property, n_structures, n_atoms):
             extra = f" [component {i + 1}]" if len(data) > 1 else ""
             item["description"] = str(property["description"]) + extra
 
+    # Validate the properties size
     for prop in data.values():
         if prop["target"] == "atom" and len(prop["values"]) != n_atoms:
             raise Exception(

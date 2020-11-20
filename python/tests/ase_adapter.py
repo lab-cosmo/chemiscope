@@ -8,7 +8,7 @@ BASE_FRAME = ase.Atoms("CO2", positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]])
 
 class TestASEAdapter(unittest.TestCase):
     def test_structures(self):
-        data = create_input([BASE_FRAME])
+        data = create_input(BASE_FRAME)
         self.assertEqual(len(data["structures"]), 1)
         self.assertEqual(data["structures"][0]["size"], 3)
         self.assertEqual(data["structures"][0]["names"], ["C", "O", "O"])
@@ -43,7 +43,7 @@ class TestASEAdapter(unittest.TestCase):
         )
 
     def test_arrays_numbers_postions_ignored(self):
-        data = create_input([BASE_FRAME])
+        data = create_input(BASE_FRAME)
         self.assertEqual(len(BASE_FRAME.arrays.keys()), 2)
         self.assertEqual(len(data["properties"].keys()), 0)
 
@@ -119,6 +119,23 @@ class TestASEAdapter(unittest.TestCase):
         self.assertEqual(data["properties"]["bar"]["values"], [4, -1])
         self.assertEqual(data["properties"]["bar"].get("units"), None)
         self.assertEqual(data["properties"]["bar"].get("description"), None)
+
+    def test_wrong_property_type(self):
+        frame = BASE_FRAME.copy()
+        frame.arrays["bar"] = [{"f": 3}, {"f": 3}, {"f": 3}]
+
+        with self.assertWarns(UserWarning) as cm:
+            data = create_input(frame)
+        self.assertEqual(
+            cm.warning.args,
+            (
+                "value '{'f': 3}' of type '<class 'dict'>' for the 'bar' property "
+                + "from ASE is not convertible to float or string, this property "
+                + "will be ignored.",
+            ),
+        )
+
+        self.assertEqual(len(data["properties"].keys()), 0)
 
 
 if __name__ == "__main__":
