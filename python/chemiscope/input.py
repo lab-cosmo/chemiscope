@@ -72,6 +72,35 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     will generate four properties named ``cheese[1]``, ``cheese[2]``,
     ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
 
+    Here is a quick example of generating a chemiscope input from an `ase.Atoms`_
+    file, a `json`_-type metadatafile, and a text file which contains additional
+    atomic properties as columns, with headers.
+
+    .. code-block:: python
+
+       from ase.io import read
+       import numpy as np
+       import json
+
+       input_file = 'trajectory.xyz'
+       property_file = 'properties.txt'
+       meta_file = 'metadata.json'
+
+       frames = read(input_file, ':')
+       property_values = np.genfromtxt(property_file, names=True)
+       property_dictionary = {
+                              name: {
+                                        'target': 'atom',
+                                        'values': property_values[name],
+                                    }
+                              for name in property_values.dtype.names
+                             }
+
+       meta = json.load(open(meta_file, 'r'))
+       c_input = create_input(frames=frames, meta=meta, properties=property_dictionary)
+
+
+    .. _`json`: www.json.org
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
 
