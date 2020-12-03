@@ -133,8 +133,8 @@ own script to generate the JSON file. This script assumes you use the `ase`_
 Python module to read the structures.
 
 If all the properties you want to include into chemiscope are already stored in
-an `ase`_-readable file, the ``chemiscope`` python package also install a
-``chemiscope-input`` command line script Note that chemiscope does not compute
+a file `ase`_ can read, the ``chemiscope`` python package also install a
+``chemiscope-input`` command line script. Note that chemiscope does not compute
 structural representations or dimensionality reduction. The `ASAP`_ structural
 analysis package is another tool that can directly generate an output in
 chemiscope format.
