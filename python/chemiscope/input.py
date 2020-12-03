@@ -72,35 +72,6 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     will generate four properties named ``cheese[1]``, ``cheese[2]``,
     ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
 
-    Here is a quick example of generating a chemiscope input from an `ase.Atoms`_
-    file, a `json`_-type metadatafile, and a text file which contains additional
-    atomic properties as columns, with headers.
-
-    .. code-block:: python
-
-       from ase.io import read
-       import numpy as np
-       import json
-
-       input_file = 'trajectory.xyz'
-       property_file = 'properties.txt'
-       meta_file = 'metadata.json'
-
-       frames = read(input_file, ':')
-       property_values = np.genfromtxt(property_file, names=True)
-       property_dictionary = {
-                              name: {
-                                        'target': 'atom',
-                                        'values': property_values[name],
-                                    }
-                              for name in property_values.dtype.names
-                             }
-
-       meta = json.load(open(meta_file, 'r'))
-       c_input = create_input(frames=frames, meta=meta, properties=property_dictionary)
-
-
-    .. _`json`: www.json.org
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
 
@@ -156,8 +127,8 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
     Create the input JSON file used by the default chemiscope visualizer, and
     save it to the given ``path``.
 
-    :param str path: name of the file to use to save the json data. If it
-                     ends with '.gz', a gzip compressed file will be written
+    :param str path: name of the file to use to save the json data. If it ends
+                     with '.gz', a gzip compressed file will be written
     :param list frames: list of atomic structures. For now, only `ase.Atoms`_
                         objects are supported
     :param dict meta: optional metadata of the dataset
@@ -167,6 +138,46 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
 
     This function uses :py:func:`create_input` to generate the input data, see
     the documentation of this function for more information.
+
+    Here is a quick example of generating a chemiscope input reading the
+    structures from a file that `ase <ase-io_>`_ can read, and performing PCA
+    using `sklearn`_ on a descriptor computed with another package.
+
+    .. code-block:: python
+
+        from ase import io
+        import numpy as np
+        import sklearn
+        from chemiscope import write_input
+
+        frames = ase.io.read('trajectory.xyz', ':')
+
+        # example property 1: list containing the energy of each structure,
+        # from calculations performed beforehand
+        energy = [ ... ]
+
+
+        # example property 2: PCA projection computed using sklearn.
+        # X contains a multi-dimensional descriptor of the structure
+        X = np.array( ... )
+        pca = sklearn.decomposition.PCA(n_components=3).fit_transform(X)
+
+        properties = {
+            "PCA": {
+                "target": "atom",
+                "values": pca,
+            },
+            "energies": {
+                "target": "structure",
+                "values": energies,
+                "units": "kcal/mol",
+            },
+        }
+
+        write_input("chemiscope.json.gz", frames=frames, properties=properties)
+
+    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _sklearn: https://scikit-learn.org/
     """
 
     if not (path.endswith(".json") or path.endswith(".json.gz")):
