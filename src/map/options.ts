@@ -128,7 +128,7 @@ export class MapOptions extends OptionsGroup {
         this.y.property.value = propertiesName[1];
         this.z.property.value = '';
 
-        if (propertiesName.length >= 2) {
+        if (propertiesName.length > 2) {
             this.color.property.value = propertiesName[2];
         } else {
             this.color.property.value = '';
