@@ -20,14 +20,6 @@ describe('MapOptions', () => {
         setupJSDOM();
     });
 
-    it('validate new values for properties');
-
-    it('creates HTML elements with unique id');
-
-    it('can save settings');
-
-    it('can apply saved settings');
-
     it('can remove itself from DOM', () => {
         const root = document.createElement('div');
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
