@@ -10,6 +10,9 @@ export const BASE_CONFIG: webpack.Configuration = {
         new webpack.DefinePlugin({
             CHEMISCOPE_GIT_VERSION: `"${GIT_VERSION}"`,
         }),
+        new webpack.ProvidePlugin({
+            process: 'process/browser',
+        }),
     ],
     resolve: {
         extensions: ['.js', '.ts'],
