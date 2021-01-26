@@ -45,10 +45,10 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     ``target = "atom"`` properties; while values in ``ase.Atoms.info`` are
     mapped to ``target = "structure"`` properties. The only exception is
     ``ase.Atoms.arrays["numbers"]``, which is always ignored. If you want to
-    have the atomic numbers as a property, you should add it to ``extra``
+    have the atomic numbers as a property, you should add it to ``properties``
     manually.
 
-    Additional properties can be added with the ``extra`` parameter. This
+    Additional properties can be added with the ``properties`` parameter. This
     parameter should be a dictionary containing one entry for each property.
     Each entry contains a ``target`` attribute (``'atom'`` or ``'structure'``)
     and a set of values. ``values`` can be a Python list of float or string; a
@@ -58,7 +58,7 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
 
     .. code-block:: python
 
-        extra = {
+        properties = {
             'cheese': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
@@ -154,7 +154,7 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
 
         # example property 1: list containing the energy of each structure,
         # from calculations performed beforehand
-        energy = [ ... ]
+        energies = [ ... ]
 
 
         # example property 2: PCA projection computed using sklearn.

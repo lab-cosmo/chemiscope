@@ -10,7 +10,7 @@ Dependencies
 ^^^^^^^^^^^^
 
 Chemiscope relies on different external dependencies that you should load in all
-the HTML pages using it. You can serve these from your own webserver, or use a
+the HTML pages using it. You can serve these from your own web server, or use a
 CDN to deliver them.
 
 - `JSmol <http://jmol.org/>`_ for structure visualization;
@@ -44,10 +44,10 @@ the minified JavaScript file much smaller. Other partial builds containing only
 part of chemiscope can be added upon request.
 
 .. _DefaultVisualizer: api/classes/main.defaultvisualizer.html
-.. _addWarningHandler: api/modules/utils.html#addwarninghandler
+.. _addWarningHandler: api/modules/utils.html#addwarninghandler-1
 .. _ViewersGrid: api/classes/structure.viewersgrid.html
-.. _PropertiesMap: api/classes/map.propertiesmap.html
-.. _EnvironmentInfo: api/classes/info.environmentinfo.html
+.. _PropertiesMap: api/classes/map.propertiesmap-1.html
+.. _EnvironmentInfo: api/classes/info.environmentinfo-1.html
 .. _MetadataPanel: api/classes/main.metadatapanel.html
 .. _EnvironmentIndexer: api/classes/utils.environmentindexer.html
 .. _JSmolWidget: api/classes/structure.jsmolwidget.html
