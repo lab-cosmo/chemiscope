@@ -9,12 +9,11 @@ import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID, sendWarning, unreachable } from '../utils';
+import { generateGUID, getByID, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Structure } from '../dataset';
 
 import { StructureOptions } from './options';
-import { $3DmolStructure } from './utils';
 
 require('../static/chemiscope.css');
 
@@ -23,13 +22,52 @@ require('../static/chemiscope.css');
  */
 function createStyleSheet(rules: string[]): CSSStyleSheet {
     const style = document.createElement('style');
-    style.type = 'text/css';
     document.head.appendChild(style);
     const sheet = style.sheet as CSSStyleSheet;
     for (const rule of rules) {
         sheet.insertRule(rule);
     }
     return sheet;
+}
+
+/**
+ * Add data from the `structure` to the `model`
+ *
+ * @param model 3Dmol GLModel that will contain structure data
+ * @param structure the structure to convert
+ */
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
+    if (structure.cell !== undefined) {
+        const cell = structure.cell;
+        // prettier-ignore
+        const matrix = new $3Dmol.Matrix3(
+            cell[0], cell[3], cell[6],
+            cell[1], cell[4], cell[7],
+            cell[2], cell[5], cell[8]
+        );
+        model.setCrystMatrix(matrix);
+    }
+
+    const atoms = [];
+    for (let i = 0; i < structure.size; i++) {
+        const x = structure.x[i];
+        const y = structure.y[i];
+        const z = structure.z[i];
+        atoms.push({
+            serial: i,
+            elem: structure.names[i],
+            x: x,
+            y: y,
+            z: z,
+        });
+    }
+
+    model.addAtoms(atoms);
+}
+
+interface LabeledArrow {
+    label: $3Dmol.Label;
+    arrow: $3Dmol.GLShape;
 }
 
 /** A spherical atom-centered environment */
@@ -43,7 +81,7 @@ export interface Environment {
     cutoff: number;
 }
 
-/** Possible options passed to `JSmolWidget.load` */
+/** Possible options passed to `MoleculeViewer.load` */
 export interface LoadOptions {
     /** Supercell to display (default: [1, 1, 1]) */
     supercell: [number, number, number];
@@ -73,29 +111,38 @@ export class MoleculeViewer {
     /**
      * Unique identifier of this viewer.
      *
-     * All HTML elements created by this class use this ID to ensure unicity.
+     * All HTML elements created by this class use this ID to ensure uniqueness.
      */
     public guid: string;
 
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
 
+    /// Instance of the 3Dmol viewer
     private _viewer: $3Dmol.GLViewer;
+    /// Currently displayed structure, if any
     private _current?: {
+        /// the structure itself
         structure: Structure;
+        /// Corresponding 3Dmol Model
         model: $3Dmol.GLModel;
     };
+    /// Currently highlighted environment, if any
     private _highlighted?: {
+        /// index of the central atom
         center: number;
+        /// 3Dmol Model containing only atoms inside the spherical cutoff
         model: $3Dmol.GLModel;
     };
+    /// Axes shown, if any
+    private _axes?: [LabeledArrow, LabeledArrow, LabeledArrow];
 
     /// Representation options from the HTML side
     private _options: StructureOptions;
-    /// The supercell used to intialize the viewer
+    /// The supercell used to initialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
-    private _resetEnvCutof!: HTMLButtonElement;
+    private _resetEnvCutoff!: HTMLButtonElement;
     // button to reset reset the supercell
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
@@ -114,19 +161,17 @@ export class MoleculeViewer {
     private _environments?: Environment[];
 
     /**
-     * Create a new JSmolWidget inside the HTML DOM element with the given `id`.
+     * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
      *
      * @param id HTML element id inside which the viewer will be created
-     * @param j2sPath path where j2s files can be loaded by Jmol
      * @param guid (optional) unique identifier for the widget
-     * @param serverURL URL where to find `jsmol.php`
      */
     constructor(id: string, guid?: string) {
         if (guid === undefined) {
             guid = generateGUID();
         }
 
-        // add a 'chsp-' prefic to ensure the id start with letter. It looks like
+        // add a 'chsp-' prefix to ensure the id start with letter. It looks like
         // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
         // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
         this.guid = 'chsp-' + guid;
@@ -144,7 +189,7 @@ export class MoleculeViewer {
             antialias: true,
             defaultcolors: $3Dmol.elementColors.Jmol,
             disableFog: true,
-            orthographic: true,
+            orthographic: false,
         });
         if (viewer === undefined) {
             throw Error('unable to create WebGL canvas');
@@ -204,9 +249,9 @@ export class MoleculeViewer {
 
     /**
      * Get the number of atoms in the structure, or `undefined` if no structure
-     * is currenly loaded
+     * is currently loaded
      *
-     * @return the number of atoms in the currenly loaded structure
+     * @return the number of atoms in the currently loaded structure
      */
     public natoms(): number | undefined {
         if (this._current === undefined) {
@@ -230,10 +275,9 @@ export class MoleculeViewer {
         // Deal with loading options
         this._environments = options.environments;
 
-        // TODO
         let keepOrientation: boolean;
         if (options.keepOrientation === undefined) {
-            // keep pre-existting settings if any
+            // keep pre-existing settings if any
             keepOrientation = this._options.keepOrientation.value;
         } else {
             keepOrientation = options.keepOrientation;
@@ -273,13 +317,17 @@ export class MoleculeViewer {
             trajectoryOptions.style.display = 'block';
         }
 
+        if (this._options.unitCell.value && this._current !== undefined) {
+            this._viewer.removeUnitCell(this._current.model);
+        }
+
         // Actual loading
         this._viewer.removeAllModels();
         this._current = {
             model: this._viewer.addModel(),
             structure: structure,
         };
-        $3DmolStructure(this._current.model, structure);
+        setup3DmolStructure(this._current.model, structure);
         this._viewer.replicateUnitCell(
             this._options.supercell[0].value,
             this._options.supercell[1].value,
@@ -287,10 +335,19 @@ export class MoleculeViewer {
             this._current.model
         );
 
+        if (this._options.unitCell.value) {
+            this._viewer.addUnitCell(this._current.model, {
+                box: { color: 'black' },
+                astyle: { hidden: true },
+                bstyle: { hidden: true },
+                cstyle: { hidden: true },
+            });
+        }
+
         assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
         this._current.model.addAtomSpecs(['index']);
 
-        this._viewer.setClickable({}, true, (atom) => this._atomSelected(atom));
+        this._viewer.setClickable({}, true, (atom) => this._selectAtom(atom));
 
         if (this._environments === undefined) {
             this._styles.noEnvs.disabled = false;
@@ -356,7 +413,42 @@ export class MoleculeViewer {
         this._options.spaceFilling.onchange = restyleAndRender;
         this._options.bonds.onchange = restyleAndRender;
 
-        this._options.axes.onchange = () => sendWarning('TODO: axes settings');
+        this._options.axes.onchange = (value) => {
+            if (this._axes !== undefined) {
+                this._viewer.removeShape(this._axes[0].arrow);
+                this._viewer.removeLabel(this._axes[0].label);
+                this._viewer.removeShape(this._axes[1].arrow);
+                this._viewer.removeLabel(this._axes[1].label);
+                this._viewer.removeShape(this._axes[2].arrow);
+                this._viewer.removeLabel(this._axes[2].label);
+                this._axes = undefined;
+            }
+
+            if (value === 'off') {
+                // nothing to do
+            } else if (value === 'xyz') {
+                this._axes = [
+                    this._addLabeledArrow([2, 0, 0], 'red', 'X'),
+                    this._addLabeledArrow([0, 2, 0], 'green', 'Y'),
+                    this._addLabeledArrow([0, 0, 2], 'blue', 'Z'),
+                ];
+            } else if (value === 'abc') {
+                if (this._current === undefined || this._current.structure.cell === undefined) {
+                    return;
+                }
+                const cell = this._current.structure.cell;
+                const a: [number, number, number] = [cell[0], cell[1], cell[2]];
+                const b: [number, number, number] = [cell[3], cell[4], cell[5]];
+                const c: [number, number, number] = [cell[6], cell[7], cell[8]];
+                this._axes = [
+                    this._addLabeledArrow(a, 'red', 'A'),
+                    this._addLabeledArrow(b, 'green', 'B'),
+                    this._addLabeledArrow(c, 'blue', 'C'),
+                ];
+            }
+
+            this._viewer.render();
+        };
 
         this._options.rotation.onchange = (rotate) => {
             if (rotate) {
@@ -432,29 +524,50 @@ export class MoleculeViewer {
         };
 
         // Setup various buttons
-        this._resetEnvCutof = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);
-        this._resetEnvCutof.onclick = () => {
+        this._resetEnvCutoff = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);
+        this._resetEnvCutoff.onclick = () => {
             this._options.environments.cutoff.value = this._currentDefaultCutoff();
             restyleAndRender();
         };
 
         const alignX = getByID<HTMLButtonElement>(`${this.guid}-align-x`);
-        alignX.onclick = () => sendWarning('TODO: camera change');
+        alignX.onclick = () => this._viewAlong([1, 0, 0]);
 
         const alignY = getByID<HTMLButtonElement>(`${this.guid}-align-y`);
-        alignY.onclick = () => sendWarning('TODO: camera change');
+        alignY.onclick = () => this._viewAlong([0, 1, 0]);
 
         const alignZ = getByID<HTMLButtonElement>(`${this.guid}-align-z`);
-        alignZ.onclick = () => sendWarning('TODO: camera change');
+        alignZ.onclick = () => this._viewAlong([0, 0, 1]);
 
         const alignA = getByID<HTMLButtonElement>(`${this.guid}-align-a`);
-        alignA.onclick = () => sendWarning('TODO: camera change');
+        alignA.onclick = () => {
+            if (this._current === undefined || this._current.structure.cell === undefined) {
+                return;
+            }
+            const cell = this._current.structure.cell;
+            const a: [number, number, number] = [cell[0], cell[1], cell[2]];
+            this._viewAlong(a);
+        };
 
         const alignB = getByID<HTMLButtonElement>(`${this.guid}-align-b`);
-        alignB.onclick = () => sendWarning('TODO: camera change');
+        alignB.onclick = () => {
+            if (this._current === undefined || this._current.structure.cell === undefined) {
+                return;
+            }
+            const cell = this._current.structure.cell;
+            const b: [number, number, number] = [cell[3], cell[4], cell[5]];
+            this._viewAlong(b);
+        };
 
         const alignC = getByID<HTMLButtonElement>(`${this.guid}-align-c`);
-        alignC.onclick = () => sendWarning('TODO: camera change');
+        alignC.onclick = () => {
+            if (this._current === undefined || this._current.structure.cell === undefined) {
+                return;
+            }
+            const cell = this._current.structure.cell;
+            const c: [number, number, number] = [cell[6], cell[7], cell[8]];
+            this._viewAlong(c);
+        };
 
         this._resetSupercell = getByID<HTMLButtonElement>(`${this.guid}-reset-supercell`);
         this._resetSupercell.onclick = () => {
@@ -465,7 +578,11 @@ export class MoleculeViewer {
         };
     }
 
-    private _atomSelected(atom: Partial<$3Dmol.AtomSpec>): void {
+    /**
+     * Func
+     * @param atom
+     */
+    private _selectAtom(atom: Partial<$3Dmol.AtomSpec>): void {
         // use atom.serial instead of atom.index to ensure we are getting the
         // id of the atom inside the central cell when using a supercell
         assert(atom.serial !== undefined);
@@ -477,6 +594,9 @@ export class MoleculeViewer {
         this.onselect(atom.serial);
     }
 
+    /**
+     * Update the styles of all atoms as required
+     */
     private _updateStyle(): void {
         if (this._current === undefined) {
             return;
@@ -498,10 +618,14 @@ export class MoleculeViewer {
         this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
+    /**
+     * Get the main style used for all atoms/atoms inside the environment when
+     * highlighting a specific environment
+     */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {
             sphere: {
-                scale: this._options.spaceFilling.value ? 1.0 : 0.3,
+                scale: this._options.spaceFilling.value ? 1.0 : 0.22,
             },
         };
         if (this._options.bonds.value) {
@@ -513,6 +637,10 @@ export class MoleculeViewer {
         return style;
     }
 
+    /**
+     * Get the style specification for the hidden/background atoms when
+     * highlighting a specific environment
+     */
     private _hiddenStyle(): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
 
@@ -528,7 +656,7 @@ export class MoleculeViewer {
 
             if (bgStyle === 'ball-stick') {
                 style.sphere = {
-                    scale: 0.3,
+                    scale: 0.22,
                     opacity: 0.7,
                 };
             }
@@ -554,6 +682,10 @@ export class MoleculeViewer {
         return style;
     }
 
+    /**
+     * Get the style specification for the central atom when
+     * highlighting a specific environment
+     */
     private _centralStyle(): Partial<$3Dmol.AtomStyleSpec> {
         return {
             sphere: {
@@ -564,6 +696,10 @@ export class MoleculeViewer {
         };
     }
 
+    /**
+     * Show the information related to supercell in a small box on the bottom
+     * right corner.
+     */
     private _showSupercellInfo(): void {
         const a = this._options.supercell[0].value;
         const b = this._options.supercell[1].value;
@@ -576,19 +712,27 @@ export class MoleculeViewer {
         }
     }
 
+    /**
+     * Enable (if `show` is true) or disable (if `show` is false) the settings
+     * related to environments
+     */
     private _enableEnvironmentSettings(show: boolean): void {
-        if (this._resetEnvCutof.disabled === show) {
+        if (this._resetEnvCutoff.disabled === show) {
             this._toggleEnvironmentSettings();
         }
     }
 
+    /**
+     * Toggle the settings related to environments (enabled => disable, disable
+     * => enable).
+     */
     private _toggleEnvironmentSettings(): void {
         const toggleGroup = getByID(`${this.guid}-env-activated`);
         assert(toggleGroup.parentElement !== null);
         const toggle = toggleGroup.parentElement.lastChild;
         assert(toggle !== null);
 
-        const reset = this._resetEnvCutof;
+        const reset = this._resetEnvCutoff;
         if (reset.disabled) {
             reset.disabled = false;
             toggle.nodeValue = 'Disable';
@@ -606,7 +750,9 @@ export class MoleculeViewer {
         }
     }
 
-    /// Get the default cutoff for the currently displayed environment
+    /**
+     * Get the default cutoff for the currently displayed environment
+     */
     private _currentDefaultCutoff(): number {
         if (this._highlighted === undefined) {
             throw Error('no central environments defined when calling _currentCutoff');
@@ -616,6 +762,12 @@ export class MoleculeViewer {
         }
     }
 
+    /**
+     * Change which central atom is highlighted in the system to `center`. If
+     * `center` is undefined, this disable highlighting.
+     *
+     * @param center index of the atom to highlight
+     */
     private _changeHighlighted(center?: number): void {
         if (this._highlighted !== undefined) {
             this._viewer.removeModel(this._highlighted.model);
@@ -633,7 +785,7 @@ export class MoleculeViewer {
             }
 
             // We need to create a separate model to have different opacity
-            // in the background & highlighted atoms
+            // for the background & highlighted atoms
             // https://github.com/3dmol/3Dmol.js/issues/166
             // prettier-ignore
             const selection = { or: [
@@ -648,14 +800,87 @@ export class MoleculeViewer {
         }
     }
 
+    /**
+     * Reset the view by re-centering it and zooming to fit the model as much as
+     * possible inside the views.
+     *
+     * @param center Should we center on the highlighted central atom? If false,
+     *               the camera center/look-at is the center of the whole
+     *               structure.
+     */
     private _resetView(center: boolean): void {
+        // HACK: orthographic camera is broken in 3Dmol
+        // (https://github.com/3dmol/3Dmol.js/issues/434) so we fake on by using
+        // a perspective camera set far away, with a very narrow field of view.
+        this._viewer.setCameraParameters({ fov: 0.01, z: 2000 });
+
         if (center && this._highlighted !== undefined) {
             this._viewer.zoomTo({ serial: this._highlighted.center });
         } else {
             this._viewer.zoomTo();
         }
-
-        this._viewer.zoom(2);
         this._viewer.setSlab(-1000, 1000);
+    }
+
+    /**
+     * Rotate the viewed group so that the given direction (in group
+     * coordinates) is aligned with the z axis (in camera space)
+     *
+     * @param direction axis to align with the camera view
+     */
+    private _viewAlong(direction: [number, number, number]): void {
+        const norm = Math.sqrt(
+            direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]
+        );
+
+        // angle between Oz and the axis
+        const angle = Math.acos(direction[2] / norm);
+
+        const quaternion = [
+            // rotation axis is direction ^ Oz
+            // rotation[0] * sin(angle / 2)
+            (direction[1] / norm) * Math.sin(angle / 2),
+            // rotation[1] * sin(angle / 2)
+            (-direction[0] / norm) * Math.sin(angle / 2),
+            // rotation[2] * sin(angle / 2)
+            0,
+            Math.cos(angle / 2),
+        ];
+
+        const viewpoint = this._viewer.getView();
+        viewpoint[4] = quaternion[0];
+        viewpoint[5] = quaternion[1];
+        viewpoint[6] = quaternion[2];
+        viewpoint[7] = quaternion[3];
+        this._viewer.setView(viewpoint);
+    }
+
+    /**
+     * Add a labeled arrow of the given color from 0 to the given position, with
+     * the given label.
+     */
+    private _addLabeledArrow(
+        position: [number, number, number],
+        color: string,
+        label: string
+    ): LabeledArrow {
+        const pos = new $3Dmol.Vector3(position[0], position[1], position[2]);
+
+        return {
+            arrow: this._viewer.addArrow({
+                start: new $3Dmol.Vector3(0, 0, 0),
+                end: pos,
+                radius: 0.1,
+                color: color,
+                midpos: -1,
+            }),
+            label: this._viewer.addLabel(label, {
+                position: pos,
+                inFront: true,
+                fontColor: 'black',
+                fontSize: 14,
+                showBackground: false,
+            }),
+        };
     }
 }

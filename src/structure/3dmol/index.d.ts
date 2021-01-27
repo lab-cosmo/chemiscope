@@ -355,8 +355,8 @@ export interface LabelSpec {
     /** opacity of background, default 1 */
     backgroundOpacity: string;
     /** x, y, z coordinates for label */
-    position: [number, number, number];
-    /** always put labels in from of model */
+    position: Vector3;
+    /** always put labels in front of model */
     inFront: boolean;
     /** show background rounded rectangle, default true */
     showBackground: boolean;
@@ -368,6 +368,25 @@ export interface LabelSpec {
      * topCenter, topRight, centerLeft, center, centerRight, bottomLeft,
      * bottomCenter, bottomRight */
     alignment: string;
+    /** if set, only display in this frame of an animation */
+    frame: number;
+}
+
+export interface ShapeSpec {
+    /** solid color */
+    color: ColorSpec;
+    /** transparency */
+    alpha: number;
+    /** draw as wireframe, not surface */
+    wireframe: boolean;
+    /** if true, do not display object */
+    hidden: boolean;
+    /** width of line for wireframe rendering. No longer supported by most browsers */
+    linewidth: number;
+    /** if true, user can click on object to trigger callback */
+    clickable: boolean;
+    /** function to call on click */
+    callback: () => void;
     /** if set, only display in this frame of an animation */
     frame: number;
 }
@@ -423,6 +442,18 @@ export declare class GLViewer {
 
     public getView(): View;
     public setView(view: View): void;
+    public setCameraParameters(parameters: Partial<{ fov: number; z: number }>): void;
+
+    public addArrow(spec: Partial<ArrowSpec>): GLShape;
+    public removeShape(shape: GLShape): void;
+
+    public addLabel(
+        text: string,
+        options?: Partial<LabelSpec>,
+        sel?: Partial<AtomSelectionSpec>,
+        noshow?: boolean
+    ): Label;
+    public removeLabel(label: Label): void;
 }
 
 /** [ pos.x, pos.y, pos.z, rotationGroup.position.z, q.x, q.y, q.z, q.w ] */
@@ -446,11 +477,16 @@ export declare class GLModel {
         gamma: number
     ): void;
 
+    public setCrystMatrix(matrix: Matrix3): void;
+
     public selectedAtoms(sel: Partial<AtomSelectionSpec>): Array<Partial<AtomSpec>>;
     public removeAtoms(atoms: Array<Partial<AtomSpec>>): Array<Partial<AtomSpec>>;
 
     public addAtomSpecs(customAtomSpecs: string[]): void;
 }
+
+export declare class GLShape {}
+export declare class Label {}
 
 export declare function createViewer(
     element: HTMLElement | string,
@@ -475,10 +511,16 @@ export interface PresetElementColors {
 
 export declare const elementColors: PresetElementColors;
 
-declare namespace Parsers {
-    function assignBonds(atoms: Array<Partial<AtomSpec>>): void;
-}
-
 export declare class Vector3 {
     constructor(x: number, y: number, z: number);
+    public normalize(): Vector3;
+}
+
+export declare class Matrix3 {
+    // prettier-ignore
+    constructor(
+        ax: number, ay: number, az: number,
+        bx: number, by: number, bz: number,
+        cx: number, cy: number, cz: number
+    );
 }
