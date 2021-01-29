@@ -41,11 +41,18 @@
         <!-- Create basic DOM element for the different panels to live in -->
         <div id="meta"></div>
         <div id="map"></div>
-        <div id="structure"></div>
+        <div id="structure" style="width: 400px; height: 400px"></div>
         <div id="info"></div>
         <!-- We appreciate a citation back to the main chemiscope website -->
         <span style="font-size: x-small; float: right"> powered by <a href="https://chemiscope.org">chemiscope</a> </span>
     </body>
+
+    <script type="text/javascript">
+        // show errors in the webpage
+        window.onerror = (error) => {
+            document.body.insertAdjacentHTML('beforebegin', `<div style="margin: auto; color: red;">ERROR: ${error}</div>`);
+        };
+    </script>
 
     <script type="text/javascript">
         // load data from anywhere
