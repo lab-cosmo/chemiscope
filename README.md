@@ -45,7 +45,6 @@ webpage: https://www.epfl.ch/labs/cosmo/people/)
 git clone https://github.com/cosmo-epfl/chemiscope
 cd chemiscope
 npm install
-npm run download-example-input
 npm start
 
 # navigate to localhost:8080

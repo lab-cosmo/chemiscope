@@ -3,6 +3,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as tmp from 'tmp';
 
+const ALL_EXAMPLES = [
+    'CSD-1000R.json.gz',
+    'Arginine-Dipeptide.json.gz',
+    'Qm7b.json.gz',
+    'Azaphenacenes.json.gz',
+    'Zeolites.json.gz',
+];
+
+let needsUpdate = false;
+for (const file of ALL_EXAMPLES) {
+    if (!fs.existsSync(`./app/${file}`)) {
+        needsUpdate = true;
+    }
+}
+
+if (!needsUpdate) {
+    // eslint-disable-next-line no-console
+    console.log(
+        'Example input files already exists. Run `rm -rf app/*.json.gz` if you want to update them'
+    );
+    process.exit();
+}
+
 const tmpdir = tmp.dirSync({
     prefix: '.tmp',
     tmpdir: path.join(__dirname, '..'),
@@ -16,13 +39,7 @@ childProcess.execSync(
         tmpdir.name
 );
 
-for (const file of [
-    'CSD-1000R.json.gz',
-    'Arginine-Dipeptide.json.gz',
-    'Qm7b.json.gz',
-    'Azaphenacenes.json.gz',
-    'Zeolites.json.gz',
-]) {
+for (const file of ALL_EXAMPLES) {
     fs.renameSync(`${tmpdir.name}/${file}`, `./app/${file}`);
 }
 

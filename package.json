@@ -23,7 +23,7 @@
     "build": "webpack --mode production",
     "download-example-input": "ts-node ./utils/download-example-input.ts",
     "api-docs": "typedoc",
-    "start": "webpack serve --mode development --content-base ./app",
+    "start": "npm run download-example-input && webpack serve --mode development --content-base ./app",
     "chemiscope-dts": "dts-bundle-generator -o dist/chemiscope.d.ts dist/src/index.d.ts",
     "jsmol-widget-dts": "dts-bundle-generator -o dist/jsmol-widget.d.ts dist/src/structure/widget.d.ts",
     "merge-dts": "npm run chemiscope-dts && npm run jsmol-widget-dts",
