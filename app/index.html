@@ -111,7 +111,7 @@
         </header>
 
         <div class="container">
-            <div class="alert alert-danger" role="alert" id="error-display" style="display: none;">
+            <div class="alert alert-danger" role="alert" id="error-display" style="display: none">
                 <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -122,7 +122,7 @@
                 </details>
             </div>
 
-            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none;">
+            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none">
                 <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -136,21 +136,21 @@
 
         <main class="container-fluid">
             <div class="row">
-                <div class="col-md-7" style="padding: 0;">
+                <div class="col-md-7" style="padding: 0">
                     <div class="embed-responsive embed-responsive-1by1">
                         <div id="chemiscope-meta"></div>
-                        <div id="chemiscope-map" class="embed-responsive-item" style="position: absolute;"></div>
+                        <div id="chemiscope-map" class="embed-responsive-item" style="position: absolute"></div>
                     </div>
                 </div>
 
-                <div class="col-md-5" style="padding: 0;">
+                <div class="col-md-5" style="padding: 0">
                     <div class="embed-responsive embed-responsive-5by7">
                         <div class="embed-responsive-item">
                             <!-- height: 0 below is a hack to force safari to
                             respect height: 100% on the children
                             https://github.com/philipwalton/flexbugs/issues/197#issuecomment-378908438
                             -->
-                            <div id="chemiscope-structure" style="height: 0;"></div>
+                            <div id="chemiscope-structure" style="height: 0"></div>
                             <div id="chemiscope-info"></div>
                         </div>
                     </div>
@@ -160,15 +160,13 @@
 
         <footer class="footer">
             <div class="container">
-                <div style="float: left; font-size: x-small;">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
-                <div style="float: right; font-size: x-small;">
-                    <i class="far fa-copyright"></i> 2020 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a> <br /><span id="chemiscope-version"
+                <div style="float: left; font-size: x-small">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
+                <div style="float: right; font-size: x-small">
+                    <i class="far fa-copyright"></i> 2021 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a> <br /><span id="chemiscope-version"
                         >unknown version</span
                     >
                 </div>
-                <div style="text-align: center;">
-                    Chemiscope: interactive structure/property explorer for materials and molecules
-                </div>
+                <div style="text-align: center">Chemiscope: interactive structure/property explorer for materials and molecules</div>
             </div>
         </footer>
 
@@ -176,9 +174,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
-                            Chemiscope: interactive structure/property explorer for materials and molecules
-                        </h5>
+                        <h5 class="modal-title">Chemiscope: interactive structure/property explorer for materials and molecules</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -216,9 +212,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
-                            Download chemiscope
-                        </h5>
+                        <h5 class="modal-title">Download chemiscope</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -236,9 +230,7 @@
 
                         <p>
                             If you are a user, you may want to download a
-                            <a href="chemiscope_standalone.html" download>
-                                standalone version
-                            </a>
+                            <a href="chemiscope_standalone.html" download> standalone version </a>
                             of the standard viewer, which you can use to display locally datasets prepared in the chemiscope JSON format.
                         </p>
                     </div>
@@ -250,9 +242,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
-                            Load and save data
-                        </h5>
+                        <h5 class="modal-title">Load and save data</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close-load-save-modal">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -283,7 +273,7 @@
                             </div>
                         </div>
 
-                        <div class="input-group" style="margin-top: 1em;">
+                        <div class="input-group" style="margin-top: 1em">
                             <div class="input-group-prepend">
                                 <span class="input-group-text">save as</span>
                             </div>
@@ -300,7 +290,7 @@
                             </div>
                         </div>
 
-                        <div class="grid-1-1" style="margin-top: 1em;">
+                        <div class="grid-1-1" style="margin-top: 1em">
                             <div class="custom-control custom-switch">
                                 <input class="custom-control-input" id="save-dataset-settings" type="checkbox" checked />
                                 <label class="custom-control-label" for="save-dataset-settings">include visualization state</label>
@@ -310,11 +300,11 @@
                                 <label class="custom-control-label" for="save-dataset-structures">include all structures</label>
                             </div>
                         </div>
-                        <div class="alert alert-warning hide-on-demand-structures" role="alert" style="margin: 0; margin-top: 1em;">
+                        <div class="alert alert-warning hide-on-demand-structures" role="alert" style="margin: 0; margin-top: 1em">
                             The current dataset contains dynamically loaded structures, use 'include all structure' to include all of them in the file
                         </div>
 
-                        <h5 style="margin-top: 1em;">Visualization state</h5>
+                        <h5 style="margin-top: 1em">Visualization state</h5>
                         <p>The visualization state is a JSON file including all settings changes made on the current dataset.</p>
                         <div class="input-group">
                             <label for="load-settings" class="form-control">
@@ -333,7 +323,7 @@
                             </div>
                         </div>
 
-                        <div class="input-group" style="margin-top: 1em;">
+                        <div class="input-group" style="margin-top: 1em">
                             <div class="input-group-prepend">
                                 <span class="input-group-text">save as</span>
                             </div>
@@ -349,7 +339,7 @@
                                 </button>
                             </div>
 
-                            <div class="grid-1-1" style="margin-top: 1em;">
+                            <div class="grid-1-1" style="margin-top: 1em">
                                 <div class="custom-control custom-switch align-middle">
                                     <input class="custom-control-input" id="save-settings-map" type="checkbox" checked />
                                     <label class="custom-control-label" for="save-settings-map">include map settings</label>

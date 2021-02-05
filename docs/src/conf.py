@@ -8,7 +8,7 @@ import chemiscope  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "chemiscope"
-copyright = "2020, Guillaume Fraux"
+copyright = "2021, Guillaume Fraux"
 author = "Guillaume Fraux"
 
 # The full version, including alpha/beta/rc tags
