@@ -145,9 +145,11 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
 
     .. code-block:: python
 
+        import ase
         from ase import io
         import numpy as np
         import sklearn
+        from sklearn import decomposition
         from chemiscope import write_input
 
         frames = ase.io.read('trajectory.xyz', ':')
