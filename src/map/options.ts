@@ -244,7 +244,9 @@ export class MapOptions extends OptionsGroup {
                         break;
                     case 'log':
                         if (scaled < 0) {
-                            sendWarning("This property contains negative values, taking the log will discard them.");
+                            sendWarning(
+                                'This property contains negative values, taking the log will discard them.'
+                            );
                         }
                         scaled = Math.log(scaled);
                         break;
