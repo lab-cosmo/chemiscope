@@ -243,7 +243,7 @@ export class MapOptions extends OptionsGroup {
                         scaled = 1.0 / scaled;
                         break;
                     case 'log':
-                        if (scaled < 0) {
+                        if (scaled <= 0) {
                             sendWarning(
                                 'This property contains negative values, taking the log will discard them.'
                             );
