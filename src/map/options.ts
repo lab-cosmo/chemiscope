@@ -210,9 +210,6 @@ export class MapOptions extends OptionsGroup {
      * all of them if `trace === undefined`.
      */
     public calculateSizes(rawSizes: number[]): number[] {
-        if (!rawSizes.every((x: number) => x > 0)) {
-                sendWarning("This property contains negative values, taking the log will discard them.");
-        }
         const logSlider = (value: number) => {
             const min_slider = 1;
             const max_slider = 100;
@@ -246,6 +243,9 @@ export class MapOptions extends OptionsGroup {
                         scaled = 1.0 / scaled;
                         break;
                     case 'log':
+                        if (scaled < 0) {
+                            sendWarning("This property contains negative values, taking the log will discard them.");
+                        }
                         scaled = Math.log(scaled);
                         break;
                     case 'sqrt':
