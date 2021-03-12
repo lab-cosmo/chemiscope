@@ -261,14 +261,13 @@ export class ViewersGrid {
     }
 
     /**
-     * Removes the viewer wiith the given `guid` from the viewer grid.
+     * Removes the viewer with the given `guid` from the viewer grid.
      *
      * @param guid GUID of the viewer to remove
      */
     public removeViewer(guid: GUID): void {
-        if (this._viewers.size === 1) {
-            sendWarning('can not remove the last viewer from the grid');
-        }
+        // don't remove the last viewer
+        assert(this._viewers.size > 1);
 
         // If we removed the active marker, change the active one
         if (this._active === guid) {
@@ -566,6 +565,11 @@ the object was ${JSON.stringify(s)}`
                 </button>`;
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
+                if (this._viewers.size === 1) {
+                    sendWarning('can not remove the last viewer from the grid');
+                    return;
+                }
+
                 this.onremove(cellGUID);
                 this.removeViewer(cellGUID);
                 this._setupGrid(this._viewers.size);
