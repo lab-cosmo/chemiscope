@@ -456,7 +456,7 @@ export class ViewersGrid {
     private _structureForJSmol(index: number): string {
         if (this._cachedStructures[index] === undefined) {
             const s = this.loadStructure(index, this._structures[index]);
-            const check = checkStructure((s as unknown) as JsObject);
+            const check = checkStructure(s as unknown as JsObject);
             if (check !== '') {
                 throw Error(
                     `got invalid object as structure: ${check}

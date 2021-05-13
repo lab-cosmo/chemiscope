@@ -179,7 +179,7 @@ export class PropertiesMap {
             this._root.style.position = 'relative';
         }
 
-        this._plot = (document.createElement('div') as unknown) as PlotlyScatterElement;
+        this._plot = document.createElement('div') as unknown as PlotlyScatterElement;
         this._plot.style.width = '100%';
         this._plot.style.height = '100%';
         this._root.appendChild(this._plot);
@@ -341,17 +341,17 @@ export class PropertiesMap {
         this._options.x.property.onchange = () => {
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
-            this._relayout(({
+            this._relayout({
                 'scene.xaxis.title': this._title(this._options.x.property.value),
                 'xaxis.title': this._title(this._options.x.property.value),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         this._options.x.scale.onchange = () => {
             if (this._is3D()) {
-                this._relayout(({
+                this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
-                } as unknown) as Layout);
+                } as unknown as Layout);
             } else {
                 this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
             }
@@ -369,9 +369,9 @@ export class PropertiesMap {
                 const min = axis.min.value;
                 const max = axis.max.value;
                 if (this._is3D()) {
-                    this._relayout(({
+                    this._relayout({
                         [`scene.${name}.range`]: [min, max],
-                    } as unknown) as Layout);
+                    } as unknown as Layout);
                 } else {
                     this._relayout({ [`${name}.range`]: [min, max] });
                 }
@@ -385,17 +385,17 @@ export class PropertiesMap {
         this._options.y.property.onchange = () => {
             const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y: values }, [0, 1]);
-            this._relayout(({
+            this._relayout({
                 'scene.yaxis.title': this._title(this._options.y.property.value),
                 'yaxis.title': this._title(this._options.y.property.value),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         this._options.y.scale.onchange = () => {
             if (this._is3D()) {
-                this._relayout(({
+                this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
-                } as unknown) as Layout);
+                } as unknown as Layout);
             } else {
                 this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
             }
@@ -420,16 +420,16 @@ export class PropertiesMap {
 
             const values = this._coordinates(this._options.z);
             this._restyle({ z: values } as Data, [0, 1]);
-            this._relayout(({
+            this._relayout({
                 'scene.zaxis.title': this._title(this._options.z.property.value),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         this._options.z.scale.onchange = () => {
             if (this._options.z.property.value !== '') {
-                this._relayout(({
+                this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,
-                } as unknown) as Layout);
+                } as unknown as Layout);
             }
         };
 
@@ -466,12 +466,12 @@ export class PropertiesMap {
                 this._options.color.min.value = min;
                 this._options.color.max.value = max;
 
-                this._relayout(({
+                this._relayout({
                     'coloraxis.colorbar.title.text': this._title(
                         this._options.color.property.value
                     ),
                     'coloraxis.showscale': true,
-                } as unknown) as Layout);
+                } as unknown as Layout);
             } else {
                 this._options.color.disable();
                 this._colorReset.disabled = true;
@@ -479,10 +479,10 @@ export class PropertiesMap {
                 this._options.color.min.value = 0;
                 this._options.color.max.value = 0;
 
-                this._relayout(({
+                this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
-                } as unknown) as Layout);
+                } as unknown as Layout);
             }
 
             this._restyle(
@@ -497,7 +497,7 @@ export class PropertiesMap {
         const colorRangeChange = () => {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
-            this._relayout(({
+            this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
@@ -506,7 +506,7 @@ export class PropertiesMap {
                 // seems to do the trick. This is possiblely a Ploty bug, we
                 // would need to investiguate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
         this._options.color.min.onchange = colorRangeChange;
         this._options.color.max.onchange = colorRangeChange;
@@ -516,33 +516,33 @@ export class PropertiesMap {
             const { min, max } = arrayMaxMin(values);
             this._options.color.min.value = min;
             this._options.color.max.value = max;
-            this._relayout(({
+            this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
                 // same as above regarding update of the points color
                 'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         // ======= color palette
         this._options.palette.onchange = () => {
-            this._relayout(({
+            this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         // ======= markers symbols
         this._options.symbol.onchange = () => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
 
-            this._restyle(({
+            this._restyle({
                 name: this._legendNames(),
                 showlegend: this._showlegend(),
-            } as unknown) as Data);
+            } as unknown as Data);
 
-            this._relayout(({
+            this._relayout({
                 'coloraxis.colorbar.len': this._colorbarLen(),
-            } as unknown) as Layout);
+            } as unknown as Layout);
         };
 
         // ======= markers size
@@ -936,10 +936,10 @@ export class PropertiesMap {
         }
 
         // switch all traces to 3D mode
-        this._restyle(({
+        this._restyle({
             'marker.symbol': symbols,
             type: 'scatter3d',
-        } as unknown) as Data);
+        } as unknown as Data);
 
         for (const data of this._selected.values()) {
             data.toggleVisible(false);
@@ -961,14 +961,14 @@ export class PropertiesMap {
             [0, 1]
         );
 
-        this._relayout(({
+        this._relayout({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
-        } as unknown) as Layout);
+        } as unknown as Layout);
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -982,10 +982,10 @@ export class PropertiesMap {
         }
 
         // switch all traces to 2D mode
-        this._restyle(({
+        this._restyle({
             'marker.symbol': symbols,
             type: 'scattergl',
-        } as unknown) as Data);
+        } as unknown as Data);
 
         // show selected environments markers
         for (const data of this._selected.values()) {
@@ -1004,13 +1004,13 @@ export class PropertiesMap {
             [0, 1]
         );
 
-        this._relayout(({
+        this._relayout({
             // change colorbar length to accomodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-        } as unknown) as Layout);
+        } as unknown as Layout);
     }
 
     /**

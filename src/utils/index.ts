@@ -57,7 +57,7 @@ export function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
     }
-    return (e as unknown) as HTMLType;
+    return e as unknown as HTMLType;
 }
 
 export function enumerate<T>(iterable: Iterable<T>): Iterable<[number, T]> {
