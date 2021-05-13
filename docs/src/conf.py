@@ -57,4 +57,4 @@ templates_path = [os.path.join("..", "_templates")]
 
 
 def setup(app):
-    app.add_stylesheet("css/chemiscope.css")
+    app.add_css_file("css/chemiscope.css")
