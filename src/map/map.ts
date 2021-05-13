@@ -822,9 +822,9 @@ export class PropertiesMap {
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
                 if (guid === this._active) {
-                    selected.push(4000);
+                    selected.push(600);
                 } else {
-                    selected.push(2000);
+                    selected.push(300);
                 }
             }
         }
