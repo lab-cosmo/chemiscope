@@ -172,8 +172,8 @@ class DefaultVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: Config, dataset: Dataset) {
-        validateConfig((config as unknown) as JsObject);
-        validateDataset((dataset as unknown) as JsObject);
+        validateConfig(config as unknown as JsObject);
+        validateDataset(dataset as unknown as JsObject);
 
         this._dataset = dataset;
         this._pinned = [];

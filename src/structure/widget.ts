@@ -239,7 +239,7 @@ export class JSmolWidget {
         // for JSmol. This function will then call the callback inside this
         // instance of the viewer
         const name: string = this.guid.replace(/-/g, '_') + '_loaded_callback';
-        const window_as_map = (window as unknown) as Record<string, unknown>;
+        const window_as_map = window as unknown as Record<string, unknown>;
 
         window_as_map[name] = (
             _a: unknown,
@@ -631,7 +631,7 @@ export class JSmolWidget {
                 }
             }
         };
-        bindUpdateState((this._options as unknown) as Record<string, unknown>);
+        bindUpdateState(this._options as unknown as Record<string, unknown>);
 
         // For changes to the cell, we have to reload the structure.
         // This override the function set above

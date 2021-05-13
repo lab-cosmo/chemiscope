@@ -172,7 +172,7 @@ export class HTMLOption<T extends OptionsType> {
      */
     public disable(): void {
         for (const bound of this._boundList) {
-            const element = (bound.element as unknown) as Record<string, unknown>;
+            const element = bound.element as unknown as Record<string, unknown>;
             if ('disabled' in element) {
                 element.disabled = true;
             }
@@ -186,7 +186,7 @@ export class HTMLOption<T extends OptionsType> {
      */
     public enable(): void {
         for (const bound of this._boundList) {
-            const element = (bound.element as unknown) as Record<string, unknown>;
+            const element = bound.element as unknown as Record<string, unknown>;
             if ('disabled' in element) {
                 element.disabled = false;
             }
