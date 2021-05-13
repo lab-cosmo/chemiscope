@@ -224,47 +224,39 @@ export class MapOptions extends OptionsGroup {
 
         const userFactor = logSlider(this.size.factor.value);
 
-        let values;
-        if (this.size.mode.value !== 'constant') {
-            const scaleMode = this.size.mode.value;
-            const reversed = this.size.reverse.value;
-            const { min, max } = arrayMaxMin(rawSizes);
-            const defaultSize = this.is3D() ? 2000 : 150;
-            const bottomLimit = 0.1; // lower limit to prevent size of 0
+        const scaleMode = this.size.mode.value;
+        const reversed = this.size.reverse.value;
+        const { min, max } = arrayMaxMin(rawSizes);
+        const defaultSize = this.is3D() ? 800 : 150;
+        const bottomLimit = 0.1; // lower limit to prevent size of 0
 
-            values = rawSizes.map((v: number) => {
-                // normalize between 0 and 1, then scale by the user provided value
-                let scaled = (v + bottomLimit - min) / (max - min);
-                if (reversed) {
-                    scaled = 1.0 + bottomLimit - scaled;
-                }
-                switch (scaleMode) {
-                    case 'inverse':
-                        scaled = 1.0 / scaled;
-                        break;
-                    case 'log':
-                        scaled = Math.log(scaled);
-                        break;
-                    case 'sqrt':
-                        scaled = Math.sqrt(scaled);
-                        break;
-                    case 'linear':
-                        scaled = 1.0 * scaled;
-                        break;
-                    default:
-                        // corresponds to 'constant'
-                        scaled = 1.0;
-                        break;
-                }
-                // since we are using scalemode: 'area', square the scaled value
-                return defaultSize * scaled * scaled * userFactor * userFactor;
-            });
-        } else {
-            // we need to use an array instead of a single value because of
-            // https://github.com/plotly/plotly.js/issues/2735
-            const defaultSize = this.is3D() ? 500 : 50;
-            values = Array(rawSizes.length).fill(defaultSize * userFactor) as number[];
-        }
+        const values = rawSizes.map((v: number) => {
+            // normalize between 0 and 1, then scale by the user provided value
+            let scaled = (v + bottomLimit - min) / (max - min);
+            if (reversed) {
+                scaled = 1.0 + bottomLimit - scaled;
+            }
+            switch (scaleMode) {
+                case 'inverse':
+                    scaled = 1.0 / scaled;
+                    break;
+                case 'log':
+                    scaled = Math.log(scaled);
+                    break;
+                case 'sqrt':
+                    scaled = Math.sqrt(scaled);
+                    break;
+                case 'linear':
+                    scaled = 1.0 * scaled;
+                    break;
+                default:
+                    // corresponds to 'constant'
+                    scaled = 0.55;
+                    break;
+            }
+            // since we are using scalemode: 'area', square the scaled value
+            return defaultSize * scaled * scaled * userFactor * userFactor;
+        });
         return values;
     }
 
