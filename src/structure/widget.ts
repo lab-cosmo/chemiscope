@@ -364,6 +364,9 @@ export class MoleculeViewer {
             this._resetView(centerView);
         }
 
+        // make sure to reset axes when the structure changes
+        this._options.axes.onchange(this._options.axes.value, 'JS');
+
         this._viewer.render();
     }
 
