@@ -126,6 +126,8 @@ export class MoleculeViewer {
         structure: Structure;
         /// Corresponding 3Dmol Model
         model: $3Dmol.GLModel;
+        /// Atomic labels
+        atomLabels: $3Dmol.Label[];
     };
     /// Currently highlighted environment, if any
     private _highlighted?: {
@@ -321,11 +323,19 @@ export class MoleculeViewer {
             this._viewer.removeUnitCell(this._current.model);
         }
 
-        // Actual loading
+        // unload previous structure
         this._viewer.removeAllModels();
+        if (this._current !== undefined) {
+            for (const label of this._current.atomLabels) {
+                this._viewer.removeLabel(label);
+            }
+        }
+
+        // load new structure
         this._current = {
             model: this._viewer.addModel(),
             structure: structure,
+            atomLabels: [],
         };
         setup3DmolStructure(this._current.model, structure);
         this._viewer.replicateUnitCell(
@@ -364,8 +374,9 @@ export class MoleculeViewer {
             this._resetView(centerView);
         }
 
-        // make sure to reset axes when the structure changes
+        // make sure to reset axes/labels when the structure changes
         this._options.axes.onchange(this._options.axes.value, 'JS');
+        this._options.atomLabels.onchange(this._options.atomLabels.value, 'JS');
 
         this._viewer.render();
     }
@@ -413,9 +424,53 @@ export class MoleculeViewer {
             this._viewer.render();
         };
 
-        this._options.atomLabels.onchange = restyleAndRender;
         this._options.spaceFilling.onchange = restyleAndRender;
         this._options.bonds.onchange = restyleAndRender;
+
+        this._options.atomLabels.onchange = (showLabels) => {
+            if (this._current === undefined) {
+                return;
+            }
+
+            // move the atomic label a bit further away from the atom by
+            // monkey-patching 3Dmol
+            $3Dmol.SpriteAlignment.bottomLeft = new $3Dmol.Vector2(1.5, 1.5);
+
+            if (showLabels) {
+                assert(this._current.atomLabels.length === 0);
+
+                const structure = this._current.structure;
+                for (let i = 0; i < structure.size; i++) {
+                    const position = new $3Dmol.Vector3(
+                        structure.x[i],
+                        structure.y[i],
+                        structure.z[i]
+                    );
+                    const name = structure.names[i];
+
+                    let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
+                    if (color === 0xffffff || color === 'white') {
+                        color = 0x000000;
+                    }
+
+                    const label = this._viewer.addLabel(name, {
+                        position: position,
+                        inFront: true,
+                        fontColor: color,
+                        fontSize: 14,
+                        showBackground: false,
+                        alignment: 'bottomLeft',
+                    });
+                    this._current.atomLabels.push(label);
+                }
+            } else {
+                // remove all labels
+                for (const label of this._current.atomLabels) {
+                    this._viewer.removeLabel(label);
+                }
+                this._current.atomLabels = [];
+            }
+        };
 
         this._options.axes.onchange = (value) => {
             if (this._axes !== undefined) {

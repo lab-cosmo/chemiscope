@@ -81,7 +81,7 @@ export interface ParserOptionsSpec {
     assemblyIndex: number;
 }
 
-export type ColorSpec = string;
+export type ColorSpec = string | number;
 
 export interface AtomSpec {
     index: number;
@@ -494,7 +494,7 @@ export declare function createViewer(
     shared_viewer_resources?: unknown
 ): GLViewer | undefined;
 
-export interface PresetElementColors {
+interface PresetElementColors {
     defaultColor: ElementColors;
     Jmol: ElementColors;
     rasmol: ElementColors;
@@ -511,9 +511,27 @@ export interface PresetElementColors {
 
 export declare const elementColors: PresetElementColors;
 
+interface PresetSpriteAlignment {
+    topLeft: Vector2;
+    topCenter: Vector2;
+    topRight: Vector2;
+    centerLeft: Vector2;
+    center: Vector2;
+    centerRight: Vector2;
+    bottomLeft: Vector2;
+    bottomCenter: Vector2;
+    bottomRight: Vector2;
+}
+
+export declare const SpriteAlignment: PresetSpriteAlignment;
+
 export declare class Vector3 {
     constructor(x: number, y: number, z: number);
     public normalize(): Vector3;
+}
+
+export declare class Vector2 {
+    constructor(x: number, y: number);
 }
 
 export declare class Matrix3 {
