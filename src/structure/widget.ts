@@ -359,8 +359,9 @@ export class MoleculeViewer {
 
         this._updateStyle();
 
-        if (!keepOrientation) {
-            this._resetView(this._options.environments.center.value);
+        const centerView = this._options.environments.center.value;
+        if (!keepOrientation || centerView) {
+            this._resetView(centerView);
         }
 
         this._viewer.render();
@@ -579,8 +580,7 @@ export class MoleculeViewer {
     }
 
     /**
-     * Func
-     * @param atom
+     * Function called whenever the user click on an atom in the viewer
      */
     private _selectAtom(atom: Partial<$3Dmol.AtomSpec>): void {
         // use atom.serial instead of atom.index to ensure we are getting the
@@ -602,19 +602,25 @@ export class MoleculeViewer {
             return;
         }
 
-        if (this._highlighted === undefined) {
+        // if there is no environment to highlight, render all atoms with the
+        // main style
+        if (!this._environmentsEnabled()) {
             this._current.model.setStyle({}, this._mainStyle());
             this._viewer.render();
             return;
         }
 
+        assert(this._highlighted !== undefined);
+        // otherwise, render all atoms with hidden/background style
         this._current.model.setStyle({}, this._hiddenStyle());
+        // the central atom with central/highlighted style
         this._current.model.setStyle(
             { index: this._highlighted.center },
             this._centralStyle(),
             /* add: */ true
         );
 
+        // and the environment around the central atom with main style
         this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
@@ -713,27 +719,29 @@ export class MoleculeViewer {
     }
 
     /**
+     * Check whether environments are enabled or not
+     */
+    private _environmentsEnabled(): boolean {
+        return this._highlighted !== undefined && !this._resetEnvCutoff.disabled;
+    }
+
+    /**
      * Enable (if `show` is true) or disable (if `show` is false) the settings
      * related to environments
      */
     private _enableEnvironmentSettings(show: boolean): void {
-        if (this._resetEnvCutoff.disabled === show) {
-            this._toggleEnvironmentSettings();
-        }
-    }
-
-    /**
-     * Toggle the settings related to environments (enabled => disable, disable
-     * => enable).
-     */
-    private _toggleEnvironmentSettings(): void {
         const toggleGroup = getByID(`${this.guid}-env-activated`);
         assert(toggleGroup.parentElement !== null);
         const toggle = toggleGroup.parentElement.lastChild;
         assert(toggle !== null);
-
         const reset = this._resetEnvCutoff;
-        if (reset.disabled) {
+
+        if (show) {
+            if (this._environmentsEnabled()) {
+                // nothing to do
+                return;
+            }
+
             reset.disabled = false;
             toggle.nodeValue = 'Disable';
 
@@ -741,6 +749,11 @@ export class MoleculeViewer {
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
         } else {
+            if (!this._environmentsEnabled()) {
+                // nothing to do
+                return;
+            }
+
             reset.disabled = true;
             toggle.nodeValue = 'Enable';
 
@@ -816,6 +829,7 @@ export class MoleculeViewer {
 
         if (center && this._highlighted !== undefined) {
             this._viewer.zoomTo({ serial: this._highlighted.center });
+            this._viewer.zoom(4.0);
         } else {
             this._viewer.zoomTo();
         }
