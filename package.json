@@ -23,7 +23,7 @@
     "build": "webpack --mode production",
     "download-example-input": "ts-node ./utils/download-example-input.ts",
     "api-docs": "typedoc",
-    "start": "npm run download-example-input && webpack serve --mode development --content-base ./app",
+    "start": "npm run download-example-input && webpack serve --mode development --static ./app",
     "chemiscope-dts": "dts-bundle-generator -o dist/chemiscope.d.ts dist/src/index.d.ts",
     "jsmol-widget-dts": "dts-bundle-generator -o dist/jsmol-widget.d.ts dist/src/structure/widget.d.ts",
     "merge-dts": "npm run chemiscope-dts && npm run jsmol-widget-dts",
@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
+    "@types/glob": "^7.1.3",
     "@types/markdown-it": "^12",
     "@types/mocha": "^8.0.3",
     "@types/node": "^15",
@@ -65,8 +66,8 @@
     "typedoc": "^0.19",
     "typedoc-plugin-external-module-name": "^4",
     "typescript": "^4.0.3",
-    "webpack": "^5.2.0",
-    "webpack-cli": "^4.1.0",
-    "webpack-dev-server": "^3.11.0"
+    "webpack": "^5.37.0",
+    "webpack-cli": "^4.7.0",
+    "webpack-dev-server": "4.0.0-beta.3"
   }
 }

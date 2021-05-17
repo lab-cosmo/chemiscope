@@ -41,9 +41,6 @@ const config: ConfigFn = (env, argv) => {
         target: 'web',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
-        devServer: {
-            injectClient: false,
-        },
         entry: {
             chemiscope: './src/index.ts',
             'jsmol-widget': './src/structure/widget.ts',
