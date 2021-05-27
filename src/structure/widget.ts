@@ -9,7 +9,7 @@ import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID, getElement, unreachable } from '../utils';
+import { GUID, generateGUID, getByID, getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Structure } from '../dataset';
 
@@ -113,7 +113,7 @@ export class MoleculeViewer {
      *
      * All HTML elements created by this class use this ID to ensure uniqueness.
      */
-    public guid: string;
+    public guid: GUID;
 
     /// The HTML element serving as root element for the viewer
     private _root: HTMLElement;
@@ -177,7 +177,7 @@ export class MoleculeViewer {
         // add a 'chsp-' prefix to ensure the id start with letter. It looks like
         // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
         // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
-        this.guid = 'chsp-' + guid;
+        this.guid = ('chsp-' + guid) as GUID;
 
         this._root = document.createElement('div');
 
