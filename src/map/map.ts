@@ -12,7 +12,7 @@ import { Property } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin, generateGUID, sendWarning } from '../utils';
 import { enumerate, getByID, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
@@ -239,13 +239,15 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
+        const guid = ('chsp-' + generateGUID()) as GUID;
         this._options = new MapOptions(
             this._root,
+            guid,
             this._data[this._indexer.mode],
             (rect) => this.positionSettingsModal(rect),
             config.settings
         );
-        this._colorReset = getByID<HTMLButtonElement>('chsp-color-reset');
+        this._colorReset = getByID<HTMLButtonElement>(this._options.getId('map-color-reset'));
 
         this._connectSettings();
 
@@ -423,7 +425,7 @@ export class PropertiesMap {
                     'xaxis.autorange': true,
                 } as unknown as Layout);
             }
-            this.setScaleStep(this._getBounds().x, 'x');
+            this._setScaleStep(this._getBounds().x, 'x');
         };
 
         this._options.x.scale.onchange = () => {
@@ -495,7 +497,7 @@ export class PropertiesMap {
                     'yaxis.autorange': true,
                 } as unknown as Layout);
             }
-            this.setScaleStep(this._getBounds().y, 'y');
+            this._setScaleStep(this._getBounds().y, 'y');
         };
 
         this._options.y.scale.onchange = () => {
@@ -543,7 +545,7 @@ export class PropertiesMap {
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
             if (this._is3D()) {
-                this.setScaleStep(this._getBounds().z as number[], 'z');
+                this._setScaleStep(this._getBounds().z as number[], 'z');
             }
         };
 
@@ -577,7 +579,7 @@ export class PropertiesMap {
 
             this._options.color.min.value = min;
             this._options.color.max.value = max;
-            this.setScaleStep([min, max], 'color');
+            this._setScaleStep([min, max], 'color');
         }
 
         this._options.color.property.onchange = () => {
@@ -590,7 +592,7 @@ export class PropertiesMap {
 
                 this._options.color.min.value = min;
                 this._options.color.max.value = max;
-                this.setScaleStep([min, max], 'color');
+                this._setScaleStep([min, max], 'color');
 
                 this._relayout({
                     'coloraxis.colorbar.title.text': this._title(
@@ -885,10 +887,10 @@ export class PropertiesMap {
 
         // set step of min/max select arrows based on the plot range
         const bounds = this._getBounds();
-        this.setScaleStep(bounds.x, 'x');
-        this.setScaleStep(bounds.y, 'y');
+        this._setScaleStep(bounds.x, 'x');
+        this._setScaleStep(bounds.y, 'y');
         if (bounds.z !== undefined) {
-            this.setScaleStep(bounds.z, 'z');
+            this._setScaleStep(bounds.z, 'z');
         }
     }
 
@@ -1292,12 +1294,12 @@ export class PropertiesMap {
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
+    private _setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
         if (axisBounds !== undefined) {
             // round to 10 decimal places so it does not break in Firefox
             const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = getByID<HTMLInputElement>(`chsp-${name}-min`);
-            const maxElement = getByID<HTMLInputElement>(`chsp-${name}-max`);
+            const minElement = getByID<HTMLInputElement>(this._options.getId(`map-${name}-min`));
+            const maxElement = getByID<HTMLInputElement>(this._options.getId(`map-${name}-max`));
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }

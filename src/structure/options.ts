@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, makeDraggable, sendWarning } from '../utils';
+import { GUID, PositioningCallback, makeDraggable, sendWarning } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -45,10 +45,12 @@ export class StructureOptions extends OptionsGroup {
 
     /// The HTML element containing the settings modal
     private _modal: HTMLElement;
+    /// The HTML element containing the button to open the settings modal
+    private _openModal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, guid: string, positionSettings: PositioningCallback) {
+    constructor(root: HTMLElement, guid: GUID, positionSettings: PositioningCallback) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -100,8 +102,12 @@ export class StructureOptions extends OptionsGroup {
 
         this._positionSettingsModal = positionSettings;
 
-        this._modal = this._insertHTML(root, guid);
+        const { openModal, modal } = this._createSettingsHTML(guid);
+        this._modal = modal;
+        this._openModal = openModal;
+        root.appendChild(this._openModal);
         document.body.appendChild(this._modal);
+
         this._bind(guid);
     }
 
@@ -116,6 +122,7 @@ export class StructureOptions extends OptionsGroup {
             (close as HTMLElement).click();
         }
         this._modal.remove();
+        this._openModal.remove();
     }
 
     /**
@@ -137,29 +144,28 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /**
-     * Insert HTML needed for setting in the page, adding the "open settings"
-     * button to `root`. The setting modal HTML element is returned, not yet
-     * inserted in the document.
+     * Create HTML needed for structure settings.
+     *
+     * The HTML elements are returned, not yet inserted in the document.
      *
      * @param  root where to place the HTML button
      * @param  guid unique identifier of the corresponding MoleculeViewer, used
      *              as prefix for all HTML elements `id`
      * @return      the HTML element containing the setting modal
      */
-    private _insertHTML(root: HTMLElement, guid: string): HTMLElement {
+    private _createSettingsHTML(guid: GUID): { modal: HTMLElement; openModal: HTMLElement } {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-viewer-button"
-            data-target="#${guid}-settings"
+            data-target="#${guid}-structure-settings"
             data-toggle="modal"
             style="top: 4px; right: 4px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
-        const openSettings = template.content.firstChild as HTMLElement;
-        root.append(openSettings);
+        const openModal = template.content.firstChild as HTMLElement;
 
-        // replace id to ensure they are unique even if we have mulitple viewers
+        // replace id to ensure they are unique even if we have multiple viewers
         // on a single page
         // prettier-ignore
         template.innerHTML = HTML_OPTIONS
@@ -173,7 +179,7 @@ export class StructureOptions extends OptionsGroup {
         assert(modalDialog.classList.contains('modal-dialog'));
 
         // Position modal near the actual viewer
-        openSettings.addEventListener('click', () => {
+        openModal.addEventListener('click', () => {
             // only set style once, on first open, and keep previous position
             // on next open to keep the 'draged-to' position
             if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
@@ -203,11 +209,11 @@ export class StructureOptions extends OptionsGroup {
         // otherwise jupyter tries to interpret key press in the modal as its own input
         modal.addEventListener('keydown', (event) => event.stopPropagation());
 
-        return modal;
+        return { modal, openModal };
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(guid: string): void {
+    private _bind(guid: GUID): void {
         this.atomLabels.bind(`${guid}-atom-labels`, 'checked');
         this.spaceFilling.bind(`${guid}-space-filling`, 'checked');
         this.bonds.bind(`${guid}-bonds`, 'checked');
