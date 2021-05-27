@@ -18,7 +18,7 @@
   },
   "scripts": {
     "test": "npm run test:mocha && npm run test:lint",
-    "test:mocha": "webpack --config=tests/webpack.config.ts && mocha dist/tests/**/*.test.js",
+    "test:mocha": "mochapack --webpack-config=tests/webpack.config.ts --recursive --glob '*.test.ts' tests",
     "test:lint": "eslint src && prettier --check src",
     "build": "webpack --mode production",
     "download-example-input": "ts-node ./utils/download-example-input.ts",
@@ -55,6 +55,7 @@
     "jsdom": "^16.4.0",
     "markdown-it": "^12.0.2",
     "mocha": "^8.1.2",
+    "mochapack": "^2.1.2",
     "node-loader": "^2.0",
     "plotly.js": "1.58.4",
     "prettier": "2.3.0",
