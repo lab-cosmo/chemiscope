@@ -313,7 +313,7 @@ export class ViewersGrid {
                 const current = widgetData.current;
                 assert(current.atom !== undefined);
                 const structure = current.structure;
-                const atom = current.atom + (1 % this._indexer.atomsCount(structure));
+                const atom = (current.atom + 1) % this._indexer.atomsCount(structure);
                 const indexes = this._indexer.from_structure_atom(structure, atom);
                 this.show(indexes);
                 this.onselect(indexes);
