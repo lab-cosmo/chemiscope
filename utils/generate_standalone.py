@@ -29,11 +29,15 @@ def get_url(url):
         return data.text
     else:
         if url == "chemiscope.min.js":
-            path = os.path.join(ROOT, "dist")
+            root = os.path.join(ROOT, "dist")
         else:
-            path = os.path.join(ROOT, "app")
+            root = os.path.join(ROOT, "app")
 
-        with open(os.path.join(path, url)) as fd:
+        path = os.path.realpath(os.path.join(root, url))
+        if not os.path.exists(path):
+            raise Exception(f"{path} does not exists, did you run `npm run build`?")
+
+        with open(path) as fd:
             return fd.read()
 
 
