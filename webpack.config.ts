@@ -43,6 +43,7 @@ const config: ConfigFn = (env, argv) => {
         devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
         entry: {
             chemiscope: './src/index.ts',
+            'chemiscope-app': './app/app.ts',
             'molecule-viewer': './src/structure/widget.ts',
         },
         output: {
