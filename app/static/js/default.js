@@ -58,7 +58,7 @@ function loadStructureOnDemand(index, structure) {
     return JSON.parse(
         $.ajax({
             type: 'GET',
-            url: structure.data,
+            url: `examples/${structure.data}`,
             // this is getting deprecated, but the best option for now
             async: false,
         }).responseText
