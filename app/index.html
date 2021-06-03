@@ -19,33 +19,10 @@
             crossorigin="anonymous"
         ></script>
 
-        <!-- bootstrap -->
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css"
-            integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y="
-            crossorigin="anonymous"
-        />
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"
-            integrity="sha256-WqU1JavFxSAMcLP2WIOI+GB2zWmShMI82mTpLDcqFUg="
-            crossorigin="anonymous"
-        ></script>
-
         <!-- font-awesome -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
 
-        <!-- Pako: zlib implementation in javascript, to store data files as gziped json -->
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.10/pako_inflate.min.js"
-            integrity="sha256-LKJ+mo2uVpzerEJ1LtGu0a/v9/GSgtPMEsCqpUoIvAQ="
-            crossorigin="anonymous"
-        ></script>
-
-        <!-- Chemiscope code and default viewer code -->
-        <script defer type="text/javascript" src="chemiscope.min.js"></script>
-        <script type="text/javascript" src="static/js/default.js"></script>
-        <link rel="stylesheet" href="static/css/default.css" />
+        <script type="text/javascript" src="chemiscope-app.min.js"></script>
     </head>
 
     <body>
@@ -91,15 +68,13 @@
                                 <i class="fa fa-images"></i> Examples
                             </a>
                             <div class="dropdown-menu" aria-labelledby="examples">
-                                <span class="dropdown-item clickable" onclick="loadExample('examples/Arginine-Dipeptide.json.gz');">
+                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');">
                                     Arginine-Dipeptide
                                 </span>
-                                <span class="dropdown-item clickable" onclick="loadExample('examples/CSD-1000R.json.gz');">
-                                    Chemical Shieldings
-                                </span>
-                                <span class="dropdown-item clickable" onclick="loadExample('examples/Qm7b.json.gz');"> Qm7b </span>
-                                <span class="dropdown-item clickable" onclick="loadExample('examples/Azaphenacenes.json.gz');"> Azaphenacenes </span>
-                                <span class="dropdown-item clickable" onclick="loadExample('examples/Zeolites.json.gz');"> Zeolites </span>
+                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');"> Chemical Shieldings </span>
+                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Qm7b');"> Qm7b </span>
+                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');"> Azaphenacenes </span>
+                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Zeolites');"> Zeolites </span>
                             </div>
                         </li>
 
@@ -135,29 +110,7 @@
             </div>
         </div>
 
-        <main class="container-fluid">
-            <div class="row">
-                <div class="col-md-7" style="padding: 0">
-                    <div class="embed-responsive embed-responsive-1by1">
-                        <div id="chemiscope-meta"></div>
-                        <div id="chemiscope-map" class="embed-responsive-item" style="position: absolute"></div>
-                    </div>
-                </div>
-
-                <div class="col-md-5" style="padding: 0">
-                    <div class="embed-responsive embed-responsive-5by7">
-                        <div class="embed-responsive-item">
-                            <!-- height: 0 below is a hack to force safari to
-                            respect height: 100% on the children
-                            https://github.com/philipwalton/flexbugs/issues/197#issuecomment-378908438
-                            -->
-                            <div id="chemiscope-structure" style="height: 0"></div>
-                            <div id="chemiscope-info"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <main id="chemiscope-container"></main>
 
         <footer class="footer">
             <div class="container">
@@ -362,23 +315,46 @@
     </body>
 
     <script type="text/javascript">
+        function displayError(error) {
+            document.getElementById('loading').style.display = 'none';
+
+            const display = document.getElementById('error-display');
+            display.style.display = 'block';
+            display.getElementsByTagName('p')[0].innerText = error.toString();
+            const stacktrace = display.getElementsByTagName('details')[0];
+            stacktrace.getElementsByTagName('p')[0].innerText = error.stack || '';
+        }
+
+        window.onerror = (msg, url, line, col, error) => {
+            if (error !== undefined) {
+                displayError(error);
+            }
+        };
+
+        // store the app instance globally, and use it to load examples with
+        // `onclick` above
+        let CHEMISCOPE_APP;
+
         document.addEventListener('DOMContentLoaded', () => {
+            CHEMISCOPE_APP = new Chemiscope.ChemiscopeApp('chemiscope-container');
+
             const standalone = document.getElementById('standalone-json-data');
-            const isStandalone = standalone !== null;
 
-            const version = document.getElementById('chemiscope-version');
-            version.innerText = `version ${Chemiscope.version()}`;
-
-            setupDefaultChemiscope();
-
-            if (!isStandalone) {
-                loadExample('examples/Arginine-Dipeptide.json.gz');
+            if (!standalone) {
+                CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');
             } else {
                 const data = standalone.innerText;
                 if (data.trim() !== '') {
-                    setupChemiscope(JSON.parse(standalone.innerText));
+                    const dataset = JSON.parse(standalone.innerText);
+                    const config = {
+                        settings: dataset.settings || {},
+                    };
+                    CHEMISCOPE_APP.load(config, dataset);
                 } else {
-                    document.getElementById('loading').style.display = 'none';
+                    // it looks like this standalone viewer does not contain
+                    // data. stop the loading indicator to not make the user
+                    // think we are doing something useful.
+                    stopLoading();
                 }
             }
         });

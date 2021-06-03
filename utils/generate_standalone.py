@@ -28,7 +28,7 @@ def get_url(url):
         data = requests.get(url)
         return data.text
     else:
-        if url == "chemiscope.min.js":
+        if url == "chemiscope-app.min.js":
             root = os.path.join(ROOT, "dist")
         else:
             root = os.path.join(ROOT, "app")

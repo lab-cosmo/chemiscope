@@ -50,7 +50,7 @@ export interface Config {
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
 
-interface Settings {
+export interface Settings {
     map: SavedSettings;
     structure: SavedSettings[];
     pinned: number[];
