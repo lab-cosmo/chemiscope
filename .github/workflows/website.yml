@@ -28,7 +28,7 @@ jobs:
           python3 -m pip install -r docs/requirements.txt
           python3 -m pip install beautifulsoup4 requests
       - run: npm run build
-      - run: npm run download-example-input
+      - run: npm run download-examples
       - run: cd docs && make html
       - run: python3 utils/generate_standalone.py -o chemiscope_standalone.html
       - name: assemble full website

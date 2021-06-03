@@ -13,7 +13,7 @@ const ALL_EXAMPLES = [
 
 let needsUpdate = false;
 for (const file of ALL_EXAMPLES) {
-    if (!fs.existsSync(`./app/${file}`)) {
+    if (!fs.existsSync(`./app/examples/${file}`)) {
         needsUpdate = true;
     }
 }
@@ -21,7 +21,7 @@ for (const file of ALL_EXAMPLES) {
 if (!needsUpdate) {
     // eslint-disable-next-line no-console
     console.log(
-        'Example input files already exists. Run `rm -rf app/*.json.gz` if you want to update them'
+        'Example input files already exists. Run `rm -rf app/examples/*.json.gz` if you want to update them'
     );
     process.exit();
 }
@@ -40,13 +40,16 @@ childProcess.execSync(
 );
 
 for (const file of ALL_EXAMPLES) {
-    fs.renameSync(`${tmpdir.name}/${file}`, `./app/${file}`);
+    fs.renameSync(`${tmpdir.name}/examples/${file}`, `./app/examples/${file}`);
 }
 
-fs.mkdirSync('./app/structures/', { recursive: true });
+fs.mkdirSync('./app/examples/structures/', { recursive: true });
 for (let i = 0; i < 523; i++) {
     const file = `Azaphenacenes-${i}.json`;
-    fs.renameSync(`${tmpdir.name}/structures/${file}`, `./app/structures/${file}`);
+    fs.renameSync(
+        `${tmpdir.name}/examples/structures/${file}`,
+        `./app/examples/structures/${file}`
+    );
 }
 
 tmpdir.removeCallback();
