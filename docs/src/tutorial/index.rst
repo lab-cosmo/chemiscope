@@ -19,5 +19,5 @@ notebook.
     properties
     panels
     input
-    standalone
+    sharing
     jupyter

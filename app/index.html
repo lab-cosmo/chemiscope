@@ -321,6 +321,15 @@
     </body>
 
     <script type="text/javascript">
+        /**
+         * Create an URL that can be used to load data from the `external` URL
+         * working around Same-Origin policy by using https://allorigins.win/ to
+         * redirect the request for us.
+         */
+        function externalDataUrl(external) {
+            return `https://api.allorigins.win/raw?url=${encodeURIComponent(external)}`;
+        }
+
         function displayError(error) {
             document.getElementById('loading').style.display = 'none';
 
@@ -347,13 +356,34 @@
         // `onclick` above
         let CHEMISCOPE_APP;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            CHEMISCOPE_APP = new Chemiscope.ChemiscopeApp('chemiscope-container');
-
+        async function loadDefaultDataset(app) {
             const standalone = document.getElementById('standalone-json-data');
 
             if (!standalone) {
-                CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');
+                const url = new URL(window.location.href);
+                const external = url.searchParams.get('load');
+                if (external) {
+                    const settings = url.searchParams.get('settings');
+                    const config = {};
+                    if (settings) {
+                        const response = await fetch(externalDataUrl(settings));
+                        if (!response.ok) {
+                            throw Error(`unable to load settings from '${settings}'`);
+                        }
+                        config.settings = await response.json();
+
+                        // Until https://github.com/gnuns/allOrigins/issues/70
+                        // is resolved, this is how we can check for wrong url
+                        if (config.settings.status?.error !== undefined) {
+                            throw Error(`unable to load settings from '${settings}'`);
+                        }
+                    }
+
+                    await app.fetchAndLoad(externalDataUrl(external), config);
+                } else {
+                    // default to Arginine-Dipeptide
+                    await app.loadExample('Arginine-Dipeptide');
+                }
             } else {
                 const data = standalone.innerText;
                 if (data.trim() !== '') {
@@ -361,7 +391,7 @@
                     const config = {
                         settings: dataset.settings || {},
                     };
-                    CHEMISCOPE_APP.load(config, dataset);
+                    await app.load(config, dataset);
                 } else {
                     // it looks like this standalone viewer does not contain
                     // data. stop the loading indicator to not make the user
@@ -369,6 +399,15 @@
                     stopLoading();
                 }
             }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            CHEMISCOPE_APP = new Chemiscope.ChemiscopeApp('chemiscope-container');
+            loadDefaultDataset(CHEMISCOPE_APP).catch((e) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
         });
     </script>
 </html>

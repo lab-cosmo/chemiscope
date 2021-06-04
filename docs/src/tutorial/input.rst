@@ -1,3 +1,5 @@
+.. _input-format:
+
 Input file format for chemiscope
 ================================
 
