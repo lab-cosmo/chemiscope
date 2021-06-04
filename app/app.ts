@@ -81,18 +81,7 @@ export class ChemiscopeApp {
      * Load the example input with the given name, and display it
      */
     public async loadExample(example: string): Promise<void> {
-        startLoading();
-        this.dataset = `/examples/${example}.json.gz`;
-
-        const response = await fetch(this.dataset);
-        if (!response.ok) {
-            throw Error(`unable to load file at ${this.dataset}`);
-        }
-        const buffer = await response.arrayBuffer();
-        const dataset = readJSON(this.dataset, buffer);
-
-        let config: Configuration = {
-            settings: dataset.settings || {},
+        let config: Partial<Configuration> = {
             loadStructure: undefined,
         };
         if (example == 'Azaphenacenes') {
@@ -102,14 +91,50 @@ export class ChemiscopeApp {
                     $.ajax({
                         type: 'GET',
                         url: `examples/${structure.data}`,
-                        // this is getting deprecated, but the best option for now
+                        // this is getting deprecated, but the best option until
+                        // we change loadStructure to be an async callback
                         async: false,
                     }).responseText
                 );
             };
         }
 
-        await this.load(config, dataset);
+        await this.fetchAndLoad(`/examples/${example}.json.gz`, config);
+    }
+
+    /**
+     * Fetch the JSON file at the given URL, an load it as a chemiscope dataset.
+     *
+     * Optionally specify the configuration in `config`
+     */
+    public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
+        startLoading();
+        this.dataset = url;
+
+        const response = await fetch(this.dataset);
+        if (!response.ok) {
+            throw Error(`unable to load file at '${this.dataset}'`);
+        }
+        const buffer = await response.arrayBuffer();
+
+        if (buffer.byteLength === 0) {
+            // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
+            // we can not check if the URL does not exists, so let's assume an
+            // error if the buffer is empty
+            if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
+                let originalUrl = decodeURIComponent(this.dataset.substr(35));
+                throw Error(`unable to load file at '${originalUrl}'`);
+            }
+        }
+
+        const dataset = readJSON(this.dataset, buffer);
+
+        if (config.settings === undefined) {
+            // take settings from the dataset if they exist
+            config.settings = dataset.settings || {};
+        }
+
+        await this.load(config as Configuration, dataset);
     }
 
     /**
