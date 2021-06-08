@@ -14,6 +14,8 @@ interface ScatterLayout {
         yaxis: LayoutAxis;
         zaxis: LayoutAxis;
     };
+    width: number;
+    height: number;
 }
 
 export interface PlotlyScatterElement extends PlotlyHTMLElement {
