@@ -317,7 +317,7 @@ export class PropertiesMap {
         return this._options.saveSettings();
     }
 
-    /** Forward to Ploty.restyle */
+    /** Forward to Plotly.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) =>
             setTimeout(() => {
@@ -326,7 +326,7 @@ export class PropertiesMap {
         );
     }
 
-    /** Forward to Ploty.relayout */
+    /** Forward to Plotly.relayout */
     private _relayout(layout: Partial<Layout>) {
         Plotly.relayout(this._plot, layout).catch((e) =>
             setTimeout(() => {
@@ -503,8 +503,8 @@ export class PropertiesMap {
                 // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
                 // not update the color of the points (although it does change
                 // the colorbar). Asking for an update of 'coloraxis.colorscale'
-                // seems to do the trick. This is possiblely a Ploty bug, we
-                // would need to investiguate a bit more.
+                // seems to do the trick. This is possibly a Plotly bug, we
+                // would need to investigate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
@@ -654,7 +654,7 @@ export class PropertiesMap {
 
                 // We need to add a dummy point to force plotly to display the
                 // associated legend; but we don't want to see the point in the
-                // map. Setting the coordinates to NaN acheive this.
+                // map. Setting the coordinates to NaN achieve this.
                 x: [NaN],
                 y: [NaN],
                 z: [NaN],
@@ -672,7 +672,7 @@ export class PropertiesMap {
 
         // make a copy of the default layout
         const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
-        // and set values speific to the displayed dataset
+        // and set values specific to the displayed dataset
         layout.xaxis.title = this._title(this._options.x.property.value);
         layout.yaxis.title = this._title(this._options.y.property.value);
         layout.xaxis.type = this._options.x.scale.value;
@@ -902,7 +902,7 @@ export class PropertiesMap {
         }
     }
 
-    /** Get the length of the colorbar to accomodate for the legend */
+    /** Get the length of the colorbar to accommodate for the legend */
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
         const LEGEND_ITEM_HEIGH = 0.045;
@@ -962,7 +962,7 @@ export class PropertiesMap {
         );
 
         this._relayout({
-            // change colorbar length to accomodate for symbols legend
+            // change colorbar length to accommodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
@@ -1005,7 +1005,7 @@ export class PropertiesMap {
         );
 
         this._relayout({
-            // change colorbar length to accomodate for symbols legend
+            // change colorbar length to accommodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
@@ -1018,21 +1018,15 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private _afterplot(): void {
-        // HACK: this is not public, so it might break
-        const bounds = this._getRange();
+        const bounds = this._getBounds();
 
-        const xbound = bounds.get('x');
-        const ybound = bounds.get('y');
-        const zbound = bounds.get('z');
-
-        assert(xbound !== undefined && ybound !== undefined);
-        this._options.x.min.value = xbound[0];
-        this._options.x.max.value = xbound[1];
-        this._options.y.min.value = ybound[0];
-        this._options.y.max.value = ybound[1];
-        if (zbound !== undefined) {
-            this._options.z.min.value = zbound[0];
-            this._options.z.max.value = zbound[1];
+        this._options.x.min.value = bounds.x[0];
+        this._options.x.max.value = bounds.x[1];
+        this._options.y.min.value = bounds.y[0];
+        this._options.y.max.value = bounds.y[1];
+        if (bounds.z !== undefined) {
+            this._options.z.min.value = bounds.z[0];
+            this._options.z.max.value = bounds.z[1];
         }
 
         if (!this._is3D()) {
@@ -1076,21 +1070,23 @@ export class PropertiesMap {
         }
     }
 
-    // Get the current boundaries. Returns map of 'x' | 'y' | 'z' --> limits
-    private _getRange(): Map<string, number[]> {
-        const bounds = new Map<string, number[]>();
-        let layout;
+    // Get the current boundaries on x/y/z axis
+    private _getBounds(): { x: [number, number]; y: [number, number]; z?: [number, number] } {
         if (this._is3D()) {
-            layout = this._plot._fullLayout.scene;
-            bounds.set('x', layout.xaxis.range as number[]);
-            bounds.set('y', layout.yaxis.range as number[]);
-            bounds.set('z', layout.zaxis.range as number[]);
+            // HACK: `_fullLayout` is not public, so it might break
+            const layout = this._plot._fullLayout.scene;
+            return {
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
+                z: layout.zaxis.range as [number, number],
+            };
         } else {
-            layout = this._plot._fullLayout;
-            bounds.set('x', layout.xaxis.range as number[]);
-            bounds.set('y', layout.yaxis.range as number[]);
+            const layout = this._plot._fullLayout;
+            return {
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
+            };
         }
-        return bounds;
     }
 
     // Computes the real space coordinate of a value on the plot
@@ -1109,19 +1105,22 @@ export class PropertiesMap {
         return axis.l2p(value) + axis._offset;
     }
 
-    // Checks if a point is in the visible plot for a *single* axis
-    private _checkBounds(value: number, axis: string, buffer: number = 10): boolean {
-        const bounds = this._getRange().get(axis);
-        assert(bounds !== undefined);
-        return value > bounds[0] - buffer && value < bounds[1] + buffer;
-    }
-
     // Checks if a point is in the visible plot
-    private _insidePlot(x: number, y: number, z?: number, buffer: number = 10): boolean {
-        const check = this._checkBounds(x, 'x', buffer) && this._checkBounds(y, 'y', buffer);
+    private _insidePlot(x: number, y: number, z?: number): boolean {
+        const tolerance = 10;
+
+        const bounds = this._getBounds();
+        const isInsideRange = (value: number, range: [number, number], tolerance: number) => {
+            return value > range[0] - tolerance && value < range[1] + tolerance;
+        };
+
+        let inside = isInsideRange(x, bounds.x, tolerance);
+        inside = inside && isInsideRange(y, bounds.y, tolerance);
+
         if (z !== undefined) {
-            return this._checkBounds(z, 'z', buffer) && check;
+            assert(bounds.z !== undefined);
+            inside = inside && isInsideRange(z, bounds.z, tolerance);
         }
-        return check;
+        return inside;
     }
 }
