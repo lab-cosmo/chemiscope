@@ -345,6 +345,16 @@ export class PropertiesMap {
                 'scene.xaxis.title': this._title(this._options.x.property.value),
                 'xaxis.title': this._title(this._options.x.property.value),
             } as unknown as Layout);
+
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.xaxis.autorange': true,
+                } as unknown as Layout);
+            } else {
+                this._relayout({
+                    'xaxis.autorange': true,
+                } as unknown as Layout);
+            }
         };
 
         this._options.x.scale.onchange = () => {
@@ -389,6 +399,16 @@ export class PropertiesMap {
                 'scene.yaxis.title': this._title(this._options.y.property.value),
                 'yaxis.title': this._title(this._options.y.property.value),
             } as unknown as Layout);
+
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.yaxis.autorange': true,
+                } as unknown as Layout);
+            } else {
+                this._relayout({
+                    'yaxis.autorange': true,
+                } as unknown as Layout);
+            }
         };
 
         this._options.y.scale.onchange = () => {
@@ -422,6 +442,7 @@ export class PropertiesMap {
             this._restyle({ z: values } as Data, [0, 1]);
             this._relayout({
                 'scene.zaxis.title': this._title(this._options.z.property.value),
+                'scene.zaxis.autorange': true,
             } as unknown as Layout);
         };
 
