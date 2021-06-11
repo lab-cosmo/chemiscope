@@ -112,8 +112,8 @@ const DEFAULT_CONFIG = {
         {
             name: 'Download as PNG',
             icon: {
-                width: 550,
-                height: 550,
+                width: 400,
+                height: 424,
                 path: extractSvgPath(PNG_SVG),
             },
             click: function (gd: PlotlyScatterElement) {
@@ -132,8 +132,8 @@ const DEFAULT_CONFIG = {
         {
             name: 'Download as SVG',
             icon: {
-                width: 550,
-                height: 550,
+                width: 400,
+                height: 424,
                 path: extractSvgPath(SVG_SVG),
             },
             click: function (gd: PlotlyScatterElement) {
