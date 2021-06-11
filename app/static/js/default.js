@@ -49,7 +49,6 @@ function readJSON(path, buffer) {
 
 let VISUALIZER = undefined;
 let DATASET = undefined;
-let J2S_PATH = undefined;
 let HIDE_ON_DEMAND_STRUCTURES = undefined;
 
 function loadStructureOnDemand(index, structure) {
@@ -73,7 +72,6 @@ function setupChemiscope(json) {
         meta: 'chemiscope-meta',
         structure: 'chemiscope-structure',
         settings: json.settings || {},
-        j2sPath: J2S_PATH,
     };
 
     if (DATASET !== undefined && DATASET.includes('Azaphenacenes.json.gz')) {
@@ -121,17 +119,7 @@ function setupChemiscope(json) {
         );
 }
 
-const IGNORED_JSMOL_ERRORS = [
-    "IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.",
-    'IndexSizeError: Index or size is negative or greater than the allowed amount',
-];
-
 function displayError(error) {
-    if (IGNORED_JSMOL_ERRORS.includes(error.toString())) {
-        // Ignores mysterious JSMol resize error we really have no clear way to fix.
-        return;
-    }
-
     document.getElementById('loading').style.display = 'none';
 
     const display = document.getElementById('error-display');
@@ -183,8 +171,7 @@ function loadExample(url) {
         );
 }
 
-function setupDefaultChemiscope(j2sPath) {
-    J2S_PATH = j2sPath;
+function setupDefaultChemiscope() {
     Chemiscope.addWarningHandler((message) => displayWarning(message));
 
     window.onerror = (msg, url, line, col, error) => {

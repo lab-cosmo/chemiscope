@@ -142,8 +142,8 @@ export class StructureOptions extends OptionsGroup {
      * inserted in the document.
      *
      * @param  root where to place the HTML button
-     * @param  guid unique identifier of the corresponding JSmolWidget, used as
-     *              prefix for all elements ID
+     * @param  guid unique identifier of the corresponding MoleculeViewer, used
+     *              as prefix for all HTML elements `id`
      * @return      the HTML element containing the setting modal
      */
     private _insertHTML(root: HTMLElement, guid: string): HTMLElement {

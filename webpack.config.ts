@@ -43,7 +43,7 @@ const config: ConfigFn = (env, argv) => {
         devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
         entry: {
             chemiscope: './src/index.ts',
-            'jsmol-widget': './src/structure/widget.ts',
+            'molecule-viewer': './src/structure/widget.ts',
         },
         output: {
             filename: '[name].min.js',

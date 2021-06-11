@@ -236,7 +236,7 @@ export class MoleculeViewer {
     }
 
     /**
-     * Remove all HTML added by this [[JSmolWidget]] in the current document
+     * Remove all HTML added by this [[MoleculeViewer]] in the current document
      */
     public remove(): void {
         if (this._root.parentElement !== null) {
@@ -245,6 +245,10 @@ export class MoleculeViewer {
         this._options.remove();
     }
 
+    /**
+     * Resize the 3Dmol viewer/canvas to the size of the HTML element containing
+     * this widget.
+     */
     public resize(): void {
         this._viewer.resize();
     }

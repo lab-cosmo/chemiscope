@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
     <head>
         <meta charset="utf-8" />
-        <title>JSmol widget example</title>
+        <title>Structure widget example</title>
 
         <!-- jquery -->
         <script
@@ -29,8 +29,8 @@
             crossorigin="anonymous"
         ></script>
 
-        <!-- The code for jsmol-widget -->
-        <script type="text/javascript" src="jsmol-widget.min.js"></script>
+        <!-- The code for molecule-viewer -->
+        <script type="text/javascript" src="molecule-viewer.min.js"></script>
 
         <style>
             .description {
@@ -49,25 +49,19 @@
     </head>
 
     <body>
-        <h1 style="text-align: center; margin-bottom: 1em;">
-            3Dmol widget example
-        </h1>
+        <h1 style="text-align: center; margin-bottom: 1em">3Dmol widget example</h1>
 
-        <div style="width: 600px; margin: auto;">
+        <div style="width: 600px; margin: auto">
             <h4>Crystal with environments</h4>
         </div>
         <div id="crystal" class="viewer"></div>
-        <div class="card description">
-            Example of a crystal structure (see the options related to the unit cell) with atom centered environments.
-        </div>
+        <div class="card description">Example of a crystal structure (see the options related to the unit cell) with atom centered environments.</div>
 
-        <div style="width: 600px; margin: auto;">
+        <div style="width: 600px; margin: auto">
             <h4>Simple molecule</h4>
         </div>
         <div id="molecule" class="viewer"></div>
-        <div class="card description">
-            Example of a single molecule, without unit cell or environments.
-        </div>
+        <div class="card description">Example of a single molecule, without unit cell or environments.</div>
     </body>
 
     <script type="text/javascript">

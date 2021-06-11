@@ -1,7 +1,8 @@
 /**
- * This module contains the [[ViewersGrid|structure viewer]] class and
- * associated code. Notably, it contains the [[JSmolWidget]] class, that can be
- * used outside of chemiscope as a small wrapper around JSmol.
+ * This module contains the code for the [[ViewersGrid|grid]] of structure
+ * viewer and associated classes. Notably, it contains the [[MoleculeViewer]]
+ * class, that can be used outside of chemiscope as a small wrapper around
+ * 3Dmol.js.
  *
  * @packageDocumentation
  * @module structure

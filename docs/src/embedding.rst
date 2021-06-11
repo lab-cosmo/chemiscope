@@ -13,10 +13,9 @@ Chemiscope relies on different external dependencies that you should load in all
 the HTML pages using it. You can serve these from your own web server, or use a
 CDN to deliver them.
 
-- `JSmol <http://jmol.org/>`_ for structure visualization;
 - `Bootstrap <https://getbootstrap.com/>`_ for HTML styling and basic UI;
-- Both JSmol and Bootstrap rely on the ubiquitous `JQuery
-  <https://jquery.com/>`_ and `JQueryUI <https://jqueryui.com/>`_
+- Bootstrap relies on the ubiquitous `JQuery <https://jquery.com/>`_ and
+  `JQueryUI <https://jqueryui.com/>`_
 
 Getting and building the code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -26,8 +25,8 @@ Pre-built version
 
 The easiest way to do so is to download the latest release from `the release
 page <https://github.com/cosmo-epfl/chemiscope/releases>`_ on GitHub. The main
-file is ``chemiscope.min.js``, containing the needed JavaScript code to create
-the default visualizer. This file exports a single global object ``Chemiscope``,
+file is ``chemiscope.min.js``, containing the code required to create the
+default visualizer. This file exports a single global object ``Chemiscope``,
 which contains references to
 
 - `Chemiscope.DefaultVisualizer <DefaultVisualizer_>`_
@@ -38,10 +37,10 @@ which contains references to
 - `Chemiscope.EnvironmentInfo <EnvironmentInfo_>`_
 - `Chemiscope.EnvironmentIndexer <EnvironmentIndexer_>`_
 
-Partial builds are also available, in particular ``jsmol-widget.min.js`` which
-only contains code related to `Chemiscope.JSmolWidget <JSmolWidget_>`_, making
-the minified JavaScript file much smaller. Other partial builds containing only
-part of chemiscope can be added upon request.
+Partial builds are also available, in particular ``molecule-viewer.min.js``
+which only contains code related to `Chemiscope.MoleculeViewer
+<MoleculeViewer_>`_, making the minified JavaScript file much smaller. Other
+partial builds containing only part of chemiscope can be added upon request.
 
 .. _DefaultVisualizer: api/classes/main.defaultvisualizer.html
 .. _addWarningHandler: api/modules/utils.html#addwarninghandler-1
@@ -50,7 +49,7 @@ part of chemiscope can be added upon request.
 .. _EnvironmentInfo: api/classes/info.environmentinfo-1.html
 .. _MetadataPanel: api/classes/main.metadatapanel.html
 .. _EnvironmentIndexer: api/classes/utils.environmentindexer.html
-.. _JSmolWidget: api/classes/structure.jsmolwidget.html
+.. _MoleculeViewer: api/classes/structure.moleculeviewer.html
 
 Build from sources
 ------------------
