@@ -1173,7 +1173,7 @@ export class PropertiesMap {
     }
 }
 
-/** Extract an SVG path */
+/** Extract the data associated with the first `path` element in an SVG string */
 function extractSvgPath(svg: string) {
     const doc = document.createElement('div');
     doc.innerHTML = svg;
