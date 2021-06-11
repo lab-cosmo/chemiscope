@@ -3,6 +3,5 @@ dist/
 package-lock.json
 
 app/structures/*.json
-app/static/js/jsmol/
 
-docs/_build/
+docs/build/

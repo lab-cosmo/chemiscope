@@ -36,7 +36,7 @@ jobs:
           cp -r app/ gh-pages/
           cp dist/*.min.js gh-pages/
           cp chemiscope_standalone.html gh-pages/
-          cp -r docs/_build/html/ gh-pages/docs/
+          cp -r docs/build/html/ gh-pages/docs/
           rm -f gh-pages/.gitignore
           tar czf gh-pages.tar.gz gh-pages/
       - name: store website archive
