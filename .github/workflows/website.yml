@@ -63,6 +63,6 @@ jobs:
           files: |
             dist/chemiscope.d.ts
             dist/chemiscope.min.js
-            dist/jsmol-widget.min.js
+            dist/molecule-viewer.min.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

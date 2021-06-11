@@ -365,8 +365,7 @@
             const version = document.getElementById('chemiscope-version');
             version.innerText = `version ${Chemiscope.version()}`;
 
-            const j2sPath = isStandalone ? 'https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/j2s/' : 'static/js/jsmol/j2s';
-            setupDefaultChemiscope(j2sPath);
+            setupDefaultChemiscope();
 
             if (!isStandalone) {
                 loadExample('Arginine-Dipeptide.json.gz');

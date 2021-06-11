@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Generate a standalone version of the example/index.html file by inlining all
-javascript/css except for jsmol.
+javascript/css.
 
 This creates a file that can be distributed in supplementary information
 """
@@ -15,7 +15,6 @@ import requests
 
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
-JSMOL = "https://chemapps.stolaf.edu/jmol/jsmol-2019-10-30/JSmol.min.nojq.js"
 
 
 def get_html():
@@ -43,11 +42,6 @@ def inline_ressources(html):
         if script.has_attr("src"):
             url = script["src"]
             if url.startswith("https://") or url.startswith("http://"):
-                continue
-
-            if "JSmol.min.nojq.js" in url:
-                new_script = html.new_tag("script", src=JSMOL)
-                script.replace_with(new_script)
                 continue
 
             content = get_url(url)

@@ -58,7 +58,7 @@ cd chemiscope
 npm install
 npm run build
 
-# Include dist/chemiscope.min.js or dist/jsmol-widget.min.js
+# Include dist/chemiscope.min.js or dist/molecule-viewer.min.js
 # in your own web page
 ```
 
@@ -73,5 +73,3 @@ If you are interested in contributing to chemiscope, please have a look at our
 Chemiscope itself is distributed under the 3-Clauses BSD license. By
 contributing to this repository, you agree to distribute your contributions
 under the same license.
-
-Chemiscope depends on JSmol, which is distributed under the LGPLv2.1 license.

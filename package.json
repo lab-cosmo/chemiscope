@@ -25,8 +25,8 @@
     "api-docs": "typedoc",
     "start": "npm run download-example-input && webpack serve --mode development --static ./app",
     "chemiscope-dts": "dts-bundle-generator -o dist/chemiscope.d.ts dist/src/index.d.ts",
-    "jsmol-widget-dts": "dts-bundle-generator -o dist/jsmol-widget.d.ts dist/src/structure/widget.d.ts",
-    "merge-dts": "npm run chemiscope-dts && npm run jsmol-widget-dts",
+    "molecule-viewer-dts": "dts-bundle-generator -o dist/molecule-viewer.d.ts dist/src/structure/widget.d.ts",
+    "merge-dts": "npm run chemiscope-dts && npm run molecule-viewer-dts",
     "prepublishOnly": "rm -rf dist && npm run build && npm run merge-dts",
     "pretty": "prettier --write src"
   },

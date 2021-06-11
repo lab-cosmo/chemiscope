@@ -84,7 +84,7 @@ interface WidgetGridData {
 
 /**
  * The [[ViewersGrid]] class displays a grid of molecule or a crystal viewers
- * in 3D using [JSmol](http://wiki.jmol.org/index.php/JSmol) for rendering.
+ * in 3D using [[MolecularViewer]] widgets for rendering.
  */
 export class ViewersGrid {
     /** Callback used when the user select an environment */
@@ -145,7 +145,6 @@ export class ViewersGrid {
      * `id`
      *
      * @param id           HTML id of the DOM element where the viewer should live
-     * @param j2sPath      path to the `j2s` files uses by JSmol
      * @param indexer      [[EnvironmentIndexer]] used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
@@ -440,11 +439,11 @@ export class ViewersGrid {
     }
 
     /**
-     * Get the structure at the given index in a format JSmol can undertand
-     * and load. [[Structure]] already rendered as strings are cached for faster
-     * subsequent access.
+     * Get the structure at the given index, potentially loading them using a
+     * user provided loading function.
+     *
      * @param  index index of the structure
-     * @return       a string that can be passed to JSmol `load INLINE` command
+     * @return       a Structure instance
      */
     private _structure(index: number): Structure {
         if (this._resolvedStructures[index] === undefined) {

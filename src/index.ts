@@ -46,8 +46,6 @@ export interface Config {
     structure: string;
     /** Settings for the map & structure viewer */
     settings?: Partial<Settings>;
-    /** Path of j2s files, used by JSmol, which is used by the [[StructureViewer|structure viewer]] */
-    j2sPath: string;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
@@ -84,10 +82,6 @@ function validateConfig(o: JsObject) {
         }
 
         validateSettings(o.settings as JsObject);
-    }
-
-    if (!('j2sPath' in o && typeof o.j2sPath === 'string')) {
-        throw Error('missing "j2sPath" key in chemiscope config');
     }
 
     // from underscore.js / https://stackoverflow.com/a/6000016
