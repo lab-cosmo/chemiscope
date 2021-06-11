@@ -1175,7 +1175,7 @@ export class PropertiesMap {
 
 /** Extract an SVG path */
 function extractSvgPath(svg: string) {
-    let doc = document.createElement('div');
+    const doc = document.createElement('div');
     doc.innerHTML = svg;
     return doc.getElementsByTagName('path')[0].getAttribute('d');
 }
