@@ -12,7 +12,7 @@
   "typedocOptions": {
     "mode": "module",
     "inputFiles": "src",
-    "out": "docs/_build/html/api/",
+    "out": "docs/build/html/api/",
     "excludePrivate": true,
     "excludeNotExported": true,
     "hideGenerator": true,
