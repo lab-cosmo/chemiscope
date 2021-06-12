@@ -100,7 +100,7 @@ export class MapOptions extends OptionsGroup {
 
         this.x = new AxisOptions(propertiesName);
         this.y = new AxisOptions(propertiesName);
-        // For z and color, '' is a valid value
+        // For z and color '' is a valid value
         this.z = new AxisOptions(propertiesName.concat(['']));
         this.color = new AxisOptions(propertiesName.concat(['']));
 
@@ -118,20 +118,18 @@ export class MapOptions extends OptionsGroup {
 
         this.size = {
             factor: new HTMLOption('number', 50),
-            mode: new HTMLOption('string', 'constant'),
-            property: new HTMLOption('string', propertiesName[0]),
+            mode: new HTMLOption('string', 'linear'),
+            property: new HTMLOption('string', ''),
             reverse: new HTMLOption('boolean', false),
         };
-        this.size.property.validate = optionValidator(propertiesName, 'size');
+
+        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
-        this.size.mode.validate = optionValidator(
-            ['constant', 'linear', 'log', 'sqrt', 'inverse'],
-            'size'
-        );
+        this.size.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
 
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
@@ -161,13 +159,13 @@ export class MapOptions extends OptionsGroup {
      * @param settings settings for all panels
      */
     public applySettings(settings: SavedSettings): void {
-        // deal with backward compatibility: size.property === '' used to mean
-        // "use a constant scaling"
+        // deal with backward compatibility: size.mode === 'constant' should be
+        // the same as `size.property === ''`
         if ('size' in settings) {
             const size = settings.size as SavedSettings;
-            if ('property' in size && size.property === '') {
-                delete size.property;
-                size.mode = 'constant';
+            if ('mode' in size && size.mode === 'constant') {
+                delete size.mode;
+                size.property = '';
             }
         }
         super.applySettings(settings);
@@ -224,7 +222,7 @@ export class MapOptions extends OptionsGroup {
 
         const userFactor = logSlider(this.size.factor.value);
 
-        const scaleMode = this.size.mode.value;
+        let scaleMode = this.size.mode.value;
         const reversed = this.size.reverse.value;
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 150;
@@ -232,9 +230,14 @@ export class MapOptions extends OptionsGroup {
 
         const values = rawSizes.map((v: number) => {
             // normalize between 0 and 1, then scale by the user provided value
-            let scaled = (v + bottomLimit - min) / (max - min);
-            if (reversed) {
-                scaled = 1.0 + bottomLimit - scaled;
+            let scaled = 0.55; // default
+            if (max === min) {
+                scaleMode = 'fixed';
+            } else {
+                scaled = (v + bottomLimit - min) / (max - min);
+                if (reversed) {
+                    scaled = 1.0 + bottomLimit - scaled;
+                }
             }
             switch (scaleMode) {
                 case 'inverse':
@@ -378,9 +381,9 @@ export class MapOptions extends OptionsGroup {
 
         // ======= data used as color values
         const selectColorProperty = getByID<HTMLSelectElement>('chsp-color');
-        // first option is 'none'
+        // first option is 'fixed'
         selectColorProperty.options.length = 0;
-        selectColorProperty.options.add(new Option('none', ''));
+        selectColorProperty.options.add(new Option('fixed', ''));
         for (const key in properties) {
             selectColorProperty.options.add(new Option(key, key));
         }
@@ -398,9 +401,9 @@ export class MapOptions extends OptionsGroup {
 
         // ======= marker symbols
         const selectSymbolProperty = getByID<HTMLSelectElement>('chsp-symbol');
-        // first option is 'default'
+        // first option is 'fixed'
         selectSymbolProperty.options.length = 0;
-        selectSymbolProperty.options.add(new Option('default', ''));
+        selectSymbolProperty.options.add(new Option('fixed', ''));
         for (const key in properties) {
             if (properties[key].string !== undefined) {
                 selectSymbolProperty.options.add(new Option(key, key));
@@ -410,7 +413,9 @@ export class MapOptions extends OptionsGroup {
 
         // ======= marker size
         const selectSizeProperty = getByID<HTMLSelectElement>('chsp-size');
+        // first option is 'fixed'
         selectSizeProperty.options.length = 0;
+        selectSizeProperty.options.add(new Option('fixed', ''));
         for (const key in properties) {
             selectSizeProperty.options.add(new Option(key, key));
         }
