@@ -12,7 +12,7 @@ import { Property } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
 import { enumerate, getByID, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
@@ -337,8 +337,22 @@ export class PropertiesMap {
 
     /** Add all the required callback to the settings */
     private _connectSettings() {
+        // Reads a warning if negative values of log are discared and not shown
+        const negativeLogWarning = (axis: AxisOptions) => {
+            if (
+                axis.scale.value === 'log' &&
+                arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
+                axis.min.value <= 0
+            ) {
+                sendWarning(
+                    'This property contains negative values. Note that taking the log will discard them.'
+                );
+            }
+        };
+
         // ======= x axis settings
         this._options.x.property.onchange = () => {
+            negativeLogWarning(this._options.x);
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
             this._relayout({
@@ -358,6 +372,7 @@ export class PropertiesMap {
         };
 
         this._options.x.scale.onchange = () => {
+            negativeLogWarning(this._options.x);
             if (this._is3D()) {
                 this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
@@ -378,6 +393,9 @@ export class PropertiesMap {
                 }
                 const min = axis.min.value;
                 const max = axis.max.value;
+
+                negativeLogWarning(axis);
+
                 if (this._is3D()) {
                     this._relayout({
                         [`scene.${name}.range`]: [min, max],
@@ -393,6 +411,7 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange = () => {
+            negativeLogWarning(this._options.y);
             const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y: values }, [0, 1]);
             this._relayout({
@@ -412,6 +431,7 @@ export class PropertiesMap {
         };
 
         this._options.y.scale.onchange = () => {
+            negativeLogWarning(this._options.y);
             if (this._is3D()) {
                 this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
@@ -426,6 +446,7 @@ export class PropertiesMap {
 
         // ======= z axis settings
         this._options.z.property.onchange = () => {
+            negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
@@ -447,6 +468,7 @@ export class PropertiesMap {
         };
 
         this._options.z.scale.onchange = () => {
+            negativeLogWarning(this._options.z);
             if (this._options.z.property.value !== '') {
                 this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,
