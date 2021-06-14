@@ -109,46 +109,50 @@ const DEFAULT_CONFIG = {
     ],
 
     modeBarButtonsToAdd: [
-        {
-            name: 'Download as PNG',
-            icon: {
-                width: 400,
-                height: 424,
-                path: extractSvgPath(PNG_SVG),
+        [
+            {
+                name: 'Download plot as PNG',
+                icon: {
+                    width: 400,
+                    height: 424,
+                    path: extractSvgPath(PNG_SVG),
+                },
+                click: function (gd: PlotlyScatterElement) {
+                    Plotly.downloadImage(gd, {
+                        filename: 'chemiscope-map',
+                        format: 'png',
+                        width: Math.max(gd._fullLayout.width, 600),
+                        height: Math.max(gd._fullLayout.width, 600),
+                    } as any).catch((e) =>
+                        setTimeout(() => {
+                            throw e;
+                        })
+                    );
+                },
             },
-            click: function (gd: PlotlyScatterElement) {
-                Plotly.downloadImage(gd, {
-                    filename: 'newplot',
-                    format: 'png',
-                    width: gd._fullLayout.width,
-                    height: gd._fullLayout.height,
-                }).catch((e) =>
-                    setTimeout(() => {
-                        throw e;
-                    })
-                );
+        ],
+        [
+            {
+                name: 'Download plot as SVG',
+                icon: {
+                    width: 400,
+                    height: 424,
+                    path: extractSvgPath(SVG_SVG),
+                },
+                click: function (gd: PlotlyScatterElement) {
+                    Plotly.downloadImage(gd, {
+                        filename: 'chemiscope-map',
+                        format: 'svg',
+                        width: Math.max(gd._fullLayout.width, 600),
+                        height: Math.max(gd._fullLayout.height, 600),
+                    }).catch((e) =>
+                        setTimeout(() => {
+                            throw e;
+                        })
+                    );
+                },
             },
-        },
-        {
-            name: 'Download as SVG',
-            icon: {
-                width: 400,
-                height: 424,
-                path: extractSvgPath(SVG_SVG),
-            },
-            click: function (gd: PlotlyScatterElement) {
-                Plotly.downloadImage(gd, {
-                    filename: 'newplot',
-                    format: 'svg',
-                    width: gd._fullLayout.width,
-                    height: gd._fullLayout.height,
-                }).catch((e) =>
-                    setTimeout(() => {
-                        throw e;
-                    })
-                );
-            },
-        },
+        ],
     ],
 };
 
