@@ -123,7 +123,7 @@ const DEFAULT_CONFIG = {
                         format: 'png',
                         width: Math.max(gd._fullLayout.width, 600),
                         height: Math.max(gd._fullLayout.width, 600),
-                    } as any).catch((e) =>
+                    }).catch((e) =>
                         setTimeout(() => {
                             throw e;
                         })
