@@ -19,6 +19,9 @@ import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
 
+import PNG_SVG from '../static/png-icon.svg';
+import SVG_SVG from '../static/svg-icon.svg';
+
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
     coloraxis: {
@@ -102,6 +105,54 @@ const DEFAULT_CONFIG = {
         'hoverClosest3d',
         'tableRotation',
         'resetCameraLastSave3d',
+        'toImage',
+    ],
+
+    modeBarButtonsToAdd: [
+        [
+            {
+                name: 'Download plot as PNG',
+                icon: {
+                    width: 400,
+                    height: 424,
+                    path: extractSvgPath(PNG_SVG),
+                },
+                click: function (gd: PlotlyScatterElement) {
+                    Plotly.downloadImage(gd, {
+                        filename: 'chemiscope-map',
+                        format: 'png',
+                        width: Math.max(gd._fullLayout.width, 600),
+                        height: Math.max(gd._fullLayout.width, 600),
+                    }).catch((e) =>
+                        setTimeout(() => {
+                            throw e;
+                        })
+                    );
+                },
+            },
+        ],
+        [
+            {
+                name: 'Download plot as SVG',
+                icon: {
+                    width: 400,
+                    height: 424,
+                    path: extractSvgPath(SVG_SVG),
+                },
+                click: function (gd: PlotlyScatterElement) {
+                    Plotly.downloadImage(gd, {
+                        filename: 'chemiscope-map',
+                        format: 'svg',
+                        width: Math.max(gd._fullLayout.width, 600),
+                        height: Math.max(gd._fullLayout.height, 600),
+                    }).catch((e) =>
+                        setTimeout(() => {
+                            throw e;
+                        })
+                    );
+                },
+            },
+        ],
     ],
 };
 
@@ -734,7 +785,7 @@ export class PropertiesMap {
             this._plot,
             traces,
             layout as Partial<Layout>,
-            DEFAULT_CONFIG as Config
+            DEFAULT_CONFIG as unknown as Config
         ).catch((e) =>
             setTimeout(() => {
                 throw e;
@@ -1166,4 +1217,11 @@ export class PropertiesMap {
         }
         return inside;
     }
+}
+
+/** Extract the data associated with the first `path` element in an SVG string */
+function extractSvgPath(svg: string) {
+    const doc = document.createElement('div');
+    doc.innerHTML = svg;
+    return doc.getElementsByTagName('path')[0].getAttribute('d');
 }
