@@ -2,9 +2,8 @@
 
 :tada: First off, thanks for taking the time to contribute to chemiscope! :tada:
 
-If you want to contribute but feel a bit lost, do not hesitate to
-[contact][gitter] us and ask your questions! We will happily mentor you through
-your first contributions.
+If you want to contribute but feel a bit lost, do not hesitate to contact us and
+ask your questions! We will happily mentor you through your first contributions.
 
 ## Area of contributions
 
@@ -72,10 +71,20 @@ You can then navigate to `http://localhost:8080` to interact with the code and
 check that everything works as expected. It is always a good idea to check that
 your code is working with multiple browsers (Chrome, Firefox, Edge, Safari).
 
-Run tests and lints (we use `tslint` to ensure a consistent coding style):
+Run tests and lints (we use [eslint] and [prettier] to ensure a consistent
+coding style):
 
 ```bash
 npm test
+```
+
+We suggest that you configure your code editor to automatically re-format the
+code when you save the files. There are prettier plugins for most editors, see
+the "Editor Support" section of the [prettier] website. If you want to manually
+format your files, you can use
+
+```bash
+npx prettier --write <path/to/the/files>
 ```
 
 Finally, you can push your code to Github, and create a [Pull Request][pr] to
@@ -90,3 +99,5 @@ git push -u origin <new-branch>
 [easy-issues]: https://github.com/cosmo-epfl/chemiscope/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [fork]: https://help.github.com/articles/fork-a-repo/
 [issue]: https://github.com/cosmo-epfl/chemiscope/issues/new
+[eslint]: https://eslint.org/
+[prettier]: https://prettier.io/
