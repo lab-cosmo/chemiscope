@@ -60,25 +60,29 @@ interface Settings {
  * Check if `o` contains all the expected fields to be a [[Config]].
  */
 function validateConfig(o: JsObject) {
+    if (typeof o !== 'object') {
+        throw Error('the configuration must be a JavaScript object');
+    }
+
     if (!('meta' in o && typeof o.meta === 'string')) {
-        throw Error('missing "meta" key in chemiscope config');
+        throw Error('missing "meta" key in chemiscope configuration');
     }
 
     if (!('map' in o && typeof o.map === 'string')) {
-        throw Error('missing "map" key in chemiscope config');
+        throw Error('missing "map" key in chemiscope configuration');
     }
 
     if (!('info' in o && typeof o.info === 'string')) {
-        throw Error('missing "info" key in chemiscope config');
+        throw Error('missing "info" key in chemiscope configuration');
     }
 
     if (!('structure' in o && typeof o.structure === 'string')) {
-        throw Error('missing "structure" key in chemiscope config');
+        throw Error('missing "structure" key in chemiscope configuration');
     }
 
     if ('settings' in o) {
         if (typeof o.settings !== 'object' || o.settings === null) {
-            throw Error('"settings" must be an object in chemiscope config');
+            throw Error('"settings" must be an object in chemiscope configuration');
         }
 
         validateSettings(o.settings as JsObject);

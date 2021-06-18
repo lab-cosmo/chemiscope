@@ -153,6 +153,10 @@ export type JsObject = Record<string, unknown>;
  * required properties to be a dataset.
  */
 export function validateDataset(o: JsObject): void {
+    if (typeof o !== 'object') {
+        throw Error('the dataset must be a JavaScript object');
+    }
+
     if (!('meta' in o)) {
         throw Error('missing "meta" key in the dataset');
     } else if (!(typeof o.meta === 'object' && o.meta !== null)) {
@@ -256,6 +260,10 @@ function checkStructures(o: JsObject[]): [number, number] {
  * structure.
  */
 export function checkStructure(s: JsObject): string {
+    if (typeof s !== 'object') {
+        throw Error('the structure must be a JavaScript object');
+    }
+
     if (!('size' in s && typeof s.size === 'number' && isPositiveInteger(s.size))) {
         return 'missing "size"';
     }
