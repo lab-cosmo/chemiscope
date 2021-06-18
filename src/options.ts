@@ -209,6 +209,10 @@ export class HTMLOption<T extends OptionsType> {
     // different data types coming from the DOM.
     private _update(value: string, origin: OptionModificationOrigin) {
         const updated = parse<T>(this.type, value);
+        if (this._value === updated) {
+            // nothing to update
+            return;
+        }
         this.validate(updated);
 
         this._value = updated;
