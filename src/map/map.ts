@@ -504,6 +504,7 @@ export class PropertiesMap {
                 if (was3D) {
                     this._switch2D();
                 }
+                return;
             } else {
                 if (!was3D) {
                     this._switch3D();
