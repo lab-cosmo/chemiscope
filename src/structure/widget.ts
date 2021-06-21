@@ -37,6 +37,7 @@ function createStyleSheet(rules: string[]): CSSStyleSheet {
  * @param structure the structure to convert
  */
 function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
+    console.log('setting up 3D mol structure');
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -168,7 +169,7 @@ export class MoleculeViewer {
      * @param id HTML element id inside which the viewer will be created
      * @param guid (optional) unique identifier for the widget
      */
-    constructor(id: string, guid?: string) {
+    constructor(element: string | HTMLElement, guid?: string) {
         if (guid === undefined) {
             guid = generateGUID();
         }
@@ -179,7 +180,14 @@ export class MoleculeViewer {
         this.guid = 'chsp-' + guid;
 
         this._root = document.createElement('div');
-        const root = getByID(id);
+
+        let root;
+        if (typeof element !== 'string') {
+            root = element;
+        } else {
+            root = getByID(element);
+        }
+
         root.appendChild(this._root);
 
         this._root.style.position = 'relative';
@@ -357,7 +365,6 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-
         assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
         this._current.model.addAtomSpecs(['index']);
 
@@ -412,6 +419,7 @@ export class MoleculeViewer {
      */
     public applySettings(settings: SavedSettings): void {
         this._options.applySettings(settings);
+        console.log('after apply settings');
     }
 
     /**

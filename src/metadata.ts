@@ -86,17 +86,22 @@ export class MetadataPanel {
      * Create a new [[MetadataPanel]] inside the HTML element with the given
      * `id`.
      *
-     * @param id       HTML id of the DOM element where the name should live
+     * @param element HTML element or HTML id of the DOM element where the name should live
      * @param metadata dataset metadata
      */
-    constructor(id: string, metadata: Metadata) {
+    constructor(element: string | HTMLElement, metadata: Metadata) {
         // sanitize HTML, all the other field will go through markdown
         metadata.name = metadata.name.replace(/</g, '&lt;');
         metadata.name = metadata.name.replace(/>/g, '&gt;');
 
         this._guid = `chsp-${generateGUID()}`;
 
-        this._name = getByID(id);
+        if (typeof element !== 'string') {
+            this._name = element;
+        } else {
+            this._name = getByID(element);
+        }
+
         this._name.innerHTML = generateName(this._guid, metadata.name);
         this._name.classList.add('chsp-meta');
 
