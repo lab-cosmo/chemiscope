@@ -16,6 +16,7 @@ import { LoadOptions, MoleculeViewer } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
+import PNG_SVG from '../static/png-icon.svg';
 
 const MAX_WIDGETS = 9;
 
@@ -531,7 +532,7 @@ export class ViewersGrid {
             color = this._getNextColor();
             template.innerHTML = `<div
                 class="chsp-has-tooltip"
-                style="position: absolute; top: 9px; right: 115px;">
+                style="position: absolute; top: 9px; right: 145px;">
                     <div id="chsp-activate-${cellGUID}"
                          class="chsp-structure-marker"
                          style="background-color: ${color}; top: 14px; right: 0px;"
@@ -571,7 +572,7 @@ export class ViewersGrid {
             // add a button to duplicate the widget
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 70px;">
+                style="top: 8px; right: 100px;">
                     <span>${DUPLICATE_SVG}</span>
                     <span class="chsp-tooltip">duplicate viewer</span>
                 </button>`;
@@ -584,8 +585,25 @@ export class ViewersGrid {
                 }
                 this.oncreate(this.active, data.color, data.current);
             };
-
             cell.appendChild(duplicate);
+
+            // add a button to download PNG
+            template.innerHTML = `<button
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
+                style="top: 8px; right: 70px;">
+                    <span>${PNG_SVG}</span>
+                    <span class="chsp-tooltip">download as PNG</span>
+                </button>`;
+            const downloadPNG = template.content.firstChild as HTMLElement;
+
+            downloadPNG.onclick = () => {
+                downloadURI(
+                    this._viewers.get(cellGUID)?.widget.exportPNG() as string,
+                    'structure.png'
+                );
+            };
+
+            cell.appendChild(downloadPNG);
 
             this._root.appendChild(cell);
             return color;
@@ -694,4 +712,19 @@ export class ViewersGrid {
 
         return newGUID;
     }
+}
+
+/**
+ *  Creates a download request from a URI
+ * @param uri       URI of the image
+ * @param name      Name of the downloaded image
+ */
+function downloadURI(uri: string, name: string) {
+    var link = document.createElement('a');
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    link.remove();
 }

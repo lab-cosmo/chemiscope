@@ -454,6 +454,8 @@ export declare class GLViewer {
         noshow?: boolean
     ): Label;
     public removeLabel(label: Label): void;
+
+    public pngURI(): string;
 }
 
 /** [ pos.x, pos.y, pos.z, rotationGroup.position.z, q.x, q.y, q.z, q.w ] */

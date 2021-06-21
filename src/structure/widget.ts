@@ -422,6 +422,13 @@ export class MoleculeViewer {
         return this._options.saveSettings();
     }
 
+    /**
+     * Returns a PNG screenshot of the viewer as a URI string
+     */
+    public exportPNG(): string {
+        return this._viewer.pngURI();
+    }
+
     private _connectOptions(): void {
         const restyleAndRender = () => {
             this._updateStyle();
