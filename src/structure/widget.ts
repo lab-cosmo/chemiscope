@@ -639,6 +639,12 @@ export class MoleculeViewer {
             this._options.supercell[1].value = this._initialSupercell[1];
             this._options.supercell[2].value = this._initialSupercell[2];
         };
+
+        // Reset zoom level when double clicked
+        this._root.ondblclick = () => {
+            this._resetView(this._options.environments.center.value);
+            this._viewer.render();
+        };
     }
 
     /**
