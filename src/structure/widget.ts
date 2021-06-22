@@ -190,8 +190,8 @@ export class MoleculeViewer {
         const viewer = $3Dmol.createViewer(this._root, {
             antialias: true,
             defaultcolors: $3Dmol.elementColors.Jmol,
-            backgroundColor: "0xffffff",
-            backgroundAlpha: 0,
+            backgroundColor: '0xffffff',
+            //backgroundAlpha: 0,
             disableFog: true,
             orthographic: false,
         });
