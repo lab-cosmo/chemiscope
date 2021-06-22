@@ -12,6 +12,7 @@ export interface ViewerSpec {
     nomouse: boolean;
     /** Color of the canvas' background */
     backgroundColor: ColorSpec;
+    backgroundAlpha: number;
 
     disableFog: boolean;
 
