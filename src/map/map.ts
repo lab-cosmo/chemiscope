@@ -1132,37 +1132,20 @@ export class PropertiesMap {
     private _afterplot(): void {
         const bounds = this._getBounds();
 
-        if (this._options.x.scale.value === 'log') {
-            this._options.x.min.value = 10 ** bounds.x[0];
-            this._options.x.max.value = 10 ** bounds.x[1];
-        } else {
-            this._options.x.min.value = bounds.x[0];
-            this._options.x.max.value = bounds.x[1];
-        }
-
-        if (this._options.y.scale.value === 'log') {
-            this._options.y.min.value = 10 ** bounds.x[0];
-            this._options.y.max.value = 10 ** bounds.x[1];
-        } else {
-            this._options.y.min.value = bounds.x[0];
-            this._options.y.max.value = bounds.x[1];
-        }
+        this._options.x.min.value = bounds.x[0];
+        this._options.x.max.value = bounds.x[1];
+        this._options.y.min.value = bounds.y[0];
+        this._options.y.max.value = bounds.y[1];
 
         if (bounds.z !== undefined) {
-            if (this._options.z.scale.value === 'log') {
-                this._options.z.min.value = 10 ** bounds.z[0];
-                this._options.z.max.value = 10 ** bounds.z[1];
-            } else {
-                this._options.z.min.value = bounds.z[0];
-                this._options.z.max.value = bounds.z[1];
+            this._options.z.min.value = bounds.z[0];
+            this._options.z.max.value = bounds.z[1];
+
+            if (!this._is3D()) {
+                this._updateMarkers();
             }
         }
-
-        if (!this._is3D()) {
-            this._updateMarkers();
-        }
     }
-
     /**
      * Update the position, color & size of markers within the data array
      */

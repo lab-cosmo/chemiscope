@@ -344,10 +344,13 @@ export class MapOptions extends OptionsGroup {
             selectXProperty.options.add(new Option(key, key));
         }
         this.x.property.bind(selectXProperty, 'value');
-        this.x.min.bind('chsp-x-min', 'value');
-        this.x.max.bind('chsp-x-max', 'value');
         this.x.scale.bind('chsp-x-scale', 'value');
 
+        if (this.x.scale.value === 'log') {
+        } else {
+            this.x.min.bind('chsp-x-min', 'value');
+            this.x.max.bind('chsp-x-max', 'value');
+        }
         // ======= data used as y values
         const selectYProperty = getByID<HTMLSelectElement>('chsp-y');
         selectYProperty.options.length = 0;
