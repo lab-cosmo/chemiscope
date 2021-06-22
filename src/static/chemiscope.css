@@ -39,19 +39,19 @@
 /* Tooltip text */
 .chsp-tooltip {
     visibility: hidden;
-    background-color: #69738a;
+    background: rgb(105, 115, 138);
     color: white;
-    border-radius: 2px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 12px;
     white-space: nowrap;
+    margin-right: -18px;
+    border-radius: 2px;
     text-align: center;
     display: inline-block;
-    font-size: 12px;
-    height: 28px;
-    line-height: 28px;
-    padding-left: 8px;
-    padding-right: 8px;
     top: 30px;
     left: -60px;
+    opacity: 0.9;
     /* Position the tooltip text - see examples below! */
     position: absolute;
     z-index: 100000;
@@ -95,12 +95,15 @@
     margin: 0;
     height: 28px;
     width: 28px;
-    opacity: 0.4;
     z-index: 10;
 }
 
-.chsp-viewer-button:hover {
-    opacity: 0.9;
+.chsp-viewer-button svg {
+    opacity: 0.3;
+}
+
+.chsp-viewer-button:hover svg {
+    opacity: 0.6;
 }
 
 .chsp-structure-viewer-grid {
@@ -205,9 +208,61 @@
     font-weight: bold;
 }
 
+/* Plotly Modebar */
+
+.modebar-group {
+    padding-left: 0 !important;
+}
+
+.modebar-btn {
+    cursor: default !important;
+}
+
+.modebar-btn::after {
+    opacity: 0.9 !important;
+    top: 140% !important;
+}
+
+.icon:hover + .modebar-btn::after {
+    visibility: visible;
+}
+
+.modebar-btn::before {
+    content: none !important;
+    font-family: Arial !important;
+}
+
+.modebar-btn .icon {
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+        opacity 0.15s ease-in-out;
+    background-color: #ebebeb;
+    border: 1px solid;
+    border-color: #ebebeb;
+    border-radius: 0.2rem;
+    padding: 3px;
+    opacity: 0.3;
+    cursor: pointer;
+}
+
 .modebar-group svg.icon {
-    width: 1.5em !important;
-    height: 1.5em !important;
+    width: 2em !important;
+    height: 2em !important;
+}
+
+.modebar-btn .icon path {
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    fill: black !important;
+}
+
+.modebar-btn .icon:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
+    opacity: 0.6;
+}
+
+.modebar-btn.active .icon {
+    opacity: 0.6 !important;
 }
 
 .chsp-info-btns {

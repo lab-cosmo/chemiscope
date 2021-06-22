@@ -348,7 +348,7 @@ export class ViewersGrid {
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
             assert(tooltip !== null);
-            tooltip.innerHTML = toggle ? 'this is the active viewer' : 'choose as active';
+            tooltip.innerHTML = toggle ? 'This is the active viewer' : 'Choose as active';
 
             // change style of the cell border
             const cell = getByID(`gi-${this._active}`);
@@ -532,10 +532,10 @@ export class ViewersGrid {
             color = this._getNextColor();
             template.innerHTML = `<div
                 class="chsp-has-tooltip"
-                style="position: absolute; top: 9px; right: 145px;">
+                style="position: absolute; top: 7px; right: 158px;">
                     <div id="chsp-activate-${cellGUID}"
                          class="chsp-structure-marker"
-                         style="background-color: ${color}; top: 14px; right: 0px;"
+                         style="background-color: ${color}; top: 13px; right: 0px;"
                     ></div>
                     <span class="chsp-tooltip">WILL BE FILLED LATER</span>
                 </div>`;
@@ -552,9 +552,9 @@ export class ViewersGrid {
             // add a button to remove the widget
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 40px;">
+                style="top: 6px; right: 41px;">
                     <span>${CLOSE_SVG}</span>
-                    <span class="chsp-tooltip">remove viewer</span>
+                    <span class="chsp-tooltip">Remove viewer</span>
                 </button>`;
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
@@ -572,9 +572,9 @@ export class ViewersGrid {
             // add a button to duplicate the widget
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 100px;">
+                style="top: 6px; right: 111px;">
                     <span>${DUPLICATE_SVG}</span>
-                    <span class="chsp-tooltip">duplicate viewer</span>
+                    <span class="chsp-tooltip">Duplicate viewer</span>
                 </button>`;
             const duplicate = template.content.firstChild as HTMLElement;
 
@@ -590,9 +590,9 @@ export class ViewersGrid {
             // add a button to download PNG
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 70px;">
+                style="top: 6px; right: 76px;">
                     <span>${PNG_SVG}</span>
-                    <span class="chsp-tooltip">download as PNG</span>
+                    <span class="chsp-tooltip">Download structure as PNG</span>
                 </button>`;
             const downloadPNG = template.content.firstChild as HTMLElement;
 
