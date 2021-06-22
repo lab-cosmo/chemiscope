@@ -191,7 +191,7 @@ export class MoleculeViewer {
             antialias: true,
             defaultcolors: $3Dmol.elementColors.Jmol,
             backgroundColor: '0xffffff',
-            //backgroundAlpha: 0,
+            backgroundAlpha: 0,
             disableFog: true,
             orthographic: false,
         });
