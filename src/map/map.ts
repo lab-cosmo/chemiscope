@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import Plotly, { Axis } from './plotly/plotly-scatter';
+import Plotly from './plotly/plotly-scatter';
 import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scatter';
 
 import { Property } from '../dataset';
@@ -1143,10 +1143,10 @@ export class PropertiesMap {
         if (bounds.z !== undefined) {
             this._options.z.min.value = bounds.z[0];
             this._options.z.max.value = bounds.z[1];
+        }
 
-            if (!this._is3D()) {
-                this._updateMarkers();
-            }
+        if (!this._is3D()) {
+            this._updateMarkers();
         }
     }
     /**
