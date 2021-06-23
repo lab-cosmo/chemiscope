@@ -1139,7 +1139,6 @@ export class PropertiesMap {
         this._options.x.max.value = bounds.x[1];
         this._options.y.min.value = bounds.y[0];
         this._options.y.max.value = bounds.y[1];
-
         if (bounds.z !== undefined) {
             this._options.z.min.value = bounds.z[0];
             this._options.z.max.value = bounds.z[1];
@@ -1149,6 +1148,7 @@ export class PropertiesMap {
             this._updateMarkers();
         }
     }
+
     /**
      * Update the position, color & size of markers within the data array
      */

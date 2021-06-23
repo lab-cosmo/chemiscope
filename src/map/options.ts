@@ -339,12 +339,10 @@ export class MapOptions extends OptionsGroup {
     private _bind(properties: NumericProperties): void {
         // ======= data used as x values
         const selectXProperty = getByID<HTMLSelectElement>('chsp-x');
-
         selectXProperty.options.length = 0;
         for (const key in properties) {
             selectXProperty.options.add(new Option(key, key));
         }
-
         this.x.property.bind(selectXProperty, 'value');
         this.x.min.bind('chsp-x-min', 'value');
         this.x.max.bind('chsp-x-max', 'value');
