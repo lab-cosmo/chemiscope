@@ -219,13 +219,15 @@
 }
 
 .chsp-info-structure-btn {
-    margin-right: 1em;
     min-width: 8em;
+    padding-left: 6px;
+    padding-right: 4px;
     font-weight: bold;
     font-size: small;
     background-color: none;
     border-color: #66a5e8;
     border-width: 2px;
+    float: left;
 }
 
 .chsp-info-structure-btn:hover {
@@ -233,6 +235,9 @@
 }
 
 .chsp-info-atom-btn {
+    margin-left: 1em;
+    padding-left: 6px;
+    padding-right: 4px;
     min-width: 8em;
     font-weight: bold;
     font-size: small;
@@ -245,13 +250,22 @@
     background-color: #44a344;
 }
 
+.chsp-info-btns-svg {
+    float: right;
+    padding-left: 1px;
+}
+
+.chsp-info-btns-svg svg {
+    display: block;
+}
+
 .chsp-info-number {
     -moz-appearance: textfield;
     border: none;
     transition: background-color 0.15s;
     background-color: #ebedf0;
-    padding-left: 2px;
-    padding-right: 2px;
+    margin-left: 2px;
+    margin-right: 4px;
     font-family: inherit;
     width: 4em;
 }
