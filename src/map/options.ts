@@ -346,10 +346,9 @@ export class MapOptions extends OptionsGroup {
         }
 
         this.x.property.bind(selectXProperty, 'value');
-        this.x.scale.bind('chsp-x-scale', 'value');
-
         this.x.min.bind('chsp-x-min', 'value');
         this.x.max.bind('chsp-x-max', 'value');
+        this.x.scale.bind('chsp-x-scale', 'value');
 
         // ======= data used as y values
         const selectYProperty = getByID<HTMLSelectElement>('chsp-y');
