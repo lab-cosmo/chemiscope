@@ -12,7 +12,7 @@ import { generateGUID, getByID } from '../utils';
 import { Slider } from './slider';
 import { Table } from './table';
 
-import BARS_SVG from '../static/clipboard.svg';
+import CLIPBOARD_SVG from '../static/clipboard.svg';
 
 function filter<T extends Record<string, Property>>(
     obj: T,
@@ -92,7 +92,7 @@ export class EnvironmentInfo {
                     aria-controls='${atomId}'>
                 
                     atom <input class='chsp-info-number' type=number value=1 min=1></input>
-                    <div class="chsp-info-btns-svg">${BARS_SVG}</div>
+                    <div class="chsp-info-btns-svg">${CLIPBOARD_SVG}</div>
             </div>
             `;
         }
@@ -106,7 +106,7 @@ export class EnvironmentInfo {
                 aria-expanded='false'
                 aria-controls='${structureId}'>
                     structure <input class='chsp-info-number' type=number value=1 min=1></input>
-                    <div class="chsp-info-btns-svg">${BARS_SVG}</div>
+                    <div class="chsp-info-btns-svg">${CLIPBOARD_SVG}</div>
             </div>
             ${atomButton}
         </div>`;
