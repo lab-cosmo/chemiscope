@@ -339,18 +339,18 @@ export class MapOptions extends OptionsGroup {
     private _bind(properties: NumericProperties): void {
         // ======= data used as x values
         const selectXProperty = getByID<HTMLSelectElement>('chsp-x');
+
         selectXProperty.options.length = 0;
         for (const key in properties) {
             selectXProperty.options.add(new Option(key, key));
         }
+
         this.x.property.bind(selectXProperty, 'value');
         this.x.scale.bind('chsp-x-scale', 'value');
 
-        if (this.x.scale.value === 'log') {
-        } else {
-            this.x.min.bind('chsp-x-min', 'value');
-            this.x.max.bind('chsp-x-max', 'value');
-        }
+        this.x.min.bind('chsp-x-min', 'value');
+        this.x.max.bind('chsp-x-max', 'value');
+
         // ======= data used as y values
         const selectYProperty = getByID<HTMLSelectElement>('chsp-y');
         selectYProperty.options.length = 0;
@@ -423,4 +423,18 @@ export class MapOptions extends OptionsGroup {
     public colorScale(): Plotly.ColorScale {
         return COLOR_MAPS[this.palette.value];
     }
+
+    public logLinearLabelSwitch = (axis: AxisOptions, axisName: string) => {
+        const optionsContainer = getByID<HTMLElement>(`chsp-extra-${axisName}`);
+        const minInputLabel = optionsContainer.getElementsByClassName('input-group-text')[1];
+        const maxInputLabel = optionsContainer.getElementsByClassName('input-group-text')[2];
+
+        if (this.x.scale.value === 'log') {
+            minInputLabel.innerHTML = 'min: 10^';
+            maxInputLabel.innerHTML = 'max: 10^';
+        } else {
+            minInputLabel.innerHTML = 'min:';
+            maxInputLabel.innerHTML = 'max:';
+        }
+    };
 }
