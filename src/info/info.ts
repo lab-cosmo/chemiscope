@@ -85,12 +85,11 @@ export class EnvironmentInfo {
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {
             atomButton = `
-            <div    class='btn btn-sm chsp-info-atom-btn'
-                    data-toggle='collapse'
-                    data-target='#${atomId}'
-                    aria-expanded='false'
-                    aria-controls='${atomId}'>
-                
+            <div class='btn btn-sm chsp-info-atom-btn'
+                data-toggle='collapse'
+                data-target='#${atomId}'
+                aria-expanded='false'
+                aria-controls='${atomId}'>
                     atom <input class='chsp-info-number' type=number value=1 min=1></input>
                     <div class="chsp-info-btns-svg">${CLIPBOARD_SVG}</div>
             </div>
