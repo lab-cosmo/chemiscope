@@ -12,7 +12,7 @@ import { generateGUID, getByID } from '../utils';
 import { Slider } from './slider';
 import { Table } from './table';
 
-import CLIPBOARD_SVG from '../static/clipboard.svg';
+import CLIPBOARD_SVG from '../static/info.svg';
 
 function filter<T extends Record<string, Property>>(
     obj: T,
