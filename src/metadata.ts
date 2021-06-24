@@ -9,10 +9,13 @@ import markdown from 'markdown-it';
 import { Metadata } from './dataset';
 import { generateGUID, getByID } from './utils';
 
+import INFO_SVG from './static/info.svg';
+
 function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">
         ${name}
-    </span>`;
+    </span> 
+    <div id="chsp-meta-info-icon">${INFO_SVG}</div>`;
 }
 
 function generateModal(guid: string, metadata: Metadata): string {

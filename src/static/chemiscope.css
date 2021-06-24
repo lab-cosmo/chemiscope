@@ -3,6 +3,21 @@
     cursor: pointer;
 }
 
+#chemiscope-meta:hover {
+    border-color: #22313f;
+    background-color: #5b84aa;
+}
+
+#chsp-meta-info-icon {
+    float: right;
+    margin-top: 5px;
+    margin-left: 8px;
+}
+
+#chsp-meta-info-icon svg {
+    display: block;
+}
+
 .chsp-authors-list {
     padding: 0;
     display: flex;
