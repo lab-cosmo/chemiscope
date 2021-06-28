@@ -423,7 +423,7 @@ export class MapOptions extends OptionsGroup {
 
     /** Changes the min/max range label between linear and log appropriately */
     public setLogLabel(axis: AxisOptions, axisName: string): void {
-        const optionsContainer = getByID<HTMLElement>(`chsp-extra-${axisName}`);
+        const optionsContainer = getByID(`chsp-extra-${axisName}`);
         const minInputLabel = optionsContainer.getElementsByClassName('input-group-text')[1];
         const maxInputLabel = optionsContainer.getElementsByClassName('input-group-text')[2];
 
