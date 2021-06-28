@@ -153,6 +153,10 @@ export class MapOptions extends OptionsGroup {
 
         this._bind(properties);
         this.applySettings(settings);
+
+        this.setScaleStep(this.x, 'x');
+        this.setScaleStep(this.y, 'y');
+        this.setScaleStep(this.z, 'z');
     }
 
     /**
@@ -323,7 +327,7 @@ export class MapOptions extends OptionsGroup {
                 );
 
                 // set width first, since setting position can influence it
-                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
+                modalDialog.style.width = '35%'; //`${modalDialog.offsetWidth / 1.2}px`;
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
@@ -433,5 +437,16 @@ export class MapOptions extends OptionsGroup {
             minInputLabel.innerHTML = 'min:';
             maxInputLabel.innerHTML = 'max:';
         }
+    }
+
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    public setScaleStep(axis: AxisOptions, axisName: string): void {
+        const step = ((axis.max.value - axis.min.value) / 20) as number;
+        const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
+        const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
+        minElement.step = `${step}`;
+        maxElement.step = `${step}`;
+        console.log(axis.max.value, axis.min.value);
+        console.log(minElement, maxElement, step);
     }
 }

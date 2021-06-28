@@ -32,7 +32,7 @@
 }
 
 .chsp-extra-options-btn {
-    margin: auto;
+    margin-right: auto;
     display: block;
 }
 
@@ -143,7 +143,7 @@
     display: grid;
     align-items: center;
     justify-items: center;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 0.75fr 1fr 1fr;
     grid-gap: 1em;
     margin-bottom: 1.5em;
 }
@@ -158,6 +158,10 @@
 
 .chsp-map-options .form-check-label {
     width: auto;
+}
+
+#chsp-color-reset {
+    width: 100%;
 }
 
 .chsp-modal-header {

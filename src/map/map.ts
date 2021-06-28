@@ -421,6 +421,7 @@ export class PropertiesMap {
                     'xaxis.autorange': true,
                 } as unknown as Layout);
             }
+            this._options.setScaleStep(this._options.x, 'x');
         };
 
         this._options.x.scale.onchange = () => {
@@ -481,6 +482,7 @@ export class PropertiesMap {
                     'yaxis.autorange': true,
                 } as unknown as Layout);
             }
+            this._options.setScaleStep(this._options.y, 'y');
         };
 
         this._options.y.scale.onchange = () => {
@@ -527,6 +529,7 @@ export class PropertiesMap {
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
+            this._options.setScaleStep(this._options.z, 'z');
         };
 
         this._options.z.scale.onchange = () => {
