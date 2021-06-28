@@ -388,7 +388,8 @@ export class PropertiesMap {
 
     /** Add all the required callback to the settings */
     private _connectSettings() {
-        // Reads a warning if negative values of log are discared and not shown
+        // Send a warning if a property contains negative values, that will be
+        // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
             if (
                 axis.scale.value === 'log' &&
@@ -496,6 +497,13 @@ export class PropertiesMap {
         this._options.y.max.onchange = rangeChange('yaxis', this._options.y);
 
         // ======= z axis settings
+        // setup initial state of the z axis settings
+        if (this._options.z.property.value === '') {
+            this._options.z.disable();
+        } else {
+            this._options.z.enable();
+        }
+
         this._options.z.property.onchange = () => {
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -533,7 +541,13 @@ export class PropertiesMap {
 
         // ======= color axis settings
         // setup initial state of the color settings
-        if (this._options.color.property.value) {
+        if (this._options.color.property.value === '') {
+            this._options.color.min.disable();
+            this._colorReset.disabled = true;
+
+            this._options.color.min.value = 0;
+            this._options.color.max.value = 0;
+        } else {
             this._options.color.enable();
             this._colorReset.disabled = false;
 
@@ -542,12 +556,6 @@ export class PropertiesMap {
 
             this._options.color.min.value = min;
             this._options.color.max.value = max;
-        } else {
-            this._options.color.min.disable();
-            this._colorReset.disabled = true;
-
-            this._options.color.min.value = 0;
-            this._options.color.max.value = 0;
         }
 
         this._options.color.property.onchange = () => {
@@ -641,6 +649,15 @@ export class PropertiesMap {
         };
 
         // ======= markers size
+        // setup initial state of the z axis settings
+        if (this._options.size.mode.value === 'constant') {
+            this._options.size.property.disable();
+            this._options.size.reverse.disable();
+        } else {
+            this._options.size.property.enable();
+            this._options.size.reverse.enable();
+        }
+
         this._options.size.mode.onchange = () => {
             if (this._options.size.mode.value !== 'constant') {
                 this._options.size.property.enable();
