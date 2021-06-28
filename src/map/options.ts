@@ -421,7 +421,7 @@ export class MapOptions extends OptionsGroup {
         return COLOR_MAPS[this.palette.value];
     }
 
-    public logLinearLabelSwitch = (axis: AxisOptions, axisName: string) => {
+    public logLinearLabelSwitch(axis: AxisOptions, axisName: string): void {
         const optionsContainer = getByID<HTMLElement>(`chsp-extra-${axisName}`);
         const minInputLabel = optionsContainer.getElementsByClassName('input-group-text')[1];
         const maxInputLabel = optionsContainer.getElementsByClassName('input-group-text')[2];
