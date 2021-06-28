@@ -423,11 +423,10 @@ export class MapOptions extends OptionsGroup {
 
     /** Changes the min/max range label between linear and log appropriately */
     public setLogLabel(axis: AxisOptions, axisName: string): void {
-        const optionsContainer = getByID(`chsp-extra-${axisName}`);
-        const minInputLabel = optionsContainer.getElementsByClassName('input-group-text')[1];
-        const maxInputLabel = optionsContainer.getElementsByClassName('input-group-text')[2];
+        const minInputLabel = getByID(`chsp-${axisName}-min-label`);
+        const maxInputLabel = getByID(`chsp-${axisName}-max-label`);
 
-        if (this.x.scale.value === 'log') {
+        if (axis.scale.value === 'log') {
             minInputLabel.innerHTML = 'min: 10^';
             maxInputLabel.innerHTML = 'max: 10^';
         } else {
