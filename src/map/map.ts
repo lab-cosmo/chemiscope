@@ -425,7 +425,7 @@ export class PropertiesMap {
 
         this._options.x.scale.onchange = () => {
             negativeLogWarning(this._options.x);
-            this._options.logLinearLabelSwitch(this._options.x, 'x');
+            this._options.setLogLabel(this._options.x, 'x');
             if (this._is3D()) {
                 this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
@@ -485,7 +485,7 @@ export class PropertiesMap {
 
         this._options.y.scale.onchange = () => {
             negativeLogWarning(this._options.y);
-            this._options.logLinearLabelSwitch(this._options.y, 'y');
+            this._options.setLogLabel(this._options.y, 'y');
             if (this._is3D()) {
                 this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
@@ -531,7 +531,7 @@ export class PropertiesMap {
 
         this._options.z.scale.onchange = () => {
             negativeLogWarning(this._options.z);
-            this._options.logLinearLabelSwitch(this._options.z, 'z');
+            this._options.setLogLabel(this._options.z, 'z');
             if (this._options.z.property.value !== '') {
                 this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,

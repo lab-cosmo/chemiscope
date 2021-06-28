@@ -421,7 +421,8 @@ export class MapOptions extends OptionsGroup {
         return COLOR_MAPS[this.palette.value];
     }
 
-    public logLinearLabelSwitch(axis: AxisOptions, axisName: string): void {
+    /** Changes the min/max range label between linear and log appropriately */
+    public setLogLabel(axis: AxisOptions, axisName: string): void {
         const optionsContainer = getByID<HTMLElement>(`chsp-extra-${axisName}`);
         const minInputLabel = optionsContainer.getElementsByClassName('input-group-text')[1];
         const maxInputLabel = optionsContainer.getElementsByClassName('input-group-text')[2];
@@ -433,5 +434,5 @@ export class MapOptions extends OptionsGroup {
             minInputLabel.innerHTML = 'min:';
             maxInputLabel.innerHTML = 'max:';
         }
-    };
+    }
 }
