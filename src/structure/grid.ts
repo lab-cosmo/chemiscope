@@ -16,7 +16,6 @@ import { LoadOptions, MoleculeViewer } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
-import { Z_UNKNOWN } from 'zlib';
 
 const MAX_WIDGETS = 9;
 
