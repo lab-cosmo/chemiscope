@@ -153,10 +153,6 @@ export class MapOptions extends OptionsGroup {
 
         this._bind(properties);
         this.applySettings(settings);
-
-        this.setScaleStep(this.x, 'x');
-        this.setScaleStep(this.y, 'y');
-        this.setScaleStep(this.z, 'z');
     }
 
     /**

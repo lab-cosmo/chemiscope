@@ -848,6 +848,12 @@ export class PropertiesMap {
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateMarkers();
+
+        this.setScaleStep(this._options.x, 'x');
+        this.setScaleStep(this._options.y, 'y');
+        if (this._options.z.property !== undefined) {
+            this.setScaleStep(this._options.z, 'z');
+        }
     }
 
     /** Get the property with the given name */
@@ -1240,6 +1246,17 @@ export class PropertiesMap {
             inside = inside && isInsideRange(z, bounds.z, tolerance);
         }
         return inside;
+    }
+
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    private setScaleStep(axis: AxisOptions, axisName: string): void {
+        const step = ((axis.max.value - axis.min.value) / 20) as number;
+        const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
+        const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
+        minElement.step = `${step}`;
+        maxElement.step = `${step}`;
+        console.log(axis.max.value, axis.min.value);
+        console.log(minElement, maxElement, step);
     }
 }
 
