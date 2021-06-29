@@ -129,6 +129,8 @@ export class HTMLOption<T extends OptionsType> {
 
     /** Get the value of this setting */
     public get value(): OptionsValue<T> {
+        console.log('inside getter - this', this);
+        console.log('inside getter', this._value);
         return this._value;
     }
 

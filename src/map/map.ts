@@ -1101,6 +1101,7 @@ export class PropertiesMap {
         console.log(this._options.y.max.value);
         console.log(this._options.z);
         console.log(this._options.z.max.value);
+        console.log();
     }
 
     /** Switch current plot from 3D back to 2D */
