@@ -499,7 +499,6 @@ export class ViewersGrid {
         }
 
         data.current = indexes;
-        console.log('after showing in viewer');
     }
 
     /**
@@ -663,7 +662,6 @@ export class ViewersGrid {
                     this._root.querySelector(`#gi-${cellGUID}`) as HTMLElement,
                     cellGUID
                 );
-                console.log('after inititiation of MoleculeViewer');
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
@@ -697,7 +695,6 @@ export class ViewersGrid {
                     widget.positionSettingsModal = this._positionSettingsModal;
                 }
                 newGUID.push(cellGUID);
-                console.log('after pushing (end of new MoleculeViewever)');
             }
         }
 

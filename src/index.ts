@@ -184,7 +184,7 @@ class DefaultVisualizer {
             dataset.structures,
             dataset.environments
         );
-        console.log('after setting up the viewers grid');
+
         if (config.loadStructure !== undefined) {
             this.structure.loadStructure = config.loadStructure;
         }

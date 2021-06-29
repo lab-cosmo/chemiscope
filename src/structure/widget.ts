@@ -37,7 +37,6 @@ function createStyleSheet(rules: string[]): CSSStyleSheet {
  * @param structure the structure to convert
  */
 function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
-    console.log('setting up 3D mol structure');
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -419,7 +418,6 @@ export class MoleculeViewer {
      */
     public applySettings(settings: SavedSettings): void {
         this._options.applySettings(settings);
-        console.log('after apply settings');
     }
 
     /**

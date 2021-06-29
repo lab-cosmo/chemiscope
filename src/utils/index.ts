@@ -60,7 +60,6 @@ export function getByID<HTMLType = HTMLElement>(id: string, root?: HTMLElement):
         e = document.getElementById(id);
     }
     if (e === null) {
-        console.log(root);
         throw Error(`unable to get element with id ${id}`);
     }
     return e as unknown as HTMLType;
