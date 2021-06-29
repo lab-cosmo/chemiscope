@@ -421,6 +421,8 @@ export class PropertiesMap {
                     'xaxis.autorange': true,
                 } as unknown as Layout);
             }
+            console.log('---change of x property---');
+            console.log(this._options.x);
             this._options.setScaleStep(this._options.x, 'x');
         };
 
@@ -529,6 +531,7 @@ export class PropertiesMap {
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
+            console.log('---z property change---');
             this._options.setScaleStep(this._options.z, 'z');
         };
 
@@ -1093,6 +1096,11 @@ export class PropertiesMap {
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
         } as unknown as Layout);
+        console.log('inside 3D switch');
+        console.log(this._options.y);
+        console.log(this._options.y.max.value);
+        console.log(this._options.z);
+        console.log(this._options.z.max.value);
     }
 
     /** Switch current plot from 3D back to 2D */

@@ -437,7 +437,7 @@ export class MapOptions extends OptionsGroup {
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
     public setScaleStep(axis: AxisOptions, axisName: string): void {
-        const step = ((axis.max.value - axis.min.value) / 20) as number;
+        const step = (axis.max.value - axis.min.value) / 20;
         const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
         const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
         minElement.step = `${step}`;
