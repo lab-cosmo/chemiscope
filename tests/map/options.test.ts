@@ -32,7 +32,7 @@ describe('MapOptions', () => {
         assert(root.innerHTML === '');
     });
 
-    it('scale label switches between linear and log', () => {
+    it('scale label for min/max switches between linear and log', () => {
         const root = document.createElement('div');
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
