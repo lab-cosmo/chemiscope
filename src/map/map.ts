@@ -1254,7 +1254,7 @@ export class PropertiesMap {
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
     private setScaleStep(axisBounds: number[], axisName: string): void {
         if (axisBounds !== undefined) {
-            const step = ((axisBounds[1] - axisBounds[0]) / 20) as number;
+            const step = (axisBounds[1] - axisBounds[0]) / 20;
             const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
             const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
             minElement.step = `${step}`;
