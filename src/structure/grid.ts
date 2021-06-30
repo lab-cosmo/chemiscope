@@ -551,7 +551,7 @@ export class ViewersGrid {
 
             // add a button to remove the widget
             template.innerHTML = `<button
-                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
                 style="top: 6px; right: 41px;">
                     <span>${CLOSE_SVG}</span>
                     <span class="chsp-tooltip">Remove viewer</span>
@@ -571,8 +571,8 @@ export class ViewersGrid {
 
             // add a button to duplicate the widget
             template.innerHTML = `<button
-                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 6px; right: 111px;">
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="top: 6px; right: 76px;">
                     <span>${DUPLICATE_SVG}</span>
                     <span class="chsp-tooltip">Duplicate viewer</span>
                 </button>`;
@@ -589,18 +589,19 @@ export class ViewersGrid {
 
             // add a button to download PNG
             template.innerHTML = `<button
-                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 6px; right: 76px;">
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="top: 6px; right: 111px;">
                     <span>${PNG_SVG}</span>
                     <span class="chsp-tooltip">Download structure as PNG</span>
                 </button>`;
             const downloadPNG = template.content.firstChild as HTMLElement;
 
             downloadPNG.onclick = () => {
-                downloadURI(
-                    this._viewers.get(cellGUID)?.widget.exportPNG() as string,
-                    'structure.png'
-                );
+                const widget = this._viewers.get(cellGUID)?.widget;
+                assert(widget !== undefined);
+                const fileName;
+
+                downloadURI(widget.exportPNG() as string, 'structure.png');
             };
 
             cell.appendChild(downloadPNG);

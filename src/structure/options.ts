@@ -153,7 +153,7 @@ export class StructureOptions extends OptionsGroup {
             class="btn btn-light btn-sm chsp-viewer-button"
             data-target="#${guid}-settings"
             data-toggle="modal"
-            style="top: 5px; right: 5px; opacity: 1;">
+            style="top: 4px; right: 4px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
         const openSettings = template.content.firstChild as HTMLElement;

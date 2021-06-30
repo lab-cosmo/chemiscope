@@ -98,11 +98,20 @@
     z-index: 10;
 }
 
-.chsp-viewer-button svg {
-    opacity: 0.3;
+.chsp-viewer-action-button {
+    background-color: rgba(255, 255, 255, 0.5);
+    border: none;
+    transition: background-color 0.15s ease-in-out;
+}
+.chsp-viewer-action-button:hover {
+    background: white;
 }
 
-.chsp-viewer-button:hover svg {
+.chsp-viewer-action-button svg {
+    opacity: 0.4;
+}
+
+.chsp-viewer-action-button:hover svg {
     opacity: 0.6;
 }
 
@@ -233,12 +242,7 @@
 }
 
 .modebar-btn .icon {
-    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
-        opacity 0.15s ease-in-out;
-    background-color: #ebebeb;
-    border: 1px solid;
-    border-color: #ebebeb;
-    border-radius: 0.2rem;
+    transition: opacity 0.15s ease-in-out;
     padding: 3px;
     opacity: 0.3;
     cursor: pointer;
@@ -247,6 +251,14 @@
 .modebar-group svg.icon {
     width: 2em !important;
     height: 2em !important;
+    border-radius: 0.2rem !important;
+}
+
+.modebar-group svg.icon:active {
+    color: #212529 !important;
+    background-color: #dae0e5 !important;
+    border-color: #d3d9df !important;
+    box-shadow: 0 0 0 0.2rem rgb(216 217 219 / 50%) !important;
 }
 
 .modebar-btn .icon path {
@@ -256,8 +268,6 @@
 }
 
 .modebar-btn .icon:hover {
-    background-color: #e2e6ea;
-    border-color: #dae0e5;
     opacity: 0.6;
 }
 
