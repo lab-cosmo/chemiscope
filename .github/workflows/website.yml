@@ -37,7 +37,7 @@ jobs:
           cp dist/*.min.js gh-pages/
           cp chemiscope_standalone.html gh-pages/
           cp -r docs/build/html/ gh-pages/docs/
-          rm -f gh-pages/.gitignore
+          rm -f gh-pages/examples/.gitignore
       - name: deploy website to gh-pages
         # only deploy website from master
         if: github.ref == 'refs/heads/master'
