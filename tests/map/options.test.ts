@@ -45,11 +45,13 @@ describe('MapOptions', () => {
             const max = getByID(`chsp-${axisName}-max-label`);
 
             // change from linear (default) to log scale
+            axisOptions.scale.value = 'log';
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min: 10^');
             assert(max.innerHTML === 'max: 10^');
 
             // change back from log to linear
+            axisOptions.scale.value = 'linear';
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min:');
             assert(max.innerHTML === 'max:');
