@@ -421,9 +421,7 @@ export class PropertiesMap {
                     'xaxis.autorange': true,
                 } as unknown as Layout);
             }
-            console.log('---change of x property---');
-            console.log(this._options.x);
-            this._options.setScaleStep(this._options.x, 'x');
+            this.setScaleStep(this._getBounds().x, 'x');
         };
 
         this._options.x.scale.onchange = () => {
@@ -484,7 +482,7 @@ export class PropertiesMap {
                     'yaxis.autorange': true,
                 } as unknown as Layout);
             }
-            this._options.setScaleStep(this._options.y, 'y');
+            this.setScaleStep(this._getBounds().y, 'y');
         };
 
         this._options.y.scale.onchange = () => {
@@ -531,8 +529,9 @@ export class PropertiesMap {
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
-            console.log('---z property change---');
-            this._options.setScaleStep(this._options.z, 'z');
+            if (this._getBounds().z !== undefined) {
+                this.setScaleStep(this._getBounds().z as number[], 'z');
+            }
         };
 
         this._options.z.scale.onchange = () => {
@@ -852,10 +851,11 @@ export class PropertiesMap {
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateMarkers();
 
-        this.setScaleStep(this._options.x, 'x');
-        this.setScaleStep(this._options.y, 'y');
-        if (this._options.z.property !== undefined) {
-            this.setScaleStep(this._options.z, 'z');
+        const bounds = this._getBounds();
+        this.setScaleStep(bounds.x, 'x');
+        this.setScaleStep(bounds.y, 'y');
+        if (bounds.z !== undefined) {
+            this.setScaleStep(bounds.z, 'z');
         }
     }
 
@@ -1096,12 +1096,6 @@ export class PropertiesMap {
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
         } as unknown as Layout);
-        console.log('inside 3D switch');
-        console.log(this._options.y);
-        console.log(this._options.y.max.value);
-        console.log(this._options.z);
-        console.log(this._options.z.max.value);
-        console.log();
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -1258,14 +1252,14 @@ export class PropertiesMap {
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private setScaleStep(axis: AxisOptions, axisName: string): void {
-        const step = ((axis.max.value - axis.min.value) / 20) as number;
-        const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
-        const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
-        minElement.step = `${step}`;
-        maxElement.step = `${step}`;
-        console.log(axis.max.value, axis.min.value);
-        console.log(minElement, maxElement, step);
+    private setScaleStep(axisBounds: number[], axisName: string): void {
+        if (axisBounds !== undefined) {
+            const step = ((axisBounds[1] - axisBounds[0]) / 20) as number;
+            const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
+            const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
+            minElement.step = `${step}`;
+            maxElement.step = `${step}`;
+        }
     }
 }
 
