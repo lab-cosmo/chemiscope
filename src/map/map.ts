@@ -1255,8 +1255,8 @@ export class PropertiesMap {
     private setScaleStep(axisBounds: number[], axisName: string): void {
         if (axisBounds !== undefined) {
             const step = (axisBounds[1] - axisBounds[0]) / 20;
-            const minElement = getByID(`chsp-${axisName}-min`) as HTMLInputElement;
-            const maxElement = getByID(`chsp-${axisName}-max`) as HTMLInputElement;
+            const minElement = getByID<HTMLInputElement>(`chsp-${axisName}-min`);
+            const maxElement = getByID<HTMLInputElement>(`chsp-${axisName}-max`);
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }
