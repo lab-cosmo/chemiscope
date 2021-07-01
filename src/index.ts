@@ -387,7 +387,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
     }
 }
 /** Validate HTML element */
-function isHTMLElement(o: any) {
+function isHTMLElement(o: unknown) {
     return o instanceof HTMLElement;
 }
 
