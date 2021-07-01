@@ -851,6 +851,7 @@ export class PropertiesMap {
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateMarkers();
 
+        // set step of min/max select arrows based on the plot range
         const bounds = this._getBounds();
         this.setScaleStep(bounds.x, 'x');
         this.setScaleStep(bounds.y, 'y');
