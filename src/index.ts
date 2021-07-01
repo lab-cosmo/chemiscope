@@ -388,13 +388,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
 }
 /** Validate HTML element */
 function isHTMLElement(o: any) {
-    return typeof HTMLElement === 'object'
-        ? o instanceof HTMLElement
-        : o &&
-              typeof o === 'object' &&
-              o !== null &&
-              o.nodeType === 1 &&
-              typeof o.nodeName === 'string';
+    return o instanceof HTMLElement;
 }
 
 export {
