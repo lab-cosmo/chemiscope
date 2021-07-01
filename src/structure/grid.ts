@@ -605,14 +605,11 @@ export class ViewersGrid {
                 if (viewer.current.atom !== undefined) {
                     const atomID = viewer.current.atom;
                     downloadURI(
-                        widget.exportPNG() as string,
+                        widget.exportPNG(),
                         `chemiscope-structure-${structID + 1}-atom-${atomID + 1}.png`
                     );
                 } else {
-                    downloadURI(
-                        widget.exportPNG() as string,
-                        `chemiscope-structure-${structID + 1}.png`
-                    );
+                    downloadURI(widget.exportPNG(), `chemiscope-structure-${structID + 1}.png`);
                 }
             };
 
