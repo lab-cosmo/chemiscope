@@ -3,19 +3,17 @@
     cursor: pointer;
 }
 
-#chemiscope-meta:hover {
-    border-color: #22313f;
-    background-color: #5b84aa;
-}
-
-#chsp-meta-info-icon {
+.chsp-meta div {
     float: right;
     margin-top: 5px;
-    margin-left: 8px;
+    margin-left: 3px;
 }
 
-#chsp-meta-info-icon svg {
+.chsp-meta svg {
     display: block;
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
 }
 
 .chsp-authors-list {
@@ -266,12 +264,14 @@
 }
 
 .chsp-info-btns-svg {
-    float: right;
-    padding-left: 1px;
+    float: left;
+    padding-right: 6px;
+    padding-top: 3px;
 }
 
 .chsp-info-btns-svg svg {
     display: block;
+    opacity: 0.6;
 }
 
 .chsp-info-number {

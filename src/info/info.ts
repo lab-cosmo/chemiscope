@@ -90,8 +90,8 @@ export class EnvironmentInfo {
                 data-target='#${atomId}'
                 aria-expanded='false'
                 aria-controls='${atomId}'>
-                    atom <input class='chsp-info-number' type=number value=1 min=1></input>
-                    <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                atom <input class='chsp-info-number' type=number value=1 min=1></input>
             </div>
             `;
         }
@@ -104,8 +104,9 @@ export class EnvironmentInfo {
                 data-target='#${structureId}'
                 aria-expanded='false'
                 aria-controls='${structureId}'>
-                    structure <input class='chsp-info-number' type=number value=1 min=1></input>
-                    <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                structure <input class='chsp-info-number' type=number value=1 min=1></input>
+                    
             </div>
             ${atomButton}
         </div>`;

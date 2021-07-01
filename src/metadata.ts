@@ -15,7 +15,7 @@ function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">
         ${name}
     </span> 
-    <div id="chsp-meta-info-icon">${INFO_SVG}</div>`;
+    <div>${INFO_SVG}</div>`;
 }
 
 function generateModal(guid: string, metadata: Metadata): string {
