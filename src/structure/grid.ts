@@ -16,7 +16,7 @@ import { LoadOptions, MoleculeViewer } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
-import PNG_SVG from '../static/png-icon.svg';
+import PNG_SVG from '../static/download-png.svg';
 
 const MAX_WIDGETS = 9;
 
@@ -348,7 +348,7 @@ export class ViewersGrid {
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
             assert(tooltip !== null);
-            tooltip.innerHTML = toggle ? 'This is the active viewer' : 'Choose as active';
+            tooltip.innerHTML = toggle ? 'Active viewer' : 'Choose as active';
 
             // change style of the cell border
             const cell = getByID(`gi-${this._active}`);
@@ -532,7 +532,7 @@ export class ViewersGrid {
             color = this._getNextColor();
             template.innerHTML = `<div
                 class="chsp-has-tooltip"
-                style="position: absolute; top: 7px; right: 158px;">
+                style="position: absolute; top: 7px; right: 160px;">
                     <div id="chsp-activate-${cellGUID}"
                          class="chsp-structure-marker"
                          style="background-color: ${color}; top: 13px; right: 0px;"
@@ -592,16 +592,28 @@ export class ViewersGrid {
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
                 style="top: 6px; right: 111px;">
                     <span>${PNG_SVG}</span>
-                    <span class="chsp-tooltip">Download structure as PNG</span>
+                    <span class="chsp-tooltip">Download PNG</span>
                 </button>`;
             const downloadPNG = template.content.firstChild as HTMLElement;
 
             downloadPNG.onclick = () => {
-                const widget = this._viewers.get(cellGUID)?.widget;
-                assert(widget !== undefined);
-                const fileName;
+                const viewer = this._viewers.get(cellGUID);
+                assert(viewer !== undefined);
+                const widget = viewer.widget;
 
-                downloadURI(widget.exportPNG() as string, 'structure.png');
+                const structID = viewer.current.structure;
+                if (viewer.current.atom !== undefined) {
+                    const atomID = viewer.current.atom;
+                    downloadURI(
+                        widget.exportPNG() as string,
+                        `chemiscope-structure-${structID + 1}-atom-${atomID + 1}.png`
+                    );
+                } else {
+                    downloadURI(
+                        widget.exportPNG() as string,
+                        `chemiscope-structure-${structID + 1}.png`
+                    );
+                }
             };
 
             cell.appendChild(downloadPNG);

@@ -39,7 +39,7 @@
 /* Tooltip text */
 .chsp-tooltip {
     visibility: hidden;
-    background: rgb(105, 115, 138);
+    background: #69738a;
     color: white;
     padding: 8px 10px;
     font-size: 12px;
@@ -51,7 +51,6 @@
     display: inline-block;
     top: 30px;
     left: -60px;
-    opacity: 0.9;
     /* Position the tooltip text - see examples below! */
     position: absolute;
     z-index: 100000;
@@ -99,16 +98,17 @@
 }
 
 .chsp-viewer-action-button {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: white;
     border: none;
-    transition: background-color 0.15s ease-in-out;
 }
+
 .chsp-viewer-action-button:hover {
     background: white;
 }
 
 .chsp-viewer-action-button svg {
     opacity: 0.4;
+    transition: opacity 0.15s ease-in-out;
 }
 
 .chsp-viewer-action-button:hover svg {
@@ -217,28 +217,29 @@
     font-weight: bold;
 }
 
-/* Plotly Modebar */
+/* Change Plotly modebar style to match the style of the structure grid buttons */
 
-.modebar-group {
+.chsp-map .modebar-group {
     padding-left: 0 !important;
 }
 
-.modebar-btn {
+.chsp-map .modebar-btn {
     cursor: default !important;
+    font-family: apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
 }
 
-.modebar-btn::after {
-    opacity: 0.9 !important;
-    top: 140% !important;
+.chsp-map .modebar-btn::after {
+    opacity: 0.9;
 }
 
-.icon:hover + .modebar-btn::after {
+.chsp-map .icon:hover + .modebar-btn::after {
     visibility: visible;
 }
 
-.modebar-btn::before {
+.chsp-map .modebar-btn::before {
     content: none !important;
-    font-family: Arial !important;
 }
 
 .modebar-btn .icon {
@@ -248,31 +249,31 @@
     cursor: pointer;
 }
 
-.modebar-group svg.icon {
-    width: 2em !important;
-    height: 2em !important;
-    border-radius: 0.2rem !important;
+.chsp-map .modebar-group svg.icon {
+    width: 2em;
+    height: 2em;
+    border-radius: 0.2em;
 }
 
-.modebar-group svg.icon:active {
-    color: #212529 !important;
-    background-color: #dae0e5 !important;
-    border-color: #d3d9df !important;
-    box-shadow: 0 0 0 0.2rem rgb(216 217 219 / 50%) !important;
+.chsp-map .modebar-group svg.icon:active {
+    color: #212529;
+    background-color: #dae0e5;
+    border-color: #d3d9df;
+    box-shadow: 0 0 0 0.2rem rgb(216 217 219 / 50%);
 }
 
-.modebar-btn .icon path {
+.chsp-map .modebar-btn .icon path {
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
         border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     fill: black !important;
 }
 
-.modebar-btn .icon:hover {
+.chsp-map .modebar-btn .icon:hover {
     opacity: 0.6;
 }
 
-.modebar-btn.active .icon {
-    opacity: 0.6 !important;
+.chsp-map .modebar-btn.active .icon {
+    opacity: 0.6;
 }
 
 .chsp-info-btns {
