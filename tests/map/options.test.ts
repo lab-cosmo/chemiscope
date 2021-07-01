@@ -43,15 +43,18 @@ describe('MapOptions', () => {
         function assertScaleLabel(axisOptions: AxisOptions, axisName: string): void {
             const min = getByID(`chsp-${axisName}-min-label`);
             const max = getByID(`chsp-${axisName}-max-label`);
+            const selectElement = getByID<HTMLSelectElement>(`chsp-${axisName}-scale`);
 
             // change from linear (default) to log scale
-            axisOptions.scale.value = 'log';
+            selectElement.selectedIndex = 1;
+            selectElement.dispatchEvent(new Event('change'));
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min: 10^');
             assert(max.innerHTML === 'max: 10^');
 
             // change back from log to linear
-            axisOptions.scale.value = 'linear';
+            selectElement.selectedIndex = 0;
+            selectElement.dispatchEvent(new Event('change'));
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min:');
             assert(max.innerHTML === 'max:');

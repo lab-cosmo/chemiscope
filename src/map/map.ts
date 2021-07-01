@@ -529,7 +529,7 @@ export class PropertiesMap {
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
-            if (this._getBounds().z !== undefined) {
+            if (this._is3D()) {
                 this.setScaleStep(this._getBounds().z as number[], 'z');
             }
         };

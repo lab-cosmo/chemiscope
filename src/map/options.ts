@@ -323,12 +323,17 @@ export class MapOptions extends OptionsGroup {
                 );
 
                 // set width first, since setting position can influence it
-                modalDialog.style.width = '35%'; //`${modalDialog.offsetWidth / 1.2}px`;
+                modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
                 modalDialog.style.top = `${top}px`;
-                modalDialog.style.left = `${left}px`;
+
+                if (screen.width < 1400) {
+                    modalDialog.style.left = `${left / 2}px`;
+                } else {
+                    modalDialog.style.left = `${left}px`;
+                }
             }
         });
 
