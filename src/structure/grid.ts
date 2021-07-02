@@ -356,7 +356,6 @@ export class ViewersGrid {
 
             // change style of the cell border
             const cell = getByID(`gi-${this._active}`, this._root);
-            // const cell = this._root.querySelector(`#${this._active}`) as HTMLElement;
             cell.classList.toggle('chsp-structure-viewer-cell-active', toggle);
         };
 
