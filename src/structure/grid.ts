@@ -277,8 +277,7 @@ export class ViewersGrid {
         data.widget.remove();
 
         // remove the cell containing the widget
-        // const cell = getByID(`gi-${guid}`, this._root);
-        const cell = this._root.querySelector(`#${guid}`) as HTMLElement;
+        const cell = getByID(`gi-${guid}`, this._root);
         cell.remove();
 
         this._viewers.delete(guid);
