@@ -421,10 +421,12 @@ export class PropertiesMap {
                     'xaxis.autorange': true,
                 } as unknown as Layout);
             }
+            this.setScaleStep(this._getBounds().x, 'x');
         };
 
         this._options.x.scale.onchange = () => {
             negativeLogWarning(this._options.x);
+            this._options.setLogLabel(this._options.x, 'x');
             if (this._is3D()) {
                 this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
@@ -480,10 +482,12 @@ export class PropertiesMap {
                     'yaxis.autorange': true,
                 } as unknown as Layout);
             }
+            this.setScaleStep(this._getBounds().y, 'y');
         };
 
         this._options.y.scale.onchange = () => {
             negativeLogWarning(this._options.y);
+            this._options.setLogLabel(this._options.y, 'y');
             if (this._is3D()) {
                 this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
@@ -525,10 +529,14 @@ export class PropertiesMap {
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
+            if (this._is3D()) {
+                this.setScaleStep(this._getBounds().z as number[], 'z');
+            }
         };
 
         this._options.z.scale.onchange = () => {
             negativeLogWarning(this._options.z);
+            this._options.setLogLabel(this._options.z, 'z');
             if (this._options.z.property.value !== '') {
                 this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,
@@ -843,6 +851,14 @@ export class PropertiesMap {
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateMarkers();
+
+        // set step of min/max select arrows based on the plot range
+        const bounds = this._getBounds();
+        this.setScaleStep(bounds.x, 'x');
+        this.setScaleStep(bounds.y, 'y');
+        if (bounds.z !== undefined) {
+            this.setScaleStep(bounds.z, 'z');
+        }
     }
 
     /** Get the property with the given name */
@@ -1235,6 +1251,18 @@ export class PropertiesMap {
             inside = inside && isInsideRange(z, bounds.z, tolerance);
         }
         return inside;
+    }
+
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    private setScaleStep(axisBounds: number[], axisName: string): void {
+        if (axisBounds !== undefined) {
+            // round to 10 decimal places so it does not break in Firefox
+            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
+            const minElement = getByID<HTMLInputElement>(`chsp-${axisName}-min`);
+            const maxElement = getByID<HTMLInputElement>(`chsp-${axisName}-max`);
+            minElement.step = `${step}`;
+            maxElement.step = `${step}`;
+        }
     }
 }
 

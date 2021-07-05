@@ -140,7 +140,7 @@
 
 .chsp-map-options {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 0.5fr;
     align-items: center;
     justify-content: center;
     align-content: start;
@@ -155,7 +155,7 @@
     display: grid;
     align-items: center;
     justify-items: center;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 0.75fr 1fr 1fr;
     grid-gap: 1em;
     margin-bottom: 1.5em;
 }

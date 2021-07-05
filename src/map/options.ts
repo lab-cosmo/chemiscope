@@ -318,15 +318,19 @@ export class MapOptions extends OptionsGroup {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
+                // set width first, since setting position can influence it
+                // scale width of the larger modal-lg class
+                modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
+                // minimum width so that text in rows remains on a single line
+                modalDialog.style.minWidth = `400px`;
+                // unset margins when using position: fixed
+                modalDialog.style.margin = '0';
+                modalDialog.style.position = 'fixed';
+
                 const { top, left } = this._positionSettingsModal(
                     modalDialog.getBoundingClientRect()
                 );
 
-                // set width first, since setting position can influence it
-                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
-                // unset margins when using position: fixed
-                modalDialog.style.margin = '0';
-                modalDialog.style.position = 'fixed';
                 modalDialog.style.top = `${top}px`;
                 modalDialog.style.left = `${left}px`;
             }
@@ -419,5 +423,19 @@ export class MapOptions extends OptionsGroup {
     /** Get the colorscale to use for markers in the main plotly trace */
     public colorScale(): Plotly.ColorScale {
         return COLOR_MAPS[this.palette.value];
+    }
+
+    /** Changes the min/max range label between linear and log appropriately */
+    public setLogLabel(axis: AxisOptions, axisName: string): void {
+        const minInputLabel = getByID(`chsp-${axisName}-min-label`);
+        const maxInputLabel = getByID(`chsp-${axisName}-max-label`);
+
+        if (axis.scale.value === 'log') {
+            minInputLabel.innerHTML = 'min: 10^';
+            maxInputLabel.innerHTML = 'max: 10^';
+        } else {
+            minInputLabel.innerHTML = 'min:';
+            maxInputLabel.innerHTML = 'max:';
+        }
     }
 }
