@@ -76,6 +76,7 @@ export class EnvironmentInfo {
         indexer: EnvironmentIndexer
     ) {
         if (typeof element !== 'string') {
+            assert(element instanceof HTMLElement);
             this._root = element;
         } else {
             this._root = getByID(element);
