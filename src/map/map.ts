@@ -226,6 +226,7 @@ export class PropertiesMap {
         this._selected = new Map<GUID, MarkerData>();
 
         if (typeof config.element !== 'string') {
+            assert(element instanceof HTMLElement);
             this._root = config.element;
         } else {
             this._root = getByID(config.element);
