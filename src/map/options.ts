@@ -318,10 +318,6 @@ export class MapOptions extends OptionsGroup {
                 // display: block to ensure modalDialog.offsetWidth is non-zero
                 (modalDialog.parentNode as HTMLElement).style.display = 'block';
 
-                const { top, left } = this._positionSettingsModal(
-                    modalDialog.getBoundingClientRect()
-                );
-
                 // set width first, since setting position can influence it
                 // scale width of the larger modal-lg class
                 modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
@@ -330,13 +326,13 @@ export class MapOptions extends OptionsGroup {
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
-                modalDialog.style.top = `${top}px`;
 
-                if (window.innerWidth < 1400) {
-                    modalDialog.style.right = `10px`;
-                } else {
-                    modalDialog.style.left = `${left}px`;
-                }
+                const { top, left } = this._positionSettingsModal(
+                    modalDialog.getBoundingClientRect()
+                );
+
+                modalDialog.style.top = `${top}px`;
+                modalDialog.style.left = `${left}px`;
             }
         });
 

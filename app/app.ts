@@ -144,9 +144,18 @@ export class ChemiscopeApp {
 
         this.visualizer.map.positionSettingsModal = (rect) => {
             const mapRect = getByID('chemiscope-map').getBoundingClientRect();
+
+            let left;
+            if (window.innerWidth < 1400) {
+                // clip modal to the right if it overflows
+                left = window.innerWidth - rect.width - 10;
+            } else {
+                left = mapRect.left + mapRect.width + 25;
+            }
+
             return {
                 top: mapRect.top,
-                left: mapRect.left + mapRect.width + 25,
+                left: left,
             };
         };
 
