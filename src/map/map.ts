@@ -210,7 +210,8 @@ export class PropertiesMap {
      * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
      * `id`
      *
-     * @param element   HTML element or HTML id of the DOM element where the name should live
+     * @param element   HTML element or string 'id' of the element where
+     *                   the map should live
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
@@ -226,7 +227,7 @@ export class PropertiesMap {
         this._selected = new Map<GUID, MarkerData>();
 
         if (typeof config.element !== 'string') {
-            assert(element instanceof HTMLElement);
+            assert(config.element instanceof HTMLElement);
             this._root = config.element;
         } else {
             this._root = getByID(config.element);

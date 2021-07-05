@@ -144,7 +144,8 @@ export class ViewersGrid {
      * Create a new [[ViewersGrid]] inside the HTML element with the given
      * `id`
      *
-     * @param element      HTML element or HTML id of the DOM element where the name should live
+     * @param element      HTML element or string 'id' of the element where
+     *                     viewer should live
      * @param indexer      [[EnvironmentIndexer]] used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
@@ -518,7 +519,7 @@ export class ViewersGrid {
      */
     private _setupCell(cellGUID: GUID, colNum: number, rowNum: number): string {
         const cellId = `gi-${cellGUID}`;
-        let cell = this._root.querySelector(`#${cellId}`) as HTMLElement | null;
+        let cell = this._root.querySelector(`#${cellId}`) as HTMLElement | null;
         let color = '';
 
         if (cell === null) {
