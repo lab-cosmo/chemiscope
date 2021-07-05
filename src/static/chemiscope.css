@@ -3,13 +3,13 @@
     cursor: pointer;
 }
 
-.chsp-meta div {
+.chsp-meta .chsp-info-icon {
     float: right;
     margin-top: 5px;
     margin-left: 3px;
 }
 
-.chsp-meta svg {
+.chsp-meta .chsp-info-icon svg {
     display: block;
     width: 14px;
     height: 14px;

@@ -12,10 +12,10 @@ import { generateGUID, getByID } from './utils';
 import INFO_SVG from './static/info.svg';
 
 function generateName(guid: string, name: string): string {
-    return `<span data-toggle="modal" data-target="#${guid}">
-        ${name}
-    </span> 
-    <div>${INFO_SVG}</div>`;
+    return `<div data-toggle="modal" data-target="#${guid}">
+    <span> ${name} </span> 
+    <div class='chsp-info-icon'>${INFO_SVG}</div>
+    </div>`;
 }
 
 function generateModal(guid: string, metadata: Metadata): string {
