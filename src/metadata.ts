@@ -86,7 +86,7 @@ export class MetadataPanel {
      * Create a new [[MetadataPanel]] inside the HTML element with the given
      * `id`.
      *
-     * @param element HTML element or HTML id of the DOM element where the name should live
+     * @param element HTML element or HTML id of the DOM element where the name of the dataset should be inserted
      * @param metadata dataset metadata
      */
     constructor(element: string | HTMLElement, metadata: Metadata) {
