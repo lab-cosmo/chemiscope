@@ -32,7 +32,7 @@
 }
 
 .chsp-extra-options-btn {
-    margin-right: auto;
+    margin: auto;
     display: block;
 }
 
@@ -128,7 +128,7 @@
 
 .chsp-map-options {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 0.5fr;
     align-items: center;
     justify-content: center;
     align-content: start;

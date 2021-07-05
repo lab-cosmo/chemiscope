@@ -323,14 +323,17 @@ export class MapOptions extends OptionsGroup {
                 );
 
                 // set width first, since setting position can influence it
+                // scale width of the larger modal-lg class
                 modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
+                // minimum width so that text in rows remains on a single line
+                modalDialog.style.minWidth = `400px`;
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
                 modalDialog.style.top = `${top}px`;
 
-                if (screen.width < 1400) {
-                    modalDialog.style.left = `${left / 2}px`;
+                if (window.innerWidth < 1400) {
+                    modalDialog.style.right = `10px`;
                 } else {
                     modalDialog.style.left = `${left}px`;
                 }
