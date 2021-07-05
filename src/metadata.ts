@@ -97,6 +97,7 @@ export class MetadataPanel {
         this._guid = `chsp-${generateGUID()}`;
 
         if (typeof element !== 'string') {
+            assert(element instanceof HTMLElement);
             this._name = element;
         } else {
             this._name = getByID(element);
