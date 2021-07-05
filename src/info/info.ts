@@ -63,8 +63,8 @@ export class EnvironmentInfo {
 
     /**
      * Create a new [[EnvironmentInfo]] inside the DOM element with given `id`
-     * @param element    HTML id of the DOM element where the sliders and
-     *                   tables should live
+     * @param element    HTML element or string 'id' of the element where
+     *                   the sliders and tables should live
      * @param properties properties to be displayed
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes

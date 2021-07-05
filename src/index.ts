@@ -60,20 +60,24 @@ export interface Settings {
  * Check if `o` contains all the expected fields to be a [[Config]].
  */
 function validateConfig(o: JsObject) {
+    if (typeof o !== 'object') {
+        throw Error('the configuration must be a JavaScript object');
+    }
+
     if (!('meta' in o && (typeof o.meta === 'string' || isHTMLElement(o.meta)))) {
-        throw Error('missing "meta" key in chemiscope config');
+        throw Error('missing "meta" key in chemiscope configuration');
     }
 
     if (!('map' in o && (typeof o.map === 'string' || isHTMLElement(o.map)))) {
-        throw Error('missing "map" key in chemiscope config');
+        throw Error('missing "map" key in chemiscope configuration');
     }
 
     if (!('info' in o && (typeof o.info === 'string' || isHTMLElement(o.info)))) {
-        throw Error('missing "info" key in chemiscope config');
+        throw Error('missing "info" key in chemiscope configuration');
     }
 
     if (!('structure' in o && (typeof o.structure === 'string' || isHTMLElement(o.structure)))) {
-        throw Error('missing "structure" key in chemiscope config');
+        throw Error('missing "structure" key in chemiscope configuration');
     }
 
     if ('settings' in o) {
