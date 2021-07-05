@@ -19,8 +19,8 @@ import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
 
-import PNG_SVG from '../static/png-icon.svg';
-import SVG_SVG from '../static/svg-icon.svg';
+import PNG_SVG from '../static/download-png.svg';
+import SVG_SVG from '../static/download-svg.svg';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -111,10 +111,10 @@ const DEFAULT_CONFIG = {
     modeBarButtonsToAdd: [
         [
             {
-                name: 'Download plot as PNG',
+                name: 'Download PNG',
                 icon: {
                     width: 400,
-                    height: 424,
+                    height: 447,
                     path: extractSvgPath(PNG_SVG),
                 },
                 click: function (gd: PlotlyScatterElement) {
@@ -133,10 +133,10 @@ const DEFAULT_CONFIG = {
         ],
         [
             {
-                name: 'Download plot as SVG',
+                name: 'Download SVG',
                 icon: {
                     width: 400,
-                    height: 424,
+                    height: 447,
                     path: extractSvgPath(SVG_SVG),
                 },
                 click: function (gd: PlotlyScatterElement) {
@@ -809,6 +809,7 @@ export class PropertiesMap {
                 throw e;
             })
         );
+        this._plot.classList.add('chsp-map');
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
             // don't update selected env on double click, since it is bound to

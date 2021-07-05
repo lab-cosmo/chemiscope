@@ -16,6 +16,7 @@ import { LoadOptions, MoleculeViewer } from './widget';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
+import PNG_SVG from '../static/download-png.svg';
 
 const MAX_WIDGETS = 9;
 
@@ -347,7 +348,7 @@ export class ViewersGrid {
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
             assert(tooltip !== null);
-            tooltip.innerHTML = toggle ? 'this is the active viewer' : 'choose as active';
+            tooltip.innerHTML = toggle ? 'Active viewer' : 'Choose as active';
 
             // change style of the cell border
             const cell = getByID(`gi-${this._active}`);
@@ -531,10 +532,10 @@ export class ViewersGrid {
             color = this._getNextColor();
             template.innerHTML = `<div
                 class="chsp-has-tooltip"
-                style="position: absolute; top: 9px; right: 115px;">
+                style="position: absolute; top: 7px; right: 160px;">
                     <div id="chsp-activate-${cellGUID}"
                          class="chsp-structure-marker"
-                         style="background-color: ${color}; top: 14px; right: 0px;"
+                         style="background-color: ${color}; top: 13px; right: 0px;"
                     ></div>
                     <span class="chsp-tooltip">WILL BE FILLED LATER</span>
                 </div>`;
@@ -550,10 +551,10 @@ export class ViewersGrid {
 
             // add a button to remove the widget
             template.innerHTML = `<button
-                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 40px;">
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="top: 6px; right: 41px;">
                     <span>${CLOSE_SVG}</span>
-                    <span class="chsp-tooltip">remove viewer</span>
+                    <span class="chsp-tooltip">Remove viewer</span>
                 </button>`;
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
@@ -570,10 +571,10 @@ export class ViewersGrid {
 
             // add a button to duplicate the widget
             template.innerHTML = `<button
-                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button"
-                style="top: 8px; right: 70px;">
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="top: 6px; right: 76px;">
                     <span>${DUPLICATE_SVG}</span>
-                    <span class="chsp-tooltip">duplicate viewer</span>
+                    <span class="chsp-tooltip">Duplicate viewer</span>
                 </button>`;
             const duplicate = template.content.firstChild as HTMLElement;
 
@@ -584,8 +585,35 @@ export class ViewersGrid {
                 }
                 this.oncreate(this.active, data.color, data.current);
             };
-
             cell.appendChild(duplicate);
+
+            // add a button to download PNG
+            template.innerHTML = `<button
+                class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="top: 6px; right: 111px;">
+                    <span>${PNG_SVG}</span>
+                    <span class="chsp-tooltip">Download PNG</span>
+                </button>`;
+            const downloadPNG = template.content.firstChild as HTMLElement;
+
+            downloadPNG.onclick = () => {
+                const viewer = this._viewers.get(cellGUID);
+                assert(viewer !== undefined);
+                const widget = viewer.widget;
+
+                const structID = viewer.current.structure;
+                if (viewer.current.atom !== undefined) {
+                    const atomID = viewer.current.atom;
+                    downloadURI(
+                        widget.exportPNG(),
+                        `chemiscope-structure-${structID + 1}-atom-${atomID + 1}.png`
+                    );
+                } else {
+                    downloadURI(widget.exportPNG(), `chemiscope-structure-${structID + 1}.png`);
+                }
+            };
+
+            cell.appendChild(downloadPNG);
 
             this._root.appendChild(cell);
             return color;
@@ -694,4 +722,19 @@ export class ViewersGrid {
 
         return newGUID;
     }
+}
+
+/**
+ *  Creates a download request from a URI
+ * @param uri       URI of the image
+ * @param name      Name of the downloaded image
+ */
+function downloadURI(uri: string, name: string) {
+    const link = document.createElement('a');
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    link.remove();
 }

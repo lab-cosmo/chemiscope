@@ -39,17 +39,16 @@
 /* Tooltip text */
 .chsp-tooltip {
     visibility: hidden;
-    background-color: #69738a;
+    background: #69738a;
     color: white;
-    border-radius: 2px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 12px;
     white-space: nowrap;
+    margin-right: -18px;
+    border-radius: 2px;
     text-align: center;
     display: inline-block;
-    font-size: 12px;
-    height: 28px;
-    line-height: 28px;
-    padding-left: 8px;
-    padding-right: 8px;
     top: 30px;
     left: -60px;
     /* Position the tooltip text - see examples below! */
@@ -95,12 +94,25 @@
     margin: 0;
     height: 28px;
     width: 28px;
-    opacity: 0.4;
     z-index: 10;
 }
 
-.chsp-viewer-button:hover {
-    opacity: 0.9;
+.chsp-viewer-action-button {
+    background-color: white;
+    border: none;
+}
+
+.chsp-viewer-action-button:hover {
+    background: white;
+}
+
+.chsp-viewer-action-button svg {
+    opacity: 0.4;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.chsp-viewer-action-button:hover svg {
+    opacity: 0.6;
 }
 
 .chsp-structure-viewer-grid {
@@ -205,9 +217,63 @@
     font-weight: bold;
 }
 
-.modebar-group svg.icon {
-    width: 1.5em !important;
-    height: 1.5em !important;
+/* Change Plotly modebar style to match the style of the structure grid buttons */
+
+.chsp-map .modebar-group {
+    padding-left: 0 !important;
+}
+
+.chsp-map .modebar-btn {
+    cursor: default !important;
+    font-family: apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+}
+
+.chsp-map .modebar-btn::after {
+    opacity: 0.9;
+}
+
+.chsp-map .icon:hover + .modebar-btn::after {
+    visibility: visible;
+}
+
+.chsp-map .modebar-btn::before {
+    content: none !important;
+}
+
+.chsp-map .modebar-btn .icon {
+    transition: opacity 0.15s ease-in-out;
+    padding: 3px;
+    opacity: 0.3;
+    cursor: pointer;
+}
+
+.chsp-map .modebar-group svg.icon {
+    width: 2em;
+    height: 2em;
+    border-radius: 0.2em;
+}
+
+.chsp-map .modebar-group svg.icon:active {
+    color: #212529;
+    background-color: #dae0e5;
+    border-color: #d3d9df;
+    box-shadow: 0 0 0 0.2rem rgb(216 217 219 / 50%);
+}
+
+.chsp-map .modebar-btn .icon path {
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    fill: black !important;
+}
+
+.chsp-map .modebar-btn .icon:hover {
+    opacity: 0.6;
+}
+
+.chsp-map .modebar-btn.active .icon {
+    opacity: 0.6;
 }
 
 .chsp-info-btns {

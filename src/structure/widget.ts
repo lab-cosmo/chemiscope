@@ -190,6 +190,8 @@ export class MoleculeViewer {
         const viewer = $3Dmol.createViewer(this._root, {
             antialias: true,
             defaultcolors: $3Dmol.elementColors.Jmol,
+            backgroundColor: '0xffffff',
+            backgroundAlpha: 0,
             disableFog: true,
             orthographic: false,
         });
@@ -420,6 +422,13 @@ export class MoleculeViewer {
      */
     public saveSettings(): SavedSettings {
         return this._options.saveSettings();
+    }
+
+    /**
+     * Returns a PNG screenshot of the viewer as a URI string
+     */
+    public exportPNG(): string {
+        return this._viewer.pngURI();
     }
 
     private _connectOptions(): void {
