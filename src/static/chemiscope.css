@@ -242,7 +242,7 @@
     content: none !important;
 }
 
-.modebar-btn .icon {
+.chsp-map .modebar-btn .icon {
     transition: opacity 0.15s ease-in-out;
     padding: 3px;
     opacity: 0.3;
