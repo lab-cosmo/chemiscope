@@ -184,6 +184,7 @@ export class ViewersGrid {
 
         let root;
         if (typeof element !== 'string') {
+            assert(element instanceof HTMLElement);
             root = element;
         } else {
             root = getByID(element);
