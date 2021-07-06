@@ -165,8 +165,7 @@ export class MoleculeViewer {
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
      *
-     * @param element HTML element or HTML id of the DOM element
-     *                where the viewer will be created
+     * @param id HTML element id inside which the viewer will be created
      * @param guid (optional) unique identifier for the widget
      */
     constructor(element: string | HTMLElement, guid?: string) {

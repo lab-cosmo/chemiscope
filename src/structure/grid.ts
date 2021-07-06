@@ -658,7 +658,7 @@ export class ViewersGrid {
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
                 const widget = new MoleculeViewer(
-                    getByID<HTMLElement>(`#gi-${cellGUID}`),
+                    this._root.querySelector(`#gi-${cellGUID}`) as HTMLElement,
                     cellGUID
                 );
 
