@@ -4,6 +4,7 @@ import copy
 import ase
 
 from chemiscope import create_input
+from chemiscope import all_atomic_environments, librascal_atomic_environments
 
 TEST_FRAMES = [ase.Atoms("CO2")]
 
@@ -300,8 +301,11 @@ class TestCreateInputProperties(unittest.TestCase):
 
     def test_wrong_number_of_values(self):
         properties = {"name": {"target": "atom", "values": [2, 3]}}
+        environments = [(0, 0, 3), (0, 1, 3), (0, 2, 3)]
         with self.assertRaises(Exception) as cm:
-            create_input(frames=TEST_FRAMES, properties=properties)
+            create_input(
+                frames=TEST_FRAMES, properties=properties, environments=environments
+            )
         self.assertEqual(
             str(cm.exception),
             "wrong size for the property 'name' with target=='atom': "
@@ -383,30 +387,47 @@ class TestCreateInputProperties(unittest.TestCase):
 
 
 class TestCreateInputEnvironments(unittest.TestCase):
-    def test_environment(self):
-        data = create_input(frames=TEST_FRAMES + TEST_FRAMES, cutoff=3.5)
-        self.assertEqual(len(data["environments"]), 6)
+    def test_manual_environments_list(self):
+        environments = [
+            (0, 0, 3.5),
+            (1, 1, 2.5),
+            (1, 2, 3),
+        ]
+        data = create_input(frames=TEST_FRAMES + TEST_FRAMES, environments=environments)
+        self.assertEqual(len(data["environments"]), 3)
 
         for i, env in enumerate(data["environments"]):
-            self.assertEqual(env["structure"], i // 3)
-            self.assertEqual(env["center"], i % 3)
-            self.assertEqual(env["cutoff"], 3.5)
+            self.assertEqual(env["structure"], environments[i][0])
+            self.assertEqual(env["center"], environments[i][1])
+            self.assertEqual(env["cutoff"], environments[i][2])
 
-    def test_environment_wrong_type(self):
-        with self.assertRaises(Exception) as cm:
-            create_input(frames=TEST_FRAMES, cutoff="3.5")
+    def test_all_environments(self):
+        environments = all_atomic_environments(TEST_FRAMES, cutoff=6)
+        for i, (structure, center, cutoff) in enumerate(environments):
+            self.assertEqual(structure, 0)
+            self.assertEqual(center, i)
+            self.assertEqual(cutoff, 6)
 
-        self.assertEqual(
-            str(cm.exception), "cutoff must be a float, got '3.5' of type <class 'str'>"
-        )
+    def test_librascal_environments(self):
+        frames = [ase.Atoms("CO2"), ase.Atoms("NH3")]
+        for frame in frames:
+            frame.arrays["atomic number"] = frame.numbers
 
-        with self.assertRaises(Exception) as cm:
-            create_input(frames=TEST_FRAMES, cutoff=False)
+        # center_atoms_mask is used by librascal to specify which atoms to consider
+        frames[1].arrays["center_atoms_mask"] = [True, False, False, False]
 
-        self.assertEqual(
-            str(cm.exception),
-            "cutoff must be a float, got 'False' of type <class 'bool'>",
-        )
+        environments = librascal_atomic_environments(frames)
+        data = create_input(frames=frames, environments=environments)
+
+        self.assertEqual(len(data["environments"]), 4)
+
+        atomic_number = data["properties"]["atomic number"]
+        self.assertEqual(atomic_number["target"], "atom")
+        self.assertEqual(len(atomic_number["values"]), 4)
+        self.assertEqual(atomic_number["values"][0], 6)  # C in CO2
+        self.assertEqual(atomic_number["values"][1], 8)  # O1 in CO2
+        self.assertEqual(atomic_number["values"][2], 8)  # O2 in CO2
+        self.assertEqual(atomic_number["values"][3], 7)  # N in NH3
 
 
 if __name__ == "__main__":
