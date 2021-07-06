@@ -1214,11 +1214,16 @@ export class PropertiesMap {
     }
 
     /**
-     * Update the position, color & size of markers within the data array
+     * Update the position, color & size of markers. If `markers` is present, only
+     * markers inside the array are updated, otherwise everything is updated.
      */
-    private _updateMarkers(data: MarkerData[] = Array.from(this._selected.values())): void {
+    private _updateMarkers(markers?: MarkerData[]): void {
+        if (markers === undefined) {
+            markers = Array.from(this._selected.values());
+        }
+
         if (this._is3D()) {
-            data.forEach((d) => d.toggleVisible(false));
+            markers.forEach((marker) => marker.toggleVisible(false));
             this._restyle(
                 {
                     'marker.color': this._colors(1),
@@ -1231,19 +1236,30 @@ export class PropertiesMap {
                 1
             );
         } else {
-            const allX = this._coordinates(this._options.x, 0) as number[][];
-            const allY = this._coordinates(this._options.y, 0) as number[][];
+            const allX = this._coordinates(this._options.x, 0)[0] as number[];
+            const allY = this._coordinates(this._options.y, 0)[0] as number[];
             const plotWidth = this._plot.getBoundingClientRect().width;
 
-            for (const datum of data) {
-                const rawX = allX[0][datum.current];
-                const rawY = allY[0][datum.current];
-                if (this._insidePlot(rawX, rawY)) {
-                    const x = plotWidth - this._computeRSCoord(rawX, 'x');
-                    const y = this._computeRSCoord(rawY, 'y');
-                    datum.update(x, y);
+            for (const marker of markers) {
+                let x = allX[marker.current];
+                let y = allY[marker.current];
+
+                // make sure we deal with log scale
+                if (this._options.x.scale.value === 'log') {
+                    x = Math.log10(x);
+                }
+                if (this._options.y.scale.value === 'log') {
+                    y = Math.log10(y);
+                }
+
+                if (this._insidePlot(x, y)) {
+                    marker.toggleVisible(true);
+                    marker.update({
+                        x: plotWidth - this._pixelCoordinate(x, 'x'),
+                        y: this._pixelCoordinate(y, 'y'),
+                    });
                 } else {
-                    datum.toggleVisible();
+                    marker.toggleVisible(false);
                 }
             }
         }
@@ -1268,8 +1284,9 @@ export class PropertiesMap {
         }
     }
 
-    // Computes the real space coordinate of a value on the plot
-    private _computeRSCoord(value: number, axisName: string): number {
+    // Computes the pixel coordinate inside the plot div of a given value along
+    // the given axis
+    private _pixelCoordinate(value: number, axisName: string): number {
         assert(axisName === 'x' || axisName === 'y');
         assert(!this._is3D());
         let axis;
@@ -1281,16 +1298,18 @@ export class PropertiesMap {
                 axis = this._plot._fullLayout.yaxis;
                 break;
         }
+
         return axis.l2p(value) + axis._offset;
     }
 
     // Checks if a point is in the visible plot
     private _insidePlot(x: number, y: number, z?: number): boolean {
-        const tolerance = 10;
+        // allow the point to be a bit outside the main plot area
+        const tolerance = 1.05;
 
         const bounds = this._getBounds();
         const isInsideRange = (value: number, range: [number, number], tolerance: number) => {
-            return value > range[0] - tolerance && value < range[1] + tolerance;
+            return value > range[0] * tolerance && value < range[1] * tolerance;
         };
 
         let inside = isInsideRange(x, bounds.x, tolerance);
