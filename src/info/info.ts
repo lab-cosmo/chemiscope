@@ -12,6 +12,8 @@ import { generateGUID, getByID } from '../utils';
 import { Slider } from './slider';
 import { Table } from './table';
 
+import INFO_SVG from '../static/info.svg';
+
 function filter<T extends Record<string, Property>>(
     obj: T,
     predicate: (o: Property) => boolean
@@ -88,7 +90,8 @@ export class EnvironmentInfo {
                 data-target='#${atomId}'
                 aria-expanded='false'
                 aria-controls='${atomId}'>
-                    atom <input class='chsp-info-number' type=number value=1 min=1></input>
+                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                atom <input class='chsp-info-number' type=number value=1 min=1></input>
             </div>
             `;
         }
@@ -101,7 +104,9 @@ export class EnvironmentInfo {
                 data-target='#${structureId}'
                 aria-expanded='false'
                 aria-controls='${structureId}'>
-                    structure <input class='chsp-info-number' type=number value=1 min=1></input>
+                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                structure <input class='chsp-info-number' type=number value=1 min=1></input>
+                    
             </div>
             ${atomButton}
         </div>`;
