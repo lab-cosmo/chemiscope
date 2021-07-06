@@ -29,13 +29,13 @@ export class MarkerData {
 
     // Updates the location of the marker on top of the plot
     // x and y should be in absolute coordinates with respect to the plot
-    public update(x: number, y: number): void {
-        if (!isFinite(x) || !isFinite(y)) {
+    public update(position: { x: number; y: number }): void {
+        if (!isFinite(position.x) || !isFinite(position.y)) {
             this.toggleVisible(false);
             return;
         }
-        this.marker.style.top = `${y}px`;
-        this.marker.style.right = `${x}px`;
+        this.marker.style.top = `${position.y}px`;
+        this.marker.style.right = `${position.x}px`;
     }
 
     // Changes the current environment if it is not already at the target
@@ -67,7 +67,7 @@ export class MarkerData {
     }
 
     // Turn the visibility of the marker on/off for 2D/3D plots
-    public toggleVisible(visible: boolean = false): void {
+    public toggleVisible(visible: boolean): void {
         if (visible) {
             this.marker.style.display = 'block';
         } else {
