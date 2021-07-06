@@ -12,6 +12,23 @@ except ImportError:
     HAVE_ASE = False
 
 
+def _guess_adapter(frames):
+    """
+    Guess which adapter to use for the given frames. This function return the
+    frames as a list and a string describing which adapter should be used.
+    """
+    frames_list = list(frames)
+    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
+        for frame in frames_list:
+            assert isinstance(frame, ase.Atoms)
+        return frames, "ASE"
+    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
+        # deal with the user passing a single frame
+        return [frames], "ASE"
+    else:
+        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
+
+
 def frames_to_json(frames):
     """
     Convert the given ``frames`` to the JSON structure used by chemiscope.
@@ -21,18 +38,15 @@ def frames_to_json(frames):
 
     :param frames: iterable over structures (typically a list of frames)
     """
-    frames_list = list(frames)
+    frames, adapter = _guess_adapter(frames)
 
-    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        return [_ase_to_json(frame) for frame in frames_list]
-    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
-        # deal with the user passing a single frame
-        return frames_to_json([frames])
+    if adapter == "ASE":
+        return [_ase_to_json(frame) for frame in frames]
     else:
-        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
+        raise Exception("reached unreachable code")
 
 
-def atom_properties(frames, composition):
+def atom_properties(frames, composition, atoms_mask=None):
     """
     Extract "atom" properties from the given ``frames``, and give them as a
     dictionary compatible with :py:func:`create_input`.
@@ -41,16 +55,17 @@ def atom_properties(frames, composition):
     supported frame types. Currently only `ase.Atoms` frames are supported.
 
     :param frames: iterable over structures (typically a list of frames)
+    :param composition: whether to also add properties containing information
+                        about the chemical composition of the system
+    :param atoms_mask: optional list of booleans containing which atoms should
+                       be include in the output
     """
-    frames_list = list(frames)
+    frames, adapter = _guess_adapter(frames)
 
-    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        return _ase_atom_properties(frames_list, composition)
-    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
-        # deal with the user passing a single frame
-        return atom_properties([frames], composition)
+    if adapter == "ASE":
+        return _ase_atom_properties(frames, composition, atoms_mask)
     else:
-        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
+        raise Exception("reached unreachable code")
 
 
 def structure_properties(frames, composition):
@@ -62,16 +77,70 @@ def structure_properties(frames, composition):
     supported frame types. Currently only `ase.Atoms` frames are supported.
 
     :param frames: iterable over structures (typically a list of frames)
+    :param composition: whether to also add properties containing information
+                        about the chemical composition of the system
     """
-    frames_list = list(frames)
+    frames, adapter = _guess_adapter(frames)
 
-    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        return _ase_structure_properties(frames_list, composition)
-    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
-        # deal with the user passing a single frame
-        return structure_properties([frames], composition)
+    if adapter == "ASE":
+        return _ase_structure_properties(frames, composition)
     else:
-        raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
+        raise Exception("reached unreachable code")
+
+
+def all_atomic_environments(frames, cutoff=3.5):
+    """
+    Generate a list of environments containing all the atoms in the given
+    ``frames``. The optional spherical ``cutoff`` radius is used to display the
+    environments in chemiscope.
+
+    :param frames: iterable over structures (typically a list of frames)
+    :param float cutoff: spherical cutoff radius used when displaying the
+                         environments
+    """
+    frames, adapter = _guess_adapter(frames)
+
+    if adapter == "ASE":
+        environments = []
+        for structure_i, frame in enumerate(frames):
+            for atom_i in range(len(frame)):
+                environments.append((structure_i, atom_i, cutoff))
+        return environments
+    else:
+        raise Exception("reached unreachable code")
+
+
+def librascal_atomic_environments(frames, cutoff=3.5):
+    """
+    Generate the list of environments for the given ``frames``, matching the
+    behavior used by librascal when computing descriptors for only a subset of
+    the atomic centers. The optional spherical ``cutoff`` radius is used to
+    display the environments in chemiscope.
+
+    Only ``ase.Atoms`` are supported for the ``frames`` since that's what
+    librascal uses.
+
+    :param frames: iterable over ``ase.Atoms``
+    :param float cutoff: spherical cutoff radius used when displaying the
+                         environments
+    """
+    frames, adapter = _guess_adapter(frames)
+
+    if adapter != "ASE":
+        raise Exception("librascal_atomic_environments only supports ASE frames")
+
+    environments = []
+    for structure_i, frame in enumerate(frames):
+        if "center_atoms_mask" in frame.arrays:
+            atoms_iter = np.where(frame.arrays["center_atoms_mask"])[0]
+        else:
+            # use all atoms
+            atoms_iter = range(len(frame))
+
+        for atom_i in atoms_iter:
+            environments.append((structure_i, atom_i, cutoff))
+
+    return environments
 
 
 def _add_structure_chemical_composition(frames):
@@ -116,9 +185,9 @@ def _ase_to_json(frame):
     return data
 
 
-def _ase_atom_properties(frames, composition):
+def _ase_atom_properties(frames, composition, atoms_mask):
     """Implementation of atom_properties for ase.Atoms"""
-    IGNORED_ASE_ARRAYS = ["positions", "numbers"]
+    IGNORED_ASE_ARRAYS = ["positions", "numbers", "center_atoms_mask"]
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
@@ -170,6 +239,12 @@ def _ase_atom_properties(frames, composition):
             )
 
     _remove_invalid_properties(properties, "ASE")
+
+    if atoms_mask is not None:
+        # only include values for requested atoms
+        for property in properties.values():
+            property["values"] = property["values"][atoms_mask]
+
     return properties
 
 

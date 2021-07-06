@@ -38,12 +38,6 @@ def main():
     parser.add_argument(
         "-o", "--output", type=str, help="chemiscope output file in JSON format"
     )
-    parser.add_argument(
-        "-c",
-        "--cutoff",
-        type=float,
-        help="generate atom-centred environments with the given cutoff",
-    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--only-atoms",
@@ -99,7 +93,6 @@ def main():
             "authors": args.authors,
             "references": args.references,
         },
-        cutoff=args.cutoff,
     )
 
 

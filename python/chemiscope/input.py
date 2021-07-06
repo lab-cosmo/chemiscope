@@ -9,7 +9,11 @@ import os
 
 import numpy as np
 
-from .adapters import frames_to_json, atom_properties, structure_properties
+from .structures import (
+    frames_to_json,
+    atom_properties,
+    structure_properties,
+)
 
 
 def _expand_properties(short_properties, n_structures, n_atoms):
@@ -93,7 +97,7 @@ def _expand_properties(short_properties, n_structures, n_atoms):
 
 
 def create_input(
-    frames=None, meta=None, properties=None, cutoff=None, composition=False
+    frames=None, meta=None, properties=None, environments=None, composition=False
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -103,11 +107,12 @@ def create_input(
                         objects are supported
     :param dict meta: optional metadata of the dataset, see below
     :param dict properties: optional dictionary of additional properties, see below
-    :param float cutoff: optional. If present, will be used to generate
-                         atom-centered environments
-    :param bool composition: optional. False by default. If True, will add to
-                            the structure and atom properties information
-                            about chemical composition
+    :param list environments: optional list of (structure id, atom id, cutoff)
+        specifying which atoms have properties attached and how far out
+        atom-centered environments should be drawn by default
+    :param bool composition: optional, ``False`` by default. If ``True``, will
+        add to structure and atom properties containing information about the
+        chemical composition
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
@@ -174,36 +179,20 @@ def create_input(
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
 
-    data = {"meta": {}}
-    if meta is not None:
-        if "name" in meta:
-            data["meta"]["name"] = str(meta["name"])
-
-        if "description" in meta:
-            data["meta"]["description"] = str(meta["description"])
-
-        if "authors" in meta:
-            data["meta"]["authors"] = list(map(str, meta["authors"]))
-
-        if "references" in meta:
-            data["meta"]["references"] = list(map(str, meta["references"]))
-
-        for key in meta.keys():
-            if key not in ["name", "description", "authors", "references"]:
-                warnings.warn(f"ignoring unexpected metadata: {key}")
-
-    if "name" not in data["meta"] or not data["meta"]["name"]:
-        data["meta"]["name"] = "<unknown>"
+    data = {
+        "meta": _normalize_metadata(meta if meta is not None else {}),
+    }
 
     data["structures"] = []
     n_structures = None
-    n_atoms = None
+
     if frames is not None:
         data["structures"] = frames_to_json(frames)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
     else:
         n_atoms = 0
+
         # if frames are not given, we create a dataset with only properties.
         # In that case, all properties should be structure properties
         for name, value in properties.items():
@@ -225,19 +214,38 @@ def create_input(
 
                 n_structures = len(value["values"])
 
+    if environments is not None:
+        if "structures" not in data:
+            raise ValueError("can not have environments without structures")
+
+        data["environments"] = _normalize_environments(environments, data["structures"])
+        n_atoms = len(data["environments"])
+
     data["properties"] = {}
     if properties is not None:
         properties = _expand_properties(properties, n_structures, n_atoms)
         for name, value in properties.items():
-            _validate_property(name, value)
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
     # Read properties coming from the frames
     if frames is not None:
-        for name, value in atom_properties(frames, composition).items():
+        if "environments" in data:
+            # only include values for the subset of environments
+            # requested by the user
+            atoms_mask = [[False] * s["size"] for s in data["structures"]]
+            for environment in data["environments"]:
+                atoms_mask[environment["structure"]][environment["center"]] = True
+
+            atoms_mask = np.concatenate(atoms_mask)
+        else:
+            atoms_mask = None
+
+        for name, value in atom_properties(frames, composition, atoms_mask).items():
             _validate_property(name, value)
             for name, value in _linearize(name, value, n_structures, n_atoms).items():
                 if name in data["properties"]:
+                    # check that atom properties don't override user-provided
+                    # properties
                     warnings.warn(
                         f"ignoring the '{name}' atom property coming from the "
                         "structures since it is already part of the properties"
@@ -250,6 +258,8 @@ def create_input(
             _validate_property(name, value)
             for name, value in _linearize(name, value, n_structures, n_atoms).items():
                 if name in data["properties"]:
+                    # check that frame properties don't override user-provided
+                    # properties or atom properties
                     warnings.warn(
                         f"ignoring the '{name}' structure property coming from the "
                         "structures since it is already part of the properties"
@@ -258,14 +268,16 @@ def create_input(
 
                 data["properties"][name] = value
 
-    if frames is not None and cutoff is not None:
-        data["environments"] = _generate_environments(frames, cutoff)
-
     return data
 
 
 def write_input(
-    path, frames, meta=None, properties=None, cutoff=None, composition=False
+    path,
+    frames,
+    meta=None,
+    properties=None,
+    environments=None,
+    composition=False,
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and
@@ -277,8 +289,9 @@ def write_input(
                         objects are supported
     :param dict meta: optional metadata of the dataset
     :param dict properties: optional dictionary of additional properties
-    :param float cutoff: optional. If present, will be used to generate
-                         atom-centered environments
+    :param list environments: optional list of (structure id, atom id, cutoff)
+        specifying which atoms have properties attached and how far out
+        atom-centered environments should be drawn by default
     :param bool composition: optional. False by default. If True, will add to
                                 the structure and atom properties information
                                 about chemical composition
@@ -332,7 +345,7 @@ def write_input(
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
-    data = create_input(frames, meta, properties, cutoff, composition)
+    data = create_input(frames, meta, properties, environments, composition)
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
         data["meta"]["name"] = os.path.basename(path).split(".")[0]
@@ -342,7 +355,7 @@ def write_input(
             file.write(json.dumps(data).encode("utf8"))
     else:
         with open(path, "w") as file:
-            json.dump(data, file)
+            json.dump(data, file, indent=2)
 
 
 def _typetransform(data, name):
@@ -368,7 +381,7 @@ def _typetransform(data, name):
             )
 
 
-def _linearize(name, property, n_structures, n_atoms):
+def _linearize(name, property, n_structures, n_centers):
     """
     Transform a property dict (containing "value", "target", "units",
     "description") with potential multi-dimensional "values" key to data that
@@ -382,8 +395,10 @@ def _linearize(name, property, n_structures, n_atoms):
                  messages
     :param property: dictionary containing the property data and metadata
     :param n_structures: total number of structures, to validate the array sizes
-    :param n_atoms: total number of atoms, to validate the array sizes
+    :param n_centers: total number of atoms, to validate the array sizes
     """
+    _validate_property(name, property)
+
     data = {}
     if isinstance(property["values"], list):
         data[name] = {
@@ -428,10 +443,10 @@ def _linearize(name, property, n_structures, n_atoms):
 
     # Validate the properties size
     for prop in data.values():
-        if prop["target"] == "atom" and len(prop["values"]) != n_atoms:
+        if prop["target"] == "atom" and len(prop["values"]) != n_centers:
             raise Exception(
                 f"wrong size for the property '{name}' with target=='atom': "
-                + f"expected {n_atoms} values, got {len(prop['values'])}"
+                + f"expected {n_centers} values, got {len(prop['values'])}"
             )
 
         if prop["target"] == "structure" and len(prop["values"]) != n_structures:
@@ -443,19 +458,43 @@ def _linearize(name, property, n_structures, n_atoms):
     return data
 
 
-def _generate_environments(frames, cutoff):
-    if not isinstance(cutoff, float):
-        raise Exception(
-            f"cutoff must be a float, got '{cutoff}' of type {type(cutoff)}"
+def _normalize_environments(environments, structures):
+    cleaned = []
+    for environment in environments:
+        if len(environment) != 3:
+            raise ValueError(
+                f"expected environments to contain three values, got {environment}"
+            )
+
+        structure, center, cutoff = environment
+        structure = int(structure)
+        center = int(center)
+        cutoff = float(cutoff)
+
+        if structure >= len(structures):
+            raise ValueError(
+                f"invalid structure index in environments: got {structure}, "
+                f"but we have {len(structures)} structures"
+            )
+
+        if center >= structures[structure]["size"]:
+            raise ValueError(
+                f"invalid center index in environments: got {center} in structure "
+                f"which only contains {structures[structure]['size']} atoms"
+            )
+
+        if cutoff <= 0:
+            raise ValueError("negative cutoff in environments is not valid")
+
+        cleaned.append(
+            {
+                "structure": structure,
+                "center": center,
+                "cutoff": float(cutoff),
+            }
         )
 
-    environments = []
-    for frame_id, frame in enumerate(frames):
-        for center in range(len(frame)):
-            environments.append(
-                {"structure": frame_id, "center": center, "cutoff": cutoff}
-            )
-    return environments
+    return cleaned
 
 
 def _validate_property(name, property):
@@ -480,3 +519,26 @@ def _validate_property(name, property):
     for key in property.keys():
         if key not in ["target", "values", "description", "units"]:
             warnings.warn(f"ignoring unexpected property key: {key}")
+
+
+def _normalize_metadata(meta):
+    cleaned = {}
+    if "name" in meta and str(meta["name"]) != "":
+        cleaned["name"] = str(meta["name"])
+    else:
+        cleaned["name"] = "<unknown>"
+
+    if "description" in meta:
+        cleaned["description"] = str(meta["description"])
+
+    if "authors" in meta:
+        cleaned["authors"] = list(map(str, meta["authors"]))
+
+    if "references" in meta:
+        cleaned["references"] = list(map(str, meta["references"]))
+
+    for key in meta.keys():
+        if key not in ["name", "description", "authors", "references"]:
+            warnings.warn(f"ignoring unexpected metadata: {key}")
+
+    return cleaned
