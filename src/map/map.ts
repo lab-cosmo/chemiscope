@@ -447,6 +447,14 @@ export class PropertiesMap {
                 }
                 const min = axis.min.value;
                 const max = axis.max.value;
+                if (min > max) {
+                    sendWarning(
+                        `${name}: inserted min and max values are such that min > max! Values are resetted to the last ones inserted.`
+                    );
+                    axis.min.reset();
+                    axis.max.reset();
+                    return;
+                }
 
                 negativeLogWarning(axis);
 
