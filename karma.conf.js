@@ -15,8 +15,9 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      { pattern: "app/**/*.ts" },
       { pattern: "src/**/*.ts" },
-      { pattern: "tests/**/*.ts" }
+      { pattern: "tests/**/*.test.ts" }
     ],
 
 
@@ -78,7 +79,7 @@ module.exports = function(config) {
         module: 'commonjs',
         moduleResolution: 'node',
         paths: {
-          'utils': ['./src/utils'], 'utils/*': ['./src/utils/*']
+          'src': ['./src/utils'], 'utils/*': ['./src/utils/*']
         },
         baseUrl: "./"
       },
