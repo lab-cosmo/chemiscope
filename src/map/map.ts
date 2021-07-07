@@ -270,6 +270,8 @@ export class PropertiesMap {
     public remove(): void {
         this._root.innerHTML = '';
         this._options.remove();
+        // remove SVG element created by Plotly
+        document.getElementById('js-plotly-tester')?.remove();
     }
 
     /**
