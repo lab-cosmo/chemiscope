@@ -9,7 +9,7 @@ import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID, unreachable } from '../utils';
+import { generateGUID, getByID, getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Structure } from '../dataset';
 
@@ -165,10 +165,11 @@ export class MoleculeViewer {
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
      *
-     * @param id HTML element id inside which the viewer will be created
+     * @param element HTML element or HTML id of the DOM element
+     *                where the viewer will be created
      * @param guid (optional) unique identifier for the widget
      */
-    constructor(id: string, guid?: string) {
+    constructor(element: string | HTMLElement, guid?: string) {
         if (guid === undefined) {
             guid = generateGUID();
         }
@@ -179,7 +180,8 @@ export class MoleculeViewer {
         this.guid = 'chsp-' + guid;
 
         this._root = document.createElement('div');
-        const root = getByID(id);
+
+        const root = getElement(element);
         root.appendChild(this._root);
 
         this._root.style.position = 'relative';
@@ -359,7 +361,6 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-
         assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
         this._current.model.addAtomSpecs(['index']);
 

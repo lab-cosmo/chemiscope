@@ -51,9 +51,20 @@ export function generateGUID(): GUID {
     }) as GUID;
 }
 
-/** Get an HTML element by id */
-export function getByID<HTMLType = HTMLElement>(id: string): HTMLType {
-    const e = document.getElementById(id);
+/**
+ * Get an HTML element by id, looking inside the `root` (by default the whole `document`).
+ *
+ * The generic parameter `HTMLType` can be used to cast the element to a given type (e.g. `getById<HTMLInputElement>("foo")`) . The element type is not checked by this function.
+ *
+ * @throws if there is not element with the given id.
+ */
+export function getByID<HTMLType = HTMLElement>(id: string, root?: HTMLElement): HTMLType {
+    let e;
+    if (root !== undefined) {
+        e = root.querySelector(`#${id}`);
+    } else {
+        e = document.getElementById(id);
+    }
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
     }
@@ -116,4 +127,14 @@ export function arrayMaxMin(values: number[]): { max: number; min: number } {
 /** unreachable marker for cases that REALLY should not happen */
 export function unreachable(): never {
     throw Error('unreachable code entered, this is a bug');
+}
+
+/** Returns the element based on ID or the element itself*/
+export function getElement<HTMLElement>(element: string | HTMLElement): void {
+    if (typeof element !== 'string') {
+        assert(element instanceof HTMLElement);
+        return element;
+    } else {
+        return getByID<HTMLElement>(element);
+    }
 }

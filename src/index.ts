@@ -37,13 +37,13 @@ require('./static/chemiscope.css');
  */
 export interface Config {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
-    meta: string;
+    meta: string | HTMLElement;
     /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
-    map: string;
+    map: string | HTMLElement;
     /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
-    info: string;
+    info: string | HTMLElement;
     /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
-    structure: string;
+    structure: string | HTMLElement;
     /** Settings for the map & structure viewer */
     settings?: Partial<Settings>;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
@@ -64,19 +64,24 @@ function validateConfig(o: JsObject) {
         throw Error('the configuration must be a JavaScript object');
     }
 
-    if (!('meta' in o && typeof o.meta === 'string')) {
+    if (!('meta' in o && (typeof o.meta === 'string' || o.meta instanceof HTMLElement))) {
         throw Error('missing "meta" key in chemiscope configuration');
     }
 
-    if (!('map' in o && typeof o.map === 'string')) {
+    if (!('map' in o && (typeof o.map === 'string' || o.map instanceof HTMLElement))) {
         throw Error('missing "map" key in chemiscope configuration');
     }
 
-    if (!('info' in o && typeof o.info === 'string')) {
+    if (!('info' in o && (typeof o.info === 'string' || o.info instanceof HTMLElement))) {
         throw Error('missing "info" key in chemiscope configuration');
     }
 
-    if (!('structure' in o && typeof o.structure === 'string')) {
+    if (
+        !(
+            'structure' in o &&
+            (typeof o.structure === 'string' || o.structure instanceof HTMLElement)
+        )
+    ) {
         throw Error('missing "structure" key in chemiscope configuration');
     }
 
@@ -220,7 +225,7 @@ class DefaultVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            { id: config.map, settings: getMapSettings(config.settings) },
+            { element: config.map, settings: getMapSettings(config.settings) },
             this._indexer,
             dataset.properties
         );

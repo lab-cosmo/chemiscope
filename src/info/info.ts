@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { generateGUID, getByID } from '../utils';
+import { generateGUID, getElement } from '../utils';
 
 import { Slider } from './slider';
 import { Table } from './table';
@@ -65,15 +65,20 @@ export class EnvironmentInfo {
 
     /**
      * Create a new [[EnvironmentInfo]] inside the DOM element with given `id`
-     * @param id         HTML id of the DOM element where the sliders and
-     *                   tables should live
+     * @param element    HTML element or string 'id' of the element where
+     *                   the sliders and tables should live
      * @param properties properties to be displayed
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param viewer     [[ViewersGrid]] from which we get the playback delay
      */
-    constructor(id: string, properties: { [name: string]: Property }, indexer: EnvironmentIndexer) {
-        this._root = getByID(id);
+    constructor(
+        element: string | HTMLElement,
+        properties: { [name: string]: Property },
+        indexer: EnvironmentIndexer
+    ) {
+        this._root = getElement(element);
+
         this._indexer = indexer;
         this.onchange = () => {};
         this.startStructurePlayback = () => {};

@@ -13,7 +13,7 @@ import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
-import { enumerate, getByID, getFirstKey } from '../utils';
+import { enumerate, getByID, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
@@ -210,13 +210,14 @@ export class PropertiesMap {
      * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
      * `id`
      *
-     * @param id         HTML id of the DOM element where the map should live
+     * @param element   HTML element or string 'id' of the element where
+     *                   the map should live
      * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
      */
     constructor(
-        config: { id: string; settings: SavedSettings },
+        config: { element: string | HTMLElement; settings: SavedSettings },
         indexer: EnvironmentIndexer,
         properties: { [name: string]: Property }
     ) {
@@ -225,7 +226,8 @@ export class PropertiesMap {
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
 
-        this._root = getByID(config.id);
+        this._root = getElement(config.element);
+
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
         }
