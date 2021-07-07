@@ -68,7 +68,7 @@ function validateConfig(o: JsObject) {
         throw Error('missing "meta" key in chemiscope configuration');
     }
 
-    if (!('map' in o && (typeof o.map === 'string' || isHTMLElement(o.map)))) {
+    if (!('map' in o && (typeof o.map === 'string' || o.map instanceof HTMLElement))) {
         throw Error('missing "map" key in chemiscope configuration');
     }
 
