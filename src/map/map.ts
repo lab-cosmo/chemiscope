@@ -13,7 +13,7 @@ import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
-import { enumerate, getByID, getFirstKey, getElement } from '../utils';
+import { enumerate, getByID, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';

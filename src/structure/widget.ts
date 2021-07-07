@@ -9,7 +9,7 @@ import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID, unreachable, getElement } from '../utils';
+import { generateGUID, getByID, getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Structure } from '../dataset';
 

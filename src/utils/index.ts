@@ -135,6 +135,6 @@ export function getElement(element: string | HTMLElement) {
         assert(element instanceof HTMLElement);
         return element;
     } else {
-        return getByID(element);
+        return getByID<HTMLElement>(element);
     }
 }
