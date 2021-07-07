@@ -515,7 +515,7 @@ export class ViewersGrid {
      */
     private _setupCell(cellGUID: GUID, colNum: number, rowNum: number): string {
         const cellId = `gi-${cellGUID}`;
-        let cell = this._root.querySelector(`#${cellId}`) as HTMLElement;
+        let cell = this._root.querySelector(`#${cellId}`);
         let color = '';
 
         if (cell === null) {

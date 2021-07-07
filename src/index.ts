@@ -64,19 +64,19 @@ function validateConfig(o: JsObject) {
         throw Error('the configuration must be a JavaScript object');
     }
 
-    if (!('meta' in o && (typeof o.meta === 'string' || isHTMLElement(o.meta)))) {
+    if (!('meta' in o && (typeof o.meta === 'string' || o.meta instanceof HTMLElement))) {
         throw Error('missing "meta" key in chemiscope configuration');
     }
 
-    if (!('map' in o && (typeof o.map === 'string' || isHTMLElement(o.map)))) {
+    if (!('map' in o && (typeof o.map === 'string' || o.map instanceof HTMLElement))) {
         throw Error('missing "map" key in chemiscope configuration');
     }
 
-    if (!('info' in o && (typeof o.info === 'string' || isHTMLElement(o.info)))) {
+    if (!('info' in o && (typeof o.info === 'string' || o.info instanceof HTMLElement))) {
         throw Error('missing "info" key in chemiscope configuration');
     }
 
-    if (!('structure' in o && (typeof o.structure === 'string' || isHTMLElement(o.structure)))) {
+    if (!('structure' in o && (typeof o.structure === 'string' || o.structure instanceof HTMLElement))) {
         throw Error('missing "structure" key in chemiscope configuration');
     }
 
@@ -389,10 +389,6 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
     } else {
         return {};
     }
-}
-/** Validate HTML element */
-function isHTMLElement(o: unknown) {
-    return o instanceof HTMLElement;
 }
 
 export {
