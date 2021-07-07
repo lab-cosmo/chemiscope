@@ -64,7 +64,7 @@ function validateConfig(o: JsObject) {
         throw Error('the configuration must be a JavaScript object');
     }
 
-    if (!('meta' in o && (typeof o.meta === 'string' || isHTMLElement(o.meta)))) {
+    if (!('meta' in o && (typeof o.meta === 'string' || o.meta instanceof HTMLElement))) {
         throw Error('missing "meta" key in chemiscope configuration');
     }
 
