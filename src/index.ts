@@ -72,7 +72,7 @@ function validateConfig(o: JsObject) {
         throw Error('missing "map" key in chemiscope configuration');
     }
 
-    if (!('info' in o && (typeof o.info === 'string' || isHTMLElement(o.info)))) {
+    if (!('info' in o && (typeof o.info === 'string' || o.info instanceof HTMLElement))) {
         throw Error('missing "info" key in chemiscope configuration');
     }
 
