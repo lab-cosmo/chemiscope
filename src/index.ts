@@ -76,7 +76,12 @@ function validateConfig(o: JsObject) {
         throw Error('missing "info" key in chemiscope configuration');
     }
 
-    if (!('structure' in o && (typeof o.structure === 'string' || o.structure instanceof HTMLElement))) {
+    if (
+        !(
+            'structure' in o &&
+            (typeof o.structure === 'string' || o.structure instanceof HTMLElement)
+        )
+    ) {
         throw Error('missing "structure" key in chemiscope configuration');
     }
 

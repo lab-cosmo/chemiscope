@@ -133,7 +133,7 @@ export function unreachable(): never {
 export function getElement(element: string | HTMLElement) {
     if (typeof element !== 'string') {
         assert(element instanceof HTMLElement);
-        return element;
+        return element as HTMLElement;
     } else {
         return getByID<HTMLElement>(element);
     }
