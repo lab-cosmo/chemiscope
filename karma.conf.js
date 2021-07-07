@@ -10,13 +10,11 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://www.npmjs.com/search?q=keywords:karma-adapter
-    frameworks: ['mocha', 'chai', 'karma-typescript'],
+    frameworks: ['mocha', 'chai', 'karma-webpack'],
 
 
     // list of files / patterns to load in the browser
     files: [
-      { pattern: "app/**/*.ts" },
-      { pattern: "src/**/*.ts" },
       { pattern: "tests/**/*.test.ts" }
     ],
 
@@ -29,13 +27,13 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://www.npmjs.com/search?q=keywords:karma-preprocessor
     preprocessors: {
-      "src/**/*.ts": ["karma-typescript"]
+      "tests/**/*.test.ts": ["webpack"]
     },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://www.npmjs.com/search?q=keywords:karma-reporter
-    reporters: ['progress', 'karma-typescript'],
+    reporters: ['progress'],
 
 
     // web server port
