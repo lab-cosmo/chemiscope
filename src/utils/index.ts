@@ -128,3 +128,13 @@ export function arrayMaxMin(values: number[]): { max: number; min: number } {
 export function unreachable(): never {
     throw Error('unreachable code entered, this is a bug');
 }
+
+/** Returns the element based on ID or the element itself*/
+export function getElement(element: string | HTMLElement) {
+    if (typeof element !== 'string') {
+        assert(element instanceof HTMLElement);
+        return element;
+    } else {
+        return getByID(element);
+    }
+}
