@@ -130,8 +130,6 @@ export class ChemiscopeApp {
      * Load the given `dataset` with the specified `configuration`.
      */
 
-    
-
     public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
         cleanOutdatedMessages();
         const config = {
