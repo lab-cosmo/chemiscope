@@ -390,10 +390,6 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
         return {};
     }
 }
-/** Validate HTML element */
-function isHTMLElement(o: unknown) {
-    return o instanceof HTMLElement;
-}
 
 export {
     addWarningHandler,
