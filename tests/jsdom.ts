@@ -27,4 +27,8 @@ export default function () {
     } as any;
 
     copyProps(window, global);
+
+    // HACK: work-around for URL.createObjectURL is not a function error
+    // URL.createObjectURL is not yet implemented in jsdom
+    window.URL.createObjectURL = function () {};
 }
