@@ -19,6 +19,20 @@ interface Configuration {
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
 
+function cleanOutdatedMessages() {
+    const displayWarning = getByID('warning-display');
+    displayWarning.style.display = 'none';
+    displayWarning.getElementsByTagName('p')[0].innerText = '';
+
+    const displayError = document.getElementById('error-display');
+    if (displayError != null) {
+        displayError.style.display = 'none';
+        displayError.getElementsByTagName('p')[0].innerText = '';
+        const stacktrace = displayError.getElementsByTagName('details')[0];
+        stacktrace.getElementsByTagName('p')[0].innerText = '';
+    }
+}
+
 export class ChemiscopeApp {
     /// Instance of the chemiscope visualizer
     private visualizer?: DefaultVisualizer;
@@ -115,7 +129,9 @@ export class ChemiscopeApp {
     /**
      * Load the given `dataset` with the specified `configuration`.
      */
+
     public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
+        cleanOutdatedMessages();
         const config = {
             map: 'chemiscope-map',
             info: 'chemiscope-info',
