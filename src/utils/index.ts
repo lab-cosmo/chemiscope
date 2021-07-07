@@ -130,7 +130,7 @@ export function unreachable(): never {
 }
 
 /** Returns the element based on ID or the element itself*/
-export function getElement<HTMLElement>(element: string | HTMLElement) {
+export function getElement<HTMLElement>(element: string | HTMLElement): void {
     if (typeof element !== 'string') {
         assert(element instanceof HTMLElement);
         return element;
