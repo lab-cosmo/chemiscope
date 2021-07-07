@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { generateGUID, getByID } from '../utils';
+import { generateGUID, getElement } from '../utils';
 
 import { Slider } from './slider';
 import { Table } from './table';
@@ -75,12 +75,7 @@ export class EnvironmentInfo {
         properties: { [name: string]: Property },
         indexer: EnvironmentIndexer
     ) {
-        if (typeof element !== 'string') {
-            assert(element instanceof HTMLElement);
-            this._root = element;
-        } else {
-            this._root = getByID(element);
-        }
+        this._root = getElement(element);
 
         this._indexer = indexer;
         this.onchange = () => {};

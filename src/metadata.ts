@@ -7,7 +7,7 @@ import assert from 'assert';
 import markdown from 'markdown-it';
 
 import { Metadata } from './dataset';
-import { generateGUID, getByID } from './utils';
+import { generateGUID, getElement } from './utils';
 
 function generateName(guid: string, name: string): string {
     return `<span data-toggle="modal" data-target="#${guid}">
@@ -96,12 +96,7 @@ export class MetadataPanel {
 
         this._guid = `chsp-${generateGUID()}`;
 
-        if (typeof element !== 'string') {
-            assert(element instanceof HTMLElement);
-            this._name = element;
-        } else {
-            this._name = getByID(element);
-        }
+        this._name = getElement(element);
 
         this._name.innerHTML = generateName(this._guid, metadata.name);
         this._name.classList.add('chsp-meta');

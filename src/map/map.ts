@@ -13,7 +13,7 @@ import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin, SavedSettings } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
-import { enumerate, getByID, getFirstKey } from '../utils';
+import { enumerate, getByID, getFirstKey, getElement } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
@@ -226,12 +226,7 @@ export class PropertiesMap {
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
 
-        if (typeof config.element !== 'string') {
-            assert(config.element instanceof HTMLElement);
-            this._root = config.element;
-        } else {
-            this._root = getByID(config.element);
-        }
+        this._root = getElement(config.element);
 
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';

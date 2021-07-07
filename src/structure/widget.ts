@@ -9,7 +9,7 @@ import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
-import { generateGUID, getByID, unreachable } from '../utils';
+import { generateGUID, getByID, unreachable, getElement } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Structure } from '../dataset';
 
@@ -181,14 +181,7 @@ export class MoleculeViewer {
 
         this._root = document.createElement('div');
 
-        let root;
-        if (typeof element !== 'string') {
-            assert(element instanceof HTMLElement);
-            root = element;
-        } else {
-            root = getByID(element);
-        }
-
+        const root = getElement(element);
         root.appendChild(this._root);
 
         this._root.style.position = 'relative';

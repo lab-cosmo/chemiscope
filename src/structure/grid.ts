@@ -9,7 +9,7 @@ import { Environment, JsObject, Structure, UserStructure, checkStructure } from 
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { SavedSettings } from '../options';
-import { GUID, PositioningCallback } from '../utils';
+import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
 import { LoadOptions, MoleculeViewer } from './widget';
@@ -182,13 +182,8 @@ export class ViewersGrid {
         this.oncreate = () => {};
         this.activeChanged = () => {};
 
-        let root;
-        if (typeof element !== 'string') {
-            assert(element instanceof HTMLElement);
-            root = element;
-        } else {
-            root = getByID(element);
-        }
+        const root = getElement(element);
+
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
