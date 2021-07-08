@@ -3,6 +3,8 @@ import { getByID } from '../../src/utils';
 
 import { assert } from 'chai';
 
+let documentHTML: string;
+
 const DUMMY_PROPERTIES = {
     first: {
         values: [],
@@ -17,7 +19,8 @@ const DUMMY_CALLBACK = () => {
 
 describe('MapOptions', () => {
     before(() => {
-        const documentHTML = document.body.innerHTML;
+        // store karma's default HTML
+        documentHTML = document.body.innerHTML;
     });
 
     it('can remove itself from DOM', () => {
