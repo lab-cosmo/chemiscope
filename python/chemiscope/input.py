@@ -12,7 +12,7 @@ import numpy as np
 from .adapters import frames_to_json, atom_properties, structure_properties
 
 
-def create_input(frames, meta=None, properties=None, cutoff=None):
+def create_input(frames, meta=None, properties=None, cutoff=None, composition=False):
     """
     Create a dictionary that can be saved to JSON using the format used by
     the default chemiscope visualizer.
@@ -23,6 +23,9 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     :param dict properties: optional dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
+    :param bool composition: optional. False by default. If True, will add to
+                            the structure and atom properties information
+                            about chemical composition
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
@@ -76,7 +79,6 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     """
 
     data = {"meta": {}}
-
     if meta is not None:
         if "name" in meta:
             data["meta"]["name"] = str(meta["name"])
@@ -108,11 +110,11 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
     # Read properties coming from the frames
-    for name, value in atom_properties(frames).items():
+    for name, value in atom_properties(frames, composition).items():
         _validate_property(name, value)
         data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
-    for name, value in structure_properties(frames).items():
+    for name, value in structure_properties(frames, composition).items():
         _validate_property(name, value)
         data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
@@ -122,7 +124,9 @@ def create_input(frames, meta=None, properties=None, cutoff=None):
     return data
 
 
-def write_input(path, frames, meta=None, properties=None, cutoff=None):
+def write_input(
+    path, frames, meta=None, properties=None, cutoff=None, composition=False
+):
     """
     Create the input JSON file used by the default chemiscope visualizer, and
     save it to the given ``path``.
@@ -135,6 +139,9 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
     :param dict properties: optional dictionary of additional properties
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
+    :param bool composition: optional. False by default. If True, will add to
+                                the structure and atom properties information
+                                about chemical composition
 
     This function uses :py:func:`create_input` to generate the input data, see
     the documentation of this function for more information.
@@ -185,7 +192,7 @@ def write_input(path, frames, meta=None, properties=None, cutoff=None):
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
-    data = create_input(frames, meta, properties, cutoff)
+    data = create_input(frames, meta, properties, cutoff, composition)
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
         data["meta"]["name"] = os.path.basename(path).split(".")[0]
