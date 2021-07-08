@@ -108,6 +108,7 @@ export class HTMLOption<T extends OptionsType> {
     // the element will change both the settting value and all of the linked
     // elements
     private _boundList: HTMLOptionElement[];
+    private _previous_value: OptionsValue<T>;
 
     /**
      * Create a new [[HTMLOption]] containing a value of the given type.
@@ -120,6 +121,7 @@ export class HTMLOption<T extends OptionsType> {
     constructor(type: T, value: OptionsValue<T>) {
         this.type = type;
         this._value = value;
+        this._previous_value = value;
         this._boundList = [];
         this.validate = () => {};
         this.onchange = () => {};
@@ -135,6 +137,11 @@ export class HTMLOption<T extends OptionsType> {
     /** Set a new value for this setting */
     public set value(v: OptionsValue<T>) {
         this._update(v.toString(), 'JS');
+    }
+
+    /** Reset to a previous value for this setting */
+    public reset(): void {
+        this.value = this._previous_value;
     }
 
     /**
@@ -214,7 +221,7 @@ export class HTMLOption<T extends OptionsType> {
             return;
         }
         this.validate(updated);
-
+        this._previous_value = this.value;
         this._value = updated;
         for (const bound of this._boundList) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any

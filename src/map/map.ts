@@ -440,7 +440,7 @@ export class PropertiesMap {
 
         // function creating a function to be used as onchange callback
         // for <axis>.min and <axis>.max
-        const rangeChange = (name: string, axis: AxisOptions) => {
+        const rangeChange = (name: string, axis: AxisOptions, minOrMax: 'min' | 'max') => {
             return (_: number, origin: OptionModificationOrigin) => {
                 if (origin === 'JS') {
                     // prevent recursion: this function calls relayout, which then
@@ -449,6 +449,17 @@ export class PropertiesMap {
                 }
                 const min = axis.min.value;
                 const max = axis.max.value;
+                if (min > max) {
+                    sendWarning(
+                        `The inserted min and max values in ${name} are such that min > max! The last inserted value was reset.`
+                    );
+                    if (minOrMax === 'min') {
+                        axis.min.reset();
+                    } else {
+                        axis.max.reset();
+                    }
+                    return;
+                }
 
                 negativeLogWarning(axis);
 
@@ -462,8 +473,8 @@ export class PropertiesMap {
             };
         };
 
-        this._options.x.min.onchange = rangeChange('xaxis', this._options.x);
-        this._options.x.max.onchange = rangeChange('xaxis', this._options.x);
+        this._options.x.min.onchange = rangeChange('xaxis', this._options.x, 'min');
+        this._options.x.max.onchange = rangeChange('xaxis', this._options.x, 'max');
 
         // ======= y axis settings
         this._options.y.property.onchange = () => {
@@ -499,8 +510,8 @@ export class PropertiesMap {
             }
         };
 
-        this._options.y.min.onchange = rangeChange('yaxis', this._options.y);
-        this._options.y.max.onchange = rangeChange('yaxis', this._options.y);
+        this._options.y.min.onchange = rangeChange('yaxis', this._options.y, 'min');
+        this._options.y.max.onchange = rangeChange('yaxis', this._options.y, 'max');
 
         // ======= z axis settings
         // setup initial state of the z axis settings
@@ -546,8 +557,8 @@ export class PropertiesMap {
             }
         };
 
-        this._options.z.min.onchange = rangeChange('zaxis', this._options.z);
-        this._options.z.max.onchange = rangeChange('zaxis', this._options.z);
+        this._options.z.min.onchange = rangeChange('zaxis', this._options.z, 'min');
+        this._options.z.max.onchange = rangeChange('zaxis', this._options.z, 'max');
 
         // ======= color axis settings
         // setup initial state of the color settings
