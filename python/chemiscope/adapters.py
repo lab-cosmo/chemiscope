@@ -3,6 +3,11 @@ import numpy as np
 import warnings
 
 try:
+    # command-line execution. checks if Counter can be imported
+    from collections import Counter
+except ImportError:
+    raise ImportError("Counter has not been imported")
+try:
     import ase
 
     HAVE_ASE = True
@@ -30,7 +35,7 @@ def frames_to_json(frames):
         raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
 
 
-def atom_properties(frames):
+def atom_properties(frames, composition):
     """
     Extract "atom" properties from the given ``frames``, and give them as a
     dictionary compatible with :py:func:`create_input`.
@@ -43,15 +48,15 @@ def atom_properties(frames):
     frames_list = list(frames)
 
     if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        return _ase_atom_properties(frames_list)
+        return _ase_atom_properties(frames_list, composition)
     elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
         # deal with the user passing a single frame
-        return atom_properties([frames])
+        return atom_properties([frames], composition)
     else:
         raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
 
 
-def structure_properties(frames):
+def structure_properties(frames, composition):
     """
     Extract "structure" properties from the given ``frames``, and give them as a
     dictionary compatible with :py:func:`create_input`.
@@ -64,12 +69,39 @@ def structure_properties(frames):
     frames_list = list(frames)
 
     if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        return _ase_structure_properties(frames_list)
+        return _ase_structure_properties(frames_list, composition)
     elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
         # deal with the user passing a single frame
-        return structure_properties([frames])
+        return structure_properties([frames], composition)
     else:
         raise Exception(f"unknown frame type: '{frames_list[0].__class__.__name__}'")
+
+
+def _add_structure_chemical_composition(frames):
+    """Adds information about the chemical composition and count for every chemical species
+    to the info dictionary for every frame as a structure property"""
+    all_elements = set()
+    for frame in frames:
+        all_elements.update(frame.symbols)
+    all_elements = set(all_elements)
+    for frame in frames:
+        frame.info["composition"] = str(frame.symbols)
+        dict_composition = dict(Counter(frame.symbols))
+        for element in all_elements:
+            if element in dict_composition:
+                frame.info[f"n_{element}"] = dict_composition[element]
+            else:
+                frame.info[f"n_{element}"] = 0
+    return frames
+
+
+def _add_atom_chemical_composition(frames):
+    """Adds information about the atoms chemical species to the frame.arrays
+    for every frame as an atom property"""
+    for frame in frames:
+        dict_elements = {"element": list(frame.symbols)}
+        frame.arrays.update(dict_elements)
+    return frames
 
 
 def _ase_to_json(frame):
@@ -87,12 +119,16 @@ def _ase_to_json(frame):
     return data
 
 
-def _ase_atom_properties(frames):
+def _ase_atom_properties(frames, composition):
     """Implementation of atom_properties for ase.Atoms"""
     IGNORED_ASE_ARRAYS = ["positions", "numbers"]
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
+
+    if composition:
+        _add_atom_chemical_composition(frames)
+
     for name in frames[0].arrays.keys():
         if name in IGNORED_ASE_ARRAYS:
             continue
@@ -140,11 +176,15 @@ def _ase_atom_properties(frames):
     return properties
 
 
-def _ase_structure_properties(frames):
+def _ase_structure_properties(frames, composition):
     """Implementation of structure_properties for ase.Atoms"""
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
+
+    if composition:
+        _add_structure_chemical_composition(frames)
+
     for name in frames[0].info.keys():
         all_names.add(name)
 
