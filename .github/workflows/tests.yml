@@ -9,6 +9,9 @@ jobs:
   # Javascript tests and linting
   npm-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['12.x', '14.x', '16.x']
     steps:
       - uses: actions/checkout@v2
         # we need the full history to be able to get the chemiscope version with
@@ -17,7 +20,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v1
         with:
-          node-version: '12.x'
+          node-version: ${{ matrix.node-version }}
       - uses: bahmutov/npm-install@v1
       - run: npm run build
       - run: npm test
@@ -27,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -48,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
