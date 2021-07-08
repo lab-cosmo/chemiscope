@@ -37,7 +37,7 @@ module.exports = (config: any) => {
                 }
                 return result;
             },
-            preferHeadless: true,
+            preferHeadless: false,
             usePhantomJS: false,
         },
     });
