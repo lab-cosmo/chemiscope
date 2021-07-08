@@ -16,15 +16,18 @@ const DUMMY_CALLBACK = () => {
 };
 
 describe('MapOptions', () => {
+    before(() => {
+        const documentHTML = document.body.innerHTML;
+    });
+
     it('can remove itself from DOM', () => {
         const root = document.createElement('div');
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
         assert(root.innerHTML !== '');
-        assert(document.body.innerHTML !== '');
 
         options.remove();
-        assert(document.body.innerHTML === '');
         assert(root.innerHTML === '');
+        assert(document.body.innerHTML === documentHTML);
     });
 
     it('scale label for min/max switches between linear and log', () => {
