@@ -11,15 +11,16 @@ import numpy as np
 
 from .adapters import frames_to_json, atom_properties, structure_properties
 
+
 def _convert(properties, n_structures, n_atoms):
     """
-    Convert a shortened entries of properties into the expanded form. 
+    Convert a shortened entries of properties into the expanded form.
     Entries in already expanded form are not changed.
-    
+
     :param dict properties: properties to handle
     :param int n_structures: number of structures in the dataset
     :param int n_atoms: total number of atoms in the whole dataset
-    
+
     For example this property dict:
     .. code-block:: python
 
@@ -32,7 +33,7 @@ def _convert(properties, n_structures, n_atoms):
             'orange' : np.zeros((100, 42)),
             'banana' : np.zeros((300, 17)),
         }
-    
+
     will be converted to
     .. code-block:: python
 
@@ -51,39 +52,50 @@ def _convert(properties, n_structures, n_atoms):
                 'values': np.zeros((300, 17)),
            }
         }
-        
-    assuming that number of structures in the dataset is 100 and 
+
+    assuming that number of structures in the dataset is 100 and
     total number of atoms in the dataset is 300.
     """
-    
+
     for key in properties.keys():
         if type(properties[key]) is not dict:
-            if (type(properties[key]) is not list) and (type(properties[key])
-                                                        is not np.ndarray):
+            if (type(properties[key]) is not list) and (
+                type(properties[key]) is not np.ndarray
+            ):
                 raise ValueError(
                     """Type of property values should be either list either np.ndarray,
-                    got {} instead"""
-                    .format(type(properties.key)))
-            if (n_structures == n_atoms):
+                    got {} instead""".format(
+                        type(properties.key)
+                    )
+                )
+            if n_structures == n_atoms:
                 raise ValueError(
                     """For the case when number of structures is equal to the number of atoms
                     it is impossible to deduce if corresponding property is structural
                     or atomic. Get n_structures = n_atoms = {}; problematic property 
-                    with unspecified target is {}"""
-                    .format(n_atoms, key))
-            if (len(properties[key]) != n_structures) and (len(properties[key]) != n_atoms):
+                    with unspecified target is {}""".format(
+                        n_atoms, key
+                    )
+                )
+            if (len(properties[key]) != n_structures) and (
+                len(properties[key]) != n_atoms
+            ):
                 raise ValueError(
-                """Length of property values should be equal to either number of 
+                    """Length of property values should be equal to either number of 
                 structures for the structural properties either to number of atoms for the atomic properties.
                 Get n_atoms = {}, n_structures = {}, length of property values = {}, for the property '{}'
-                """.format(n_atoms, n_structures, len(properties[key]), key))
-            now = {'values' : properties[key]}
-            if (len(properties[key]) == n_structures):
-                now['target'] = 'structure'
-            if (len(properties[key]) == n_atoms):
-                now['target'] = 'atom'
+                """.format(
+                        n_atoms, n_structures, len(properties[key]), key
+                    )
+                )
+            now = {"values": properties[key]}
+            if len(properties[key]) == n_structures:
+                now["target"] = "structure"
+            if len(properties[key]) == n_atoms:
+                now["target"] = "atom"
             properties[key] = now
     return properties
+
 
 def create_input(frames, meta=None, properties=None, cutoff=None, composition=False):
     """
