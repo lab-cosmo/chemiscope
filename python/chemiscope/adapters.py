@@ -2,11 +2,8 @@
 import numpy as np
 import warnings
 
-try:
-    # command-line execution. checks if Counter can be imported
-    from collections import Counter
-except ImportError:
-    raise ImportError("Counter has not been imported")
+from collections import Counter
+
 try:
     import ase
 

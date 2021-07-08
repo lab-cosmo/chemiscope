@@ -23,6 +23,9 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
     :param dict properties: optional dictionary of additional properties, see below
     :param float cutoff: optional. If present, will be used to generate
                          atom-centered environments
+    :param bool composition: optional. False by default. If True, will add to
+                            the structure and atom properties information
+                            about chemical composition
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
