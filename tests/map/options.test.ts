@@ -1,7 +1,6 @@
 import { MapOptions, AxisOptions } from '../../src/map/options';
 import { getByID } from '../../src/utils';
 
-import { default as setupJSDOM } from '../jsdom';
 import { assert } from 'chai';
 
 const DUMMY_PROPERTIES = {
@@ -17,10 +16,6 @@ const DUMMY_CALLBACK = () => {
 };
 
 describe('MapOptions', () => {
-    before(() => {
-        setupJSDOM();
-    });
-
     it('can remove itself from DOM', () => {
         const root = document.createElement('div');
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
