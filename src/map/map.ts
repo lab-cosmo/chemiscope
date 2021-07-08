@@ -644,8 +644,12 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
-        this._options.color.min.onchange = () => {colorRangeChange('min') };
-        this._options.color.max.onchange = () => {colorRangeChange('max') };
+        this._options.color.min.onchange = () => {
+            colorRangeChange('min');
+        };
+        this._options.color.max.onchange = () => {
+            colorRangeChange('max');
+        };
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
