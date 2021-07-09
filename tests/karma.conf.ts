@@ -1,7 +1,7 @@
-import { BASE_CONFIG } from '../webpack.config';
-import path from 'path';
+import { WEBPACK_CONFIG } from '../webpack.config';
+import { Config, ConfigOptions } from 'karma';
 
-module.exports = (config: any) => {
+module.exports = (config: Config) => {
     config.set({
         exclude: [],
         files: ['./**/*.test.ts'],
@@ -13,14 +13,13 @@ module.exports = (config: any) => {
         reporters: ['progress'],
         singleRun: true,
 
-        webpack: BASE_CONFIG,
-
+        webpack: WEBPACK_CONFIG,
         webpackMiddleware: {
             stats: 'errors-only',
         },
 
         detectBrowsers: {
-            postDetection: function (availableBrowsers: any) {
+            postDetection: function (availableBrowsers: string[]) {
                 // Remove IE
                 const IEindex = availableBrowsers.indexOf('IE');
                 if (IEindex !== -1) {
@@ -31,5 +30,5 @@ module.exports = (config: any) => {
             preferHeadless: false,
             usePhantomJS: false,
         },
-    });
+    } as ConfigOptions);
 };
