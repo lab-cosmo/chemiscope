@@ -20,7 +20,8 @@ jobs:
           node-version: '12.x'
       - uses: bahmutov/npm-install@v1
       - run: npm run build
-      - run: npm test
+      - run: sudo apt-get install xvfb
+      - run: xvfb-run --auto-servernum npm test
 
   # Python unit tests
   python-test:
