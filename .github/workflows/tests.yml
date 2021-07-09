@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: '12.x'
       - uses: bahmutov/npm-install@v1
+      - uses: browser-actions/setup-chrome@latest
       - run: npm run build
       - run: npm test
 
