@@ -21,13 +21,12 @@ module.exports = (config: any) => {
 
         detectBrowsers: {
             postDetection: function (availableBrowsers: any) {
-                //Remove IE
-                var result = availableBrowsers;
-                let IEindex = result.indexOf('IE');
+                // Remove IE
+                const IEindex = availableBrowsers.indexOf('IE');
                 if (IEindex !== -1) {
-                    result.splice(IEindex);
+                    availableBrowsers.splice(IEindex);
                 }
-                return result;
+                return availableBrowsers;
             },
             preferHeadless: false,
             usePhantomJS: false,
