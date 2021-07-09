@@ -3,7 +3,7 @@ import { getByID } from '../../src/utils';
 
 import { assert } from 'chai';
 
-let documentHTML: string;
+let KARMA_INSERTED_HTML: string;
 
 const DUMMY_PROPERTIES = {
     first: {
@@ -20,7 +20,7 @@ const DUMMY_CALLBACK = () => {
 describe('MapOptions', () => {
     before(() => {
         // store karma's default HTML
-        documentHTML = document.body.innerHTML;
+        KARMA_INSERTED_HTML = document.body.innerHTML;
     });
 
     it('can remove itself from DOM', () => {
@@ -30,7 +30,7 @@ describe('MapOptions', () => {
 
         options.remove();
         assert(root.innerHTML === '');
-        assert(document.body.innerHTML === documentHTML);
+        assert(document.body.innerHTML === KARMA_INSERTED_HTML);
     });
 
     it('scale label for min/max switches between linear and log', () => {

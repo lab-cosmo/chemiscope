@@ -7,7 +7,7 @@ import { ViewersGrid } from '../../src/structure/index';
 import { EnvironmentIndexer } from '../../src/indexer';
 import { MoleculeViewer } from '../../src/structure/widget';
 
-let documentHTML: string;
+let KARMA_INSERTED_HTML: string;
 
 const DUMMY_STRUCTURES = [
     {
@@ -19,12 +19,10 @@ const DUMMY_STRUCTURES = [
     },
 ];
 
-const DUMMY_ENVIRONMENTS = {};
-
 describe('ViewersGrid', () => {
     before(() => {
         // store karma's default HTML
-        documentHTML = document.body.innerHTML;
+        KARMA_INSERTED_HTML = document.body.innerHTML;
     });
 
     it('can remove itself from DOM', () => {
@@ -40,6 +38,6 @@ describe('ViewersGrid', () => {
         grid.remove();
         assert(root.innerHTML === '');
         root.remove();
-        assert(document.body.innerHTML === documentHTML);
+        assert(document.body.innerHTML === KARMA_INSERTED_HTML);
     });
 });
