@@ -3,14 +3,6 @@ import path from 'path';
 
 module.exports = (config: any) => {
     config.set({
-        autoWatch: false,
-        browserNoActivityTimeout: 10000,
-        concurrency: 1,
-        client: {
-            mocha: {
-                timeout: 8000,
-            },
-        },
         exclude: [],
         files: ['./**/*.test.ts'],
         frameworks: ['webpack', 'mocha', 'detectBrowsers'],

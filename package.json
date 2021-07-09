@@ -47,7 +47,6 @@
     "bootstrap": "^4.6.0",
     "bubleify": "^2.0.0",
     "buffer": "^6.0.2",
-    "canvas": "^2.8.0",
     "chai": "^4.2.0",
     "css-loader": "^5.2.6",
     "dts-bundle-generator": "^5.1.0",
