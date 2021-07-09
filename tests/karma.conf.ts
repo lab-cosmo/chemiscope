@@ -1,4 +1,4 @@
-import { BASE_CONFIG } from './webpack.config';
+import { BASE_CONFIG } from '../webpack.config';
 import path from 'path';
 
 module.exports = (config: any) => {
@@ -12,11 +12,11 @@ module.exports = (config: any) => {
             },
         },
         exclude: [],
-        files: ['tests/**/*test.ts'],
+        files: ['./**/*.test.ts'],
         frameworks: ['webpack', 'mocha', 'detectBrowsers'],
 
         preprocessors: {
-            'tests/**/*test.ts': ['webpack'],
+            './**/*.test.ts': ['webpack'],
         },
         reporters: ['progress'],
         singleRun: true,
