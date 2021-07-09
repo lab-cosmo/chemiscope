@@ -620,9 +620,21 @@ export class PropertiesMap {
             );
         };
 
-        const colorRangeChange = () => {
+        const colorRangeChange = (minOrMax: 'min' | 'max') => {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
+            if (min > max) {
+                sendWarning(
+                    `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
+                );
+                if (minOrMax === 'min') {
+                    this._options.color.min.reset();
+                } else {
+                    this._options.color.max.reset();
+                }
+                return;
+            }
+
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -634,8 +646,12 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
-        this._options.color.min.onchange = colorRangeChange;
-        this._options.color.max.onchange = colorRangeChange;
+        this._options.color.min.onchange = () => {
+            colorRangeChange('min');
+        };
+        this._options.color.max.onchange = () => {
+            colorRangeChange('max');
+        };
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
