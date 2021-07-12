@@ -281,7 +281,7 @@ export class MoleculeViewer {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
-
+        console.log(options);
         // Deal with loading options
         this._environments = options.environments;
 
@@ -371,6 +371,7 @@ export class MoleculeViewer {
             this._changeHighlighted(undefined);
         } else {
             this._styles.noEnvs.disabled = true;
+            console.log('higlight is:', options.highlight);
             this._changeHighlighted(options.highlight === undefined ? 0 : options.highlight);
         }
 
@@ -592,6 +593,7 @@ export class MoleculeViewer {
 
         // Deal with activation/de-activation of environments
         this._options.environments.activated.onchange = (value) => {
+            console.log('value from onchange' + value);
             this._enableEnvironmentSettings(value);
             restyleAndRender();
         };
@@ -800,7 +802,11 @@ export class MoleculeViewer {
      * Check whether environments are enabled or not
      */
     private _environmentsEnabled(): boolean {
-        return this._highlighted !== undefined && !this._resetEnvCutoff.disabled;
+        return (
+            this._highlighted !== undefined &&
+            !this._resetEnvCutoff.disabled &&
+            this._options.environments.activated.value
+        );
     }
 
     /**
@@ -814,11 +820,13 @@ export class MoleculeViewer {
         assert(toggle !== null);
         const reset = this._resetEnvCutoff;
 
+        console.log('show: ' + show);
+        console.log('environmentsEnables: ' + this._environmentsEnabled());
         if (show) {
-            if (this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
+            // if (this._environmentsEnabled()) {
+            //     // nothing to do
+            //     return;
+            // }
 
             reset.disabled = false;
             toggle.nodeValue = 'Disable';
@@ -827,10 +835,10 @@ export class MoleculeViewer {
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
         } else {
-            if (!this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
+            // if (!this._environmentsEnabled()) {
+            //     // nothing to do
+            //     return;
+            // }
 
             reset.disabled = true;
             toggle.nodeValue = 'Enable';
@@ -863,12 +871,15 @@ export class MoleculeViewer {
         if (this._highlighted !== undefined) {
             this._viewer.removeModel(this._highlighted.model);
         }
-
+        console.log('center inside _changeHighlighted:', center);
         if (center === undefined) {
+            // I believe the problem is in here as the center is 0 always rather than undefined - it's never undefined
+            console.log('FALSE ENABLE ENVRIONMENTS RUN');
             this._enableEnvironmentSettings(false);
             this._options.environments.cutoff.value = 0;
             this._highlighted = undefined;
         } else {
+            console.log('TRUE ENABLE ENVRIONMENTS RUN');
             this._enableEnvironmentSettings(true);
             // keep user defined cutoff, if any
             if (this._options.environments.cutoff.value <= 0) {
