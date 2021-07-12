@@ -281,6 +281,7 @@ export class MoleculeViewer {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
+
         // Deal with loading options
         this._environments = options.environments;
 
@@ -862,6 +863,7 @@ export class MoleculeViewer {
         if (this._highlighted !== undefined) {
             this._viewer.removeModel(this._highlighted.model);
         }
+
         if (center === undefined) {
             this._enableEnvironmentSettings(false);
             this._options.environments.cutoff.value = 0;
