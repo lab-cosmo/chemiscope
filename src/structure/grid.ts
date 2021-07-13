@@ -106,7 +106,7 @@ export class ViewersGrid {
     /// Optional list of environments for each structure
     private _environments?: Environment[][];
     /// Maximum number of allowed structure viewers
-    private _maxWidgets: number;
+    private _maxViewers: number;
     /// The indexer translating between environments indexes and structure/atom
     /// indexes
     private _indexer: EnvironmentIndexer;
@@ -128,14 +128,14 @@ export class ViewersGrid {
      * @param structures   list of structure to display
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
-     * @param maxWidgets   maximum number of allowed structure viewers
+     * @param maxViewers   maximum number of allowed structure viewers
      */
     constructor(
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
         environments?: Environment[],
-        maxWidgets?: number
+        maxViewers: number = 9
     ) {
         this._structures = structures;
         this._resolvedStructures = new Array<Structure>(structures.length);
@@ -161,14 +161,10 @@ export class ViewersGrid {
         this.oncreate = () => {};
         this.activeChanged = () => {};
 
-        if (maxWidgets !== undefined) {
-            if (maxWidgets > 9) {
-                throw Error('"maxWidgets" cannot be larger than 9 in chemiscope config');
-            }
-            this._maxWidgets = maxWidgets;
-        } else {
-            this._maxWidgets = 9;
+        if (maxViewers > 9) {
+            throw Error('chemiscope only supports up to 9 structure viewers in the grid');
         }
+        this._maxViewers = maxViewers;
 
         const root = getElement(element);
 
@@ -618,23 +614,23 @@ export class ViewersGrid {
      * place onto the DOM element mapped in `this._root`. If more cells are
      * needed, this function return the list of new cell GUID
      */
-    private _setupGrid(nwidgets: number): GUID[] {
+    private _setupGrid(nViewers: number): GUID[] {
         const newGUID = [] as GUID[];
-        if (nwidgets < 1) {
+        if (nViewers < 1) {
             sendWarning('Cannot delete last widget.');
             return newGUID;
-        } else if (nwidgets > this._maxWidgets) {
-            sendWarning(`Viewer grid cannot contain more than ${this._maxWidgets} widgets.`);
+        } else if (nViewers > this._maxViewers) {
+            sendWarning(`Viewer grid cannot contain more than ${this._maxViewers} widgets.`);
             return newGUID;
         }
 
-        // Determine best arrangement for nwidgets
-        const arrangement = this.bestGridArrangement(nwidgets);
-        if (this._viewers.size > nwidgets) {
-            sendWarning(`Warning: Eliminating last ${this._viewers.size - nwidgets} viewers.`);
+        // Determine best arrangement for the number of viewers requested
+        const arrangement = this.bestGridArrangement(nViewers);
+        if (this._viewers.size > nViewers) {
+            sendWarning(`Warning: Eliminating last ${this._viewers.size - nViewers} viewers.`);
             let i = 0;
             for (const guid of this._viewers.keys()) {
-                if (i >= nwidgets) {
+                if (i >= nViewers) {
                     this.removeViewer(guid);
                 }
                 i += 1;
@@ -646,7 +642,7 @@ export class ViewersGrid {
         let colNum = 1;
 
         const mapKeys = this._viewers.keys();
-        for (let c = 0; c < nwidgets; c++) {
+        for (let c = 0; c < nViewers; c++) {
             let cellGUID: GUID;
             if (c >= this._viewers.size) {
                 cellGUID = generateGUID();

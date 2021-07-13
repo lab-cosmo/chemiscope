@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from .input import create_input, write_input  # noqa
+from .widget import display  # noqa
+
+# TODO: check how to get labextension to work
+from .widget import _jupyter_labextension_paths, _jupyter_nbextension_paths  # noqa
 
 
 # Get the version from setuptools metadata (which took it from package.json)

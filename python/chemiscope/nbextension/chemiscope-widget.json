@@ -1,0 +1,5 @@
+{
+  "load_extensions": {
+    "chemiscope-widget/extension": true
+  }
+}
