@@ -339,6 +339,11 @@ export class MapOptions extends OptionsGroup {
             }
         });
 
+        // Stop progation of keyboard press (Jupyter widget)
+        modal.addEventListener('keydown', (event) => {
+            event.stopPropagation();
+        });
+
         return { openSettings, modal };
     }
 

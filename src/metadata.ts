@@ -106,6 +106,12 @@ export class MetadataPanel {
 
         const template = document.createElement('template');
         template.innerHTML = generateModal(this._guid, metadata);
+
+        // Stop progation of keyboard press (Jupyter widget)
+        (template.content.firstChild as HTMLElement).addEventListener('keydown', (event) => {
+            event.stopPropagation();
+        });
+
         this._modal = template.content.firstChild as HTMLElement;
         document.body.appendChild(this._modal);
     }
