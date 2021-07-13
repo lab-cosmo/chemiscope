@@ -1,5 +1,5 @@
 import path from 'path';
-import * as webpack from 'webpack';
+import webpack from 'webpack';
 
 import { execSync } from 'child_process';
 
