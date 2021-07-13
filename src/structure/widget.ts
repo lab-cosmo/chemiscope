@@ -865,15 +865,9 @@ export class MoleculeViewer {
         }
 
         if (center === undefined) {
-            this._enableEnvironmentSettings(false);
             this._options.environments.cutoff.value = 0;
             this._highlighted = undefined;
         } else {
-            if (this._environmentsEnabled() === true) {
-                this._enableEnvironmentSettings(true);
-            } else {
-                this._enableEnvironmentSettings(false);
-            }
             // keep user defined cutoff, if any
             if (this._options.environments.cutoff.value <= 0) {
                 this._options.environments.cutoff.value = this._currentDefaultCutoff();
