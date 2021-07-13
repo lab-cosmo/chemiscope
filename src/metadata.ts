@@ -106,13 +106,14 @@ export class MetadataPanel {
 
         const template = document.createElement('template');
         template.innerHTML = generateModal(this._guid, metadata);
-
-        // Stop progation when pressing a key (Jupyter widget)
-        (template.content.firstChild as HTMLElement).addEventListener('keydown', (event) => {
+        this._modal = template.content.firstChild as HTMLElement;
+        
+        // Stop propagation of keydown events. This is required for the Jupyter integration, 
+        // otherwise jupyter tries to interpret key press in the modal as its own input
+        this._modal.addEventListener('keydown', (event) => {
             event.stopPropagation();
         });
-
-        this._modal = template.content.firstChild as HTMLElement;
+        
         document.body.appendChild(this._modal);
     }
 
