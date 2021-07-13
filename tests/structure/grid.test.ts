@@ -1,11 +1,7 @@
 import { assert } from 'chai';
 
-import { default as $ } from 'jquery';
-(global as any).$ = $;
-
 import { ViewersGrid } from '../../src/structure/index';
 import { EnvironmentIndexer } from '../../src/indexer';
-import { MoleculeViewer } from '../../src/structure/widget';
 
 let KARMA_INSERTED_HTML: string;
 

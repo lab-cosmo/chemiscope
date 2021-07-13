@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Config, ConfigOptions } from 'karma';
-import path from 'path';
 import webpack from 'webpack';
 
 import { WEBPACK_CONFIG } from './webpack.config';
@@ -43,7 +42,12 @@ WEBPACK_CONFIG.plugins?.push(new RemoveDeclarationsFromAssets());
 
 module.exports = (config: Config) => {
     config.set({
-        files: [path.resolve(__dirname, 'tests/**/*.test.ts')],
+        files: [
+            // FIXME: we should not have to manually load jquery, but we
+            // currently don't include it in the main bundle
+            'node_modules/jquery/dist/jquery.min.js',
+            'tests/**/*.test.ts',
+        ],
         frameworks: ['webpack', 'mocha', 'detectBrowsers'],
 
         preprocessors: {
@@ -66,6 +70,8 @@ module.exports = (config: Config) => {
                 }
                 return availableBrowsers;
             },
+            // we can not enable headless mode since firefox does not support
+            // WebGL in this case (https://bugzilla.mozilla.org/show_bug.cgi?id=1375585)
             preferHeadless: false,
             usePhantomJS: false,
         },
