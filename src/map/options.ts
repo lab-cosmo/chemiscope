@@ -339,7 +339,8 @@ export class MapOptions extends OptionsGroup {
             }
         });
 
-        // Stop progation when pressing a key (Jupyter widget)
+        // Stop propagation of keydown events. This is required for the Jupyter integration, 
+        // otherwise jupyter tries to interpret key press in the modal as its own input
         modal.addEventListener('keydown', (event) => {
             event.stopPropagation();
         });
