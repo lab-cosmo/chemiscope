@@ -200,9 +200,7 @@ export class StructureOptions extends OptionsGroup {
         makeDraggable(modalDialog, '.modal-header');
 
         // Stop progation when pressing a key (Jupyter widget)
-        modal.addEventListener('keydown', (event) => {
-            event.stopPropagation();
-        });
+        modal.addEventListener('keydown', (event) => event.stopPropagation());
 
         return modal;
     }
