@@ -57,43 +57,33 @@ def _convert(properties, n_structures, n_atoms):
     total number of atoms in the dataset is 300.
     """
 
-    for key in properties.keys():
-        if type(properties[key]) is not dict:
-            if (type(properties[key]) is not list) and (
-                type(properties[key]) is not np.ndarray
-            ):
+    for key, value in properties.items():
+        if not isinstance(value, dict):
+            if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
                 raise ValueError(
-                    """Type of property values should be either list either np.ndarray,
-                    got {} instead""".format(
-                        type(properties.key)
-                    )
+                    f"""Type of property values should be either list or np.ndarray,
+                    got {type(properties.key)} instead"""
                 )
             if n_structures == n_atoms:
                 raise ValueError(
-                    """For the case when number of structures is equal to the number of atoms
+                    f"""For the case when number of structures is equal to the number of atoms
                     it is impossible to deduce if corresponding property is structural
-                    or atomic. Get n_structures = n_atoms = {}; problematic property 
-                    with unspecified target is {}""".format(
-                        n_atoms, key
-                    )
+                    or atomic. Get n_structures = n_atoms = {n_atoms}; problematic property 
+                    with unspecified target is {key}"""
                 )
-            if (len(properties[key]) != n_structures) and (
-                len(properties[key]) != n_atoms
-            ):
+            if (len(value) != n_structures) and (len(value) != n_atoms):
                 raise ValueError(
-                    """Length of property values should be equal to either number of 
+                    f"""Length of property values should be equal to either number of 
                 structures for the structural properties either to number of atoms for the atomic properties.
-                Get n_atoms = {}, n_structures = {}, length of property values = {}, for the property '{}'
-                """.format(
-                        n_atoms, n_structures, len(properties[key]), key
-                    )
+                Get n_atoms = {n_atoms}, n_structures = {n_structures}, length of property values = {len(value)}, for the property '{key}'
+                """
                 )
-            now = {"values": properties[key]}
-            if len(properties[key]) == n_structures:
-                now["target"] = "structure"
-            if len(properties[key]) == n_atoms:
-                now["target"] = "atom"
-            properties[key] = now
+            property = {"values": value}
+            if len(value) == n_structures:
+                property["target"] = "structure"
+            if len(value) == n_atoms:
+                property["target"] = "atom"
+            properties[key] = property
     return properties
 
 
@@ -159,6 +149,20 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
 
     will generate four properties named ``cheese[1]``, ``cheese[2]``,
     ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
+
+    It is also possible to pass shortened representation of the properties, for
+    instance:
+
+    .. code-block:: python
+
+        properties = {
+            'cheese':  np.zeros((300, 4)),
+            }
+        }
+
+    In this case, the type of property (structure or atom) would be deduced
+    by comparing the numbers atoms and structures in the dataset to the
+    length of provided list/np.ndarray.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
