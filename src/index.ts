@@ -48,7 +48,7 @@ export interface Config {
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: unknown) => Structure;
     /** Maximum number of structure viewers allowed in [[ViewersGrid]] */
-    maxWidgets?: number;
+    maxStructureViewers?: number;
 }
 
 export interface Settings {
@@ -105,8 +105,8 @@ function validateConfig(o: JsObject) {
         throw Error('"loadStructure" should be a function in chemiscope config');
     }
 
-    if ('maxWidgets' in o && typeof o.maxWidgets !== 'number') {
-        throw Error('"maxWidgets" should be a number in chemiscope config');
+    if ('maxStructureViewers' in o && typeof o.maxStructureViewers !== 'number') {
+        throw Error('"maxStructureViewers" should be a number in chemiscope config');
     }
 }
 
@@ -197,7 +197,7 @@ class DefaultVisualizer {
             this._indexer,
             dataset.structures,
             dataset.environments,
-            config.maxWidgets
+            config.maxStructureViewers
         );
 
         if (config.loadStructure !== undefined) {

@@ -1,1 +1,2 @@
 include package.json
+recursive-include chemiscope/nbextension *.js

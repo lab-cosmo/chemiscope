@@ -31,28 +31,49 @@ export const WEBPACK_CONFIG: webpack.Configuration = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ConfigFn = (env: unknown, argv: any) => webpack.Configuration;
+// type ConfigFn = (env: unknown, argv: any) => webpack.Configuration[];
+// TODO: fix types
+type ConfigFn = (env: unknown, argv: any) => any;
+
 const config: ConfigFn = (env, argv) => {
     if (!('mode' in argv)) {
         throw Error('please specify the build mode');
     }
-    return {
-        ...WEBPACK_CONFIG,
-        target: 'web',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
-        entry: {
-            chemiscope: './src/index.ts',
-            'chemiscope-app': './app/app.ts',
-            'molecule-viewer': './src/structure/widget.ts',
+    return [
+        // Use UMD modules for the main entry points
+        {
+            ...WEBPACK_CONFIG,
+            target: 'web',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
+            entry: {
+                chemiscope: './src/index.ts',
+                'chemiscope-app': './app/app.ts',
+                'molecule-viewer': './src/structure/widget.ts',
+            },
+            output: {
+                filename: '[name].min.js',
+                library: 'Chemiscope',
+                libraryTarget: 'umd',
+                path: path.resolve(__dirname, 'dist'),
+            },
         },
-        output: {
-            filename: '[name].min.js',
-            library: 'Chemiscope',
-            libraryTarget: 'umd',
-            path: path.resolve(__dirname, 'dist'),
+        // Use AMD modules for the jupyter extension
+        {
+            ...WEBPACK_CONFIG,
+            target: 'web',
+            entry: {
+                'chemiscope-widget': './src/widget/index.ts',
+            },
+            output: {
+                filename: '[name].min.js',
+                libraryTarget: 'amd',
+                path: path.resolve(__dirname, 'python', 'chemiscope', 'nbextension'),
+                publicPath: '',
+            },
+            externals: ['@jupyter-widgets/base'],
         },
-    };
+    ];
 };
 
 export default config;

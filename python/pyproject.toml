@@ -2,10 +2,8 @@
 requires = [
     "setuptools",
     "wheel",
-    "attr",
 ]
 build-backend = "setuptools.build_meta"
-
 
 [tool.tox]
 legacy_tox_ini = """

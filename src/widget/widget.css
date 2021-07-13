@@ -1,0 +1,157 @@
+/* default.css */
+main.container-fluid {
+    margin: 1.5em 0em calc(1.5em + 60px) 0em;
+    width: 100%;
+}
+
+#chemiscope-meta {
+    position: absolute;
+    top: 0;
+    left: 2em;
+    font-size: 16pt;
+}
+
+#chemiscope-map {
+    display: block;
+}
+
+#chemiscope-structure {
+    flex: 1 1 auto;
+}
+
+#chemiscope-info {
+    flex: 0 1 auto;
+    width: 100%;
+}
+
+/* Extra widget things */
+#warning-display {
+    font-size: 1.5em;
+}
+
+#chemiscope-widget-container {
+    display: grid;
+    grid-template-columns: 59% 39%;
+    grid-template-rows: 450px;
+    grid-column-gap: 0px;
+    justify-items: center;
+    overflow: hidden;
+}
+
+#chemiscope-meta-and-map {
+    width: 100%;
+    height: 100%;
+}
+
+#chemiscope-structure-and-info {
+    width: 100%;
+    height: 100%;
+}
+
+#chemiscope-meta {
+    top: initial !important;
+}
+
+.chsp-meta .chsp-info-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+    top: 3px;
+    position: relative;
+}
+
+#chemiscope-map {
+    display: block;
+}
+
+#chemiscope-structure {
+    height: 84%;
+    width: 100%;
+    display: block;
+}
+
+#chemiscope-info {
+    display: block;
+}
+
+.chsp-info-btns-svg {
+    padding-top: initial !important;
+    scale: 0.9;
+}
+
+.modal-content {
+    transform: scale(1.3);
+    transform-origin: 0 0;
+}
+
+.chemiscope-bootstrap .model-content .in {
+    display: grid !important;
+}
+
+.chemiscope-bootstrap .modal-content .input-group > .form-control {
+    min-width: 45px !important;
+}
+
+.chsp-info-table {
+    position: absolute !important;
+    bottom: 0 !important;
+}
+
+.chsp-map .modebar-group svg.icon {
+    width: 1.6em !important;
+    height: 1.6em !important;
+}
+
+.modal-dialog .chemiscope-bootstrap {
+    width: 60%;
+}
+
+.modal-dialog.modal-lg .chemiscope-bootstrap {
+    width: 90%;
+}
+
+.chsp-info-structure-btn {
+    border-color: #66a5e8 !important;
+    border-width: 2px !important;
+}
+
+.chsp-info-atom-btn {
+    border-color: #4cb64c !important;
+    border-width: 2px !important;
+}
+
+/* Change the atoms slider thumb color to green, to match structure highlight */
+.chsp-atom-slider::-webkit-slider-thumb {
+    background-color: #008000 !important;
+}
+
+.chsp-atom-slider::-moz-range-thumb {
+    background-color: #008000 !important;
+}
+
+.chsp-atom-slider::-ms-thumb {
+    background-color: #008000 !important;
+}
+
+.chsp-atom-slider::-webkit-slider-thumb:active {
+    background-color: #99cc99 !important;
+}
+
+.chsp-atom-slider::-moz-range-thumb:active {
+    background-color: #99cc99 !important;
+}
+
+.chsp-atom-slider::-ms-thumb:active {
+    background-color: #99cc99 !important;
+}
+
+.chsp-atom-slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25) !important;
+}
+
+.chsp-atom-slider:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25) !important;
+}
+
+.chsp-atom-slider:focus::-ms-thumb {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 0.2rem rgba(0, 255, 0, 0.25) !important;
+}
