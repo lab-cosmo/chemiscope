@@ -62,7 +62,7 @@ def _convert(properties, n_structures, n_atoms):
             if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
                 raise ValueError(
                     f"""Type of property values should be either list or np.ndarray,
-                    got {type(properties.key)} instead"""
+                    got {type(value)} instead"""
                 )
             if n_structures == n_atoms:
                 raise ValueError(

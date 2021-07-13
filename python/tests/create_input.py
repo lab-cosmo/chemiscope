@@ -5,6 +5,7 @@ import ase
 from chemiscope import create_input
 
 TEST_FRAMES = [ase.Atoms("CO2")]
+TEST_FRAMES_SINGLE_ATOMS = [ase.Atoms("C"), ase.Atoms("H")]
 
 
 class TestCreateInputMeta(unittest.TestCase):
@@ -86,6 +87,55 @@ class TestCreateInputMeta(unittest.TestCase):
 
 
 class TestCreateInputProperties(unittest.TestCase):
+    def test_shortened_properties(self):
+        properties = {"name": [2, 3, 4]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "atom")
+        self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        properties = {"name": ["2", "3", "4"]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "atom")
+        self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        properties = {"name": [2]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
+        self.assertEqual(data["properties"]["name"]["values"], [2])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        properties = {"name": ["2"]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
+        self.assertEqual(data["properties"]["name"]["values"], ["2"])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        properties = {"name": ["2", "3"]}
+        with self.assertRaises(ValueError) as cm:
+            data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertIn(
+            "Length of property values should be equal to either number of",
+            str(cm.exception),
+        )
+
+        properties = {"name": ase.Atoms("CO2")}
+        with self.assertRaises(ValueError) as cm:
+            data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertIn(
+            "Type of property values should be either list or np.ndarray",
+            str(cm.exception),
+        )
+
+        properties = {"name": ["2", "3"]}
+        with self.assertRaises(ValueError) as cm:
+            data = create_input(frames=TEST_FRAMES_SINGLE_ATOMS, properties=properties)
+        self.assertIn(
+            "For the case when number of structures is equal to the number of",
+            str(cm.exception),
+        )
+
     def test_properties(self):
         properties = {"name": {"target": "atom", "values": [2, 3, 4]}}
         data = create_input(frames=TEST_FRAMES, properties=properties)
