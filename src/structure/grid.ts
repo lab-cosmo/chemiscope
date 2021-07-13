@@ -680,7 +680,10 @@ export class ViewersGrid {
 
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
-                const widget = new MoleculeViewer(getByID<HTMLElement>(`gi-${cellGUID}`), cellGUID);
+                const widget = new MoleculeViewer(
+                    getByID<HTMLElement>(`gi-${cellGUID}`, this._root),
+                    cellGUID
+                );
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
