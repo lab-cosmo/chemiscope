@@ -577,6 +577,7 @@ export class PropertiesMap {
 
             this._options.color.min.value = min;
             this._options.color.max.value = max;
+            this.setScaleStep([min, max], 'color');
         }
 
         this._options.color.property.onchange = () => {
@@ -589,6 +590,7 @@ export class PropertiesMap {
 
                 this._options.color.min.value = min;
                 this._options.color.max.value = max;
+                this.setScaleStep([min, max], 'color');
 
                 this._relayout({
                     'coloraxis.colorbar.title.text': this._title(
@@ -618,9 +620,21 @@ export class PropertiesMap {
             );
         };
 
-        const colorRangeChange = () => {
+        const colorRangeChange = (minOrMax: 'min' | 'max') => {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
+            if (min > max) {
+                sendWarning(
+                    `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
+                );
+                if (minOrMax === 'min') {
+                    this._options.color.min.reset();
+                } else {
+                    this._options.color.max.reset();
+                }
+                return;
+            }
+
             this._relayout({
                 'coloraxis.cmax': max,
                 'coloraxis.cmin': min,
@@ -632,8 +646,12 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
-        this._options.color.min.onchange = colorRangeChange;
-        this._options.color.max.onchange = colorRangeChange;
+        this._options.color.min.onchange = () => {
+            colorRangeChange('min');
+        };
+        this._options.color.max.onchange = () => {
+            colorRangeChange('max');
+        };
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
@@ -1274,12 +1292,12 @@ export class PropertiesMap {
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private setScaleStep(axisBounds: number[], axisName: string): void {
+    private setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
         if (axisBounds !== undefined) {
             // round to 10 decimal places so it does not break in Firefox
             const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = getByID<HTMLInputElement>(`chsp-${axisName}-min`);
-            const maxElement = getByID<HTMLInputElement>(`chsp-${axisName}-max`);
+            const minElement = getByID<HTMLInputElement>(`chsp-${name}-min`);
+            const maxElement = getByID<HTMLInputElement>(`chsp-${name}-max`);
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }

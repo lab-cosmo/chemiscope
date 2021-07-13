@@ -1,4 +1,4 @@
-import { MapOptions, AxisOptions } from '../../src/map/options';
+import { AxisOptions, MapOptions } from '../../src/map/options';
 import { getByID } from '../../src/utils';
 
 import { default as setupJSDOM } from '../jsdom';
@@ -47,14 +47,14 @@ describe('MapOptions', () => {
 
             // change from linear (default) to log scale
             selectElement.value = 'log';
-            selectElement.dispatchEvent(new Event('change'));
+            selectElement.dispatchEvent(new window.Event('change'));
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min: 10^');
             assert(max.innerHTML === 'max: 10^');
 
             // change back from log to linear
             selectElement.value = 'linear';
-            selectElement.dispatchEvent(new Event('change'));
+            selectElement.dispatchEvent(new window.Event('change'));
             options.setLogLabel(axisOptions, axisName);
             assert(min.innerHTML === 'min:');
             assert(max.innerHTML === 'max:');
