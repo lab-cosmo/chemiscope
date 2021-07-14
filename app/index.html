@@ -325,10 +325,16 @@
             stacktrace.getElementsByTagName('p')[0].innerText = error.stack || '';
         }
 
+        // display uncaught Errors from synchronous code
         window.onerror = (msg, url, line, col, error) => {
             if (error !== undefined) {
                 displayError(error);
             }
+        };
+
+        // display uncaught Errors from async code
+        window.onunhandledrejection = (error) => {
+            displayError(error.reason);
         };
 
         // store the app instance globally, and use it to load examples with
