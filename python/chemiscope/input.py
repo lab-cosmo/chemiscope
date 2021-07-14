@@ -12,7 +12,7 @@ import numpy as np
 from .adapters import frames_to_json, atom_properties, structure_properties
 
 
-def _convert(properties, n_structures, n_atoms):
+def _expand_properties(properties, n_structures, n_atoms):
     """
     Convert a shortened entries of properties into the expanded form.
     Entries in already expanded form are not changed.
@@ -61,22 +61,22 @@ def _convert(properties, n_structures, n_atoms):
         if not isinstance(value, dict):
             if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
                 raise ValueError(
-                    f"""Type of property values should be either list or np.ndarray,
-                    got {type(value)} instead"""
+                    "Property values should be either list or numpy array, "
+                    + f"got {type(value)} instead"
                 )
             if n_structures == n_atoms:
                 raise ValueError(
-                    f"""For the case when number of structures is equal to the number of atoms
-                    it is impossible to deduce if corresponding property is structural
-                    or atomic. Get n_structures = n_atoms = {n_atoms}; problematic property 
-                    with unspecified target is {key}"""
+                    "Unable to guess the property target when the number of "
+                    + "structures is equal to the number of atoms. We have "
+                    + f"n_structures = n_atoms = {n_atoms} for the '{key}' property"
                 )
             if (len(value) != n_structures) and (len(value) != n_atoms):
                 raise ValueError(
-                    f"""Length of property values should be equal to either number of 
-                structures for the structural properties either to number of atoms for the atomic properties.
-                Get n_atoms = {n_atoms}, n_structures = {n_structures}, length of property values = {len(value)}, for the property '{key}'
-                """
+                    "The length of property values is different from the "
+                    + "number of structures and the number of atoms, we can not "
+                    + f"guess the target. Got n_atoms = {n_atoms}, n_structures = "
+                    + f"{n_structures}, the length of property values is "
+                    + f"{len(value)}, for the '{key}' property"
                 )
             property = {"values": value}
             if len(value) == n_structures:
@@ -191,10 +191,10 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
     data["structures"] = frames_to_json(frames)
     n_structures = len(data["structures"])
     n_atoms = sum(s["size"] for s in data["structures"])
-    if properties is not None:
-        properties = _convert(properties, n_structures, n_atoms)
+
     data["properties"] = {}
     if properties is not None:
+        properties = _expand_properties(properties, n_structures, n_atoms)
         for name, value in properties.items():
             _validate_property(name, value)
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))

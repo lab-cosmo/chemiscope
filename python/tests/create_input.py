@@ -5,7 +5,6 @@ import ase
 from chemiscope import create_input
 
 TEST_FRAMES = [ase.Atoms("CO2")]
-TEST_FRAMES_SINGLE_ATOMS = [ase.Atoms("C"), ase.Atoms("H")]
 
 
 class TestCreateInputMeta(unittest.TestCase):
@@ -87,62 +86,15 @@ class TestCreateInputMeta(unittest.TestCase):
 
 
 class TestCreateInputProperties(unittest.TestCase):
-    def test_shortened_properties(self):
-        properties = {"name": [2, 3, 4]}
-        data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertEqual(data["properties"]["name"]["target"], "atom")
-        self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
-        self.assertEqual(len(data["properties"]["name"].keys()), 2)
-
-        properties = {"name": ["2", "3", "4"]}
-        data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertEqual(data["properties"]["name"]["target"], "atom")
-        self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
-        self.assertEqual(len(data["properties"]["name"].keys()), 2)
-
-        properties = {"name": [2]}
-        data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertEqual(data["properties"]["name"]["target"], "structure")
-        self.assertEqual(data["properties"]["name"]["values"], [2])
-        self.assertEqual(len(data["properties"]["name"].keys()), 2)
-
-        properties = {"name": ["2"]}
-        data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertEqual(data["properties"]["name"]["target"], "structure")
-        self.assertEqual(data["properties"]["name"]["values"], ["2"])
-        self.assertEqual(len(data["properties"]["name"].keys()), 2)
-
-        properties = {"name": ["2", "3"]}
-        with self.assertRaises(ValueError) as cm:
-            data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertIn(
-            "Length of property values should be equal to either number of",
-            str(cm.exception),
-        )
-
-        properties = {"name": ase.Atoms("CO2")}
-        with self.assertRaises(ValueError) as cm:
-            data = create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertIn(
-            "Type of property values should be either list or np.ndarray",
-            str(cm.exception),
-        )
-
-        properties = {"name": ["2", "3"]}
-        with self.assertRaises(ValueError) as cm:
-            data = create_input(frames=TEST_FRAMES_SINGLE_ATOMS, properties=properties)
-        self.assertIn(
-            "For the case when number of structures is equal to the number of",
-            str(cm.exception),
-        )
-
     def test_properties(self):
+        # values are numbers
         properties = {"name": {"target": "atom", "values": [2, 3, 4]}}
         data = create_input(frames=TEST_FRAMES, properties=properties)
         self.assertEqual(data["properties"]["name"]["target"], "atom")
         self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
         self.assertEqual(len(data["properties"]["name"].keys()), 2)
 
+        # values are strings
         properties = {"name": {"target": "atom", "values": ["2", "3", "4"]}}
         data = create_input(frames=TEST_FRAMES, properties=properties)
         self.assertEqual(data["properties"]["name"]["target"], "atom")
@@ -212,6 +164,64 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(data["properties"]["name[3]"]["target"], "atom")
         self.assertEqual(data["properties"]["name[3]"]["values"], [4, 4, 4])
         self.assertEqual(len(data["properties"].keys()), 3)
+
+    def test_shortened_properties(self):
+        # atom property
+        properties = {"name": [2, 3, 4]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "atom")
+        self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        # frame property
+        properties = {"name": [2]}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
+        self.assertEqual(data["properties"]["name"]["values"], [2])
+        self.assertEqual(len(data["properties"]["name"].keys()), 2)
+
+        # ndarray frame property
+        properties = {"name": np.array([[2, 4]])}
+        data = create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(data["properties"]["name[1]"]["target"], "structure")
+        self.assertEqual(data["properties"]["name[1]"]["values"], [2])
+        self.assertEqual(len(data["properties"]["name[1]"].keys()), 2)
+
+        self.assertEqual(data["properties"]["name[2]"]["target"], "structure")
+        self.assertEqual(data["properties"]["name[2]"]["values"], [4])
+        self.assertEqual(len(data["properties"]["name[2]"].keys()), 2)
+
+    def test_shortened_properties_errors(self):
+        properties = {"name": ["2", "3"]}
+        with self.assertRaises(ValueError) as cm:
+            create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(
+            str(cm.exception),
+            "The length of property values is different from the number of "
+            + "structures and the number of atoms, we can not guess the target. "
+            + "Got n_atoms = 3, n_structures = 1, the length of property values "
+            + "is 2, for the 'name' property",
+        )
+
+        properties = {"name": ase.Atoms("CO2")}
+        with self.assertRaises(ValueError) as cm:
+            create_input(frames=TEST_FRAMES, properties=properties)
+        self.assertEqual(
+            str(cm.exception),
+            "Property values should be either list or numpy array, got "
+            + "<class 'ase.atoms.Atoms'> instead",
+        )
+
+        properties = {"name": ["2", "3"]}
+        frames_single_atoms = [ase.Atoms("C"), ase.Atoms("H")]
+        with self.assertRaises(ValueError) as cm:
+            create_input(frames=frames_single_atoms, properties=properties)
+        self.assertEqual(
+            str(cm.exception),
+            "Unable to guess the property target when the number of structures "
+            + "is equal to the number of atoms. We have n_structures = "
+            + "n_atoms = 2 for the 'name' property",
+        )
 
     def test_invalid_name(self):
         properties = {"": {"target": "atom", "values": [2, 3, 4]}}

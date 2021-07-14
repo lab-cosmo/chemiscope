@@ -34,3 +34,21 @@ properties = {
 
 chemiscope.write_input("my-input.json.gz", frames, extra=properties)
 ```
+
+## Contributing
+
+You can install this package locally after a git clone with
+
+```bash
+python setup.py install
+```
+
+If you make changes, please make sure to add tests in `tests`; and run existing
+tests with `tox`:
+
+```bash
+pip install tox
+
+cd chemiscope/python
+tox
+```
