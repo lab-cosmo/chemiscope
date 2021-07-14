@@ -12,6 +12,81 @@ import numpy as np
 from .adapters import frames_to_json, atom_properties, structure_properties
 
 
+def _expand_properties(properties, n_structures, n_atoms):
+    """
+    Convert a shortened entries of properties into the expanded form.
+    Entries in already expanded form are not changed.
+
+    :param dict properties: properties to handle
+    :param int n_structures: number of structures in the dataset
+    :param int n_atoms: total number of atoms in the whole dataset
+
+    For example this property dict:
+    .. code-block:: python
+
+        properties = {
+            'aple': {
+                'target': 'atom',
+                'values': np.zeros((300, 4)),
+                'unit': 'random / fs',
+            }
+            'orange' : np.zeros((100, 42)),
+            'banana' : np.zeros((300, 17)),
+        }
+
+    will be converted to
+    .. code-block:: python
+
+        properties = {
+            'aple': {
+                'target': 'atom',
+                'values': np.zeros((300, 4)),
+                'unit': 'random / fs',
+            }
+            'orange': {
+                'target': 'structure'
+                'values': np.zeros((100, 42)),
+            }
+            'banana': {
+                'target': 'atom',
+                'values': np.zeros((300, 17)),
+           }
+        }
+
+    assuming that number of structures in the dataset is 100 and
+    total number of atoms in the dataset is 300.
+    """
+
+    for key, value in properties.items():
+        if not isinstance(value, dict):
+            if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
+                raise ValueError(
+                    "Property values should be either list or numpy array, "
+                    + f"got {type(value)} instead"
+                )
+            if n_structures == n_atoms:
+                raise ValueError(
+                    "Unable to guess the property target when the number of "
+                    + "structures is equal to the number of atoms. We have "
+                    + f"n_structures = n_atoms = {n_atoms} for the '{key}' property"
+                )
+            if (len(value) != n_structures) and (len(value) != n_atoms):
+                raise ValueError(
+                    "The length of property values is different from the "
+                    + "number of structures and the number of atoms, we can not "
+                    + f"guess the target. Got n_atoms = {n_atoms}, n_structures = "
+                    + f"{n_structures}, the length of property values is "
+                    + f"{len(value)}, for the '{key}' property"
+                )
+            property = {"values": value}
+            if len(value) == n_structures:
+                property["target"] = "structure"
+            if len(value) == n_atoms:
+                property["target"] = "atom"
+            properties[key] = property
+    return properties
+
+
 def create_input(frames, meta=None, properties=None, cutoff=None, composition=False):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -75,6 +150,20 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
     will generate four properties named ``cheese[1]``, ``cheese[2]``,
     ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
 
+    It is also possible to pass shortened representation of the properties, for
+    instance:
+
+    .. code-block:: python
+
+        properties = {
+            'cheese':  np.zeros((300, 4)),
+            }
+        }
+
+    In this case, the type of property (structure or atom) would be deduced
+    by comparing the numbers atoms and structures in the dataset to the
+    length of provided list/np.ndarray.
+
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
 
@@ -105,6 +194,7 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
 
     data["properties"] = {}
     if properties is not None:
+        properties = _expand_properties(properties, n_structures, n_atoms)
         for name, value in properties.items():
             _validate_property(name, value)
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))
