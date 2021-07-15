@@ -106,14 +106,8 @@ function validateConfig(o: JsObject) {
         throw Error('"loadStructure" should be a function in chemiscope config');
     }
 
-    if ('maxWidgets' in o) {
-        if (typeof o.maxWidgets !== 'number' || o.maxWidgets === null) {
-            throw Error('"maxWidgets" should be a number in chemiscope config');
-        }
-
-        if (o.maxWidgets > 9) {
-            throw Error('"maxWidgets" cannot be larger than 9 in chemiscope config');
-        }
+    if ('maxWidgets' in o && typeof o.maxWidgets !== 'number') {
+        throw Error('"maxWidgets" should be a number in chemiscope config');
     }
 }
 

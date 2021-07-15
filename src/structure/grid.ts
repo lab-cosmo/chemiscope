@@ -128,6 +128,7 @@ export class ViewersGrid {
      * @param structures   list of structure to display
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
+     * @param maxWidgets   maximum number of allowed structure viewers
      */
     constructor(
         element: string | HTMLElement,
@@ -161,6 +162,9 @@ export class ViewersGrid {
         this.activeChanged = () => {};
 
         if (maxWidgets !== undefined) {
+            if (maxWidgets > 9) {
+                throw Error('"maxWidgets" cannot be larger than 9 in chemiscope config');
+            }
             this._maxWidgets = maxWidgets;
         } else {
             this._maxWidgets = 9;
@@ -713,7 +717,6 @@ export class ViewersGrid {
 
     /**
      * Function to return *optimal* arrangement of n widgets.
-     * Defaults to a 4 x ? grid. Hardcoded for simplicity.
      */
     private bestGridArrangement(n: number) {
         switch (n) {
@@ -731,7 +734,7 @@ export class ViewersGrid {
             case 9:
                 return { rows: 3, columns: 3 };
             default:
-                throw Error("reached unreachable code: too many viewer in the grid");
+                throw Error('reached unreachable code: too many viewer in the grid');
         }
     }
 }
