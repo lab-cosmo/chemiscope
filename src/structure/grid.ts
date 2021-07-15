@@ -731,7 +731,7 @@ export class ViewersGrid {
             case 9:
                 return { rows: 3, columns: 3 };
             default:
-                throw Error(`Can not create a grid with more than ${this._maxWidgets} elements`);
+                throw Error("reached unreachable code: too many viewer in the grid");
         }
     }
 }
