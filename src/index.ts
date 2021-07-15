@@ -48,7 +48,7 @@ export interface Config {
     settings?: Partial<Settings>;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: unknown) => Structure;
-    /** Number of maximum allowed structure viewers in [[ViewersGrid]] */
+    /** Maximum number of structure viewers allowed in [[ViewersGrid]] */
     maxWidgets?: number;
 }
 
