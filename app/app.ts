@@ -200,6 +200,10 @@ export class ChemiscopeApp {
                     settings: dataset.settings || {},
                 };
                 this.load(config, dataset);
+                // clear the selected file name to make sure 'onchange' is
+                // called again if the user loads a file a the same path
+                // multiple time
+                loadDataset.value = '';
                 loadSaveModal.classList.add('fade');
             });
         };
@@ -233,6 +237,10 @@ export class ChemiscopeApp {
                 }
 
                 this.visualizer.applySettings(readJSON(file.name, result));
+                // clear the selected file name to make sure 'onchange' is
+                // called again if the user loads a file a the same path
+                // multiple time
+                loadSettings.value = '';
                 stopLoading();
                 loadSaveModal.classList.add('fade');
             });
