@@ -42,6 +42,13 @@ WEBPACK_CONFIG.plugins?.push(new RemoveDeclarationsFromAssets());
 
 module.exports = (config: Config) => {
     config.set({
+        browserNoActivityTimeout: 8000,
+        client: {
+            mocha: {
+                timeout: 8000,
+            },
+        },
+
         files: [
             // FIXME: we should not have to manually load jquery, but we
             // currently don't include it in the main bundle
