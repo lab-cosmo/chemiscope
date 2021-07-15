@@ -18,32 +18,6 @@ import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
 import PNG_SVG from '../static/download-png.svg';
 
-const MAX_WIDGETS = 9;
-
-/**
- * Function to return *optimal* arrangement of n widgets.
- * Defaults to a 4 x ? grid. Hardcoded for simplicity.
- */
-function bestGridArrangement(n: number) {
-    switch (n) {
-        case 1:
-        case 2:
-            return { rows: n, columns: 1 };
-        case 3:
-        case 4:
-            return { rows: 2, columns: 2 };
-        case 5:
-        case 6:
-            return { rows: 3, columns: 2 };
-        case 8:
-        case 7:
-        case 9:
-            return { rows: 3, columns: 3 };
-        default:
-            throw Error(`Can not create a grid with more than ${MAX_WIDGETS} elements`);
-    }
-}
-
 /**
  * Create a list of environments grouped together by structure.
  *
@@ -131,6 +105,8 @@ export class ViewersGrid {
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
     private _environments?: Environment[][];
+    /// Maximum number of allowed structure viewers
+    private _maxWidgets: number;
     /// The indexer translating between environments indexes and structure/atom
     /// indexes
     private _indexer: EnvironmentIndexer;
@@ -157,7 +133,8 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
-        environments?: Environment[]
+        environments?: Environment[],
+        maxWidgets?: number
     ) {
         this._structures = structures;
         this._resolvedStructures = new Array<Structure>(structures.length);
@@ -182,6 +159,12 @@ export class ViewersGrid {
         this.onremove = () => {};
         this.oncreate = () => {};
         this.activeChanged = () => {};
+
+        if (maxWidgets !== undefined) {
+            this._maxWidgets = maxWidgets;
+        } else {
+            this._maxWidgets = 9;
+        }
 
         const root = getElement(element);
 
@@ -636,13 +619,13 @@ export class ViewersGrid {
         if (nwidgets < 1) {
             sendWarning('Cannot delete last widget.');
             return newGUID;
-        } else if (nwidgets > MAX_WIDGETS) {
-            sendWarning(`Viewer grid cannot contain more than ${MAX_WIDGETS} widgets.`);
+        } else if (nwidgets > this._maxWidgets) {
+            sendWarning(`Viewer grid cannot contain more than ${this._maxWidgets} widgets.`);
             return newGUID;
         }
 
         // Determine best arrangement for nwidgets
-        const arrangement = bestGridArrangement(nwidgets);
+        const arrangement = this.bestGridArrangement(nwidgets);
         if (this._viewers.size > nwidgets) {
             sendWarning(`Warning: Eliminating last ${this._viewers.size - nwidgets} viewers.`);
             let i = 0;
@@ -726,6 +709,30 @@ export class ViewersGrid {
         }
 
         return newGUID;
+    }
+
+    /**
+     * Function to return *optimal* arrangement of n widgets.
+     * Defaults to a 4 x ? grid. Hardcoded for simplicity.
+     */
+    private bestGridArrangement(n: number) {
+        switch (n) {
+            case 1:
+            case 2:
+                return { rows: n, columns: 1 };
+            case 3:
+            case 4:
+                return { rows: 2, columns: 2 };
+            case 5:
+            case 6:
+                return { rows: 3, columns: 2 };
+            case 8:
+            case 7:
+            case 9:
+                return { rows: 3, columns: 3 };
+            default:
+                throw Error(`Can not create a grid with more than ${this._maxWidgets} elements`);
+        }
     }
 }
 
