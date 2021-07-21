@@ -643,8 +643,6 @@ export class ViewersGrid {
                         return;
                     }
 
-                    widget.highlight(atom);
-
                     // if the viewer is showing a bigger supercell than [1, 1, 1], the
                     // atom index can be outside of [0, natoms), so make sure it is
                     // inside this range.
@@ -656,6 +654,17 @@ export class ViewersGrid {
                         data.current.structure,
                         atom % natoms
                     );
+
+                    if (indexes === undefined) {
+                        sendWarning(
+                            `this environment (atom ${atom % natoms} in structure ${
+                                data.current.structure
+                            }) is not part of the dataset`
+                        );
+                        return;
+                    }
+
+                    widget.highlight(atom);
                     this.onselect(indexes);
                 };
 

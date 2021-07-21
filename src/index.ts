@@ -258,6 +258,13 @@ class DefaultVisualizer {
         };
 
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+
+        // if we have sparse environments, make sure to use the first
+        // environment actually part of the dataset
+        if (dataset.environments !== undefined) {
+            initial = this._indexer.from_environment(0);
+        }
+
         if (config.settings && config.settings.pinned) {
             initial = this._indexer.from_environment(config.settings.pinned[0]);
         }
@@ -541,7 +548,9 @@ class MapVisualizer {
         const n_structure = dataset.properties[Object.keys(dataset.properties)[0]].values.length;
         this._indexer = new EnvironmentIndexer(
             'structure',
-            new Array(n_structure).fill({ size: 0, data: 0 }) as UserStructure[]
+            // pseudo-structures to get the EnvironmentIndexer working even
+            // though we don't have any structure data
+            new Array(n_structure).fill({ size: 1, data: 0 }) as UserStructure[]
         );
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);

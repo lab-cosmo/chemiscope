@@ -698,11 +698,6 @@ export class MoleculeViewer {
         // use atom.serial instead of atom.index to ensure we are getting the
         // id of the atom inside the central cell when using a supercell
         assert(atom.serial !== undefined);
-
-        if (this._environments !== undefined) {
-            this.highlight(atom.serial);
-        }
-
         this.onselect(atom.serial);
     }
 
