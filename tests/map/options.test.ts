@@ -1,8 +1,9 @@
 import { AxisOptions, MapOptions } from '../../src/map/options';
 import { getByID } from '../../src/utils';
 
-import { default as setupJSDOM } from '../jsdom';
 import { assert } from 'chai';
+
+let KARMA_INSERTED_HTML: string;
 
 const DUMMY_PROPERTIES = {
     first: {
@@ -18,18 +19,18 @@ const DUMMY_CALLBACK = () => {
 
 describe('MapOptions', () => {
     before(() => {
-        setupJSDOM();
+        // store karma's default HTML
+        KARMA_INSERTED_HTML = document.body.innerHTML;
     });
 
     it('can remove itself from DOM', () => {
         const root = document.createElement('div');
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
         assert(root.innerHTML !== '');
-        assert(document.body.innerHTML !== '');
 
         options.remove();
-        assert(document.body.innerHTML === '');
         assert(root.innerHTML === '');
+        assert(document.body.innerHTML === KARMA_INSERTED_HTML);
     });
 
     it('scale label for min/max switches between linear and log', () => {

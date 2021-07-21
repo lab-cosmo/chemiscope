@@ -1,11 +1,11 @@
 import path from 'path';
-import * as webpack from 'webpack';
+import webpack from 'webpack';
 
 import { execSync } from 'child_process';
 
 const GIT_VERSION = execSync('git describe --tags --dirty').toString().trim();
 
-export const BASE_CONFIG: webpack.Configuration = {
+export const WEBPACK_CONFIG: webpack.Configuration = {
     plugins: [
         new webpack.DefinePlugin({
             CHEMISCOPE_GIT_VERSION: `"${GIT_VERSION}"`,
@@ -37,7 +37,7 @@ const config: ConfigFn = (env, argv) => {
         throw Error('please specify the build mode');
     }
     return {
-        ...BASE_CONFIG,
+        ...WEBPACK_CONFIG,
         target: 'web',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
