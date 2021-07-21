@@ -138,3 +138,25 @@ export function getElement<HTMLElement>(element: string | HTMLElement): HTMLElem
         return getByID<HTMLElement>(element);
     }
 }
+
+/**
+ * check for the position of `value` in `array` using binary search.
+ * The array must be sorted for this to work
+ */
+export function binarySearch(array: number[], value: number): number {
+    let min = 0;
+    let max = array.length - 1;
+    let mid;
+    while (min <= max) {
+        mid = (min + max) >>> 1;
+        if (array[mid] === value) {
+            return mid;
+        } else if (array[mid] < value) {
+            min = mid + 1;
+        } else {
+            max = mid - 1;
+        }
+    }
+
+    return -1;
+}

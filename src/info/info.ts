@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { generateGUID, getElement } from '../utils';
+import { binarySearch, generateGUID, getElement, sendWarning } from '../utils';
 
 import { Slider } from './slider';
 import { Table } from './table';
@@ -119,15 +119,16 @@ export class EnvironmentInfo {
 
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes): void {
+        const previousStructure = this._indexes().structure;
+
         this._structure.number.value = `${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
 
-        if (this._atom !== undefined) {
-            const n_atoms = this._indexer.atomsCount(indexes.structure);
-            this._atom.number.value = '1';
-            this._atom.slider.reset(n_atoms - 1);
-            this._structure.table.show(indexes);
+        if (indexes.structure !== previousStructure && this._atom !== undefined) {
+            const activeAtoms = this._indexer.activeAtoms(indexes.structure);
+            this._atom.number.value = `${activeAtoms[0] + 1}`;
+            this._atom.slider.reset(activeAtoms);
         }
 
         if (indexes.atom !== undefined) {
@@ -155,8 +156,7 @@ export class EnvironmentInfo {
     /** Create the structure slider and table */
     private _createStructure(id: string, properties: { [name: string]: Property }): Info {
         const slider = new Slider(this._root, 'structure');
-        const n_structures = this._indexer.structuresCount();
-        slider.reset(n_structures - 1);
+        slider.reset(this._indexer.activeStructures());
 
         const tableRoot = this._root.children[0] as HTMLElement;
         assert(tableRoot.tagName.toLowerCase() === 'div');
@@ -165,9 +165,31 @@ export class EnvironmentInfo {
         slider.startPlayback = (advance) => {
             setTimeout(() => {
                 if (advance()) {
+                    // find the next structure/atom to display
                     const current = this._indexes();
-                    const structure = (current.structure + 1) % this._indexer.structuresCount();
-                    const indexes = this._indexer.from_structure_atom(structure, 0);
+                    const structuresCount = this._indexer.structuresCount();
+
+                    let iterations = 0;
+                    let structure = current.structure;
+                    let indexes = undefined;
+                    while (indexes === undefined) {
+                        structure = (structure + 1) % structuresCount;
+                        // try to find the first atom in the structure with
+                        // associated data
+                        for (let atom = 0; atom < this._indexer.atomsCount(structure); atom++) {
+                            indexes = this._indexer.from_structure_atom(structure, atom);
+                            if (indexes !== undefined) {
+                                break;
+                            }
+                        }
+                        // prevent infinite loop
+                        if (iterations === structuresCount) {
+                            return;
+                        }
+                        iterations += 1;
+                    }
+
+                    assert(indexes !== undefined);
                     this.show(indexes);
                     this.onchange(indexes);
                     // continue playing until the advance callback returns false
@@ -175,15 +197,28 @@ export class EnvironmentInfo {
                 }
             }, this.playbackDelay);
         };
+
         slider.onchange = () => {
+            const structure = this._structure.slider.value();
+
             if (this._atom !== undefined) {
-                const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
-                this._atom.number.value = '1';
-                this._atom.number.max = n_atoms.toString();
-                this._atom.slider.reset(n_atoms - 1);
+                const activeAtoms = this._indexer.activeAtoms(structure);
+                if (activeAtoms.length === 0) {
+                    sendWarning(
+                        `can not change to structure ${
+                            structure + 1
+                        } which does not contain any active atom`
+                    );
+                    return;
+                }
+                this._atom.number.value = `${activeAtoms[0] + 1}`;
+                this._atom.number.max = `${activeAtoms.length}`;
+                this._atom.slider.reset(activeAtoms);
             }
 
             const indexes = this._indexes();
+            assert(indexes !== undefined);
+
             this._structure.table.show(indexes);
             this._structure.number.value = `${indexes.structure + 1}`;
 
@@ -198,20 +233,22 @@ export class EnvironmentInfo {
             '.chsp-info-structure-btn .chsp-info-number'
         ) as HTMLInputElement;
         number.max = this._indexer.structuresCount().toString();
-        // Don't collapse the info table when clicking on the input field
-        number.onclick = (event) => event.stopPropagation();
+
         number.onchange = () => {
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value
                 number.value = `${this._structure.slider.value() + 1}`;
+            } else if (binarySearch(this._indexer.activeStructures(), value) === -1) {
+                // also reset if we got a value which is not an active structure
+                number.value = `${this._structure.slider.value() + 1}`;
             } else {
                 this._structure.slider.update(value);
                 if (this._atom !== undefined) {
-                    const n_atoms = this._indexer.atomsCount(value);
-                    this._atom.slider.reset(n_atoms - 1);
-                    this._atom.number.value = '1';
-                    this._atom.number.max = n_atoms.toString();
+                    const activeAtoms = this._indexer.activeAtoms(value);
+                    this._atom.number.value = `${activeAtoms[0] + 1}`;
+                    this._atom.number.max = `${activeAtoms.length}`;
+                    this._atom.slider.reset(activeAtoms);
                 }
 
                 const indexes = this._indexes();
@@ -224,22 +261,41 @@ export class EnvironmentInfo {
             }
         };
 
+        // Don't collapse the info table when clicking on the input field
+        number.onclick = (event) => event.stopPropagation();
+
         return { number, slider, table };
     }
 
     /** Create the atom slider and table */
     private _createAtom(id: string, properties: { [name: string]: Property }) {
         const slider = new Slider(this._root, 'atom');
-        const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
-        slider.reset(n_atoms - 1);
+        slider.reset(this._indexer.activeAtoms(this._structure.slider.value()));
+
         slider.startPlayback = (advance) => {
             setTimeout(() => {
                 if (advance()) {
                     const current = this._indexes();
-                    assert(current.atom !== undefined);
                     const structure = current.structure;
-                    const atom = (current.atom + 1) % this._indexer.atomsCount(structure);
-                    const indexes = this._indexer.from_structure_atom(structure, atom);
+
+                    const atomsCount = this._indexer.atomsCount(structure);
+                    let atom = current.atom;
+                    assert(atom !== undefined);
+
+                    let indexes = undefined;
+                    let iterations = 0;
+                    while (indexes === undefined) {
+                        atom = (atom + 1) % atomsCount;
+                        indexes = this._indexer.from_structure_atom(structure, atom);
+
+                        // prevent infinite loop if the current structure has no
+                        // environments
+                        if (iterations === atomsCount) {
+                            return;
+                        }
+                        iterations += 1;
+                    }
+
                     this.show(indexes);
                     this.onchange(indexes);
                     // continue playing until the advance callback returns false
@@ -251,6 +307,16 @@ export class EnvironmentInfo {
         slider.onchange = () => {
             assert(this._atom !== undefined);
             const indexes = this._indexes();
+
+            if (indexes === undefined) {
+                const structure = this._structure.slider.value();
+                const atom = this._atom.slider.value();
+                sendWarning(
+                    `environment for atom ${atom} in structure ${structure} is not part of this dataset`
+                );
+                return;
+            }
+
             assert(indexes.atom !== undefined);
             this._atom.table.show(indexes);
             this._atom.number.value = `${indexes.atom + 1}`;
@@ -264,23 +330,29 @@ export class EnvironmentInfo {
         const number = this._root.querySelector(
             '.chsp-info-atom-btn .chsp-info-number'
         ) as HTMLInputElement;
-        number.max = n_atoms.toString();
-        // Don't collapse the info table when clicking on the input field
-        number.onclick = (event) => event.stopPropagation();
+        number.max = this._indexer.atomsCount(this._structure.slider.value()).toString();
+
         number.onchange = () => {
             assert(this._atom !== undefined);
+            const activeAtoms = this._indexer.activeAtoms(this._structure.slider.value());
+
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value
+                number.value = `${this._atom.slider.value() + 1}`;
+            } else if (binarySearch(activeAtoms, value) === -1) {
+                // also reset if we got a value which is not an active structure
                 number.value = `${this._atom.slider.value() + 1}`;
             } else {
                 this._atom.slider.update(value);
                 const indexes = this._indexes();
                 this._atom.table.show(indexes);
-
                 this.onchange(indexes);
             }
         };
+
+        // Don't collapse the info table when clicking on the input field
+        number.onclick = (event) => event.stopPropagation();
 
         return { number, slider, table };
     }
@@ -288,12 +360,15 @@ export class EnvironmentInfo {
     /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
         const structure = this._structure.slider.value();
+        let indexes;
         if (this._atom !== undefined) {
             const atom = this._atom.slider.value();
-            return this._indexer.from_structure_atom(structure, atom);
+            indexes = this._indexer.from_structure_atom(structure, atom);
         } else {
             assert(this._indexer.mode === 'structure');
-            return this._indexer.from_structure_atom(structure);
+            indexes = this._indexer.from_structure_atom(structure);
         }
+        assert(indexes !== undefined);
+        return indexes;
     }
 }
