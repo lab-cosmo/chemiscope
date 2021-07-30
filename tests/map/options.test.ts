@@ -12,6 +12,9 @@ const DUMMY_PROPERTIES = {
     second: {
         values: [],
     },
+    third: {
+        values: [],
+    },
 };
 
 const DUMMY_CALLBACK = () => {
@@ -92,6 +95,90 @@ describe('MapOptions', () => {
                 assert(element.id.includes(guid));
             }
         });
+
+        options.remove();
+    });
+
+    it('axis property changes when modified by the user', () => {
+        const root = document.createElement('div');
+        const guid = 'guid' as GUID;
+        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+
+        function checkPropertySelect(axisOptions: AxisOptions, axisName: string) {
+            const selectElement = getByID<HTMLSelectElement>(`guid-map-${axisName}-property`);
+            selectElement.value = 'first';
+            selectElement.dispatchEvent(new window.Event('change'));
+            assert(selectElement.value !== 'second');
+            assert(axisOptions.property.value !== 'second');
+            selectElement.value = 'second';
+            selectElement.dispatchEvent(new window.Event('change'));
+            assert(axisOptions.property.value === 'second');
+        }
+
+        checkPropertySelect(options.x, 'x');
+        checkPropertySelect(options.y, 'y');
+        checkPropertySelect(options.z, 'z');
+        checkPropertySelect(options.color, 'color');
+
+        options.remove();
+    });
+
+    it('axis range changes when min/max are modified', () => {
+        const root = document.createElement('div');
+        const guid = 'guid' as GUID;
+        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+
+        function checkRangeSelect(axisOptions: AxisOptions, axisName: string) {
+            const minSelectElement = getByID<HTMLSelectElement>(`guid-map-${axisName}-min`);
+            const maxSelectElement = getByID<HTMLSelectElement>(`guid-map-${axisName}-max`);
+
+            assert(minSelectElement.value !== '0.01');
+            assert(axisOptions.min.value !== 0.01);
+            minSelectElement.value = '0.01';
+            minSelectElement.dispatchEvent(new window.Event('change'));
+            assert(axisOptions.min.value === 0.01);
+
+            assert(maxSelectElement.value !== '1.01');
+            assert(axisOptions.max.value !== 1.01);
+            maxSelectElement.value = '1.01';
+            maxSelectElement.dispatchEvent(new window.Event('change'));
+            assert(axisOptions.max.value === 1.01);
+        }
+
+        checkRangeSelect(options.x, 'x');
+        checkRangeSelect(options.y, 'y');
+        checkRangeSelect(options.z, 'z');
+        checkRangeSelect(options.color, 'color');
+
+        options.remove();
+    });
+
+    it('property used for size changes when modified by the user', () => {
+        const root = document.createElement('div');
+        const guid = 'guid' as GUID;
+        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const selectElement = getByID<HTMLSelectElement>(`guid-map-size-property`);
+
+        assert(selectElement.value !== 'second');
+        assert(options.size.property.value !== 'second');
+        selectElement.value = 'second';
+        selectElement.dispatchEvent(new window.Event('change'));
+        assert(options.size.property.value === 'second');
+
+        options.remove();
+    });
+
+    it('size factor changes when the slider is modified by the user', () => {
+        const root = document.createElement('div');
+        const guid = 'guid' as GUID;
+        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const sliderElement = getByID<HTMLInputElement>(`guid-map-size-factor`);
+
+        assert(sliderElement.value !== '100');
+        assert(options.size.factor.value !== 100);
+        sliderElement.value = '100';
+        sliderElement.dispatchEvent(new window.Event('change'));
+        assert(options.size.factor.value === 100);
 
         options.remove();
     });
