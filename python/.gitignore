@@ -1,9 +1,0 @@
-.tox/
-__pycache__/
-build/
-
-*.pyc
-*.egg-info
-LICENSE
-
-chemiscope/nbextension/*.min.js

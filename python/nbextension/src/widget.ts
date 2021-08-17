@@ -1,12 +1,12 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
-import { addWarningHandler, getByID } from '../utils';
+import { addWarningHandler, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
 import './chemiscope-bootstrap.css';
 
-import { DefaultVisualizer } from '../index';
-import { Dataset } from '../dataset';
+import { DefaultVisualizer } from '../../../src/index';
+import { Dataset } from '../../../src/dataset';
 
 /**
  * The [[ChemiscopeView]] class renders the Chemiscope App as a widget

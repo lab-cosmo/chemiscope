@@ -10,9 +10,10 @@ legacy_tox_ini = """
 [tox]
 
 [testenv]
+isolated_build = true
 deps =
     ase
 
 commands =
-    python -m unittest discover -p "*.py" -s tests
+    python -m unittest discover -p "*.py" -s python/tests
 """

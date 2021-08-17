@@ -49,6 +49,5 @@ tests with `tox`:
 ```bash
 pip install tox
 
-cd chemiscope/python
 tox
 ```
