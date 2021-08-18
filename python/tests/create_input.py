@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import copy
 import ase
 
 from chemiscope import create_input
@@ -52,9 +53,7 @@ class TestCreateInputMeta(unittest.TestCase):
         self.assertEqual(data["meta"]["name"], "foo")
         self.assertEqual(len(data["meta"].keys()), 1)
 
-        self.assertEqual(
-            cm.warning.args, ("ignoring unexpected metadata: what_is_this",)
-        )
+        self.assertEqual(str(cm.warning), "ignoring unexpected metadata: what_is_this")
 
     def test_meta_conversions(self):
         meta = {"name": 33}
@@ -269,7 +268,7 @@ class TestCreateInputProperties(unittest.TestCase):
         properties = {"name": {"target": "atom", "values": [2, 3, 4], "what": False}}
         with self.assertWarns(UserWarning) as cm:
             create_input(frames=TEST_FRAMES, properties=properties)
-        self.assertEqual(cm.warning.args, ("ignoring unexpected property key: what",))
+        self.assertEqual(str(cm.warning), "ignoring unexpected property key: what")
 
     def test_invalid_values_types(self):
         properties = {"name": {"target": "atom", "values": 3}}
@@ -312,6 +311,37 @@ class TestCreateInputProperties(unittest.TestCase):
             "wrong size for the property 'name' with target=='structure': "
             + "expected 1 values, got 3",
         )
+
+    def test_properties_also_in_frame(self):
+        properties = {"name": {"target": "atom", "values": [2, 3, 4]}}
+        frames = copy.deepcopy(TEST_FRAMES)
+        for frame in frames:
+            frame.info["name"] = "test"
+
+        with self.assertWarns(UserWarning) as cm:
+            data = create_input(frames=frames, properties=properties)
+
+        self.assertEqual(
+            str(cm.warning),
+            "ignoring the 'name' structure property coming from the "
+            + "structures since it is already part of the properties",
+        )
+        self.assertEqual(data["properties"]["name"]["target"], "atom")
+
+        properties = {"name": {"target": "structure", "values": [2]}}
+        frames = copy.deepcopy(TEST_FRAMES)
+        for frame in frames:
+            frame.arrays["name"] = [0] * len(frame)
+
+        with self.assertWarns(UserWarning) as cm:
+            data = create_input(frames=frames, properties=properties)
+
+        self.assertEqual(
+            str(cm.warning),
+            "ignoring the 'name' atom property coming from the "
+            + "structures since it is already part of the properties",
+        )
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
 
 
 class TestCreateInputEnvironments(unittest.TestCase):
