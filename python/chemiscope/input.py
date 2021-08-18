@@ -202,11 +202,27 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
     # Read properties coming from the frames
     for name, value in atom_properties(frames, composition).items():
         _validate_property(name, value)
-        data["properties"].update(_linearize(name, value, n_structures, n_atoms))
+        for name, value in _linearize(name, value, n_structures, n_atoms).items():
+            if name in data["properties"]:
+                warnings.warn(
+                    f"ignoring the '{name}' atom property coming from the "
+                    "structures since it is already part of the properties"
+                )
+                continue
+
+            data["properties"][name] = value
 
     for name, value in structure_properties(frames, composition).items():
         _validate_property(name, value)
-        data["properties"].update(_linearize(name, value, n_structures, n_atoms))
+        for name, value in _linearize(name, value, n_structures, n_atoms).items():
+            if name in data["properties"]:
+                warnings.warn(
+                    f"ignoring the '{name}' structure property coming from the "
+                    "structures since it is already part of the properties"
+                )
+                continue
+
+            data["properties"][name] = value
 
     if cutoff is not None:
         data["environments"] = _generate_environments(frames, cutoff)
