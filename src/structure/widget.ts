@@ -221,10 +221,10 @@ export class MoleculeViewer {
         this._styles = {
             noCell: createStyleSheet([
                 `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
-                `#${this.guid}-settings .chsp-hide-if-no-cell { display: none; }`,
+                `#${this.guid}-structure-settings .chsp-hide-if-no-cell { display: none; }`,
             ]),
             noEnvs: createStyleSheet([
-                `#${this.guid}-settings .chsp-hide-if-no-environments { display: none; }`,
+                `#${this.guid}-structure-settings .chsp-hide-if-no-environments { display: none; }`,
             ]),
         };
 
