@@ -1,6 +1,5 @@
 /**
- * This module contains the [[DefaultVisualizer]] class, which is the default
- * entry point of the code.
+ * Welcome to Chemiscope's API documentation
  *
  * The default visualization is organized around four panels: the
  * [[MetadataPanel|metadata]] panel; the [[PropertiesMap|map]] (a scatter plot of
