@@ -20,3 +20,4 @@ notebook.
     panels
     input
     standalone
+    jupyter

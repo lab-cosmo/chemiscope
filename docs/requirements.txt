@@ -3,3 +3,4 @@ sphinx-bootstrap-theme
 
 # required to be able to import chemiscope in the doc
 numpy
+ipywidgets
