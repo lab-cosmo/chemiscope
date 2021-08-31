@@ -3,8 +3,11 @@ Chemiscope as a library
 
 It is possible to use chemiscope as a software library when writing your own
 web-based interface. This page document how to get the library and give a few
-usage examples. You may also want to look at the `API documentation
-<api/index.html>`_ for all classes, interfaces and functions in chemiscope.
+usage examples.
+
+.. note::
+    You should also look at the `API documentation <api/index.html>`_ for a list
+    of all public classes, interfaces and functions in chemiscope.
 
 Dependencies
 ^^^^^^^^^^^^

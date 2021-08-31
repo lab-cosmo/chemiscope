@@ -1,119 +1,5 @@
-User tutorial
-=============
-
-This tutorial will present how to use the `default chemiscope visualizer
-<chemiscope_>`_ with your own database: the different panels and related
-settings; as well as how to create an input file for it.
-
-.. _chemiscope: https://chemiscope.org
-
-Introduction to structural properties
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Before we get started, we will introduce a few concepts that underlie the
-concept and the usage of chemiscope. Chemiscope is designed to help navigating
-*structure-property maps*, i.e. 2D or 3D representations of a set of
-atomic scale entities that reflect how structure influences materials
-properties.
-
-Chemiscope can work with two kinds of entities: full structures, or
-atom-centred environments. A structure consists in a set of atoms, possibly
-representing the periodic repeat unit of an infinite structure. An
-environment consists in a set of atoms that surround a central atom,
-In both cases, these entities are fully defined by the position and nature
-of the atoms present in the structure, or in the neighborhood of the
-environment center.
-
-For each structure or environment, one may have computed *properties*,
-e.g. the cohesive energy of a molecule, or the NMR chemical shielding of
-a nucleus, or *structural representations*, i.e. functions of the
-spatial arrangement of the atoms that incorporate some fundamental
-symmetries to achieve a description of the structure that is as complete
-as possible, yet concise. Examples of such representations are for instance
-`atom density representationis <soap>`_ or `Behler-Parrinello
-symmetry functions <Behler-Parrinello>`_. These representations are usually
-high-dimensional vectors, hard to visualize and interpret. For this reason, one
-usually applies a dimensionality reduction algorithm, such as `PCA`_, `sketch-map`_,
-*etc.*   The interpretation of the resulting  will differ depending on both the
-descriptor used to represent the structures or environments and the
-dimensionality reduction algorithm applied.
-
-Chemiscope simplifies visualizing the correlations between structural
-representations and properties associated with structures and environments,
-by representing in an interactive fashion these atomic-scale entities as points
-on a map, and by associating these points with an explicit, 3D visualization
-of the structure of the material or molecule.
-
-.. figure:: img/mol-to-map.*
-    :width: 65 %
-
-    Illustration of the process used to create structural properties from a
-    molecule.
-
-Chemiscope is completly agnostic with respect to how properties and structural
-representations are generated, and do not provide any facilities to generate them.
-In the rest of this document, we will refer to properties describing
-the structure of an environment or structure as *structural properties*
-and other associated properties associated (such as energy, density, ...) as
-*physical properties*.
-
-.. _soap: https://doi.org/10.1063/1.5090481
-.. _Behler-Parrinello: https://doi.org/10.1103/physrevlett.98.146401
-.. _PCA: https://en.wikipedia.org/wiki/Principal_component_analysis
-.. _sketch-map: https://doi.org/10.1073/pnas.1108486108
-
-Different panels and settings
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The default chemiscope visualizer is organized in three main panels: the map,
-the structure viewer and the environment information display. Additionally,
-clicking on the dataset title (on top of the map) will display some metadata
-about the dataset (description, authors, references). This section will
-present each one, as well as the main settings accessible to customize the
-display.
-
-The map is a 2D or 3D scatter plot showing properties for all the environments
-in the dataset. You can set which properties (structural or physical) should be
-used a the x, y, and potentially z axis; as well as for color and size of the
-points. Additionally, properties which have string values (an not numeric
-values) can be used as category data to set the symbols used for the points. To
-open the settings modal window, click on the hamburger menu (the ☰ symbol) on
-the left of the dataset title.
-
-.. figure:: img/map.png
-    :width: 80 %
-
-    The map panel in 2D mode and the related settings
-
-The structure panel is a 3D molecular viewer based on `Jmol`_. The settings are
-accessible through the hamburger menu (☰) on the right of the viewer. The
-settings are grouped into **representation** (how is the molecule rendered);
-**supercell** (how many copies of the unit cell to display); **environments**
-(how atom-centered environments are displayed); **camera** (reset the camera in
-along one of the given axis); and **trajectory** (playback related settings).
-
-.. figure:: img/structure.png
-    :width: 80 %
-
-    The structure panel and related settings
-
-Finally, the environments information panel features sliders and text input to
-allow for an easy selection of the environment of interest. The play button on
-the left of the sliders activates the trajectory playback, looping over the
-structures in the datasets or the atoms in a structure. By clicking on the
-labels at the top (*structure XXX* and*atom XXX*), one can hide or show the
-full property tables. These tables show all properties in the dataset for the
-currently selected environment.
-
-.. figure:: img/info.png
-    :width: 40 %
-
-    The environment information panel fully expanded
-
-.. _Jmol: http://jmol.org
-
 Input file format for chemiscope
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+================================
 
 When using the default chemiscope interface, all the structures and properties
 in a dataset are loaded from a single JSON file. This sections describe how to
@@ -146,7 +32,7 @@ chemiscope format.
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
 
-Input file structure
+Input file reference
 --------------------
 
 If you can not or do not want to use the script mentioned above, you can also
@@ -358,34 +244,3 @@ values:
     }
 
 .. _Dataset: api/interfaces/main.dataset.html
-
-
-Using the standalone visualizer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The default chemiscope interface lives online, at https://chemiscope.org/. But
-there are some cases where you do not want to use an online tool for your own
-dataset, such as scientific article supplementation information. For these use
-cases, a standalone, mostly offline visualizer exists that uses the same input
-file format as the default interface. You can download the latest version of the
-standalone viewer at
-:download:`https://chemiscope.org/chemiscope_standalone.html`.
-
-This file contains all the required HTML and JavaScript code for chemiscope.
-You can then add your own dataset by adding the corresponding JSON file at the
-end of the ``chemiscope_standalone.html`` file.
-
-.. code-block:: bash
-
-    cat chemiscope_standalone.html my-dataset.json > my-dataset.html
-
-To re-build the ``chemiscope_standalone.html`` file from sources, please follow
-the steps below:
-
-.. code-block:: bash
-
-    git clone https://github.com/cosmo-epfl/chemiscope
-    cd chemiscope
-    npm install
-    npm run build
-    python3 ./utils/generate_standalone.py

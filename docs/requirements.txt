@@ -1,6 +1,5 @@
-sphinx>=2.1
-sphinx-js
+sphinx>=4
 sphinx-bootstrap-theme
-m2r
+
+# required to be able to import chemiscope in the doc
 numpy
-ipywidgets
