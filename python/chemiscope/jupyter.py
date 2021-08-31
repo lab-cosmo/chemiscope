@@ -35,22 +35,47 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         file.close()
 
 
-def show(frames, properties, meta={"name": " "}, cutoff=None):
+def show(frames, properties=None, meta=None, cutoff=None):
     """
-    Show the dataset defined by the given ``frames`` and ``properties`` using a
-    embedded chemiscope visualizer inside a Jupyter notebook.
+    Show the dataset defined by the given ``frames`` and ``properties``
+    (optionally ``meta`` and ``cutoff`` as well) using a embedded chemiscope
+    visualizer inside a Jupyter notebook. These parameters have the same meaning
+    as in the :py:func:`chemiscope.create_input` function.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
-                        objects are supported
-    :param dict properties: optional dictionary of additional properties, see below
-    :param dict meta: optional metadata of the dataset, see below
-    :param float cutoff: optional. If present, will be used to generate
-                         atom-centered environments
+    When inside a jupyter notebook, the returned object will create a new
+    chemiscope visualizer displaying the dataset. The returned object also have
+    a ``save`` function that can be used to save the dataset to a ``.json`` or
+    ``.json.gz`` file to load it in the main website later.
 
-    :returns: a :py:class:`ChemiscopeWidget` that will display itself
+    .. code-block:: python
+
+        import chemiscope
+        from sklearn.decomposition import PCA
+        import ase.io
+
+        pca = PCA(n_components = 3)
+
+        frames = ase.io.read(...)
+        properties = {
+            "PCA": pca.fit_transform(some_data)
+        }
+
+        widget = chemiscope.show(frames, properties)
+        # display the dataset in a chemiscope visualizer inside the notebook
+        widget
+        # ...
+
+
+        # Save the file for later use
+        widget.save("dataset.json")
+
+    .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
     if not _is_running_in_notebook():
         raise Exception("chemiscope.show only works inside a jupyter notebook")
+
+    if meta is None:
+        meta = {"name": " "}
 
     dict_input = create_input(
         frames=frames, properties=properties, meta=meta, cutoff=cutoff
