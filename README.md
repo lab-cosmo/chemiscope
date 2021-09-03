@@ -8,7 +8,7 @@ molecular databases, correlating local and global structural descriptors with
 the physical properties of the different systems; as well as a library of
 re-usable components useful to create new interfaces.
 
-![Default interface of chemiscope](paper/screenshot.png)
+![Default interface of chemiscope](docs/src/img/screenshot.png)
 
 ## Citing chemiscope
 
