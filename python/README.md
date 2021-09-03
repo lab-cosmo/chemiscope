@@ -1,7 +1,8 @@
-# chemiscope Python package
+# Python helpers for chemiscope
 
 This package contains Python code to help generate input files for the
-[chemiscope](https://chemiscope.org) default visualizer.
+[chemiscope](https://chemiscope.org) default visualizer, and integrate
+chemiscope with jupyter notebooks.
 
 ## Installation
 
@@ -16,38 +17,39 @@ package.
 
 ## Usage
 
-From your own code:
+To create a new chemiscope input file:
 
 ```python
 import chemiscope
+import ase.io
 
 # read frames using ase
-frames = ...
+frames = ase.io.read("structures.xyz", ":")
 
-# add additional properties
+# add additional properties to display
 properties = {
-    "<name>": {
+    "<property name>": {
         target: "atom",
         values: [3, 4, 2, 8, 9, 10],
     }
 }
 
-chemiscope.write_input("my-input.json.gz", frames, extra=properties)
+chemiscope.write_input("my-input.json.gz", frames=frames, properties=properties)
 ```
 
-## Contributing
+To display a chemiscope widget inside a jupyter notebook:
 
-You can install this package locally after a git clone with
+```python
+import chemiscope
+import ase.io
 
-```bash
-python setup.py install
-```
+# read frames using ase
+frames = ase.io.read("structures.xyz", ":")
 
-If you make changes, please make sure to add tests in `tests`; and run existing
-tests with `tox`:
+# add additional properties to display
+properties = {
+    "<property name>": [3, 4, 2, 8, 9, 10],
+}
 
-```bash
-pip install tox
-
-tox
+chemiscope.show(frames=frames, properties=properties)
 ```
