@@ -91,7 +91,7 @@
         </header>
 
         <div class="container">
-            <div class="alert alert-danger" role="alert" id="error-display" style="display: none">
+            <div class="alert alert-danger pop-on-top" role="alert" id="error-display" style="display: none">
                 <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -102,12 +102,13 @@
                 </details>
             </div>
 
-            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none">
+            <div class="alert alert-warning pop-on-top" role="alert" id="warning-display" style="display: none">
                 <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
+            <div style="padding: 0.5rem 1.25rem">&nbsp;</div>
 
             <div id="loading">
                 <i class="fa fa-spinner fa-spin"></i>

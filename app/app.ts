@@ -19,20 +19,6 @@ interface Configuration {
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
 
-function cleanOutdatedMessages() {
-    const displayWarning = getByID('warning-display');
-    displayWarning.style.display = 'none';
-    displayWarning.getElementsByTagName('p')[0].innerText = '';
-
-    const displayError = document.getElementById('error-display');
-    if (displayError != null) {
-        displayError.style.display = 'none';
-        displayError.getElementsByTagName('p')[0].innerText = '';
-        const stacktrace = displayError.getElementsByTagName('details')[0];
-        stacktrace.getElementsByTagName('p')[0].innerText = '';
-    }
-}
-
 export class ChemiscopeApp {
     /// Instance of the chemiscope visualizer
     private visualizer?: DefaultVisualizer;
@@ -59,7 +45,7 @@ export class ChemiscopeApp {
 
         // setup the main HTML
         const root = getByID(id);
-        root.innerHTML = `<main class="container-fluid">
+        root.innerHTML = `<div class="container-fluid">
             <div class="row">
                 <div class="col-md-7" style="padding: 0">
                     <div class="embed-responsive embed-responsive-1by1">
@@ -81,7 +67,7 @@ export class ChemiscopeApp {
                     </div>
                 </div>
             </div>
-        </main>`;
+        </div>`;
 
         this._setupLoadSaveMenu();
 
@@ -131,7 +117,10 @@ export class ChemiscopeApp {
      */
 
     public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
-        cleanOutdatedMessages();
+        // hide any error coming from the previous dataset loading
+        const errors = getByID('error-display');
+        errors.style.display = 'none';
+
         const config = {
             map: 'chemiscope-map',
             info: 'chemiscope-info',
@@ -275,8 +264,13 @@ export class ChemiscopeApp {
 
 function displayWarning(message: string) {
     const display = getByID('warning-display');
-    display.style.display = 'block';
     display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'block';
+
+    // automatically remove the warning after 4s
+    setTimeout(() => {
+        display.style.display = 'none';
+    }, 4000);
 }
 
 function startLoading() {
