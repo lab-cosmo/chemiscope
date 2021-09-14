@@ -96,6 +96,14 @@ main .embed-responsive-item {
     cursor: pointer;
 }
 
+.pop-on-top {
+    z-index: 100;
+    position: absolute;
+    width: 80%;
+    left: 50%;
+    margin-left: -40%;
+}
+
 #chemiscope-meta {
     position: absolute;
     top: 0;
