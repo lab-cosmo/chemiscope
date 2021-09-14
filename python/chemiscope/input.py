@@ -25,7 +25,7 @@ def _expand_properties(properties, n_structures, n_atoms):
     .. code-block:: python
 
         properties = {
-            'aple': {
+            'apple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 'unit': 'random / fs',
@@ -87,7 +87,9 @@ def _expand_properties(properties, n_structures, n_atoms):
     return properties
 
 
-def create_input(frames, meta=None, properties=None, cutoff=None, composition=False):
+def create_input(
+    frames=None, meta=None, properties=None, cutoff=None, composition=False
+):
     """
     Create a dictionary that can be saved to JSON using the format used by
     the default chemiscope visualizer.
@@ -188,9 +190,28 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
     if "name" not in data["meta"] or not data["meta"]["name"]:
         data["meta"]["name"] = "<unknown>"
 
-    data["structures"] = frames_to_json(frames)
-    n_structures = len(data["structures"])
-    n_atoms = sum(s["size"] for s in data["structures"])
+    data["structures"] = []
+    if frames is not None:
+        data["structures"] = frames_to_json(frames)
+        n_structures = len(data["structures"])
+        n_atoms = sum(s["size"] for s in data["structures"])
+    else:
+        # if frames are not given, we create a dataset with only properties.
+        # then, all properties should be structure properties
+        for name, value in properties.items():
+            if not isinstance(value, dict):
+                properties[name] = {"values": value, "target": "structure"}
+                n_structures = len(value)
+                n_atoms = len(value)
+            else:
+                if properties["target"] != "structure":
+                    raise ValueError(
+                        f"Property '{name}' has a non-structure target, "
+                        " which is not allowed if frames are not provided"
+                    )
+                else:
+                    n_structures = len(properties["values"])
+                    n_atoms = n_structures
 
     data["properties"] = {}
     if properties is not None:
@@ -200,31 +221,32 @@ def create_input(frames, meta=None, properties=None, cutoff=None, composition=Fa
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
     # Read properties coming from the frames
-    for name, value in atom_properties(frames, composition).items():
-        _validate_property(name, value)
-        for name, value in _linearize(name, value, n_structures, n_atoms).items():
-            if name in data["properties"]:
-                warnings.warn(
-                    f"ignoring the '{name}' atom property coming from the "
-                    "structures since it is already part of the properties"
-                )
-                continue
+    if frames is not None:
+        for name, value in atom_properties(frames, composition).items():
+            _validate_property(name, value)
+            for name, value in _linearize(name, value, n_structures, n_atoms).items():
+                if name in data["properties"]:
+                    warnings.warn(
+                        f"ignoring the '{name}' atom property coming from the "
+                        "structures since it is already part of the properties"
+                    )
+                    continue
 
-            data["properties"][name] = value
+                data["properties"][name] = value
 
-    for name, value in structure_properties(frames, composition).items():
-        _validate_property(name, value)
-        for name, value in _linearize(name, value, n_structures, n_atoms).items():
-            if name in data["properties"]:
-                warnings.warn(
-                    f"ignoring the '{name}' structure property coming from the "
-                    "structures since it is already part of the properties"
-                )
-                continue
+        for name, value in structure_properties(frames, composition).items():
+            _validate_property(name, value)
+            for name, value in _linearize(name, value, n_structures, n_atoms).items():
+                if name in data["properties"]:
+                    warnings.warn(
+                        f"ignoring the '{name}' structure property coming from the "
+                        "structures since it is already part of the properties"
+                    )
+                    continue
 
-            data["properties"][name] = value
+                data["properties"][name] = value
 
-    if cutoff is not None:
+    if frames is not None and cutoff is not None:
         data["environments"] = _generate_environments(frames, cutoff)
 
     return data

@@ -422,19 +422,12 @@ class StructureVisualizer {
     public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
-    // Stores raw input input so we can give it back later
-    private _dataset: Dataset;
-    // Keep the list of pinned environments around to be able to apply settings
-    private _pinned: GUID[];
 
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: StructureConfig, dataset: Dataset) {
-        // validateConfig(config as unknown as JsObject); // validate for the momentdon't
+        // validateConfig(config as unknown as JsObject); // don't validate for the momentdon't
         validateDataset(dataset as unknown as JsObject);
-
-        this._dataset = dataset;
-        this._pinned = [];
 
         const mode = dataset.environments === undefined ? 'structure' : 'atom';
         this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
@@ -462,16 +455,8 @@ class StructureVisualizer {
             this.info.show(indexes);
         };
 
-        this.structure.onremove = (guid) => {
-            // remove the guid from this._pinned
-            const index = this._pinned.indexOf(guid);
-            assert(index > -1);
-            this._pinned.splice(index, 1);
-        };
-
         this.structure.oncreate = (guid, color, indexes) => {
             this.info.show(indexes);
-            this._pinned.push(guid);
         };
 
         // information table & slider setup
@@ -489,16 +474,8 @@ class StructureVisualizer {
             initial = this._indexer.from_environment(config.settings.pinned[0]);
         }
 
-        const firstGUID = this.structure.active;
-        this._pinned.push(firstGUID);
         this.structure.show(initial);
         this.info.show(initial);
-
-        // setup additional pinned values from the settings if needed
-        if (config.settings !== undefined) {
-            delete config.settings.map;
-            this.applySettings(config.settings);
-        }
     }
 
     /**
@@ -509,93 +486,102 @@ class StructureVisualizer {
         this.info.remove();
         this.structure.remove();
     }
+}
 
+/**
+ * Configuration for the [[StructureVisualizer]]
+ */
+export interface MapConfig {
+    /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
+    map: string | HTMLElement;
+    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    info: string | HTMLElement;
+    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    meta: string | HTMLElement;
+    /** Settings for the map & structure viewer */
+    settings?: Partial<Settings>;
+}
+
+/**
+ * A map-only visualizer state of chemiscope
+ */
+class MapVisualizer {
     /**
-     * Get the current values of settings for all panels in the visualizer
+     * Load a dataset and create a visualizer.
      *
-     * @return the viewers settings, suitable to be used with [[applySettings]]
+     * This function returns a `Promise<MapVisualizer>` to prevent blocking
+     * the browser while everything is loading.
+     *
+     * @param  config  configuration of the visualizer
+     * @param  dataset visualizer input, containing a dataset and optional visualization settings
+     * @return         Promise that resolves to a [[MapVisualizer]]
      */
-    public saveSettings(): Partial<Settings> {
-        return {
-            pinned: this.structure.pinned().map((value) => value.environment),
-            structure: this.structure.saveSettings(),
-        };
+    public static load(config: MapConfig, dataset: Dataset): Promise<MapVisualizer> {
+        return new Promise((resolve) => {
+            const visualizer = new MapVisualizer(config, dataset);
+            resolve(visualizer);
+        });
     }
 
-    /**
-     * Apply the given settings to all panels in the visualizer
-     *
-     * @param settings settings for all panels
-     */
-    public applySettings(settings: Partial<Settings>): void {
-        validateSettings(settings);
+    public info: EnvironmentInfo;
+    public map: PropertiesMap;
+    public meta: MetadataPanel;
 
-        if (settings.pinned !== undefined) {
-            // remove all viewers except from the first one and start fresh
-            for (const guid of this._pinned.slice(1)) {
-                this.structure.removeViewer(guid);
-            }
-            this._pinned = [this._pinned[0]];
+    private _indexer: EnvironmentIndexer;
 
-            // Change the first viewer/marker
-            assert(settings.pinned.length > 0);
-            const indexes = this._indexer.from_environment(settings.pinned[0]);
+    // the constructor is private because the main entry point is the static
+    // `load` function
+    private constructor(config: MapConfig, dataset: Dataset) {
+        // validateConfig(config as unknown as JsObject); don't validate for now
+        validateDataset(dataset as unknown as JsObject);
+
+        const mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+
+        this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        // map setup
+        this.map = new PropertiesMap(
+            { element: config.map, settings: getMapSettings(config.settings) },
+            this._indexer,
+            dataset.properties
+        );
+
+        this.map.onselect = (indexes) => {
             this.info.show(indexes);
-            this.structure.show(indexes);
+        };
 
-            // Create additional viewers as needed
-            for (const environment of settings.pinned.slice(1)) {
-                const [guid, color] = this.structure.addViewer();
-                if (guid === undefined) {
-                    throw Error("too many environments in 'pinned' setting");
-                }
-                const indexes = this._indexer.from_environment(environment);
+        this.map.activeChanged = (guid, indexes) => {
+            this.info.show(indexes);
+        };
 
-                this._pinned.push(guid);
-                this.info.show(indexes);
-                this.structure.setActive(guid);
-                this.structure.show(indexes);
-            }
+        // information table & slider setup
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info.onchange = (indexes) => {
+            this.map.select(indexes);
+        };
+
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        if (config.settings && config.settings.pinned) {
+            initial = this._indexer.from_environment(config.settings.pinned[0]);
         }
 
-        if (settings.structure !== undefined) {
-            this.structure.applySettings(settings.structure);
-        }
+        this.map.addMarker('map-0' as GUID, 'red', initial);
+        this.info.show(initial);
     }
 
     /**
-     * Get the dataset used to create the current visualization
-     *
-     * If the dataset is using user-specified structures and a loading callback
-     * [[DefaultConfig.loadStructure]]; you can request all structure to be fully
-     * resolved and placed inside the dataset.
-     *
-     * @param  getStructures should all [[UserStructure]] resolved and placed
-     *                       inside the dataset?
-     * @return the dataset currently visualized
+     * Removes all the chemiscope widgets from the DOM
      */
-    public dataset(getStructures: boolean = false): Dataset {
-        // preserve NaN values in the copy
-        const copy = JSON.parse(
-            JSON.stringify(this._dataset, (_, value) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            (_, value) => (value === '***NaN***' ? NaN : value)
-        ) as Dataset;
-
-        if (getStructures) {
-            copy.structures = [] as Structure[];
-            for (let i = 0; i < this._dataset.structures.length; i++) {
-                copy.structures.push(this.structure.loadStructure(i, this._dataset.structures[i]));
-            }
-        }
-        return copy;
+    public remove(): void {
+        this.meta.remove();
+        this.info.remove();
+        this.map.remove();
     }
 }
 
 declare const CHEMISCOPE_GIT_VERSION: string;
+/** Get the version of chemiscope as a string */
 function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
@@ -630,4 +616,5 @@ export {
     EnvironmentIndexer,
     DefaultVisualizer,
     StructureVisualizer,
+    MapVisualizer,
 };

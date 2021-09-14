@@ -29,10 +29,19 @@ main.container-fluid {
     font-size: 1.5em;
 }
 
-#chemiscope-widget-container {
+#chemiscope-widget-twocol {
     display: grid;
     grid-template-columns: 59% 39%;
     grid-template-rows: 450px;
+    grid-column-gap: 0px;
+    justify-items: center;
+    overflow: hidden;
+}
+
+#chemiscope-widget-onecol {
+    display: grid;
+    grid-template-columns: 60%;
+    grid-template-rows: 500px;
     grid-column-gap: 0px;
     justify-items: center;
     overflow: hidden;
@@ -64,11 +73,18 @@ main.container-fluid {
 }
 
 #chemiscope-structure {
-    height: 84%;
+    height: 100%;
     width: 100%;
     display: block;
 }
 
+#chemiscope-widget-twocol #chemiscope-structure {
+    height: 84%;
+}
+
+#chemiscope-widget-onecol #chemiscope-structure {
+    height: 90%;
+}
 #chemiscope-info {
     display: block;
 }
