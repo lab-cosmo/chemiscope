@@ -35,12 +35,27 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         file.close()
 
 
-def show(frames, properties=None, meta=None, cutoff=None):
+@ipywidgets.register
+class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+    _view_name = Unicode("StructureView").tag(sync=True)
+    _view_module = Unicode("chemiscope-widget").tag(sync=True)
+
+    data = Unicode().tag(sync=True)
+
+    def __init__(self, data):
+        super().__init__()
+        self.data = json.dumps(data)
+
+
+def show(frames, properties=None, meta=None, cutoff=None, mode="default"):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
     (optionally ``meta`` and ``cutoff`` as well) using a embedded chemiscope
     visualizer inside a Jupyter notebook. These parameters have the same meaning
     as in the :py:func:`chemiscope.create_input` function.
+    The ``mode`` keyword also allows overriding the default two-panels visualization
+    to show only a structure panel or the map panel. These modes also make it possible
+    to view a dataset for which properties (or frames) are not available.
 
     When inside a jupyter notebook, the returned object will create a new
     chemiscope visualizer displaying the dataset. The returned object also have
@@ -77,10 +92,26 @@ def show(frames, properties=None, meta=None, cutoff=None):
     if meta is None:
         meta = {"name": " "}
 
-    dict_input = create_input(
-        frames=frames, properties=properties, meta=meta, cutoff=cutoff
-    )
-    return ChemiscopeWidget(dict_input)
+    if mode == "default":
+        dict_input = create_input(
+            frames=frames, properties=properties, meta=meta, cutoff=cutoff
+        )
+        return ChemiscopeWidget(dict_input)
+    elif mode == "structure":
+        if properties is None:
+            properties = {}
+        if "index" not in properties:
+            # also adds an index property to have something to show in the info panel
+            properties["index"] = list(range(len(frames)))
+
+        dict_input = create_input(
+            frames=frames, properties=properties, meta=meta, cutoff=cutoff
+        )
+        return StructureWidget(dict_input)
+    else:
+        raise ValueError(
+            f"invalid mode '{mode}' in chemiscope.show, expected one of 'default' or 'structure'"
+        )
 
 
 def _is_running_in_notebook():

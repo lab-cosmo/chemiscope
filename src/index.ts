@@ -34,7 +34,7 @@ require('./static/chemiscope.css');
 /**
  * Configuration for the [[DefaultVisualizer]]
  */
-export interface Config {
+export interface DefaultConfig {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string | HTMLElement;
     /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
@@ -58,7 +58,7 @@ export interface Settings {
 }
 
 /** @hidden
- * Check if `o` contains all the expected fields to be a [[Config]].
+ * Check if `o` contains all valid config the expected fields to be a [[DefaultConfig]].
  */
 function validateConfig(o: JsObject) {
     if (typeof o !== 'object') {
@@ -159,7 +159,7 @@ class DefaultVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
-    public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
+    public static load(config: DefaultConfig, dataset: Dataset): Promise<DefaultVisualizer> {
         return new Promise((resolve) => {
             const visualizer = new DefaultVisualizer(config, dataset);
             resolve(visualizer);
@@ -179,7 +179,7 @@ class DefaultVisualizer {
 
     // the constructor is private because the main entry point is the static
     // `load` function
-    private constructor(config: Config, dataset: Dataset) {
+    private constructor(config: DefaultConfig, dataset: Dataset) {
         validateConfig(config as unknown as JsObject);
         validateDataset(dataset as unknown as JsObject);
 
@@ -351,7 +351,223 @@ class DefaultVisualizer {
      * Get the dataset used to create the current visualization
      *
      * If the dataset is using user-specified structures and a loading callback
-     * [[Config.loadStructure]]; you can request all structure to be fully
+     * [[DefaultConfig.loadStructure]]; you can request all structure to be fully
+     * resolved and placed inside the dataset.
+     *
+     * @param  getStructures should all [[UserStructure]] resolved and placed
+     *                       inside the dataset?
+     * @return the dataset currently visualized
+     */
+    public dataset(getStructures: boolean = false): Dataset {
+        // preserve NaN values in the copy
+        const copy = JSON.parse(
+            JSON.stringify(this._dataset, (_, value) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            (_, value) => (value === '***NaN***' ? NaN : value)
+        ) as Dataset;
+
+        if (getStructures) {
+            copy.structures = [] as Structure[];
+            for (let i = 0; i < this._dataset.structures.length; i++) {
+                copy.structures.push(this.structure.loadStructure(i, this._dataset.structures[i]));
+            }
+        }
+        return copy;
+    }
+}
+
+/**
+ * Configuration for the [[StructureVisualizer]]
+ */
+export interface StructureConfig {
+    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    meta: string | HTMLElement;
+    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    info: string | HTMLElement;
+    /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
+    structure: string | HTMLElement;
+    /** Settings for the map & structure viewer */
+    settings?: Partial<Settings>;
+    /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
+    loadStructure?: (index: number, structure: unknown) => Structure;
+}
+
+/**
+ * A structure-only chemiscope visualizer: two panels (map,
+ * info) updating one another when the user interact with any of them.
+ */
+class StructureVisualizer {
+    /**
+     * Load a dataset and create a visualizer.
+     *
+     * This function returns a `Promise<StructureVisualizer>` to prevent blocking
+     * the browser while everything is loading.
+     *
+     * @param  config  configuration of the visualizer
+     * @param  dataset visualizer input, containing a dataset and optional visualization settings
+     * @return         Promise that resolves to a [[StructureVisualizer]]
+     */
+    public static load(config: StructureConfig, dataset: Dataset): Promise<StructureVisualizer> {
+        return new Promise((resolve) => {
+            const visualizer = new StructureVisualizer(config, dataset);
+            resolve(visualizer);
+        });
+    }
+
+    public info: EnvironmentInfo;
+    public meta: MetadataPanel;
+    public structure: ViewersGrid;
+
+    private _indexer: EnvironmentIndexer;
+    // Stores raw input input so we can give it back later
+    private _dataset: Dataset;
+    // Keep the list of pinned environments around to be able to apply settings
+    private _pinned: GUID[];
+
+    // the constructor is private because the main entry point is the static
+    // `load` function
+    private constructor(config: StructureConfig, dataset: Dataset) {
+        // validateConfig(config as unknown as JsObject); // validate for the momentdon't
+        validateDataset(dataset as unknown as JsObject);
+
+        this._dataset = dataset;
+        this._pinned = [];
+
+        const mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+
+        this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        // Structure viewer setup
+        this.structure = new ViewersGrid(
+            config.structure,
+            this._indexer,
+            dataset.structures,
+            dataset.environments,
+            1 // hardcoded single panel
+        );
+
+        if (config.loadStructure !== undefined) {
+            this.structure.loadStructure = config.loadStructure;
+        }
+
+        this.structure.activeChanged = (guid, indexes) => {
+            this.info.show(indexes);
+        };
+
+        this.structure.onselect = (indexes) => {
+            this.info.show(indexes);
+        };
+
+        this.structure.onremove = (guid) => {
+            // remove the guid from this._pinned
+            const index = this._pinned.indexOf(guid);
+            assert(index > -1);
+            this._pinned.splice(index, 1);
+        };
+
+        this.structure.oncreate = (guid, color, indexes) => {
+            this.info.show(indexes);
+            this._pinned.push(guid);
+        };
+
+        // information table & slider setup
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info.onchange = (indexes) => {
+            this.structure.show(indexes);
+        };
+
+        this.structure.delayChanged = (delay) => {
+            this.info.playbackDelay = delay;
+        };
+
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        if (config.settings && config.settings.pinned) {
+            initial = this._indexer.from_environment(config.settings.pinned[0]);
+        }
+
+        const firstGUID = this.structure.active;
+        this._pinned.push(firstGUID);
+        this.structure.show(initial);
+        this.info.show(initial);
+
+        // setup additional pinned values from the settings if needed
+        if (config.settings !== undefined) {
+            delete config.settings.map;
+            this.applySettings(config.settings);
+        }
+    }
+
+    /**
+     * Removes all the chemiscope widgets from the DOM
+     */
+    public remove(): void {
+        this.meta.remove();
+        this.info.remove();
+        this.structure.remove();
+    }
+
+    /**
+     * Get the current values of settings for all panels in the visualizer
+     *
+     * @return the viewers settings, suitable to be used with [[applySettings]]
+     */
+    public saveSettings(): Partial<Settings> {
+        return {
+            pinned: this.structure.pinned().map((value) => value.environment),
+            structure: this.structure.saveSettings(),
+        };
+    }
+
+    /**
+     * Apply the given settings to all panels in the visualizer
+     *
+     * @param settings settings for all panels
+     */
+    public applySettings(settings: Partial<Settings>): void {
+        validateSettings(settings);
+
+        if (settings.pinned !== undefined) {
+            // remove all viewers except from the first one and start fresh
+            for (const guid of this._pinned.slice(1)) {
+                this.structure.removeViewer(guid);
+            }
+            this._pinned = [this._pinned[0]];
+
+            // Change the first viewer/marker
+            assert(settings.pinned.length > 0);
+            const indexes = this._indexer.from_environment(settings.pinned[0]);
+            this.info.show(indexes);
+            this.structure.show(indexes);
+
+            // Create additional viewers as needed
+            for (const environment of settings.pinned.slice(1)) {
+                const [guid, color] = this.structure.addViewer();
+                if (guid === undefined) {
+                    throw Error("too many environments in 'pinned' setting");
+                }
+                const indexes = this._indexer.from_environment(environment);
+
+                this._pinned.push(guid);
+                this.info.show(indexes);
+                this.structure.setActive(guid);
+                this.structure.show(indexes);
+            }
+        }
+
+        if (settings.structure !== undefined) {
+            this.structure.applySettings(settings.structure);
+        }
+    }
+
+    /**
+     * Get the dataset used to create the current visualization
+     *
+     * If the dataset is using user-specified structures and a loading callback
+     * [[DefaultConfig.loadStructure]]; you can request all structure to be fully
      * resolved and placed inside the dataset.
      *
      * @param  getStructures should all [[UserStructure]] resolved and placed
@@ -413,4 +629,5 @@ export {
     EnvironmentInfo,
     EnvironmentIndexer,
     DefaultVisualizer,
+    StructureVisualizer,
 };
