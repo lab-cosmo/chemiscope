@@ -596,8 +596,11 @@ export class PropertiesMap {
                 const values = this._colors(0)[0] as number[];
                 const { min, max } = arrayMaxMin(values);
 
-                this._options.color.min.value = min;
+                // We have to set max first and min second here to avoid sending
+                // a spurious warning in `colorRangeChange` below in case the
+                // new min is bigger than the old max.
                 this._options.color.max.value = max;
+                this._options.color.min.value = min;
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
