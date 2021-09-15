@@ -47,16 +47,8 @@ interface Info {
 export class EnvironmentInfo {
     /** Callback used when the user changes one of the sliders value */
     public onchange: (indexes: Indexes) => void;
-    /**
-     * Callback fired when the use click the play button of the structure slider.
-     * The `advance` callback indicate whether to continue playback or not.
-     */
-    public startStructurePlayback: (advance: () => boolean) => void;
-    /**
-     * Callback fired when the use click the play button of the atom slider.
-     * The `advance` callback indicate whether to continue playback or not.
-     */
-    public startAtomPlayback: (advance: () => boolean) => void;
+    /** delay in ms between "frames" during playback over structures/atoms */
+    public playbackDelay: number;
 
     private _root: HTMLElement;
     private _atom?: Info;
@@ -81,8 +73,8 @@ export class EnvironmentInfo {
 
         this._indexer = indexer;
         this.onchange = () => {};
-        this.startStructurePlayback = () => {};
-        this.startAtomPlayback = () => {};
+        // 700 ms between steps is a good default
+        this.playbackDelay = 700;
 
         const structureId = `chsp-${generateGUID()}`;
         const atomId = `chsp-${generateGUID()}`;
@@ -111,7 +103,7 @@ export class EnvironmentInfo {
                 aria-controls='${structureId}'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                 structure <input class='chsp-info-number' type=number value=1 min=1></input>
-                    
+
             </div>
             ${atomButton}
         </div>`;
@@ -170,7 +162,19 @@ export class EnvironmentInfo {
         assert(tableRoot.tagName.toLowerCase() === 'div');
         const table = new Table(tableRoot, 'structure', id, properties);
 
-        slider.startPlayback = (advance) => this.startStructurePlayback(advance);
+        slider.startPlayback = (advance) => {
+            setTimeout(() => {
+                if (advance()) {
+                    const current = this._indexes();
+                    const structure = (current.structure + 1) % this._indexer.structuresCount();
+                    const indexes = this._indexer.from_structure_atom(structure, 0);
+                    this.show(indexes);
+                    this.onchange(indexes);
+                    // continue playing until the advance callback returns false
+                    slider.startPlayback(advance);
+                }
+            }, this.playbackDelay);
+        };
         slider.onchange = () => {
             if (this._atom !== undefined) {
                 const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
@@ -228,7 +232,22 @@ export class EnvironmentInfo {
         const slider = new Slider(this._root, 'atom');
         const n_atoms = this._indexer.atomsCount(this._structure.slider.value());
         slider.reset(n_atoms - 1);
-        slider.startPlayback = (advance) => this.startAtomPlayback(advance);
+        slider.startPlayback = (advance) => {
+            setTimeout(() => {
+                if (advance()) {
+                    const current = this._indexes();
+                    assert(current.atom !== undefined);
+                    const structure = current.structure;
+                    const atom = (current.atom + 1) % this._indexer.atomsCount(structure);
+                    const indexes = this._indexer.from_structure_atom(structure, atom);
+                    this.show(indexes);
+                    this.onchange(indexes);
+                    // continue playing until the advance callback returns false
+                    slider.startPlayback(advance);
+                }
+            }, this.playbackDelay);
+        };
+
         slider.onchange = () => {
             assert(this._atom !== undefined);
             const indexes = this._indexes();

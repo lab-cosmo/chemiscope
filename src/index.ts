@@ -252,8 +252,10 @@ class DefaultVisualizer {
             this.map.select(indexes);
             this.structure.show(indexes);
         };
-        this.info.startStructurePlayback = (advance) => this.structure.structurePlayback(advance);
-        this.info.startAtomPlayback = (advance) => this.structure.atomPlayback(advance);
+
+        this.structure.delayChanged = (delay) => {
+            this.info.playbackDelay = delay;
+        };
 
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
         if (config.settings && config.settings.pinned) {

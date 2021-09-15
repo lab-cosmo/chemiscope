@@ -52,9 +52,14 @@ function groupByStructure(
 }
 
 interface WidgetGridData {
+    /// the viewer itself
     widget: MoleculeViewer;
+    /// color associated with this viewer
     color: string;
+    /// set of indexes currently displayed in this viewer
     current: Indexes;
+    /// Playback delay setting for this viewer
+    playbackDelay: HTMLInputElement;
 }
 
 /**
@@ -81,6 +86,12 @@ export class ViewersGrid {
      * @param indexes environment showed in the new active viewer
      */
     public activeChanged: (guid: GUID, indexes: Indexes) => void;
+    /**
+     * Callback fired when the playback delay for structure/atom playback changed
+     *
+     * @param delay the new delay value
+     */
+    public delayChanged: (delay: number) => void;
 
     /**
      * Callback used when a new structure should be loaded
@@ -97,8 +108,6 @@ export class ViewersGrid {
 
     /// Root element containing the full viewer grid
     private _root: HTMLElement;
-    /// Playback delay setting
-    private _delay: HTMLInputElement;
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
     /// Cached string representation of structures
@@ -160,6 +169,7 @@ export class ViewersGrid {
         this.onremove = () => {};
         this.oncreate = () => {};
         this.activeChanged = () => {};
+        this.delayChanged = () => {};
 
         if (maxViewers > 9) {
             throw Error('chemiscope only supports up to 9 structure viewers in the grid');
@@ -177,12 +187,6 @@ export class ViewersGrid {
 
         this._active = getFirstKey(this._viewers);
         this.setActive(this._active);
-
-        const data = this._viewers.get(this.active);
-        assert(data !== undefined);
-
-        // get the 'delay' setting inside the current widget setting
-        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
     }
 
     /**
@@ -265,50 +269,6 @@ export class ViewersGrid {
     }
 
     /**
-     * Start playing the trajectory of structures in this dataset, until
-     * `advance` returns false
-     */
-    public structurePlayback(advance: () => boolean): void {
-        setTimeout(() => {
-            if (advance()) {
-                const widgetData = this._viewers.get(this._active);
-                assert(widgetData !== undefined);
-
-                const current = widgetData.current;
-                const structure = (current.structure + 1) % this._indexer.structuresCount();
-                const indexes = this._indexer.from_structure_atom(structure, 0);
-                this.show(indexes);
-                this.onselect(indexes);
-                // continue playing until the advance callback returns false
-                this.structurePlayback(advance);
-            }
-        }, parseFloat(this._delay.value) * 100);
-    }
-
-    /**
-     * Start playing the 'trajectory' of atoms in the current structure, until
-     * `advance` returns false
-     */
-    public atomPlayback(advance: () => boolean): void {
-        setTimeout(() => {
-            if (advance()) {
-                const widgetData = this._viewers.get(this._active);
-                assert(widgetData !== undefined);
-
-                const current = widgetData.current;
-                assert(current.atom !== undefined);
-                const structure = current.structure;
-                const atom = (current.atom + 1) % this._indexer.atomsCount(structure);
-                const indexes = this._indexer.from_structure_atom(structure, atom);
-                this.show(indexes);
-                this.onselect(indexes);
-                // continue playing until the advance callback returns false
-                this.atomPlayback(advance);
-            }
-        }, parseFloat(this._delay.value) * 100);
-    }
-
-    /**
      * Remove all HTML added by this [[ViewersGrid]] in the current document
      */
     public remove(): void {
@@ -325,10 +285,9 @@ export class ViewersGrid {
      * Function to set the active widget for communicating with the map
      */
     public setActive(guid: GUID): void {
-        const changeClasses = (toggle: boolean) => {
-            assert(this._viewers.has(this._active));
+        const changeClasses = (guid: string, toggle: boolean) => {
             // change tooltip text in the active marker
-            const button = getByID(`chsp-activate-${this._active}`, this._root);
+            const button = getByID(`chsp-activate-${guid}`, this._root);
             button.classList.toggle('chsp-active-structure', toggle);
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
@@ -336,17 +295,28 @@ export class ViewersGrid {
             tooltip.innerHTML = toggle ? 'Active viewer' : 'Choose as active';
 
             // change style of the cell border
-            const cell = getByID(`gi-${this._active}`, this._root);
+            const cell = getByID(`gi-${guid}`, this._root);
             cell.classList.toggle('chsp-structure-viewer-cell-active', toggle);
         };
 
-        // remove active classes from the previous active
-        changeClasses(false);
+        const current = this._viewers.get(this._active);
+        assert(current !== undefined);
+        current.playbackDelay.onchange = () => {};
+
+        // remove active classes from the previous active viewer
+        changeClasses(this._active, false);
 
         this._active = guid;
-        changeClasses(true);
 
-        this._delay = getByID<HTMLInputElement>(`chsp-${this._active}-playback-delay`);
+        const newViewer = this._viewers.get(this._active);
+        assert(newViewer !== undefined);
+        newViewer.playbackDelay.onchange = () => {
+            this.delayChanged(parseFloat(newViewer.playbackDelay.value) * 100);
+        };
+        // set the right initial value for playback delay
+        this.delayChanged(parseFloat(newViewer.playbackDelay.value) * 100);
+
+        changeClasses(this._active, true);
     }
 
     /**
@@ -690,10 +660,15 @@ export class ViewersGrid {
                 };
 
                 const current = { atom: undefined, structure: -1, environment: -1 };
+
+                // get the 'delay' setting inside the current widget setting
+                const playbackDelay = getByID<HTMLInputElement>(`chsp-${cellGUID}-playback-delay`);
+
                 this._viewers.set(cellGUID, {
                     color: color,
                     current: current,
                     widget: widget,
+                    playbackDelay: playbackDelay,
                 });
 
                 if (this._positionSettingsModal !== undefined) {
