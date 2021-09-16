@@ -31,7 +31,11 @@ const DEFAULT_LAYOUT = {
             len: 1,
             thickness: 20,
             title: {
-                text: '' as undefined | string,
+                text: '',
+                side: 'right',
+                font: {
+                    size: 15,
+                },
             },
             y: 0,
             yanchor: 'bottom',
@@ -592,8 +596,11 @@ export class PropertiesMap {
                 const values = this._colors(0)[0] as number[];
                 const { min, max } = arrayMaxMin(values);
 
-                this._options.color.min.value = min;
+                // We have to set max first and min second here to avoid sending
+                // a spurious warning in `colorRangeChange` below in case the
+                // new min is bigger than the old max.
                 this._options.color.max.value = max;
+                this._options.color.min.value = min;
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
@@ -937,7 +944,7 @@ export class PropertiesMap {
         if (name !== '') {
             const units = this._property(name).units;
             if (units !== undefined) {
-                return name + `/${units}`;
+                return name + ` / ${units}`;
             }
         }
         return name;
@@ -1077,7 +1084,8 @@ export class PropertiesMap {
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
         const LEGEND_ITEM_HEIGH = 0.045;
-        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount();
+        const PADDING = 0.025;
+        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount() - PADDING;
     }
 
     /** Is the the current plot a 3D plot? */
