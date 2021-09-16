@@ -149,6 +149,8 @@ export class MoleculeViewer {
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
+    /// Options related to the trajectory
+    private _trajectoryOptions: HTMLElement;
 
     /// Dynamic CSS used to hide options as needed
     private _styles: {
@@ -217,6 +219,7 @@ export class MoleculeViewer {
         );
 
         this._connectOptions();
+        this._trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
 
         this._styles = {
             noCell: createStyleSheet([
@@ -320,11 +323,10 @@ export class MoleculeViewer {
         }
         this._showSupercellInfo();
 
-        const trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
         if (options.trajectory === undefined || !options.trajectory) {
-            trajectoryOptions.style.display = 'none';
+            this._trajectoryOptions.style.display = 'none';
         } else {
-            trajectoryOptions.style.display = 'block';
+            this._trajectoryOptions.style.display = 'block';
         }
 
         if (this._options.unitCell.value && this._current !== undefined) {
