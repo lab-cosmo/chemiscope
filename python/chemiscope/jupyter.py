@@ -2,7 +2,7 @@
 import json
 import gzip
 import ipywidgets
-from traitlets import Unicode
+from traitlets import Unicode, Bool
 
 from .input import create_input
 
@@ -13,10 +13,12 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
 
-    def __init__(self, data):
+    def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
+        self.has_metadata = has_metadata
 
     def save(self, path):
         """
@@ -41,10 +43,12 @@ class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
 
-    def __init__(self, data):
+    def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
+        self.has_metadata = has_metadata
 
 
 @ipywidgets.register
@@ -53,10 +57,12 @@ class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
 
-    def __init__(self, data):
+    def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
+        self.has_metadata = has_metadata
 
 
 def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
@@ -103,7 +109,8 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
     if not _is_running_in_notebook():
         raise Exception("chemiscope.show only works inside a jupyter notebook")
 
-    if meta is None:
+    has_metadata = meta is not None
+    if not has_metadata:
         meta = {"name": " "}
 
     if mode == "default":
@@ -135,7 +142,8 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
     dict_input = create_input(
         frames=frames, properties=properties, meta=meta, cutoff=cutoff
     )
-    return widget_class(dict_input)
+
+    return widget_class(dict_input, has_metadata=has_metadata)
 
 
 def _is_running_in_notebook():

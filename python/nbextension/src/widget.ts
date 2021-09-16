@@ -71,6 +71,10 @@ export class ChemiscopeView extends DOMWidgetView {
         void DefaultVisualizer.load(config, data).then((visualizer) => {
             this.visualizer = visualizer;
         });
+
+        if (!this.model.get('has_metadata')) {
+            getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
+        }
     }
 
     public remove(): unknown {
@@ -132,6 +136,10 @@ export class StructureView extends DOMWidgetView {
         void StructureVisualizer.load(config, data).then((visualizer) => {
             this.visualizer = visualizer;
         });
+
+        if (!this.model.get('has_metadata')) {
+            getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
+        }
     }
 
     public remove(): unknown {
@@ -200,6 +208,10 @@ export class MapView extends DOMWidgetView {
         void MapVisualizer.load(config, data).then((visualizer) => {
             this.visualizer = visualizer;
         });
+
+        if (!this.model.get('has_metadata')) {
+            getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
+        }
     }
 
     public remove(): unknown {
