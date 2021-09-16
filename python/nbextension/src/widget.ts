@@ -1,5 +1,5 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
-import { addWarningHandler, getByID } from '../../../src/utils';
+import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -9,14 +9,17 @@ import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../
 import { Dataset } from '../../../src/dataset';
 
 /**
- * The [[ChemiscopeView]] class renders the Chemiscope App as a widget
- * in the Jupyter Notebook output window when instantiated from
- * the Chemiscope Python package.
+ * The [[ChemiscopeView]] class renders the Chemiscope App as a widget in the
+ * Jupyter Notebook output window when instantiated from the Chemiscope Python
+ * package.
  */
 export class ChemiscopeView extends DOMWidgetView {
     private visualizer?: DefaultVisualizer;
+    private guid!: string;
 
     public render(): void {
+        this.guid = `chsp-${generateGUID()}`;
+
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
@@ -28,40 +31,39 @@ export class ChemiscopeView extends DOMWidgetView {
             window.dispatchEvent(new Event('resize'));
         });
 
-        // handle warnings
         addWarningHandler((message) => {
-            const display = getByID('warning-display', element);
+            const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
         });
 
         element.innerHTML = `
         <div class="chemiscope-bootstrap">
-            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none">
-                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
+            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
 
-            <div id="chemiscope-widget-twocol">
-              <div id="chemiscope-meta-and-map">
-                <div id="chemiscope-meta"></div>
-                <div id="chemiscope-map" ></div>
-              </div>
-              <div id="chemiscope-structure-and-info">
-                <div id="chemiscope-structure"></div>
-                <div id="chemiscope-info"></div>
-              </div>
+            <div class="chemiscope-widget-two-col">
+                <div class="chemiscope-meta-and-map">
+                    <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
+                    <div class="chemiscope-map" id="${this.guid}-chemiscope-map"></div>
+                </div>
+                <div class="chemiscope-structure-and-info">
+                    <div class="chemiscope-structure" id="${this.guid}-chemiscope-structure"></div>
+                    <div class="chemiscope-info" id="${this.guid}-chemiscope-info"></div>
+                </div>
+                </div>
             </div>
-          </div>
         </div>`;
 
         const config = {
-            map: element.querySelector('#chemiscope-map') as HTMLElement,
-            info: element.querySelector('#chemiscope-info') as HTMLElement,
-            meta: element.querySelector('#chemiscope-meta') as HTMLElement,
-            structure: element.querySelector('#chemiscope-structure') as HTMLElement,
+            meta: getByID(`${this.guid}-chemiscope-meta`, element),
+            map: getByID(`${this.guid}-chemiscope-map`, element),
+            structure: getByID(`${this.guid}-chemiscope-structure`, element),
+            info: getByID(`${this.guid}-chemiscope-info`, element),
             maxStructureViewers: 4,
         };
 
@@ -81,48 +83,49 @@ export class ChemiscopeView extends DOMWidgetView {
 }
 
 /**
- * The [[StructureView]] class renders a structure-only widget
- * in the Jupyter Notebook output window when instantiated from
- * the Chemiscope Python package.
+ * The [[StructureView]] class renders a structure-only widget in the Jupyter
+ * Notebook output window when instantiated from the Chemiscope Python package.
  */
 export class StructureView extends DOMWidgetView {
     private visualizer?: StructureVisualizer;
+    private guid!: string;
 
     public render(): void {
+        this.guid = `chsp-${generateGUID()}`;
+
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        // handle warnings
         addWarningHandler((message) => {
-            const display = getByID('warning-display', element);
+            const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
         });
 
         element.innerHTML = `
         <div class="chemiscope-bootstrap">
-            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none">
-                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
+            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
 
-            <div id="chemiscope-widget-onecol">
-              <div id="chemiscope-structure-and-info">
-                <div id="chemiscope-meta"></div>
-                <div id="chemiscope-structure"></div>
-                <div id="chemiscope-info"></div>
-              </div>
+            <div class="chemiscope-widget-one-col">
+                <div class="chemiscope-structure-and-info">
+                    <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
+                    <div class="chemiscope-structure" id="${this.guid}-chemiscope-structure"></div>
+                    <div class="chemiscope-info" id="${this.guid}-chemiscope-info"></div>
+                </div>
+                </div>
             </div>
-          </div>
         </div>`;
 
         const config = {
-            info: element.querySelector('#chemiscope-info') as HTMLElement,
-            meta: element.querySelector('#chemiscope-meta') as HTMLElement,
-            structure: element.querySelector('#chemiscope-structure') as HTMLElement,
+            meta: getByID(`${this.guid}-chemiscope-meta`, element),
+            structure: getByID(`${this.guid}-chemiscope-structure`, element),
+            info: getByID(`${this.guid}-chemiscope-info`, element),
         };
 
         const data = JSON.parse(this.model.get('data')) as Dataset;
@@ -141,14 +144,16 @@ export class StructureView extends DOMWidgetView {
 }
 
 /**
- * The [[MapView]] class renders a map-only widget
- * in the Jupyter Notebook output window when instantiated from
- * the Chemiscope Python package.
+ * The [[MapView]] class renders a map-only widget in the Jupyter Notebook
+ * output window when instantiated from the Chemiscope Python package.
  */
 export class MapView extends DOMWidgetView {
     private visualizer?: MapVisualizer;
+    private guid!: string;
 
     public render(): void {
+        this.guid = `chsp-${generateGUID()}`;
+
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
@@ -160,36 +165,35 @@ export class MapView extends DOMWidgetView {
             window.dispatchEvent(new Event('resize'));
         });
 
-        // handle warnings
         addWarningHandler((message) => {
-            const display = getByID('warning-display', element);
+            const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
         });
 
         element.innerHTML = `
         <div class="chemiscope-bootstrap">
-            <div class="alert alert-warning" role="alert" id="warning-display" style="display: none">
-                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
+            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
 
-            <div id="chemiscope-widget-onecol">
-              <div id="chemiscope-meta-and-map">
-                <div id="chemiscope-meta"></div>
-                <div id="chemiscope-map" ></div>
-                <div id="chemiscope-info"></div>
-              </div>
+            <div class="chemiscope-widget-one-col">
+                <div class="chemiscope-meta-and-map">
+                    <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
+                    <div class="chemiscope-map" id="${this.guid}-chemiscope-map"></div>
+                    <div class="chemiscope-info" id="${this.guid}-chemiscope-info"></div>
+                </div>
+                </div>
             </div>
-          </div>
         </div>`;
 
         const config = {
-            map: element.querySelector('#chemiscope-map') as HTMLElement,
-            info: element.querySelector('#chemiscope-info') as HTMLElement,
-            meta: element.querySelector('#chemiscope-meta') as HTMLElement,
+            meta: getByID(`${this.guid}-chemiscope-meta`, element),
+            map: getByID(`${this.guid}-chemiscope-map`, element),
+            info: getByID(`${this.guid}-chemiscope-info`, element),
         };
 
         const data = JSON.parse(this.model.get('data')) as Dataset;
