@@ -45,7 +45,10 @@ def inline_ressources(html):
     for script in html.find_all("script"):
         if script.has_attr("src"):
             url = script["src"]
-            if url.startswith("https://") or url.startswith("http://"):
+
+            # Do not include plausible analytics in the standalone HTML
+            if url == "https://plausible.io/js/plausible.js":
+                script.replace_with(html.new_tag("script"))
                 continue
 
             content = get_url(url)
