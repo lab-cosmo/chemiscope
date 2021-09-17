@@ -60,30 +60,15 @@ export interface Settings {
 /** @hidden
  * Check if `o` contains all valid config the expected fields to be a [[DefaultConfig]].
  */
-function validateConfig(o: JsObject) {
+function validateConfig(o: JsObject, requiredIds: string[]) {
     if (typeof o !== 'object') {
         throw Error('the configuration must be a JavaScript object');
     }
 
-    if (!('meta' in o && (typeof o.meta === 'string' || o.meta instanceof HTMLElement))) {
-        throw Error('missing "meta" key in chemiscope configuration');
-    }
-
-    if (!('map' in o && (typeof o.map === 'string' || o.map instanceof HTMLElement))) {
-        throw Error('missing "map" key in chemiscope configuration');
-    }
-
-    if (!('info' in o && (typeof o.info === 'string' || o.info instanceof HTMLElement))) {
-        throw Error('missing "info" key in chemiscope configuration');
-    }
-
-    if (
-        !(
-            'structure' in o &&
-            (typeof o.structure === 'string' || o.structure instanceof HTMLElement)
-        )
-    ) {
-        throw Error('missing "structure" key in chemiscope configuration');
+    for (const id of requiredIds) {
+        if (!(id in o && (typeof o[id] === 'string' || o[id] instanceof HTMLElement))) {
+            throw Error(`missing "${id}" key in chemiscope configuration`);
+        }
     }
 
     if ('settings' in o) {
@@ -180,7 +165,7 @@ class DefaultVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: DefaultConfig, dataset: Dataset) {
-        validateConfig(config as unknown as JsObject);
+        validateConfig(config as unknown as JsObject, ['meta', 'map', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
         this._dataset = dataset;
@@ -426,7 +411,7 @@ class StructureVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: StructureConfig, dataset: Dataset) {
-        // validateConfig(config as unknown as JsObject); // don't validate for the momentdon't
+        validateConfig(config as unknown as JsObject, ['meta', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
         const mode = dataset.environments === undefined ? 'structure' : 'atom';
@@ -532,7 +517,7 @@ class MapVisualizer {
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: MapConfig, dataset: Dataset) {
-        // validateConfig(config as unknown as JsObject); don't validate for now
+        validateConfig(config as unknown as JsObject, ['meta', 'map', 'info']);
         validateDataset(dataset as unknown as JsObject);
 
         const mode = dataset.environments === undefined ? 'structure' : 'atom';
