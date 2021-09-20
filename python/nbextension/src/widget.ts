@@ -3,7 +3,8 @@ import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
-import './chemiscope-bootstrap.css';
+import './chemiscope-bootstrap.less';
+import 'bootstrap/dist/js/bootstrap.min.js';
 
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset } from '../../../src/dataset';
