@@ -128,9 +128,6 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
     elif mode == "map":
         if properties is None:
             properties = {}
-        if "index" not in properties:
-            # also adds an index property to have something to show in the info panel
-            properties["index"] = list(range(len(frames)))
 
         widget_class = MapWidget
 

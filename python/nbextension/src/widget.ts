@@ -45,6 +45,12 @@ export class ChemiscopeView extends DOMWidgetView {
                 </button>
                 <p></p>
             </div>
+            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+            </div>
 
             <div class="chemiscope-widget-two-col">
                 <div class="chemiscope-meta-and-map">
@@ -68,9 +74,15 @@ export class ChemiscopeView extends DOMWidgetView {
         };
 
         const data = JSON.parse(this.model.get('data')) as Dataset;
-        void DefaultVisualizer.load(config, data).then((visualizer) => {
-            this.visualizer = visualizer;
-        });
+        void DefaultVisualizer.load(config, data)
+            .then((visualizer) => {
+                this.visualizer = visualizer;
+            })
+            .catch((e: Error) => {
+                const display = getByID(`${this.guid}-error-display`, element);
+                display.style.display = 'block';
+                display.getElementsByTagName('p')[0].innerText = e.toString();
+            });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
@@ -115,6 +127,12 @@ export class StructureView extends DOMWidgetView {
                 </button>
                 <p></p>
             </div>
+            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+            </div>
 
             <div class="chemiscope-widget-one-col">
                 <div class="chemiscope-structure-and-info">
@@ -133,9 +151,15 @@ export class StructureView extends DOMWidgetView {
         };
 
         const data = JSON.parse(this.model.get('data')) as Dataset;
-        void StructureVisualizer.load(config, data).then((visualizer) => {
-            this.visualizer = visualizer;
-        });
+        void StructureVisualizer.load(config, data)
+            .then((visualizer) => {
+                this.visualizer = visualizer;
+            })
+            .catch((e: Error) => {
+                const display = getByID(`${this.guid}-error-display`, element);
+                display.style.display = 'block';
+                display.getElementsByTagName('p')[0].innerText = e.toString();
+            });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
@@ -187,6 +211,12 @@ export class MapView extends DOMWidgetView {
                 </button>
                 <p></p>
             </div>
+            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
+                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p></p>
+            </div>
 
             <div class="chemiscope-widget-one-col">
                 <div class="chemiscope-meta-and-map">
@@ -205,9 +235,15 @@ export class MapView extends DOMWidgetView {
         };
 
         const data = JSON.parse(this.model.get('data')) as Dataset;
-        void MapVisualizer.load(config, data).then((visualizer) => {
-            this.visualizer = visualizer;
-        });
+        void MapVisualizer.load(config, data)
+            .then((visualizer) => {
+                this.visualizer = visualizer;
+            })
+            .catch((e: Error) => {
+                const display = getByID(`${this.guid}-error-display`, element);
+                display.style.display = 'block';
+                display.getElementsByTagName('p')[0].innerText = e.toString();
+            });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
