@@ -66,6 +66,8 @@
     "karma-mocha": "^2.0.1",
     "karma-safarinative-launcher": "^1.1.0",
     "karma-webpack": "https://github.com/ryanclark/karma-webpack/archive/ef7edb6b6756fb563871eaff88ca876892694896.tar.gz",
+    "less": "^4.1.1",
+    "less-loader": "^10.0.1",
     "markdown-it": "^12",
     "mocha": "^9",
     "node-loader": "^2",

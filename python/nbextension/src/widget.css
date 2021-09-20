@@ -1,35 +1,50 @@
-/* default.css */
-main.container-fluid {
-    margin: 1.5em 0em calc(1.5em + 60px) 0em;
+.chemiscope-meta-and-map {
     width: 100%;
+    height: 100%;
 }
 
-#chemiscope-meta {
+.chemiscope-structure-and-info {
+    width: 100%;
+    height: 100%;
+}
+
+.chemiscope-meta {
     position: absolute;
     top: 0;
     left: 2em;
     font-size: 16pt;
 }
 
-#chemiscope-map {
+.chemiscope-map {
     display: block;
 }
 
-#chemiscope-structure {
+.chemiscope-structure {
+    height: 100%;
+    width: 100%;
+    display: block;
     flex: 1 1 auto;
 }
 
-#chemiscope-info {
+.chemiscope-info {
     flex: 0 1 auto;
     width: 100%;
+    display: block;
 }
 
-/* Extra widget things */
-#warning-display {
-    font-size: 1.5em;
+.chemiscope-widget-two-col .chemiscope-structure {
+    height: 84%;
 }
 
-#chemiscope-widget-container {
+.chemiscope-widget-one-col .chemiscope-structure {
+    height: 90%;
+}
+
+.chemiscope-meta {
+    top: initial !important;
+}
+
+.chemiscope-widget-two-col {
     display: grid;
     grid-template-columns: 59% 39%;
     grid-template-rows: 450px;
@@ -38,39 +53,19 @@ main.container-fluid {
     overflow: hidden;
 }
 
-#chemiscope-meta-and-map {
-    width: 100%;
-    height: 100%;
+.chemiscope-widget-one-col {
+    margin: auto;
+    max-width: 500px;
+    height: 500px;
 }
 
-#chemiscope-structure-and-info {
-    width: 100%;
-    height: 100%;
-}
-
-#chemiscope-meta {
-    top: initial !important;
-}
+/* Override some of chemiscope style */
 
 .chsp-meta .chsp-info-icon svg {
     width: 20px !important;
     height: 20px !important;
     top: 3px;
     position: relative;
-}
-
-#chemiscope-map {
-    display: block;
-}
-
-#chemiscope-structure {
-    height: 84%;
-    width: 100%;
-    display: block;
-}
-
-#chemiscope-info {
-    display: block;
 }
 
 .chsp-info-btns-svg {

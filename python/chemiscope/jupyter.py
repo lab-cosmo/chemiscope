@@ -2,7 +2,7 @@
 import json
 import gzip
 import ipywidgets
-from traitlets import Unicode
+from traitlets import Unicode, Bool
 
 from .input import create_input
 
@@ -13,10 +13,12 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
 
-    def __init__(self, data):
+    def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
+        self.has_metadata = has_metadata
 
     def save(self, path):
         """
@@ -35,12 +37,45 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         file.close()
 
 
-def show(frames, properties=None, meta=None, cutoff=None):
+@ipywidgets.register
+class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+    _view_name = Unicode("StructureView").tag(sync=True)
+    _view_module = Unicode("chemiscope-widget").tag(sync=True)
+
+    data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
+
+    def __init__(self, data, has_metadata):
+        super().__init__()
+        self.data = json.dumps(data)
+        self.has_metadata = has_metadata
+
+
+@ipywidgets.register
+class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+    _view_name = Unicode("MapView").tag(sync=True)
+    _view_module = Unicode("chemiscope-widget").tag(sync=True)
+
+    data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
+
+    def __init__(self, data, has_metadata):
+        super().__init__()
+        self.data = json.dumps(data)
+        self.has_metadata = has_metadata
+
+
+def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
     (optionally ``meta`` and ``cutoff`` as well) using a embedded chemiscope
     visualizer inside a Jupyter notebook. These parameters have the same meaning
     as in the :py:func:`chemiscope.create_input` function.
+
+    The ``mode`` keyword also allows overriding the default two-panels
+    visualization to show only a structure panel (``mode = "structure"``) or the
+    map panel (``mode = "map"``). These modes also make it possible to view a
+    dataset for which properties (or frames) are not available.
 
     When inside a jupyter notebook, the returned object will create a new
     chemiscope visualizer displaying the dataset. The returned object also have
@@ -74,13 +109,44 @@ def show(frames, properties=None, meta=None, cutoff=None):
     if not _is_running_in_notebook():
         raise Exception("chemiscope.show only works inside a jupyter notebook")
 
-    if meta is None:
+    has_metadata = meta is not None
+    if not has_metadata:
         meta = {"name": " "}
+
+    if mode == "default":
+        widget_class = ChemiscopeWidget
+
+    elif mode == "structure":
+        if properties is None:
+            properties = {}
+        if "index" not in properties:
+            # also adds an index property to have something to show in the info panel
+            properties["index"] = list(range(len(frames)))
+
+        widget_class = StructureWidget
+
+    elif mode == "map":
+        if properties is None:
+            properties = {}
+
+        widget_class = MapWidget
+
+    else:
+        raise ValueError(
+            f"invalid mode '{mode}' in chemiscope.show, expected one of 'default', 'structure' or 'map'"
+        )
 
     dict_input = create_input(
         frames=frames, properties=properties, meta=meta, cutoff=cutoff
     )
-    return ChemiscopeWidget(dict_input)
+
+    if mode != "structure":
+        # if there is a map, we need two properties, otherwise there will be no map
+        # and error is only visible in the console
+        if len(dict_input["properties"]) < 2:
+            raise ValueError("Need at least two properties to visualize a map widget")
+
+    return widget_class(dict_input, has_metadata=has_metadata)
 
 
 def _is_running_in_notebook():

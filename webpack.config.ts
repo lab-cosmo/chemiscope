@@ -20,12 +20,13 @@ export const WEBPACK_CONFIG: webpack.Configuration = {
     },
     module: {
         rules: [
-            { test: /\.ts?$/, use: ['ts-loader', './utils/webpack-assert-message.ts'] },
-            { test: /\.css?$/, use: ['style-loader', 'css-loader'] },
-            { test: /\.html?$/, loader: 'html-loader', options: { minimize: true } },
-            { test: /\.svg?$/, loader: 'html-loader', options: { minimize: true } },
+            { test: /\.ts$/, use: ['ts-loader', './utils/webpack-assert-message.ts'] },
+            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+            { test: /\.less$/, use: ['style-loader', 'css-loader', 'less-loader'] },
+            { test: /\.html$/, loader: 'html-loader', options: { minimize: true } },
+            { test: /\.svg$/, loader: 'html-loader', options: { minimize: true } },
             // this is required by plotly, since we are building our own bundle
-            { test: /\.js?$/, use: ['ify-loader'] },
+            { test: /\.js$/, use: ['ify-loader'] },
         ],
     },
 };

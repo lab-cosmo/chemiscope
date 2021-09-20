@@ -34,7 +34,7 @@ require('./static/chemiscope.css');
 /**
  * Configuration for the [[DefaultVisualizer]]
  */
-export interface Config {
+export interface DefaultConfig {
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string | HTMLElement;
     /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
@@ -58,32 +58,17 @@ export interface Settings {
 }
 
 /** @hidden
- * Check if `o` contains all the expected fields to be a [[Config]].
+ * Check if `o` contains all valid config the expected fields to be a [[DefaultConfig]].
  */
-function validateConfig(o: JsObject) {
+function validateConfig(o: JsObject, requiredIds: string[]) {
     if (typeof o !== 'object') {
         throw Error('the configuration must be a JavaScript object');
     }
 
-    if (!('meta' in o && (typeof o.meta === 'string' || o.meta instanceof HTMLElement))) {
-        throw Error('missing "meta" key in chemiscope configuration');
-    }
-
-    if (!('map' in o && (typeof o.map === 'string' || o.map instanceof HTMLElement))) {
-        throw Error('missing "map" key in chemiscope configuration');
-    }
-
-    if (!('info' in o && (typeof o.info === 'string' || o.info instanceof HTMLElement))) {
-        throw Error('missing "info" key in chemiscope configuration');
-    }
-
-    if (
-        !(
-            'structure' in o &&
-            (typeof o.structure === 'string' || o.structure instanceof HTMLElement)
-        )
-    ) {
-        throw Error('missing "structure" key in chemiscope configuration');
+    for (const id of requiredIds) {
+        if (!(id in o && (typeof o[id] === 'string' || o[id] instanceof HTMLElement))) {
+            throw Error(`missing "${id}" key in chemiscope configuration`);
+        }
     }
 
     if ('settings' in o) {
@@ -159,7 +144,7 @@ class DefaultVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a [[DefaultVisualizer]]
      */
-    public static load(config: Config, dataset: Dataset): Promise<DefaultVisualizer> {
+    public static load(config: DefaultConfig, dataset: Dataset): Promise<DefaultVisualizer> {
         return new Promise((resolve) => {
             const visualizer = new DefaultVisualizer(config, dataset);
             resolve(visualizer);
@@ -179,8 +164,8 @@ class DefaultVisualizer {
 
     // the constructor is private because the main entry point is the static
     // `load` function
-    private constructor(config: Config, dataset: Dataset) {
-        validateConfig(config as unknown as JsObject);
+    private constructor(config: DefaultConfig, dataset: Dataset) {
+        validateConfig(config as unknown as JsObject, ['meta', 'map', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
         this._dataset = dataset;
@@ -351,7 +336,7 @@ class DefaultVisualizer {
      * Get the dataset used to create the current visualization
      *
      * If the dataset is using user-specified structures and a loading callback
-     * [[Config.loadStructure]]; you can request all structure to be fully
+     * [[DefaultConfig.loadStructure]]; you can request all structure to be fully
      * resolved and placed inside the dataset.
      *
      * @param  getStructures should all [[UserStructure]] resolved and placed
@@ -379,7 +364,209 @@ class DefaultVisualizer {
     }
 }
 
+/**
+ * Configuration for the [[StructureVisualizer]]
+ */
+export interface StructureConfig {
+    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    meta: string | HTMLElement;
+    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    info: string | HTMLElement;
+    /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
+    structure: string | HTMLElement;
+    /** Settings for the map & structure viewer */
+    settings?: Partial<Settings>;
+    /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
+    loadStructure?: (index: number, structure: unknown) => Structure;
+}
+
+/**
+ * A structure-only chemiscope visualizer: two panels (map,
+ * info) updating one another when the user interact with any of them.
+ */
+class StructureVisualizer {
+    /**
+     * Load a dataset and create a visualizer.
+     *
+     * This function returns a `Promise<StructureVisualizer>` to prevent blocking
+     * the browser while everything is loading.
+     *
+     * @param  config  configuration of the visualizer
+     * @param  dataset visualizer input, containing a dataset and optional visualization settings
+     * @return         Promise that resolves to a [[StructureVisualizer]]
+     */
+    public static load(config: StructureConfig, dataset: Dataset): Promise<StructureVisualizer> {
+        return new Promise((resolve) => {
+            const visualizer = new StructureVisualizer(config, dataset);
+            resolve(visualizer);
+        });
+    }
+
+    public info: EnvironmentInfo;
+    public meta: MetadataPanel;
+    public structure: ViewersGrid;
+
+    private _indexer: EnvironmentIndexer;
+
+    // the constructor is private because the main entry point is the static
+    // `load` function
+    private constructor(config: StructureConfig, dataset: Dataset) {
+        validateConfig(config as unknown as JsObject, ['meta', 'info', 'structure']);
+        validateDataset(dataset as unknown as JsObject);
+
+        const mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+
+        this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        // Structure viewer setup
+        this.structure = new ViewersGrid(
+            config.structure,
+            this._indexer,
+            dataset.structures,
+            dataset.environments,
+            1 // hardcoded single panel
+        );
+
+        if (config.loadStructure !== undefined) {
+            this.structure.loadStructure = config.loadStructure;
+        }
+
+        this.structure.activeChanged = (guid, indexes) => {
+            this.info.show(indexes);
+        };
+
+        this.structure.onselect = (indexes) => {
+            this.info.show(indexes);
+        };
+
+        this.structure.oncreate = (guid, color, indexes) => {
+            this.info.show(indexes);
+        };
+
+        // information table & slider setup
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info.onchange = (indexes) => {
+            this.structure.show(indexes);
+        };
+
+        this.structure.delayChanged = (delay) => {
+            this.info.playbackDelay = delay;
+        };
+
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        if (config.settings && config.settings.pinned) {
+            initial = this._indexer.from_environment(config.settings.pinned[0]);
+        }
+
+        this.structure.show(initial);
+        this.info.show(initial);
+    }
+
+    /**
+     * Removes all the chemiscope widgets from the DOM
+     */
+    public remove(): void {
+        this.meta.remove();
+        this.info.remove();
+        this.structure.remove();
+    }
+}
+
+/**
+ * Configuration for the [[StructureVisualizer]]
+ */
+export interface MapConfig {
+    /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
+    map: string | HTMLElement;
+    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    info: string | HTMLElement;
+    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    meta: string | HTMLElement;
+    /** Settings for the map & structure viewer */
+    settings?: Partial<Settings>;
+}
+
+/**
+ * A map-only visualizer state of chemiscope
+ */
+class MapVisualizer {
+    /**
+     * Load a dataset and create a visualizer.
+     *
+     * This function returns a `Promise<MapVisualizer>` to prevent blocking
+     * the browser while everything is loading.
+     *
+     * @param  config  configuration of the visualizer
+     * @param  dataset visualizer input, containing a dataset and optional visualization settings
+     * @return         Promise that resolves to a [[MapVisualizer]]
+     */
+    public static load(config: MapConfig, dataset: Dataset): Promise<MapVisualizer> {
+        return new Promise((resolve) => {
+            const visualizer = new MapVisualizer(config, dataset);
+            resolve(visualizer);
+        });
+    }
+
+    public info: EnvironmentInfo;
+    public map: PropertiesMap;
+    public meta: MetadataPanel;
+
+    private _indexer: EnvironmentIndexer;
+
+    // the constructor is private because the main entry point is the static
+    // `load` function
+    private constructor(config: MapConfig, dataset: Dataset) {
+        validateConfig(config as unknown as JsObject, ['meta', 'map', 'info']);
+        validateDataset(dataset as unknown as JsObject);
+
+        const mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+
+        this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        // map setup
+        this.map = new PropertiesMap(
+            { element: config.map, settings: getMapSettings(config.settings) },
+            this._indexer,
+            dataset.properties
+        );
+
+        this.map.onselect = (indexes) => {
+            this.info.show(indexes);
+        };
+
+        this.map.activeChanged = (guid, indexes) => {
+            this.info.show(indexes);
+        };
+
+        // information table & slider setup
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info.onchange = (indexes) => {
+            this.map.select(indexes);
+        };
+
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        if (config.settings && config.settings.pinned) {
+            initial = this._indexer.from_environment(config.settings.pinned[0]);
+        }
+
+        this.map.addMarker('map-0' as GUID, 'red', initial);
+        this.info.show(initial);
+    }
+
+    /**
+     * Removes all the chemiscope widgets from the DOM
+     */
+    public remove(): void {
+        this.meta.remove();
+        this.info.remove();
+        this.map.remove();
+    }
+}
+
 declare const CHEMISCOPE_GIT_VERSION: string;
+/** Get the version of chemiscope as a string */
 function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
@@ -413,4 +600,6 @@ export {
     EnvironmentInfo,
     EnvironmentIndexer,
     DefaultVisualizer,
+    StructureVisualizer,
+    MapVisualizer,
 };

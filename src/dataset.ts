@@ -277,7 +277,7 @@ export function checkStructure(s: JsObject): string {
             return `"${key}" must be an array`;
         }
 
-        if (array.length !== s.size) {
+        if (s.size > 0 && array.length !== s.size) {
             return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
         }
     }
@@ -319,7 +319,7 @@ function checkProperties(
             expected = structureCount;
         }
 
-        if (property.values.length !== expected) {
+        if (expected > 0 && property.values.length !== expected) {
             throw Error(
                 `wrong size for 'properties['${key}'].values': expected ${expected}, got ${property.values.length}`
             );
