@@ -140,6 +140,12 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
         frames=frames, properties=properties, meta=meta, cutoff=cutoff
     )
 
+    if mode != "structure":
+        # if there is a map, we need two properties, otherwise there will be no map
+        # and error is only visible in the console
+        if len(dict_input["properties"]) < 2:
+            raise ValueError("Need at least two properties to visualize a map widget")
+
     return widget_class(dict_input, has_metadata=has_metadata)
 
 
