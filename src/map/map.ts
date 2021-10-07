@@ -1000,9 +1000,9 @@ export class PropertiesMap {
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
                 if (guid === this._active) {
-                    selected.push(600);
+                    selected.push(1000);
                 } else {
-                    selected.push(300);
+                    selected.push(500);
                 }
             }
         }

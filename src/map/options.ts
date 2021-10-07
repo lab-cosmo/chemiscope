@@ -231,7 +231,7 @@ export class MapOptions extends OptionsGroup {
         let scaleMode = this.size.mode.value;
         const reversed = this.size.reverse.value;
         const { min, max } = arrayMaxMin(rawSizes);
-        const defaultSize = this.is3D() ? 800 : 150;
+        const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
 
         const values = rawSizes.map((v: number) => {
