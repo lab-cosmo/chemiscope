@@ -76,12 +76,6 @@ module.exports = (config: Config) => {
                     availableBrowsers.splice(IEindex);
                 }
 
-                // Rename Safari to use SafariNative karma launcher
-                const SafariIndex = availableBrowsers.indexOf('Safari');
-                if (SafariIndex !== -1) {
-                    availableBrowsers[SafariIndex] = 'SafariNative';
-                }
-
                 return availableBrowsers;
             },
             // we can not enable headless mode since firefox does not support
