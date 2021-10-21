@@ -1252,12 +1252,29 @@ export class PropertiesMap {
                     y = Math.log10(y);
                 }
 
-                if (this._insidePlot(x, y)) {
+                // convert to pixel coordinates
+                x = plotWidth - this._pixelCoordinate(x, 'x');
+                y = this._pixelCoordinate(y, 'y');
+
+                const bounds = this._getBounds();
+                const xMin = this._pixelCoordinate(bounds.x[0], 'x');
+                const xMax = this._pixelCoordinate(bounds.x[1], 'x');
+
+                // pixel coordinates are inverted for y (y is measured from the
+                // top of the page, not the bottom)
+                const yMin = this._pixelCoordinate(bounds.y[1], 'y');
+                const yMax = this._pixelCoordinate(bounds.y[0], 'y');
+
+                const isInsideRange = (value: number, min: number, max: number) => {
+                    // allow points a bit outside of the range, according to
+                    // this the tolerance value in pixels
+                    const tolerance = 10;
+                    return value + tolerance > min && value - tolerance < max;
+                };
+
+                if (isInsideRange(x, xMin, xMax) && isInsideRange(y, yMin, yMax)) {
                     marker.toggleVisible(true);
-                    marker.update({
-                        x: plotWidth - this._pixelCoordinate(x, 'x'),
-                        y: this._pixelCoordinate(y, 'y'),
-                    });
+                    marker.update({ x, y });
                 } else {
                     marker.toggleVisible(false);
                 }
@@ -1300,26 +1317,6 @@ export class PropertiesMap {
         }
 
         return axis.l2p(value) + axis._offset;
-    }
-
-    // Checks if a point is in the visible plot
-    private _insidePlot(x: number, y: number, z?: number): boolean {
-        // allow the point to be a bit outside the main plot area
-        const tolerance = 1.05;
-
-        const bounds = this._getBounds();
-        const isInsideRange = (value: number, range: [number, number], tolerance: number) => {
-            return value > range[0] * tolerance && value < range[1] * tolerance;
-        };
-
-        let inside = isInsideRange(x, bounds.x, tolerance);
-        inside = inside && isInsideRange(y, bounds.y, tolerance);
-
-        if (z !== undefined) {
-            assert(bounds.z !== undefined);
-            inside = inside && isInsideRange(z, bounds.z, tolerance);
-        }
-        return inside;
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
