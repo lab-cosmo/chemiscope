@@ -39,11 +39,11 @@ childProcess.execSync(
         tmpdir.name
 );
 
+fs.mkdirSync('./app/examples/structures/', { recursive: true });
 for (const file of ALL_EXAMPLES) {
     fs.renameSync(`${tmpdir.name}/examples/${file}`, `./app/examples/${file}`);
 }
 
-fs.mkdirSync('./app/examples/structures/', { recursive: true });
 for (let i = 0; i < 523; i++) {
     const file = `Azaphenacenes-${i}.json`;
     fs.renameSync(
