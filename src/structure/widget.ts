@@ -197,7 +197,7 @@ export class MoleculeViewer {
             backgroundColor: '0xffffff',
             backgroundAlpha: 0,
             disableFog: true,
-            orthographic: false,
+            orthographic: true,
         });
         if (viewer === undefined) {
             throw Error('unable to create WebGL canvas');
@@ -900,16 +900,12 @@ export class MoleculeViewer {
      *               structure.
      */
     private _resetView(center: boolean): void {
-        // HACK: orthographic camera is broken in 3Dmol
-        // (https://github.com/3dmol/3Dmol.js/issues/434) so we fake on by using
-        // a perspective camera set far away, with a very narrow field of view.
-        this._viewer.setCameraParameters({ fov: 0.01, z: 2000 });
-
         if (center && this._highlighted !== undefined) {
             this._viewer.zoomTo({ serial: this._highlighted.center });
             this._viewer.zoom(4.0);
         } else {
             this._viewer.zoomTo();
+            this._viewer.zoom(2.0);
         }
         this._viewer.setSlab(-1000, 1000);
     }
