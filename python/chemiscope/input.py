@@ -204,13 +204,13 @@ def create_input(
                 n_structures = len(value)
                 n_atoms = len(value)
             else:
-                if properties["target"] != "structure":
+                if value["target"] != "structure":
                     raise ValueError(
                         f"Property '{name}' has a non-structure target, "
-                        " which is not allowed if frames are not provided"
+                        "which is not allowed if frames are not provided"
                     )
                 else:
-                    n_structures = len(properties["values"])
+                    n_structures = len(value["values"])
                     n_atoms = n_structures
 
     data["properties"] = {}

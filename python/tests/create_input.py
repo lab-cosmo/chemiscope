@@ -343,6 +343,31 @@ class TestCreateInputProperties(unittest.TestCase):
         )
         self.assertEqual(data["properties"]["name"]["target"], "structure")
 
+    def test_property_only(self):
+        properties = {"name": [2, 3, 4]}
+        data = create_input(properties=properties)
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
+
+        # error: different size
+        properties = {"first": [2, 3, 4], "second": [2, 3, 4, 5]}
+        with self.assertRaises(Exception) as cm:
+            data = create_input(properties=properties)
+
+        self.assertEqual(
+            str(cm.exception),
+            "wrong size for the property 'first' with target=='structure': expected 4 values, got 3",
+        )
+
+        # error: target is not "structure"
+        properties = {"name": {"target": "atom", "values": [2]}}
+        with self.assertRaises(Exception) as cm:
+            data = create_input(properties=properties)
+
+        self.assertEqual(
+            str(cm.exception),
+            "Property 'name' has a non-structure target, which is not allowed if frames are not provided",
+        )
+
 
 class TestCreateInputEnvironments(unittest.TestCase):
     def test_environment(self):
