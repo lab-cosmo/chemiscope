@@ -10,7 +10,7 @@ legacy_tox_ini = """
 [tox]
 
 [testenv]
-isolated_build = true
+usedevelop = true
 deps =
     ase
 

@@ -12,12 +12,12 @@ import numpy as np
 from .adapters import frames_to_json, atom_properties, structure_properties
 
 
-def _expand_properties(properties, n_structures, n_atoms):
+def _expand_properties(short_properties, n_structures, n_atoms):
     """
     Convert a shortened entries of properties into the expanded form.
     Entries in already expanded form are not changed.
 
-    :param dict properties: properties to handle
+    :param dict short_properties: properties to handle
     :param int n_structures: number of structures in the dataset
     :param int n_atoms: total number of atoms in the whole dataset
 
@@ -56,9 +56,11 @@ def _expand_properties(properties, n_structures, n_atoms):
     assuming that number of structures in the dataset is 100 and
     total number of atoms in the dataset is 300.
     """
-
-    for key, value in properties.items():
-        if not isinstance(value, dict):
+    properties = {}
+    for key, value in short_properties.items():
+        if isinstance(value, dict):
+            properties[key] = value
+        else:
             if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
                 raise ValueError(
                     "Property values should be either list or numpy array, "
@@ -78,12 +80,14 @@ def _expand_properties(properties, n_structures, n_atoms):
                     + f"{n_structures}, the length of property values is "
                     + f"{len(value)}, for the '{key}' property"
                 )
-            property = {"values": value}
+
+            dict_property = {"values": value}
             if len(value) == n_structures:
-                property["target"] = "structure"
+                dict_property["target"] = "structure"
             if len(value) == n_atoms:
-                property["target"] = "atom"
-            properties[key] = property
+                dict_property["target"] = "atom"
+
+            properties[key] = dict_property
     return properties
 
 
@@ -191,27 +195,34 @@ def create_input(
         data["meta"]["name"] = "<unknown>"
 
     data["structures"] = []
+    n_structures = None
+    n_atoms = None
     if frames is not None:
         data["structures"] = frames_to_json(frames)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
     else:
+        n_atoms = 0
         # if frames are not given, we create a dataset with only properties.
-        # then, all properties should be structure properties
+        # In that case, all properties should be structure properties
         for name, value in properties.items():
             if not isinstance(value, dict):
-                properties[name] = {"values": value, "target": "structure"}
-                n_structures = len(value)
-                n_atoms = len(value)
+                if n_structures is None:
+                    n_structures = len(value)
+                else:
+                    if len(value) != n_structures:
+                        raise ValueError(
+                            f"wrong size for property '{name}': expected {n_structures} elements, "
+                            f"but got an array with {len(value)} entries"
+                        )
             else:
                 if value["target"] != "structure":
                     raise ValueError(
-                        f"Property '{name}' has a non-structure target, "
+                        f"property '{name}' has a non-structure target, "
                         "which is not allowed if frames are not provided"
                     )
-                else:
-                    n_structures = len(value["values"])
-                    n_atoms = n_structures
+
+                n_structures = len(value["values"])
 
     data["properties"] = {}
     if properties is not None:
