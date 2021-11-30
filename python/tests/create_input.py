@@ -190,6 +190,9 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(data["properties"]["name[2]"]["values"], [4])
         self.assertEqual(len(data["properties"]["name[2]"].keys()), 2)
 
+        # the initial properties object must not be changed
+        self.assertEqual(type(properties["name"]), np.ndarray)
+
     def test_shortened_properties_errors(self):
         properties = {"name": ["2", "3"]}
         with self.assertRaises(ValueError) as cm:
@@ -348,6 +351,14 @@ class TestCreateInputProperties(unittest.TestCase):
         data = create_input(properties=properties)
         self.assertEqual(data["properties"]["name"]["target"], "structure")
 
+        properties = {
+            "first": [2, 3, 4],
+            "second": np.array([[1, 2], [1, 2], [1, 2]]),
+        }
+        data = create_input(properties=properties)
+        self.assertEqual(data["properties"]["second[1]"]["target"], "structure")
+        self.assertEqual(data["properties"]["second[2]"]["target"], "structure")
+
         # error: different size
         properties = {"first": [2, 3, 4], "second": [2, 3, 4, 5]}
         with self.assertRaises(Exception) as cm:
@@ -355,7 +366,7 @@ class TestCreateInputProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "wrong size for the property 'first' with target=='structure': expected 4 values, got 3",
+            "wrong size for property 'second': expected 3 elements, but got an array with 4 entries",
         )
 
         # error: target is not "structure"
@@ -365,7 +376,7 @@ class TestCreateInputProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "Property 'name' has a non-structure target, which is not allowed if frames are not provided",
+            "property 'name' has a non-structure target, which is not allowed if frames are not provided",
         )
 
 
