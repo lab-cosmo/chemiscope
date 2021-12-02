@@ -10,3 +10,4 @@
  */
 
 export { ViewersGrid } from './grid';
+export { MoleculeViewer, LoadOptions } from './widget';

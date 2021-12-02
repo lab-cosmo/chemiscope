@@ -24,9 +24,18 @@ import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
 import { SavedSettings } from './options';
-import { ViewersGrid } from './structure';
+import { LoadOptions, MoleculeViewer, ViewersGrid } from './structure';
 
-import { Dataset, JsObject, Structure, validateDataset } from './dataset';
+import {
+    Dataset,
+    Environment,
+    Metadata,
+    Property,
+    Structure,
+    Target,
+    UserStructure,
+} from './dataset';
+import { JsObject, validateDataset } from './dataset';
 import { GUID, addWarningHandler, getNextColor } from './utils';
 
 require('./static/chemiscope.css');
@@ -592,13 +601,27 @@ function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings 
 }
 
 export {
+    // free functions
     addWarningHandler,
     version,
+    // dataset definitions
+    Dataset,
+    Metadata,
+    Property,
+    Target,
+    Structure,
+    UserStructure,
+    Environment,
+    SavedSettings,
+    // different panels
     MetadataPanel,
     PropertiesMap,
     ViewersGrid,
+    MoleculeViewer,
+    LoadOptions,
     EnvironmentInfo,
     EnvironmentIndexer,
+    // different visualizers built with the panels
     DefaultVisualizer,
     StructureVisualizer,
     MapVisualizer,
