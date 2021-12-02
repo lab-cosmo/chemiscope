@@ -98,6 +98,7 @@ export interface LoadOptions {
     highlight: number;
 }
 
+/** */
 export class MoleculeViewer {
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
