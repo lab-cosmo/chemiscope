@@ -529,8 +529,14 @@ class MapVisualizer {
         validateConfig(config as unknown as JsObject, ['meta', 'map', 'info']);
         validateDataset(dataset as unknown as JsObject);
 
-        const mode = dataset.environments === undefined ? 'structure' : 'atom';
-        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+        // We need to create pseudo structures with 0 atoms so that the indexer
+        // knows how to associate structure id & point id on the map. The
+        // structure id is used by the info panel to create the slider
+        const n_structure = dataset.properties[Object.keys(dataset.properties)[0]].values.length;
+        this._indexer = new EnvironmentIndexer(
+            'structure',
+            new Array(n_structure).fill({ size: 0, data: 0 }) as UserStructure[]
+        );
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
