@@ -154,6 +154,14 @@ def _is_running_in_notebook():
     Check whether the python interpreter is running for a jupyter notebook or
     not. Taken from https://stackoverflow.com/a/39662359/4692076.
     """
+
+    # apparently get_ipython is lost when this gets called from a callback of
+    # an ipython widget. See https://github.com/jupyter/jupyter/issues/299
+    try:
+        from IPython import get_ipython
+    except ImportError:
+        return False
+
     try:
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell":
