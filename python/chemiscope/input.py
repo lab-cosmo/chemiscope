@@ -66,13 +66,15 @@ def _expand_properties(short_properties, n_structures, n_atoms):
                     "Property values should be either list or numpy array, "
                     + f"got {type(value)} instead"
                 )
-            if n_structures == n_atoms:
-                raise ValueError(
-                    "Unable to guess the property target when the number of "
-                    + "structures is equal to the number of atoms. We have "
-                    + f"n_structures = n_atoms = {n_atoms} for the '{key}' property"
-                )
-            if (len(value) != n_structures) and (len(value) != n_atoms):
+
+            dict_property = {"values": value}
+
+            # heuristically determines the type of target
+            if len(value) == n_structures:
+                dict_property["target"] = "structure"
+            elif len(value) == n_atoms:
+                dict_property["target"] = "atom"
+            else:
                 raise ValueError(
                     "The length of property values is different from the "
                     + "number of structures and the number of atoms, we can not "
@@ -80,12 +82,6 @@ def _expand_properties(short_properties, n_structures, n_atoms):
                     + f"{n_structures}, the length of property values is "
                     + f"{len(value)}, for the '{key}' property"
                 )
-
-            dict_property = {"values": value}
-            if len(value) == n_structures:
-                dict_property["target"] = "structure"
-            if len(value) == n_atoms:
-                dict_property["target"] = "atom"
 
             properties[key] = dict_property
     return properties

@@ -121,7 +121,10 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
             properties = {}
         if "index" not in properties:
             # also adds an index property to have something to show in the info panel
-            properties["index"] = list(range(len(frames)))
+            properties["index"] = {
+                "target": "structure",
+                "values": list(range(len(frames))),
+            }
 
         widget_class = StructureWidget
 
