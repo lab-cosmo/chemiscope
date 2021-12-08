@@ -216,13 +216,12 @@ class TestCreateInputProperties(unittest.TestCase):
 
         properties = {"name": ["2", "3"]}
         frames_single_atoms = [ase.Atoms("C"), ase.Atoms("H")]
-        with self.assertRaises(ValueError) as cm:
+        with self.assertWarns(UserWarning) as cm:
             create_input(frames=frames_single_atoms, properties=properties)
         self.assertEqual(
-            str(cm.exception),
-            "Unable to guess the property target when the number of structures "
-            + "is equal to the number of atoms. We have n_structures = "
-            + "n_atoms = 2 for the 'name' property",
+            str(cm.warning.args),
+            f"The target of the property {name} is ambiguous because there is the same "
+            + "number of atoms and structures. Will assume target=structure. ",
         )
 
     def test_invalid_name(self):

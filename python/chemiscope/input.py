@@ -66,6 +66,11 @@ def _expand_properties(short_properties, n_structures, n_atoms):
                     "Property values should be either list or numpy array, "
                     + f"got {type(value)} instead"
                 )
+            if n_structures == n_atoms:
+                warnings.warn(
+                    f"The target of the property {key} is ambiguous because there is the same "
+                    + "number of atoms and structures. Will assume target=structure. "
+                )
 
             dict_property = {"values": value}
 
