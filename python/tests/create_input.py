@@ -219,9 +219,9 @@ class TestCreateInputProperties(unittest.TestCase):
         with self.assertWarns(UserWarning) as cm:
             create_input(frames=frames_single_atoms, properties=properties)
         self.assertEqual(
-            str(cm.warning.args),
+            cm.warning.args[0],
             "The target of the property 'name' is ambiguous because there is the same "
-            + "number of atoms and structures. Will assume target=structure. "
+            + "number of atoms and structures. Will assume target=structure. ",
         )
 
     def test_invalid_name(self):
