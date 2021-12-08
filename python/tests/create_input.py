@@ -220,7 +220,7 @@ class TestCreateInputProperties(unittest.TestCase):
             create_input(frames=frames_single_atoms, properties=properties)
         self.assertEqual(
             str(cm.warning.args),
-            f"The target of the property {name} is ambiguous because there is the same "
+            f"The target of the property name is ambiguous because there is the same "
             + "number of atoms and structures. Will assume target=structure. ",
         )
 
