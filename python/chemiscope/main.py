@@ -91,7 +91,7 @@ def main():
     output = args.output or args.input + "_chemiscope.json.gz"
 
     write_input(
-        filename=output,
+        path=output,
         frames=frames,
         meta={
             "name": args.name,
@@ -99,7 +99,6 @@ def main():
             "authors": args.authors,
             "references": args.references,
         },
-        extra=None,
         cutoff=args.cutoff,
     )
 
