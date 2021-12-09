@@ -217,7 +217,10 @@ class TestCreateInputProperties(unittest.TestCase):
         properties = {"name": ["2", "3"]}
         frames_single_atoms = [ase.Atoms("C"), ase.Atoms("H")]
         with self.assertWarns(UserWarning) as cm:
-            create_input(frames=frames_single_atoms, properties=properties)
+            data = create_input(frames=frames_single_atoms, properties=properties)
+
+        self.assertEqual(data["properties"]["name"]["target"], "structure")
+
         self.assertEqual(
             cm.warning.args[0],
             "The target of the property 'name' is ambiguous because there is the same "
