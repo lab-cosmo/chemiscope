@@ -901,6 +901,9 @@ export class PropertiesMap {
         if (bounds.z !== undefined) {
             this._setScaleStep(bounds.z, 'z');
         }
+
+        // Hack to fix a Plotly bug preventing zooming on Safari
+        this._plot.addEventListener('wheel', () => {});
     }
 
     /** Get the property with the given name */
