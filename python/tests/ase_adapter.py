@@ -1,5 +1,6 @@
 import unittest
 import ase
+import numpy as np
 
 from chemiscope import create_input
 
@@ -27,20 +28,19 @@ class TestASEAdapter(unittest.TestCase):
         frame.cell = [23, 22, 11, 120, 90, 70]
         data = create_input([frame])
         self.assertEqual(len(data["structures"]), 1)
-        self.assertEqual(
-            data["structures"][0]["cell"],
-            [
-                23.0,
-                0.0,
-                0.0,
-                7.5244431531647145,
-                20.673237657289985,
-                0.0,
-                0.0,
-                -5.852977748617515,
-                9.313573507209156,
-            ],
-        )
+
+        cell = [
+            23.0,
+            0.0,
+            0.0,
+            7.5244431531647145,
+            20.673237657289985,
+            0.0,
+            0.0,
+            -5.852977748617515,
+            9.313573507209156,
+        ]
+        self.assertTrue(np.allclose(data["structures"][0]["cell"], cell))
 
     def test_arrays_numbers_postions_ignored(self):
         data = create_input(BASE_FRAME)
