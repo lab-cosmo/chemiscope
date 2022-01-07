@@ -1,6 +1,6 @@
 # Chemiscope: interactive structure-property explorer for materials and molecules
 
-![tests](https://github.com/cosmo-epfl/chemiscope/workflows/Tests%20&%20Lints/badge.svg)
+![tests](https://github.com/lab-cosmo/chemiscope/workflows/Tests%20&%20Lints/badge.svg)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02117/status.svg)](https://doi.org/10.21105/joss.02117)
 
 Chemiscope is an graphical tool for the interactive exploration of materials and
@@ -35,14 +35,14 @@ own dataset](https://chemiscope.org/docs/tutorial.html#input-file-format-for-che
 If you want to get help when using chemiscope either as a JavaScript/TypeScript
 library inside your own project; or for creating input files for the default
 visualizer at https://chemiscope.org, you can open a [Github
-issue](https://github.com/cosmo-epfl/chemiscope/issues/new) with your question;
+issue](https://github.com/lab-cosmo/chemiscope/issues/new) with your question;
 or send an email to the developers (you can find these emails on the lab
 webpage: https://www.epfl.ch/labs/cosmo/people/)
 
 ## Getting and running the code
 
 ```bash
-git clone https://github.com/cosmo-epfl/chemiscope
+git clone https://github.com/lab-cosmo/chemiscope
 cd chemiscope
 npm install
 npm start
@@ -53,7 +53,7 @@ npm start
 ## Building the code to use it in other projects
 
 ```bash
-git clone https://github.com/cosmo-epfl/chemiscope
+git clone https://github.com/lab-cosmo/chemiscope
 cd chemiscope
 npm install
 npm run build

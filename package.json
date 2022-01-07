@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cosmo-epfl/chemiscope.git"
+    "url": "git+https://github.com/lab-cosmo/chemiscope.git"
   },
   "scripts": {
     "test": "npm run test:karma && npm run test:lint",

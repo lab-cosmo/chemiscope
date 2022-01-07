@@ -88,7 +88,7 @@ npx prettier --write <path/to/the/files>
 ```
 
 Finally, you can push your code to Github, and create a [Pull Request][pr] to
-the `cosmo-epfl/chemiscope` repository.
+the `lab-cosmo/chemiscope` repository.
 
 ```bash
 git commit  # ask for help if you don't know how to use git
@@ -96,8 +96,8 @@ git push -u origin <new-branch>
 ```
 
 [pr]: https://help.github.com/articles/using-pull-requests/
-[easy-issues]: https://github.com/cosmo-epfl/chemiscope/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+[easy-issues]: https://github.com/lab-cosmo/chemiscope/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [fork]: https://help.github.com/articles/fork-a-repo/
-[issue]: https://github.com/cosmo-epfl/chemiscope/issues/new
+[issue]: https://github.com/lab-cosmo/chemiscope/issues/new
 [eslint]: https://eslint.org/
 [prettier]: https://prettier.io/

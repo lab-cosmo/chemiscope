@@ -33,7 +33,7 @@ const tmpdir = tmp.dirSync({
 });
 
 childProcess.execSync(
-    'git clone https://github.com/cosmo-epfl/chemiscope' +
+    'git clone https://github.com/lab-cosmo/chemiscope' +
         ' --depth=1 ' +
         ' --branch=gh-pages ' +
         tmpdir.name

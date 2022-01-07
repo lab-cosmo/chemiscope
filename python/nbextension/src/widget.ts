@@ -27,7 +27,7 @@ export class ChemiscopeView extends DOMWidgetView {
 
         // HACK: resize Plotly when inserted. It currently render itself at full
         // width and then needs to be resized. For more on this, see
-        // https://github.com/cosmo-epfl/chemiscope/pull/181#discussion_r693005307
+        // https://github.com/lab-cosmo/chemiscope/pull/181#discussion_r693005307
         element.addEventListener('DOMNodeInserted', () => {
             window.dispatchEvent(new Event('resize'));
         });
@@ -193,7 +193,7 @@ export class MapView extends DOMWidgetView {
 
         // HACK: resize Plotly when inserted. It currently render itself at full
         // width and then needs to be resized. For more on this, see
-        // https://github.com/cosmo-epfl/chemiscope/pull/181#discussion_r693005307
+        // https://github.com/lab-cosmo/chemiscope/pull/181#discussion_r693005307
         element.addEventListener('DOMNodeInserted', () => {
             window.dispatchEvent(new Event('resize'));
         });

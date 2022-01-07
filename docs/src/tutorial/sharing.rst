@@ -74,7 +74,7 @@ the steps below:
 
 .. code-block:: bash
 
-    git clone https://github.com/cosmo-epfl/chemiscope
+    git clone https://github.com/lab-cosmo/chemiscope
     cd chemiscope
     npm install
     npm run build

@@ -27,7 +27,7 @@ Pre-built version
 -----------------
 
 The easiest way to do so is to download the latest release from `the release
-page <https://github.com/cosmo-epfl/chemiscope/releases>`_ on GitHub. The main
+page <https://github.com/lab-cosmo/chemiscope/releases>`_ on GitHub. The main
 file is ``chemiscope.min.js``, containing the code required to create the
 default visualizer. This file exports a single global object ``Chemiscope``,
 which contains references to
@@ -61,11 +61,11 @@ Chemiscope is written in TypeScript, a statically typed language which compiles
 to JavaScript. It uses the standard JavaScript ecosystem tools for dependency
 management, ``npm``. To build chemiscope from sources, you will first need to
 get the sources, either as an archive from `the release page
-<https://github.com/cosmo-epfl/chemiscope/releases>`_, or using git
+<https://github.com/lab-cosmo/chemiscope/releases>`_, or using git
 
 .. code-block:: bash
 
-    git clone https://github.com/cosmo-epfl/chemiscope
+    git clone https://github.com/lab-cosmo/chemiscope
 
 You will also need `node.js <https://nodejs.org/en/>`_ and `npm
 <https://docs.npmjs.com/cli/npm>`_, which you can install with your favorite
