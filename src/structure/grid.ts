@@ -32,23 +32,22 @@ import PNG_SVG from '../static/download-png.svg';
  * @return              The list of environments grouped by structure
  */
 function groupByStructure(
-    n_structures: number,
+    structures: (Structure | UserStructure)[],
     environments?: Environment[]
 ): Environment[][] | undefined {
     if (environments === undefined) {
         return undefined;
     }
 
-    const result: Environment[][] = [];
-    for (let i = 0; i < n_structures; i++) {
-        result.push([]);
-    }
+    const result = Array.from({ length: structures.length }).map((_, i) =>
+        Array.from({ length: structures[i].size })
+    );
 
     for (const env of environments) {
-        result[env.structure].push(env);
+        result[env.structure][env.center] = env;
     }
 
-    return result;
+    return result as Environment[][];
 }
 
 interface WidgetGridData {
@@ -148,7 +147,7 @@ export class ViewersGrid {
     ) {
         this._structures = structures;
         this._resolvedStructures = new Array<Structure>(structures.length);
-        this._environments = groupByStructure(this._structures.length, environments);
+        this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
 
         this.loadStructure = (_, s) => {
@@ -656,11 +655,7 @@ export class ViewersGrid {
                     );
 
                     if (indexes === undefined) {
-                        sendWarning(
-                            `this environment (atom ${atom % natoms} in structure ${
-                                data.current.structure
-                            }) is not part of the dataset`
-                        );
+                        // user clicked on an atom which is not in this dataset
                         return;
                     }
 

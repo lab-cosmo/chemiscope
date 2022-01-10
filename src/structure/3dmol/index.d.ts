@@ -457,6 +457,20 @@ export declare class GLViewer {
     public removeLabel(label: Label): void;
 
     public pngURI(): string;
+
+    public setHoverable(
+        sel: Partial<AtomSelectionSpec>,
+        hoverable: bool,
+        hover_callback: (
+            atom: AtomSpec,
+            viewer: GLViewer,
+            event: unknown,
+            container: HTMLElement
+        ) => void,
+        unhover_callback: (atom: AtomSpec) => void
+    ): void;
+
+    public setHoverDuration(duration?: number): void;
 }
 
 /** [ pos.x, pos.y, pos.z, rotationGroup.position.z, q.x, q.y, q.z, q.w ] */
@@ -486,6 +500,9 @@ export declare class GLModel {
     public removeAtoms(atoms: Array<Partial<AtomSpec>>): Array<Partial<AtomSpec>>;
 
     public addAtomSpecs(customAtomSpecs: string[]): void;
+
+    public getInternalState(): { atoms: AtomSpec[]; frames: unknown[] };
+    public setInternalState(state: { atoms: AtomSpec[]; frames: unknown[] }): void;
 }
 
 export declare class GLShape {}
@@ -544,4 +561,8 @@ export declare class Matrix3 {
         bx: number, by: number, bz: number,
         cx: number, cy: number, cz: number
     );
+}
+
+export declare class Sphere {
+    constructor(center: Vector3, radius: number);
 }

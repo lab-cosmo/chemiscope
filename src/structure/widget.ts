@@ -10,8 +10,8 @@ import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
 import { GUID, generateGUID, getByID, getElement, unreachable } from '../utils';
-import { PositioningCallback } from '../utils';
-import { Structure } from '../dataset';
+import { PositioningCallback, binarySearch } from '../utils';
+import { Environment, Structure } from '../dataset';
 
 import { StructureOptions } from './options';
 
@@ -70,17 +70,6 @@ interface LabeledArrow {
     arrow: $3Dmol.GLShape;
 }
 
-/** A spherical atom-centered environment */
-export interface Environment {
-    /**
-     * Cutoff radius of the environment.
-     *
-     * Atoms inside the sphere centered on the `center` atom with this radius
-     * are part of the environment.
-     */
-    cutoff: number;
-}
-
 /** Possible options passed to `MoleculeViewer.load` */
 export interface LoadOptions {
     /** Supercell to display (default: [1, 1, 1]) */
@@ -89,8 +78,10 @@ export interface LoadOptions {
     keepOrientation: boolean;
     /** Are we loading a file part of a trajectory (default: false) */
     trajectory: boolean;
-    /** List of atom-centered environments */
-    environments: Environment[];
+    /** List of atom-centered environments in the current structure, potentially
+     * undefined if the environnement is not part of the dataset.
+     * The `structure` field of `Environment` is ignored */
+    environments: (Environment | undefined)[];
     /**
      * Index of the environment to highlight, this is only considered if
      * `environments` is set.
@@ -163,7 +154,7 @@ export class MoleculeViewer {
         noEnvs: CSSStyleSheet;
     };
     /// List of atom-centered environments for the current structure
-    private _environments?: Environment[];
+    private _environments?: (Environment | undefined)[];
 
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
@@ -406,6 +397,13 @@ export class MoleculeViewer {
         } else {
             this._styles.noEnvs.disabled = true;
             this._changeHighlighted(options.highlight === undefined ? 0 : options.highlight);
+
+            assert(this._environments.length === structure.size);
+
+            this._setHoverable(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this._environments.filter((e) => e !== undefined).map((e) => e!.center)
+            );
         }
 
         this._updateStyle();
@@ -464,6 +462,75 @@ export class MoleculeViewer {
      */
     public exportPNG(): string {
         return this._viewer.pngURI();
+    }
+
+    /* Set the given list of active atoms as hoverable **/
+    public _setHoverable(active: number[]): void {
+        this._viewer.setHoverDuration(0);
+
+        interface Hoverable {
+            model: $3Dmol.GLModel;
+            // used to debounce visual changes and prevent flickering
+            display: boolean;
+        }
+
+        const n_atoms = this.natoms();
+        assert(n_atoms !== undefined);
+        const hovered = Array(n_atoms) as (Hoverable | undefined)[];
+
+        const isHoverable = (atom: $3Dmol.AtomSpec) => {
+            return binarySearch(active, atom.index) !== -1;
+        };
+
+        this._viewer.setHoverable(
+            {
+                predicate: isHoverable,
+            },
+            true,
+            (atom) => {
+                if (!isHoverable(atom)) {
+                    // this function might still be called on non-hoverable
+                    // atoms since 3Dmol consider periodic images of an atom to
+                    // be the same atom.
+                    return;
+                }
+
+                const current = hovered[atom.index];
+
+                if (current === undefined) {
+                    const model = this._viewer.addModel();
+                    model.addAtoms([atom]);
+                    model.setStyle({}, this._centralStyle(0.3));
+                    hovered[atom.index] = { model, display: true };
+                } else if (!current.display) {
+                    // the atom was hovered again, display it a bit longer
+                    current.display = true;
+                }
+
+                this._viewer.render();
+            },
+            (atom) => {
+                if (!isHoverable(atom)) {
+                    return;
+                }
+
+                const current = hovered[atom.index];
+                if (current === undefined) {
+                    return;
+                }
+                current.display = false;
+
+                setTimeout(() => {
+                    if (!current.display) {
+                        this._viewer.removeModel(current.model);
+                        this._viewer.render();
+
+                        hovered[atom.index] = undefined;
+                    }
+                }, 10);
+            }
+        );
+        this._viewer.render();
     }
 
     private _connectOptions(): void {
@@ -723,7 +790,7 @@ export class MoleculeViewer {
         // the central atom with central/highlighted style
         this._current.model.setStyle(
             { index: this._highlighted.center },
-            this._centralStyle(),
+            this._centralStyle(0.4),
             /* add: */ true
         );
 
@@ -799,10 +866,10 @@ export class MoleculeViewer {
      * Get the style specification for the central atom when
      * highlighting a specific environment
      */
-    private _centralStyle(): Partial<$3Dmol.AtomStyleSpec> {
+    private _centralStyle(scale: number): Partial<$3Dmol.AtomStyleSpec> {
         return {
             sphere: {
-                scale: 0.4,
+                scale: scale,
                 color: 'green',
                 opacity: 0.7,
             },
@@ -878,7 +945,9 @@ export class MoleculeViewer {
             throw Error('no central environments defined when calling _currentCutoff');
         } else {
             assert(this._environments !== undefined);
-            return this._environments[this._highlighted.center].cutoff;
+            const environment = this._environments[this._highlighted.center];
+            assert(environment !== undefined);
+            return environment.cutoff;
         }
     }
 
@@ -897,6 +966,16 @@ export class MoleculeViewer {
             this._options.environments.cutoff.value = 0;
             this._highlighted = undefined;
         } else {
+            if (this._environments === undefined) {
+                throw Error('can not highlight an atom without having a list of environments');
+            }
+
+            if (this._environments[center] === undefined) {
+                throw Error(
+                    `can not highlight atom ${center}: it is not part of the list of environments`
+                );
+            }
+
             // keep user defined cutoff, if any
             if (this._options.environments.cutoff.value <= 0) {
                 this._options.environments.cutoff.value = this._currentDefaultCutoff();
