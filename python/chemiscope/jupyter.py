@@ -65,10 +65,10 @@ class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         self.has_metadata = has_metadata
 
 
-def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
+def show(frames=None, properties=None, meta=None, environments=None, mode="default"):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
-    (optionally ``meta`` and ``cutoff`` as well) using a embedded chemiscope
+    (optionally ``meta`` and ``environments`` as well) using a embedded chemiscope
     visualizer inside a Jupyter notebook. These parameters have the same meaning
     as in the :py:func:`chemiscope.create_input` function.
 
@@ -140,7 +140,7 @@ def show(frames=None, properties=None, meta=None, cutoff=None, mode="default"):
         )
 
     dict_input = create_input(
-        frames=frames, properties=properties, meta=meta, cutoff=cutoff
+        frames=frames, properties=properties, meta=meta, environments=environments
     )
 
     if mode != "structure":
