@@ -245,28 +245,33 @@ export class MoleculeViewer {
         // Hack to reverse the scroll direction of 3dmol to match that of Plotly
         // The wheel event is captured on the parent of the canvas, modified
         // and then dispatched on the canvas.
-        this._root.addEventListener('wheel', (event) => {
-            // Avoid an infinite loop by only intercepting the original event
-            // and not synthetic ones.
-            if (event instanceof WheelEvent) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
+        this._root.addEventListener(
+            'wheel',
+            (event) => {
+                // Avoid an infinite loop by only intercepting the original event
+                // and not synthetic ones.
+                if (event instanceof WheelEvent) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
 
-                let copy = new Event('wheel');
+                    const copy = new Event('wheel');
 
-                Object.assign(copy, {
-                    ctrlKey: true, // This emulates a zoom action in the right direction
-                    detail: event.detail,
-                    wheelDelta: (event as any).wheelDelta, // Deprecated but used by 3dmol
-                    pageX: event.pageX,
-                    pageY: event.pageY
-                });
+                    Object.assign(copy, {
+                        ctrlKey: true, // This emulates a zoom action in the right direction
+                        detail: event.detail,
+                        wheelDelta: (event as unknown as { wheelDelta: number }).wheelDelta, // Deprecated but used by 3dmol
+                        pageX: event.pageX,
+                        pageY: event.pageY,
+                    });
 
-                // Dispatch the synthetic event on event.target which
-                // represents the canvas
-                event.target!.dispatchEvent(copy);
-            }
-        }, { capture: true });
+                    // Dispatch the synthetic event on event.target which
+                    // represents the canvas
+                    assert(event.target);
+                    event.target.dispatchEvent(copy);
+                }
+            },
+            { capture: true }
+        );
     }
 
     /**
