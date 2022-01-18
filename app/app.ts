@@ -13,8 +13,6 @@ import { inflate } from 'pako';
 require('./app.css');
 
 interface Configuration {
-    /// saved settings to apply to the visualizer
-    settings: Partial<Settings>;
     /// optional callback to load the structures on demand.
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
@@ -128,12 +126,6 @@ export class ChemiscopeApp {
         }
 
         const dataset = readJSON(this.dataset, buffer);
-
-        if (config.settings === undefined) {
-            // take settings from the dataset if they exist
-            config.settings = dataset.settings || {};
-        }
-
         await this.load(config as Configuration, dataset);
     }
 
@@ -151,7 +143,6 @@ export class ChemiscopeApp {
             info: 'chemiscope-info',
             meta: 'chemiscope-meta',
             structure: 'chemiscope-structure',
-            settings: configuration.settings,
             loadStructure: configuration.loadStructure,
         };
 
@@ -210,10 +201,7 @@ export class ChemiscopeApp {
             this.dataset = file.name;
             readFile(file, (result) => {
                 const dataset = readJSON(file.name, result);
-                const config = {
-                    settings: dataset.settings || {},
-                };
-                this.load(config, dataset);
+                this.load({}, dataset);
                 // clear the selected file name to make sure 'onchange' is
                 // called again if the user loads a file a the same path
                 // multiple time

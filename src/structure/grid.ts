@@ -5,10 +5,16 @@
 
 import assert from 'assert';
 
-import { Environment, JsObject, Structure, UserStructure, checkStructure } from '../dataset';
+import {
+    Environment,
+    JsObject,
+    Settings,
+    Structure,
+    UserStructure,
+    checkStructure,
+} from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { SavedSettings } from '../options';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
@@ -223,14 +229,14 @@ export class ViewersGrid {
     /**
      * Add a new empty viewer to the grid
      *
-     * @return a 2-array containing the GUID and color of the new viewer, the
-     *         GUID is `undefined` if we already reached the viewer limit.
+     * @return the GUID and color of the new viewer, the GUID is `undefined`
+     *         if we already reached the viewer limit.
      */
-    public addViewer(): [GUID | undefined, string] {
+    public addViewer(): { guid?: GUID; color: string } {
         const newGUIDs = this._setupGrid(this._viewers.size + 1);
         if (newGUIDs.length === 0) {
             // no new widget, probably because we already have MAX_WIDGETS
-            return [undefined, ''];
+            return { guid: undefined, color: '' };
         }
         assert(newGUIDs.length === 1);
         const newGUID = newGUIDs[0];
@@ -238,7 +244,7 @@ export class ViewersGrid {
         const newData = this._viewers.get(newGUID);
         assert(newData !== undefined);
 
-        return [newGUID, newData.color];
+        return { guid: newGUID, color: newData.color };
     }
 
     /**
@@ -342,7 +348,7 @@ export class ViewersGrid {
      *
      * @param settings settings for all viewers in the grid
      */
-    public applySettings(settings: SavedSettings[]): void {
+    public applySettings(settings: Settings[]): void {
         if (settings.length === 0) {
             return;
         }
@@ -360,7 +366,7 @@ export class ViewersGrid {
      *
      * @return the settings in an array, suitable to be used with [[applySettings]]
      */
-    public saveSettings(): SavedSettings[] {
+    public saveSettings(): Settings[] {
         const settings = [];
         for (const data of this._viewers.values()) {
             settings.push(data.widget.saveSettings());
@@ -380,7 +386,7 @@ export class ViewersGrid {
         const data = this._viewers.get(initial);
         assert(data !== undefined);
 
-        const newGUID = this.addViewer()[0];
+        const newGUID = this.addViewer().guid;
         if (newGUID === undefined) {
             return undefined;
         }

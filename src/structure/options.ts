@@ -5,7 +5,8 @@
 
 import assert from 'assert';
 
-import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
+import { Settings } from '../dataset';
+import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { GUID, PositioningCallback, makeDraggable, sendWarning } from '../utils';
 
@@ -128,7 +129,7 @@ export class StructureOptions extends OptionsGroup {
     /**
      * Applies saved settings, possibly filling in with default values
      */
-    public applySettings(settings: SavedSettings): void {
+    public applySettings(settings: Settings): void {
         // don't warn for packedCell setting if is was set to false, which is
         // now the only possible way of doing it
         if ('packedCell' in settings) {

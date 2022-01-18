@@ -65,7 +65,14 @@ class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         self.has_metadata = has_metadata
 
 
-def show(frames=None, properties=None, meta=None, environments=None, mode="default"):
+def show(
+    frames=None,
+    properties=None,
+    meta=None,
+    environments=None,
+    settings=None,
+    mode="default",
+):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
     (optionally ``meta`` and ``environments`` as well) using a embedded chemiscope
@@ -140,7 +147,11 @@ def show(frames=None, properties=None, meta=None, environments=None, mode="defau
         )
 
     dict_input = create_input(
-        frames=frames, properties=properties, meta=meta, environments=environments
+        frames=frames,
+        properties=properties,
+        meta=meta,
+        environments=environments,
+        settings=settings,
     )
 
     if mode != "structure":

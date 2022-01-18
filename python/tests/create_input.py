@@ -225,7 +225,7 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             cm.warning.args[0],
             "The target of the property 'name' is ambiguous because there is the same "
-            + "number of atoms and structures. Will assume target=structure. ",
+            "number of atoms and structures. We will assume target=structure",
         )
 
     def test_invalid_name(self):

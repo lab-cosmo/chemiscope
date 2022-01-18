@@ -8,10 +8,9 @@ import assert from 'assert';
 import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
-import { SavedSettings } from '../options';
 import { GUID, generateGUID, getByID, getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
-import { Environment, Structure } from '../dataset';
+import { Environment, Settings, Structure } from '../dataset';
 
 import { StructureOptions } from './options';
 
@@ -470,7 +469,7 @@ export class MoleculeViewer {
     /**
      * Applies saved settings, possibly filling in with default values
      */
-    public applySettings(settings: SavedSettings): void {
+    public applySettings(settings: Settings): void {
         this._options.applySettings(settings);
     }
 
@@ -478,7 +477,7 @@ export class MoleculeViewer {
      * Save the values of the current settings in a way that an be used with
      * [[applySettings]] or saved to JSON.
      */
-    public saveSettings(): SavedSettings {
+    public saveSettings(): Settings {
         return this._options.saveSettings();
     }
 

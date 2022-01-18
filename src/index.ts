@@ -23,7 +23,6 @@ import { DisplayMode, EnvironmentIndexer, Indexes } from './indexer';
 import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
-import { SavedSettings } from './options';
 import { LoadOptions, MoleculeViewer, ViewersGrid } from './structure';
 
 import {
@@ -31,6 +30,7 @@ import {
     Environment,
     Metadata,
     Property,
+    Settings,
     Structure,
     Target,
     UserStructure,
@@ -58,18 +58,10 @@ export interface DefaultConfig {
     info: string | HTMLElement;
     /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
     structure: string | HTMLElement;
-    /** Settings for the map & structure viewer */
-    settings?: Partial<Settings>;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: unknown) => Structure;
     /** Maximum number of structure viewers allowed in [[ViewersGrid]] */
     maxStructureViewers?: number;
-}
-
-export interface Settings {
-    map: SavedSettings;
-    structure: SavedSettings[];
-    pinned: number[];
 }
 
 /** @hidden
@@ -231,7 +223,7 @@ class DefaultVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            { element: config.map, settings: getMapSettings(config.settings) },
+            { element: config.map, settings: getMapSettings(dataset.settings) },
             this._indexer,
             dataset.properties
         );
@@ -265,8 +257,14 @@ class DefaultVisualizer {
             initial = this._indexer.from_environment(0);
         }
 
-        if (config.settings && config.settings.pinned) {
-            initial = this._indexer.from_environment(config.settings.pinned[0]);
+        if (dataset.settings && dataset.settings.pinned) {
+            if (
+                !Array.isArray(dataset.settings.pinned) ||
+                typeof dataset.settings.pinned[0] !== 'number'
+            ) {
+                throw Error('settings.pinned must be an array of numbers');
+            }
+            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
         }
 
         const firstGUID = this.structure.active;
@@ -276,9 +274,9 @@ class DefaultVisualizer {
         this.info.show(initial);
 
         // setup additional pinned values from the settings if needed
-        if (config.settings !== undefined) {
-            delete config.settings.map;
-            this.applySettings(config.settings);
+        if (dataset.settings !== undefined) {
+            delete dataset.settings.map;
+            this.applySettings(dataset.settings);
         }
     }
 
@@ -314,10 +312,14 @@ class DefaultVisualizer {
         validateSettings(settings);
 
         if (settings.map !== undefined) {
-            this.map.applySettings(settings.map);
+            this.map.applySettings(settings.map as Settings);
         }
 
         if (settings.pinned !== undefined) {
+            if (!Array.isArray(settings.pinned)) {
+                throw Error('settings.pinned must be an array');
+            }
+
             // remove all viewers except from the first one and start fresh
             for (const guid of this._pinned.slice(1)) {
                 this.map.removeMarker(guid);
@@ -327,6 +329,10 @@ class DefaultVisualizer {
 
             // Change the first viewer/marker
             assert(settings.pinned.length > 0);
+            if (typeof settings.pinned[0] !== 'number') {
+                throw Error('settings.pinned must be an array of numbers');
+            }
+
             const indexes = this._indexer.from_environment(settings.pinned[0]);
             this.map.select(indexes);
             this.info.show(indexes);
@@ -334,7 +340,11 @@ class DefaultVisualizer {
 
             // Create additional viewers as needed
             for (const environment of settings.pinned.slice(1)) {
-                const [guid, color] = this.structure.addViewer();
+                if (typeof environment !== 'number') {
+                    throw Error('settings.pinned must be an array of numbers');
+                }
+
+                const { guid, color } = this.structure.addViewer();
                 if (guid === undefined) {
                     throw Error("too many environments in 'pinned' setting");
                 }
@@ -350,7 +360,7 @@ class DefaultVisualizer {
         }
 
         if (settings.structure !== undefined) {
-            this.structure.applySettings(settings.structure);
+            this.structure.applySettings(settings.structure as Settings[]);
         }
     }
 
@@ -396,8 +406,6 @@ export interface StructureConfig {
     info: string | HTMLElement;
     /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
     structure: string | HTMLElement;
-    /** Settings for the map & structure viewer */
-    settings?: Partial<Settings>;
     /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
@@ -447,7 +455,7 @@ class StructureVisualizer {
             this._indexer,
             dataset.structures,
             dataset.environments,
-            1 // hardcoded single panel
+            1 // only allow one structure
         );
 
         if (config.loadStructure !== undefined) {
@@ -476,13 +484,14 @@ class StructureVisualizer {
             this.info.playbackDelay = delay;
         };
 
-        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
-        if (config.settings && config.settings.pinned) {
-            initial = this._indexer.from_environment(config.settings.pinned[0]);
-        }
-
+        const initial = { environment: 0, structure: 0, atom: 0 };
         this.structure.show(initial);
         this.info.show(initial);
+
+        // apply settings if needed
+        if (dataset.settings !== undefined) {
+            this.applySettings(dataset.settings);
+        }
     }
 
     /**
@@ -492,6 +501,14 @@ class StructureVisualizer {
         this.meta.remove();
         this.info.remove();
         this.structure.remove();
+    }
+
+    public applySettings(settings: Partial<Settings>): void {
+        validateSettings(settings);
+
+        if (settings.structure !== undefined) {
+            this.structure.applySettings(settings.structure as Settings[]);
+        }
     }
 }
 
@@ -505,8 +522,6 @@ export interface MapConfig {
     info: string | HTMLElement;
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string | HTMLElement;
-    /** Settings for the map & structure viewer */
-    settings?: Partial<Settings>;
 }
 
 /**
@@ -557,7 +572,7 @@ class MapVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            { element: config.map, settings: getMapSettings(config.settings) },
+            { element: config.map, settings: getMapSettings(dataset.settings) },
             this._indexer,
             dataset.properties
         );
@@ -576,11 +591,7 @@ class MapVisualizer {
             this.map.select(indexes);
         };
 
-        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
-        if (config.settings && config.settings.pinned) {
-            initial = this._indexer.from_environment(config.settings.pinned[0]);
-        }
-
+        const initial: Indexes = { environment: 0, structure: 0, atom: 0 };
         this.map.addMarker('map-0' as GUID, 'red', initial);
         this.info.show(initial);
     }
@@ -601,12 +612,13 @@ function version(): string {
     return CHEMISCOPE_GIT_VERSION;
 }
 
-function getMapSettings(settings: Partial<Settings> | undefined): SavedSettings {
+function getMapSettings(settings: Partial<Settings> | undefined): Settings {
     if (settings === undefined) {
         return {};
     }
+
     if ('map' in settings) {
-        const map = settings.map;
+        const map = settings.map as Settings;
         if (typeof map === 'object') {
             if (map === null) {
                 throw Error('invalid settings for map, should not be null');
@@ -633,7 +645,7 @@ export {
     Structure,
     UserStructure,
     Environment,
-    SavedSettings,
+    Settings,
     // different panels
     MetadataPanel,
     PropertiesMap,
