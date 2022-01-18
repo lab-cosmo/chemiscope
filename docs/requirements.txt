@@ -1,5 +1,6 @@
 sphinx>=4
 sphinx-bootstrap-theme
+sphinx-argparse-cli
 
 # required to be able to import chemiscope in the doc
 numpy

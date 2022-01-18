@@ -109,7 +109,9 @@ def create_input(
     :param dict properties: optional dictionary of additional properties, see below
     :param list environments: optional list of (structure id, atom id, cutoff)
         specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default
+        atom-centered environments should be drawn by default. Functions like
+        :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
+        can be used to generate the list of environments in simple cases.
     :param bool composition: optional, ``False`` by default. If ``True``, will
         add to structure and atom properties containing information about the
         chemical composition
@@ -291,7 +293,9 @@ def write_input(
     :param dict properties: optional dictionary of additional properties
     :param list environments: optional list of (structure id, atom id, cutoff)
         specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default
+        atom-centered environments should be drawn by default. Functions like
+        :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
+        can be used to generate the list of environments in simple cases.
     :param bool composition: optional. False by default. If True, will add to
                                 the structure and atom properties information
                                 about chemical composition
@@ -310,7 +314,7 @@ def write_input(
         import numpy as np
         import sklearn
         from sklearn import decomposition
-        from chemiscope import write_input
+        import chemiscope
 
         frames = ase.io.read('trajectory.xyz', ':')
 
@@ -328,6 +332,7 @@ def write_input(
             "PCA": {
                 "target": "atom",
                 "values": pca,
+                "description": "PCA of per-atom representation of the structures",
             },
             "energies": {
                 "target": "structure",
@@ -336,7 +341,13 @@ def write_input(
             },
         }
 
-        write_input("chemiscope.json.gz", frames=frames, properties=properties)
+        chemiscope.write_input(
+            path="chemiscope.json.gz",
+            frames=frames,
+            properties=properties,
+            # This is required to display properties with `target: "atom"`
+            environments=chemiscope.all_atomic_environments(frames),
+        )
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
