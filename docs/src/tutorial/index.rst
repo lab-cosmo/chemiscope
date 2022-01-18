@@ -19,5 +19,6 @@ notebook.
     properties
     panels
     input
+    input-reference
     sharing
     jupyter
