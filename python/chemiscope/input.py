@@ -68,12 +68,13 @@ def _expand_properties(short_properties, n_structures, n_atoms):
             if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
                 raise ValueError(
                     "Property values should be either list or numpy array, "
-                    + f"got {type(value)} instead"
+                    f"got {type(value)} instead"
                 )
             if n_structures == n_atoms:
                 warnings.warn(
-                    f"The target of the property '{key}' is ambiguous because there is the same "
-                    + "number of atoms and structures. Will assume target=structure. "
+                    f"The target of the property '{key}' is ambiguous because "
+                    "there is the same number of atoms and structures. "
+                    "We will assume target=structure"
                 )
 
             dict_property = {"values": value}
@@ -97,7 +98,12 @@ def _expand_properties(short_properties, n_structures, n_atoms):
 
 
 def create_input(
-    frames=None, meta=None, properties=None, environments=None, composition=False
+    frames=None,
+    meta=None,
+    properties=None,
+    environments=None,
+    settings=None,
+    composition=False,
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -112,6 +118,9 @@ def create_input(
         atom-centered environments should be drawn by default. Functions like
         :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
         can be used to generate the list of environments in simple cases.
+    :param dict settings: optional dictionary of settings to use when displaying
+        the data. Possible entries for the ``settings`` dictionary are documented
+        in the chemiscope input file reference.
     :param bool composition: optional, ``False`` by default. If ``True``, will
         add to structure and atom properties containing information about the
         chemical composition
@@ -185,6 +194,16 @@ def create_input(
         "meta": _normalize_metadata(meta if meta is not None else {}),
     }
 
+    if settings is not None:
+        # dump/load as json to catch possible json incompatibility in settings
+        # early
+        if not isinstance(settings, dict):
+            raise ValueError(
+                f"expected 'settings' to be a dict, got {type(settings)} instead"
+            )
+
+        data["settings"] = json.loads(json.dumps(settings))
+
     data["structures"] = []
     n_structures = None
 
@@ -204,8 +223,9 @@ def create_input(
                 else:
                     if len(value) != n_structures:
                         raise ValueError(
-                            f"wrong size for property '{name}': expected {n_structures} elements, "
-                            f"but got an array with {len(value)} entries"
+                            f"wrong size for property '{name}': expected "
+                            f"{n_structures} elements, but got an array with "
+                            f"{len(value)} entries"
                         )
             else:
                 if value["target"] != "structure":
@@ -279,6 +299,7 @@ def write_input(
     meta=None,
     properties=None,
     environments=None,
+    settings=None,
     composition=False,
 ):
     """
@@ -296,6 +317,9 @@ def write_input(
         atom-centered environments should be drawn by default. Functions like
         :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
         can be used to generate the list of environments in simple cases.
+    :param dict settings: optional dictionary of settings to use when displaying
+        the data. Possible entries for the ``settings`` dictionary are documented
+        in the chemiscope input file reference.
     :param bool composition: optional. False by default. If True, will add to
                                 the structure and atom properties information
                                 about chemical composition
@@ -356,7 +380,14 @@ def write_input(
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
-    data = create_input(frames, meta, properties, environments, composition)
+    data = create_input(
+        frames=frames,
+        meta=meta,
+        properties=properties,
+        environments=environments,
+        settings=settings,
+        composition=composition,
+    )
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
         data["meta"]["name"] = os.path.basename(path).split(".")[0]

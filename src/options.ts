@@ -6,6 +6,7 @@
 import assert from 'assert';
 
 import { getByID, sendWarning } from './utils';
+import { Settings } from './dataset';
 
 /**
  * Possible HTML attributes to attach to a setting
@@ -232,13 +233,6 @@ export class HTMLOption<T extends OptionsType> {
 }
 
 /**
- * Type defintion for saveSettings output: should be a simple object containing
- * either value, or a nested SavedSettings.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SavedSettings extends Record<string, string | number | boolean | SavedSettings> {}
-
-/**
  * Callback function to use with [[OptionsGroup.foreachSetting]]
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -290,7 +284,7 @@ export abstract class OptionsGroup {
      * @return An object with the same structure as this class containing the
      *         values of all settings.
      */
-    public saveSettings(): SavedSettings {
+    public saveSettings(): Settings {
         const settings = {};
         /* eslint-disable */
         this.foreachOption((keys, option) => {
@@ -317,9 +311,9 @@ export abstract class OptionsGroup {
      *
      * Properties starting with an underscore are ignored.
      */
-    public applySettings(settings: SavedSettings): void {
+    public applySettings(settings: Settings): void {
         // make a copy of the settings since we will be changing it below
-        const copy = JSON.parse(JSON.stringify(settings)) as SavedSettings;
+        const copy = JSON.parse(JSON.stringify(settings)) as Settings;
 
         this.foreachOption((keys, option) => {
             /* eslint-disable */

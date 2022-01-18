@@ -8,10 +8,10 @@ import assert from 'assert';
 import Plotly from './plotly/plotly-scatter';
 import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scatter';
 
-import { Property } from '../dataset';
+import { Property, Settings } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { OptionModificationOrigin, SavedSettings } from '../options';
+import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, generateGUID, sendWarning } from '../utils';
 import { enumerate, getByID, getElement, getFirstKey } from '../utils';
 
@@ -221,7 +221,7 @@ export class PropertiesMap {
      * @param properties properties to be displayed
      */
     constructor(
-        config: { element: string | HTMLElement; settings: SavedSettings },
+        config: { element: string | HTMLElement; settings: Settings },
         indexer: EnvironmentIndexer,
         properties: { [name: string]: Property }
     ) {
@@ -366,7 +366,7 @@ export class PropertiesMap {
     /**
      * Apply saved settings to the map.
      */
-    public applySettings(settings: SavedSettings): void {
+    public applySettings(settings: Settings): void {
         this._options.applySettings(settings);
     }
 
@@ -374,7 +374,7 @@ export class PropertiesMap {
      * Save the values of the current settings in a way that an be used with
      * [[applySettings]] or saved to JSON.
      */
-    public saveSettings(): SavedSettings {
+    public saveSettings(): Settings {
         return this._options.saveSettings();
     }
 

@@ -5,7 +5,8 @@
 
 import assert from 'assert';
 
-import { HTMLOption, OptionsGroup, SavedSettings } from '../options';
+import { Settings } from '../dataset';
+import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { GUID, PositioningCallback } from '../utils';
 import { arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
@@ -87,7 +88,7 @@ export class MapOptions extends OptionsGroup {
         guid: GUID,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        settings: SavedSettings = {}
+        settings: Settings = {}
     ) {
         super();
         const propertiesName = Object.keys(properties);
@@ -164,11 +165,11 @@ export class MapOptions extends OptionsGroup {
      *
      * @param settings settings for all panels
      */
-    public applySettings(settings: SavedSettings): void {
+    public applySettings(settings: Settings): void {
         // deal with backward compatibility: size.mode === 'constant' should be
         // the same as `size.property === ''`
         if ('size' in settings) {
-            const size = settings.size as SavedSettings;
+            const size = settings.size as Settings;
             if ('mode' in size && size.mode === 'constant') {
                 delete size.mode;
                 size.property = '';

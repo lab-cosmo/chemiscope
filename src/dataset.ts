@@ -35,7 +35,21 @@ export interface Dataset {
      * environment. This may change in the future.
      */
     environments?: Environment[];
+    /** Settings for visualization of this dataset */
+    settings?: Partial<Settings>;
 }
+
+/**
+ * Type definition for settings that can be saved with a dataset. THey should be
+ * a simple object with string keys, scalar values, array values or nested
+ * Settings objects.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface Settings
+    extends Record<
+        string,
+        string | string[] | number | number[] | boolean | boolean[] | Settings | Settings[]
+    > {}
 
 /** Various metadata associated with a dataset */
 export interface Metadata {
