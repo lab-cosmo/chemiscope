@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@jupyter-widgets/base": "^4.0.0",
+    "@popperjs/core": "^2.11.2",
     "@types/chai": "^4",
     "@types/glob": "^7",
     "@types/jquery": "^3.5",
@@ -76,7 +77,6 @@
     "node-loader": "^2",
     "pako": "^2",
     "plotly.js": "2.8.3",
-    "popper.js": "^1.16",
     "prettier": "2.5.1",
     "process": "^0.11.10",
     "rimraf": "^3",
