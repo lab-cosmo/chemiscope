@@ -83,8 +83,8 @@ export class EnvironmentInfo {
         if (this._indexer.mode === 'atom') {
             atomButton = `
             <div class='btn btn-sm chsp-info-atom-btn'
-                data-toggle='collapse'
-                data-target='#${atomId}'
+                data-bs-toggle='collapse'
+                data-bs-target='#${atomId}'
                 aria-expanded='false'
                 aria-controls='${atomId}'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
@@ -97,8 +97,8 @@ export class EnvironmentInfo {
         <div class='accordion chsp-info-tables' id='info-tables'></div>
         <div class='chsp-info-btns'>
             <div class='btn btn-sm chsp-info-structure-btn'
-                data-toggle='collapse'
-                data-target='#${structureId}'
+                data-bs-toggle='collapse'
+                data-bs-target='#${structureId}'
                 aria-expanded='false'
                 aria-controls='${structureId}'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>

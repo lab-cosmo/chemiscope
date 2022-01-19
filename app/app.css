@@ -18,6 +18,10 @@ body {
     font-size: 0.8rem;
 }
 
+.footer .container {
+    max-width: 1140px;
+}
+
 .footer a {
     color: inherit;
     text-decoration: underline;
@@ -30,6 +34,7 @@ header {
 }
 
 .navbar {
+    max-width: 1140px;
     margin-bottom: 1em;
     z-index: 999;
     background-color: inherit;
@@ -68,25 +73,29 @@ main.container-fluid {
     }
 }
 
-main .embed-responsive {
+main .ratio {
     margin: auto;
 }
 
-main .embed-responsive-item {
+main .ratio > * {
     display: flex;
     flex-flow: column;
 }
 
-.embed-responsive-5by7::before {
+.ratio-5x7 {
+    overflow-y: hidden;
+}
+
+.ratio-5x7::before {
     padding-top: 140%;
 }
 
 @media screen and (min-width: 768px) {
-    .embed-responsive-5by7 {
+    .ratio-5x7 {
         max-height: calc(100vh - 4em - 120px);
     }
 
-    main .embed-responsive {
+    main .ratio {
         /* set the width to fit the vertical space, and the height will be set automatically */
         max-width: calc(100vh - 4em - 120px);
     }
@@ -105,6 +114,7 @@ main .embed-responsive-item {
 }
 
 #chemiscope-meta {
+    width: max-content;
     position: absolute;
     top: 0;
     left: 2em;

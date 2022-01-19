@@ -182,7 +182,7 @@ export class MapOptions extends OptionsGroup {
      */
     public remove(): void {
         if (this._modal.classList.contains('show')) {
-            const close = this._modal.querySelector('.close');
+            const close = this._modal.querySelector('.btn-close');
             assert(close !== null);
             (close as HTMLElement).click();
         }
@@ -305,8 +305,8 @@ export class MapOptions extends OptionsGroup {
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-viewer-button"
-            data-target='#${this.getId('map-settings')}'
-            data-toggle="modal"
+            data-bs-target='#${this.getId('map-settings')}'
+            data-bs-toggle="modal"
             style="top: 4px; left: 5px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
@@ -318,7 +318,7 @@ export class MapOptions extends OptionsGroup {
         template.innerHTML = HTML_OPTIONS
             .replace(/id="(.*?)"/g, (_: string, id: string) => `id="${this.getId(id)}"`)
             .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${this.getId(id)}"`)
-            .replace(/data-target="#(.*?)"/g, (_: string, id: string) => `data-target="#${this.getId(id)}"`);
+            .replace(/data-bs-target="#(.*?)"/g, (_: string, id: string) => `data-bs-target="#${this.getId(id)}"`);
 
         const modal = template.content.firstChild as HTMLElement;
         const modalDialog = modal.childNodes[1] as HTMLElement;
