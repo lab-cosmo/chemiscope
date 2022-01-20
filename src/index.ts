@@ -19,7 +19,7 @@
 
 import assert from 'assert';
 
-import { EnvironmentIndexer, Indexes } from './indexer';
+import { DisplayMode, EnvironmentIndexer, Indexes } from './indexer';
 import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
@@ -36,7 +36,13 @@ import {
     UserStructure,
 } from './dataset';
 import { JsObject, validateDataset } from './dataset';
-import { GUID, addWarningHandler, getNextColor } from './utils';
+import {
+    GUID,
+    PositioningCallback,
+    WarningHandler,
+    addWarningHandler,
+    getNextColor,
+} from './utils';
 
 require('./static/chemiscope.css');
 
@@ -631,4 +637,10 @@ export {
     DefaultVisualizer,
     StructureVisualizer,
     MapVisualizer,
+    // miscellaneous helpers
+    DisplayMode,
+    GUID,
+    PositioningCallback,
+    Indexes,
+    WarningHandler,
 };

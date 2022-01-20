@@ -17,8 +17,7 @@ the HTML pages using it. You can serve these from your own web server, or use a
 CDN to deliver them.
 
 - `Bootstrap <https://getbootstrap.com/>`_ for HTML styling and basic UI;
-- Bootstrap relies on the ubiquitous `JQuery <https://jquery.com/>`_ and
-  `JQueryUI <https://jqueryui.com/>`_
+- Bootstrap and 3Dmol.js rely on the ubiquitous `JQuery <https://jquery.com/>`_
 
 Getting and building the code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -45,14 +44,14 @@ which only contains code related to `Chemiscope.MoleculeViewer
 <MoleculeViewer_>`_, making the minified JavaScript file much smaller. Other
 partial builds containing only part of chemiscope can be added upon request.
 
-.. _DefaultVisualizer: api/classes/main.defaultvisualizer.html
-.. _addWarningHandler: api/modules/utils.html#addwarninghandler-1
-.. _ViewersGrid: api/classes/structure.viewersgrid.html
-.. _PropertiesMap: api/classes/map.propertiesmap-1.html
-.. _EnvironmentInfo: api/classes/info.environmentinfo-1.html
-.. _MetadataPanel: api/classes/main.metadatapanel.html
-.. _EnvironmentIndexer: api/classes/utils.environmentindexer.html
-.. _MoleculeViewer: api/classes/structure.moleculeviewer.html
+.. _DefaultVisualizer: api/classes/DefaultVisualizer.html
+.. _addWarningHandler: api/index.html#addWarningHandler
+.. _ViewersGrid: api/classes/ViewersGrid.html
+.. _PropertiesMap: api/classes/PropertiesMap.html
+.. _EnvironmentInfo: api/classes/EnvironmentInfo.html
+.. _MetadataPanel: api/classes/MetadataPanel.html
+.. _EnvironmentIndexer: api/classes/EnvironmentIndexer.html
+.. _MoleculeViewer: api/classes/MoleculeViewer.html
 
 Build from sources
 ------------------
