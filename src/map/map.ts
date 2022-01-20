@@ -996,7 +996,7 @@ export class PropertiesMap {
         } else {
             sizes = new Array(this._property(this._options.x.property.value).values.length).fill(
                 1.0
-            );
+            ) as number[];
         }
         const values = this._options.calculateSizes(sizes);
         const selected = [];
