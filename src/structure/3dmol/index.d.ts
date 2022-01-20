@@ -128,6 +128,8 @@ export interface AtomSpec {
     pdbline: string;
     /** Set this flag to true to enable click selection handling for this atom */
     clickable: boolean;
+    /** Set this flag to true to enable click selection handling for this atom */
+    hoverable: boolean;
     // TODO
     // /** Callback click handler function to be executed on this atom and its parent viewer */
     // callback: function;
@@ -136,11 +138,12 @@ export interface AtomSpec {
     altLoc: string;
 }
 
-export interface AtomSelectionSpec extends Omit<AtomSpec, 'bonds'> {
+export interface AtomSelectionSpec extends Omit<AtomSpec, 'bonds', 'index'> {
     /** a single model or list of models from which atoms should be selected. Can also specify by numerical creation order. Reverse indexing is allowed (-1 specifies last added model). */
     model: GLModel | number;
     /** overloaded to select number of bonds, e.g. {bonds: 0} will select all nonbonded atoms */
     bonds: number;
+    index: number | number[];
     /** user supplied function that gets passed an {AtomSpec} and should return true if the atom should be selected */
     predicate: (spec: AtomSpec) => boolean;
     /** if set, inverts the meaning of the selection */
@@ -425,6 +428,12 @@ export declare class GLViewer {
     ): void;
 
     public zoomTo(
+        sel?: Partial<AtomSelectionSpec>,
+        animationDuration?: number,
+        fixedPath?: boolean
+    ): void;
+
+    public center(
         sel?: Partial<AtomSelectionSpec>,
         animationDuration?: number,
         fixedPath?: boolean

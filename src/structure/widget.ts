@@ -10,7 +10,7 @@ import { assignBonds } from './3dmol/assignBonds';
 
 import { SavedSettings } from '../options';
 import { GUID, generateGUID, getByID, getElement, unreachable } from '../utils';
-import { PositioningCallback, binarySearch } from '../utils';
+import { PositioningCallback } from '../utils';
 import { Environment, Structure } from '../dataset';
 
 import { StructureOptions } from './options';
@@ -389,8 +389,6 @@ export class MoleculeViewer {
         assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
         this._current.model.addAtomSpecs(['index']);
 
-        this._viewer.setClickable({}, true, (atom) => this._selectAtom(atom));
-
         if (this._environments === undefined) {
             this._styles.noEnvs.disabled = false;
             this._changeHighlighted(undefined);
@@ -400,17 +398,17 @@ export class MoleculeViewer {
 
             assert(this._environments.length === structure.size);
 
-            this._setHoverable(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this._environments.filter((e) => e !== undefined).map((e) => e!.center)
-            );
+            this._setEnvironmentInteractions();
         }
 
         this._updateStyle();
 
-        const centerView = this._options.environments.center.value;
-        if (!keepOrientation || centerView) {
-            this._resetView(centerView);
+        if (!keepOrientation) {
+            this._resetView();
+        }
+
+        if (this._options.environments.center.value) {
+            this._centerView();
         }
 
         // make sure to reset axes/labels when the structure changes
@@ -420,6 +418,28 @@ export class MoleculeViewer {
         this._viewer.render();
     }
 
+    /** Setup interaction (click & hover) for environments highlighting */
+    private _setEnvironmentInteractions() {
+        if (this._environments === undefined) {
+            return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const active = this._environments.filter((e) => e !== undefined).map((e) => e!.center);
+
+        // resets clickable and hoverable state interactions
+        for (const atom of this._viewer.selectedAtoms({})) {
+            atom.clickable = false;
+            atom.hoverable = false;
+        }
+
+        assert(this._current !== undefined);
+        this._viewer.setClickable({ model: this._current.model, index: active }, true, (atom) =>
+            this._selectAtom(atom)
+        );
+
+        this._setHoverable(active);
+    }
     /**
      * Highlight a given `atom` in the current structure.
      *
@@ -435,8 +455,13 @@ export class MoleculeViewer {
         this._updateStyle();
 
         const centerView = this._options.environments.center.value;
+
         if (this._highlighted !== undefined && centerView) {
-            this._resetView(centerView);
+            if (!this._options.keepOrientation.value) {
+                this._resetView();
+            }
+
+            this._centerView();
         }
 
         this._viewer.render();
@@ -466,68 +491,46 @@ export class MoleculeViewer {
 
     /* Set the given list of active atoms as hoverable **/
     public _setHoverable(active: number[]): void {
+        assert(this._current !== undefined);
         this._viewer.setHoverDuration(0);
-
-        interface Hoverable {
-            model: $3Dmol.GLModel;
-            // used to debounce visual changes and prevent flickering
-            display: boolean;
-        }
 
         const n_atoms = this.natoms();
         assert(n_atoms !== undefined);
-        const hovered = Array(n_atoms) as (Hoverable | undefined)[];
-
-        const isHoverable = (atom: $3Dmol.AtomSpec) => {
-            return binarySearch(active, atom.index) !== -1;
-        };
+        const hovered: Map<number, $3Dmol.GLModel> = new Map();
 
         this._viewer.setHoverable(
             {
-                predicate: isHoverable,
+                model: this._current.model,
+                index: active,
             },
             true,
             (atom) => {
-                if (!isHoverable(atom)) {
-                    // this function might still be called on non-hoverable
-                    // atoms since 3Dmol consider periodic images of an atom to
-                    // be the same atom.
+                if (hovered.get(atom.index) !== undefined) {
+                    // the 'hover' model for this atom already exists
                     return;
                 }
 
-                const current = hovered[atom.index];
+                const model = this._viewer.addModel();
+                model.addAtoms([atom]);
+                model.setStyle({}, this._centralStyle(0.3));
 
-                if (current === undefined) {
-                    const model = this._viewer.addModel();
-                    model.addAtoms([atom]);
-                    model.setStyle({}, this._centralStyle(0.3));
-                    hovered[atom.index] = { model, display: true };
-                } else if (!current.display) {
-                    // the atom was hovered again, display it a bit longer
-                    current.display = true;
-                }
+                // the atom is marked as clickable, reset flags
+                const sel = model.selectedAtoms({});
+                sel[0].clickable = false;
+                sel[0].hoverable = false;
 
+                hovered.set(atom.index, model);
                 this._viewer.render();
             },
             (atom) => {
-                if (!isHoverable(atom)) {
+                const model = hovered.get(atom.index);
+                if (model === undefined) {
                     return;
                 }
 
-                const current = hovered[atom.index];
-                if (current === undefined) {
-                    return;
-                }
-                current.display = false;
-
-                setTimeout(() => {
-                    if (!current.display) {
-                        this._viewer.removeModel(current.model);
-                        this._viewer.render();
-
-                        hovered[atom.index] = undefined;
-                    }
-                }, 10);
+                this._viewer.removeModel(model);
+                this._viewer.render();
+                hovered.delete(atom.index);
             }
         );
         this._viewer.render();
@@ -671,6 +674,9 @@ export class MoleculeViewer {
             if (this._highlighted !== undefined) {
                 this._changeHighlighted(this._highlighted.center);
             }
+            if (this._environmentsEnabled()) {
+                this._setEnvironmentInteractions();
+            }
             this._updateStyle();
             this._viewer.render();
         };
@@ -687,7 +693,14 @@ export class MoleculeViewer {
             restyleAndRender();
         };
         this._options.environments.center.onchange = (center) => {
-            this._resetView(center);
+            if (!this._options.keepOrientation.value) {
+                this._resetView();
+            }
+
+            if (center) {
+                this._centerView();
+            }
+
             this._viewer.render();
         };
 
@@ -751,9 +764,14 @@ export class MoleculeViewer {
             this._options.supercell[2].value = this._initialSupercell[2];
         };
 
-        // Reset zoom level when double clicked
+        // Reset zoom level and centering when double clicked
         this._root.ondblclick = () => {
-            this._resetView(this._options.environments.center.value);
+            this._resetView();
+
+            if (this._options.environments.center.value) {
+                this._centerView();
+            }
+
             this._viewer.render();
         };
     }
@@ -765,6 +783,7 @@ export class MoleculeViewer {
         // use atom.serial instead of atom.index to ensure we are getting the
         // id of the atom inside the central cell when using a supercell
         assert(atom.serial !== undefined);
+
         this.onselect(atom.serial);
     }
 
@@ -829,14 +848,16 @@ export class MoleculeViewer {
             // nothing to do
         } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
             style.stick = {
-                radius: 0.15,
+                // slightly smaller radius than the main style
+                radius: 0.149,
                 opacity: 0.7,
                 hidden: !this._options.bonds.value,
             };
 
             if (bgStyle === 'ball-stick') {
                 style.sphere = {
-                    scale: 0.22,
+                    // slightly smaller scale than the main style
+                    scale: 0.219,
                     opacity: 0.7,
                 };
             }
@@ -1000,20 +1021,23 @@ export class MoleculeViewer {
     /**
      * Reset the view by re-centering it and zooming to fit the model as much as
      * possible inside the views.
-     *
-     * @param center Should we center on the highlighted central atom? If false,
-     *               the camera center/look-at is the center of the whole
-     *               structure.
      */
-    private _resetView(center: boolean): void {
-        if (center && this._highlighted !== undefined) {
-            this._viewer.zoomTo({ serial: this._highlighted.center });
-            this._viewer.zoom(4.0);
-        } else {
-            this._viewer.zoomTo();
-            this._viewer.zoom(2.0);
-        }
+    private _resetView(): void {
+        this._viewer.zoomTo();
+        this._viewer.zoom(2.0);
         this._viewer.setSlab(-1000, 1000);
+    }
+
+    /**
+     * Centers the view around the selected atom (if there is one)
+     */
+    private _centerView(): void {
+        if (this._highlighted !== undefined && this._current !== undefined) {
+            // use index rather than serial to specify the selection, to avoid picking also the
+            // periodic replicas. however we then have to specify the model id, otherwise it'd
+            // pick the index from the highlighted selection, which does not match the serial ID
+            this._viewer.center({ index: this._highlighted.center, model: this._current.model });
+        }
     }
 
     /**
