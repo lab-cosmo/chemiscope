@@ -161,7 +161,7 @@ export class HTMLOption<T extends OptionsType> {
 
         const listener = (event: Event) => {
             assert(event.target !== null);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
             this._update((event.target as any)[attribute].toString(), 'DOM');
         };
 

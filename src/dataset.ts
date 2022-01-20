@@ -169,7 +169,7 @@ export function validateDataset(o: JsObject): void {
     } else if (!Array.isArray(o.structures)) {
         throw Error('"structures" must be an array in the dataset');
     }
-    const [structureCount, envCount] = checkStructures(o.structures);
+    const [structureCount, envCount] = checkStructures(o.structures as JsObject[]);
 
     if (!('properties' in o)) {
         throw Error('missing "properties" key in then dataset');
@@ -186,7 +186,7 @@ export function validateDataset(o: JsObject): void {
         if (o.environments.length !== envCount) {
             throw Error(`expected ${envCount} environments, got ${o.environments.length} instead`);
         }
-        checkEnvironments(o.environments, o.structures);
+        checkEnvironments(o.environments as JsObject[], o.structures as Structure[]);
     }
 }
 
