@@ -164,7 +164,7 @@
     min-width: 6em;
 }
 
-.chsp-map-options > :nth-child(n+3):not(.chsp-map-extra-options) {
+.chsp-map-options > :nth-child(n + 3):not(.chsp-map-extra-options) {
     margin-top: 1rem;
 }
 
