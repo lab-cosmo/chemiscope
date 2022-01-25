@@ -723,7 +723,8 @@ export class MoleculeViewer {
         // Setup various buttons
         this._resetEnvCutoff = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);
         this._resetEnvCutoff.onclick = () => {
-            this._options.environments.cutoff.value = this._currentDefaultCutoff();
+            assert(this._highlighted !== undefined);
+            this._options.environments.cutoff.value = this._cutoffAround(this._highlighted.center);
             restyleAndRender();
         };
 
@@ -969,17 +970,13 @@ export class MoleculeViewer {
     }
 
     /**
-     * Get the default cutoff for the currently displayed environment
+     * Get the cutoff for the environment around the given `center`
      */
-    private _currentDefaultCutoff(): number {
-        if (this._highlighted === undefined) {
-            throw Error('no central environments defined when calling _currentCutoff');
-        } else {
-            assert(this._environments !== undefined);
-            const environment = this._environments[this._highlighted.center];
-            assert(environment !== undefined);
-            return environment.cutoff;
-        }
+    private _cutoffAround(center: number): number {
+        assert(this._environments !== undefined);
+        const environment = this._environments[center];
+        assert(environment !== undefined);
+        return environment.cutoff;
     }
 
     /**
@@ -1001,15 +998,21 @@ export class MoleculeViewer {
                 throw Error('can not highlight an atom without having a list of environments');
             }
 
-            if (this._environments[center] === undefined) {
+            const environment = this._environments[center];
+            if (environment === undefined) {
                 throw Error(
                     `can not highlight atom ${center}: it is not part of the list of environments`
                 );
             }
 
-            // keep user defined cutoff, if any
-            if (this._options.environments.cutoff.value <= 0) {
-                this._options.environments.cutoff.value = this._currentDefaultCutoff();
+            let oldCutoff = undefined;
+            if (this._highlighted !== undefined) {
+                oldCutoff = this._cutoffAround(this._highlighted.center);
+            }
+
+            // only change the cutoff if it was not changed manually by the user
+            if (oldCutoff === undefined || this._options.environments.cutoff.value === oldCutoff) {
+                this._options.environments.cutoff.value = environment.cutoff;
             }
 
             // We need to create a separate model to have different opacity
