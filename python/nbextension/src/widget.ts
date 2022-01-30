@@ -13,6 +13,7 @@ import {
     Settings,
 } from '../../../src/index';
 import { Dataset } from '../../../src/dataset';
+import { SavedSettings } from '../../../src/options';
 
 /**
  * The [[ChemiscopeView]] class renders the Chemiscope App as a widget in the
@@ -165,9 +166,14 @@ export class StructureView extends DOMWidgetView {
             settings: settings,
         };
 
+        // Python -> JavaScript update
+        this.model.on('change:settings', this._onSettingsChanged, this);
+
         void StructureVisualizer.load(config, dataset)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+                this._SaveSettings();
+                this.visualizer.structure.onsettings = this._SaveSettings;
             })
             .catch((e: Error) => {
                 const display = getByID(`${this.guid}-error-display`, element);
@@ -177,6 +183,32 @@ export class StructureView extends DOMWidgetView {
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
+        }
+
+        // JavaScript -> Python update
+        //this._emailInput.onchange = this._onInputChanged.bind(this);
+    }
+
+    private _onSettingsChanged(): void {
+        console.log('onSettingsChanged');
+        console.log(this.model.get('settings'));
+        const settings = JSON.parse(this.model.get('settings')) as Partial<Settings>;
+        console.log(settings);
+        if (settings.structure !== undefined) {
+            this.visualizer?.structure.applySettings(settings.structure);
+        }
+    }
+
+    public _SaveSettings(): void {
+        console.log('saving settings', this.visualizer);
+
+        if (this.visualizer !== undefined) {
+            console.log(JSON.stringify(this.visualizer.structure.saveSettings()));
+            this.model.set(
+                'settings',
+                JSON.stringify({ structure: this.visualizer?.structure.saveSettings() })
+            );
+            this.model.save_changes();
         }
     }
 

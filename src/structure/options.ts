@@ -44,7 +44,7 @@ export class StructureOptions extends OptionsGroup {
     };
 
     /// The HTML element containing the settings modal
-    private _modal: HTMLElement;
+    public _modal: HTMLElement;
     /// The HTML element containing the button to open the settings modal
     private _openModal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.

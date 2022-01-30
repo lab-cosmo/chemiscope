@@ -7,15 +7,21 @@ from traitlets import Unicode, Bool
 from .input import create_input
 
 
-class _ChemiscopeWidgetBase:
+class _ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     """Base class to hold member functions that are common to the different
     types of chemiscope modes"""
+
+    data = Unicode().tag(sync=True)
+    settings = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
 
     def save(self, path):
         """
         Save the dataset displayed by this :py:class:`ChemiscopeWidget` as JSON
         to the given ``path``. If ``path`` ends with ``.gz``, the file is
         written as gzip compressed JSON string.
+        NB: this is the data as of the creation of the widget, the style does
+        not get dynamically updated.
 
         :param str path: where to save the dataset.
         """
@@ -29,15 +35,10 @@ class _ChemiscopeWidgetBase:
 
 
 @ipywidgets.register
-class ChemiscopeWidget(
-    ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase
-):
+class ChemiscopeWidget(_ChemiscopeWidgetBase):
     _view_name = Unicode("ChemiscopeView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
-
     def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
@@ -45,15 +46,10 @@ class ChemiscopeWidget(
 
 
 @ipywidgets.register
-class StructureWidget(
-    ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase
-):
+class StructureWidget(_ChemiscopeWidgetBase):
     _view_name = Unicode("StructureView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
-
     def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
@@ -61,12 +57,9 @@ class StructureWidget(
 
 
 @ipywidgets.register
-class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase):
+class MapWidget(_ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
-
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__()

@@ -210,6 +210,8 @@ export class MoleculeViewer {
             this.positionSettingsModal(rect)
         );
 
+        this._options._modal.onclose = this.onsettings;
+
         this._connectOptions();
         this._trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
 
@@ -263,6 +265,13 @@ export class MoleculeViewer {
             },
             { capture: true }
         );
+    }
+
+    /**
+     * Called when the settings modal is closed
+     */
+    public onsettings(): void {
+        console.log('original onsettings called');
     }
 
     /**

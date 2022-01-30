@@ -70,6 +70,8 @@ export class ViewersGrid {
     public onselect: (indexes: Indexes) => void;
     /** Callback fired when a viewer is removed from the grid */
     public onremove: (guid: GUID) => void;
+    /** Callback fired when settings of one of the viewers is changed */
+    public onsettings: () => void;
     /**
      * Callback fired when a new viewer is created
      *
@@ -167,6 +169,7 @@ export class ViewersGrid {
         this.onselect = () => {};
         this.onremove = () => {};
         this.oncreate = () => {};
+        this.onsettings = () => {};
         this.activeChanged = () => {};
         this.delayChanged = () => {};
 
@@ -661,6 +664,11 @@ export class ViewersGrid {
 
                     widget.highlight(atom);
                     this.onselect(indexes);
+                };
+
+                widget.onsettings = () => {
+                    console.log('overridden onsettings called');
+                    this.onsettings();
                 };
 
                 const current = { atom: undefined, structure: -1, environment: -1 };
