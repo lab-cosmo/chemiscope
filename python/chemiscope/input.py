@@ -120,7 +120,7 @@ def create_input(
     :param bool composition: optional, ``False`` by default. If ``True``, will
         add to structure and atom properties containing information about the
         chemical composition
-    :param str settings: optional. "" by default. If provided, it should be a
+    :param str settings: optional. "" by default. If provided, it must be a
         JSON string with the visualization options that should be used to initialize
         the viewer.
 
@@ -313,7 +313,7 @@ def write_input(
     :param bool composition: optional. False by default. If True, will add to
                                 the structure and atom properties information
                                 about chemical composition
-    :param str settings: optional. "" by default. If provided, it should be a
+    :param str settings: optional. "" by default. If provided, it must be a
         JSON string with the visualization options that should be used to initialize
         the viewer.
 
