@@ -74,15 +74,15 @@ export class ChemiscopeView extends DOMWidgetView {
 
         const json_data = JSON.parse(this.model.get('data'));
         const dataset = json_data as Dataset;
-        const settings = json_data.settings as Partial<Settings> | undefined;
 
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             map: getByID(`${this.guid}-chemiscope-map`, element),
             structure: getByID(`${this.guid}-chemiscope-structure`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
-            settings: settings,
             maxStructureViewers: 4,
+            // conditionally adds a settings field
+            ...('settings' in json_data && { settings: json_data.settings as Partial<Settings> }),
         };
 
         void DefaultVisualizer.load(config, dataset)
@@ -157,13 +157,13 @@ export class StructureView extends DOMWidgetView {
 
         const json_data = JSON.parse(this.model.get('data'));
         const dataset = json_data as Dataset;
-        const settings = json_data.settings as Partial<Settings> | undefined;
 
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             structure: getByID(`${this.guid}-chemiscope-structure`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
-            settings: settings,
+            // conditionally adds a settings field
+            ...('settings' in json_data && { settings: json_data.settings as Partial<Settings> }),
         };
 
         // Python -> JavaScript update
@@ -200,7 +200,7 @@ export class StructureView extends DOMWidgetView {
     }
 
     public _SaveSettings(): void {
-        console.log('saving settings', this.visualizer);
+        console.log('saving settings', this, this.visualizer);
 
         if (this.visualizer !== undefined) {
             console.log(JSON.stringify(this.visualizer.structure.saveSettings()));
@@ -276,13 +276,13 @@ export class MapView extends DOMWidgetView {
 
         const json_data = JSON.parse(this.model.get('data'));
         const dataset = json_data as Dataset;
-        const settings = json_data.settings as Partial<Settings> | undefined;
 
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             map: getByID(`${this.guid}-chemiscope-map`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
-            settings: settings,
+            // conditionally adds a settings field
+            ...('settings' in json_data && { settings: json_data.settings as Partial<Settings> }),
         };
 
         void MapVisualizer.load(config, dataset)

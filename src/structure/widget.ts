@@ -210,7 +210,10 @@ export class MoleculeViewer {
             this.positionSettingsModal(rect)
         );
 
-        this._options._modal.onclose = this.onsettings;
+        this._options._modal.ontransitionend = () => {
+            console.log('modal event');
+            this.onsettings();
+        };
 
         this._connectOptions();
         this._trajectoryOptions = getByID(`${this.guid}-trajectory-settings-group`);
