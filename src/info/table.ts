@@ -37,7 +37,7 @@ export class Table {
         properties: { [name: string]: Property }
     ) {
         const template = document.createElement('template');
-        template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-parent='#info-tables'>
+        template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-bs-parent='#info-tables'>
         <div class="chsp-properties-table">
             <table class="table table-striped table-sm">
                 <thead><th colspan=2 style="text-align: center;"></th></thead>
