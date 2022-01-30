@@ -97,7 +97,12 @@ def _expand_properties(short_properties, n_structures, n_atoms):
 
 
 def create_input(
-    frames=None, meta=None, properties=None, environments=None, composition=False
+    frames=None,
+    meta=None,
+    properties=None,
+    environments=None,
+    composition=False,
+    settings="",
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -115,6 +120,9 @@ def create_input(
     :param bool composition: optional, ``False`` by default. If ``True``, will
         add to structure and atom properties containing information about the
         chemical composition
+    :param str settings: optional. "" by default. If provided, it should be a
+        JSON string with the visualization options that should be used to initialize
+        the viewer.
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
@@ -270,6 +278,11 @@ def create_input(
 
                 data["properties"][name] = value
 
+    if settings != "":
+        try:
+            data["settings"] = json.loads(settings)
+        except:
+            raise ValueError("`settings` should be a valid JSON string")
     return data
 
 
@@ -280,6 +293,7 @@ def write_input(
     properties=None,
     environments=None,
     composition=False,
+    settings="",
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and
@@ -299,6 +313,9 @@ def write_input(
     :param bool composition: optional. False by default. If True, will add to
                                 the structure and atom properties information
                                 about chemical composition
+    :param str settings: optional. "" by default. If provided, it should be a
+        JSON string with the visualization options that should be used to initialize
+        the viewer.
 
     This function uses :py:func:`create_input` to generate the input data, see
     the documentation of this function for more information.
@@ -356,7 +373,7 @@ def write_input(
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
-    data = create_input(frames, meta, properties, environments, composition)
+    data = create_input(frames, meta, properties, environments, composition, settings)
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
         data["meta"]["name"] = os.path.basename(path).split(".")[0]

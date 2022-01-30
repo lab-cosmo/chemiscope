@@ -6,7 +6,12 @@ import './widget.css';
 import './chemiscope-bootstrap.less';
 import 'bootstrap/dist/js/bootstrap.min.js';
 
-import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
+import {
+    DefaultVisualizer,
+    MapVisualizer,
+    StructureVisualizer,
+    Settings,
+} from '../../../src/index';
 import { Dataset } from '../../../src/dataset';
 
 /**
@@ -66,16 +71,20 @@ export class ChemiscopeView extends DOMWidgetView {
             </div>
         </div>`;
 
+        const json_data = JSON.parse(this.model.get('data'));
+        const dataset = json_data as Dataset;
+        const settings = json_data.settings as Partial<Settings> | undefined;
+
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             map: getByID(`${this.guid}-chemiscope-map`, element),
             structure: getByID(`${this.guid}-chemiscope-structure`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
+            settings: settings,
             maxStructureViewers: 4,
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
-        void DefaultVisualizer.load(config, data)
+        void DefaultVisualizer.load(config, dataset)
             .then((visualizer) => {
                 this.visualizer = visualizer;
             })
@@ -145,14 +154,18 @@ export class StructureView extends DOMWidgetView {
             </div>
         </div>`;
 
+        const json_data = JSON.parse(this.model.get('data'));
+        const dataset = json_data as Dataset;
+        const settings = json_data.settings as Partial<Settings> | undefined;
+
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             structure: getByID(`${this.guid}-chemiscope-structure`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
+            settings: settings,
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
-        void StructureVisualizer.load(config, data)
+        void StructureVisualizer.load(config, dataset)
             .then((visualizer) => {
                 this.visualizer = visualizer;
             })
@@ -229,14 +242,18 @@ export class MapView extends DOMWidgetView {
             </div>
         </div>`;
 
+        const json_data = JSON.parse(this.model.get('data'));
+        const dataset = json_data as Dataset;
+        const settings = json_data.settings as Partial<Settings> | undefined;
+
         const config = {
             meta: getByID(`${this.guid}-chemiscope-meta`, element),
             map: getByID(`${this.guid}-chemiscope-map`, element),
             info: getByID(`${this.guid}-chemiscope-info`, element),
+            settings: settings,
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
-        void MapVisualizer.load(config, data)
+        void MapVisualizer.load(config, dataset)
             .then((visualizer) => {
                 this.visualizer = visualizer;
             })

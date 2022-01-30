@@ -7,18 +7,9 @@ from traitlets import Unicode, Bool
 from .input import create_input
 
 
-@ipywidgets.register
-class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
-    _view_name = Unicode("ChemiscopeView").tag(sync=True)
-    _view_module = Unicode("chemiscope-widget").tag(sync=True)
-
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
-
-    def __init__(self, data, has_metadata):
-        super().__init__()
-        self.data = json.dumps(data)
-        self.has_metadata = has_metadata
+class _ChemiscopeWidgetBase:
+    """Base class to hold member functions that are common to the different
+    types of chemiscope modes"""
 
     def save(self, path):
         """
@@ -38,7 +29,25 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
 
 @ipywidgets.register
-class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+class ChemiscopeWidget(
+    ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase
+):
+    _view_name = Unicode("ChemiscopeView").tag(sync=True)
+    _view_module = Unicode("chemiscope-widget").tag(sync=True)
+
+    data = Unicode().tag(sync=True)
+    has_metadata = Bool().tag(sync=True)
+
+    def __init__(self, data, has_metadata):
+        super().__init__()
+        self.data = json.dumps(data)
+        self.has_metadata = has_metadata
+
+
+@ipywidgets.register
+class StructureWidget(
+    ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase
+):
     _view_name = Unicode("StructureView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
@@ -52,7 +61,7 @@ class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
 
 @ipywidgets.register
-class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget, _ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
@@ -65,7 +74,14 @@ class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         self.has_metadata = has_metadata
 
 
-def show(frames=None, properties=None, meta=None, environments=None, mode="default"):
+def show(
+    frames=None,
+    properties=None,
+    meta=None,
+    environments=None,
+    settings="",
+    mode="default",
+):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
     (optionally ``meta`` and ``environments`` as well) using a embedded chemiscope
@@ -140,7 +156,11 @@ def show(frames=None, properties=None, meta=None, environments=None, mode="defau
         )
 
     dict_input = create_input(
-        frames=frames, properties=properties, meta=meta, environments=environments
+        frames=frames,
+        properties=properties,
+        meta=meta,
+        environments=environments,
+        settings=settings,
     )
 
     if mode != "structure":

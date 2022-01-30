@@ -483,6 +483,9 @@ class StructureVisualizer {
 
         this.structure.show(initial);
         this.info.show(initial);
+        if (config.settings && config.settings.structure) {
+            this.structure.applySettings(config.settings.structure);
+        }
     }
 
     /**
@@ -496,7 +499,7 @@ class StructureVisualizer {
 }
 
 /**
- * Configuration for the [[StructureVisualizer]]
+ * Configuration for the [[MapVisualizer]]
  */
 export interface MapConfig {
     /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
@@ -505,7 +508,7 @@ export interface MapConfig {
     info: string | HTMLElement;
     /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
     meta: string | HTMLElement;
-    /** Settings for the map & structure viewer */
+    /** Settings for the map viewer */
     settings?: Partial<Settings>;
 }
 
@@ -583,6 +586,10 @@ class MapVisualizer {
 
         this.map.addMarker('map-0' as GUID, 'red', initial);
         this.info.show(initial);
+
+        if (config.settings && config.settings.map) {
+            this.map.applySettings(config.settings.map);
+        }
     }
 
     /**
