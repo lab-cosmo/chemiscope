@@ -279,10 +279,9 @@ def create_input(
                 data["properties"][name] = value
 
     if settings != "":
-        try:
-            data["settings"] = json.loads(settings)
-        except:
-            raise ValueError("`settings` should be a valid JSON string")
+        # Converts to a dictionary, checkign in passing that the JSON string is valid
+        data["settings"] = json.loads(settings)
+
     return data
 
 
