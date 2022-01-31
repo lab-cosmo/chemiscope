@@ -173,7 +173,16 @@ export class StructureView extends DOMWidgetView {
             .then((visualizer) => {
                 this.visualizer = visualizer;
                 this._SaveSettings();
-                this.visualizer.structure.onsettings = this._SaveSettings;
+                visualizer.structure.onsettings = () => {
+                    console.log(JSON.stringify(visualizer.structure.saveSettings()));
+                    this.model.set(
+                        'settings',
+                        JSON.stringify({ structure: visualizer.structure.saveSettings() })
+                    ); 
+                    this.model.save_changes();
+                };                    
+                console.log("Initializing callback0, this");
+                this.visualizer.structure.onsettings.bind(this);
             })
             .catch((e: Error) => {
                 const display = getByID(`${this.guid}-error-display`, element);
@@ -200,7 +209,8 @@ export class StructureView extends DOMWidgetView {
     }
 
     public _SaveSettings(): void {
-        console.log('saving settings', this, this.visualizer);
+        console.log('saving settings', this);
+        console.log("visualize", this.visualizer);
 
         if (this.visualizer !== undefined) {
             console.log(JSON.stringify(this.visualizer.structure.saveSettings()));
