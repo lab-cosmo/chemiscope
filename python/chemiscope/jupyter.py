@@ -2,29 +2,32 @@
 import json
 import gzip
 import ipywidgets
-from traitlets import Unicode, Bool
+from traitlets import Unicode, Bool, Dict
 
 from .input import create_input
 
 
-@ipywidgets.register
-class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
-    _view_name = Unicode("ChemiscopeView").tag(sync=True)
-    _view_module = Unicode("chemiscope-widget").tag(sync=True)
-
+class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     data = Unicode().tag(sync=True)
     has_metadata = Bool().tag(sync=True)
+
+    # synchronized settings from the JS side. You can assign to this field to
+    # change what's being displayed by chemiscope, but you need to assign a full
+    # dictionary (`widget.settings["map"]["x"]["property"] = "foo"` will not
+    # work, but `widget.settings = updated_settings` will).
+    settings = Dict().tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
         self.has_metadata = has_metadata
+        self.settings = {}
 
     def save(self, path):
         """
-        Save the dataset displayed by this :py:class:`ChemiscopeWidget` as JSON
-        to the given ``path``. If ``path`` ends with ``.gz``, the file is
-        written as gzip compressed JSON string.
+        Save the dataset displayed by this widget as JSON to the given ``path``.
+        If ``path`` ends with ``.gz``, the file is written as gzip compressed
+        JSON string.
 
         :param str path: where to save the dataset.
         """
@@ -33,36 +36,39 @@ class ChemiscopeWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         else:
             file = open(path, "wb")
 
-        file.write(self.data.encode("utf8"))
+        # update the settings in the data to the latest value
+        data = json.loads(self.data)
+        data["settings"] = self.settings
+
+        file.write(json.dumps(data).encode("utf8"))
         file.close()
 
 
 @ipywidgets.register
-class StructureWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
-    _view_name = Unicode("StructureView").tag(sync=True)
+class ChemiscopeWidget(ChemiscopeWidgetBase):
+    _view_name = Unicode("ChemiscopeView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
-
     def __init__(self, data, has_metadata):
-        super().__init__()
-        self.data = json.dumps(data)
-        self.has_metadata = has_metadata
+        super().__init__(data, has_metadata)
 
 
 @ipywidgets.register
-class MapWidget(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
+class StructureWidget(ChemiscopeWidgetBase):
+    _view_name = Unicode("StructureView").tag(sync=True)
+    _view_module = Unicode("chemiscope-widget").tag(sync=True)
+
+    def __init__(self, data, has_metadata):
+        super().__init__(data, has_metadata)
+
+
+@ipywidgets.register
+class MapWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
     _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
-    data = Unicode().tag(sync=True)
-    has_metadata = Bool().tag(sync=True)
-
     def __init__(self, data, has_metadata):
-        super().__init__()
-        self.data = json.dumps(data)
-        self.has_metadata = has_metadata
+        super().__init__(data, has_metadata)
 
 
 def show(
@@ -143,7 +149,8 @@ def show(
 
     else:
         raise ValueError(
-            f"invalid mode '{mode}' in chemiscope.show, expected one of 'default', 'structure' or 'map'"
+            f"invalid mode '{mode}' in chemiscope.show, expected one of "
+            "'default', 'structure' or 'map'"
         )
 
     dict_input = create_input(

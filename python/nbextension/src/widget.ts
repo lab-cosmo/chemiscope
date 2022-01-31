@@ -7,7 +7,7 @@ import './chemiscope-bootstrap.less';
 import 'bootstrap/dist/js/bootstrap.min.js';
 
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
-import { Dataset } from '../../../src/dataset';
+import { Dataset, Settings } from '../../../src/dataset';
 
 /**
  * The [[ChemiscopeView]] class renders the Chemiscope App as a widget in the
@@ -74,10 +74,25 @@ export class ChemiscopeView extends DOMWidgetView {
             maxStructureViewers: 4,
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
+        // update settings on JS side when they are changed in Python
+        this.model.on('change:settings', () => {
+            const settings = this.model.get('settings') as Partial<Settings>;
+            // ignore pinned setting in jupyter, otherwise the pinned is changed
+            // by JS and then overwritten the first time by Python
+            delete settings.pinned;
+
+            this.visualizer?.applySettings(settings);
+        });
+
+        const data = JSON.parse(this.model.get('data') as string) as Dataset;
         void DefaultVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+
+                // update the Python side settings whenever a setting changes
+                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                // and set them to the initial value right now
+                this._updatePythonSettings();
             })
             .catch((e: Error) => {
                 const display = getByID(`${this.guid}-error-display`, element);
@@ -96,6 +111,18 @@ export class ChemiscopeView extends DOMWidgetView {
         }
 
         return super.remove();
+    }
+
+    private _updatePythonSettings(): void {
+        if (this.visualizer !== undefined) {
+            const settings = this.visualizer.saveSettings();
+            // ignore pinned setting in jupyter, otherwise the pinned is changed
+            // by JS and then overwritten the first time by Python
+            delete settings.pinned;
+
+            this.model.set('settings', settings);
+            this.model.save_changes();
+        }
     }
 }
 
@@ -151,10 +178,23 @@ export class StructureView extends DOMWidgetView {
             info: getByID(`${this.guid}-chemiscope-info`, element),
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
+        const data = JSON.parse(this.model.get('data') as string) as Dataset;
+
+        // update settings on JS side when they are changed in Python
+        this.model.on('change:settings', () => {
+            const settings = this.model.get('settings') as Partial<Settings>;
+            delete settings.pinned;
+            this.visualizer?.applySettings(settings);
+        });
+
         void StructureVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+
+                // update the Python side settings whenever a setting changes
+                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                // and set them to the initial value right now
+                this._updatePythonSettings();
             })
             .catch((e: Error) => {
                 const display = getByID(`${this.guid}-error-display`, element);
@@ -173,6 +213,18 @@ export class StructureView extends DOMWidgetView {
         }
 
         return super.remove();
+    }
+
+    private _updatePythonSettings(): void {
+        if (this.visualizer !== undefined) {
+            const settings = this.visualizer.saveSettings();
+            // ignore pinned setting in jupyter, otherwise the pinned is changed
+            // by JS and then overwritten the first time by Python
+            delete settings.pinned;
+
+            this.model.set('settings', settings);
+            this.model.save_changes();
+        }
     }
 }
 
@@ -235,10 +287,22 @@ export class MapView extends DOMWidgetView {
             info: getByID(`${this.guid}-chemiscope-info`, element),
         };
 
-        const data = JSON.parse(this.model.get('data')) as Dataset;
+        // update settings on JS side when they are changed in Python
+        this.model.on('change:settings', () => {
+            const settings = this.model.get('settings') as Partial<Settings>;
+            delete settings.pinned;
+            this.visualizer?.applySettings(settings);
+        });
+
+        const data = JSON.parse(this.model.get('data') as string) as Dataset;
         void MapVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+
+                // update the Python side settings whenever a setting changes
+                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                // and set them to the initial value right now
+                this._updatePythonSettings();
             })
             .catch((e: Error) => {
                 const display = getByID(`${this.guid}-error-display`, element);
@@ -257,5 +321,17 @@ export class MapView extends DOMWidgetView {
         }
 
         return super.remove();
+    }
+
+    private _updatePythonSettings(): void {
+        if (this.visualizer !== undefined) {
+            const settings = this.visualizer.saveSettings();
+            // ignore pinned setting in jupyter, otherwise the pinned is changed
+            // by JS and then overwritten the first time by Python
+            delete settings.pinned;
+
+            this.model.set('settings', settings);
+            this.model.save_changes();
+        }
     }
 }
