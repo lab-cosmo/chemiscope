@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin, generateGUID, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
@@ -258,7 +258,6 @@ export class PropertiesMap {
         this._root.style.setProperty('height', '100%');
         this._shadow.appendChild(this._root);
 
-
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
         }
@@ -270,15 +269,13 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
-        const guid = ('chsp-' + generateGUID()) as GUID;
         this._options = new MapOptions(
             this._root,
-            guid,
             this._data[this._indexer.mode],
             (rect) => this.positionSettingsModal(rect),
             config.settings
         );
-        this._colorReset = this.getById<HTMLButtonElement>(this._options.getId('map-color-reset'));
+        this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
         this._connectSettings();
 
@@ -304,16 +301,16 @@ export class PropertiesMap {
         ];
     }
 
-    public getById<T extends HTMLElement = HTMLElement>(id: string): T {
-        return this._shadow.getElementById(id) as T;
-    }
-
     /**
      * Remove all HTML added by this [[PropertiesMap]] in the current document
      */
     public remove(): void {
-        this._root.innerHTML = '';
+        // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
+        this._shadow.host.remove();
+
+        // Remove options
         this._options.remove();
+
         // remove SVG element created by Plotly
         document.getElementById('js-plotly-tester')?.remove();
 
@@ -1382,8 +1379,8 @@ export class PropertiesMap {
         if (axisBounds !== undefined) {
             // round to 10 decimal places so it does not break in Firefox
             const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = this.getById<HTMLInputElement>(this._options.getId(`map-${name}-min`));
-            const maxElement = this.getById<HTMLInputElement>(this._options.getId(`map-${name}-max`));
+            const minElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-min`);
+            const maxElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-max`);
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }

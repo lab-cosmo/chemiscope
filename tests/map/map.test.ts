@@ -59,8 +59,8 @@ describe('Map', () => {
         // default is to have a constant color)
         options.color.property.value = 'first';
 
-        const minSelectElement = options.getById<HTMLSelectElement>(options.getId(`map-color-min`));
-        const maxSelectElement = options.getById<HTMLSelectElement>(options.getId(`map-color-max`));
+        const minSelectElement = options.getModalElement<HTMLSelectElement>(`map-color-min`);
+        const maxSelectElement = options.getModalElement<HTMLSelectElement>(`map-color-max`);
         const originalMin = options.color.min.value;
         const originalMax = options.color.max.value;
 

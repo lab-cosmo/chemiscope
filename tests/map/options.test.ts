@@ -1,5 +1,4 @@
 import { AxisOptions, MapOptions } from '../../src/map/options';
-import { GUID } from '../../src/utils';
 
 import { assert } from 'chai';
 
@@ -52,7 +51,6 @@ describe('MapOptions', () => {
         const root = createShadow();
         const options = new MapOptions(
             root,
-            'this-is-my-id' as GUID,
             DUMMY_PROPERTIES,
             DUMMY_CALLBACK
         );
@@ -65,14 +63,13 @@ describe('MapOptions', () => {
 
     it('scale label for min/max switches between linear and log', () => {
         const root = createShadow();
-        const guid = 'guid' as GUID;
 
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
         function checkScaleLabel(axisOptions: AxisOptions, axisName: string): void {
-            const min = options.getById(`guid-map-${axisName}-min-label`);
-            const max = options.getById(`guid-map-${axisName}-max-label`);
-            const selectElement = options.getById<HTMLSelectElement>(`guid-map-${axisName}-scale`);
+            const min = options.getModalElement(`map-${axisName}-min-label`);
+            const max = options.getModalElement(`map-${axisName}-max-label`);
+            const selectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-scale`);
 
             // change from linear (default) to log scale
             selectElement.value = 'log';
@@ -96,27 +93,12 @@ describe('MapOptions', () => {
         options.remove();
     });
 
-    it('has a unique id in the page', () => {
-        const root = createShadow();
-
-        const guid = 'this-is-my-id' as GUID;
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
-        traverseDOM(root, (element) => {
-            if (element.id) {
-                assert(element.id.includes(guid));
-            }
-        });
-
-        options.remove();
-    });
-
     it('axis property changes when modified by the user', () => {
         const root = createShadow();
-        const guid = 'guid' as GUID;
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
         function checkPropertySelect(axisOptions: AxisOptions, axisName: string) {
-            const selectElement = options.getById<HTMLSelectElement>(`guid-map-${axisName}-property`);
+            const selectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-property`);
             selectElement.value = 'first';
             selectElement.dispatchEvent(new window.Event('change'));
             assert(selectElement.value !== 'second');
@@ -136,12 +118,11 @@ describe('MapOptions', () => {
 
     it('axis range changes when min/max are modified', () => {
         const root = createShadow();
-        const guid = 'guid' as GUID;
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
         function checkRangeSelect(axisOptions: AxisOptions, axisName: string) {
-            const minSelectElement = options.getById<HTMLSelectElement>(`guid-map-${axisName}-min`);
-            const maxSelectElement = options.getById<HTMLSelectElement>(`guid-map-${axisName}-max`);
+            const minSelectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-min`);
+            const maxSelectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-max`);
 
             assert(minSelectElement.value !== '0.01');
             assert(axisOptions.min.value !== 0.01);
@@ -167,9 +148,8 @@ describe('MapOptions', () => {
     it('property used for size changes when modified by the user', () => {
         const root = createShadow();
 
-        const guid = 'guid' as GUID;
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
-        const selectElement = options.getById<HTMLSelectElement>(`guid-map-size-property`);
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const selectElement = options.getModalElement<HTMLSelectElement>('map-size-property');
 
         assert(selectElement.value !== 'second');
         assert(options.size.property.value !== 'second');
@@ -182,9 +162,8 @@ describe('MapOptions', () => {
 
     it('size factor changes when the slider is modified by the user', () => {
         const root = createShadow();
-        const guid = 'guid' as GUID;
-        const options = new MapOptions(root, guid, DUMMY_PROPERTIES, DUMMY_CALLBACK);
-        const sliderElement = options.getById<HTMLInputElement>(`guid-map-size-factor`);
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
+        const sliderElement = options.getModalElement<HTMLInputElement>('map-size-factor');
 
         assert(sliderElement.value !== '100');
         assert(options.size.factor.value !== 100);
