@@ -9,7 +9,7 @@ import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { GUID, PositioningCallback } from '../utils';
-import { arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
+import { arrayMaxMin, makeDraggable, sendWarning } from '../utils';
 import { NumericProperties, NumericProperty } from './data';
 
 import { COLOR_MAPS } from './colorscales';
@@ -74,7 +74,7 @@ export class MapOptions extends OptionsGroup {
         reverse: HTMLOption<'boolean'>;
     };
 
-    /// The GUID of this set of options
+    // The GUID of this set of options
     private _guid: GUID;
     /// The HTML button to open the settings modal
     private _openModal: HTMLElement;
@@ -82,9 +82,11 @@ export class MapOptions extends OptionsGroup {
     private _modal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
+    // Root node for the options
+    private _root: Node;
 
     constructor(
-        root: HTMLElement,
+        root: Node,
         guid: GUID,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
@@ -104,6 +106,7 @@ export class MapOptions extends OptionsGroup {
         }
 
         this._guid = guid;
+        this._root = root;
 
         this.x = new AxisOptions(propertiesName);
         this.y = new AxisOptions(propertiesName);
@@ -154,10 +157,17 @@ export class MapOptions extends OptionsGroup {
         this._modal = modal;
         this._openModal = openModal;
         root.appendChild(this._openModal);
-        document.body.appendChild(this._modal);
+        root.getRootNode().appendChild(this._modal);
 
         this._bind(properties);
         this.applySettings(settings);
+    }
+
+    private _getById<T extends HTMLElement = HTMLElement>(id: string): T {
+        const shadow = this._root.getRootNode();
+        assert(shadow instanceof ShadowRoot);
+
+        return shadow.getElementById(id) as T;
     }
 
     /**
@@ -368,30 +378,30 @@ export class MapOptions extends OptionsGroup {
     /** Bind all options to the corresponding HTML elements */
     private _bind(properties: NumericProperties): void {
         // ======= data used as x values
-        const selectXProperty = getByID<HTMLSelectElement>(this.getId('map-x-property'));
+        const selectXProperty = this._getById<HTMLSelectElement>(this.getId('map-x-property'));
         selectXProperty.options.length = 0;
         for (const key in properties) {
             selectXProperty.options.add(new Option(key, key));
         }
         this.x.property.bind(selectXProperty, 'value');
-        this.x.min.bind(this.getId('map-x-min'), 'value');
-        this.x.max.bind(this.getId('map-x-max'), 'value');
-        this.x.scale.bind(this.getId('map-x-scale'), 'value');
+        this.x.min.bind(this._getById(this.getId('map-x-min')), 'value');
+        this.x.max.bind(this._getById(this.getId('map-x-max')), 'value');
+        this.x.scale.bind(this._getById(this.getId('map-x-scale')), 'value');
 
         // ======= data used as y values
-        const selectYProperty = getByID<HTMLSelectElement>(this.getId('map-y-property'));
+        const selectYProperty = this._getById<HTMLSelectElement>(this.getId('map-y-property'));
 
         selectYProperty.options.length = 0;
         for (const key in properties) {
             selectYProperty.options.add(new Option(key, key));
         }
         this.y.property.bind(selectYProperty, 'value');
-        this.y.min.bind(this.getId('map-y-min'), 'value');
-        this.y.max.bind(this.getId('map-y-max'), 'value');
-        this.y.scale.bind(this.getId('map-y-scale'), 'value');
+        this.y.min.bind(this._getById(this.getId('map-y-min')), 'value');
+        this.y.max.bind(this._getById(this.getId('map-y-max')), 'value');
+        this.y.scale.bind(this._getById(this.getId('map-y-scale')), 'value');
 
         // ======= data used as z values
-        const selectZProperty = getByID<HTMLSelectElement>(this.getId('map-z-property'));
+        const selectZProperty = this._getById<HTMLSelectElement>(this.getId('map-z-property'));
         // first option is 'none'
         selectZProperty.options.length = 0;
         selectZProperty.options.add(new Option('none', ''));
@@ -399,12 +409,14 @@ export class MapOptions extends OptionsGroup {
             selectZProperty.options.add(new Option(key, key));
         }
         this.z.property.bind(selectZProperty, 'value');
-        this.z.min.bind(this.getId('map-z-min'), 'value');
-        this.z.max.bind(this.getId('map-z-max'), 'value');
-        this.z.scale.bind(this.getId('map-z-scale'), 'value');
+        this.z.min.bind(this._getById(this.getId('map-z-min')), 'value');
+        this.z.max.bind(this._getById(this.getId('map-z-max')), 'value');
+        this.z.scale.bind(this._getById(this.getId('map-z-scale')), 'value');
 
         // ======= data used as color values
-        const selectColorProperty = getByID<HTMLSelectElement>(this.getId('map-color-property'));
+        const selectColorProperty = this._getById<HTMLSelectElement>(
+            this.getId('map-color-property')
+        );
         // first option is 'fixed'
         selectColorProperty.options.length = 0;
         selectColorProperty.options.add(new Option('fixed', ''));
@@ -412,11 +424,11 @@ export class MapOptions extends OptionsGroup {
             selectColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectColorProperty, 'value');
-        this.color.min.bind(this.getId('map-color-min'), 'value');
-        this.color.max.bind(this.getId('map-color-max'), 'value');
+        this.color.min.bind(this._getById(this.getId('map-color-min')), 'value');
+        this.color.max.bind(this._getById(this.getId('map-color-max')), 'value');
 
         // ======= color palette
-        const selectPalette = getByID<HTMLSelectElement>(this.getId('map-color-palette'));
+        const selectPalette = this._getById<HTMLSelectElement>(this.getId('map-color-palette'));
         selectPalette.length = 0;
         for (const key in COLOR_MAPS) {
             selectPalette.options.add(new Option(key, key));
@@ -424,7 +436,9 @@ export class MapOptions extends OptionsGroup {
         this.palette.bind(selectPalette, 'value');
 
         // ======= marker symbols
-        const selectSymbolProperty = getByID<HTMLSelectElement>(this.getId('map-symbol-property'));
+        const selectSymbolProperty = this._getById<HTMLSelectElement>(
+            this.getId('map-symbol-property')
+        );
         // first option is 'fixed'
         selectSymbolProperty.options.length = 0;
         selectSymbolProperty.options.add(new Option('fixed', ''));
@@ -436,7 +450,9 @@ export class MapOptions extends OptionsGroup {
         this.symbol.bind(selectSymbolProperty, 'value');
 
         // ======= marker size
-        const selectSizeProperty = getByID<HTMLSelectElement>(this.getId('map-size-property'));
+        const selectSizeProperty = this._getById<HTMLSelectElement>(
+            this.getId('map-size-property')
+        );
         // first option is 'fixed'
         selectSizeProperty.options.length = 0;
         selectSizeProperty.options.add(new Option('fixed', ''));
@@ -444,9 +460,9 @@ export class MapOptions extends OptionsGroup {
             selectSizeProperty.options.add(new Option(key, key));
         }
         this.size.property.bind(selectSizeProperty, 'value');
-        this.size.factor.bind(this.getId('map-size-factor'), 'value');
-        this.size.mode.bind(this.getId('map-size-scale'), 'value');
-        this.size.reverse.bind(this.getId('map-size-reverse'), 'checked');
+        this.size.factor.bind(this._getById(this.getId('map-size-factor')), 'value');
+        this.size.mode.bind(this._getById(this.getId('map-size-scale')), 'value');
+        this.size.reverse.bind(this._getById(this.getId('map-size-reverse')), 'checked');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */
@@ -456,8 +472,8 @@ export class MapOptions extends OptionsGroup {
 
     /** Changes the min/max range label between linear and log appropriately */
     public setLogLabel(axis: AxisOptions, axisName: string): void {
-        const minInputLabel = getByID(this.getId(`map-${axisName}-min-label`));
-        const maxInputLabel = getByID(this.getId(`map-${axisName}-max-label`));
+        const minInputLabel = this._getById(this.getId(`map-${axisName}-min-label`));
+        const maxInputLabel = this._getById(this.getId(`map-${axisName}-max-label`));
 
         if (axis.scale.value === 'log') {
             minInputLabel.innerHTML = 'min: 10^';

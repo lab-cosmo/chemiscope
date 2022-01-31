@@ -7,17 +7,20 @@ import assert from 'assert';
 
 import Plotly from './plotly/plotly-scatter';
 import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scatter';
+import * as plotlyStyles from './plotly/plotly-styles';
+import fixPlot from './plotly/fix-plot';
 
 import { Property, Settings } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, generateGUID, sendWarning } from '../utils';
-import { enumerate, getByID, getElement, getFirstKey } from '../utils';
+import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
+import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
@@ -191,7 +194,9 @@ export class PropertiesMap {
      */
     public positionSettingsModal: PositioningCallback;
 
-    /// HTML root holding the full plot
+    /// Shadow root for isolation
+    private _shadow: ShadowRoot;
+    /// HTML element holding the full plot
     private _root: HTMLElement;
     /// Plotly plot
     private _plot!: PlotlyScatterElement;
@@ -209,6 +214,8 @@ export class PropertiesMap {
     private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
+    /// Plotly fix instance
+    private _plotFix!: ReturnType<typeof fixPlot>;
 
     /**
      * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
@@ -230,7 +237,27 @@ export class PropertiesMap {
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
 
-        this._root = getElement(config.element);
+        // DOM structure outside the map:
+        // - containerElement/config.element (#chemiscope-map)
+        //   - hostElement (layer needed for removal)
+        //     - this._shadow (shadow root)
+        //       - this._root
+        //         - plotly root
+        //         - viewer button
+        //         - marker
+
+        const containerElement = getElement(config.element);
+
+        const hostElement = document.createElement('div');
+        hostElement.style.setProperty('height', '100%');
+        containerElement.appendChild(hostElement);
+
+        this._shadow = hostElement.attachShadow({ mode: 'open' });
+
+        this._root = document.createElement('div');
+        this._root.style.setProperty('height', '100%');
+        this._shadow.appendChild(this._root);
+
 
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
@@ -251,7 +278,7 @@ export class PropertiesMap {
             (rect) => this.positionSettingsModal(rect),
             config.settings
         );
-        this._colorReset = getByID<HTMLButtonElement>(this._options.getId('map-color-reset'));
+        this._colorReset = this.getById<HTMLButtonElement>(this._options.getId('map-color-reset'));
 
         this._connectSettings();
 
@@ -266,6 +293,19 @@ export class PropertiesMap {
         };
 
         this._createPlot();
+
+        // This is done last as the plot needs to be created to obtain its
+        // style sheets.
+        this._shadow.adoptedStyleSheets = [
+            styles.bootstrap,
+            styles.chemiscope,
+            plotlyStyles.globalStyleSheet,
+            plotlyStyles.getPlotStyleSheet(this._plot),
+        ];
+    }
+
+    public getById<T extends HTMLElement = HTMLElement>(id: string): T {
+        return this._shadow.getElementById(id) as T;
     }
 
     /**
@@ -276,6 +316,9 @@ export class PropertiesMap {
         this._options.remove();
         // remove SVG element created by Plotly
         document.getElementById('js-plotly-tester')?.remove();
+
+        // Remove listeners on the document caused by the plot fix
+        this._plotFix.disable();
     }
 
     /**
@@ -872,6 +915,7 @@ export class PropertiesMap {
             })
         );
         this._plot.classList.add('chsp-map');
+        this._plotFix = fixPlot(this._plot);
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
             // don't update selected env on double click, since it is bound to
@@ -1318,8 +1362,7 @@ export class PropertiesMap {
 
     // Computes the pixel coordinate inside the plot div of a given value along
     // the given axis
-    private _pixelCoordinate(value: number, axisName: string): number {
-        assert(axisName === 'x' || axisName === 'y');
+    private _pixelCoordinate(value: number, axisName: 'x' | 'y'): number {
         assert(!this._is3D());
         let axis;
         switch (axisName) {
@@ -1339,8 +1382,8 @@ export class PropertiesMap {
         if (axisBounds !== undefined) {
             // round to 10 decimal places so it does not break in Firefox
             const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = getByID<HTMLInputElement>(this._options.getId(`map-${name}-min`));
-            const maxElement = getByID<HTMLInputElement>(this._options.getId(`map-${name}-max`));
+            const minElement = this.getById<HTMLInputElement>(this._options.getId(`map-${name}-min`));
+            const maxElement = this.getById<HTMLInputElement>(this._options.getId(`map-${name}-max`));
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }

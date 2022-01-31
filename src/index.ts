@@ -17,6 +17,7 @@
  * @preferred
  */
 
+import 'construct-style-sheets-polyfill';
 import assert from 'assert';
 
 import { DisplayMode, EnvironmentIndexer, Indexes } from './indexer';
@@ -43,8 +44,6 @@ import {
     addWarningHandler,
     getNextColor,
 } from './utils';
-
-require('./static/chemiscope.css');
 
 /**
  * Configuration for the [[DefaultVisualizer]]

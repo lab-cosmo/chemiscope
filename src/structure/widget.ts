@@ -239,9 +239,9 @@ export class MoleculeViewer {
         this._root.addEventListener(
             'wheel',
             (event) => {
-                // Avoid an infinite loop by only intercepting the original event
-                // and not synthetic ones.
-                if (event instanceof WheelEvent) {
+                // Avoid an infinite loop by only intercepting the original
+                // (= trusted) event and not synthetic ones.
+                if (event.isTrusted) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
 

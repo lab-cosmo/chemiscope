@@ -1,7 +1,7 @@
 // load bootstrap: this needs to come first so that CSS files are loaded in the
 // right order
-require('bootstrap');
-require('bootstrap/dist/css/bootstrap.min.css');
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { getByID, addWarningHandler } from '../src/utils';
 import { Dataset, Structure } from '../src/dataset';
@@ -10,7 +10,7 @@ import { version, DefaultVisualizer, Settings } from '../src/index';
 import { inflate } from 'pako';
 
 // load CSS for the app
-require('./app.css');
+import './app.css';
 
 interface Configuration {
     /// optional callback to load the structures on demand.

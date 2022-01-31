@@ -58,12 +58,15 @@ export function generateGUID(): GUID {
  *
  * @throws if there is not element with the given id.
  */
-export function getByID<HTMLType = HTMLElement>(id: string, root?: HTMLElement): HTMLType {
+export function getByID<HTMLType = HTMLElement>(
+    id: string,
+    root: Document | HTMLElement | ShadowRoot = document
+): HTMLType {
     let e;
-    if (root !== undefined) {
+    if (root instanceof HTMLElement) {
         e = root.querySelector(`#${id}`);
     } else {
-        e = document.getElementById(id);
+        e = root.getElementById(id);
     }
     if (e === null) {
         throw Error(`unable to get element with id ${id}`);
