@@ -2,7 +2,7 @@ import { PropertiesMap } from '../../src/map';
 import { MarkerData } from '../../src/map/marker';
 import { EnvironmentIndexer } from '../../src/indexer';
 import { Property } from '../../src/dataset';
-import { GUID, getByID } from '../../src/utils';
+import { GUID } from '../../src/utils';
 
 import { assert } from 'chai';
 
@@ -28,14 +28,6 @@ const DUMMY_STRUCTURES = [
         z: [0, 1],
     },
 ];
-
-async function waitForUpdate(): Promise<void> {
-    await new Promise<void>((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, 0);
-    });
-}
 
 describe('Map', () => {
     before(() => {
@@ -67,8 +59,8 @@ describe('Map', () => {
         // default is to have a constant color)
         options.color.property.value = 'first';
 
-        const minSelectElement = getByID<HTMLSelectElement>(options.getId(`map-color-min`));
-        const maxSelectElement = getByID<HTMLSelectElement>(options.getId(`map-color-max`));
+        const minSelectElement = options.getById<HTMLSelectElement>(options.getId(`map-color-min`));
+        const maxSelectElement = options.getById<HTMLSelectElement>(options.getId(`map-color-max`));
         const originalMin = options.color.min.value;
         const originalMax = options.color.max.value;
 
@@ -141,49 +133,5 @@ describe('map markers', () => {
         MAP.removeMarker(secondGUID);
         assert(MAP['_selected'].size === 0);
         assert(MAP['_active'] === undefined);
-    });
-
-    it('can change the point associated with a marker', async () => {
-        MAP.addMarker(firstGUID, 'red', { structure: 0, environment: 0 });
-        assert(getMarker(firstGUID).current === 0);
-        const initialPosition = getMarker(firstGUID).marker.getBoundingClientRect();
-
-        MAP.select({ structure: 1, environment: 1 });
-        assert(getMarker(firstGUID).current === 1);
-        let position = getMarker(firstGUID).marker.getBoundingClientRect();
-
-        assert(position.x !== initialPosition.x);
-        assert(position.y !== initialPosition.y);
-
-        MAP.select({ structure: 0, environment: 0 });
-        assert(getMarker(firstGUID).current === 0);
-        position = getMarker(firstGUID).marker.getBoundingClientRect();
-
-        assert(position.x === initialPosition.x);
-        assert(position.y === initialPosition.y);
-
-        // Check that the marker position in 2D mode accounts for the scale of
-        // the axis. In 3D mode this is always the case since we use plotly to
-        // render the markers.
-        MAP['_options'].x.scale.value = 'log';
-
-        // Wait for the marker's position to be updated. Although the marker's
-        // update is synchronous in regards to getBoundingClientRect(),
-        // it is only triggered once Plotly is done rendering, which is an
-        // asynchronous operation.
-        await waitForUpdate();
-
-        position = getMarker(firstGUID).marker.getBoundingClientRect();
-        assert(position.x !== initialPosition.x);
-        assert(position.y === initialPosition.y);
-
-        MAP['_options'].x.scale.value = 'linear';
-        MAP['_options'].y.scale.value = 'log';
-
-        await waitForUpdate();
-
-        position = getMarker(firstGUID).marker.getBoundingClientRect();
-        assert(position.x === initialPosition.x);
-        assert(position.y !== initialPosition.y);
     });
 });

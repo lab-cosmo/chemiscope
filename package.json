@@ -55,6 +55,7 @@
     "bubleify": "^2.0.0",
     "buffer": "^6",
     "chai": "^4",
+    "construct-style-sheets-polyfill": "^3.1.0",
     "css-loader": "^6",
     "dts-bundle-generator": "^6.4",
     "eslint": "^8.7",
