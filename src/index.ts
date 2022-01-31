@@ -45,6 +45,8 @@ import {
     getNextColor,
 } from './utils';
 
+import './static/chemiscope.css';
+
 /**
  * Configuration for the [[DefaultVisualizer]]
  */

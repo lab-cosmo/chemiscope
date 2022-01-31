@@ -10,7 +10,7 @@ declare global {
 }
 
 export function getPlotStyleSheet(plot: PlotlyScatterElement): CSSStyleSheet {
-  return getStyleSheet(plot._fullLayout._modeBar._uid);
+    return getStyleSheet(plot._fullLayout._modeBar._uid);
 }
 
 export const globalStyleSheet = getStyleSheet('global');
@@ -18,20 +18,19 @@ export const globalStyleSheet = getStyleSheet('global');
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, getDocumentStyleSheet()];
 
 function getStyleSheet(name: string): CSSStyleSheet {
-  const style = document.getElementById(`plotly.js-style-${name}`);
-  assert(style instanceof HTMLStyleElement);
-  assert(style.sheet);
+    const style = document.getElementById(`plotly.js-style-${name}`);
+    assert(style instanceof HTMLStyleElement);
+    assert(style.sheet);
 
+    const sheet = new CSSStyleSheet();
 
-  const sheet = new CSSStyleSheet();
+    for (const rule of Array.from(style.sheet.cssRules)) {
+        sheet.insertRule(rule.cssText);
+    }
 
-  for (const rule of Array.from(style.sheet.cssRules)) {
-    sheet.insertRule(rule.cssText);
-  }
+    style.remove();
 
-  style.remove();
-
-  return sheet;
+    return sheet;
 }
 
 // Only keep the rules regarding .plotly-notifier which is a direct child of <body>.
