@@ -131,6 +131,10 @@ export class ViewersGrid {
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
 
+    /// Store the `onSettingChange` callbacks to be able to add them to new
+    /// viewers in the grid
+    private _onSettingChangeCallbacks: Array<(keys: string[], value: unknown) => void>;
+
     /**
      * Create a new [[ViewersGrid]] inside the HTML element with the given
      * `id`
@@ -175,6 +179,7 @@ export class ViewersGrid {
         this.oncreate = () => {};
         this.activeChanged = () => {};
         this.delayChanged = () => {};
+        this._onSettingChangeCallbacks = [];
 
         if (maxViewers > 9) {
             throw Error('chemiscope only supports up to 9 structure viewers in the grid');
@@ -243,6 +248,23 @@ export class ViewersGrid {
 
         const newData = this._viewers.get(newGUID);
         assert(newData !== undefined);
+
+        for (const callback of this._onSettingChangeCallbacks) {
+            newData.widget.onSettingChange((keys, value) => {
+                // add the index of the viewer in the current grid of viewers
+                // at the front of the keys
+                let i = 0;
+                for (const currentGuid of this._viewers.keys()) {
+                    if (newGUID === currentGuid) {
+                        break;
+                    }
+                    i += 1;
+                }
+                keys.unshift(i.toString());
+
+                callback(keys, value);
+            });
+        }
 
         return { guid: newGUID, color: newData.color };
     }
@@ -372,6 +394,29 @@ export class ViewersGrid {
             settings.push(data.widget.saveSettings());
         }
         return settings;
+    }
+
+    /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        for (const guid of this._viewers.keys()) {
+            const data = this._viewers.get(guid);
+            assert(data !== undefined);
+
+            data.widget.onSettingChange((keys: string[], value: unknown) => {
+                keys = JSON.parse(JSON.stringify(keys)) as string[];
+                keys.unshift(this._getCurrentPositionInGrid(guid).toString());
+
+                callback(keys, value);
+            });
+        }
+
+        this._onSettingChangeCallbacks.push(callback);
     }
 
     /**
@@ -717,6 +762,18 @@ export class ViewersGrid {
             default:
                 throw Error('reached unreachable code: too many viewer in the grid');
         }
+    }
+
+    /** get the current position in the viewer grid of a viewer by GUID */
+    private _getCurrentPositionInGrid(guid: GUID): number {
+        let position = 0;
+        for (const currentGuid of this._viewers.keys()) {
+            if (guid === currentGuid) {
+                break;
+            }
+            position += 1;
+        }
+        return position;
     }
 }
 

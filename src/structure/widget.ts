@@ -411,8 +411,8 @@ export class MoleculeViewer {
         }
 
         // make sure to reset axes/labels when the structure changes
-        this._options.axes.onchange(this._options.axes.value, 'JS');
-        this._options.atomLabels.onchange(this._options.atomLabels.value, 'JS');
+        this._options.axes.changed('JS');
+        this._options.atomLabels.changed('JS');
 
         this._viewer.render();
     }
@@ -482,6 +482,17 @@ export class MoleculeViewer {
     }
 
     /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this._options.onSettingChange(callback);
+    }
+
+    /**
      * Returns a PNG screenshot of the viewer as a URI string
      */
     public exportPNG(): string {
@@ -541,10 +552,10 @@ export class MoleculeViewer {
             this._viewer.render();
         };
 
-        this._options.spaceFilling.onchange = restyleAndRender;
-        this._options.bonds.onchange = restyleAndRender;
+        this._options.spaceFilling.onchange.push(restyleAndRender);
+        this._options.bonds.onchange.push(restyleAndRender);
 
-        this._options.atomLabels.onchange = (showLabels) => {
+        this._options.atomLabels.onchange.push((showLabels) => {
             if (this._current === undefined) {
                 return;
             }
@@ -587,9 +598,9 @@ export class MoleculeViewer {
                 }
                 this._current.atomLabels = [];
             }
-        };
+        });
 
-        this._options.axes.onchange = (value) => {
+        this._options.axes.onchange.push((value) => {
             if (this._axes !== undefined) {
                 this._viewer.removeShape(this._axes[0].arrow);
                 this._viewer.removeLabel(this._axes[0].label);
@@ -624,17 +635,17 @@ export class MoleculeViewer {
             }
 
             this._viewer.render();
-        };
+        });
 
-        this._options.rotation.onchange = (rotate) => {
+        this._options.rotation.onchange.push((rotate) => {
             if (rotate) {
                 this._viewer.spin('vy');
             } else {
                 this._viewer.spin(false);
             }
-        };
+        });
 
-        this._options.unitCell.onchange = (add) => {
+        this._options.unitCell.onchange.push((add) => {
             if (this._current === undefined) {
                 return;
             }
@@ -650,7 +661,7 @@ export class MoleculeViewer {
                 this._viewer.removeUnitCell(this._current.model);
             }
             this._viewer.render();
-        };
+        });
 
         const changedSuperCell = () => {
             this._showSupercellInfo();
@@ -679,19 +690,19 @@ export class MoleculeViewer {
             this._updateStyle();
             this._viewer.render();
         };
-        this._options.supercell[0].onchange = changedSuperCell;
-        this._options.supercell[1].onchange = changedSuperCell;
-        this._options.supercell[2].onchange = changedSuperCell;
+        this._options.supercell[0].onchange.push(changedSuperCell);
+        this._options.supercell[1].onchange.push(changedSuperCell);
+        this._options.supercell[2].onchange.push(changedSuperCell);
 
-        this._options.environments.bgColor.onchange = restyleAndRender;
-        this._options.environments.bgStyle.onchange = restyleAndRender;
-        this._options.environments.cutoff.onchange = () => {
+        this._options.environments.bgColor.onchange.push(restyleAndRender);
+        this._options.environments.bgStyle.onchange.push(restyleAndRender);
+        this._options.environments.cutoff.onchange.push(() => {
             if (this._highlighted !== undefined) {
                 this._changeHighlighted(this._highlighted.center);
             }
             restyleAndRender();
-        };
-        this._options.environments.center.onchange = (center) => {
+        });
+        this._options.environments.center.onchange.push((center) => {
             if (!this._options.keepOrientation.value) {
                 this._resetView();
             }
@@ -701,13 +712,13 @@ export class MoleculeViewer {
             }
 
             this._viewer.render();
-        };
+        });
 
         // Deal with activation/de-activation of environments
-        this._options.environments.activated.onchange = (value) => {
+        this._options.environments.activated.onchange.push((value) => {
             this._enableEnvironmentSettings(value);
             restyleAndRender();
-        };
+        });
 
         // Setup various buttons
         this._resetEnvCutoff = getByID<HTMLButtonElement>(`${this.guid}-env-reset`);

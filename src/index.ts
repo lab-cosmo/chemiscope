@@ -365,6 +365,29 @@ class DefaultVisualizer {
     }
 
     /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this.map.onSettingChange((keys, value) => {
+            keys = JSON.parse(JSON.stringify(keys)) as string[];
+            keys.unshift('map');
+
+            callback(keys, value);
+        });
+
+        this.structure.onSettingChange((keys, value) => {
+            keys = JSON.parse(JSON.stringify(keys)) as string[];
+            keys.unshift('structure');
+
+            callback(keys, value);
+        });
+    }
+
+    /**
      * Get the dataset used to create the current visualization
      *
      * If the dataset is using user-specified structures and a loading callback
@@ -503,12 +526,41 @@ class StructureVisualizer {
         this.structure.remove();
     }
 
+    /**
+     * Apply the given `settings` to the structure panels in the visualizer
+     */
     public applySettings(settings: Partial<Settings>): void {
         validateSettings(settings);
 
         if (settings.structure !== undefined) {
             this.structure.applySettings(settings.structure as Settings[]);
         }
+    }
+
+    /**
+     * Get the current values of settings for all panels in the visualizer
+     */
+    public saveSettings(): Settings {
+        return {
+            pinned: this.structure.pinned().map((value) => value.environment),
+            structure: this.structure.saveSettings(),
+        };
+    }
+
+    /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this.structure.onSettingChange((keys, value) => {
+            keys = JSON.parse(JSON.stringify(keys)) as string[];
+            keys.unshift('structure');
+
+            callback(keys, value);
+        });
     }
 }
 
@@ -603,6 +655,42 @@ class MapVisualizer {
         this.meta.remove();
         this.info.remove();
         this.map.remove();
+    }
+
+    /**
+     * Get the current values of settings for all panels in the visualizer
+     */
+    public saveSettings(): Settings {
+        return {
+            map: this.map.saveSettings(),
+        };
+    }
+
+    /**
+     * Apply the given `settings` to the structure panels in the visualizer
+     */
+    public applySettings(settings: Partial<Settings>): void {
+        validateSettings(settings);
+
+        if (settings.map !== undefined) {
+            this.map.applySettings(getMapSettings(settings));
+        }
+    }
+
+    /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this.map.onSettingChange((keys, value) => {
+            keys = JSON.parse(JSON.stringify(keys)) as string[];
+            keys.unshift('map');
+
+            callback(keys, value);
+        });
     }
 }
 

@@ -378,6 +378,17 @@ export class PropertiesMap {
         return this._options.saveSettings();
     }
 
+    /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this._options.onSettingChange(callback);
+    }
+
     /** Forward to Plotly.restyle */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) =>
@@ -413,7 +424,7 @@ export class PropertiesMap {
         };
 
         // ======= x axis settings
-        this._options.x.property.onchange = () => {
+        this._options.x.property.onchange.push(() => {
             negativeLogWarning(this._options.x);
             const values = this._coordinates(this._options.x) as number[][];
             this._restyle({ x: values }, [0, 1]);
@@ -432,9 +443,9 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
             this._setScaleStep(this._getBounds().x, 'x');
-        };
+        });
 
-        this._options.x.scale.onchange = () => {
+        this._options.x.scale.onchange.push(() => {
             negativeLogWarning(this._options.x);
             this._options.setLogLabel(this._options.x, 'x');
             if (this._is3D()) {
@@ -444,7 +455,7 @@ export class PropertiesMap {
             } else {
                 this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
             }
-        };
+        });
 
         // function creating a function to be used as onchange callback
         // for <axis>.min and <axis>.max
@@ -481,11 +492,11 @@ export class PropertiesMap {
             };
         };
 
-        this._options.x.min.onchange = rangeChange('xaxis', this._options.x, 'min');
-        this._options.x.max.onchange = rangeChange('xaxis', this._options.x, 'max');
+        this._options.x.min.onchange.push(rangeChange('xaxis', this._options.x, 'min'));
+        this._options.x.max.onchange.push(rangeChange('xaxis', this._options.x, 'max'));
 
         // ======= y axis settings
-        this._options.y.property.onchange = () => {
+        this._options.y.property.onchange.push(() => {
             negativeLogWarning(this._options.y);
             const values = this._coordinates(this._options.y) as number[][];
             this._restyle({ y: values }, [0, 1]);
@@ -504,9 +515,9 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
             this._setScaleStep(this._getBounds().y, 'y');
-        };
+        });
 
-        this._options.y.scale.onchange = () => {
+        this._options.y.scale.onchange.push(() => {
             negativeLogWarning(this._options.y);
             this._options.setLogLabel(this._options.y, 'y');
             if (this._is3D()) {
@@ -516,10 +527,10 @@ export class PropertiesMap {
             } else {
                 this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
             }
-        };
+        });
 
-        this._options.y.min.onchange = rangeChange('yaxis', this._options.y, 'min');
-        this._options.y.max.onchange = rangeChange('yaxis', this._options.y, 'max');
+        this._options.y.min.onchange.push(rangeChange('yaxis', this._options.y, 'min'));
+        this._options.y.max.onchange.push(rangeChange('yaxis', this._options.y, 'max'));
 
         // ======= z axis settings
         // setup initial state of the z axis settings
@@ -529,7 +540,7 @@ export class PropertiesMap {
             this._options.z.enable();
         }
 
-        this._options.z.property.onchange = () => {
+        this._options.z.property.onchange.push(() => {
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -553,9 +564,9 @@ export class PropertiesMap {
             if (this._is3D()) {
                 this._setScaleStep(this._getBounds().z as number[], 'z');
             }
-        };
+        });
 
-        this._options.z.scale.onchange = () => {
+        this._options.z.scale.onchange.push(() => {
             negativeLogWarning(this._options.z);
             this._options.setLogLabel(this._options.z, 'z');
             if (this._options.z.property.value !== '') {
@@ -563,10 +574,10 @@ export class PropertiesMap {
                     'scene.zaxis.type': this._options.z.scale.value,
                 } as unknown as Layout);
             }
-        };
+        });
 
-        this._options.z.min.onchange = rangeChange('zaxis', this._options.z, 'min');
-        this._options.z.max.onchange = rangeChange('zaxis', this._options.z, 'max');
+        this._options.z.min.onchange.push(rangeChange('zaxis', this._options.z, 'min'));
+        this._options.z.max.onchange.push(rangeChange('zaxis', this._options.z, 'max'));
 
         // ======= color axis settings
         // setup initial state of the color settings
@@ -588,7 +599,7 @@ export class PropertiesMap {
             this._setScaleStep([min, max], 'color');
         }
 
-        this._options.color.property.onchange = () => {
+        this._options.color.property.onchange.push(() => {
             if (this._options.color.property.value !== '') {
                 this._options.color.enable();
                 this._colorReset.disabled = false;
@@ -629,7 +640,7 @@ export class PropertiesMap {
                 } as Data,
                 0
             );
-        };
+        });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
             const min = this._options.color.min.value;
@@ -657,12 +668,13 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
-        this._options.color.min.onchange = () => {
+
+        this._options.color.min.onchange.push(() => {
             colorRangeChange('min');
-        };
-        this._options.color.max.onchange = () => {
+        });
+        this._options.color.max.onchange.push(() => {
             colorRangeChange('max');
-        };
+        });
 
         this._colorReset.onclick = () => {
             const values = this._colors(0)[0] as number[];
@@ -678,14 +690,14 @@ export class PropertiesMap {
         };
 
         // ======= color palette
-        this._options.palette.onchange = () => {
+        this._options.palette.onchange.push(() => {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
-        };
+        });
 
         // ======= markers symbols
-        this._options.symbol.onchange = () => {
+        this._options.symbol.onchange.push(() => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
 
             this._restyle({
@@ -696,7 +708,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorbar.len': this._colorbarLen(),
             } as unknown as Layout);
-        };
+        });
 
         // ======= markers size
         // setup initial state of the marker size settings
@@ -708,7 +720,7 @@ export class PropertiesMap {
             this._options.size.reverse.enable();
         }
 
-        this._options.size.property.onchange = () => {
+        this._options.size.property.onchange.push(() => {
             if (this._options.size.property.value !== '') {
                 this._options.size.mode.enable();
                 this._options.size.reverse.enable();
@@ -717,19 +729,19 @@ export class PropertiesMap {
                 this._options.size.reverse.disable();
             }
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
+        });
 
-        this._options.size.factor.onchange = () => {
+        this._options.size.factor.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
+        });
 
-        this._options.size.mode.onchange = () => {
+        this._options.size.mode.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
+        });
 
-        this._options.size.reverse.onchange = () => {
+        this._options.size.reverse.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        };
+        });
     }
 
     /** Actually create the Plotly plot */

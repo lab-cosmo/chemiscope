@@ -61,7 +61,7 @@ export type OptionModificationOrigin = 'JS' | 'DOM';
 interface HTMLOptionElement {
     /** The DOM element that we should check for changes */
     element: HTMLElement;
-    /** Which atrribute of the element should we check */
+    /** Which attribute of the element should we check */
     attribute: Attribute;
     /** Store the function used to listen on the element to be able to remove it */
     listener: (e: Event) => void;
@@ -99,14 +99,14 @@ export class HTMLOption<T extends OptionsType> {
     public readonly type: T;
     /** Callback to validate the new value before propagating changes. */
     public validate: (value: OptionsValue<T>) => void;
-    /** Additional callback to run whenever the setting value changes */
-    public onchange: (value: OptionsValue<T>, origin: OptionModificationOrigin) => void;
+    /** Additional callbacks to run whenever the setting value changes */
+    public onchange: Array<(value: OptionsValue<T>, origin: OptionModificationOrigin) => void>;
 
     // storage of the actual value, this is separated from this.value to allow
     // intercepting set
     private _value: OptionsValue<T>;
     // list of bound HTML elements: any update to the setting `value` or any of
-    // the element will change both the settting value and all of the linked
+    // the element will change both the setting value and all of the linked
     // elements
     private _boundList: HTMLOptionElement[];
     private _previous_value: OptionsValue<T>;
@@ -125,7 +125,7 @@ export class HTMLOption<T extends OptionsType> {
         this._previous_value = value;
         this._boundList = [];
         this.validate = () => {};
-        this.onchange = () => {};
+        this.onchange = [];
 
         Object.preventExtensions(this);
     }
@@ -140,6 +140,21 @@ export class HTMLOption<T extends OptionsType> {
         this._update(v.toString(), 'JS');
     }
 
+    /**
+     * Call all onchange callbacks & update the DOM representation after a
+     * change. This function is called automatically when using `.value = ...`
+     */
+    public changed(origin: OptionModificationOrigin) {
+        for (const bound of this._boundList) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            (bound.element as any)[bound.attribute] = this._value;
+        }
+
+        for (const callback of this.onchange) {
+            callback(this._value, origin);
+        }
+    }
+
     /** Reset to a previous value for this setting */
     public reset(): void {
         this.value = this._previous_value;
@@ -148,7 +163,7 @@ export class HTMLOption<T extends OptionsType> {
     /**
      * Add a new HTML element to the list of synchronized element.
      * `element.attribute` will be set to the setting value, and the setting
-     * value will be updated everytime the 'change' event is emmited.
+     * value will be updated every time the 'change' event is sent.
      *
      * @param  element   HTML DOM element to watch for updates, or string id
      *                   of such element
@@ -224,11 +239,8 @@ export class HTMLOption<T extends OptionsType> {
         this.validate(updated);
         this._previous_value = this.value;
         this._value = updated;
-        for (const bound of this._boundList) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            (bound.element as any)[bound.attribute] = updated;
-        }
-        this.onchange(updated, origin);
+
+        this.changed(origin);
     }
 }
 
@@ -298,8 +310,8 @@ export abstract class OptionsGroup {
                 }
                 root = root[key];
             }
-            const lastkey = keys[keys.length - 1];
-            root[lastkey] = value;
+            const lastKey = keys[keys.length - 1];
+            root[lastKey] = value;
         });
         /* eslint-enable */
         return settings;
@@ -328,14 +340,14 @@ export abstract class OptionsGroup {
                 parent = root;
                 root = root[key];
             }
-            const lastkey = keys[keys.length - 1];
+            const lastKey = keys[keys.length - 1];
 
-            if (lastkey in root) {
-                option.value = root[lastkey];
+            if (lastKey in root) {
+                option.value = root[lastKey];
 
                 // remove used keys from the settings to be able to warn on
                 // unused keys
-                delete root[lastkey];
+                delete root[lastKey];
                 if (parent !== undefined && Object.keys(root).length === 0) {
                     // if we removed all keys from a sub-object, remove the sub-object
                     assert(keys.length >= 2);
@@ -346,8 +358,21 @@ export abstract class OptionsGroup {
         });
 
         if (Object.keys(copy).length !== 0) {
-            sendWarning(`ignored unkown settings '${JSON.stringify(copy)}'`);
+            sendWarning(`ignored unknown settings '${JSON.stringify(copy)}'`);
         }
+    }
+
+    /**
+     * Add the given `callback` to be called whenever a setting changes. The
+     * callback will be given the path to the settings as a list of keys; and
+     * the new value of the setting.
+     *
+     * There is currently no way to remove a callback.
+     */
+    public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this.foreachOption((keys, option) => {
+            option.onchange.push((value) => callback(keys, value));
+        });
     }
 
     /**
