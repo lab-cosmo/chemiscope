@@ -1260,8 +1260,8 @@ export class PropertiesMap {
                 y = this._pixelCoordinate(y, 'y');
 
                 const bounds = this._getBounds();
-                const xMin = this._pixelCoordinate(bounds.x[0], 'x');
-                const xMax = this._pixelCoordinate(bounds.x[1], 'x');
+                const xMin = plotWidth - this._pixelCoordinate(bounds.x[1], 'x');
+                const xMax = plotWidth - this._pixelCoordinate(bounds.x[0], 'x');
 
                 // pixel coordinates are inverted for y (y is measured from the
                 // top of the page, not the bottom)
