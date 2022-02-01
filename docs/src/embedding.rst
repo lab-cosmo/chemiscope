@@ -17,7 +17,7 @@ the HTML pages using it. You can serve these from your own web server, or use a
 CDN to deliver them.
 
 - `Bootstrap <https://getbootstrap.com/>`_ for HTML styling and basic UI;
-- Bootstrap and 3Dmol.js rely on the ubiquitous `JQuery <https://jquery.com/>`_
+- 3Dmol.js relies on the ubiquitous `JQuery <https://jquery.com/>`_
 
 Getting and building the code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
