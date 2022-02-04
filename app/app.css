@@ -115,6 +115,7 @@ main .ratio > * {
 
 #chemiscope-meta {
     width: max-content;
+    height: max-content;
     position: absolute;
     top: 0;
     left: 2em;
