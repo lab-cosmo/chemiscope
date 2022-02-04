@@ -20,11 +20,6 @@
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
             crossorigin="anonymous"
         ></script>
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
-            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
-            crossorigin="anonymous"
-        ></script>
 
         <!-- font-awesome -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
@@ -79,9 +74,13 @@
                                     <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');">
                                         Arginine-Dipeptide
                                     </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');"> Chemical Shieldings </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');">
+                                        Chemical Shieldings
+                                    </span>
                                     <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Qm7b');"> Qm7b </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');"> Azaphenacenes </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');">
+                                        Azaphenacenes
+                                    </span>
                                     <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Zeolites');"> Zeolites </span>
                                 </div>
                             </li>
@@ -97,7 +96,12 @@
 
         <div class="container">
             <div class="alert alert-dismissible alert-danger pop-on-top" role="alert" id="error-display" style="display: none">
-                <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('error-display').style.display = 'none';"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('error-display').style.display = 'none';"
+                ></button>
                 <p></p>
                 <details>
                     <summary>Backtrace</summary>
@@ -107,7 +111,12 @@
 
             <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="warning-display" style="display: none">
                 <p></p>
-                <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('warning-display').style.display = 'none';"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('warning-display').style.display = 'none';"
+                ></button>
             </div>
             <div style="padding: 0.5rem 1.25rem">&nbsp;</div>
 
