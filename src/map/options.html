@@ -135,7 +135,7 @@
                         </button>
 
                         <div class="collapse chsp-map-extra-options" id="map-color-extra">
-                            <button class="btn btn-sm btn-light" type="button" id="map-color-reset" style="width: 100%">reset</button>
+                            <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%">reset</button>
 
                             <div class="input-group input-group-sm">
                                 <label class="input-group-text" for="map-color-min">min:</label>
@@ -147,10 +147,10 @@
                                 <input id="map-color-max" class="form-control" type="number" step="any" />
                             </div>
 
-                            <div class="chsp-map-options" style="grid-column: 1 / 3">
+                            <div class="chsp-map-options" style="grid-column: auto / span 3; margin-left: -5.5em">
                                 <div class="input-group input-group-sm">
-                                    <label class="input-group-text" for="map-color-palette">palette:</label>
-                                    <select id="map-color-palette" class="form-select"></select>
+                                    <label class="input-group-text" for="map-color-palette" style="width: 6em">palette:</label>
+                                    <select id="map-color-palette" class="form-select" style="width: 13em"></select>
                                 </div>
                             </div>
                         </div>
@@ -186,8 +186,16 @@
                                 <label class="form-check-label" for="map-size-reverse" title="reverse sizes">reverse sizes</label>
                             </div>
                             <div class="input-group input-group-sm" style="grid-column: auto / span 2">
-                                <label class="input-group-text" for="map-size-factor">factor:</label>
-                                <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-size-factor" />
+                                <label class="input-group-text" for="map-size-factor" style="min-width: 6em">factor:</label>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="100"
+                                    step="1"
+                                    class="form-control form-range"
+                                    id="map-size-factor"
+                                    style="height: 2rem"
+                                />
                             </div>
                         </div>
 
