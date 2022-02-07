@@ -118,7 +118,7 @@ export class StructureOptions extends OptionsGroup {
      */
     public remove(): void {
         if (this._modal.classList.contains('show')) {
-            const close = this._modal.querySelector('.close');
+            const close = this._modal.querySelector('.btn-close');
             assert(close !== null);
             (close as HTMLElement).click();
         }
@@ -159,8 +159,8 @@ export class StructureOptions extends OptionsGroup {
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-viewer-button"
-            data-target="#${guid}-structure-settings"
-            data-toggle="modal"
+            data-bs-target="#${guid}-structure-settings"
+            data-bs-toggle="modal"
             style="top: 4px; right: 4px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
@@ -172,7 +172,7 @@ export class StructureOptions extends OptionsGroup {
         template.innerHTML = HTML_OPTIONS
             .replace(/id="(.*?)"/g, (_: string, id: string) => `id="${guid}-${id}"`)
             .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${guid}-${id}"`)
-            .replace(/data-target="#(.*?)"/g, (_: string, id: string) => `data-target="#${guid}-${id}"`);
+            .replace(/data-bs-target="#(.*?)"/g, (_: string, id: string) => `data-bs-target="#${guid}-${id}"`);
 
         const modal = template.content.firstChild as HTMLElement;
         const modalDialog = modal.childNodes[1] as HTMLElement;

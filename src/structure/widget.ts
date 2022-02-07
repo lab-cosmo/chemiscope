@@ -201,7 +201,8 @@ export class MoleculeViewer {
             'chsp-cell-info',
             'chsp-hide-if-no-cell',
             'badge',
-            'badge-light'
+            'bg-light',
+            'text-dark'
         );
         this._root.appendChild(this._cellInfo);
 
@@ -936,9 +937,7 @@ export class MoleculeViewer {
      * related to environments
      */
     private _enableEnvironmentSettings(show: boolean): void {
-        const toggleGroup = getByID(`${this.guid}-env-activated`);
-        assert(toggleGroup.parentElement !== null);
-        const toggle = toggleGroup.parentElement.lastChild;
+        const toggle = getByID(`${this.guid}-env-activated`).nextElementSibling as HTMLLabelElement;
         assert(toggle !== null);
         const reset = this._resetEnvCutoff;
 
@@ -949,7 +948,7 @@ export class MoleculeViewer {
             }
 
             reset.disabled = false;
-            toggle.nodeValue = 'Disable';
+            toggle.innerText = 'Disable';
 
             this._options.environments.cutoff.enable();
             this._options.environments.bgStyle.enable();
@@ -961,7 +960,7 @@ export class MoleculeViewer {
             }
 
             reset.disabled = true;
-            toggle.nodeValue = 'Enable';
+            toggle.innerText = 'Enable';
 
             this._options.environments.cutoff.disable();
             this._options.environments.bgStyle.disable();

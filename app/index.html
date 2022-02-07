@@ -20,11 +20,6 @@
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
             crossorigin="anonymous"
         ></script>
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
-            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
-            crossorigin="anonymous"
-        ></script>
 
         <!-- font-awesome -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
@@ -35,69 +30,78 @@
     <body>
         <header>
             <nav class="container navbar navbar-expand-lg navbar-dark">
-                <a class="navbar-brand" href="#">chemiscope</a>
-                <button
-                    class="navbar-toggler"
-                    type="button"
-                    data-toggle="collapse"
-                    data-target="#navbar"
-                    aria-controls="navbar"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation"
-                >
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">chemiscope</a>
+                    <button
+                        class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbar"
+                        aria-controls="navbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
 
-                <div class="collapse navbar-collapse" id="navbar">
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="https://chemiscope.org/docs/"><i class="fa fa-book"></i> Documentation</a>
-                        </li>
+                    <div class="collapse navbar-collapse" id="navbar">
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://chemiscope.org/docs/"><i class="fa fa-book"></i> Documentation</a>
+                            </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" data-toggle="modal" href="#about"><i class="fa fa-user"></i> About</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="modal" href="#about"><i class="fa fa-user"></i> About</a>
+                            </li>
 
-                        <li class="nav-item hide-if-standalone">
-                            <a class="nav-link" data-toggle="modal" href="#sources"><i class="fa fa-download"></i> Sources</a>
-                        </li>
+                            <li class="nav-item hide-if-standalone">
+                                <a class="nav-link" data-bs-toggle="modal" href="#sources"><i class="fa fa-download"></i> Sources</a>
+                            </li>
 
-                        <li class="nav-item dropdown hide-if-standalone">
-                            <a
-                                class="nav-link"
-                                href="#"
-                                id="examples"
-                                role="button"
-                                data-toggle="dropdown"
-                                aria-haspopup="true"
-                                aria-expanded="false"
-                            >
-                                <i class="fa fa-images"></i> Examples
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="examples">
-                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');">
-                                    Arginine-Dipeptide
-                                </span>
-                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');"> Chemical Shieldings </span>
-                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Qm7b');"> Qm7b </span>
-                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');"> Azaphenacenes </span>
-                                <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Zeolites');"> Zeolites </span>
-                            </div>
-                        </li>
+                            <li class="nav-item dropdown hide-if-standalone">
+                                <a
+                                    class="nav-link"
+                                    href="#"
+                                    id="examples"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                >
+                                    <i class="fa fa-images"></i> Examples
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="examples">
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');">
+                                        Arginine-Dipeptide
+                                    </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');">
+                                        Chemical Shieldings
+                                    </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Qm7b');"> Qm7b </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');">
+                                        Azaphenacenes
+                                    </span>
+                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Zeolites');"> Zeolites </span>
+                                </div>
+                            </li>
 
-                        <li>
-                            <a class="nav-link" data-toggle="modal" href="#load-save"> <i class="fa fa-file"></i> Load/Save </a>
-                        </li>
-                    </ul>
+                            <li>
+                                <a class="nav-link" data-bs-toggle="modal" href="#load-save"> <i class="fa fa-file"></i> Load/Save </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </nav>
         </header>
 
         <div class="container">
-            <div class="alert alert-danger pop-on-top" role="alert" id="error-display" style="display: none">
-                <button type="button" class="close" onclick="document.getElementById('error-display').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="alert alert-dismissible alert-danger pop-on-top" role="alert" id="error-display" style="display: none">
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('error-display').style.display = 'none';"
+                ></button>
                 <p></p>
                 <details>
                     <summary>Backtrace</summary>
@@ -105,11 +109,14 @@
                 </details>
             </div>
 
-            <div class="alert alert-warning pop-on-top" role="alert" id="warning-display" style="display: none">
-                <button type="button" class="close" onclick="document.getElementById('warning-display').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="warning-display" style="display: none">
                 <p></p>
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('warning-display').style.display = 'none';"
+                ></button>
             </div>
             <div style="padding: 0.5rem 1.25rem">&nbsp;</div>
 
@@ -137,9 +144,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Chemiscope: interactive structure/property explorer for materials and molecules</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -175,9 +180,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Download chemiscope</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -205,9 +208,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Load and save data</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close-load-save-modal">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-load-save-modal"></button>
                     </div>
 
                     <div class="modal-body">
@@ -223,43 +224,37 @@
                                 pick a file
                                 <input id="load-dataset" type="file" accept=".json,.gz" class="hidden-input-file" />
                             </label>
-                            <div class="input-group-append">
-                                <button
-                                    class="btn btn-primary width-10em"
-                                    type="button"
-                                    name="button"
-                                    onclick="document.getElementById('load-dataset').click()"
-                                >
-                                    <i class="fa fa-upload"></i> load dataset
-                                </button>
-                            </div>
+                            <button
+                                class="btn btn-primary width-10em"
+                                type="button"
+                                name="button"
+                                onclick="document.getElementById('load-dataset').click()"
+                            >
+                                <i class="fa fa-upload"></i> load dataset
+                            </button>
                         </div>
 
                         <div class="input-group" style="margin-top: 1em">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">save as</span>
-                            </div>
+                            <span class="input-group-text">save as</span>
                             <input id="save-dataset-name" class="form-control" type="text" value="dataset.json" autocomplete="off" />
-                            <div class="input-group-append">
-                                <button
-                                    class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
-                                    type="button"
-                                    name="button"
-                                    id="save-dataset"
-                                >
-                                    <i class="fa fa-download"></i> save dataset
-                                </button>
-                            </div>
+                            <button
+                                class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
+                                type="button"
+                                name="button"
+                                id="save-dataset"
+                            >
+                                <i class="fa fa-download"></i> save dataset
+                            </button>
                         </div>
 
                         <div class="grid-1-1" style="margin-top: 1em">
-                            <div class="custom-control custom-switch">
-                                <input class="custom-control-input" id="save-dataset-settings" type="checkbox" checked />
-                                <label class="custom-control-label" for="save-dataset-settings">include visualization state</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" id="save-dataset-settings" type="checkbox" checked />
+                                <label class="form-check-label" for="save-dataset-settings">include visualization state</label>
                             </div>
-                            <div class="custom-control custom-switch hide-on-demand-structures">
-                                <input class="custom-control-input" id="save-dataset-structures" type="checkbox" />
-                                <label class="custom-control-label" for="save-dataset-structures">include all structures</label>
+                            <div class="form-check form-switch hide-on-demand-structures">
+                                <input class="form-check-input" id="save-dataset-structures" type="checkbox" />
+                                <label class="form-check-label" for="save-dataset-structures">include all structures</label>
                             </div>
                         </div>
                         <div class="alert alert-warning hide-on-demand-structures" role="alert" style="margin: 0; margin-top: 1em">
@@ -273,47 +268,41 @@
                                 pick a file
                                 <input id="load-settings" type="file" accept=".json" class="hidden-input-file" />
                             </label>
-                            <div class="input-group-append">
-                                <button
-                                    class="btn btn-secondary width-10em"
-                                    type="button"
-                                    name="button"
-                                    onclick="document.getElementById('load-settings').click()"
-                                >
-                                    <i class="fa fa-upload"></i> load settings
-                                </button>
-                            </div>
+                            <button
+                                class="btn btn-secondary width-10em"
+                                type="button"
+                                name="button"
+                                onclick="document.getElementById('load-settings').click()"
+                            >
+                                <i class="fa fa-upload"></i> load settings
+                            </button>
                         </div>
 
                         <div class="input-group" style="margin-top: 1em">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">save as</span>
-                            </div>
+                            <span class="input-group-text">save as</span>
                             <input id="save-settings-name" class="form-control" type="text" value="settings.json" autocomplete="off" />
-                            <div class="input-group-append">
-                                <button
-                                    class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
-                                    type="button"
-                                    name="button"
-                                    id="save-settings"
-                                >
-                                    <i class="fa fa-download"></i> save settings
-                                </button>
-                            </div>
+                            <button
+                                class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
+                                type="button"
+                                name="button"
+                                id="save-settings"
+                            >
+                                <i class="fa fa-download"></i> save settings
+                            </button>
 
                             <div class="grid-1-1" style="margin-top: 1em">
-                                <div class="custom-control custom-switch align-middle">
-                                    <input class="custom-control-input" id="save-settings-map" type="checkbox" checked />
-                                    <label class="custom-control-label" for="save-settings-map">include map settings</label>
+                                <div class="form-check form-switch align-middle">
+                                    <input class="form-check-input" id="save-settings-map" type="checkbox" checked />
+                                    <label class="form-check-label" for="save-settings-map">include map settings</label>
                                 </div>
-                                <div class="custom-control custom-switch align-middle">
-                                    <input class="custom-control-input" id="save-settings-structure" type="checkbox" checked />
-                                    <label class="custom-control-label" for="save-settings-structure">include structure settings</label>
+                                <div class="form-check form-switch align-middle">
+                                    <input class="form-check-input" id="save-settings-structure" type="checkbox" checked />
+                                    <label class="form-check-label" for="save-settings-structure">include structure settings</label>
                                 </div>
                             </div>
-                            <div class="custom-control custom-switch">
-                                <input class="custom-control-input" id="save-settings-selected" type="checkbox" checked />
-                                <label class="custom-control-label" for="save-settings-selected">include selected environments</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" id="save-settings-selected" type="checkbox" checked />
+                                <label class="form-check-label" for="save-settings-selected">include selected environments</label>
                             </div>
                         </div>
                     </div>

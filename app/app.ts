@@ -46,15 +46,15 @@ export class ChemiscopeApp {
         root.innerHTML = `<div class="container-fluid">
             <div class="row">
                 <div class="col-md-7" style="padding: 0">
-                    <div class="embed-responsive embed-responsive-1by1">
+                    <div class="ratio ratio-1x1">
                         <div id="chemiscope-meta"></div>
-                        <div id="chemiscope-map" class="embed-responsive-item" style="position: absolute"></div>
+                        <div id="chemiscope-map" style="position: absolute"></div>
                     </div>
                 </div>
 
                 <div class="col-md-5" style="padding: 0">
-                    <div class="embed-responsive embed-responsive-5by7">
-                        <div class="embed-responsive-item">
+                    <div class="ratio ratio-5x7">
+                        <div>
                             <!-- height: 0 below is a hack to force safari to
                             respect height: 100% on the children
                             https://github.com/philipwalton/flexbugs/issues/197#issuecomment-378908438

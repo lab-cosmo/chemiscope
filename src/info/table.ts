@@ -37,7 +37,7 @@ export class Table {
         properties: { [name: string]: Property }
     ) {
         const template = document.createElement('template');
-        template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-parent='#info-tables'>
+        template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-bs-parent='#info-tables'>
         <div class="chsp-properties-table">
             <table class="table table-striped table-sm">
                 <thead><th colspan=2 style="text-align: center;"></th></thead>
@@ -62,15 +62,17 @@ export class Table {
             if (units !== undefined) {
                 title += `/${units}`;
             }
-            td.innerText = title;
 
             // add a tooltip containing the description of the property and underline if it exists
             const description = properties[name].description;
             if (description !== undefined) {
-                td.style.borderBottom = '1px dotted #00f';
-                td.style.cursor = 'help';
-                td.style.display = 'inline';
-                td.title = description;
+                td.innerHTML = `<span style="border-bottom: 1px dotted #00f; cursor: help"></span>`;
+
+                const span = td.firstChild as HTMLSpanElement;
+                span.innerText = title;
+                span.setAttribute('title', description);
+            } else {
+                td.innerText = title;
             }
 
             tr.appendChild(td);

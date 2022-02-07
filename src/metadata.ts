@@ -12,8 +12,8 @@ import { generateGUID, getElement } from './utils';
 import INFO_SVG from './static/info.svg';
 
 function generateName(guid: string, name: string): string {
-    return `<div data-toggle="modal" data-target="#${guid}">
-    <span> ${name} </span> 
+    return `<div data-bs-toggle="modal" data-bs-target="#${guid}">
+    <span> ${name} </span>
     <div class='chsp-info-icon'>${INFO_SVG}</div>
     </div>`;
 }
@@ -56,7 +56,7 @@ function generateModal(guid: string, metadata: Metadata): string {
             <div class="modal-content">
                 <div class="modal-header chsp-modal-header">
                     <h4 class="modal-title">${metadata.name}</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div>${md.render(description)}</div>
@@ -123,7 +123,7 @@ export class MetadataPanel {
     public remove(): void {
         this._name.innerHTML = '';
         if (this._modal.classList.contains('show')) {
-            const close = this._modal.querySelector('.close');
+            const close = this._modal.querySelector('.btn-close');
             assert(close !== null);
             (close as HTMLElement).click();
         }

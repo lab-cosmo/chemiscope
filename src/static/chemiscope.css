@@ -157,20 +157,27 @@
     align-items: center;
     justify-content: center;
     align-content: start;
-    grid-gap: 1em;
+    column-gap: 1em;
 }
 
 .chsp-map-options label {
     min-width: 6em;
 }
 
+.chsp-map-options > :nth-child(n + 3):not(.chsp-map-extra-options) {
+    margin-top: 1rem;
+}
+
 .chsp-map-extra-options {
     display: grid;
     align-items: center;
     justify-items: center;
-    grid-template-columns: 0.75fr 1fr 1fr;
-    grid-gap: 1em;
-    margin-bottom: 1.5em;
+    grid-template-columns: auto 1fr 1fr;
+    column-gap: 1em;
+}
+
+.chsp-map-extra-options > * {
+    margin: 1em 0;
 }
 
 .chsp-map-extra-options label {
