@@ -363,6 +363,10 @@ export class MoleculeViewer {
                 this._viewer.removeLabel(label);
             }
         }
+        if (this._highlighted !== undefined) {
+            this._viewer.removeModel(this._highlighted.model);
+            this._highlighted = undefined;
+        }
 
         // load new structure
         this._current = {
