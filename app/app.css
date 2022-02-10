@@ -1,18 +1,23 @@
+:root {
+    --header-height: 50px;
+    --footer-height: 40px;
+}
+
 html {
     position: relative;
     min-height: 100%;
 }
 
 body {
-    margin-bottom: 60px;
+    margin-bottom: 35px;
 }
 
 .footer {
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 60px;
-    padding-top: 20px;
+    height: var(--footer-height);
+    padding-top: 12px;
     background-color: #2c3e50;
     color: white;
     font-size: 0.8rem;
@@ -30,7 +35,7 @@ body {
 header {
     background-color: #2c3e50;
     width: 100%;
-    height: 60px;
+    height: var(--header-height);
 }
 
 .navbar {
@@ -55,20 +60,20 @@ header {
 }
 
 main.container-fluid {
-    margin: 1.5em 0em calc(1.5em + 60px) 0em;
+    margin: 1.5em 0em calc(1.5em + var(--header-height)) 0em;
     width: 100%;
 }
 
 @media screen and (min-width: 1200px) {
     main.container-fluid {
-        margin: 2em 2em calc(2em + 60px) 2em;
+        margin: 2em 2em calc(2em + var(--header-height)) 2em;
         width: calc(100% - 4em);
     }
 }
 
 @media screen and (min-width: 1500px) {
     main.container-fluid {
-        margin: 2em auto calc(2em + 60px) auto;
+        margin: 2em auto calc(2em + var(--header-height)) auto;
         width: 1500px;
     }
 }
@@ -92,12 +97,12 @@ main .ratio > * {
 
 @media screen and (min-width: 768px) {
     .ratio-5x7 {
-        max-height: calc(100vh - 4em - 120px);
+        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
     }
 
     main .ratio {
         /* set the width to fit the vertical space, and the height will be set automatically */
-        max-width: calc(100vh - 4em - 120px);
+        max-width: calc(100vh - 2em - var(--header-height) - var(--footer-height));
     }
 }
 
