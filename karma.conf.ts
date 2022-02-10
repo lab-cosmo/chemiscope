@@ -42,10 +42,10 @@ WEBPACK_CONFIG.plugins?.push(new RemoveDeclarationsFromAssets());
 
 module.exports = (config: Config) => {
     config.set({
-        browserNoActivityTimeout: 8000,
+        browserNoActivityTimeout: 32000,
         client: {
             mocha: {
-                timeout: 8000,
+                timeout: 32000,
             },
         },
 
