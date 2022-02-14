@@ -11,11 +11,11 @@ let KARMA_INSERTED_HTML: string;
 const DUMMY_PROPERTIES = {
     first: {
         target: 'structure',
-        values: [1.1, 1.2],
+        values: [1.1, 1.2, 0.6],
     } as Property,
     second: {
         target: 'structure',
-        values: [2.1, 2.2],
+        values: [2.1, 2.2, 1.4],
     } as Property,
 };
 
@@ -28,6 +28,14 @@ const DUMMY_STRUCTURES = [
         z: [0, 1],
     },
 ];
+
+async function waitForUpdate(): Promise<void> {
+    await new Promise<void>((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, 0);
+    });
+}
 
 describe('Map', () => {
     before(() => {
@@ -135,7 +143,7 @@ describe('map markers', () => {
         assert(MAP['_active'] === undefined);
     });
 
-    it('can change the point associated with a marker', () => {
+    it('can change the point associated with a marker', async () => {
         MAP.addMarker(firstGUID, 'red', { structure: 0, environment: 0 });
         assert(getMarker(firstGUID).current === 0);
         const initialPosition = getMarker(firstGUID).marker.getBoundingClientRect();
@@ -159,20 +167,23 @@ describe('map markers', () => {
         // render the markers.
         MAP['_options'].x.scale.value = 'log';
 
-        // use setTimeout with a timeout of 0 to allow the browser to re-render
-        // the marker before checking its position
-        setTimeout(() => {
-            position = getMarker(firstGUID).marker.getBoundingClientRect();
-            assert(position.x !== initialPosition.x);
-            assert(position.y === initialPosition.y);
-        }, 0);
+        // Wait for the marker's position to be updated. Although the marker's
+        // update is synchronous in regards to getBoundingClientRect(),
+        // it is only triggered once Plotly is done rendering, which is an
+        // asynchronous operation.
+        await waitForUpdate();
+
+        position = getMarker(firstGUID).marker.getBoundingClientRect();
+        assert(position.x !== initialPosition.x);
+        assert(position.y === initialPosition.y);
 
         MAP['_options'].x.scale.value = 'linear';
         MAP['_options'].y.scale.value = 'log';
-        setTimeout(() => {
-            position = getMarker(firstGUID).marker.getBoundingClientRect();
-            assert(position.x !== initialPosition.x);
-            assert(position.y !== initialPosition.y);
-        }, 0);
+
+        await waitForUpdate();
+
+        position = getMarker(firstGUID).marker.getBoundingClientRect();
+        assert(position.x === initialPosition.x);
+        assert(position.y !== initialPosition.y);
     });
 });
