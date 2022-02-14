@@ -29,11 +29,11 @@ const DUMMY_STRUCTURES = [
     },
 ];
 
-async function wait(duration: number = 0): Promise<void> {
+async function waitForUpdate(): Promise<void> {
     await new Promise<void>((resolve) => {
         setTimeout(() => {
             resolve();
-        }, duration);
+        }, 0);
     });
 }
 
@@ -167,9 +167,11 @@ describe('map markers', () => {
         // render the markers.
         MAP['_options'].x.scale.value = 'log';
 
-        // Use setTimeout with a timeout of 0 to let Plotly re-render and
-        // then trigger an update of the marker before checking its position
-        await wait();
+        // Wait for the marker's position to be updated. Although the marker's
+        // update is synchronous in regards to getBoundingClientRect(),
+        // it is only triggered once Plotly is done rendering, which is an
+        // asynchronous operation.
+        await waitForUpdate();
 
         position = getMarker(firstGUID).marker.getBoundingClientRect();
         assert(position.x !== initialPosition.x);
@@ -178,7 +180,7 @@ describe('map markers', () => {
         MAP['_options'].x.scale.value = 'linear';
         MAP['_options'].y.scale.value = 'log';
 
-        await wait();
+        await waitForUpdate();
 
         position = getMarker(firstGUID).marker.getBoundingClientRect();
         assert(position.x === initialPosition.x);
