@@ -102,6 +102,17 @@ export class EnvironmentIndexer {
             }
         }
 
+        // Make sure the list of active structures & atoms are sorted since they
+        // will be passed to a binary search function.
+        //
+        // We need the `(a, b) => a - b` since by default javascript sorts
+        // arrays using the string representation of elements, giving [1, 11, 2,
+        // 22, ...]
+        this._activeStructures.sort((a, b) => a - b);
+        for (let structure = 0; structure < this._structures.length; structure++) {
+            this._activeAtoms[structure].sort((a, b) => a - b);
+        }
+
         if (this.mode === 'atom') {
             assert(this._environments !== undefined);
         }
