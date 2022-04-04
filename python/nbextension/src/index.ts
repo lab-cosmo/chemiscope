@@ -12,3 +12,7 @@
     'nbextensions/chemiscope-widget';
 
 export * from './widget';
+
+
+// Prevent Chemiscope's Bootstrap v5 from replacing Jupyter's Bootstrap v3.
+(window as any).$.fn.modal.noConflict();

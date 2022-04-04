@@ -73,7 +73,7 @@
     scale: 0.9;
 }
 
-.modal-content {
+.chemiscope-bootstrap .modal-content {
     transform: scale(1.3);
     transform-origin: 0 0;
 }
