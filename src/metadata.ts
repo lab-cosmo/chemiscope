@@ -51,7 +51,7 @@ function generateModal(guid: string, metadata: Metadata): string {
         ref += '</ul>';
     }
 
-    return `<div id=${guid} class="modal fade" tabindex='-1'>
+    return `<div id=${guid} class="modal chemiscope-modal fade" tabindex='-1'>
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header chsp-modal-header">

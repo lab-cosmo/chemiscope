@@ -2,14 +2,16 @@
     @import (less) 'bootstrap/dist/css/bootstrap.css';
 }
 
-.fade {
-    opacity: initial;
+.chemiscope-modal {
+    &.fade {
+        opacity: initial;
+    }
+
+    &.fade:not(.show) {
+        opacity: 0;
+    }
 }
 
-.modal-backdrop.fade {
+.modal-backdrop.show {
     opacity: 0.5;
-}
-
-.fade:not(.show) {
-    opacity: 0;
 }
