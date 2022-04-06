@@ -7,8 +7,7 @@
     "declarationDir": "dist/",
     "downlevelIteration": true,
     "sourceMap": true,
-    "lib": ["dom", "es5"],
-
+    "lib": ["dom", "dom.iterable", "es5"],
     "skipLibCheck": true /* Skip type checking of declaration files */
   },
   "typedocOptions": {

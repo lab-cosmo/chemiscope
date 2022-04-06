@@ -24,7 +24,7 @@ function getStyleSheet(name: string): CSSStyleSheet {
 
     const sheet = new CSSStyleSheet();
 
-    for (const rule of Array.from(style.sheet.cssRules)) {
+    for (const rule of style.sheet.cssRules) {
         sheet.insertRule(rule.cssText);
     }
 
@@ -37,7 +37,7 @@ function getStyleSheet(name: string): CSSStyleSheet {
 function getDocumentStyleSheet(): CSSStyleSheet {
     const sheet = new CSSStyleSheet();
 
-    for (const rule of Array.from(globalStyleSheet.cssRules)) {
+    for (const rule of globalStyleSheet.cssRules) {
         if (rule.selectorText.startsWith('.plotly-notifier')) {
             sheet.insertRule(rule.cssText);
         }

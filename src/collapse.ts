@@ -90,8 +90,8 @@ export default class Collapse {
      */
     static initialize(root: HTMLElement = document.body) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        for (const el of Array.from(root.querySelectorAll('[data-bs-toggle]')) as HTMLElement[]) {
-            if ('bsTarget' in el.dataset) {
+        for (const el of root.querySelectorAll('[data-bs-toggle]')) {
+            if (el instanceof HTMLElement && 'bsTarget' in el.dataset) {
                 const target: HTMLElement | null = root.querySelector(
                     (el.dataset as { bsTarget: string }).bsTarget
                 );

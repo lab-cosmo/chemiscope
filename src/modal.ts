@@ -55,7 +55,7 @@ export default class Modal {
         });
 
         // Find close buttons inside the modal.
-        for (const el of Array.from(this._element.querySelectorAll('[data-bs-dismiss="modal"]'))) {
+        for (const el of this._element.querySelectorAll('[data-bs-dismiss="modal"]')) {
             el.addEventListener('click', () => {
                 this.close();
             });
