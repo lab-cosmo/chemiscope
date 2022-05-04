@@ -87,6 +87,7 @@ function bondLength(elem: string): number {
 // return true if atom1 and atom2 are probably bonded to each other
 // based on distance alone
 function areConnected(atom1: AtomSpec, atom2: AtomSpec) {
+    if (atom1.elem === 'X' || atom2.elem === 'X') return false;
     let maxsq = bondLength(atom1.elem) + bondLength(atom2.elem);
     maxsq += 0.25; // fudge factor, especially important for md frames, also see 1i3d
     maxsq *= maxsq;
