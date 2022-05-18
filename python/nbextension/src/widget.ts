@@ -11,7 +11,7 @@ import { Dataset, Settings } from '../../../src/dataset';
 
 
 class ChemiscopeBaseView extends DOMWidgetView {
-    protected visualizer?: any;
+    protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
     
     public remove(): unknown {
