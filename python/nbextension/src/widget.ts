@@ -69,7 +69,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
  * Jupyter Notebook output window when instantiated from the Chemiscope Python
  * package.
  */
-export class ChemiscopeView extends CSBaseView {
+export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
     
     public render(): void {
@@ -155,7 +155,7 @@ export class ChemiscopeView extends CSBaseView {
  * The [[StructureView]] class renders a structure-only widget in the Jupyter
  * Notebook output window when instantiated from the Chemiscope Python package.
  */
-export class StructureView extends CSBaseView {
+export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
     
     public render(): void {
@@ -230,7 +230,7 @@ export class StructureView extends CSBaseView {
  * The [[MapView]] class renders a map-only widget in the Jupyter Notebook
  * output window when instantiated from the Chemiscope Python package.
  */
-export class MapView extends CSBaseView {
+export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
     
     public render(): void {
