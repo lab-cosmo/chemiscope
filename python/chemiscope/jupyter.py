@@ -16,12 +16,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     # dictionary (`widget.settings["map"]["x"]["property"] = "foo"` will not
     # work, but `widget.settings = updated_settings` will).
     settings = Dict().tag(sync=True)
+    # switch to disable automatic update of settings
+    _settings_sync = Bool().tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__()
         self.data = json.dumps(data)
         self.has_metadata = has_metadata
         self.settings = {}
+        self._settings_sync = True
 
     def save(self, path):
         """
