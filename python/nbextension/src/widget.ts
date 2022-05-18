@@ -10,7 +10,7 @@ import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../
 import { Dataset, Settings } from '../../../src/dataset';
 
 
-class CSBaseView extends DOMWidgetView {
+class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: any;
     protected guid!: string;
     
