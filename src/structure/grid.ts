@@ -15,6 +15,7 @@ import {
 } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
+import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
@@ -111,6 +112,8 @@ export class ViewersGrid {
      */
     public loadStructure: (index: number, structure: unknown) => Structure;
 
+    /// Shadow root for isolation
+    private _shadow: ShadowRoot;
     /// Root element containing the full viewer grid
     private _root: HTMLElement;
     /// List of structures in the dataset
@@ -186,17 +189,28 @@ export class ViewersGrid {
         }
         this._maxViewers = maxViewers;
 
-        const root = getElement(element);
+        const containerElement = getElement(element);
+        const hostElement = document.createElement('div');
+
+        hostElement.style.setProperty('height', '100%');
+        containerElement.appendChild(hostElement);
+
+        this._shadow = hostElement.attachShadow({ mode: 'open' });
+        this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
 
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
-        root.appendChild(this._root);
+        this._shadow.appendChild(this._root);
 
         this._setupGrid(1);
 
         this._active = getFirstKey(this._viewers);
         this.setActive(this._active);
+    }
+
+    private _getById<T = HTMLElement>(id: string): T {
+        return getByID(id, this._shadow);
     }
 
     /**
@@ -289,7 +303,7 @@ export class ViewersGrid {
         data.widget.remove();
 
         // remove the cell containing the widget
-        const cell = getByID(`gi-${guid}`, this._root);
+        const cell = this._getById(`gi-${guid}`);
         cell.remove();
 
         this._viewers.delete(guid);
@@ -303,9 +317,7 @@ export class ViewersGrid {
             data.widget.remove();
         }
 
-        if (this._root.parentElement !== null) {
-            this._root.parentElement.innerHTML = '';
-        }
+        this._shadow.host.remove();
     }
 
     /**
@@ -314,7 +326,7 @@ export class ViewersGrid {
     public setActive(guid: GUID): void {
         const changeClasses = (guid: string, toggle: boolean) => {
             // change tooltip text in the active marker
-            const button = getByID(`chsp-activate-${guid}`, this._root);
+            const button = this._getById(`chsp-activate-${guid}`);
             button.classList.toggle('chsp-active-structure', toggle);
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
@@ -322,7 +334,7 @@ export class ViewersGrid {
             tooltip.innerHTML = toggle ? 'Active viewer' : 'Choose as active';
 
             // change style of the cell border
-            const cell = getByID(`gi-${guid}`, this._root);
+            const cell = this._getById(`gi-${guid}`);
             cell.classList.toggle('chsp-structure-viewer-cell-active', toggle);
         };
 
@@ -684,7 +696,7 @@ export class ViewersGrid {
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
                 const widget = new MoleculeViewer(
-                    getByID<HTMLElement>(`gi-${cellGUID}`, this._root),
+                    this._getById<HTMLElement>(`gi-${cellGUID}`),
                     cellGUID
                 );
 
@@ -717,7 +729,9 @@ export class ViewersGrid {
                 const current = { atom: undefined, structure: -1, environment: -1 };
 
                 // get the 'delay' setting inside the current widget setting
-                const playbackDelay = getByID<HTMLInputElement>(`chsp-${cellGUID}-playback-delay`);
+                const playbackDelay = widget._options.getModalElement<HTMLInputElement>(
+                    `chsp-${cellGUID}-playback-delay`
+                );
 
                 this._viewers.set(cellGUID, {
                     color: color,

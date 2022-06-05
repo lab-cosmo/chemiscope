@@ -53,11 +53,16 @@ module.exports = (config: Config) => {
             // FIXME: we should not have to manually load jquery, but we
             // currently don't include it in the main bundle
             'node_modules/jquery/dist/jquery.min.js',
+
+            // This will load the style sheets polyfill necessary for the tests.
+            'src/index.ts',
+
             'tests/**/*.test.ts',
         ],
         frameworks: ['webpack', 'mocha', 'detectBrowsers'],
 
         preprocessors: {
+            'src/index.ts': 'webpack',
             'tests/**/*.test.ts': 'webpack',
         },
         reporters: ['progress'],
