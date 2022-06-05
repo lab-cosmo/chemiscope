@@ -454,22 +454,27 @@
 
 .chsp-settings-camera {
     display: grid;
-    grid-gap: 1em;
+    gap: 1em;
     grid-template-columns: repeat(7, auto);
     justify-content: center;
 }
 
 .chsp-settings-environments {
     display: grid;
-    grid-gap: 1em;
+    align-items: center;
+    column-gap: 1em;
     grid-template-columns: 1fr 1fr 1fr;
 }
 
 .chsp-settings-extra-options {
     display: grid;
-    grid-gap: 1em;
+    gap: 1em;
     grid-template-columns: 1fr 1fr 1fr;
     grid-column: 1 / span 3;
+}
+
+.chsp-settings-extra-options > :nth-child(-n + 3) {
+    margin-top: 1em;
 }
 
 .chsp-settings-trajectory {
@@ -477,7 +482,7 @@
     grid-template-columns: 12em 12em;
     justify-content: center;
     align-content: center;
-    grid-gap: 1em;
+    gap: 1em;
     margin-bottom: 1ex;
 }
 

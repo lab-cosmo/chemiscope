@@ -5,10 +5,12 @@
 
 import assert from 'assert';
 
+import Collapse from '../collapse';
+import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { GUID, PositioningCallback, makeDraggable, sendWarning } from '../utils';
+import { GUID, PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -44,8 +46,8 @@ export class StructureOptions extends OptionsGroup {
         bgColor: HTMLOption<'string'>;
     };
 
-    /// The HTML element containing the settings modal
-    private _modal: HTMLElement;
+    /// The Modal instance
+    private _modal: Modal;
     /// The HTML element containing the button to open the settings modal
     private _openModal: HTMLElement;
     // Callback to get the initial positioning of the settings modal.
@@ -105,11 +107,18 @@ export class StructureOptions extends OptionsGroup {
 
         const { openModal, modal } = this._createSettingsHTML(guid);
         this._modal = modal;
+        this._modal.shadow.adoptedStyleSheets = (
+            root.getRootNode() as ShadowRoot
+        ).adoptedStyleSheets;
         this._openModal = openModal;
         root.appendChild(this._openModal);
-        document.body.appendChild(this._modal);
 
         this._bind(guid);
+    }
+
+    /** Get in a element in the modal from its id */
+    public getModalElement<T extends HTMLElement = HTMLElement>(id: string): T {
+        return getByID(id, this._modal.shadow);
     }
 
     /**
@@ -117,11 +126,6 @@ export class StructureOptions extends OptionsGroup {
      * document
      */
     public remove(): void {
-        if (this._modal.classList.contains('show')) {
-            const close = this._modal.querySelector('.btn-close');
-            assert(close !== null);
-            (close as HTMLElement).click();
-        }
         this._modal.remove();
         this._openModal.remove();
     }
@@ -154,7 +158,7 @@ export class StructureOptions extends OptionsGroup {
      *              as prefix for all HTML elements `id`
      * @return      the HTML element containing the setting modal
      */
-    private _createSettingsHTML(guid: GUID): { modal: HTMLElement; openModal: HTMLElement } {
+    private _createSettingsHTML(guid: GUID): { modal: Modal; openModal: HTMLElement } {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button
@@ -174,10 +178,10 @@ export class StructureOptions extends OptionsGroup {
             .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${guid}-${id}"`)
             .replace(/data-bs-target="#(.*?)"/g, (_: string, id: string) => `data-bs-target="#${guid}-${id}"`);
 
-        const modal = template.content.firstChild as HTMLElement;
-        const modalDialog = modal.childNodes[1] as HTMLElement;
-        assert(modalDialog !== undefined);
-        assert(modalDialog.classList.contains('modal-dialog'));
+        const modalElement = template.content.querySelector('.modal');
+        assert(modalElement !== null && modalElement instanceof HTMLElement);
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        assert(modalDialog !== null && modalDialog instanceof HTMLElement);
 
         // Position modal near the actual viewer
         openModal.addEventListener('click', () => {
@@ -201,6 +205,8 @@ export class StructureOptions extends OptionsGroup {
                 modalDialog.style.top = `${top}px`;
                 modalDialog.style.left = `${left}px`;
             }
+
+            modal.open();
         });
 
         // make the settings modal draggable
@@ -208,31 +214,34 @@ export class StructureOptions extends OptionsGroup {
 
         // Stop propagation of keydown events. This is required for the Jupyter integration,
         // otherwise jupyter tries to interpret key press in the modal as its own input
-        modal.addEventListener('keydown', (event) => event.stopPropagation());
+        modalElement.addEventListener('keydown', (event) => event.stopPropagation());
+
+        const modal = new Modal(modalElement);
+        Collapse.initialize(modalElement);
 
         return { modal, openModal };
     }
 
     /** Bind all options to the corresponding HTML elements */
     private _bind(guid: GUID): void {
-        this.atomLabels.bind(`${guid}-atom-labels`, 'checked');
-        this.spaceFilling.bind(`${guid}-space-filling`, 'checked');
-        this.bonds.bind(`${guid}-bonds`, 'checked');
+        this.atomLabels.bind(this.getModalElement(`${guid}-atom-labels`), 'checked');
+        this.spaceFilling.bind(this.getModalElement(`${guid}-space-filling`), 'checked');
+        this.bonds.bind(this.getModalElement(`${guid}-bonds`), 'checked');
 
-        this.rotation.bind(`${guid}-rotation`, 'checked');
-        this.unitCell.bind(`${guid}-unit-cell`, 'checked');
+        this.rotation.bind(this.getModalElement(`${guid}-rotation`), 'checked');
+        this.unitCell.bind(this.getModalElement(`${guid}-unit-cell`), 'checked');
 
-        this.supercell[0].bind(`${guid}-supercell-a`, 'value');
-        this.supercell[1].bind(`${guid}-supercell-b`, 'value');
-        this.supercell[2].bind(`${guid}-supercell-c`, 'value');
+        this.supercell[0].bind(this.getModalElement(`${guid}-supercell-a`), 'value');
+        this.supercell[1].bind(this.getModalElement(`${guid}-supercell-b`), 'value');
+        this.supercell[2].bind(this.getModalElement(`${guid}-supercell-c`), 'value');
 
-        this.axes.bind(`${guid}-axes`, 'value');
-        this.keepOrientation.bind(`${guid}-keep-orientation`, 'checked');
+        this.axes.bind(this.getModalElement(`${guid}-axes`), 'value');
+        this.keepOrientation.bind(this.getModalElement(`${guid}-keep-orientation`), 'checked');
 
-        this.environments.activated.bind(`${guid}-env-activated`, 'checked');
-        this.environments.bgColor.bind(`${guid}-env-bg-color`, 'value');
-        this.environments.bgStyle.bind(`${guid}-env-bg-style`, 'value');
-        this.environments.cutoff.bind(`${guid}-env-cutoff`, 'value');
-        this.environments.center.bind(`${guid}-env-center`, 'checked');
+        this.environments.activated.bind(this.getModalElement(`${guid}-env-activated`), 'checked');
+        this.environments.bgColor.bind(this.getModalElement(`${guid}-env-bg-color`), 'value');
+        this.environments.bgStyle.bind(this.getModalElement(`${guid}-env-bg-style`), 'value');
+        this.environments.cutoff.bind(this.getModalElement(`${guid}-env-cutoff`), 'value');
+        this.environments.center.bind(this.getModalElement(`${guid}-env-center`), 'checked');
     }
 }
