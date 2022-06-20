@@ -89,8 +89,7 @@ describe('map markers', () => {
     const getMarker = (id: GUID): MarkerData => {
         const marker = MAP['_selected'].get(id);
         assert(marker !== undefined);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return marker!;
+        return marker;
     };
 
     beforeEach(() => {
@@ -112,21 +111,21 @@ describe('map markers', () => {
         assert(MAP['_active'] === undefined);
 
         MAP.addMarker(firstGUID, 'red', { structure: 0, environment: 0 });
-        assert(MAP['_selected'].size === 1);
+        assert((MAP['_selected'].size as number) === 1);
         assert(MAP['_active'] === firstGUID);
         assert(getMarker(firstGUID).color === 'red');
 
         MAP.addMarker(secondGUID, 'blue', { structure: 1, environment: 1 });
-        assert(MAP['_selected'].size === 2);
+        assert((MAP['_selected'].size as number) === 2);
         assert(MAP['_active'] === secondGUID);
         assert(getMarker(secondGUID).color === 'blue');
 
         MAP.setActive(firstGUID);
-        assert(MAP['_selected'].size === 2);
+        assert((MAP['_selected'].size as number) === 2);
         assert(MAP['_active'] === firstGUID);
 
         MAP.removeMarker(firstGUID);
-        assert(MAP['_selected'].size === 1);
+        assert((MAP['_selected'].size as number) === 1);
         // the remaining marker is made active
         assert(MAP['_active'] === secondGUID);
 

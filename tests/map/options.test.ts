@@ -20,26 +20,12 @@ const DUMMY_CALLBACK = () => {
     return { top: 0, left: 0 };
 };
 
-function traverseDOM(element: Element | ShadowRoot, callback: (element: Element) => void) {
-    if (element.children) {
-        const elements = element.children;
-        for (let i = 0; i < elements.length; i++) {
-            traverseDOM(elements[i], callback);
-        }
-    }
-
-    if (element instanceof Element) {
-        callback(element);
-    }
-}
-
 function createShadow(): ShadowRoot {
     const shadowElement = document.createElement('div');
     const shadow = shadowElement.attachShadow({ mode: 'open' });
 
     return shadow;
 }
-
 
 describe('MapOptions', () => {
     before(() => {
@@ -49,11 +35,7 @@ describe('MapOptions', () => {
 
     it('can remove itself from DOM', () => {
         const root = createShadow();
-        const options = new MapOptions(
-            root,
-            DUMMY_PROPERTIES,
-            DUMMY_CALLBACK
-        );
+        const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
         assert(root.innerHTML !== '');
 
         options.remove();
@@ -69,7 +51,9 @@ describe('MapOptions', () => {
         function checkScaleLabel(axisOptions: AxisOptions, axisName: string): void {
             const min = options.getModalElement(`map-${axisName}-min-label`);
             const max = options.getModalElement(`map-${axisName}-max-label`);
-            const selectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-scale`);
+            const selectElement = options.getModalElement<HTMLSelectElement>(
+                `map-${axisName}-scale`
+            );
 
             // change from linear (default) to log scale
             selectElement.value = 'log';
@@ -82,8 +66,8 @@ describe('MapOptions', () => {
             selectElement.value = 'linear';
             selectElement.dispatchEvent(new window.Event('change'));
             options.setLogLabel(axisOptions, axisName);
-            assert(min.innerHTML === 'min:');
-            assert(max.innerHTML === 'max:');
+            assert((min.innerHTML as string) === 'min:');
+            assert((max.innerHTML as string) === 'max:');
         }
 
         checkScaleLabel(options.x, 'x');
@@ -98,7 +82,9 @@ describe('MapOptions', () => {
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
         function checkPropertySelect(axisOptions: AxisOptions, axisName: string) {
-            const selectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-property`);
+            const selectElement = options.getModalElement<HTMLSelectElement>(
+                `map-${axisName}-property`
+            );
             selectElement.value = 'first';
             selectElement.dispatchEvent(new window.Event('change'));
             assert(selectElement.value !== 'second');
@@ -121,8 +107,12 @@ describe('MapOptions', () => {
         const options = new MapOptions(root, DUMMY_PROPERTIES, DUMMY_CALLBACK);
 
         function checkRangeSelect(axisOptions: AxisOptions, axisName: string) {
-            const minSelectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-min`);
-            const maxSelectElement = options.getModalElement<HTMLSelectElement>(`map-${axisName}-max`);
+            const minSelectElement = options.getModalElement<HTMLSelectElement>(
+                `map-${axisName}-min`
+            );
+            const maxSelectElement = options.getModalElement<HTMLSelectElement>(
+                `map-${axisName}-max`
+            );
 
             assert(minSelectElement.value !== '0.01');
             assert(axisOptions.min.value !== 0.01);

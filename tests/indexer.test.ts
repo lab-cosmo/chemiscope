@@ -32,15 +32,15 @@ describe('EnvironmentIndexer', () => {
 
         let indexes = indexer.from_structure_atom(0, undefined);
         assert(indexes !== undefined);
-        assert(indexes!.environment === 0);
-        assert(indexes!.structure === 0);
-        assert(indexes!.atom === undefined);
+        assert(indexes.environment === 0);
+        assert(indexes.structure === 0);
+        assert(indexes.atom === undefined);
 
         indexes = indexer.from_structure_atom(1, undefined);
         assert(indexes !== undefined);
-        assert(indexes!.environment === 1);
-        assert(indexes!.structure === 1);
-        assert(indexes!.atom === undefined);
+        assert(indexes.environment === 1);
+        assert(indexes.structure === 1);
+        assert(indexes.atom === undefined);
 
         indexes = indexer.from_environment(0);
         assert(indexes.environment === 0);
@@ -70,15 +70,15 @@ describe('EnvironmentIndexer', () => {
 
         let indexes = indexer.from_structure_atom(0, 1);
         assert(indexes !== undefined);
-        assert(indexes!.environment === 1);
-        assert(indexes!.structure === 0);
-        assert(indexes!.atom === 1);
+        assert(indexes.environment === 1);
+        assert(indexes.structure === 0);
+        assert(indexes.atom === 1);
 
         indexes = indexer.from_structure_atom(1, 2);
         assert(indexes !== undefined);
-        assert(indexes!.environment === 4);
-        assert(indexes!.structure === 1);
-        assert(indexes!.atom === 2);
+        assert(indexes.environment === 4);
+        assert(indexes.structure === 1);
+        assert(indexes.atom === 2);
 
         indexes = indexer.from_environment(2);
         assert(indexes.environment === 2);
@@ -111,9 +111,9 @@ describe('EnvironmentIndexer', () => {
 
         indexes = indexer.from_structure_atom(1, 2);
         assert(indexes !== undefined);
-        assert(indexes!.environment === 1);
-        assert(indexes!.structure === 1);
-        assert(indexes!.atom === 2);
+        assert(indexes.environment === 1);
+        assert(indexes.structure === 1);
+        assert(indexes.atom === 2);
 
         indexes = indexer.from_environment(0);
         assert(indexes.environment === 0);
