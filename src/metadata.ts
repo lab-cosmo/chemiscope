@@ -3,22 +3,16 @@
  * @module main
  */
 
-import assert from 'assert';
 import markdown from 'markdown-it';
 
 import { Metadata } from './dataset';
-import { generateGUID, getElement } from './utils';
+import { getElement } from './utils';
+import * as styles from './styles';
+import Modal from './modal';
 
 import INFO_SVG from './static/info.svg';
 
-function generateName(guid: string, name: string): string {
-    return `<div data-bs-toggle="modal" data-bs-target="#${guid}">
-    <span> ${name} </span>
-    <div class='chsp-info-icon'>${INFO_SVG}</div>
-    </div>`;
-}
-
-function generateModal(guid: string, metadata: Metadata): string {
+function generateModal(metadata: Metadata): string {
     const md = markdown({
         html: false,
         linkify: true,
@@ -51,7 +45,7 @@ function generateModal(guid: string, metadata: Metadata): string {
         ref += '</ul>';
     }
 
-    return `<div id=${guid} class="modal chemiscope-modal fade" tabindex='-1'>
+    return `<div class="modal chemiscope-modal fade" tabindex='-1'>
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header chsp-modal-header">
@@ -78,12 +72,12 @@ function generateModal(guid: string, metadata: Metadata): string {
  * the other information.
  */
 export class MetadataPanel {
-    /// Global id of this panel
-    private _guid: string;
+    /// Shadow root for isolation
+    private _shadow: ShadowRoot;
     /// The HTML element serving as root element for the name
     private _name: HTMLElement;
     /// The HTML element containing the modal for the current dataset
-    private _modal: HTMLElement;
+    private _modal: Modal;
 
     /**
      * Create a new [[MetadataPanel]] inside the HTML element with the given
@@ -97,36 +91,49 @@ export class MetadataPanel {
         metadata.name = metadata.name.replace(/</g, '&lt;');
         metadata.name = metadata.name.replace(/>/g, '&gt;');
 
-        this._guid = `chsp-${generateGUID()}`;
+        const containerElement = getElement(element);
+        const hostElement = document.createElement('div');
 
-        this._name = getElement(element);
+        hostElement.style.setProperty('height', '100%');
+        containerElement.appendChild(hostElement);
 
-        this._name.innerHTML = generateName(this._guid, metadata.name);
-        this._name.classList.add('chsp-meta');
+        this._shadow = hostElement.attachShadow({ mode: 'open' });
+
+        this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
+
+        this._name = document.createElement('div');
+
+        // this._root = document.createElement('div');
+        // this._root.style.setProperty('height', '100%');
+        this._shadow.appendChild(this._name);
+
+        this._name.innerHTML = `<div class="chsp-meta">
+            <span> ${metadata.name} </span>
+            <div class='chsp-info-icon'>${INFO_SVG}</div>
+        </div>`;
 
         const template = document.createElement('template');
-        template.innerHTML = generateModal(this._guid, metadata);
-        this._modal = template.content.firstChild as HTMLElement;
+        template.innerHTML = generateModal(metadata);
+        const modalElement = template.content.firstChild as HTMLElement;
 
-        // Stop propagation of keydown events. This is required for the Jupyter integration,
-        // otherwise jupyter tries to interpret key press in the modal as its own input
-        this._modal.addEventListener('keydown', (event) => {
+        this._modal = new Modal(modalElement);
+        this._modal.shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
+
+        this._name.onclick = () => this._modal.open();
+
+        // Stop propagation of keydown events. This is required for the Jupyter
+        // integration, otherwise Jupyter tries to interpret key press in the
+        // modal as its own input
+        modalElement.addEventListener('keydown', (event) => {
             event.stopPropagation();
         });
-
-        document.body.appendChild(this._modal);
     }
 
     /**
      * Remove all HTML added by this [[EnvironmentInfo]] in the current document
      */
     public remove(): void {
-        this._name.innerHTML = '';
-        if (this._modal.classList.contains('show')) {
-            const close = this._modal.querySelector('.btn-close');
-            assert(close !== null);
-            (close as HTMLElement).click();
-        }
         this._modal.remove();
+        this._shadow.host.remove();
     }
 }

@@ -47,7 +47,7 @@ export class ChemiscopeApp {
             <div class="row">
                 <div class="col-md-6" style="padding: 0">
                     <div class="ratio ratio-1x1">
-                        <div id="chemiscope-meta"></div>
+                        <div id="chemiscope-meta" style="z-index: 10"></div>
                         <div id="chemiscope-map" style="position: absolute"></div>
                     </div>
                 </div>
