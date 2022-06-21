@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { GUID, PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
+import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html';
@@ -53,7 +53,7 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, guid: GUID, positionSettings: PositioningCallback) {
+    constructor(root: HTMLElement, positionSettings: PositioningCallback) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -105,7 +105,7 @@ export class StructureOptions extends OptionsGroup {
 
         this._positionSettingsModal = positionSettings;
 
-        const { openModal, modal } = this._createSettingsHTML(guid);
+        const { openModal, modal } = this._createSettingsHTML();
         this._modal = modal;
         this._modal.shadow.adoptedStyleSheets = (
             root.getRootNode() as ShadowRoot
@@ -113,7 +113,7 @@ export class StructureOptions extends OptionsGroup {
         this._openModal = openModal;
         root.appendChild(this._openModal);
 
-        this._bind(guid);
+        this._bind();
     }
 
     /** Get in a element in the modal from its id */
@@ -153,31 +153,19 @@ export class StructureOptions extends OptionsGroup {
      *
      * The HTML elements are returned, not yet inserted in the document.
      *
-     * @param  root where to place the HTML button
-     * @param  guid unique identifier of the corresponding MoleculeViewer, used
-     *              as prefix for all HTML elements `id`
-     * @return      the HTML element containing the setting modal
+     * @return the HTML element containing the setting modal, and the button to open the modal
      */
-    private _createSettingsHTML(guid: GUID): { modal: Modal; openModal: HTMLElement } {
+    private _createSettingsHTML(): { modal: Modal; openModal: HTMLElement } {
         // use HTML5 template to generate a DOM object from an HTML string
         const template = document.createElement('template');
         template.innerHTML = `<button
             class="btn btn-light btn-sm chsp-viewer-button"
-            data-bs-target="#${guid}-structure-settings"
-            data-bs-toggle="modal"
             style="top: 4px; right: 4px; opacity: 1;">
                 <div>${BARS_SVG}</div>
             </button>`;
         const openModal = template.content.firstChild as HTMLElement;
 
-        // replace id to ensure they are unique even if we have multiple viewers
-        // on a single page
-        // prettier-ignore
-        template.innerHTML = HTML_OPTIONS
-            .replace(/id="(.*?)"/g, (_: string, id: string) => `id="${guid}-${id}"`)
-            .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${guid}-${id}"`)
-            .replace(/data-bs-target="#(.*?)"/g, (_: string, id: string) => `data-bs-target="#${guid}-${id}"`);
-
+        template.innerHTML = HTML_OPTIONS;
         const modalElement = template.content.querySelector('.modal');
         assert(modalElement !== null && modalElement instanceof HTMLElement);
         const modalDialog = modalElement.querySelector('.modal-dialog');
@@ -223,25 +211,25 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(guid: GUID): void {
-        this.atomLabels.bind(this.getModalElement(`${guid}-atom-labels`), 'checked');
-        this.spaceFilling.bind(this.getModalElement(`${guid}-space-filling`), 'checked');
-        this.bonds.bind(this.getModalElement(`${guid}-bonds`), 'checked');
+    private _bind(): void {
+        this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
+        this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
+        this.bonds.bind(this.getModalElement('bonds'), 'checked');
 
-        this.rotation.bind(this.getModalElement(`${guid}-rotation`), 'checked');
-        this.unitCell.bind(this.getModalElement(`${guid}-unit-cell`), 'checked');
+        this.rotation.bind(this.getModalElement('rotation'), 'checked');
+        this.unitCell.bind(this.getModalElement('unit-cell'), 'checked');
 
-        this.supercell[0].bind(this.getModalElement(`${guid}-supercell-a`), 'value');
-        this.supercell[1].bind(this.getModalElement(`${guid}-supercell-b`), 'value');
-        this.supercell[2].bind(this.getModalElement(`${guid}-supercell-c`), 'value');
+        this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
+        this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');
+        this.supercell[2].bind(this.getModalElement('supercell-c'), 'value');
 
-        this.axes.bind(this.getModalElement(`${guid}-axes`), 'value');
-        this.keepOrientation.bind(this.getModalElement(`${guid}-keep-orientation`), 'checked');
+        this.axes.bind(this.getModalElement('axes'), 'value');
+        this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');
 
-        this.environments.activated.bind(this.getModalElement(`${guid}-env-activated`), 'checked');
-        this.environments.bgColor.bind(this.getModalElement(`${guid}-env-bg-color`), 'value');
-        this.environments.bgStyle.bind(this.getModalElement(`${guid}-env-bg-style`), 'value');
-        this.environments.cutoff.bind(this.getModalElement(`${guid}-env-cutoff`), 'value');
-        this.environments.center.bind(this.getModalElement(`${guid}-env-center`), 'checked');
+        this.environments.activated.bind(this.getModalElement('env-activated'), 'checked');
+        this.environments.bgColor.bind(this.getModalElement('env-bg-color'), 'value');
+        this.environments.bgStyle.bind(this.getModalElement('env-bg-style'), 'value');
+        this.environments.cutoff.bind(this.getModalElement('env-cutoff'), 'value');
+        this.environments.center.bind(this.getModalElement('env-center'), 'checked');
     }
 }

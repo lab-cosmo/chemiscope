@@ -9,11 +9,10 @@ import 'bootstrap/dist/js/bootstrap.min.js';
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings } from '../../../src/dataset';
 
-
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
-    
+
     public remove(): unknown {
         if (this.visualizer !== undefined) {
             this.visualizer.remove();
@@ -24,41 +23,45 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
     protected _bindPythonSettings(): void {
         // update settings on the JS side when they are changed in Python
-        this.model.on('change:settings', () => {
-            // only trigger a visualizer update if required.
-            // this is also used to avoid an infinite loop when settings are changed JS-side
-            if (!this.model.get('_settings_sync')) { 
-                return;
-            }
+        this.model.on(
+            'change:settings',
+            () => {
+                // only trigger a visualizer update if required.
+                // this is also used to avoid an infinite loop when settings are changed JS-side
+                if (!this.model.get('_settings_sync')) {
+                    return;
+                }
 
-            const settings = this.model.get('settings') as Partial<Settings>;
-            
-            // ignore pinned setting in jupyter, otherwise the pinned is changed
-            // by JS and then overwritten the first time by Python
-            delete settings.pinned;
-            this.model.set('settings', settings)
-            this.visualizer?.applySettings(settings);
-        }, this);
+                const settings = this.model.get('settings') as Partial<Settings>;
+
+                // ignore pinned setting in jupyter, otherwise the pinned is changed
+                // by JS and then overwritten the first time by Python
+                delete settings.pinned;
+                this.model.set('settings', settings);
+                this.visualizer?.applySettings(settings);
+            },
+            this
+        );
     }
 
     protected _updatePythonSettings(): void {
-        if (this.visualizer !== undefined) {            
+        if (this.visualizer !== undefined) {
             const settings = this.visualizer.saveSettings();
             // ignore pinned setting in jupyter, otherwise the pinned is changed
             // by JS and then overwritten the first time by Python
             delete settings.pinned;
-            
+
             // save current settings of settings_sync
-            let sync_state = this.model.get('_settings_sync'); 
+            const sync_state = this.model.get('_settings_sync') as unknown;
 
             // signals that updating the Python state shouldn't trigger a re-update.
             // this is a workaround because it seems that settings:change doesn't know
             // if it's triggered from JS or from Python, so we need an extra flag to avoid a loop
-            this.model.set('_settings_sync', false);  
-            this.model.save_changes(); 
+            this.model.set('_settings_sync', false);
+            this.model.save_changes();
             this.model.set('settings', settings);
             this.model.save_changes();
-            this.model.set('_settings_sync', sync_state);       
+            this.model.set('_settings_sync', sync_state);
             this.model.save_changes();
         }
     }
@@ -71,7 +74,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
-    
+
     public render(): void {
         this.guid = `chsp-${generateGUID()}`;
 
@@ -157,7 +160,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
-    
+
     public render(): void {
         this.guid = `chsp-${generateGUID()}`;
 
@@ -204,7 +207,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('data') as string) as Dataset;        
+        const data = JSON.parse(this.model.get('data') as string) as Dataset;
         void StructureVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -232,7 +235,7 @@ export class StructureView extends ChemiscopeBaseView {
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
-    
+
     public render(): void {
         this.guid = `chsp-${generateGUID()}`;
 

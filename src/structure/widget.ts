@@ -8,7 +8,7 @@ import assert from 'assert';
 import { default as $3Dmol } from './3dmol';
 import { assignBonds } from './3dmol/assignBonds';
 
-import { GUID, generateGUID, getElement, unreachable } from '../utils';
+import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
@@ -97,13 +97,6 @@ export class MoleculeViewer {
      */
     public positionSettingsModal: PositioningCallback;
 
-    /**
-     * Unique identifier of this viewer.
-     *
-     * All HTML elements created by this class use this ID to ensure uniqueness.
-     */
-    public guid: GUID;
-
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// The HTML element serving as root element for the viewer
@@ -160,18 +153,8 @@ export class MoleculeViewer {
      *
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
-     * @param guid (optional) unique identifier for the widget
      */
-    constructor(element: string | HTMLElement, guid?: string) {
-        if (guid === undefined) {
-            guid = generateGUID();
-        }
-
-        // add a 'chsp-' prefix to ensure the id start with letter. It looks like
-        // if the id start with a number (2134950-ffff-4879-82d8-5c9f81dd00ab)
-        // then bootstrap code linking modal button to the modal fails ¯\_(ツ)_/¯
-        this.guid = ('chsp-' + guid) as GUID;
-
+    constructor(element: string | HTMLElement) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -183,7 +166,7 @@ export class MoleculeViewer {
         this._shadow.appendChild(this._root);
 
         this._root.style.position = 'relative';
-        this._root.id = this.guid;
+        // this._root.id = this.guid;
         this._root.style.width = '100%';
         this._root.style.height = '100%';
 
@@ -213,11 +196,11 @@ export class MoleculeViewer {
 
         this._styles = {
             noCell: createStyleSheet([
-                `#${this.guid} .chsp-hide-if-no-cell { display: none; }`,
-                `#${this.guid}-structure-settings .chsp-hide-if-no-cell { display: none; }`,
+                `.chsp-hide-if-no-cell { display: none; }`,
+                `#structure-settings .chsp-hide-if-no-cell { display: none; }`,
             ]),
             noEnvs: createStyleSheet([
-                `#${this.guid}-structure-settings .chsp-hide-if-no-environments { display: none; }`,
+                `#structure-settings .chsp-hide-if-no-environments { display: none; }`,
             ]),
         };
 
@@ -228,14 +211,12 @@ export class MoleculeViewer {
 
         // Options reuse the same style sheets so they must be created after these.
 
-        this._options = new StructureOptions(this._root, this.guid, (rect) =>
+        this._options = new StructureOptions(this._root, (rect) =>
             this.positionSettingsModal(rect)
         );
 
         this._connectOptions();
-        this._trajectoryOptions = this._options.getModalElement(
-            `${this.guid}-trajectory-settings-group`
-        );
+        this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
         // By default, position the modal for settings on top of the viewer,
         // centered horizontally
@@ -740,25 +721,23 @@ export class MoleculeViewer {
         });
 
         // Setup various buttons
-        this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>(
-            `${this.guid}-env-reset`
-        );
+        this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
             assert(this._highlighted !== undefined);
             this._options.environments.cutoff.value = this._cutoffAround(this._highlighted.center);
             restyleAndRender();
         };
 
-        const alignX = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-x`);
+        const alignX = this._options.getModalElement<HTMLButtonElement>('align-x');
         alignX.onclick = () => this._viewAlong([1, 0, 0]);
 
-        const alignY = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-y`);
+        const alignY = this._options.getModalElement<HTMLButtonElement>('align-y');
         alignY.onclick = () => this._viewAlong([0, 1, 0]);
 
-        const alignZ = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-z`);
+        const alignZ = this._options.getModalElement<HTMLButtonElement>('align-z');
         alignZ.onclick = () => this._viewAlong([0, 0, 1]);
 
-        const alignA = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-a`);
+        const alignA = this._options.getModalElement<HTMLButtonElement>('align-a');
         alignA.onclick = () => {
             if (this._current === undefined || this._current.structure.cell === undefined) {
                 return;
@@ -768,7 +747,7 @@ export class MoleculeViewer {
             this._viewAlong(a);
         };
 
-        const alignB = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-b`);
+        const alignB = this._options.getModalElement<HTMLButtonElement>('align-b');
         alignB.onclick = () => {
             if (this._current === undefined || this._current.structure.cell === undefined) {
                 return;
@@ -778,7 +757,7 @@ export class MoleculeViewer {
             this._viewAlong(b);
         };
 
-        const alignC = this._options.getModalElement<HTMLButtonElement>(`${this.guid}-align-c`);
+        const alignC = this._options.getModalElement<HTMLButtonElement>('align-c');
         alignC.onclick = () => {
             if (this._current === undefined || this._current.structure.cell === undefined) {
                 return;
@@ -788,9 +767,7 @@ export class MoleculeViewer {
             this._viewAlong(c);
         };
 
-        this._resetSupercell = this._options.getModalElement<HTMLButtonElement>(
-            `${this.guid}-reset-supercell`
-        );
+        this._resetSupercell = this._options.getModalElement<HTMLButtonElement>('reset-supercell');
         this._resetSupercell.onclick = () => {
             assert(this._initialSupercell !== undefined);
             this._options.supercell[0].value = this._initialSupercell[0];
@@ -959,7 +936,7 @@ export class MoleculeViewer {
      * related to environments
      */
     private _enableEnvironmentSettings(show: boolean): void {
-        const toggle = this._options.getModalElement(`${this.guid}-env-activated`)
+        const toggle = this._options.getModalElement(`env-activated`)
             .nextElementSibling as HTMLLabelElement;
         assert(toggle !== null);
         const reset = this._resetEnvCutoff;
