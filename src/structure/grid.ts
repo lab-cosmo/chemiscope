@@ -695,10 +695,7 @@ export class ViewersGrid {
 
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
-                const widget = new MoleculeViewer(
-                    this._getById<HTMLElement>(`gi-${cellGUID}`),
-                    cellGUID
-                );
+                const widget = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
@@ -729,9 +726,8 @@ export class ViewersGrid {
                 const current = { atom: undefined, structure: -1, environment: -1 };
 
                 // get the 'delay' setting inside the current widget setting
-                const playbackDelay = widget._options.getModalElement<HTMLInputElement>(
-                    `chsp-${cellGUID}-playback-delay`
-                );
+                const playbackDelay =
+                    widget._options.getModalElement<HTMLInputElement>('playback-delay');
 
                 this._viewers.set(cellGUID, {
                     color: color,

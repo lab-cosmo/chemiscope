@@ -306,10 +306,7 @@ export class MapOptions extends OptionsGroup {
         // replace id to ensure they are unique even if we have multiple viewers
         // on a single page
         // prettier-ignore
-        template.innerHTML = HTML_OPTIONS
-            .replace(/id="(.*?)"/g, (_: string, id: string) => `id="${id}"`)
-            .replace(/for="(.*?)"/g, (_: string, id: string) => `for="${id}"`)
-            .replace(/data-bs-target="#(.*?)"/g, (_: string, id: string) => `data-bs-target="#${id}"`);
+        template.innerHTML = HTML_OPTIONS;
 
         const modalElement = template.content.querySelector('.modal');
         assert(modalElement !== null && modalElement instanceof HTMLElement);
