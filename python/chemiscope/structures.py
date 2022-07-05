@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import warnings
-
 from collections import Counter
+
+import numpy as np
 
 try:
     import ase
