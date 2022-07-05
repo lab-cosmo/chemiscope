@@ -2,18 +2,14 @@
 """
 Generate JSON input files for the default chemiscope visualizer.
 """
-import warnings
-import json
 import gzip
+import json
 import os
+import warnings
 
 import numpy as np
 
-from .structures import (
-    frames_to_json,
-    atom_properties,
-    structure_properties,
-)
+from .structures import atom_properties, frames_to_json, structure_properties
 
 
 def _expand_properties(short_properties, n_structures, n_atoms):

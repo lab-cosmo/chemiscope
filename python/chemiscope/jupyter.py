@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import json
 import gzip
+import json
+
 import ipywidgets
-from traitlets import Unicode, Bool, Dict
+from traitlets import Bool, Dict, Unicode
 
 from .input import create_input
 
