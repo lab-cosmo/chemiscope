@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from setuptools import setup
-from distutils.command import sdist, install
-from wheel import bdist_wheel
-
-import subprocess
 import os
+import subprocess
 import sys
+from distutils.command import install, sdist
+
+from setuptools import setup
+from wheel import bdist_wheel
 
 # customize dist directory if the user did not already request one, and if we
 # are running setup.py directly (i.e. not from pip)
