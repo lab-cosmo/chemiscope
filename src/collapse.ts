@@ -12,6 +12,7 @@ import assert from 'assert';
  * for details.
  */
 export default class Collapse {
+    private _parent: HTMLElement | null = null;
     private _horizontal: boolean;
     private _property: 'width' | 'height';
     private _visible: boolean = false;
@@ -21,9 +22,16 @@ export default class Collapse {
      * @param _element The element to be made collapsible. It should have the
      *  .collapse class.
      */
-    constructor(private _element: HTMLElement) {
+    constructor(private _element: HTMLElement, root: HTMLElement) {
         this._horizontal = this._element.classList.contains('horizontal');
         this._property = this._horizontal ? 'width' : 'height';
+
+        const bsParent = this._element.dataset.bsParent;
+
+        if (bsParent) {
+            this._parent = root.querySelector(bsParent);
+            assert(this._parent);
+        }
 
         this._element.addEventListener('transitionend', (event) => {
             if (event.target === event.currentTarget && event.propertyName === this._property) {
@@ -38,29 +46,45 @@ export default class Collapse {
     }
 
     hide() {
-        const size = this._element.getBoundingClientRect()[this._property];
-        this._element.style.setProperty(this._property, `${size}px`);
+        if (this._visible) {
+            const size = this._element.getBoundingClientRect()[this._property];
+            this._element.style.setProperty(this._property, `${size}px`);
 
-        this._element.classList.replace('collapse', 'collapsing');
-        this._element.classList.remove('show');
+            this._element.classList.replace('collapse', 'collapsing');
+            this._element.classList.remove('show');
 
-        // eslint-disable-next-line no-unused-expressions
-        this._element.offsetHeight;
-        this._element.style.removeProperty(this._property);
+            // eslint-disable-next-line no-unused-expressions
+            this._element.offsetHeight;
+            this._element.style.removeProperty(this._property);
 
-        this._visible = false;
+            this._visible = false;
+
+            if (this._parent && parentsMap.get(this._parent) === this) {
+                parentsMap.set(this._parent, null);
+            }
+        }
     }
 
     show() {
-        const scrollProperty = this._horizontal ? 'scrollWidth' : 'scrollHeight';
+        if (!this._visible) {
+            if (this._parent) {
+                // If the parent has a visible collapse, hide it.
+                parentsMap.get(this._parent)?.hide();
 
-        this._element.classList.replace('collapse', 'collapsing');
-        this._element.style.setProperty(this._property, '0');
+                // Set the visible collapse of the parent to the current collapse.
+                parentsMap.set(this._parent, this);
+            }
 
-        const size = this._element[scrollProperty];
-        this._element.style.setProperty(this._property, `${size}px`);
+            const scrollProperty = this._horizontal ? 'scrollWidth' : 'scrollHeight';
 
-        this._visible = true;
+            this._element.classList.replace('collapse', 'collapsing');
+            this._element.style.setProperty(this._property, '0');
+
+            const size = this._element[scrollProperty];
+            this._element.style.setProperty(this._property, `${size}px`);
+
+            this._visible = true;
+        }
     }
 
     toggle(value: boolean = !this._visible) {
@@ -89,7 +113,6 @@ export default class Collapse {
      * @param root The root element in which to scan.
      */
     static initialize(root: HTMLElement = document.body) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         for (const el of root.querySelectorAll('[data-bs-toggle]')) {
             if (el instanceof HTMLElement && 'bsTarget' in el.dataset) {
                 const target: HTMLElement | null = root.querySelector(
@@ -97,7 +120,7 @@ export default class Collapse {
                 );
 
                 if (target) {
-                    getCollapse(target).addTrigger(el);
+                    getCollapse(target, root).addTrigger(el);
                 }
             }
         }
@@ -109,13 +132,16 @@ export default class Collapse {
  * one if none exists. The WeakMap allows elements and instances to be
  * discarded once they are removed from the dom and have no more references.
  */
-const map = new WeakMap<HTMLElement, Collapse>();
-const getCollapse = getFromMap(map, (el) => new Collapse(el));
+const collapsesMap = new WeakMap<HTMLElement, Collapse>();
+const getCollapse = getFromMap(collapsesMap, (el, root: HTMLElement) => new Collapse(el, root));
 
-function getFromMap<K extends object, V>(map: WeakMap<K, V>, create: (key: K) => V) {
-    return (key: K): V => {
+function getFromMap<K extends object, V, A extends unknown[]>(
+    map: WeakMap<K, V>,
+    create: (key: K, ...args: A) => V
+) {
+    return (key: K, ...args: A): V => {
         if (!map.has(key)) {
-            map.set(key, create(key));
+            map.set(key, create(key, ...args));
         }
 
         const value = map.get(key);
@@ -124,3 +150,8 @@ function getFromMap<K extends object, V>(map: WeakMap<K, V>, create: (key: K) =>
         return value;
     };
 }
+
+/**
+ * Stores the open collapse for each parent, if any.
+ */
+const parentsMap = new WeakMap<HTMLElement, Collapse | null>();
