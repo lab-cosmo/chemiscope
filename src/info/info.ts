@@ -7,12 +7,14 @@ import assert from 'assert';
 
 import { Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { binarySearch, generateGUID, getElement, sendWarning } from '../utils';
+import { binarySearch, getElement, sendWarning } from '../utils';
 
+import Collapse from '../collapse';
 import { Slider } from './slider';
 import { Table } from './table';
 
 import INFO_SVG from '../static/info.svg';
+import * as styles from '../styles';
 
 function filter<T extends Record<string, Property>>(
     obj: T,
@@ -50,6 +52,7 @@ export class EnvironmentInfo {
     /** delay in ms between "frames" during playback over structures/atoms */
     public playbackDelay: number;
 
+    private _shadow: ShadowRoot;
     private _root: HTMLElement;
     private _atom?: Info;
     private _structure: Info;
@@ -69,24 +72,30 @@ export class EnvironmentInfo {
         properties: { [name: string]: Property },
         indexer: EnvironmentIndexer
     ) {
-        this._root = getElement(element);
+        const containerElement = getElement(element);
+
+        const hostElement = document.createElement('div');
+        containerElement.appendChild(hostElement);
+
+        this._shadow = hostElement.attachShadow({ mode: 'open' });
+        this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
+
+        this._root = document.createElement('div');
+        this._shadow.appendChild(this._root);
 
         this._indexer = indexer;
         this.onchange = () => {};
         // 700 ms between steps is a good default
         this.playbackDelay = 700;
 
-        const structureId = `chsp-${generateGUID()}`;
-        const atomId = `chsp-${generateGUID()}`;
-
         let atomButton = '<div></div>';
         if (this._indexer.mode === 'atom') {
             atomButton = `
             <div class='btn btn-sm chsp-info-atom-btn'
                 data-bs-toggle='collapse'
-                data-bs-target='#${atomId}'
+                data-bs-target='#atom'
                 aria-expanded='false'
-                aria-controls='${atomId}'>
+                aria-controls='atom'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                 atom <input class='chsp-info-number' type=number value=1 min=1></input>
             </div>
@@ -98,9 +107,9 @@ export class EnvironmentInfo {
         <div class='chsp-info-btns'>
             <div class='btn btn-sm chsp-info-structure-btn'
                 data-bs-toggle='collapse'
-                data-bs-target='#${structureId}'
+                data-bs-target='#structure'
                 aria-expanded='false'
-                aria-controls='${structureId}'>
+                aria-controls='structure'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                 structure <input class='chsp-info-number' type=number value=1 min=1></input>
 
@@ -109,12 +118,15 @@ export class EnvironmentInfo {
         </div>`;
 
         const structureProperties = filter(properties, (p) => p.target === 'structure');
-        this._structure = this._createStructure(structureId, structureProperties);
+        this._structure = this._createStructure(structureProperties);
 
         if (this._indexer.mode === 'atom') {
             const atomProperties = filter(properties, (p) => p.target === 'atom');
-            this._atom = this._createAtom(atomId, atomProperties);
+            this._atom = this._createAtom(atomProperties);
         }
+
+        // Initialize the collapse components from their 'data-bs-*' attributes.
+        Collapse.initialize(this._root);
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
@@ -150,17 +162,17 @@ export class EnvironmentInfo {
      * Remove all HTML added by this [[EnvironmentInfo]] in the current document
      */
     public remove(): void {
-        this._root.innerHTML = '';
+        this._shadow.host.remove();
     }
 
     /** Create the structure slider and table */
-    private _createStructure(id: string, properties: { [name: string]: Property }): Info {
+    private _createStructure(properties: { [name: string]: Property }): Info {
         const slider = new Slider(this._root, 'structure');
         slider.reset(this._indexer.activeStructures());
 
         const tableRoot = this._root.children[0] as HTMLElement;
         assert(tableRoot.tagName.toLowerCase() === 'div');
-        const table = new Table(tableRoot, 'structure', id, properties);
+        const table = new Table(tableRoot, 'structure', 'structure', properties);
 
         slider.startPlayback = (advance) => {
             setTimeout(() => {
@@ -268,7 +280,7 @@ export class EnvironmentInfo {
     }
 
     /** Create the atom slider and table */
-    private _createAtom(id: string, properties: { [name: string]: Property }) {
+    private _createAtom(properties: { [name: string]: Property }) {
         const slider = new Slider(this._root, 'atom');
         slider.reset(this._indexer.activeAtoms(this._structure.slider.value()));
 
@@ -325,7 +337,7 @@ export class EnvironmentInfo {
 
         const tableRoot = this._root.children[0] as HTMLElement;
         assert(tableRoot.tagName.toLowerCase() === 'div');
-        const table = new Table(tableRoot, 'atom', id, properties);
+        const table = new Table(tableRoot, 'atom', 'atom', properties);
 
         const number = this._root.querySelector(
             '.chsp-info-atom-btn .chsp-info-number'

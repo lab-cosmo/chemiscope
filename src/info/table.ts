@@ -10,7 +10,7 @@ import { Indexes } from '../indexer';
 
 interface TableProperty {
     values: number[] | string[];
-    cell: HTMLTableDataCellElement;
+    cell: HTMLTableCellElement;
 }
 
 /** @hidden
@@ -19,7 +19,7 @@ interface TableProperty {
 export class Table {
     private _target: Target;
 
-    private _header: HTMLTableHeaderCellElement;
+    private _header: HTMLTableCellElement;
     private _properties: TableProperty[];
 
     /**
@@ -47,7 +47,7 @@ export class Table {
         const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
 
-        this._header = group.querySelector('th') as HTMLTableHeaderCellElement;
+        this._header = group.querySelector('th') as HTMLTableCellElement;
         this._target = target;
         this._properties = [];
 
