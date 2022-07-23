@@ -28,7 +28,7 @@ export default function fixPlot(plot: PlotlyScatterElement) {
         target: EventTarget;
     } | null = null;
 
-    const mousedownListener = (event: MouseEvent) => {
+    const mousedownListener = (event: MouseEvent | TouchEvent) => {
         if (event.isTrusted && event.target) {
             event.preventDefault();
             event.stopPropagation();
@@ -38,18 +38,26 @@ export default function fixPlot(plot: PlotlyScatterElement) {
             // corrected (if the user selected a point) or not (if the user
             // selected an area for zooming).
             movement = {
-                data: {
-                    buttons: event.buttons,
-                    clientX: event.clientX,
-                    clientY: event.clientY,
-                    ctrlKey: event.ctrlKey,
-                },
+                data:
+                    event instanceof MouseEvent
+                        ? {
+                              buttons: event.buttons,
+                              clientX: event.clientX,
+                              clientY: event.clientY,
+                              ctrlKey: event.ctrlKey,
+                          }
+                        : {
+                              buttons: 1,
+                              clientX: event.touches[0].clientX,
+                              clientY: event.touches[0].clientY,
+                              ctrlKey: event.ctrlKey,
+                          },
                 target: event.target,
             };
         }
     };
 
-    const mouseupListener = (event: MouseEvent) => {
+    const mouseupListener = (event: MouseEvent | TouchEvent) => {
         if (movement && event.target) {
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -73,16 +81,18 @@ export default function fixPlot(plot: PlotlyScatterElement) {
         }
     };
 
-    const mousemoveListener = (event: MouseEvent) => {
+    const mousemoveListener = (event: MouseEvent | TouchEvent) => {
         if (movement) {
             event.preventDefault();
             event.stopImmediatePropagation();
 
+            const ev = event instanceof MouseEvent ? event : event.changedTouches[0];
+
             // Additional logic to allow area selection, in which case the bug
             // doesn't happen and no fix is needed.
             if (
-                Math.abs(event.clientX - movement.data.clientX) > 5 ||
-                Math.abs(event.clientY - movement.data.clientY) > 5
+                Math.abs(ev.clientX - movement.data.clientX) > 5 ||
+                Math.abs(ev.clientY - movement.data.clientY) > 5
             ) {
                 const downEvent = new Event('mousedown', { composed: true });
                 Object.assign(downEvent, movement.data);
@@ -102,6 +112,10 @@ export default function fixPlot(plot: PlotlyScatterElement) {
         plot.addEventListener('mousedown', mousedownListener, { capture: true });
         document.addEventListener('mouseup', mouseupListener);
         document.addEventListener('mousemove', mousemoveListener);
+
+        plot.addEventListener('touchstart', mousedownListener, { capture: true });
+        document.addEventListener('touchmove', mousemoveListener, { passive: false });
+        document.addEventListener('touchend', mouseupListener, { passive: false });
     };
 
     const disable = () => {
@@ -110,6 +124,10 @@ export default function fixPlot(plot: PlotlyScatterElement) {
         plot.removeEventListener('mousedown', mousedownListener, { capture: true });
         document.removeEventListener('mouseup', mouseupListener);
         document.removeEventListener('mousemove', mousemoveListener);
+
+        plot.removeEventListener('touchstart', mousedownListener, { capture: true });
+        document.removeEventListener('touchmove', mousemoveListener);
+        document.removeEventListener('touchend', mouseupListener);
     };
 
     // Toggle the fix when the plot type changes.
