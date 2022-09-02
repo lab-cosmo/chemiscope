@@ -164,7 +164,7 @@ const DEFAULT_CONFIG = {
 };
 
 /**
- * The [[PropertiesMap]] class displays a 2D or 3D map (scatter plot) of
+ * The {@link PropertiesMap} class displays a 2D or 3D map (scatter plot) of
  * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
  * for rendering.
  *
@@ -218,12 +218,12 @@ export class PropertiesMap {
     private _plotFix!: ReturnType<typeof fixPlot>;
 
     /**
-     * Create a new [[PropertiesMap]] inside the DOM element with the given HTML
+     * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
      *
      * @param element   HTML element or string 'id' of the element where
      *                   the map should live
-     * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
+     * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param properties properties to be displayed
      */
@@ -302,7 +302,7 @@ export class PropertiesMap {
     }
 
     /**
-     * Remove all HTML added by this [[PropertiesMap]] in the current document
+     * Remove all HTML added by this {@link PropertiesMap} in the current document
      */
     public remove(): void {
         // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
@@ -412,7 +412,7 @@ export class PropertiesMap {
 
     /**
      * Save the values of the current settings in a way that an be used with
-     * [[applySettings]] or saved to JSON.
+     * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
         return this._options.saveSettings();
@@ -1122,7 +1122,7 @@ export class PropertiesMap {
 
     /**
      * Select either main, selected or both depending on `trace`, and return
-     * them in a mode usable with `Plotly.restyle`/[[PropertiesMap._restyle]]
+     * them in a mode usable with `Plotly.restyle`/{@link PropertiesMap._restyle}
      */
     private _selectTrace<T>(main: T, selected: T, trace?: number): T[] {
         if (trace === 0) {

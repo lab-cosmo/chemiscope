@@ -181,7 +181,7 @@ export class MapOptions extends OptionsGroup {
     }
 
     /**
-     * Remove all HTML added by this [[MapSettings]] in the current document
+     * Remove all HTML added by this {@link MapSettings} in the current document
      */
     public remove(): void {
         this._modal.remove();

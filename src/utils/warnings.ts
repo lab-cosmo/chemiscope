@@ -3,7 +3,7 @@
  * @module utils
  */
 
-/** A [[WarningHandler]] is called when a new warning is emitted */
+/** A {@link WarningHandler} is called when a new warning is emitted */
 export type WarningHandler = (message: string) => void;
 
 /** List of registered warnings handlers */

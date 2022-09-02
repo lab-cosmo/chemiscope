@@ -1,22 +1,3 @@
-/**
- * Welcome to Chemiscope's API documentation
- *
- * The default visualization is organized around four panels: the
- * [[MetadataPanel|metadata]] panel; the [[PropertiesMap|map]] (a scatter plot of
- * properties), the [[ViewersGrid|structure viewer]], and the general
- * dataset [[EnvironmentInfo|information]]. Each one of these is defined in a
- * separate module.
- *
- * Other organization of the visualization are possible by using the classes
- * responsible for each sub-panel separately, instead of using the
- * [[DefaultVisualizer]]. In this case, developers should make sure to finish
- * the plumbing by setting the right callbacks on each element used.
- *
- * @packageDocumentation
- * @module main
- * @preferred
- */
-
 import 'construct-style-sheets-polyfill';
 import assert from 'assert';
 
@@ -48,25 +29,44 @@ import {
 import './static/chemiscope.css';
 
 /**
- * Configuration for the [[DefaultVisualizer]]
+ * Welcome to Chemiscope's API documentation
+ *
+ * The default visualization is organized around four panels: the
+ * {@link MetadataPanel|metadata} panel; the {@link PropertiesMap|map} (a scatter plot of
+ * properties), the {@link ViewersGrid|structure viewer}, and the general
+ * dataset {@link EnvironmentInfo|information}. Each one of these is defined in a
+ * separate module.
+ *
+ * Other organization of the visualization are possible by using the classes
+ * responsible for each sub-panel separately, instead of using the
+ * {@link DefaultVisualizer}. In this case, developers should make sure to finish
+ * the plumbing by setting the right callbacks on each element used.
+ *
+ * @packageDocumentation
+ * @module main
+ * @preferred
+ */
+
+/**
+ * Configuration for the {@link DefaultVisualizer}
  */
 export interface DefaultConfig {
-    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    /** Id of the DOM element to use to display metadata */
     meta: string | HTMLElement;
-    /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
+    /** Id of the DOM element to use for the properties map */
     map: string | HTMLElement;
-    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    /** Id of the DOM element to use for the environment information */
     info: string | HTMLElement;
-    /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
+    /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
-    /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
+    /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
     loadStructure?: (index: number, structure: unknown) => Structure;
-    /** Maximum number of structure viewers allowed in [[ViewersGrid]] */
+    /** Maximum number of structure viewers allowed in {@link ViewersGrid} */
     maxStructureViewers?: number;
 }
 
 /** @hidden
- * Check if `o` contains all valid config the expected fields to be a [[DefaultConfig]].
+ * Check if `o` contains all valid config the expected fields to be a {@link DefaultConfig}.
  */
 function validateConfig(o: JsObject, requiredIds: string[]) {
     if (typeof o !== 'object') {
@@ -150,7 +150,7 @@ class DefaultVisualizer {
      *
      * @param  config  configuration of the visualizer
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
-     * @return         Promise that resolves to a [[DefaultVisualizer]]
+     * @return         Promise that resolves to a {@link DefaultVisualizer}
      */
     public static load(config: DefaultConfig, dataset: Dataset): Promise<DefaultVisualizer> {
         return new Promise((resolve) => {
@@ -294,7 +294,7 @@ class DefaultVisualizer {
     /**
      * Get the current values of settings for all panels in the visualizer
      *
-     * @return the viewers settings, suitable to be used with [[applySettings]]
+     * @return the viewers settings, suitable to be used with {@link applySettings}
      */
     public saveSettings(): Settings {
         return {
@@ -392,10 +392,10 @@ class DefaultVisualizer {
      * Get the dataset used to create the current visualization
      *
      * If the dataset is using user-specified structures and a loading callback
-     * [[DefaultConfig.loadStructure]]; you can request all structure to be fully
+     * {@link DefaultConfig.loadStructure}; you can request all structure to be fully
      * resolved and placed inside the dataset.
      *
-     * @param  getStructures should all [[UserStructure]] resolved and placed
+     * @param  getStructures should all {@link UserStructure} resolved and placed
      *                       inside the dataset?
      * @return the dataset currently visualized
      */
@@ -421,16 +421,16 @@ class DefaultVisualizer {
 }
 
 /**
- * Configuration for the [[StructureVisualizer]]
+ * Configuration for the {@link StructureVisualizer}
  */
 export interface StructureConfig {
-    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    /** Id of the DOM element to use to display metadata */
     meta: string | HTMLElement;
-    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
+    /** Id of the DOM element to use for the environment information */
     info: string | HTMLElement;
-    /** Id of the DOM element to use for the [[ViewersGrid|structure viewer]] */
+    /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
-    /** Custom structure loading callback, used to set [[ViewersGrid.loadStructure]] */
+    /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
     loadStructure?: (index: number, structure: unknown) => Structure;
 }
 
@@ -447,7 +447,7 @@ class StructureVisualizer {
      *
      * @param  config  configuration of the visualizer
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
-     * @return         Promise that resolves to a [[StructureVisualizer]]
+     * @return         Promise that resolves to a {@link StructureVisualizer}
      */
     public static load(config: StructureConfig, dataset: Dataset): Promise<StructureVisualizer> {
         return new Promise((resolve) => {
@@ -566,15 +566,15 @@ class StructureVisualizer {
 }
 
 /**
- * Configuration for the [[StructureVisualizer]]
+ * Configuration for the {@link StructureVisualizer}
  */
 export interface MapConfig {
-    /** Id of the DOM element to use for the [[PropertiesMap|properties map]] */
-    map: string | HTMLElement;
-    /** Id of the DOM element to use for the [[EnvironmentInfo|environment information]] */
-    info: string | HTMLElement;
-    /** Id of the DOM element to use for the [[MetadataPanel|metadata display]] */
+    /** Id of the DOM element to use to display metadata */
     meta: string | HTMLElement;
+    /** Id of the DOM element to use for the properties map */
+    map: string | HTMLElement;
+    /** Id of the DOM element to use for the environment information */
+    info: string | HTMLElement;
 }
 
 /**
@@ -589,7 +589,7 @@ class MapVisualizer {
      *
      * @param  config  configuration of the visualizer
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
-     * @return         Promise that resolves to a [[MapVisualizer]]
+     * @return         Promise that resolves to a {@link MapVisualizer}
      */
     public static load(config: MapConfig, dataset: Dataset): Promise<MapVisualizer> {
         return new Promise((resolve) => {

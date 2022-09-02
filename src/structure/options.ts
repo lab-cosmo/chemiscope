@@ -122,7 +122,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /**
-     * Remove all HTML added by this [[StructureSettings]] in the current
+     * Remove all HTML added by this {@link StructureSettings} in the current
      * document
      */
     public remove(): void {

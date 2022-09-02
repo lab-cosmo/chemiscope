@@ -25,7 +25,7 @@ export interface NumericProperty {
 export class StringInterner {
     private _values: string[];
 
-    /** Create a new empty [[StringInterner]] */
+    /** Create a new empty {@link StringInterner} */
     constructor() {
         this._values = [];
     }
@@ -132,7 +132,7 @@ export class MapData {
     /** Maximal number of symbols (i.e. different values in string properties) in this dataset */
     public maxSymbols: number;
 
-    /** Create a new [[MapData]] containing values from the given properties */
+    /** Create a new {@link MapData} containing values from the given properties */
     constructor(properties: { [name: string]: Property }) {
         this.structure = {};
         this.atom = {};

@@ -70,7 +70,7 @@ interface HTMLOptionElement {
 /**
  * Creates a validating function that checks value against a list of valid
  * entries. This is intended to be used as a `validate` callback on an
- * [[HTMLOption]].
+ * {@link HTMLOption}.
  *
  * @param  valid list of valid values for the setting
  * @param  name  name of the setting for better error messages
@@ -112,8 +112,8 @@ export class HTMLOption<T extends OptionsType> {
     private _previous_value: OptionsValue<T>;
 
     /**
-     * Create a new [[HTMLOption]] containing a value of the given type.
-     * Possible type/values combinations are described in the [[OptionsTypeMap]]
+     * Create a new {@link HTMLOption} containing a value of the given type.
+     * Possible type/values combinations are described in the {@link OptionsTypeMap}
      * interface.
      *
      * @param type  type of the setting
@@ -245,7 +245,7 @@ export class HTMLOption<T extends OptionsType> {
 }
 
 /**
- * Callback function to use with [[OptionsGroup.foreachSetting]]
+ * Callback function to use with {@link OptionsGroup.foreachSetting}
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type OptionsCallback = (keys: string[], setting: HTMLOption<any>) => void;
@@ -253,7 +253,7 @@ export type OptionsCallback = (keys: string[], setting: HTMLOption<any>) => void
 /**
  * Abstract base class to use for a group of settings.
  *
- * This class implement saving current settings as [[SavedSettings]]; and
+ * This class implement saving current settings as {@link SavedSettings}; and
  * applying saved settings to the setting group.
  *
  * # Example
@@ -318,7 +318,7 @@ export abstract class OptionsGroup {
     }
 
     /**
-     * Set values from `settings` to the [[HTMLOption]] properties of this class,
+     * Set values from `settings` to the {@link HTMLOption} properties of this class,
      * matching the properties names.
      *
      * Properties starting with an underscore are ignored.
@@ -393,7 +393,7 @@ export abstract class OptionsGroup {
  *
  * This function looks through all properties of `options`, ignoring the ones
  * starting with an underscore. If the property is an instance of
- * [[HTMLOption]], the `callback` is called on the option, together with the
+ * {@link HTMLOption}, the `callback` is called on the option, together with the
  * keys used to access the property from the root object.
  *
  * @param options  object containing the options

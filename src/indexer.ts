@@ -8,7 +8,7 @@ import { Environment, Structure, UserStructure } from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
- * display one kind at the time, indicated by the [[DisplayMode]].
+ * display one kind at the time, indicated by the {@link DisplayMode}.
  */
 export type DisplayMode = 'structure' | 'atom';
 
@@ -24,8 +24,7 @@ export interface Indexes {
     /** The global environment index. */
     environment: number;
     /**
-     * Index of the structure which the [[Indexes.environment|environment]]
-     * corresponds to.
+     * Index of the structure which this `Indexes.environment` corresponds to.
      */
     structure: number;
     /**
@@ -37,7 +36,7 @@ export interface Indexes {
 }
 
 /**
- * [[EnvironmentIndexer]] links environment index and structure/atom indexes
+ * {@link EnvironmentIndexer} links environment index and structure/atom indexes
  *
  * Environments can be either full structures or centered on a specific atom.
  * This class makes the link between two representations: a single, global,
@@ -46,7 +45,7 @@ export interface Indexes {
  */
 export class EnvironmentIndexer {
     /**
-     * Current [[DisplayMode]]. This is useful for datasets that
+     * Current {@link DisplayMode}. This is useful for datasets that
      * contain both atom-level and structure-level properties.
      */
     public mode: DisplayMode;
@@ -59,7 +58,7 @@ export class EnvironmentIndexer {
     private _activeAtoms: number[][];
 
     /**
-     * Create a new [[EnvironmentIndexer]] for the given set of structures and
+     * Create a new {@link EnvironmentIndexer} for the given set of structures and
      * environments.
      *
      * @param mode         should we display atomic or structure properties
@@ -121,7 +120,7 @@ export class EnvironmentIndexer {
     /**
      * Get a full set of indexes from the global environment index
      * @param  environment global index of an environment
-     * @return             full [[Indexes]], containing the corresponding
+     * @return             full {@link Indexes}, containing the corresponding
      *                     structure / atom indexes
      */
     public from_environment(environment: number): Indexes {
@@ -148,7 +147,7 @@ export class EnvironmentIndexer {
      * Get a full set of indexes from the structure/atom indexes
      * @param  structure index of the structure in the full structure list
      * @param  atom      index of the atom in the structure
-     * @return an [[Indexes]] instance, containing the global environment index;
+     * @return an {@link Indexes} instance, containing the global environment index;
      *         or ``undefined`` if there is no environment corresponding to the
      *         given atom in the given structure
      */

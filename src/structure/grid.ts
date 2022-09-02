@@ -19,7 +19,7 @@ import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
-import { LoadOptions, MoleculeViewer } from './widget';
+import { LoadOptions, MoleculeViewer } from './viewer';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -69,8 +69,8 @@ interface WidgetGridData {
 }
 
 /**
- * The [[ViewersGrid]] class displays a grid of molecule or a crystal viewers
- * in 3D using [[MolecularViewer]] widgets for rendering.
+ * The {@link ViewersGrid} class displays a grid of molecule or a crystal viewers
+ * in 3D using {@link MoleculeViewer} widgets for rendering.
  */
 export class ViewersGrid {
     /** Callback used when the user select an environment */
@@ -102,13 +102,13 @@ export class ViewersGrid {
     /**
      * Callback used when a new structure should be loaded
      *
-     * By default, this assumes that the loaded dataset contains [[Structure]]
+     * By default, this assumes that the loaded dataset contains {@link Structure}
      * directly, and returns the data from there. If the loaded dataset contains
-     * [[UserStructure]] instead, this callback should be set to transform from
-     * data in [[UserStructure.data]] to a [[Structure]].
+     * {@link UserStructure} instead, this callback should be set to transform from
+     * data in {@link UserStructure.data} to a {@link Structure}.
      *
      * The callback gets two parameter: the structure index (0-based); and the
-     * full [[UserStructure]].
+     * full {@link UserStructure}.
      */
     public loadStructure: (index: number, structure: unknown) => Structure;
 
@@ -139,12 +139,12 @@ export class ViewersGrid {
     private _onSettingChangeCallbacks: Array<(keys: string[], value: unknown) => void>;
 
     /**
-     * Create a new [[ViewersGrid]] inside the HTML element with the given
+     * Create a new {@link ViewersGrid} inside the HTML element with the given
      * `id`
      *
      * @param element      HTML element or string 'id' of the element where
      *                     viewer should live
-     * @param indexer      [[EnvironmentIndexer]] used to translate indexes from
+     * @param indexer      {@link EnvironmentIndexer} used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
      * @param environments list of atom-centered environments in the structures,
@@ -310,7 +310,7 @@ export class ViewersGrid {
     }
 
     /**
-     * Remove all HTML added by this [[ViewersGrid]] in the current document
+     * Remove all HTML added by this {@link ViewersGrid} in the current document
      */
     public remove(): void {
         for (const data of this._viewers.values()) {
@@ -398,7 +398,7 @@ export class ViewersGrid {
      *
      * The settings are given in viewer creation order.
      *
-     * @return the settings in an array, suitable to be used with [[applySettings]]
+     * @return the settings in an array, suitable to be used with {@link applySettings}
      */
     public saveSettings(): Settings[] {
         const settings = [];
