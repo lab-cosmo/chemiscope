@@ -5,7 +5,6 @@
     "esModuleInterop": true,
     "declaration": true,
     "declarationDir": "dist/",
-    "downlevelIteration": true,
     "moduleResolution": "Node",
     "sourceMap": true,
     "lib": ["dom", "dom.iterable", "es6"],

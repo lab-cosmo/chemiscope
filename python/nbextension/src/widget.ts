@@ -3,8 +3,6 @@ import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
-import './chemiscope-bootstrap.less';
-import 'bootstrap/dist/js/bootstrap.min.js';
 
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings } from '../../../src/dataset';
@@ -96,7 +94,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div class="chemiscope-bootstrap">
+        <div>
             <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
@@ -175,7 +173,7 @@ export class StructureView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div class="chemiscope-bootstrap">
+        <div>
             <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
@@ -257,7 +255,7 @@ export class MapView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div class="chemiscope-bootstrap">
+        <div>
             <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
