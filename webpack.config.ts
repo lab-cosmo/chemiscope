@@ -16,7 +16,7 @@ export const WEBPACK_CONFIG: webpack.Configuration = {
     ],
     resolve: {
         extensions: ['.js', '.ts'],
-        modules: ['./node_modules'],
+        modules: [path.resolve('./node_modules')],
     },
     module: {
         rules: [
