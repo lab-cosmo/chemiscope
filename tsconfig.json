@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es5",
+    "target": "es6",
     "esModuleInterop": true,
     "declaration": true,
     "declarationDir": "dist/",
     "downlevelIteration": true,
+    "moduleResolution": "Node",
     "sourceMap": true,
-    "lib": ["dom", "dom.iterable", "es5"],
+    "lib": ["dom", "dom.iterable", "es6"],
     "skipLibCheck": true /* Skip type checking of declaration files */
   },
   "typedocOptions": {
