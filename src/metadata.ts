@@ -65,7 +65,7 @@ function generateModal(metadata: Metadata): string {
 }
 
 /**
- * The [[MetadataPanel]] class displays information regarding the dataset: name,
+ * The {@link MetadataPanel} class displays information regarding the dataset: name,
  * authors, references, description, etc.
  *
  * By default, only the name is shown, and clicking on it reveals a modal with
@@ -80,7 +80,7 @@ export class MetadataPanel {
     private _modal: Modal;
 
     /**
-     * Create a new [[MetadataPanel]] inside the HTML element with the given
+     * Create a new {@link MetadataPanel} inside the HTML element with the given
      * `id`.
      *
      * @param element HTML element or HTML id of the DOM element where the name of the dataset should be inserted
@@ -130,7 +130,7 @@ export class MetadataPanel {
     }
 
     /**
-     * Remove all HTML added by this [[EnvironmentInfo]] in the current document
+     * Remove all HTML added by this {@link EnvironmentInfo} in the current document
      */
     public remove(): void {
         this._modal.remove();

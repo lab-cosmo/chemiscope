@@ -12,9 +12,9 @@ export interface Dataset {
      *
      * The structures can either follow the `Structure` interface, in which
      * case they will be loaded as-defined; or contain any kind of data as a
-     * [[UserStructure]], in which case the [[ViewersGrid.loadStructure]]
+     * {@link UserStructure}, in which case the {@link ViewersGrid.loadStructure}
      * callback should be set to translate from whatever is stored to a
-     * [[Structure]].
+     * {@link Structure}.
      */
     structures: Structure[] | UserStructure[];
     /**
@@ -22,10 +22,10 @@ export interface Dataset {
      * atom-centered environments in the structures (`target == "atom"`).
      *
      * For structure properties, the `values` array of the property should have
-     * the same size as the [[Dataset.structures|structure list]].
+     * the same size as the structure list in `Dataset.structures`.
      *
      * For atomic properties, the `values` array of the property should have
-     * the same size as the [[Dataset.environments|environments list]].
+     * the same size as the environments list in `Dataset.environments`.
      */
     properties: { [name: string]: Property };
     /**
@@ -72,21 +72,21 @@ export interface Structure {
     /**
      * x position (cartesian coordinate) of all atoms in the structure
      *
-     * This array should have the same size as [[Structure.names]], and contain
+     * This array should have the same size as {@link Structure.names}, and contain
      * values expressed in Angströms.
      */
     x: number[];
     /**
      * y position (cartesian coordinate) of all atoms in the structure
      *
-     * This array should have the same size as [[Structure.names]], and contain
+     * This array should have the same size as {@link Structure.names}, and contain
      * values expressed in Angströms.
      */
     y: number[];
     /**
      * z position (cartesian coordinate) of all atoms in the structure
      *
-     * This array should have the same size as [[Structure.names]], and contain
+     * This array should have the same size as {@link Structure.names}, and contain
      * values expressed in Angströms.
      */
     z: number[];
@@ -109,9 +109,9 @@ export interface UserStructure {
     /** Number of atoms in the structure */
     size: number;
     /**
-     * User-defined data which can be turned into a [[Structure]].
+     * User-defined data which can be turned into a {@link Structure}.
      *
-     * [[ViewersGrid.loadStructure]] must be set to be able to load this
+     * {@link ViewersGrid.loadStructure} must be set to be able to load this
      * data.
      */
     data: unknown;
@@ -151,7 +151,7 @@ export interface Property {
  * Currently, only spherical (i.e. cutoff-based) environments are supported
  */
 export interface Environment {
-    /** Index of the related structure in [[Dataset.structures]] */
+    /** Index of the related structure in {@link Dataset.structures} */
     structure: number;
     /** Index of the central atom in the structure, 0-based */
     center: number;

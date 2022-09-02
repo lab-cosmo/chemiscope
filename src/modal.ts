@@ -134,7 +134,7 @@ export default class Modal {
 // Returns the active element in `root`, if any, no matter how nested it is in
 // shadow roots. When reaching a closed shadow root containing that element,
 // the function will return the root's host element.
-function getActiveElement(root: DocumentOrShadowRoot = document): Element | null {
+function getActiveElement(root: Document | ShadowRoot = document): Element | null {
     const activeElement = root.activeElement;
 
     return activeElement?.shadowRoot ? getActiveElement(activeElement.shadowRoot) : activeElement;

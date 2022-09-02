@@ -68,7 +68,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
 }
 
 /**
- * The [[ChemiscopeView]] class renders the Chemiscope App as a widget in the
+ * The {@link ChemiscopeView} class renders the Chemiscope App as a widget in the
  * Jupyter Notebook output window when instantiated from the Chemiscope Python
  * package.
  */
@@ -155,7 +155,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 }
 
 /**
- * The [[StructureView]] class renders a structure-only widget in the Jupyter
+ * The {@link StructureView} class renders a structure-only widget in the Jupyter
  * Notebook output window when instantiated from the Chemiscope Python package.
  */
 export class StructureView extends ChemiscopeBaseView {
@@ -230,7 +230,7 @@ export class StructureView extends ChemiscopeBaseView {
 }
 
 /**
- * The [[MapView]] class renders a map-only widget in the Jupyter Notebook
+ * The {@link MapView} class renders a map-only widget in the Jupyter Notebook
  * output window when instantiated from the Chemiscope Python package.
  */
 export class MapView extends ChemiscopeBaseView {

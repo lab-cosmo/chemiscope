@@ -1,6 +1,6 @@
 /**
- * This module contains the code for the [[ViewersGrid|grid]] of structure
- * viewer and associated classes. Notably, it contains the [[MoleculeViewer]]
+ * This module contains the code for the {@link ViewersGrid|grid} of structure
+ * viewer and associated classes. Notably, it contains the {@link MoleculeViewer}
  * class, that can be used outside of chemiscope as a small wrapper around
  * 3Dmol.js.
  *
@@ -10,4 +10,4 @@
  */
 
 export { ViewersGrid } from './grid';
-export { MoleculeViewer, LoadOptions } from './widget';
+export { MoleculeViewer, LoadOptions } from './viewer';

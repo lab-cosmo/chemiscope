@@ -42,7 +42,7 @@ interface Info {
 }
 
 /**
- * The [[EnvironmentInfo]] class displays information about structure or
+ * The {@link EnvironmentInfo} class displays information about structure or
  * environment, using a slider for selection and an hidden by default table
  * displaying all properties.
  */
@@ -59,13 +59,13 @@ export class EnvironmentInfo {
     private _indexer: EnvironmentIndexer;
 
     /**
-     * Create a new [[EnvironmentInfo]] inside the DOM element with given `id`
+     * Create a new {@link EnvironmentInfo} inside the DOM element with given `id`
      * @param element    HTML element or string 'id' of the element where
      *                   the sliders and tables should live
      * @param properties properties to be displayed
-     * @param indexer    [[EnvironmentIndexer]] used to translate indexes from
+     * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
-     * @param viewer     [[ViewersGrid]] from which we get the playback delay
+     * @param viewer     {@link ViewersGrid} from which we get the playback delay
      */
     constructor(
         element: string | HTMLElement,
@@ -159,7 +159,7 @@ export class EnvironmentInfo {
     }
 
     /**
-     * Remove all HTML added by this [[EnvironmentInfo]] in the current document
+     * Remove all HTML added by this {@link EnvironmentInfo} in the current document
      */
     public remove(): void {
         this._shadow.host.remove();

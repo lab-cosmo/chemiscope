@@ -261,7 +261,7 @@ export class MoleculeViewer {
     }
 
     /**
-     * Remove all HTML added by this [[MoleculeViewer]] in the current document
+     * Remove all HTML added by this {@link MoleculeViewer} in the current document
      */
     public remove(): void {
         if (this._root.parentElement !== null) {
@@ -475,7 +475,7 @@ export class MoleculeViewer {
 
     /**
      * Save the values of the current settings in a way that an be used with
-     * [[applySettings]] or saved to JSON.
+     * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
         return this._options.saveSettings();
