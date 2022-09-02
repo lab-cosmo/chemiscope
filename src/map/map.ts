@@ -327,6 +327,18 @@ export class PropertiesMap {
             throw Error('tries to update selected environment, but there is no active marker');
         }
 
+        // data.select needs `indexes.environment`, so make sure it is defined
+        if (indexes.environment === undefined) {
+            const full_indexes = this._indexer.from_structure_atom(indexes.structure, indexes.atom);
+            if (full_indexes === undefined) {
+                const atom_str = indexes.atom === undefined ? '' : ` / atom ${indexes.atom}`;
+                throw Error(
+                    `can not find the environnement for structure ${indexes.structure}` + atom_str
+                );
+            }
+            indexes = full_indexes;
+        }
+
         const data = this._selected.get(this._active);
         assert(data !== undefined);
         // this prevents infinite recursion
