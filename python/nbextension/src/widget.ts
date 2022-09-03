@@ -108,7 +108,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 <p></p>
             </div>
 
-            <div class="chemiscope-widget-two-col">
+            <div class="chemiscope-viewer-two-col">
                 <div class="chemiscope-meta-and-map">
                     <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
                     <div class="chemiscope-map" id="${this.guid}-chemiscope-map"></div>
@@ -187,7 +187,7 @@ export class StructureView extends ChemiscopeBaseView {
                 <p></p>
             </div>
 
-            <div class="chemiscope-widget-one-col">
+            <div class="chemiscope-viewer-one-col">
                 <div class="chemiscope-structure-and-info">
                     <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
                     <div class="chemiscope-structure" id="${this.guid}-chemiscope-structure"></div>
@@ -269,7 +269,7 @@ export class MapView extends ChemiscopeBaseView {
                 <p></p>
             </div>
 
-            <div class="chemiscope-widget-one-col">
+            <div class="chemiscope-viewer-one-col">
                 <div class="chemiscope-meta-and-map">
                     <div class="chemiscope-meta" id="${this.guid}-chemiscope-meta"></div>
                     <div class="chemiscope-map" id="${this.guid}-chemiscope-map"></div>

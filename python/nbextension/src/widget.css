@@ -2,9 +2,25 @@ html {
     font-size: unset;
 }
 
+.chemiscope-viewer-two-col {
+    display: grid;
+    grid-template-columns: 59% 39%;
+    grid-template-rows: 480px;
+    grid-column-gap: 0px;
+    justify-items: center;
+    overflow: hidden;
+}
+
+.chemiscope-viewer-one-col {
+    margin: auto;
+    max-width: 500px;
+    height: 550px;
+}
+
 .chemiscope-meta-and-map {
     width: 100%;
     height: 100%;
+    display: block;
 }
 
 .chemiscope-structure-and-info {
@@ -14,13 +30,35 @@ html {
 
 .chemiscope-meta {
     position: absolute;
-    top: 0;
-    left: 2em;
+    margin-top: 8px;
     font-size: 16pt;
+    z-index: 100;
+    top: initial;
+}
+
+.chemiscope-viewer-one-col .chemiscope-meta {
+    /* Dynamic positioning if the single column is filling up it's alloted 500px */
+    left: calc(50% - 200px);
+}
+
+@media screen and (max-width: 780px) {
+    /* Static positioning if the single column is NOT filling up it's alloted 500px */
+    .chemiscope-viewer-one-col .chemiscope-meta {
+        left: 100px;
+    }
+}
+
+.chemiscope-viewer-two-col .chemiscope-meta {
+    left: 2em;
 }
 
 .chemiscope-map {
     display: block;
+}
+
+.chemiscope-viewer-one-col .chemiscope-map {
+    /* Tweak the height to ensure the two buttons/info panels are visible */
+    height: 90%;
 }
 
 .chemiscope-structure {
@@ -30,35 +68,17 @@ html {
     flex: 1 1 auto;
 }
 
+.chemiscope-viewer-two-col .chemiscope-structure {
+    /* Tweak the height to ensure the two buttons/info panels and the two sliders are visible */
+    height: 75%;
+}
+
+.chemiscope-viewer-one-col .chemiscope-structure {
+    /* Tweak the height to ensure the two buttons/info panels and the two sliders are visible */
+    height: 80%;
+}
+
 .chemiscope-info {
-    flex: 0 1 auto;
     width: 100%;
     display: block;
-}
-
-.chemiscope-widget-two-col .chemiscope-structure {
-    height: 84%;
-}
-
-.chemiscope-widget-one-col .chemiscope-structure {
-    height: 90%;
-}
-
-.chemiscope-meta {
-    top: initial !important;
-}
-
-.chemiscope-widget-two-col {
-    display: grid;
-    grid-template-columns: 59% 39%;
-    grid-template-rows: 450px;
-    grid-column-gap: 0px;
-    justify-items: center;
-    overflow: hidden;
-}
-
-.chemiscope-widget-one-col {
-    margin: auto;
-    max-width: 500px;
-    height: 500px;
 }
