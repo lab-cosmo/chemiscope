@@ -11,7 +11,7 @@ except ImportError:
     HAVE_ASE = False
 
 
-def _ase_structures(frames):
+def _ase_valid_structures(frames):
     frames_list = list(frames)
     if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
         for frame in frames_list:
@@ -24,15 +24,11 @@ def _ase_structures(frames):
         return frames, False
 
 
-def _ase_atom_properties(frames, composition, atoms_mask):
-    """Implementation of atom_properties for ase.Atoms"""
+def _ase_list_atom_properties(frames):
     IGNORED_ASE_ARRAYS = ["positions", "numbers", "center_atoms_mask"]
     # extract the set of common properties between all frames
     all_names = set()
     extra = set()
-
-    if composition:
-        _add_atom_chemical_composition(frames)
 
     for name in frames[0].arrays.keys():
         if name in IGNORED_ASE_ARRAYS:
@@ -62,6 +58,45 @@ def _ase_atom_properties(frames, composition, atoms_mask):
             f"for a subset of frames: {list(sorted(extra))}; they will be ignored"
         )
 
+    return all_names
+
+
+def _ase_list_structure_properties(frames):
+    # extract the set of common properties between all frames
+    all_names = set()
+    extra = set()
+
+    for name in frames[0].info.keys():
+        all_names.add(name)
+
+    for frame in frames[1:]:
+        for name in frame.info.keys():
+            if name not in all_names:
+                extra.add(name)
+
+        remove = []
+        for name in all_names:
+            if name not in frame.info.keys():
+                remove.append(name)
+
+        for name in remove:
+            all_names.remove(name)
+            extra.add(name)
+
+    if len(extra) != 0:
+        warnings.warn(
+            "the following structure properties properties are only defined "
+            f"for a subset of frames: {list(sorted(extra))}; they will be ignored"
+        )
+
+    return all_names
+
+
+def _ase_atom_properties(frames, only, atoms_mask=None):
+    all_names = _ase_list_atom_properties(frames)
+    if only is not None:
+        all_names = [name for name in all_names if name in only]
+
     # create property in the format expected by create_input
     properties = {
         name: {"target": "atom", "values": value}
@@ -87,37 +122,10 @@ def _ase_atom_properties(frames, composition, atoms_mask):
     return properties
 
 
-def _ase_structure_properties(frames, composition):
-    """Implementation of structure_properties for ase.Atoms"""
-    # extract the set of common properties between all frames
-    all_names = set()
-    extra = set()
-
-    if composition:
-        _add_structure_chemical_composition(frames)
-
-    for name in frames[0].info.keys():
-        all_names.add(name)
-
-    for frame in frames[1:]:
-        for name in frame.info.keys():
-            if name not in all_names:
-                extra.add(name)
-
-        remove = []
-        for name in all_names:
-            if name not in frame.info.keys():
-                remove.append(name)
-
-        for name in remove:
-            all_names.remove(name)
-            extra.add(name)
-
-    if len(extra) != 0:
-        warnings.warn(
-            "the following structure properties properties are only defined "
-            f"for a subset of frames: {list(sorted(extra))}; they will be ignored"
-        )
+def _ase_structure_properties(frames, only=None):
+    all_names = _ase_list_structure_properties(frames)
+    if only is not None:
+        all_names = [name for name in all_names if name in only]
 
     # create property in the format expected by create_input
     properties = {name: {"target": "structure", "values": []} for name in all_names}
@@ -128,6 +136,34 @@ def _ase_structure_properties(frames, composition):
                 properties[name]["values"].append(value)
 
     _remove_invalid_properties(properties, "ASE")
+
+    return properties
+
+
+def _ase_extract_properties(frames, only=None, environments=None):
+    """implementation of ``extract_properties`` for ASE"""
+
+    properties = _ase_structure_properties(frames, only)
+
+    if environments is not None:
+        atoms_mask = [[False] * len(f) for f in frames]
+        for structure, center, _ in environments:
+            atoms_mask[structure][center] = True
+
+        atoms_mask = np.concatenate(atoms_mask)
+    else:
+        atoms_mask = None
+
+    atom_properties = _ase_atom_properties(frames, only, atoms_mask)
+
+    for name, values in atom_properties.items():
+        if name in properties:
+            warnings.warn(
+                f"a property named '{name}' is defined for both atoms and structures, "
+                "the atom one will be ignored"
+            )
+        else:
+            properties[name] = values
 
     return properties
 
@@ -160,33 +196,55 @@ def _ase_librascal_atomic_environments(frames, cutoff):
     return environments
 
 
-def _add_structure_chemical_composition(frames):
-    """
-    Adds information about the chemical composition and count for every chemical
-    species to the info dictionary for every frame as a structure property
-    """
+def _ase_composition_properties(frames, environments=None):
     all_elements = set()
     for frame in frames:
         all_elements.update(frame.symbols)
     all_elements = set(all_elements)
+
+    composition = []
+    elements_count = {element: [] for element in all_elements}
     for frame in frames:
-        frame.info["composition"] = str(frame.symbols)
+        composition.append(str(frame.symbols))
+
         dict_composition = dict(Counter(frame.symbols))
         for element in all_elements:
             if element in dict_composition:
-                frame.info[f"n_{element}"] = dict_composition[element]
+                elements_count[element].append(dict_composition[element])
             else:
-                frame.info[f"n_{element}"] = 0
-    return frames
+                elements_count[element].append(0)
 
+    properties = {
+        f"n_{element}": {"values": values, "target": "structure"}
+        for element, values in elements_count.items()
+    }
 
-def _add_atom_chemical_composition(frames):
-    """Adds information about the atoms chemical species to the frame.arrays
-    for every frame as an atom property"""
-    for frame in frames:
-        dict_elements = {"element": list(frame.symbols)}
-        frame.arrays.update(dict_elements)
-    return frames
+    properties["composition"] = {"values": composition, "target": "structure"}
+
+    if environments is not None:
+        atoms_mask = [[False] * len(f) for f in frames]
+        for structure, center, _ in environments:
+            atoms_mask[structure][center] = True
+    else:
+        atoms_mask = None
+
+    symbols = []
+    numbers = []
+    for i, frame in enumerate(frames):
+        if atoms_mask is None:
+            frame_symbols = list(frame.symbols)
+            frame_numbers = list(frame.numbers)
+        else:
+            frame_symbols = frame.symbols[atoms_mask[i]]
+            frame_numbers = frame.numbers[atoms_mask[i]]
+
+        symbols.extend(frame_symbols)
+        numbers.extend(frame_numbers)
+
+    properties["symbol"] = {"values": symbols, "target": "atom"}
+    properties["number"] = {"values": numbers, "target": "atom"}
+
+    return properties
 
 
 def _ase_to_json(frame):

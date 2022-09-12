@@ -1,10 +1,9 @@
 import unittest
-import numpy as np
-import copy
-import ase
 
-from chemiscope import create_input
-from chemiscope import all_atomic_environments, librascal_atomic_environments
+import ase
+import numpy as np
+
+from chemiscope import all_atomic_environments, create_input
 
 TEST_FRAMES = [ase.Atoms("CO2")]
 
@@ -201,9 +200,9 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "The length of property values is different from the number of "
-            + "structures and the number of atoms, we can not guess the target. "
-            + "Got n_atoms = 3, n_structures = 1, the length of property values "
-            + "is 2, for the 'name' property",
+            "structures and the number of atoms, we can not guess the target. "
+            "Got n_atoms = 3, n_structures = 1, the length of property values "
+            "is 2, for the 'name' property",
         )
 
         properties = {"name": ase.Atoms("CO2")}
@@ -212,7 +211,7 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "Property values should be either list or numpy array, got "
-            + "<class 'ase.atoms.Atoms'> instead",
+            "<class 'ase.atoms.Atoms'> instead",
         )
 
         properties = {"name": ["2", "3"]}
@@ -242,7 +241,7 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "the name of a property name must be a string, "
-            + "got 'False' of type <class 'bool'>",
+            "got 'False' of type <class 'bool'>",
         )
 
     def test_invalid_target(self):
@@ -309,7 +308,7 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "wrong size for the property 'name' with target=='atom': "
-            + "expected 3 values, got 2",
+            "expected 3 values, got 2",
         )
 
         properties = {"name": {"target": "structure", "values": [2, 3, 5]}}
@@ -318,39 +317,8 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "wrong size for the property 'name' with target=='structure': "
-            + "expected 1 values, got 3",
+            "expected 1 values, got 3",
         )
-
-    def test_properties_also_in_frame(self):
-        properties = {"name": {"target": "atom", "values": [2, 3, 4]}}
-        frames = copy.deepcopy(TEST_FRAMES)
-        for frame in frames:
-            frame.info["name"] = "test"
-
-        with self.assertWarns(UserWarning) as cm:
-            data = create_input(frames=frames, properties=properties)
-
-        self.assertEqual(
-            str(cm.warning),
-            "ignoring the 'name' structure property coming from the "
-            + "structures since it is already part of the properties",
-        )
-        self.assertEqual(data["properties"]["name"]["target"], "atom")
-
-        properties = {"name": {"target": "structure", "values": [2]}}
-        frames = copy.deepcopy(TEST_FRAMES)
-        for frame in frames:
-            frame.arrays["name"] = [0] * len(frame)
-
-        with self.assertWarns(UserWarning) as cm:
-            data = create_input(frames=frames, properties=properties)
-
-        self.assertEqual(
-            str(cm.warning),
-            "ignoring the 'name' atom property coming from the "
-            + "structures since it is already part of the properties",
-        )
-        self.assertEqual(data["properties"]["name"]["target"], "structure")
 
     def test_property_only(self):
         properties = {"name": [2, 3, 4]}
@@ -372,7 +340,8 @@ class TestCreateInputProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "wrong size for property 'second': expected 3 elements, but got an array with 4 entries",
+            "wrong size for property 'second': expected 3 elements, but got an "
+            "array with 4 entries",
         )
 
         # error: target is not "structure"
@@ -382,7 +351,8 @@ class TestCreateInputProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "property 'name' has a non-structure target, which is not allowed if frames are not provided",
+            "property 'name' has a non-structure target, which is not allowed "
+            "if frames are not provided",
         )
 
 
@@ -407,27 +377,6 @@ class TestCreateInputEnvironments(unittest.TestCase):
             self.assertEqual(structure, 0)
             self.assertEqual(center, i)
             self.assertEqual(cutoff, 6)
-
-    def test_librascal_environments(self):
-        frames = [ase.Atoms("CO2"), ase.Atoms("NH3")]
-        for frame in frames:
-            frame.arrays["atomic number"] = frame.numbers
-
-        # center_atoms_mask is used by librascal to specify which atoms to consider
-        frames[1].arrays["center_atoms_mask"] = [True, False, False, False]
-
-        environments = librascal_atomic_environments(frames)
-        data = create_input(frames=frames, environments=environments)
-
-        self.assertEqual(len(data["environments"]), 4)
-
-        atomic_number = data["properties"]["atomic number"]
-        self.assertEqual(atomic_number["target"], "atom")
-        self.assertEqual(len(atomic_number["values"]), 4)
-        self.assertEqual(atomic_number["values"][0], 6)  # C in CO2
-        self.assertEqual(atomic_number["values"][1], 8)  # O1 in CO2
-        self.assertEqual(atomic_number["values"][2], 8)  # O2 in CO2
-        self.assertEqual(atomic_number["values"][3], 7)  # N in NH3
 
 
 if __name__ == "__main__":

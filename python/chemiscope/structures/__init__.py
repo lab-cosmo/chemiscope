@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from ._ase import (
     _ase_all_atomic_environments,
-    _ase_atom_properties,
+    _ase_composition_properties,
+    _ase_extract_properties,
     _ase_librascal_atomic_environments,
-    _ase_structure_properties,
-    _ase_structures,
+    _ase_list_atom_properties,
+    _ase_list_structure_properties,
     _ase_to_json,
+    _ase_valid_structures,
 )
 
 
@@ -15,7 +17,7 @@ def _guess_adapter(frames):
     frames as a list and a string describing which adapter should be used.
     """
 
-    ase_frames, use_ase = _ase_structures(frames)
+    ase_frames, use_ase = _ase_valid_structures(frames)
     if use_ase:
         return ase_frames, "ASE"
 
@@ -39,44 +41,73 @@ def frames_to_json(frames):
         raise Exception("reached unreachable code")
 
 
-def atom_properties(frames, composition, atoms_mask=None):
+def _list_atom_properties(frames):
     """
-    Extract "atom" properties from the given ``frames``, and give them as a
-    dictionary compatible with :py:func:`create_input`.
-
-    This function is a shim calling specialized implementations for all the
-    supported frame types. Currently only `ase.Atoms` frames are supported.
-
-    :param frames: iterable over structures (typically a list of frames)
-    :param composition: whether to also add properties containing information
-                        about the chemical composition of the system
-    :param atoms_mask: optional list of booleans containing which atoms should
-                       be include in the output
+    List existing "atom" properties from the given ``frames``. This is used
+    to check if the user might be missing some properties because chemiscope is
+    no longer automatically extracting properties
     """
     frames, adapter = _guess_adapter(frames)
 
     if adapter == "ASE":
-        return _ase_atom_properties(frames, composition, atoms_mask)
+        return _ase_list_atom_properties(frames)
     else:
         raise Exception("reached unreachable code")
 
 
-def structure_properties(frames, composition):
+def _list_structure_properties(frames):
     """
-    Extract "structure" properties from the given ``frames``, and give them as a
-    dictionary compatible with :py:func:`create_input`.
-
-    This function is a shim calling specialized implementations for all the
-    supported frame types. Currently only `ase.Atoms` frames are supported.
-
-    :param frames: iterable over structures (typically a list of frames)
-    :param composition: whether to also add properties containing information
-                        about the chemical composition of the system
+    List existing "structure" properties from the given ``frames``. This is used
+    to check if the user might be missing some properties because chemiscope is
+    no longer automatically extracting properties
     """
     frames, adapter = _guess_adapter(frames)
 
     if adapter == "ASE":
-        return _ase_structure_properties(frames, composition)
+        return _ase_list_structure_properties(frames)
+    else:
+        raise Exception("reached unreachable code")
+
+
+def extract_properties(frames, only=None, environments=None):
+    """
+    Extract properties defined in the ``frames`` in a chemiscope-compatible
+    format.
+
+    :param frames: iterable over structures (typically a list of frames)
+    :param only: optional, list of strings. If not ``None``, only properties
+                with a name from this list are included in the output.
+    :param environments: optional, list of environnements (described as
+        ``(structure id, center id, cutoff)``) to include when extracting the
+        atomic properties.
+    """
+    frames, adapter = _guess_adapter(frames)
+
+    if adapter == "ASE":
+        return _ase_extract_properties(frames, only, environments)
+    else:
+        raise Exception("reached unreachable code")
+
+
+def composition_properties(frames, environments=None):
+    """
+    Generate properties containing the chemical composition of the given
+    ``frames``.
+
+    This create two atomic properties: ``symbol`` (string) and ``number`` (int);
+    and multiple structure properties: ``composition`` and ``n_{element}`` for
+    each elements in the dataset. The properties are then returned in chemiscope
+    format.
+
+    :param frames: iterable over structures (typically a list of frames)
+    :param environments: optional, list of environnements (described as
+        ``(structure id, center id, cutoff)``) to include when generating the
+        atomic properties.
+    """
+    frames, adapter = _guess_adapter(frames)
+
+    if adapter == "ASE":
+        return _ase_composition_properties(frames, environments)
     else:
         raise Exception("reached unreachable code")
 

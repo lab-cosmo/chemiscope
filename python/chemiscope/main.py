@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from .input import write_input
+from .structures import all_atomic_environments, extract_properties
 
 
 def _chemiscope_input_parser():
@@ -29,6 +30,12 @@ def _chemiscope_input_parser():
         "--only-structures",
         action="store_true",
         help="only use per-structure properties from the input file",
+    )
+    parser.add_argument(
+        "--cutoff",
+        type=float,
+        default=3.5,
+        help="spherical cutoff radius for environments",
     )
     parser.add_argument("--name", default="", type=str, help="name of the dataset")
     parser.add_argument(
@@ -82,9 +89,11 @@ def main():
             for key in list(frame.arrays.keys()):
                 if key not in ["positions", "numbers"]:
                     del frame.arrays[key]
+        environnements = None
     elif args.only_atoms:
         for frame in frames:
             frame.info = {}
+        environnements = all_atomic_environments(frames, cutoff=args.cutoff)
 
     # determine output file name automatically if missing
     output = args.output or args.input + "_chemiscope.json.gz"
@@ -92,6 +101,8 @@ def main():
     write_input(
         path=output,
         frames=frames,
+        properties=extract_properties(frames),
+        environnements=environnements,
         meta={
             "name": args.name,
             "description": args.description,
