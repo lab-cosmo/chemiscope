@@ -32,7 +32,7 @@ export class Slider {
      */
     constructor(root: HTMLElement, target: Target) {
         const template = document.createElement('template');
-        template.innerHTML = `<div class="input-group input-group-sm">
+        template.innerHTML = `<div part="chsp-slider" class="input-group input-group-sm">
             <span class="input-group-text"><div class="chsp-play-button"></div></span>
             <input class="form-control form-range chsp-${target}-slider" type='range' min=0 value=0 step=1 style="height: 1.9rem">
         </div>`;
