@@ -9,88 +9,11 @@ import warnings
 
 import numpy as np
 
-from .structures import atom_properties, frames_to_json, structure_properties
-
-
-def _expand_properties(short_properties, n_structures, n_atoms):
-    """
-    Convert a shortened entries of properties into the expanded form.
-    Entries in already expanded form are not changed.
-
-    :param dict short_properties: properties to handle
-    :param int n_structures: number of structures in the dataset
-    :param int n_atoms: total number of atoms in the whole dataset
-
-    For example this property dict:
-    .. code-block:: python
-
-        properties = {
-            'apple': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
-            }
-            'orange' : np.zeros((100, 42)),
-            'banana' : np.zeros((300, 17)),
-        }
-
-    will be converted to
-    .. code-block:: python
-
-        properties = {
-            'aple': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
-            }
-            'orange': {
-                'target': 'structure'
-                'values': np.zeros((100, 42)),
-            }
-            'banana': {
-                'target': 'atom',
-                'values': np.zeros((300, 17)),
-           }
-        }
-
-    assuming that number of structures in the dataset is 100 and
-    total number of atoms in the dataset is 300.
-    """
-    properties = {}
-    for key, value in short_properties.items():
-        if isinstance(value, dict):
-            properties[key] = value
-        else:
-            if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
-                raise ValueError(
-                    "Property values should be either list or numpy array, "
-                    f"got {type(value)} instead"
-                )
-            if n_structures == n_atoms:
-                warnings.warn(
-                    f"The target of the property '{key}' is ambiguous because "
-                    "there is the same number of atoms and structures. "
-                    "We will assume target=structure"
-                )
-
-            dict_property = {"values": value}
-
-            # heuristically determines the type of target
-            if len(value) == n_structures:
-                dict_property["target"] = "structure"
-            elif len(value) == n_atoms:
-                dict_property["target"] = "atom"
-            else:
-                raise ValueError(
-                    "The length of property values is different from the "
-                    + "number of structures and the number of atoms, we can not "
-                    + f"guess the target. Got n_atoms = {n_atoms}, n_structures = "
-                    + f"{n_structures}, the length of property values is "
-                    + f"{len(value)}, for the '{key}' property"
-                )
-
-            properties[key] = dict_property
-    return properties
+from .structures import (
+    _list_atom_properties,
+    _list_structure_properties,
+    frames_to_json,
+)
 
 
 def create_input(
@@ -99,7 +22,6 @@ def create_input(
     properties=None,
     environments=None,
     settings=None,
-    composition=False,
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -108,7 +30,7 @@ def create_input(
     :param list frames: list of atomic structures. For now, only `ase.Atoms`_
                         objects are supported
     :param dict meta: optional metadata of the dataset, see below
-    :param dict properties: optional dictionary of additional properties, see below
+    :param dict properties: optional dictionary of properties, see below
     :param list environments: optional list of (structure id, atom id, cutoff)
         specifying which atoms have properties attached and how far out
         atom-centered environments should be drawn by default. Functions like
@@ -117,9 +39,6 @@ def create_input(
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
-    :param bool composition: optional, ``False`` by default. If ``True``, will
-        add to structure and atom properties containing information about the
-        chemical composition
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
@@ -137,21 +56,16 @@ def create_input(
             ],
         }
 
-    The returned dictionary will contain all the properties defined on the
-    `ase.Atoms`_ objects. Values in ``ase.Atoms.arrays`` are mapped to
-    ``target = "atom"`` properties; while values in ``ase.Atoms.info`` are
-    mapped to ``target = "structure"`` properties. The only exception is
-    ``ase.Atoms.arrays["numbers"]``, which is always ignored. If you want to
-    have the atomic numbers as a property, you should add it to ``properties``
-    manually.
+    Properties can be added with the ``properties`` parameter. This parameter
+    should be a dictionary containing one entry for each property. Properties
+    can be extracted from structures with :py:func:`extract_properties` or
+    :py:func:`composition_properties`, or manually defined by the user.
 
-    Additional properties can be added with the ``properties`` parameter. This
-    parameter should be a dictionary containing one entry for each property.
-    Each entry contains a ``target`` attribute (``'atom'`` or ``'structure'``)
-    and a set of values. ``values`` can be a Python list of float or string; a
-    1D numpy array of numeric values; or a 2D numpy array of numeric values. In
-    the later case, multiple properties will be generated along the second axis.
-    For example, passing
+    Each entry in the ``properties`` dictionary contains a ``target`` attribute
+    (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a
+    Python list of float or string; a 1D numpy array of numeric values; or a 2D
+    numpy array of numeric values. In the later case, multiple properties will
+    be generated along the second axis. For example, passing
 
     .. code-block:: python
 
@@ -245,46 +159,38 @@ def create_input(
         for name, value in properties.items():
             data["properties"].update(_linearize(name, value, n_structures, n_atoms))
 
-    # Read properties coming from the frames
+    # Check to tell the user they might have forgotten some properties coming
+    # from the frames (that chemiscope used to automatically extract). This code
+    # should be removed in version 0.6 of chemiscope.
     if frames is not None:
-        if "environments" in data:
-            # only include values for the subset of environments
-            # requested by the user
-            atoms_mask = [[False] * s["size"] for s in data["structures"]]
-            for environment in data["environments"]:
-                atoms_mask[environment["structure"]][environment["center"]] = True
+        found_one_from_frame = False
+        atom_properties = _list_atom_properties(frames)
+        for name in atom_properties:
+            if name in data["properties"]:
+                found_one_from_frame = True
 
-            atoms_mask = np.concatenate(atoms_mask)
-        else:
-            atoms_mask = None
+        structure_properties = _list_structure_properties(frames)
+        for name in structure_properties:
+            if name in data["properties"]:
+                found_one_from_frame = True
 
-        for name, value in atom_properties(frames, composition, atoms_mask).items():
-            _validate_property(name, value)
-            for name, value in _linearize(name, value, n_structures, n_atoms).items():
-                if name in data["properties"]:
-                    # check that atom properties don't override user-provided
-                    # properties
-                    warnings.warn(
-                        f"ignoring the '{name}' atom property coming from the "
-                        "structures since it is already part of the properties"
-                    )
-                    continue
+        if not found_one_from_frame:
+            properties_list = ""
 
-                data["properties"][name] = value
+            if len(structure_properties) != 0:
+                properties_list += "[" + ", ".join(structure_properties) + "]"
 
-        for name, value in structure_properties(frames, composition).items():
-            _validate_property(name, value)
-            for name, value in _linearize(name, value, n_structures, n_atoms).items():
-                if name in data["properties"]:
-                    # check that frame properties don't override user-provided
-                    # properties or atom properties
-                    warnings.warn(
-                        f"ignoring the '{name}' structure property coming from the "
-                        "structures since it is already part of the properties"
-                    )
-                    continue
+            if len(atom_properties) != 0:
+                if len(properties_list) != 0:
+                    properties_list += " and "
+                properties_list += "[" + ", ".join(atom_properties) + "]"
 
-                data["properties"][name] = value
+            if len(properties_list) != 0:
+                warnings.warn(
+                    "chemiscope behavior changed to no longer include properties "
+                    "from the structure objects. Use `chemiscope.extract_properties` "
+                    f"to also visualize these properties ({properties_list})"
+                )
 
     return data
 
@@ -296,7 +202,6 @@ def write_input(
     properties=None,
     environments=None,
     settings=None,
-    composition=False,
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and
@@ -310,15 +215,10 @@ def write_input(
     :param dict properties: optional dictionary of additional properties
     :param list environments: optional list of (structure id, atom id, cutoff)
         specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default. Functions like
-        :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
-        can be used to generate the list of environments in simple cases.
+        atom-centered environments should be drawn by default.
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
-    :param bool composition: optional. False by default. If True, will add to
-                                the structure and atom properties information
-                                about chemical composition
 
     This function uses :py:func:`create_input` to generate the input data, see
     the documentation of this function for more information.
@@ -340,8 +240,7 @@ def write_input(
 
         # example property 1: list containing the energy of each structure,
         # from calculations performed beforehand
-        energies = [ ... ]
-
+        energies = np.loadtxt('energies.txt')
 
         # example property 2: PCA projection computed using sklearn.
         # X contains a multi-dimensional descriptor of the structure
@@ -360,6 +259,15 @@ def write_input(
                 "units": "kcal/mol",
             },
         }
+
+        # additional properties coming from the trajectory
+        frame_properties = chemiscope.extract_properties(
+            frames,
+            only=["temperature", "classification"]
+        )
+
+        # merge all properties together
+        properties.extend(frame_properties)
 
         chemiscope.write_input(
             path="chemiscope.json.gz",
@@ -382,7 +290,6 @@ def write_input(
         properties=properties,
         environments=environments,
         settings=settings,
-        composition=composition,
     )
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
@@ -396,32 +303,152 @@ def write_input(
             json.dump(data, file, indent=2)
 
 
-def _typetransform(data, name):
-    """
-    Transform the given data to either a list of string or a list of floats.
-
-    :param data: list of unknown type to be converted
-    :param name: name of the property related to this data, to be used in
-                 error messages
-    """
-    assert isinstance(data, list) and len(data) > 0
-    if isinstance(data[0], str):
-        return list(map(str, data))
-    elif isinstance(data[0], bytes):
-        return list(map(lambda u: u.decode("utf8"), data))
-    else:
-        try:
-            return [float(value) for value in data]
-        except Exception:
-            raise Exception(
-                f"unsupported type in property '{name}' values: "
-                + "should be string or number"
+def _normalize_environments(environments, structures):
+    cleaned = []
+    for environment in environments:
+        if len(environment) != 3:
+            raise ValueError(
+                f"expected environments to contain three values, got {environment}"
             )
+
+        structure, center, cutoff = environment
+        structure = int(structure)
+        center = int(center)
+        cutoff = float(cutoff)
+
+        if structure >= len(structures):
+            raise ValueError(
+                f"invalid structure index in environments: got {structure}, "
+                f"but we have {len(structures)} structures"
+            )
+
+        if center >= structures[structure]["size"]:
+            raise ValueError(
+                f"invalid center index in environments: got {center} in structure "
+                f"which only contains {structures[structure]['size']} atoms"
+            )
+
+        if cutoff <= 0:
+            raise ValueError("negative cutoff in environments is not valid")
+
+        cleaned.append(
+            {
+                "structure": structure,
+                "center": center,
+                "cutoff": float(cutoff),
+            }
+        )
+
+    return cleaned
+
+
+def _normalize_metadata(meta):
+    cleaned = {}
+    if "name" in meta and str(meta["name"]) != "":
+        cleaned["name"] = str(meta["name"])
+    else:
+        cleaned["name"] = "<unknown>"
+
+    if "description" in meta:
+        cleaned["description"] = str(meta["description"])
+
+    if "authors" in meta:
+        cleaned["authors"] = list(map(str, meta["authors"]))
+
+    if "references" in meta:
+        cleaned["references"] = list(map(str, meta["references"]))
+
+    for key in meta.keys():
+        if key not in ["name", "description", "authors", "references"]:
+            warnings.warn(f"ignoring unexpected metadata: {key}")
+
+    return cleaned
+
+
+def _expand_properties(short_properties, n_structures, n_atoms):
+    """
+    Convert a shortened entries of properties into the expanded form.
+    Entries in already expanded form are not changed.
+
+    :param dict short_properties: properties to handle
+    :param int n_structures: number of structures in the dataset
+    :param int n_atoms: total number of atoms in the whole dataset
+
+    For example this property dict:
+    .. code-block:: python
+
+        properties = {
+            'apple': {
+                'target': 'atom',
+                'values': np.zeros((300, 4)),
+                'unit': 'random / fs',
+            }
+            'orange' : np.zeros((100, 42)),
+            'banana' : np.zeros((300, 17)),
+        }
+
+    will be converted to
+    .. code-block:: python
+
+        properties = {
+            'aple': {
+                'target': 'atom',
+                'values': np.zeros((300, 4)),
+                'unit': 'random / fs',
+            }
+            'orange': {
+                'target': 'structure'
+                'values': np.zeros((100, 42)),
+            }
+            'banana': {
+                'target': 'atom',
+                'values': np.zeros((300, 17)),
+           }
+        }
+
+    assuming that number of structures in the dataset is 100 and
+    total number of atoms in the dataset is 300.
+    """
+    properties = {}
+    for key, value in short_properties.items():
+        if isinstance(value, dict):
+            properties[key] = value
+        else:
+            if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
+                raise ValueError(
+                    "Property values should be either list or numpy array, "
+                    f"got {type(value)} instead"
+                )
+            if n_structures == n_atoms:
+                warnings.warn(
+                    f"The target of the property '{key}' is ambiguous because "
+                    "there is the same number of atoms and structures. "
+                    "We will assume target=structure"
+                )
+
+            dict_property = {"values": value}
+
+            # heuristically determines the type of target
+            if len(value) == n_structures:
+                dict_property["target"] = "structure"
+            elif len(value) == n_atoms:
+                dict_property["target"] = "atom"
+            else:
+                raise ValueError(
+                    "The length of property values is different from the "
+                    "number of structures and the number of atoms, we can not "
+                    f"guess the target. Got n_atoms = {n_atoms}, n_structures = "
+                    f"{n_structures}, the length of property values is "
+                    f"{len(value)}, for the '{key}' property"
+                )
+
+            properties[key] = dict_property
+    return properties
 
 
 def _linearize(name, property, n_structures, n_centers):
     """
-    Transform a property dict (containing "value", "target", "units",
+    Transform a single property dict (containing "value", "target", "units",
     "description") with potential multi-dimensional "values" key to data that
     chemiscope can load.
 
@@ -484,55 +511,16 @@ def _linearize(name, property, n_structures, n_centers):
         if prop["target"] == "atom" and len(prop["values"]) != n_centers:
             raise Exception(
                 f"wrong size for the property '{name}' with target=='atom': "
-                + f"expected {n_centers} values, got {len(prop['values'])}"
+                f"expected {n_centers} values, got {len(prop['values'])}"
             )
 
         if prop["target"] == "structure" and len(prop["values"]) != n_structures:
             raise Exception(
                 f"wrong size for the property '{name}' with target=='structure': "
-                + f"expected {n_structures} values, got {len(prop['values'])}"
+                f"expected {n_structures} values, got {len(prop['values'])}"
             )
 
     return data
-
-
-def _normalize_environments(environments, structures):
-    cleaned = []
-    for environment in environments:
-        if len(environment) != 3:
-            raise ValueError(
-                f"expected environments to contain three values, got {environment}"
-            )
-
-        structure, center, cutoff = environment
-        structure = int(structure)
-        center = int(center)
-        cutoff = float(cutoff)
-
-        if structure >= len(structures):
-            raise ValueError(
-                f"invalid structure index in environments: got {structure}, "
-                f"but we have {len(structures)} structures"
-            )
-
-        if center >= structures[structure]["size"]:
-            raise ValueError(
-                f"invalid center index in environments: got {center} in structure "
-                f"which only contains {structures[structure]['size']} atoms"
-            )
-
-        if cutoff <= 0:
-            raise ValueError("negative cutoff in environments is not valid")
-
-        cleaned.append(
-            {
-                "structure": structure,
-                "center": center,
-                "cutoff": float(cutoff),
-            }
-        )
-
-    return cleaned
 
 
 def _validate_property(name, property):
@@ -541,7 +529,7 @@ def _validate_property(name, property):
     elif not isinstance(name, str):
         raise Exception(
             "the name of a property name must be a string, "
-            + f"got '{name}' of type {type(name)}"
+            f"got '{name}' of type {type(name)}"
         )
 
     if "target" not in property:
@@ -559,24 +547,24 @@ def _validate_property(name, property):
             warnings.warn(f"ignoring unexpected property key: {key}")
 
 
-def _normalize_metadata(meta):
-    cleaned = {}
-    if "name" in meta and str(meta["name"]) != "":
-        cleaned["name"] = str(meta["name"])
+def _typetransform(data, name):
+    """
+    Transform the given data to either a list of string or a list of floats.
+
+    :param data: list of unknown type to be converted
+    :param name: name of the property related to this data, to be used in
+                 error messages
+    """
+    assert isinstance(data, list) and len(data) > 0
+    if isinstance(data[0], str):
+        return list(map(str, data))
+    elif isinstance(data[0], bytes):
+        return list(map(lambda u: u.decode("utf8"), data))
     else:
-        cleaned["name"] = "<unknown>"
-
-    if "description" in meta:
-        cleaned["description"] = str(meta["description"])
-
-    if "authors" in meta:
-        cleaned["authors"] = list(map(str, meta["authors"]))
-
-    if "references" in meta:
-        cleaned["references"] = list(map(str, meta["references"]))
-
-    for key in meta.keys():
-        if key not in ["name", "description", "authors", "references"]:
-            warnings.warn(f"ignoring unexpected metadata: {key}")
-
-    return cleaned
+        try:
+            return [float(value) for value in data]
+        except Exception:
+            raise Exception(
+                f"unsupported type in property '{name}' values: "
+                "should be string or number"
+            )

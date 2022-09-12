@@ -1,8 +1,9 @@
-import unittest
-import tempfile
 import json
-import ase
 import os
+import tempfile
+import unittest
+
+import ase
 
 from chemiscope import write_input
 
@@ -10,7 +11,7 @@ TEST_FRAMES = [ase.Atoms("CO2")]
 
 
 def is_gz_file(filepath):
-    # check for the magic number at the beggining of a file
+    # check for the magic number at the beginning of a file
     with open(filepath, "rb") as test_f:
         return test_f.read(2) == b"\x1f\x8b"
 

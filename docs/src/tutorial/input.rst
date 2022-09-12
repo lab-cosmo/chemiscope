@@ -43,6 +43,10 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.create_input
 
+.. autofunction:: chemiscope.extract_properties
+
+.. autofunction:: chemiscope.composition_properties
+
 .. autofunction:: chemiscope.all_atomic_environments
 
 .. autofunction:: chemiscope.librascal_atomic_environments
