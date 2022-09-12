@@ -24,6 +24,7 @@ import {
     WarningHandler,
     addWarningHandler,
     getNextColor,
+    sendWarning,
 } from './utils';
 
 import './static/chemiscope.css';
@@ -612,8 +613,18 @@ class MapVisualizer {
 
         // We need to create pseudo structures with 0 atoms so that the indexer
         // knows how to associate structure id & point id on the map. The
-        // structure id is used by the info panel to create the slider
-        const n_structure = dataset.properties[Object.keys(dataset.properties)[0]].values.length;
+        // structure id is used by the info panel
+        let n_structure;
+        for (const key in dataset.properties) {
+            const property = dataset.properties[key];
+            if (property.target === 'atom') {
+                sendWarning('unsupported per-atom property in a map-only viewer');
+            } else {
+                assert(property.target === 'structure');
+                n_structure = property.values.length;
+            }
+        }
+
         this._indexer = new EnvironmentIndexer(
             'structure',
             // pseudo-structures to get the EnvironmentIndexer working even
