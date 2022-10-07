@@ -169,7 +169,7 @@ def _ase_extract_properties(frames, only=None, environments=None):
 
 
 def _ase_all_atomic_environments(frames, cutoff):
-    "Extract all atomic environnements out of a set of ASE Atoms objects"
+    "Extract all atomic environments out of a set of ASE Atoms objects"
     environments = []
     for structure_i, frame in enumerate(frames):
         for atom_i in range(len(frame)):
@@ -179,7 +179,7 @@ def _ase_all_atomic_environments(frames, cutoff):
 
 def _ase_librascal_atomic_environments(frames, cutoff):
     """
-    Extract atomic environnements out of a set of ASE Atoms objects,
+    Extract atomic environments out of a set of ASE Atoms objects,
     using the same convention as librascal
     """
     environments = []
@@ -273,7 +273,7 @@ def _remove_invalid_properties(properties, origin):
             if not _is_convertible_to_property(value):
                 warnings.warn(
                     f"value '{value}' of type '{type(value)}' for the '{name}' "
-                    f"property from {origin} is not convertible to float or "
+                    f"property from {origin} is not convertible to float, array or "
                     "string, this property will be ignored."
                 )
                 to_remove.append(name)
@@ -297,4 +297,8 @@ def _is_convertible_to_property(value):
             float(value)
             return True
         except Exception:
-            return False
+            try:
+                np.array(value, dtype=float)
+                return True
+            except Exception:
+                return False

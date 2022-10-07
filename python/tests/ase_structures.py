@@ -138,7 +138,7 @@ class TestExtractProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.warning),
             "value '{'f': 3}' of type '<class 'dict'>' for the 'bar' property "
-            "from ASE is not convertible to float or string, this property "
+            "from ASE is not convertible to float, array or string, this property "
             "will be ignored.",
         )
 

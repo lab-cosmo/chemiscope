@@ -35,7 +35,7 @@ def _chemiscope_input_parser():
         "--cutoff",
         type=float,
         default=3.5,
-        help="spherical cutoff radius for environments",
+        help="spherical cutoff radius that should be visualized around environments",
     )
     parser.add_argument("--name", default="", type=str, help="name of the dataset")
     parser.add_argument(
