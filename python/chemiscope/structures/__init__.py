@@ -77,7 +77,7 @@ def extract_properties(frames, only=None, environments=None):
     :param frames: iterable over structures (typically a list of frames)
     :param only: optional, list of strings. If not ``None``, only properties
                 with a name from this list are included in the output.
-    :param environments: optional, list of environnements (described as
+    :param environments: optional, list of environments (described as
         ``(structure id, center id, cutoff)``) to include when extracting the
         atomic properties.
     """
@@ -100,7 +100,7 @@ def composition_properties(frames, environments=None):
     format.
 
     :param frames: iterable over structures (typically a list of frames)
-    :param environments: optional, list of environnements (described as
+    :param environments: optional, list of environments (described as
         ``(structure id, center id, cutoff)``) to include when generating the
         atomic properties.
     """
