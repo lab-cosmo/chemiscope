@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from .input import write_input
 from .structures import all_atomic_environments, extract_properties
+import json
 
 
 def _chemiscope_input_parser():
@@ -20,6 +21,12 @@ def _chemiscope_input_parser():
     parser.add_argument(
         "-o", "--output", type=str, help="chemiscope output file in JSON format"
     )
+    parser.add_argument(
+        "--properties",
+        type=str,
+        default="",
+        help="comma-separated list of properties that should be extracted. defaults to all",
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--only-atoms",
@@ -29,7 +36,7 @@ def _chemiscope_input_parser():
     group.add_argument(
         "--only-structures",
         action="store_true",
-        help="only use per-structure properties from the input file",
+        help="only use per-structure properties from the input file (default)",
     )
     parser.add_argument(
         "--cutoff",
@@ -50,6 +57,12 @@ def _chemiscope_input_parser():
         type=str,
         default=[],
         help="list of references for the dataset",
+    )
+    parser.add_argument(
+        "--settings",
+        type=str,
+        default="",
+        help="visualization settings, as a JSON string, following the chemiscope format",
     )
     return parser
 
@@ -87,7 +100,7 @@ def main():
     if args.only_structures:
         for frame in frames:
             for key in list(frame.arrays.keys()):
-                if key not in ["positions", "numbers"]:
+                if key not in ["positions", "numbers", "momenta"]:
                     del frame.arrays[key]
         environments = None
     elif args.only_atoms:
@@ -95,13 +108,35 @@ def main():
             frame.info = {}
         environments = all_atomic_environments(frames, cutoff=args.cutoff)
 
+    if args.properties == "":
+        filter_properties = None
+    else:
+        filter_properties = args.properties.split(",")
+
     # determine output file name automatically if missing
     output = args.output or args.input + "_chemiscope.json.gz"
+    properties = extract_properties(frames, only=filter_properties)
+    has_environment_property = False
+    for prop in properties.values():
+        if prop["target"] == "atom":
+            has_environment_property = True
+            break
+    if has_environment_property:
+        # assumes properties are associated with all atomic environments
+        environments = all_atomic_environments(frames, cutoff=args.cutoff)
+    else:
+        environments = None
+
+    if args.settings == "":
+        settings = None
+    else:
+        # reads settings as a dictionary, following chemiscope format and schema
+        settings = json.loads(args.settings)
 
     write_input(
         path=output,
         frames=frames,
-        properties=extract_properties(frames),
+        properties=properties,
         environments=environments,
         meta={
             "name": args.name,
@@ -109,6 +144,7 @@ def main():
             "authors": args.authors,
             "references": args.references,
         },
+        settings=settings,
     )
 
 
