@@ -89,11 +89,11 @@ def main():
             for key in list(frame.arrays.keys()):
                 if key not in ["positions", "numbers"]:
                     del frame.arrays[key]
-        environnements = None
+        environments = None
     elif args.only_atoms:
         for frame in frames:
             frame.info = {}
-        environnements = all_atomic_environments(frames, cutoff=args.cutoff)
+        environments = all_atomic_environments(frames, cutoff=args.cutoff)
 
     # determine output file name automatically if missing
     output = args.output or args.input + "_chemiscope.json.gz"
@@ -102,7 +102,7 @@ def main():
         path=output,
         frames=frames,
         properties=extract_properties(frames),
-        environnements=environnements,
+        environments=environments,
         meta={
             "name": args.name,
             "description": args.description,

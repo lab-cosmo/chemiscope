@@ -169,7 +169,7 @@ class TestCompositionProperties(unittest.TestCase):
 
 
 class TestEnvironments(unittest.TestCase):
-    """Generate the list of environnements"""
+    """Generate the list of environments"""
 
     def test_librascal_environments(self):
         frames = [ase.Atoms("CO2"), ase.Atoms("NH3")]
