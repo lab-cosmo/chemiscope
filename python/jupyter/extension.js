@@ -8,7 +8,7 @@ define(function () {
     window['requirejs'].config({
         map: {
             '*': {
-                'chemiscope-widget': 'nbextensions/chemiscope-widget/chemiscope-widget.min',
+                chemiscope: 'nbextensions/chemiscope/chemiscope.min',
             },
         },
     });

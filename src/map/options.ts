@@ -18,7 +18,7 @@ import * as styles from '../styles';
 import { COLOR_MAPS } from './colorscales';
 
 import BARS_SVG from '../static/bars.svg';
-import HTML_OPTIONS from './options.html';
+import HTML_OPTIONS from './options.html.in';
 
 // in 3D mode, only strings are supported for 'marker.symbol', and only very few
 // of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly

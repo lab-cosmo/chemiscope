@@ -13,7 +13,7 @@ import { optionValidator } from '../options';
 import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
 
 import BARS_SVG from '../static/bars.svg';
-import HTML_OPTIONS from './options.html';
+import HTML_OPTIONS from './options.html.in';
 
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
