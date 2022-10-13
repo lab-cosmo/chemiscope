@@ -1,4 +1,4 @@
 include pyproject.toml
 
-recursive-include python/nbextension *.js
-recursive-include python/nbextension *.json
+recursive-include python/jupyter *.js
+recursive-include python/jupyter *.json

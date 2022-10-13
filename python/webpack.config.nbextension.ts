@@ -7,13 +7,13 @@ const config: webpack.Configuration = {
     ...WEBPACK_CONFIG,
     target: 'web',
     entry: {
-        'chemiscope-widget': path.join(__dirname, 'nbextension', 'src', 'index.ts'),
+        chemiscope: path.join(__dirname, 'jupyter', 'src', 'nbextension.ts'),
     },
     output: {
         filename: '[name].min.js',
         // Use AMD modules for the jupyter extension
         libraryTarget: 'amd',
-        path: path.join(__dirname, 'nbextension', 'build'),
+        path: path.join(__dirname, 'jupyter', 'nbextension'),
         publicPath: '',
     },
     externals: ['@jupyter-widgets/base'],

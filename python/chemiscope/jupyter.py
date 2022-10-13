@@ -6,10 +6,18 @@ import ipywidgets
 from traitlets import Bool, Dict, Unicode
 
 from .input import create_input
+from .version import __version__
+
+# this needs to match the version/name defined in
+# python/jupyter/src/labextension.ts
+PACKAGE_NAME = "chemiscope"
+PACKAGE_VERSION = __version__
 
 
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
-    data = Unicode().tag(sync=True)
+    _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
+    _view_module_version = Unicode(PACKAGE_VERSION).tag(sync=True)
+    value = Unicode().tag(sync=True)
     has_metadata = Bool().tag(sync=True)
 
     # synchronized settings from the JS side. You can assign to this field to
@@ -22,7 +30,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def __init__(self, data, has_metadata):
         super().__init__()
-        self.data = json.dumps(data)
+        self.value = json.dumps(data)
         self.has_metadata = has_metadata
         self.settings = {}
         self._settings_sync = True
@@ -41,7 +49,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             file = open(path, "wb")
 
         # update the settings in the data to the latest value
-        data = json.loads(self.data)
+        data = json.loads(self.value)
         data["settings"] = self.settings
 
         file.write(json.dumps(data).encode("utf8"))
@@ -51,7 +59,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 @ipywidgets.register
 class ChemiscopeWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("ChemiscopeView").tag(sync=True)
-    _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__(data, has_metadata)
@@ -60,7 +67,6 @@ class ChemiscopeWidget(ChemiscopeWidgetBase):
 @ipywidgets.register
 class StructureWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("StructureView").tag(sync=True)
-    _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__(data, has_metadata)
@@ -69,7 +75,6 @@ class StructureWidget(ChemiscopeWidgetBase):
 @ipywidgets.register
 class MapWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
-    _view_module = Unicode("chemiscope-widget").tag(sync=True)
 
     def __init__(self, data, has_metadata):
         super().__init__(data, has_metadata)

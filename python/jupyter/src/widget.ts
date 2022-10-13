@@ -131,7 +131,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('data') as string) as Dataset;
+        const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void DefaultVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -141,6 +141,9 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 this._updatePythonSettings();
             })
             .catch((e: Error) => {
+                // eslint-disable-next-line no-console
+                console.error(e);
+
                 const display = getByID(`${this.guid}-error-display`, element);
                 display.style.display = 'block';
                 display.getElementsByTagName('p')[0].innerText = e.toString();
@@ -205,7 +208,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('data') as string) as Dataset;
+        const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void StructureVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -216,6 +219,9 @@ export class StructureView extends ChemiscopeBaseView {
                 this._updatePythonSettings();
             })
             .catch((e: Error) => {
+                // eslint-disable-next-line no-console
+                console.error(e);
+
                 const display = getByID(`${this.guid}-error-display`, element);
                 display.style.display = 'block';
                 display.getElementsByTagName('p')[0].innerText = e.toString();
@@ -287,7 +293,7 @@ export class MapView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('data') as string) as Dataset;
+        const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void MapVisualizer.load(config, data)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -298,6 +304,9 @@ export class MapView extends ChemiscopeBaseView {
                 this._updatePythonSettings();
             })
             .catch((e: Error) => {
+                // eslint-disable-next-line no-console
+                console.error(e);
+
                 const display = getByID(`${this.guid}-error-display`, element);
                 display.style.display = 'block';
                 display.getElementsByTagName('p')[0].innerText = e.toString();

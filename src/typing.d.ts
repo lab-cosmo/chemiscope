@@ -1,4 +1,4 @@
-declare module '*.html' {
+declare module '*.html.in' {
     const content: string;
     export default content;
 }

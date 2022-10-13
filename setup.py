@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+import glob
+import json
 import os
 import subprocess
 import sys
-from distutils.command import install, sdist
 
 from setuptools import setup
-from wheel import bdist_wheel
 
 # customize dist directory if the user did not already request one, and if we
 # are running setup.py directly (i.e. not from pip)
@@ -27,60 +27,64 @@ def run_npm_build():
     # js files.
     if os.path.exists(os.path.join(root, "package.json")):
         subprocess.run("npm ci", check=True, shell=True)
+        # build the labextension first, since it triggers a rebuild of the main
+        # package code
+        subprocess.run("npm run build:labextension", check=True, shell=True)
         subprocess.run("npm run build:nbextension", check=True, shell=True)
 
-
-class sdist_with_npm(sdist.sdist):
-    def run(self):
-        if change_dist_dir:
-            self.dist_dir = os.path.join("dist", "python")
-        run_npm_build()
-        super().run()
-
-
-class bdist_wheel_with_npm(bdist_wheel.bdist_wheel):
-    def run(self):
-        run_npm_build()
-        if change_dist_dir:
-            self.dist_dir = os.path.join("dist", "python")
-        super().run()
-
-
-class install_with_npm(install.install):
-    def run(self):
-        run_npm_build()
-        super().run()
+        with open(
+            os.path.join(root, "python", "jupyter", "labextension", "install.json"), "w"
+        ) as fd:
+            install_json = {
+                "__comment": "metadata about the chemiscope lab extension installation",
+                "packageManager": "python",
+                "packageName": "chemiscope",
+                "uninstallInstructions": "Use your Python package manager "
+                + "(pip, conda, etc.) to uninstall chemiscope",
+            }
+            json.dump(install_json, fd)
 
 
 if __name__ == "__main__":
+    # we need to run npm build outside of the call to setup to be able to get
+    # the full list of files to install for the labextension. Building the
+    # labextension creates unpredictable file names, and `data_file` wants to
+    # explicitly list all files one by one.
+
+    # TODO: this currently runs more than once because pip runs this function
+    # multiple times. Can we cache the outcome?
+    run_npm_build()
+
     setup(
-        cmdclass={
-            # we need to override multiple classes here to cover all possible
-            # use cases. `sdist` is used to generate the source upload to PyPI,
-            # `bdist_wheel` is used both to generate the wheel from the sdist
-            # (pip install from PyPI) and the wheel from the full repository
-            # (pip install with local path); and `install` adds support for
-            # `python setup.py install`. Notablely missing here is `python
-            # setup.py develop`/`pip install -e <local/path>`.
-            "sdist": sdist_with_npm,
-            "bdist_wheel": bdist_wheel_with_npm,
-            "install": install_with_npm,
-        },
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (
-                "share/jupyter/nbextensions/chemiscope-widget",
+                "share/jupyter/nbextensions/chemiscope",
                 [
-                    "python/nbextension/extension.js",
-                    "python/nbextension/build/chemiscope-widget.min.js",
+                    "python/jupyter/extension.js",
+                    "python/jupyter/nbextension/chemiscope.min.js",
                 ],
             ),
             # this is what `jupyter nbextension enable --sys-prefix` does
             (
                 "etc/jupyter/nbconfig/notebook.d",
                 [
-                    "python/nbextension/chemiscope-widget.json",
+                    "python/jupyter/chemiscope.json",
                 ],
+            ),
+            # install the labextension
+            (
+                "share/jupyter/labextensions/chemiscope",
+                list(
+                    filter(
+                        lambda f: os.path.isfile(f),
+                        glob.glob("python/jupyter/labextension/*"),
+                    )
+                ),
+            ),
+            (
+                "share/jupyter/labextensions/chemiscope/static",
+                glob.glob("python/jupyter/labextension/static/*"),
             ),
         ],
     )
