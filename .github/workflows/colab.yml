@@ -1,0 +1,21 @@
+name: Check Colab Notebook
+on:
+  schedule:
+    - cron: "1 * 1 * *"
+
+jobs:
+  pull-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: wget-notebook
+        uses: wei/wget@v1
+        with:
+          args: -O downloaded_file.ipynb 'https://docs.google.com/uc?export=download&id='1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu
+      - name: wget-dataset
+        uses: wei/wget@v1
+        with:
+          args: -O frames.xyz 'https://rascaline--119.org.readthedocs.build/en/119/_downloads/c31f0a732fc71020e4e8e9b45d91c762/datasets.xyz'
+      - name: run notebook
+        run: |
+          python -m pip install jupyter nbconvert nbformat
+          jupyter nbconvert --to notebook --execute downloaded_file.ipynb --ExecutePreprocessor.kernel_name='python3'
