@@ -28,7 +28,7 @@ acknowledgement.
 ## [Documentation](https://chemiscope.org/docs/)
 
 You may be interested in particular about how to [create a visualization of your
-own dataset](https://chemiscope.org/docs/tutorial.html#input-file-format-for-chemiscope).
+own dataset](https://chemiscope.org/docs/tutorial/input.html).
 
 ## Getting help for using chemiscope
 
