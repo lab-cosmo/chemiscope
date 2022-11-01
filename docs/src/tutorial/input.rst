@@ -11,6 +11,10 @@ resulting JSON file can be quite large and thus harder to share with
 collaborators, the default chemiscope interface also allows to load JSON files
 compressed with gzip.
 
+tl;dr if you would like to generate a simple chemiscope for your dataset, we
+have a `Google Colab notebook <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_
+that can help!
+
 Tools able to create chemiscope input
 -------------------------------------
 
