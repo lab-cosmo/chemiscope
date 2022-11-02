@@ -3,7 +3,7 @@
 ![tests](https://github.com/lab-cosmo/chemiscope/workflows/Tests%20&%20Lints/badge.svg)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02117/status.svg)](https://doi.org/10.21105/joss.02117)
 
-Chemiscope is an graphical tool for the interactive exploration of materials and
+Chemiscope is a graphical tool for the interactive exploration of materials and
 molecular databases, correlating local and global structural descriptors with
 the physical properties of the different systems; as well as a library of
 re-usable components useful to create new interfaces.
