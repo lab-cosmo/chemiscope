@@ -14,6 +14,12 @@ from .structures import (
     _list_structure_properties,
     frames_to_json,
 )
+from .version import __version__
+
+if tuple(map(int, __version__.split("."))) >= (0, 6, 0):
+    raise Exception(
+        "this is a reminder to remove the warning about automatic properties extraction"
+    )
 
 
 def create_input(
