@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+import warnings
 
 from setuptools import setup
 
@@ -29,20 +30,30 @@ def run_npm_build():
         subprocess.run("npm ci", check=True, shell=True)
         # build the labextension first, since it triggers a rebuild of the main
         # package code
-        subprocess.run("npm run build:labextension", check=True, shell=True)
-        subprocess.run("npm run build:nbextension", check=True, shell=True)
+        try:
+            import jupyterlab  # noqa
 
-        with open(
-            os.path.join(root, "python", "jupyter", "labextension", "install.json"), "w"
-        ) as fd:
-            install_json = {
-                "__comment": "metadata about the chemiscope lab extension installation",
-                "packageManager": "python",
-                "packageName": "chemiscope",
-                "uninstallInstructions": "Use your Python package manager "
-                + "(pip, conda, etc.) to uninstall chemiscope",
-            }
-            json.dump(install_json, fd)
+            subprocess.run("npm run build:labextension", check=True, shell=True)
+            with open(
+                os.path.join(root, "python", "jupyter", "labextension", "install.json"),
+                "w",
+            ) as fd:
+                install_json = {
+                    "__comment": "metadata for chemiscope jupyterlab extension",
+                    "packageManager": "python",
+                    "packageName": "chemiscope",
+                    "uninstallInstructions": "Use your Python package manager "
+                    + "(pip, conda, etc.) to uninstall chemiscope",
+                }
+                json.dump(install_json, fd)
+        except ImportError:
+            # skip building jupyterlab if it is not installed on the developer
+            # machine
+            warnings.warn(
+                "skipping the lab extension build since jupyterlab is not installed"
+            )
+
+        subprocess.run("npm run build:nbextension", check=True, shell=True)
 
 
 if __name__ == "__main__":
