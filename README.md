@@ -30,6 +30,10 @@ acknowledgement.
 You may be interested in particular about how to [create a visualization of your
 own dataset](https://chemiscope.org/docs/tutorial/input.html).
 
+If you would like to generate a simple chemiscope for your dataset, we
+have a [Google Colab notebook](https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu)
+that can help!
+
 ## Getting help for using chemiscope
 
 If you want to get help when using chemiscope either as a JavaScript/TypeScript
