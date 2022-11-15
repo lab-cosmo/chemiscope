@@ -10,7 +10,12 @@
     "npm": ">=6"
   },
   "files": [
-    "dist",
+    "dist/chemiscope.d.ts",
+    "dist/chemiscope.min.js",
+    "dist/chemiscope.min.js.LICENSE.txt",
+    "dist/molecule-viewer.d.ts",
+    "dist/molecule-viewer.min.js",
+    "dist/molecule-viewer.min.js.LICENSE.txt",
     "src",
     "webpack.config.ts",
     "tsconfig.json"
