@@ -1,7 +1,8 @@
 name: Check Colab Notebook
 on:
   schedule:
-    - cron: '* * 1 * *'
+    # run at 10am on every Monday
+    - cron: '0 10 * * 1'
   pull_request:
     # Check all PR
 
