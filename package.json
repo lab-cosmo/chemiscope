@@ -83,6 +83,7 @@
     "mocha": "^10",
     "node-loader": "^2",
     "pako": "^2",
+    "plausible-tracker": "^0.3.8",
     "plotly.js": "2.16.3",
     "prettier": "2.8.0",
     "rimraf": "^3",

@@ -1,4 +1,6 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
+import Plausible from 'plausible-tracker';
+
 import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
@@ -6,6 +8,12 @@ import './widget.css';
 
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings } from '../../../src/dataset';
+
+const PLAUSIBLE = Plausible({
+    domain: 'chemiscope.org',
+    // jupyter typically runs on localhost
+    trackLocalhost: true,
+});
 
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
@@ -74,6 +82,8 @@ export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
 
     public render(): void {
+        PLAUSIBLE.trackEvent('jupyter-show');
+
         this.guid = `chsp-${generateGUID()}`;
 
         // this function works by first rendering the widget inside `this.el`,
@@ -163,6 +173,8 @@ export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
 
     public render(): void {
+        PLAUSIBLE.trackEvent('jupyter-show');
+
         this.guid = `chsp-${generateGUID()}`;
 
         // this function works by first rendering the widget inside `this.el`,
@@ -241,6 +253,8 @@ export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
 
     public render(): void {
+        PLAUSIBLE.trackEvent('jupyter-show');
+
         this.guid = `chsp-${generateGUID()}`;
 
         // this function works by first rendering the widget inside `this.el`,
