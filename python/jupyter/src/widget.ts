@@ -9,8 +9,8 @@ import './widget.css';
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings } from '../../../src/dataset';
 
-const PLAUSIBLE = Plausible({
-    domain: 'chemiscope.org',
+const PlausibleTracker = Plausible({
+    domain: 'jupyter.chemiscope.org',
     // jupyter typically runs on localhost
     trackLocalhost: true,
 });
@@ -82,7 +82,9 @@ export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
 
     public render(): void {
-        PLAUSIBLE.trackEvent('jupyter-show');
+        PlausibleTracker.trackPageview({
+            url: (location.pathname.split('/')[1] || '') + '/chemiscope-view',
+        });
 
         this.guid = `chsp-${generateGUID()}`;
 
@@ -173,7 +175,9 @@ export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
 
     public render(): void {
-        PLAUSIBLE.trackEvent('jupyter-show');
+        PlausibleTracker.trackPageview({
+            url: (location.pathname.split('/')[1] || '') + '/structure-view',
+        });
 
         this.guid = `chsp-${generateGUID()}`;
 
@@ -253,7 +257,9 @@ export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
 
     public render(): void {
-        PLAUSIBLE.trackEvent('jupyter-show');
+        PlausibleTracker.trackPageview({
+            url: (location.pathname.split('/')[1] || '') + '/map-view',
+        });
 
         this.guid = `chsp-${generateGUID()}`;
 
