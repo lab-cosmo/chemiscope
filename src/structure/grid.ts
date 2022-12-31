@@ -64,8 +64,6 @@ interface WidgetGridData {
     color: string;
     /// set of indexes currently displayed in this viewer
     current: Indexes;
-    /// Playback delay setting for this viewer
-    playbackDelay: HTMLInputElement;
 }
 
 /**
@@ -340,7 +338,6 @@ export class ViewersGrid {
 
         const current = this._viewers.get(this._active);
         assert(current !== undefined);
-        current.playbackDelay.onchange = () => {};
 
         // remove active classes from the previous active viewer
         changeClasses(this._active, false);
@@ -349,11 +346,14 @@ export class ViewersGrid {
 
         const newViewer = this._viewers.get(this._active);
         assert(newViewer !== undefined);
-        newViewer.playbackDelay.onchange = () => {
-            this.delayChanged(parseFloat(newViewer.playbackDelay.value) * 100);
-        };
+
+        // links playback delay options
+        newViewer.widget._options.playbackDelay.onchange.push((value) => {
+            this.delayChanged(value);
+        });
+
         // set the right initial value for playback delay
-        this.delayChanged(parseFloat(newViewer.playbackDelay.value) * 100);
+        this.delayChanged(newViewer.widget._options.playbackDelay.value);
 
         changeClasses(this._active, true);
     }
@@ -725,15 +725,10 @@ export class ViewersGrid {
 
                 const current = { atom: undefined, structure: -1, environment: -1 };
 
-                // get the 'delay' setting inside the current widget setting
-                const playbackDelay =
-                    widget._options.getModalElement<HTMLInputElement>('playback-delay');
-
                 this._viewers.set(cellGUID, {
                     color: color,
                     current: current,
                     widget: widget,
-                    playbackDelay: playbackDelay,
                 });
 
                 if (this._positionSettingsModal !== undefined) {

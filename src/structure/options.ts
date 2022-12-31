@@ -32,6 +32,8 @@ export class StructureOptions extends OptionsGroup {
     public axes: HTMLOption<'string'>;
     // keep the orientation constant when loading a new structure
     public keepOrientation: HTMLOption<'boolean'>;
+    // trajectory playback delay in seconds
+    public playbackDelay: HTMLOption<'number'>;
     // options related to environments
     public environments: {
         // should we display environments & environments options
@@ -80,6 +82,7 @@ export class StructureOptions extends OptionsGroup {
         this.axes = new HTMLOption('string', 'off');
         this.axes.validate = optionValidator(['off', 'abc', 'xyz'], 'axes');
         this.keepOrientation = new HTMLOption('boolean', false);
+        this.playbackDelay = new HTMLOption('number', 700);
 
         this.environments = {
             activated: new HTMLOption('boolean', true),
@@ -144,7 +147,6 @@ export class StructureOptions extends OptionsGroup {
             }
             delete settings.packedCell;
         }
-
         super.applySettings(settings);
     }
 
@@ -225,6 +227,7 @@ export class StructureOptions extends OptionsGroup {
 
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');
+        this.playbackDelay.bind(this.getModalElement('playback-delay'), 'value');
 
         this.environments.activated.bind(this.getModalElement('env-activated'), 'checked');
         this.environments.bgColor.bind(this.getModalElement('env-bg-color'), 'value');
