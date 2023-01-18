@@ -269,9 +269,34 @@ export class PropertiesMap {
 
         this._data = new MapData(properties);
 
+        const currentProperties = this._data[this._indexer.mode];
+        const currentPropertiesNames = Object.keys(currentProperties);
+        if (currentPropertiesNames.length < 2) {
+            // better error message in case the user forgot to give the
+            // environments in the data
+            if (this._indexer.mode === 'structure' && !this._indexer.hasEnvironments()) {
+                if (Object.keys(this._data['atom']).length >= 2) {
+                    throw Error(
+                        'could not find enough structure properties to display, \
+                        but there are atom properties. Please provide the \
+                        environment list to display them'
+                    );
+                }
+            }
+
+            let message = 'we need at least two properties to plot in the map';
+            if (currentPropertiesNames.length === 0) {
+                message += ', we have none';
+            } else {
+                message += `, we have only one: '${currentPropertiesNames[0]}'`;
+            }
+
+            throw Error(message);
+        }
+
         this._options = new MapOptions(
             this._root,
-            this._data[this._indexer.mode],
+            currentProperties,
             (rect) => this.positionSettingsModal(rect),
             config.settings
         );
