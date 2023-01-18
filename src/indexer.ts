@@ -178,14 +178,9 @@ export class EnvironmentIndexer {
         }
     }
 
-    /** Get the total number of environments currently being displayed */
-    public environmentsCount(): number {
-        if (this.mode === 'atom') {
-            assert(this._environments !== undefined);
-            return this._environments.length;
-        } else {
-            return this._structures.length;
-        }
+    /** Does this Indexer knows about atom-centered environments? */
+    public hasEnvironments(): boolean {
+        return this._environments !== undefined;
     }
 
     /** Get the total number of structures we know about */

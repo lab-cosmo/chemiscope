@@ -92,16 +92,7 @@ export class MapOptions extends OptionsGroup {
     ) {
         super();
         const propertiesName = Object.keys(properties);
-        if (propertiesName.length < 2) {
-            let message = 'we need at least two properties to plot in the map';
-            if (propertiesName.length === 0) {
-                message += ', we have none';
-            } else {
-                message += `, we have only one: '${propertiesName[0]}'`;
-            }
-
-            throw Error(message);
-        }
+        assert(propertiesName.length >= 2);
 
         this.x = new AxisOptions(propertiesName);
         this.y = new AxisOptions(propertiesName);
