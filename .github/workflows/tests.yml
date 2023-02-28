@@ -13,17 +13,21 @@ jobs:
       matrix:
         node-version: ['14.x', '16.x', '18.x']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
         # git describe during the build
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'npm'
       - name: configure access to git repositories in package-lock.json
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
-      - uses: bahmutov/npm-install@v1
+      - name: update npm
+        run: npm install -g npm
+      - name: install npm dependencies
+        run: npm ci
       - run: npm run build
       - run: sudo apt-get install xvfb
       # use xvfb to run the tests with a pseudo-display attached
@@ -37,13 +41,13 @@ jobs:
       matrix:
         python-version: ['3.7', '3.10']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
         # git describe during the build
         with:
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: configure access to git repositories in package-lock.json
@@ -62,9 +66,9 @@ jobs:
       matrix:
         python-version: ['3.10']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: configure access to git repositories in package-lock.json

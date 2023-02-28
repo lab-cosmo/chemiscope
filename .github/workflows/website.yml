@@ -10,21 +10,22 @@ jobs:
   build-website:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
         # git describe during the build
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-      - uses: actions/setup-python@v2
+          cache: 'npm'
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.10'
       - name: configure access to git repositories in package-lock.json
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
       - name: install npm dependencies
-        uses: bahmutov/npm-install@v1
+        run: npm ci
       - name: install python dependencies
         run: |
           python3 -m pip install -r docs/requirements.txt
