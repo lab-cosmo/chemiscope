@@ -27,7 +27,7 @@ jobs:
       - name: install dependencies
         run: |
           pip install wheel numpy tqdm jupyter nbconvert
-          pip install ase chemiscope sklearn skcosmo
+          pip install ase chemiscope scikit-learn skcosmo
           pip install git+https://github.com/lab-cosmo/librascal
       # Checks that the notebook can run without errors
       - name: run notebook
