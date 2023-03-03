@@ -37,6 +37,8 @@ export interface Dataset {
     environments?: Environment[];
     /** Settings for visualization of this dataset */
     settings?: Partial<Settings>;
+    /** Parameters of multidimensional properties */
+    parameters?: { [name: string]: Parameter };
 }
 
 /**
@@ -137,12 +139,16 @@ export interface Property {
      *
      * string values should represent classification results (category "A", "B"
      * or "C"); and numeric values should be use for everything else.
+     *
+     * it supports 2D properties, i.e. arrays.
      */
-    values: string[] | number[];
+    values: string[] | number[] | number[][];
     /** user-facing description of the property */
     description?: string;
     /** unit of the property values */
     units?: string;
+    /** parameter of multidimensional property */
+    parameters?: string[];
 }
 
 /**
@@ -157,6 +163,16 @@ export interface Environment {
     center: number;
     /** Spherical cutoff radius, expressed in Angströms */
     cutoff: number;
+}
+
+/** Parameters */
+export interface Parameter {
+    /** values of the parameter */
+    values: number[];
+    /** description of the parameter */
+    description?: string;
+    /** units of the elements in the property array */
+    units?: string;
 }
 
 /** Arbitrary javascript object, to be validated */
@@ -204,7 +220,12 @@ export function validateDataset(o: JsObject): void {
         throw Error('"properties" must be an object in the dataset');
     }
 
-    checkProperties(o.properties as Record<string, JsObject>, structureCount, envCount);
+    checkProperties(
+        o.properties as Record<string, JsObject>,
+        structureCount,
+        envCount,
+        o.parameters as Record<string, JsObject>
+    );
 }
 
 function checkMetadata(o: JsObject) {
@@ -311,7 +332,8 @@ export function checkStructure(s: JsObject): string {
 function checkProperties(
     properties: Record<string, JsObject>,
     structureCount: number,
-    envCount: number
+    envCount: number,
+    parameters?: Record<string, JsObject>
 ) {
     for (const key in properties) {
         const property = properties[key];
@@ -343,13 +365,61 @@ function checkProperties(
         }
 
         const initial = typeof property.values[0];
-        if (initial !== 'string' && initial !== 'number') {
-            throw Error(`'properties['${key}'].values' should contain string or number`);
+        if (
+            initial !== 'string' &&
+            initial !== 'number' &&
+            !isMultidimensional(property.values as number[][])
+        ) {
+            throw Error(
+                `'properties['${key}'].values' should contain string or number or an array of numbers`
+            );
         }
 
         for (const value of property.values) {
             if (typeof value !== initial) {
                 throw Error(`'properties['${key}'].values' should be of a single type`);
+            }
+        }
+
+        // few checks on multidimensional properties
+        if (isMultidimensional(property.values as number[][])) {
+            // check if parameters exists
+            if (!parameters) {
+                throw Error(`'parameters' should be provided for 'properties[${key}]'`);
+            }
+            // check if parameter keyword exists and has the right format
+            const propertyParameters = property.parameters as string[];
+            if (!isArrayString(propertyParameters)) {
+                throw Error(`'properties['${key}'].parameters' should be an array of strings`);
+            }
+            // check if the length of parameters is 1 TODO: remove when support for multiple parameters is ready
+            if (propertyParameters.length !== 1) {
+                throw Error(`'properties['${key}'].parameters' should contain a single parameter`);
+            }
+            // check if parameters of the property exists in the parameters
+            for (const value of propertyParameters) {
+                if (!Object.keys(parameters).includes(value)) {
+                    throw Error(
+                        `parameter '${value}' of 'properties['${key}']' does not appear in the list provided parameters`
+                    );
+                }
+            }
+            // check if the length of the first array matches the length of the parameters
+            const initialValues = property.values[0] as number[];
+            for (const value of propertyParameters) {
+                const parameterValues = parameters[value].values as number[];
+                if (initialValues.length !== parameterValues.length) {
+                    throw Error(
+                        `'properties['${key}'].values' and 'parameters['${value}'].values' should have the same length`
+                    );
+                }
+            }
+
+            // check if all the multidimensial array elements have the same length
+            if (!isConsistent(property.values as number[][])) {
+                throw Error(
+                    `'properties['${key}].values' should contain arrays of the same length`
+                );
             }
         }
 
@@ -399,4 +469,31 @@ function checkEnvironments(o: JsObject[], structures: (Structure | UserStructure
 
 function isPositiveInteger(number: number): boolean {
     return Number.isInteger(number) && number >= 0;
+}
+
+function isMultidimensional(array: number[][]): boolean {
+    // check if an array is 2D
+    let result = true;
+    for (const value of array) {
+        result = Array.isArray(value) && result;
+    }
+    return result;
+}
+
+function isConsistent(array: number[][]): boolean {
+    // check if the elements of 2D array have the same length
+    const initial = array[0];
+    let result = true;
+    for (const value of array) {
+        result = value.length === initial.length && result;
+    }
+    return result;
+}
+
+function isArrayString(array: string[]): boolean {
+    let result = true;
+    for (const value of array) {
+        result = typeof value === 'string' && result;
+    }
+    return result;
 }

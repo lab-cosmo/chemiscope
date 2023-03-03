@@ -87,7 +87,7 @@ function propertyToNumeric(name: string, property: Property): NumericProperty {
             units: property.units,
         };
     } else {
-        throw Error(`unexpected property type '${prop_type}'`);
+        throw Error(`unexpected property type '${prop_type}'`); // error thorwn even for 2D properties
     }
 }
 
