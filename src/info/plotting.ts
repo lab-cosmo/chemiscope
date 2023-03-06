@@ -30,7 +30,7 @@ export function plotMultidimProperties(
                 size: 12,
             },
             showgrid: false,
-            zeroline: true,
+            zeroline: false,
             showline: true,
             nticks: 5,
         },
