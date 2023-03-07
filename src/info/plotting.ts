@@ -8,7 +8,7 @@ import { Data } from '../map/plotly/plotly-scatter';
 export function plotMultidimProperties(
     x: number[],
     y: number[],
-    myDiv: HTMLElement,
+    root: HTMLElement,
     plotWidth: number,
     isStatic: boolean,
     xlabel?: string,
