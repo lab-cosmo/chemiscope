@@ -167,7 +167,12 @@ export interface Environment {
     cutoff: number;
 }
 
-/** Parameters */
+/**
+ * Parameters
+ *
+ * These are the parameters used to charachterize the multidimensional properties
+ * if they are provided
+ * */
 export interface Parameter {
     /** values of the parameter */
     values: number[];
@@ -222,11 +227,17 @@ export function validateDataset(o: JsObject): void {
         throw Error('"properties" must be an object in the dataset');
     }
 
+    if ('parameters' in o) {
+        if (!(typeof o.parameters === 'object' && o.parameters !== null)) {
+            throw Error('"parameters" must be an object in the dataset');
+        }
+    }
+
     checkProperties(
         o.properties as Record<string, JsObject>,
         structureCount,
         envCount,
-        o.parameters as Record<string, JsObject>
+        o.parameters as Record<string, JsObject> | undefined
     );
 }
 
@@ -335,7 +346,7 @@ function checkProperties(
     properties: Record<string, JsObject>,
     structureCount: number,
     envCount: number,
-    parameters?: Record<string, JsObject>
+    parameters?: Record<string, JsObject> | undefined
 ) {
     for (const key in properties) {
         const property = properties[key];
@@ -387,7 +398,9 @@ function checkProperties(
         if (isMultidimensional(property.values as number[][])) {
             // check if parameters exists
             if (!parameters) {
-                throw Error(`'parameters' should be provided for multidimensional properties '${key}'`);
+                throw Error(
+                    `'parameters' should be provided for multidimensional properties '${key}'`
+                );
             }
             // check if parameter keyword exists and has the right format
             const propertyParameters = property.parameters as string[];
@@ -399,8 +412,9 @@ function checkProperties(
                 throw Error(`'properties['${key}'].parameters' should contain a single parameter`);
             }
             // check if parameters of the property exists in the parameters
+            //for (const value of propertyParameters) {
             for (const value of propertyParameters) {
-                if (!Object.keys(parameters).includes(value)) {
+                if (!(value in parameters)) {
                     throw Error(
                         `parameter '${value}' of 'properties['${key}']' does not appear in the list provided parameters`
                     );
@@ -418,7 +432,7 @@ function checkProperties(
             }
 
             // check if all the multidimensial array elements have the same length
-            if (!isConsistent(property.values as number[][])) {
+            if (!isConsistent2DArray(property.values as number[][])) {
                 throw Error(
                     `'properties['${key}].values' should contain arrays of the same length`
                 );
@@ -492,10 +506,14 @@ function isConsistent2DArray(array: number[][]): boolean {
     return result;
 }
 
-function isArrayString(array: string[]): boolean {
-    let result = true;
-    for (const value of array) {
-        result = typeof value === 'string' && result;
+function isArrayString(array: unknown): boolean {
+    if (Array.isArray(array)) {
+        let result = true;
+        for (const value of array) {
+            result = typeof value === 'string' && result;
+        }
+        return result;
+    } else {
+        return false;
     }
-    return result;
 }

@@ -10,7 +10,6 @@ export function plotMultiDimensionalProperties(
     y: number[],
     root: HTMLElement,
     plotWidth: number,
-    isStatic: boolean,
     xlabel?: string,
     ylabel?: string
 ): void {
@@ -49,7 +48,6 @@ export function plotMultiDimensionalProperties(
         legend: {
             y: 0.5,
         },
-        autosize: true,
         margin: {
             l: plotWidth / 6.0,
             r: 0,
@@ -65,7 +63,7 @@ export function plotMultiDimensionalProperties(
     const config = {
         displayModeBar: false,
         responsive: true,
-        staticPlot: isStatic,
+        staticPlot: false,
     };
 
     const data = [trace] as Data[];

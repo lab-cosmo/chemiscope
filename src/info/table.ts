@@ -7,8 +7,16 @@ import assert from 'assert';
 
 import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
-import { plotMultidimProperties } from './plotting';
+import { plotMultiDimensionalProperties } from './plotting';
 
+/**
+ * TableProperty holds the objects to show the properties in the info bar
+ * values and cell are common between all types of properties
+ * parameter: the parameter associated to the multidimensional property,
+ *            acts as the xaxis in the plot
+ * xlabel: xlabel of the plot
+ * ylabel: ylabel of the plot
+ */
 interface TableProperty {
     values: number[] | string[] | number[][];
     cell: HTMLTableCellElement;
@@ -136,12 +144,11 @@ export class Table {
             } else {
                 // now we plot!!
                 const widthPlotCell = this._root.offsetWidth / 1.5;
-                plotMultidimProperties(
+                plotMultiDimensionalProperties(
                     s.parameter as number[],
                     s.values[index] as number[],
                     s.cell,
                     widthPlotCell,
-                    true,
                     s.xlabel,
                     s.ylabel
                 );
