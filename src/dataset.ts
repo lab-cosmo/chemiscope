@@ -141,7 +141,7 @@ export interface Property {
      * or "C"); and numeric values should be use for everything else.
      *
      * it supports 2D properties, i.e. arrays, with plotting them as the main objective,
-     * so: the first diemension corresponds to number of structures/atoms
+     * where the first dimension corresponds to number of structures/atoms
      * and the second dimension corresponds to the values
      */
     values: string[] | number[] | number[][];
