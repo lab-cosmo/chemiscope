@@ -3,7 +3,7 @@ import Plotly from '../map/plotly/plotly-scatter';
 import { Data } from '../map/plotly/plotly-scatter';
 
 /**
- * wrapper around scatter plots of Plotly.js for 2D properties
+ * wrapper around line plots of Plotly.js for 2D properties
  */
 export function plotMultidimProperties(
     x: number[],
