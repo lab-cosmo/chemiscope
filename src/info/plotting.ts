@@ -70,5 +70,5 @@ export function plotMultiDimensionalProperties(
 
     const data = [trace] as Data[];
 
-    void Plotly.newPlot(myDiv, data, layout, config);
+    void Plotly.newPlot(root, data, layout, config);
 }
