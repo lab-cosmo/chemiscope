@@ -482,7 +482,7 @@ function isMultidimensional(array: number[][]): boolean {
     return result;
 }
 
-function isConsistent(array: number[][]): boolean {
+function isConsistent2DArray(array: number[][]): boolean {
     // check if the elements of 2D array have the same length
     const initial = array[0];
     let result = true;
