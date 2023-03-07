@@ -387,7 +387,7 @@ function checkProperties(
         if (isMultidimensional(property.values as number[][])) {
             // check if parameters exists
             if (!parameters) {
-                throw Error(`'parameters' should be provided for 'properties[${key}]'`);
+                throw Error(`'parameters' should be provided for multidimensional properties '${key}'`);
             }
             // check if parameter keyword exists and has the right format
             const propertyParameters = property.parameters as string[];
