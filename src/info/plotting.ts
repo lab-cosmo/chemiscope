@@ -5,7 +5,7 @@ import { Data } from '../map/plotly/plotly-scatter';
 /**
  * wrapper around line plots of Plotly.js for 2D properties
  */
-export function plotMultidimProperties(
+export function plotMultiDimensionalProperties(
     x: number[],
     y: number[],
     root: HTMLElement,
