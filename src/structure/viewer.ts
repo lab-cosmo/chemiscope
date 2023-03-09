@@ -14,19 +14,6 @@ import { Environment, Settings, Structure } from '../dataset';
 
 import { StructureOptions } from './options';
 
-/** @hidden
- * Create a stylesheet in the main `document` with the given `rules`
- */
-function createStyleSheet(rules: string[]): CSSStyleSheet {
-    const styleSheet = new CSSStyleSheet();
-
-    for (const rule of rules) {
-        styleSheet.insertRule(rule);
-    }
-
-    return styleSheet;
-}
-
 /**
  * Add data from the `structure` to the `model`
  *
@@ -194,19 +181,18 @@ export class MoleculeViewer {
         );
         this._root.appendChild(this._cellInfo);
 
+        const noCellStyle = new CSSStyleSheet();
+        const noEnvsStyle = new CSSStyleSheet();
+
         this._styles = {
-            noCell: createStyleSheet([
-                `.chsp-hide-if-no-cell { display: none; }`,
-                `#structure-settings .chsp-hide-if-no-cell { display: none; }`,
-            ]),
-            noEnvs: createStyleSheet([
-                `#structure-settings .chsp-hide-if-no-environments { display: none; }`,
-            ]),
+            noCell: noCellStyle,
+            noEnvs: noEnvsStyle,
         };
 
         this._shadow.adoptedStyleSheets = [
             ...(containerElement.getRootNode() as ShadowRoot).adoptedStyleSheets,
-            ...Object.values(this._styles),
+            noCellStyle,
+            noEnvsStyle,
         ];
 
         // Options reuse the same style sheets so they must be created after these.
@@ -214,6 +200,12 @@ export class MoleculeViewer {
         this._options = new StructureOptions(this._root, (rect) =>
             this.positionSettingsModal(rect)
         );
+
+        this._options.modal.shadow.adoptedStyleSheets = [
+            ...this._options.modal.shadow.adoptedStyleSheets,
+            noCellStyle,
+            noEnvsStyle,
+        ];
 
         this._connectOptions();
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
@@ -335,9 +327,9 @@ export class MoleculeViewer {
         }
 
         if (structure.cell === undefined) {
-            this._styles.noCell.disabled = false;
+            this._styles.noCell.replaceSync('.chsp-hide-if-no-cell { display: none; }');
         } else {
-            this._styles.noCell.disabled = true;
+            this._styles.noCell.replaceSync('');
         }
         this._showSupercellInfo();
 
@@ -389,10 +381,10 @@ export class MoleculeViewer {
         this._current.model.addAtomSpecs(['index']);
 
         if (this._environments === undefined) {
-            this._styles.noEnvs.disabled = false;
+            this._styles.noEnvs.replaceSync('.chsp-hide-if-no-environments { display: none; }');
             this._changeHighlighted(undefined);
         } else {
-            this._styles.noEnvs.disabled = true;
+            this._styles.noEnvs.replaceSync('');
             this._changeHighlighted(options.highlight === undefined ? 0 : options.highlight);
 
             assert(this._environments.length === structure.size);
