@@ -14,6 +14,19 @@ import { Environment, Settings, Structure } from '../dataset';
 
 import { StructureOptions } from './options';
 
+const IS_SAFARI =
+    navigator.vendor !== undefined &&
+    navigator.vendor.indexOf('Apple') > -1 &&
+    navigator.userAgent.indexOf('CriOS') === -1 &&
+    navigator.userAgent.indexOf('FxiOS') === -1;
+
+/** We need to use the same opacity everywhere since 3Dmol uses 1 opacity per model */
+function defaultOpacity(): number {
+    // Safari seems to have an issue rendering transparent things with the same
+    // settings as FF/Chrome
+    return IS_SAFARI ? 0.87 : 0.7;
+}
+
 /**
  * Add data from the `structure` to the `model`
  *
@@ -853,7 +866,7 @@ export class MoleculeViewer {
             style.stick = {
                 // slightly smaller radius than the main style
                 radius: 0.149,
-                opacity: 0.7,
+                opacity: defaultOpacity(),
                 hidden: !this._options.bonds.value,
             };
 
@@ -861,7 +874,7 @@ export class MoleculeViewer {
                 style.sphere = {
                     // slightly smaller scale than the main style
                     scale: 0.219,
-                    opacity: 0.7,
+                    opacity: defaultOpacity(),
                 };
             }
         } else {
@@ -873,11 +886,11 @@ export class MoleculeViewer {
             // nothing to do
         } else if (bgColor === 'grey') {
             if (style.stick !== undefined) {
-                style.stick.color = 'grey';
+                style.stick.color = 0x808080;
             }
 
             if (style.sphere !== undefined) {
-                style.sphere.color = 'grey';
+                style.sphere.color = 0x808080;
             }
         } else {
             unreachable();
@@ -895,7 +908,7 @@ export class MoleculeViewer {
             sphere: {
                 scale: scale,
                 color: 'green',
-                opacity: 0.7,
+                opacity: defaultOpacity(),
             },
         };
     }
