@@ -124,6 +124,11 @@ export class StructureOptions extends OptionsGroup {
         return getByID(id, this._modal.shadow);
     }
 
+    /** Get the modal used for these settings */
+    public get modal(): Modal {
+        return this._modal;
+    }
+
     /**
      * Remove all HTML added by this {@link StructureSettings} in the current
      * document
