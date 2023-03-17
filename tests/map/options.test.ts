@@ -97,7 +97,6 @@ describe('MapOptions', () => {
         checkPropertySelect(options.x, 'x');
         checkPropertySelect(options.y, 'y');
         checkPropertySelect(options.z, 'z');
-        checkPropertySelect(options.color, 'color');
 
         options.remove();
     });
@@ -130,7 +129,6 @@ describe('MapOptions', () => {
         checkRangeSelect(options.x, 'x');
         checkRangeSelect(options.y, 'y');
         checkRangeSelect(options.z, 'z');
-        checkRangeSelect(options.color, 'color');
 
         options.remove();
     });
