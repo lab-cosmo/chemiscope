@@ -356,7 +356,6 @@ export abstract class OptionsGroup {
             }
             /* eslint-enable */
         });
-
         if (Object.keys(copy).length !== 0) {
             sendWarning(`ignored unknown settings '${JSON.stringify(copy)}'`);
         }

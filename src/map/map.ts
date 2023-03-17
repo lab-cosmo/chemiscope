@@ -658,14 +658,19 @@ export class PropertiesMap {
 
         // ======= color axis settings
         // setup initial state of the color settings
-        if (this._options.color.property.value === '') {
+        if (this._options.color.mode.value === '') {
+            this._options.color.property.disable();
             this._options.color.min.disable();
+            this._options.color.max.disable();
             this._colorReset.disabled = true;
 
             this._options.color.min.value = 0;
             this._options.color.max.value = 0;
         } else {
-            this._options.color.enable();
+            this._options.color.property.enable();
+            this._options.color.mode.enable();
+            this._options.color.min.enable();
+            this._options.color.max.enable();
             this._colorReset.disabled = false;
 
             const values = this._colors(0)[0] as number[];
@@ -678,7 +683,11 @@ export class PropertiesMap {
 
         this._options.color.property.onchange.push(() => {
             if (this._options.color.property.value !== '') {
-                this._options.color.enable();
+                this._options.color.property.enable();
+                this._options.color.mode.enable();
+                this._options.color.min.enable();
+                this._options.color.max.enable();
+
                 this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
@@ -698,7 +707,10 @@ export class PropertiesMap {
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
             } else {
-                this._options.color.disable();
+                this._options.color.mode.disable();
+                this._options.color.min.disable();
+                this._options.color.max.disable();
+
                 this._colorReset.disabled = true;
 
                 this._options.color.min.value = 0;
@@ -746,6 +758,21 @@ export class PropertiesMap {
             } as unknown as Layout);
         };
 
+        this._options.color.mode.onchange.push(() => {
+            const values = this._colors(0)[0] as number[];
+            const { min, max } = arrayMaxMin(values);
+            // We have to set max first and min second here to avoid sending
+            // a spurious warning in `colorRangeChange` below in case the
+            // new min is bigger than the old max.
+            this._options.color.max.value = max;
+            this._options.color.min.value = min;
+            this._setScaleStep([min, max], 'color');
+
+            this._relayout({
+                'coloraxis.colorbar.title.text': this._title(this._options.color.property.value),
+                'coloraxis.showscale': true,
+            } as unknown as Layout);
+        });
         this._options.color.min.onchange.push(() => {
             colorRangeChange('min');
         });
@@ -1034,13 +1061,29 @@ export class PropertiesMap {
     }
 
     private _title(name: string): string {
+        let propertyTitle = name;
         if (name !== '') {
             const units = this._property(name).units;
             if (units !== undefined) {
-                return name + ` / ${units}`;
+                propertyTitle = name + ` / ${units}`;
             }
         }
-        return name;
+        switch (this._options.color.mode.value) {
+            case 'inverse':
+                propertyTitle = '(' + propertyTitle + ')<sup>-1</sup>';
+                break;
+            case 'log':
+                propertyTitle = 'log(' + propertyTitle + ')';
+                break;
+            case 'sqrt':
+                propertyTitle = 'sqrt(' + propertyTitle + ')';
+                break;
+            case 'linear':
+                break;
+            default:
+                break;
+        }
+        return propertyTitle;
     }
 
     /**
@@ -1048,13 +1091,15 @@ export class PropertiesMap {
      * them if `trace === undefined`
      */
     private _colors(trace?: number): Array<string | string[] | number | number[]> {
-        let values;
+        let colors;
         if (this._options.hasColors()) {
-            values = this._property(this._options.color.property.value).values;
+            colors = this._property(this._options.color.property.value).values;
         } else {
-            values = 0.5;
+            colors = new Array(this._property(this._options.x.property.value).values.length).fill(
+                0.5
+            ) as number[];
         }
-
+        const values = this._options.calculateColors(colors);
         const selected = [];
         for (const data of this._selected.values()) {
             selected.push(data.color);

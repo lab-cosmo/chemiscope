@@ -67,9 +67,14 @@ export class MapOptions extends OptionsGroup {
     public x: AxisOptions;
     public y: AxisOptions;
     public z: AxisOptions;
-    public color: AxisOptions;
     public palette: HTMLOption<'string'>;
     public symbol: HTMLOption<'string'>;
+    public color: {
+        mode: HTMLOption<'string'>;
+        property: HTMLOption<'string'>;
+        min: HTMLOption<'number'>;
+        max: HTMLOption<'number'>;
+    };
     public size: {
         factor: HTMLOption<'number'>;
         mode: HTMLOption<'string'>;
@@ -98,7 +103,6 @@ export class MapOptions extends OptionsGroup {
         this.y = new AxisOptions(propertiesName);
         // For z and color '' is a valid value
         this.z = new AxisOptions(propertiesName.concat(['']));
-        this.color = new AxisOptions(propertiesName.concat(['']));
 
         this.symbol = new HTMLOption('string', '');
         const validSymbols = [''];
@@ -111,6 +115,15 @@ export class MapOptions extends OptionsGroup {
 
         this.palette = new HTMLOption('string', 'inferno');
         this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
+
+        this.color = {
+            mode: new HTMLOption('string', 'linear'),
+            property: new HTMLOption('string', ''),
+            min: new HTMLOption('number', 0),
+            max: new HTMLOption('number', 0),
+        };
+        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
+        this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
 
         this.size = {
             factor: new HTMLOption('number', 50),
@@ -168,6 +181,13 @@ export class MapOptions extends OptionsGroup {
                 size.property = '';
             }
         }
+        if ('color' in settings) {
+            const color = settings.color as Settings;
+            if ('scale' in color) {
+                color.mode = color.scale;
+                delete color.scale;
+            }
+        }
         super.applySettings(settings);
     }
 
@@ -196,6 +216,41 @@ export class MapOptions extends OptionsGroup {
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
+    }
+    /**
+     * Get the values to use as colors with the given plotly `trace`, or
+     * all of them if `trace === undefined`.
+     */
+    public calculateColors(rawColors: number[]): number[] {
+        let scaleMode = this.color.mode.value;
+        const { min, max } = arrayMaxMin(rawColors);
+        const values = rawColors.map((v: number) => {
+            let scaled = 0.5; // default
+            if (max === min) {
+                scaleMode = 'fixed';
+            }
+            switch (scaleMode) {
+                case 'inverse':
+                    scaled = 1.0 / v;
+                    break;
+                case 'log':
+                    scaled = Math.log(v);
+                    break;
+                case 'sqrt':
+                    scaled = Math.sqrt(v);
+                    break;
+                case 'linear':
+                    scaled = 1.0 * v;
+                    break;
+                default:
+                    // corresponds to 'constant'
+                    scaled = 0.5;
+                    break;
+            }
+            // since we are using scalemode: 'area', square the scaled value
+            return scaled;
+        });
+        return values;
     }
 
     /**
@@ -398,6 +453,7 @@ export class MapOptions extends OptionsGroup {
             selectColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectColorProperty, 'value');
+        this.color.mode.bind(this.getModalElement('map-color-scale'), 'value');
         this.color.min.bind(this.getModalElement('map-color-min'), 'value');
         this.color.max.bind(this.getModalElement('map-color-max'), 'value');
 

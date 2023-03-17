@@ -144,12 +144,20 @@
                             <label class="input-group-text" for="map-color-max">max:</label>
                             <input id="map-color-max" class="form-control" type="number" step="any" />
                         </div>
-
-                        <div class="chsp-map-options" style="grid-column: auto / span 3; margin-left: -5.5em">
+                        <div class="chsp-map-extra-options" style="grid-column: auto / span 1.5">
                             <div class="input-group input-group-sm">
                                 <label class="input-group-text" for="map-color-palette" style="width: 6em">palette:</label>
-                                <select id="map-color-palette" class="form-select" style="width: 13em"></select>
+                                <select id="map-color-palette" class="form-select" style="width: 2fr"></select>
                             </div>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <label class="input-group-text" for="map-color-scale">color scale:</label>
+                            <select id="map-color-scale" class="form-select" disabled>
+                                <option value="linear">linear</option>
+                                <option value="log">log</option>
+                                <option value="sqrt">sqrt</option>
+                                <option value="inverse">inverse</option>
+                            </select>
                         </div>
                     </div>
 
