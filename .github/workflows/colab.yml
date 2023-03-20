@@ -14,7 +14,7 @@ jobs:
       - name: wget-notebook
         uses: wei/wget@v1
         with:
-          args: -O downloaded_file.ipynb 'https://docs.google.com/uc?export=download&id='1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu
+          args: -O downloaded_file.ipynb 'https://docs.google.com/uc?export=download&id=1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu'
       # Pulls an example dataset from rascaline's repository
       - name: wget-dataset
         uses: wei/wget@v1
@@ -27,7 +27,7 @@ jobs:
       - name: install dependencies
         run: |
           pip install wheel numpy tqdm jupyter nbconvert
-          pip install ase chemiscope scikit-learn skcosmo
+          pip install ase chemiscope scikit-learn skmatter
           pip install git+https://github.com/lab-cosmo/librascal
       # Checks that the notebook can run without errors
       - name: run notebook
