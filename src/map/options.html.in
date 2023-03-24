@@ -3,7 +3,12 @@
         <div class="modal-content">
             <div class="modal-header chsp-modal-header">
                 <h4 class="modal-title">Map settings</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
             <div class="modal-body">
                 <h5 class="chsp-settings-section-title">Data</h5>
@@ -32,12 +37,16 @@
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-x-min-label" class="input-group-text" for="map-x-min">min:</label>
+                            <label id="map-x-min-label" class="input-group-text" for="map-x-min">
+                                min:
+                            </label>
                             <input id="map-x-min" class="form-control" type="number" step="any" />
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-x-max-label" class="input-group-text" for="map-x-max">max:</label>
+                            <label id="map-x-max-label" class="input-group-text" for="map-x-max">
+                                max:
+                            </label>
                             <input id="map-x-max" class="form-control" type="number" step="any" />
                         </div>
                     </div>
@@ -66,18 +75,22 @@
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-y-min-label" class="input-group-text" for="map-y-min">min:</label>
+                            <label id="map-y-min-label" class="input-group-text" for="map-y-min">
+                                min:
+                            </label>
                             <input id="map-y-min" class="form-control" type="number" step="any" />
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-y-max-label" class="input-group-text" for="map-y-max">max:</label>
+                            <label id="map-y-max-label" class="input-group-text" for="map-y-max">
+                                max:
+                            </label>
                             <input id="map-y-max" class="form-control" type="number" step="any" />
                         </div>
                     </div>
 
                     <div class="input-group input-group-sm">
-                        <label class="input-group-text" for="map-z-property">z axis:</label>
+                        <label class="input-group-text" for="map-z-property"> z axis: </label>
                         <select id="map-z-property" class="form-select">
                             <option value="">none</option>
                         </select>
@@ -94,7 +107,7 @@
 
                     <div class="collapse chsp-map-extra-options" id="map-z-extra">
                         <div class="input-group input-group-sm">
-                            <label class="input-group-text" for="map-z-scale">scale:</label>
+                            <label class="input-group-text" for="map-z-scale"> scale: </label>
                             <select id="map-z-scale" class="form-select" disabled>
                                 <option value="linear">linear</option>
                                 <option value="log">log</option>
@@ -102,13 +115,29 @@
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-z-min-label" class="input-group-text" for="map-z-min">min:</label>
-                            <input id="map-z-min" class="form-control" type="number" step="any" disabled />
+                            <label id="map-z-min-label" class="input-group-text" for="map-z-min">
+                                min:
+                            </label>
+                            <input
+                                id="map-z-min"
+                                class="form-control"
+                                type="number"
+                                step="any"
+                                disabled
+                            />
                         </div>
 
                         <div class="input-group input-group-sm">
-                            <label id="map-z-max-label" class="input-group-text" for="map-z-max">max:</label>
-                            <input id="map-z-max" class="form-control" type="number" step="any" disabled />
+                            <label id="map-z-max-label" class="input-group-text" for="map-z-max">
+                                max:
+                            </label>
+                            <input
+                                id="map-z-max"
+                                class="form-control"
+                                type="number"
+                                step="any"
+                                disabled
+                            />
                         </div>
                     </div>
                 </div>
@@ -132,32 +161,64 @@
                         more options
                     </button>
 
-                    <div class="collapse chsp-map-extra-options" id="map-color-extra">
-                        <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%">reset</button>
-
-                        <div class="input-group input-group-sm">
-                            <label class="input-group-text" for="map-color-min">min:</label>
-                            <input id="map-color-min" class="form-control" type="number" step="any" />
-                        </div>
-
-                        <div class="input-group input-group-sm">
-                            <label class="input-group-text" for="map-color-max">max:</label>
-                            <input id="map-color-max" class="form-control" type="number" step="any" />
-                        </div>
-                        <div class="chsp-map-extra-options" style="grid-column: auto / span 1.5">
+                    <div
+                        class="collapse"
+                        id="map-color-extra"
+                        style="grid-column: auto / span 2; margin-top: 0.3em"
+                    >
+                        <div
+                            class="chsp-map-extra-options"
+                            style="grid-template-columns: 3fr 3fr 1fr"
+                        >
                             <div class="input-group input-group-sm">
-                                <label class="input-group-text" for="map-color-palette" style="width: 6em">palette:</label>
-                                <select id="map-color-palette" class="form-select" style="width: 2fr"></select>
+                                <label class="input-group-text" for="map-color-min">min:</label>
+                                <input
+                                    id="map-color-min"
+                                    class="form-control"
+                                    type="number"
+                                    step="any"
+                                />
                             </div>
+
+                            <div class="input-group input-group-sm">
+                                <label class="input-group-text" for="map-color-max">max:</label>
+                                <input
+                                    id="map-color-max"
+                                    class="form-control"
+                                    type="number"
+                                    step="any"
+                                />
+                            </div>
+
+                            <button
+                                class="btn btn-sm btn-secondary"
+                                type="button"
+                                id="map-color-reset"
+                                style="width: 100%"
+                            >
+                                reset
+                            </button>
                         </div>
-                        <div class="input-group input-group-sm">
-                            <label class="input-group-text" for="map-color-scale">color scale:</label>
-                            <select id="map-color-scale" class="form-select" disabled>
-                                <option value="linear">linear</option>
-                                <option value="log">log</option>
-                                <option value="sqrt">sqrt</option>
-                                <option value="inverse">inverse</option>
-                            </select>
+
+                        <div class="chsp-map-extra-options" style="grid-template-columns: 1fr 1fr">
+                            <div class="input-group input-group-sm">
+                                <label class="input-group-text" for="map-color-palette">
+                                    palette:
+                                </label>
+                                <select id="map-color-palette" class="form-select"></select>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <label class="input-group-text" for="map-color-scale">
+                                    color scale:
+                                </label>
+                                <select id="map-color-scale" class="form-select" disabled>
+                                    <option value="linear">linear</option>
+                                    <option value="log">log</option>
+                                    <option value="sqrt">sqrt</option>
+                                    <option value="inverse">inverse</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -177,7 +238,11 @@
                         more options
                     </button>
 
-                    <div class="collapse chsp-map-extra-options" id="map-size-extra" style="grid-template-columns: 1fr 1fr">
+                    <div
+                        class="collapse chsp-map-extra-options"
+                        id="map-size-extra"
+                        style="grid-template-columns: 1fr 1fr"
+                    >
                         <div class="input-group input-group-sm">
                             <label class="input-group-text" for="map-size-scale">size scale:</label>
                             <select id="map-size-scale" class="form-select" disabled>
@@ -188,11 +253,28 @@
                             </select>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" id="map-size-reverse" type="checkbox" disabled />
-                            <label class="form-check-label" for="map-size-reverse" title="reverse sizes">reverse sizes</label>
+                            <input
+                                class="form-check-input"
+                                id="map-size-reverse"
+                                type="checkbox"
+                                disabled
+                            />
+                            <label
+                                class="form-check-label"
+                                for="map-size-reverse"
+                                title="reverse sizes"
+                            >
+                                reverse sizes
+                            </label>
                         </div>
                         <div class="input-group input-group-sm" style="grid-column: auto / span 2">
-                            <label class="input-group-text" for="map-size-factor" style="min-width: 6em">factor:</label>
+                            <label
+                                class="input-group-text"
+                                for="map-size-factor"
+                                style="min-width: 6em"
+                            >
+                                factor:
+                            </label>
                             <input
                                 type="range"
                                 min="1"
