@@ -87,7 +87,8 @@ function propertyToNumeric(name: string, property: Property): NumericProperty | 
             units: property.units,
         };
     } else if (Array.isArray(property.values[0])) {
-        // left blank to avoid raising an error with multidimensionla properties
+        // left blank to avoid raising an error with multidimensional properties
+        return undefined;
     } else {
         throw Error(`unexpected property type '${prop_type}'`); // error thorwn even for 2D properties
     }
