@@ -169,10 +169,10 @@ export interface Environment {
 }
 
 /**
- * Parameters are used to describe multidimensional properties. 
+ * Parameters are used to describe multidimensional properties.
  *
  * The first dimension of a multidimensional property always corresponds to
- * structure/atoms in the dataset, and additional dimensions should be described 
+ * structure/atoms in the dataset, and additional dimensions should be described
  * with a `Parameter`.
  */
 export interface Parameter {
