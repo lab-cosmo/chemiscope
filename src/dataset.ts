@@ -140,9 +140,10 @@ export interface Property {
      * string values should represent classification results (category "A", "B"
      * or "C"); and numeric values should be use for everything else.
      *
-     * it supports 2D properties, i.e. arrays, with plotting them as the main objective,
-     * where the first dimension corresponds to number of structures/atoms
-     * and the second dimension corresponds to the values
+     * 2D properties are also supported, with the goal of displaying one curve
+     * for each atom/structure. In this case, the first dimension of the 2D
+     * array corresponds to number of structures/atoms and the second dimension
+     * corresponds to the values for each structure/atom.
      */
     values: string[] | number[] | number[][];
     /** user-facing description of the property */
