@@ -90,7 +90,7 @@ function propertyToNumeric(name: string, property: Property): NumericProperty | 
         // left blank to avoid raising an error with multidimensional properties
         return undefined;
     } else {
-        throw Error(`unexpected property type '${prop_type}'`); // error thorwn even for 2D properties
+        throw Error(`unexpected property type '${prop_type}'`);
     }
 }
 
