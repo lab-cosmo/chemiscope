@@ -174,12 +174,12 @@ export interface Environment {
  * if they are provided
  * */
 export interface Parameter {
-    /** values of the parameter */
-    values: number[];
-    /** description of the parameter */
-    description?: string;
+    /** name of the parameter */
+    name?: string;
     /** units of the elements in the property array */
     units?: string;
+    /** values of the parameter */
+    values: number[];
 }
 
 /** Arbitrary javascript object, to be validated */
