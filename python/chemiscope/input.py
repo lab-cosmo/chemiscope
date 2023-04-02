@@ -87,7 +87,7 @@ def create_input(
                 # optional: property description
                 'description': 'a random property for example',
                 # optional: parameter keyword if the property is multidimensional
-                'paramters': ['name_parameter'],
+                'parameters': ['name_parameter'],
             }
         }
 
@@ -111,6 +111,7 @@ def create_input(
     It is possible to pass 2D properties to be plotted in the info bar by
     passing a 3D numpy array of values having the shape `(n_samples, 1, n_parameters)`
     and ensuring the corresponding parameter exists. The previous example becomes:
+
     .. code-block:: python
 
         properties = {
@@ -129,6 +130,7 @@ def create_input(
     This input describes a 2D property `cheese` with 300 samples and of dimension 4
     designated by the parameter `origin`. In this case, we also need to provide the
     parameters dictionary:
+
     .. code-block:: python
 
         parameters = {
