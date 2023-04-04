@@ -40,7 +40,7 @@ contains the following fields and values:
                 // or array of numbers.
                 // string properties are assumed to represent categories of
                 // data.
-                // the first diemnsion of the multidimensional property corresponds
+                // the first dimension of the multidimensional property corresponds
                 // to the number atoms/structures, the second dimension corresponds
                 // to the size of the array of values per atom/structure. 
                 "values": [1, 2, 3, ...] | ["first", "second", "first", ...] | [[1, 3, 5], [2, 4, 6], ...],
