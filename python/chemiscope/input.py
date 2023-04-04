@@ -108,7 +108,7 @@ def create_input(
     by comparing the numbers atoms and structures in the dataset to the
     length of provided list/np.ndarray.
 
-    It is possible to pass 2D properties to be plotted in the info bar by
+    It is possible to pass 2D properties to be displayed as curves in the info panel by
     passing a 3D numpy array of values having the shape `(n_samples, 1, n_parameters)`
     and ensuring the corresponding parameter exists. The previous example becomes:
 
