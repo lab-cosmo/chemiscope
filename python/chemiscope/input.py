@@ -368,7 +368,7 @@ def write_input(
                 parameters: ["xaxis"],
             }
         }
-        multidim_parameters = {
+        multidimensional_parameters = {
             "xaxis": {
                 "values": energy_grid
                 "units": "eV"
