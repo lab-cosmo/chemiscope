@@ -123,7 +123,7 @@ def create_input(
                 # optional: property description
                 'description': 'a random property for example',
                 # optional: parameter keyword if the property is multidimensional
-                'paramters': ['color'],
+                'parameter': ['color'],
             }
         }
 
