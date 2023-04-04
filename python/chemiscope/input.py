@@ -231,7 +231,6 @@ def create_input(
             param["values"] = _typetransform(
                 list(parameters[key]["values"]), f"parameter {key}"
             )
-            # I don't check if the lengths make sense wrt to a property
 
             if "name" in parameters[key]:
                 if not isinstance(parameters[key]["name"], str):
