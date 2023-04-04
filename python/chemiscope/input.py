@@ -46,7 +46,7 @@ def create_input(
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
-    :param dict parameters: optional dictionary of parameters of multidimensional
+    :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
 
     The dataset metadata should be given in the ``meta`` dictionary, the
