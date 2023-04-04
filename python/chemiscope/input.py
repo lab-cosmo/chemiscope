@@ -117,13 +117,13 @@ def create_input(
         properties = {
             'cheese': {
                 'target': 'atom',
-                'values': np.zeros((300, 1, 4)),
+                'values': np.zeros((300, 4)),
                 # optional: property unit
                 'unit': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
                 # optional: parameter keyword if the property is multidimensional
-                'parameter': ['color'],
+                'parameters': ['color'],
             }
         }
 
@@ -206,7 +206,12 @@ def create_input(
     if properties is not None:
         properties = _expand_properties(properties, n_structures, n_atoms)
         for name, value in properties.items():
-            data["properties"].update(_linearize(name, value, n_structures, n_atoms))
+            multidimensional = False
+            if "parameters" in value:
+                multidimensional = True
+            data["properties"].update(
+                _linearize(name, value, n_structures, n_atoms, multidimensional)
+            )
 
     if parameters is not None:
         if not isinstance(parameters, dict):
@@ -220,7 +225,8 @@ def create_input(
                 raise ValueError(
                     f"expecting parameter {key} to be of type 'dict' not type {type(parameters[key])}"
                 )
-            if not isinstance(parameters[key]["values"], np.ndarray):
+
+            if not isinstance(np.asarray(parameters[key]["values"]), np.ndarray):
                 raise ValueError(
                     f"expecting the 'values' of parameter {key} to be of type 'numpy.ndarray' not {type(parameters[key]['values'])}"
                 )
@@ -559,11 +565,11 @@ def _expand_properties(short_properties, n_structures, n_atoms):
     return properties
 
 
-def _linearize(name, property, n_structures, n_centers):
+def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     """
     Transform a single property dict (containing "value", "target", "units",
-    "description") with potential multi-dimensional "values" key to data that
-    chemiscope can load.
+    "description", "parameters") with potential multi-dimensional "values" key
+    to data that chemiscope can load.
 
     Multi-dimensional "value" generate multiple properties named "XXX [1]", "XXX
     [2]", "XXX [3]", etc. Data in "values" are converted to either string or
@@ -574,51 +580,54 @@ def _linearize(name, property, n_structures, n_centers):
     :param property: dictionary containing the property data and metadata
     :param n_structures: total number of structures, to validate the array sizes
     :param n_centers: total number of atoms, to validate the array sizes
+    :param param: describes if the property is multisimensional to be plotted
     """
     _validate_property(name, property)
 
     data = {}
-    if isinstance(property["values"], list):
-        data[name] = {
-            "target": property["target"],
-            "values": _typetransform(property["values"], name),
-        }
-    elif isinstance(property["values"], np.ndarray):
-        if len(property["values"].shape) == 1:
+    if not multidimensional:
+        if isinstance(property["values"], list):
             data[name] = {
                 "target": property["target"],
-                "values": _typetransform(list(property["values"]), name),
+                "values": _typetransform(property["values"], name),
             }
-        elif len(property["values"].shape) == 2:
-            if property["values"].shape[1] == 1:
+        elif isinstance(property["values"], np.ndarray):
+            if len(property["values"].shape) == 1:
                 data[name] = {
                     "target": property["target"],
                     "values": _typetransform(list(property["values"]), name),
                 }
-            else:
-                for i in range(property["values"].shape[1]):
-                    data[f"{name}[{i + 1}]"] = {
+            elif len(property["values"].shape) == 2:
+                if property["values"].shape[1] == 1:
+                    data[name] = {
                         "target": property["target"],
-                        "values": _typetransform(list(property["values"][:, i]), name),
+                        "values": _typetransform(list(property["values"]), name),
                     }
-        elif len(property["values"].shape) == 3:
-            if property["values"].shape[1] == 1:
-                assert isinstance(property["parameters"][0], str)
-
-                values = []
-                for i in range(property["values"].shape[0]):
-                    values += [_typetransform(list(property["values"][i, 0]), name)]
-                data[name] = {
-                    "target": property["target"],
-                    "values": values,
-                    "parameters": property["parameters"],
-                }
+                else:
+                    for i in range(property["values"].shape[1]):
+                        data[f"{name}[{i + 1}]"] = {
+                            "target": property["target"],
+                            "values": _typetransform(
+                                list(property["values"][:, i]), name
+                            ),
+                        }
+            else:
+                raise Exception("unsupported ndarray property")
         else:
-            raise Exception("unsupported ndarray property")
+            raise Exception(
+                f"unknown type ({type(property['values'])}) for property '{name}'"
+            )
     else:
-        raise Exception(
-            f"unknown type ({type(property['values'])}) for property '{name}'"
-        )
+        assert isinstance(property["parameters"][0], str)
+
+        values = []
+        for i in range(len(property["values"])):
+            values += [_typetransform(list(property["values"][i]), name)]
+        data[name] = {
+            "target": property["target"],
+            "values": values,
+            "parameters": property["parameters"],
+        }
 
     # get property metadata
     if "units" in property:
