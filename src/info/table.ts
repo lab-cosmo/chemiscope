@@ -108,13 +108,13 @@ export class Table {
                 if (parameterUnits !== undefined) {
                     xlabel += `/${parameterUnits}`;
                 }
-                
+
                 const plotHolder = document.createElement('div');
                 plotHolder.style.display = 'block';
                 plotHolder.style.width = '100%';
 
                 cell.appendChild(plotHolder);
-                
+
                 this._properties.push({
                     cell: cell,
                     values: properties[name].values,
@@ -130,8 +130,7 @@ export class Table {
                 button.onclick = () => {
                     if (plotHolder.style.display === 'block') {
                         plotHolder.style.display = 'none';
-                    }
-                    else {
+                    } else {
                         plotHolder.style.display = 'block';
                     }
                 };
@@ -165,9 +164,9 @@ export class Table {
             } else {
                 // now we plot!!
                 const widthPlotCell = this._root.offsetWidth / 1.5;
-                
+
                 assert(s.cell.firstElementChild !== null);
-                
+
                 plotMultiDimensionalProperties(
                     s.parameter as number[],
                     s.values[index] as number[],
