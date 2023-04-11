@@ -496,6 +496,6 @@
 .chsp-toggle-plot-btn {
     display: block;
     position: relative;
-    top: 3px;
-    left: -2px;
+    margin-top: 3px;
+    margin-bottom: 1px;
 }
