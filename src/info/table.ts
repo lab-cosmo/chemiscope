@@ -8,6 +8,7 @@ import assert from 'assert';
 import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
 import { plotMultiDimensionalProperties } from './plotting';
+import { getByID } from '../utils';
 
 /**
  * TableProperty holds the objects to show the properties in the info bar
@@ -93,7 +94,6 @@ export class Table {
             tr.appendChild(td);
             const cell = document.createElement('td');
             tr.appendChild(cell);
-
             tbody.appendChild(tr);
 
             const propertyParameter = properties[name].parameters;
@@ -108,6 +108,13 @@ export class Table {
                 if (parameterUnits !== undefined) {
                     xlabel += `/${parameterUnits}`;
                 }
+                
+                const plotHolder = document.createElement('div');
+                plotHolder.style.display = 'block';
+                plotHolder.style.width = '100%';
+
+                cell.appendChild(plotHolder);
+                
                 this._properties.push({
                     cell: cell,
                     values: properties[name].values,
@@ -115,6 +122,20 @@ export class Table {
                     xlabel: xlabel,
                     ylabel: title,
                 });
+
+                // add show/hide button to td
+                const button = document.createElement('button');
+                button.classList.add('btn', 'btn-secondary', 'btn-sm', 'chsp-toggle-plot-btn');
+                button.textContent = 'Show/Hide';
+                button.onclick = () => {
+                    if (plotHolder.style.display === 'block') {
+                        plotHolder.style.display = 'none';
+                    }
+                    else {
+                        plotHolder.style.display = 'block';
+                    }
+                };
+                td.appendChild(button);
             }
         }
         this.show({ environment: 0, structure: 0, atom: 0 });
@@ -144,10 +165,13 @@ export class Table {
             } else {
                 // now we plot!!
                 const widthPlotCell = this._root.offsetWidth / 1.5;
+                
+                assert(s.cell.firstElementChild !== null);
+                
                 plotMultiDimensionalProperties(
                     s.parameter as number[],
                     s.values[index] as number[],
-                    s.cell,
+                    s.cell.firstElementChild as HTMLElement,
                     widthPlotCell,
                     s.xlabel,
                     s.ylabel
