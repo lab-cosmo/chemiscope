@@ -28,6 +28,7 @@ def create_input(
     properties=None,
     environments=None,
     settings=None,
+    parameters=None,
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by
@@ -45,6 +46,8 @@ def create_input(
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
+    :param dict parameters: optional dictionary of parameters for multidimensional
+        properties, see below
 
     The dataset metadata should be given in the ``meta`` dictionary, the
     possible keys are:
@@ -96,12 +99,48 @@ def create_input(
 
         properties = {
             'cheese':  np.zeros((300, 4)),
-            }
         }
 
     In this case, the type of property (structure or atom) would be deduced
     by comparing the numbers atoms and structures in the dataset to the
     length of provided list/np.ndarray.
+
+    Finally, one can give 2D properties to be displayed as curves in the info
+    panel by setting a ``parameters`` in the property, and giving the corresponding
+    ``parameters`` values to this function. The previous example becomes:
+
+    .. code-block:: python
+
+        properties = {
+            'cheese': {
+                'target': 'atom',
+                'values': np.zeros((300, 4)),
+                # optional: property unit
+                'unit': 'random / fs',
+                # optional: property description
+                'description': 'a random property for example',
+                'parameters': ['origin'],
+            }
+        }
+
+    This input describes a 2D property ``cheese`` with 300 samples and 4 values
+    taken by the ``origin`` parameter. We also need to provide the
+    ``parameters`` values to this function:
+
+    .. code-block:: python
+
+        parameters = {
+            'origin' : {
+                # an array of numbers containing the values of the parameter
+                # the size should correspond to the second dimension
+                # of the corresponding multidimensional property
+                'values': [0, 1, 2, 3]
+                # optional free-form description of the parameter as a string
+                'name': 'a short description of this parameter'
+                # optional units of the values in the values array
+                'units': 'eV'
+            }
+        }
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
@@ -163,7 +202,56 @@ def create_input(
     if properties is not None:
         properties = _expand_properties(properties, n_structures, n_atoms)
         for name, value in properties.items():
-            data["properties"].update(_linearize(name, value, n_structures, n_atoms))
+            multidimensional = False
+            if "parameters" in value:
+                multidimensional = True
+            data["properties"].update(
+                _linearize(name, value, n_structures, n_atoms, multidimensional)
+            )
+
+    if parameters is not None:
+        if not isinstance(parameters, dict):
+            raise ValueError(
+                f"expecting parameters to be a of type 'dict' not '{type(parameters)}'"
+            )
+        data["parameters"] = {}
+        for key in parameters:
+            param = {}
+            if not isinstance(parameters[key], dict):
+                raise ValueError(
+                    f"expecting parameter {key} to be of type 'dict' not "
+                    f"'{type(parameters[key])}'"
+                )
+
+            if not isinstance(np.asarray(parameters[key]["values"]), np.ndarray):
+                raise ValueError(
+                    f"expecting the 'values' of parameter {key} to be of type "
+                    f"'numpy.ndarray' not '{type(parameters[key]['values'])}'"
+                )
+            if len(parameters[key]["values"].shape) != 1:
+                raise ValueError(
+                    f"the 'values' of parameter {key} should be a 1D numpy array"
+                )
+            param["values"] = _typetransform(
+                list(parameters[key]["values"]), f"parameter {key}"
+            )
+
+            if "name" in parameters[key]:
+                if not isinstance(parameters[key]["name"], str):
+                    raise ValueError(
+                        f"optional 'name': {parameters[key]['name']} of "
+                        f"parameter {key} should a string"
+                    )
+                param["name"] = parameters[key]["name"]
+
+            if "units" in parameters[key]:
+                if not isinstance(parameters[key]["units"], str):
+                    raise ValueError(
+                        f"optional 'units': {parameters[key]['units']} of "
+                        f"parameter {key} should a string"
+                    )
+                param["units"] = parameters[key]["units"]
+            data["parameters"][key] = param
 
     # Check to tell the user they might have forgotten some properties coming
     # from the frames (that chemiscope used to automatically extract). This code
@@ -208,6 +296,7 @@ def write_input(
     properties=None,
     environments=None,
     settings=None,
+    parameters=None,
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and
@@ -225,6 +314,8 @@ def write_input(
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
+    :param dict parameters: optional dictionary of parameters of multidimensional
+        properties
 
     This function uses :py:func:`create_input` to generate the input data, see
     the documentation of this function for more information.
@@ -272,8 +363,26 @@ def write_input(
             only=["temperature", "classification"]
         )
 
+        # additional multidimensional properties to be plotted
+        dos = np.loadtxt(...) # load the 2D data
+        dos_energy_grid = np.loadtxt(...)
+        multidimensional_properties = {
+            "DOS": {
+                target: "structure",
+                values: dos,
+                parameters: ["energy"],
+            }
+        }
+        multidimensional_parameters = {
+            "energy": {
+                "values": dos_energy_grid
+                "units": "eV"
+            }
+        }
+
         # merge all properties together
         properties.extend(frame_properties)
+        properties.extend(multidimensional_properties)
 
         chemiscope.write_input(
             path="chemiscope.json.gz",
@@ -281,6 +390,8 @@ def write_input(
             properties=properties,
             # This is required to display properties with `target: "atom"`
             environments=chemiscope.all_atomic_environments(frames),
+            # this is necessary to plot the multidimensional data
+            parameters=multidimensional_parameters,
         )
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
@@ -296,6 +407,7 @@ def write_input(
         properties=properties,
         environments=environments,
         settings=settings,
+        parameters=parameters,
     )
 
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
@@ -452,11 +564,11 @@ def _expand_properties(short_properties, n_structures, n_atoms):
     return properties
 
 
-def _linearize(name, property, n_structures, n_centers):
+def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     """
     Transform a single property dict (containing "value", "target", "units",
-    "description") with potential multi-dimensional "values" key to data that
-    chemiscope can load.
+    "description", "parameters") with potential multi-dimensional "values" key
+    to data that chemiscope can load.
 
     Multi-dimensional "value" generate multiple properties named "XXX [1]", "XXX
     [2]", "XXX [3]", etc. Data in "values" are converted to either string or
@@ -467,39 +579,54 @@ def _linearize(name, property, n_structures, n_centers):
     :param property: dictionary containing the property data and metadata
     :param n_structures: total number of structures, to validate the array sizes
     :param n_centers: total number of atoms, to validate the array sizes
+    :param param: describes if the property is multisimensional to be plotted
     """
     _validate_property(name, property)
 
     data = {}
-    if isinstance(property["values"], list):
-        data[name] = {
-            "target": property["target"],
-            "values": _typetransform(property["values"], name),
-        }
-    elif isinstance(property["values"], np.ndarray):
-        if len(property["values"].shape) == 1:
+    if not multidimensional:
+        if isinstance(property["values"], list):
             data[name] = {
                 "target": property["target"],
-                "values": _typetransform(list(property["values"]), name),
+                "values": _typetransform(property["values"], name),
             }
-        elif len(property["values"].shape) == 2:
-            if property["values"].shape[1] == 1:
+        elif isinstance(property["values"], np.ndarray):
+            if len(property["values"].shape) == 1:
                 data[name] = {
                     "target": property["target"],
                     "values": _typetransform(list(property["values"]), name),
                 }
-            else:
-                for i in range(property["values"].shape[1]):
-                    data[f"{name}[{i + 1}]"] = {
+            elif len(property["values"].shape) == 2:
+                if property["values"].shape[1] == 1:
+                    data[name] = {
                         "target": property["target"],
-                        "values": _typetransform(list(property["values"][:, i]), name),
+                        "values": _typetransform(list(property["values"]), name),
                     }
+                else:
+                    for i in range(property["values"].shape[1]):
+                        data[f"{name}[{i + 1}]"] = {
+                            "target": property["target"],
+                            "values": _typetransform(
+                                list(property["values"][:, i]), name
+                            ),
+                        }
+            else:
+                raise Exception("unsupported ndarray property")
         else:
-            raise Exception("unsupported ndarray property")
+            raise Exception(
+                f"unknown type ({type(property['values'])}) for property '{name}'"
+            )
     else:
-        raise Exception(
-            f"unknown type ({type(property['values'])}) for property '{name}'"
-        )
+        assert isinstance(property["parameters"][0], str)
+
+        values = []
+        for i in range(len(property["values"])):
+            values += [_typetransform(list(property["values"][i]), name)]
+        data[name] = {
+            "target": property["target"],
+            "values": values,
+            "parameters": property["parameters"],
+        }
 
     # get property metadata
     if "units" in property:
@@ -548,8 +675,17 @@ def _validate_property(name, property):
     if "values" not in property:
         raise Exception(f"missing 'values' for the '{name}' property")
 
+    if "parameters" in property:
+        if len(property["parameters"]) != 1 or not isinstance(
+            property["parameters"][0], str
+        ):
+            raise Exception(
+                f"the parameter of property {name} should be a list containing "
+                "a single string"
+            )
+
     for key in property.keys():
-        if key not in ["target", "values", "description", "units"]:
+        if key not in ["target", "values", "description", "units", "parameters"]:
             warnings.warn(f"ignoring unexpected property key: {key}")
 
 

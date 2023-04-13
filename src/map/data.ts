@@ -56,7 +56,7 @@ export class StringInterner {
 }
 
 /** Transform a property to a numeric property */
-function propertyToNumeric(name: string, property: Property): NumericProperty {
+function propertyToNumeric(name: string, property: Property): NumericProperty | undefined {
     const prop_type = typeof property.values[0];
     if (prop_type === 'number') {
         return {
@@ -86,6 +86,9 @@ function propertyToNumeric(name: string, property: Property): NumericProperty {
             values: values,
             units: property.units,
         };
+    } else if (Array.isArray(property.values[0])) {
+        // left blank to avoid raising an error with multidimensional properties
+        return undefined;
     } else {
         throw Error(`unexpected property type '${prop_type}'`);
     }
@@ -146,9 +149,11 @@ export class MapData {
                 sendWarning(`warning: ${(e as Error).message}`);
                 continue;
             }
-            this[properties[name].target][name] = property;
-            if (property.string !== undefined) {
-                this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length);
+            if (property !== undefined) {
+                this[properties[name].target][name] = property;
+                if (property.string !== undefined) {
+                    this.maxSymbols = Math.max(this.maxSymbols, property.string.strings().length);
+                }
             }
         }
 

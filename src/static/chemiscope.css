@@ -493,3 +493,10 @@
     left: 5px;
     font-size: 0.8em;
 }
+
+.chsp-toggle-plot-btn {
+    display: block;
+    position: relative;
+    margin-top: 3px;
+    margin-bottom: 1px;
+}

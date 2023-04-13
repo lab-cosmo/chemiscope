@@ -5,9 +5,11 @@
 
 import assert from 'assert';
 
-import { Property } from '../dataset';
+import { Parameter, Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { binarySearch, getElement, sendWarning } from '../utils';
+
+import * as plotlyStyles from '../map/plotly/plotly-styles';
 
 import Collapse from '../collapse';
 import { Slider } from './slider';
@@ -70,7 +72,8 @@ export class EnvironmentInfo {
     constructor(
         element: string | HTMLElement,
         properties: { [name: string]: Property },
-        indexer: EnvironmentIndexer
+        indexer: EnvironmentIndexer,
+        parameters?: { [name: string]: Parameter }
     ) {
         const containerElement = getElement(element);
 
@@ -78,7 +81,11 @@ export class EnvironmentInfo {
         containerElement.appendChild(hostElement);
 
         this._shadow = hostElement.attachShadow({ mode: 'open' });
-        this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
+        this._shadow.adoptedStyleSheets = [
+            styles.bootstrap,
+            styles.chemiscope,
+            plotlyStyles.globalStyleSheet,
+        ];
 
         this._root = document.createElement('div');
         this._shadow.appendChild(this._root);
@@ -118,11 +125,11 @@ export class EnvironmentInfo {
         </div>`;
 
         const structureProperties = filter(properties, (p) => p.target === 'structure');
-        this._structure = this._createStructure(structureProperties);
+        this._structure = this._createStructure(structureProperties, parameters);
 
         if (this._indexer.mode === 'atom') {
             const atomProperties = filter(properties, (p) => p.target === 'atom');
-            this._atom = this._createAtom(atomProperties);
+            this._atom = this._createAtom(atomProperties, parameters);
         }
 
         // Initialize the collapse components from their 'data-bs-*' attributes.
@@ -166,14 +173,16 @@ export class EnvironmentInfo {
     }
 
     /** Create the structure slider and table */
-    private _createStructure(properties: { [name: string]: Property }): Info {
+    private _createStructure(
+        properties: { [name: string]: Property },
+        parameters?: { [name: string]: Parameter }
+    ): Info {
         const slider = new Slider(this._root, 'structure');
         slider.reset(this._indexer.activeStructures());
 
         const tableRoot = this._root.children[0] as HTMLElement;
         assert(tableRoot.tagName.toLowerCase() === 'div');
-        const table = new Table(tableRoot, 'structure', 'structure', properties);
-
+        const table = new Table(tableRoot, 'structure', 'structure', properties, parameters);
         slider.startPlayback = (advance) => {
             setTimeout(() => {
                 if (advance()) {
@@ -280,7 +289,10 @@ export class EnvironmentInfo {
     }
 
     /** Create the atom slider and table */
-    private _createAtom(properties: { [name: string]: Property }) {
+    private _createAtom(
+        properties: { [name: string]: Property },
+        parameters?: { [name: string]: Parameter }
+    ) {
         const slider = new Slider(this._root, 'atom');
         slider.reset(this._indexer.activeAtoms(this._structure.slider.value()));
 
@@ -337,7 +349,7 @@ export class EnvironmentInfo {
 
         const tableRoot = this._root.children[0] as HTMLElement;
         assert(tableRoot.tagName.toLowerCase() === 'div');
-        const table = new Table(tableRoot, 'atom', 'atom', properties);
+        const table = new Table(tableRoot, 'atom', 'atom', properties, parameters);
 
         const number = this._root.querySelector(
             '.chsp-info-atom-btn .chsp-info-number'

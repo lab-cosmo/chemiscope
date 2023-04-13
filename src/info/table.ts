@@ -5,12 +5,25 @@
 
 import assert from 'assert';
 
-import { Property, Target } from '../dataset';
+import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
+import { plotMultiDimensionalProperties } from './plotting';
+import { getByID } from '../utils';
 
+/**
+ * TableProperty holds the objects to show the properties in the info bar
+ * values and cell are common between all types of properties
+ * parameter: the parameter associated to the multidimensional property,
+ *            acts as the xaxis in the plot
+ * xlabel: xlabel of the plot
+ * ylabel: ylabel of the plot
+ */
 interface TableProperty {
-    values: number[] | string[];
+    values: number[] | string[] | number[][];
     cell: HTMLTableCellElement;
+    parameter?: number[]; // for multidimensional properties
+    xlabel?: string; // for multidimensional properties
+    ylabel?: string; // for multidimensional properties
 }
 
 /** @hidden
@@ -19,6 +32,7 @@ interface TableProperty {
 export class Table {
     private _target: Target;
 
+    private _root: HTMLElement;
     private _header: HTMLTableCellElement;
     private _properties: TableProperty[];
 
@@ -34,7 +48,8 @@ export class Table {
         root: HTMLElement,
         target: Target,
         collapseID: string,
-        properties: { [name: string]: Property }
+        properties: { [name: string]: Property },
+        parameters?: { [name: string]: Parameter }
     ) {
         const template = document.createElement('template');
         template.innerHTML = `<div class="collapse chsp-info-table" id=${collapseID} data-bs-parent='#info-tables'>
@@ -46,6 +61,7 @@ export class Table {
         </div></div>`;
         const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
+        this._root = root;
 
         this._header = group.querySelector('th') as HTMLTableCellElement;
         this._target = target;
@@ -78,14 +94,49 @@ export class Table {
             tr.appendChild(td);
             const cell = document.createElement('td');
             tr.appendChild(cell);
-
             tbody.appendChild(tr);
-            this._properties.push({
-                cell: cell,
-                values: properties[name].values,
-            });
-        }
 
+            const propertyParameter = properties[name].parameters;
+            if (typeof propertyParameter === 'undefined') {
+                this._properties.push({
+                    cell: cell,
+                    values: properties[name].values,
+                });
+            } else if (parameters && typeof propertyParameter[0] === 'string') {
+                let xlabel = propertyParameter[0];
+                const parameterUnits = parameters[propertyParameter[0]].units as string;
+                if (parameterUnits !== undefined) {
+                    xlabel += `/${parameterUnits}`;
+                }
+
+                const plotHolder = document.createElement('div');
+                plotHolder.style.display = 'block';
+                plotHolder.style.width = '100%';
+
+                cell.appendChild(plotHolder);
+
+                this._properties.push({
+                    cell: cell,
+                    values: properties[name].values,
+                    parameter: parameters[propertyParameter[0]].values,
+                    xlabel: xlabel,
+                    ylabel: title,
+                });
+
+                // add show/hide button to td
+                const button = document.createElement('button');
+                button.classList.add('btn', 'btn-secondary', 'btn-sm', 'chsp-toggle-plot-btn');
+                button.textContent = 'Show/Hide';
+                button.onclick = () => {
+                    if (plotHolder.style.display === 'block') {
+                        plotHolder.style.display = 'none';
+                    } else {
+                        plotHolder.style.display = 'block';
+                    }
+                };
+                td.appendChild(button);
+            }
+        }
         this.show({ environment: 0, structure: 0, atom: 0 });
     }
 
@@ -108,7 +159,23 @@ export class Table {
 
         this._header.innerText = `Properties for ${this._target} ${displayId}`;
         for (const s of this._properties) {
-            s.cell.innerText = s.values[index].toString();
+            if (!Array.isArray(s.values[index])) {
+                s.cell.innerText = s.values[index].toString();
+            } else {
+                // now we plot!!
+                const widthPlotCell = this._root.offsetWidth / 1.5;
+
+                assert(s.cell.firstElementChild !== null);
+
+                plotMultiDimensionalProperties(
+                    s.parameter as number[],
+                    s.values[index] as number[],
+                    s.cell.firstElementChild as HTMLElement,
+                    widthPlotCell,
+                    s.xlabel,
+                    s.ylabel
+                );
+            }
         }
     }
 }
