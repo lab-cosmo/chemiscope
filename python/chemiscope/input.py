@@ -86,8 +86,6 @@ def create_input(
                 'unit': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
-                # optional: parameter keyword if the property is multidimensional
-                'parameters': ['name_parameter'],
             }
         }
 
@@ -101,16 +99,15 @@ def create_input(
 
         properties = {
             'cheese':  np.zeros((300, 4)),
-            }
         }
 
     In this case, the type of property (structure or atom) would be deduced
     by comparing the numbers atoms and structures in the dataset to the
     length of provided list/np.ndarray.
 
-    It is possible to pass 2D properties to be displayed as curves in the info panel by
-    passing a 3D numpy array of values having the shape `(n_samples, 1, n_parameters)`
-    and ensuring the corresponding parameter exists. The previous example becomes:
+    Finally, one can give 2D properties to be displayed as curves in the info
+    panel by setting a ``parameters`` in the property, and giving the corresponding
+    ``parameters`` values to this function. The previous example becomes:
 
     .. code-block:: python
 
@@ -122,14 +119,13 @@ def create_input(
                 'unit': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
-                # optional: parameter keyword if the property is multidimensional
-                'parameters': ['color'],
+                'parameters': ['origin'],
             }
         }
 
-    This input describes a 2D property `cheese` with 300 samples and of dimension 4
-    designated by the parameter `origin`. In this case, we also need to provide the
-    parameters dictionary:
+    This input describes a 2D property ``cheese`` with 300 samples and 4 values
+    taken by the ``origin`` parameter. We also need to provide the
+    ``parameters`` values to this function:
 
     .. code-block:: python
 
@@ -137,7 +133,7 @@ def create_input(
             'origin' : {
                 # an array of numbers containing the values of the parameter
                 # the size should correspond to the second dimension
-                # of the corresponding multidimensionl property
+                # of the corresponding multidimensional property
                 'values': [0, 1, 2, 3]
                 # optional free-form description of the parameter as a string
                 'name': 'a short description of this parameter'
@@ -216,19 +212,21 @@ def create_input(
     if parameters is not None:
         if not isinstance(parameters, dict):
             raise ValueError(
-                f"expecting parameters to be a of type 'dict' not type {type(parameters)}"
+                f"expecting parameters to be a of type 'dict' not '{type(parameters)}'"
             )
         data["parameters"] = {}
         for key in parameters:
             param = {}
             if not isinstance(parameters[key], dict):
                 raise ValueError(
-                    f"expecting parameter {key} to be of type 'dict' not type {type(parameters[key])}"
+                    f"expecting parameter {key} to be of type 'dict' not "
+                    f"'{type(parameters[key])}'"
                 )
 
             if not isinstance(np.asarray(parameters[key]["values"]), np.ndarray):
                 raise ValueError(
-                    f"expecting the 'values' of parameter {key} to be of type 'numpy.ndarray' not {type(parameters[key]['values'])}"
+                    f"expecting the 'values' of parameter {key} to be of type "
+                    f"'numpy.ndarray' not '{type(parameters[key]['values'])}'"
                 )
             if len(parameters[key]["values"].shape) != 1:
                 raise ValueError(
@@ -241,14 +239,16 @@ def create_input(
             if "name" in parameters[key]:
                 if not isinstance(parameters[key]["name"], str):
                     raise ValueError(
-                        f"optional 'name': {parameters[key]['name']} of parameter {key} should a string"
+                        f"optional 'name': {parameters[key]['name']} of "
+                        f"parameter {key} should a string"
                     )
                 param["name"] = parameters[key]["name"]
 
             if "units" in parameters[key]:
                 if not isinstance(parameters[key]["units"], str):
                     raise ValueError(
-                        f"optional 'units': {parameters[key]['units']} of parameter {key} should a string"
+                        f"optional 'units': {parameters[key]['units']} of "
+                        f"parameter {key} should a string"
                     )
                 param["units"] = parameters[key]["units"]
             data["parameters"][key] = param
@@ -364,26 +364,25 @@ def write_input(
         )
 
         # additional multidimensional properties to be plotted
-        ldos = np.loadtxt(...) # load the 2D data
-        ldos.reshape((ldos.shape[0], 1, ldos.shape[1]))
-        energy_grid = np.loadtxt(...) # energy grid for the DOS
-        multidim_properties = {
+        dos = np.loadtxt(...) # load the 2D data
+        dos_energy_grid = np.loadtxt(...)
+        multidimensional_properties = {
             "DOS": {
                 target: "structure",
-                values: ldos,
-                parameters: ["xaxis"],
+                values: dos,
+                parameters: ["energy"],
             }
         }
         multidimensional_parameters = {
-            "xaxis": {
-                "values": energy_grid
+            "energy": {
+                "values": dos_energy_grid
                 "units": "eV"
             }
         }
 
         # merge all properties together
         properties.extend(frame_properties)
-        properties.extend(multidim_properties)
+        properties.extend(multidimensional_properties)
 
         chemiscope.write_input(
             path="chemiscope.json.gz",
@@ -392,7 +391,7 @@ def write_input(
             # This is required to display properties with `target: "atom"`
             environments=chemiscope.all_atomic_environments(frames),
             # this is necessary to plot the multidimensional data
-            parameters=multidim_parameters,
+            parameters=multidimensional_parameters,
         )
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
@@ -681,7 +680,8 @@ def _validate_property(name, property):
             property["parameters"][0], str
         ):
             raise Exception(
-                f"the parameter of property {name} should be a list containing a single string"
+                f"the parameter of property {name} should be a list containing "
+                "a single string"
             )
 
     for key in property.keys():

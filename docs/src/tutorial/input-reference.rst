@@ -36,21 +36,25 @@ contains the following fields and values:
                 // the property target: is it defined per atom or for the full
                 // structures
                 "target": "atom" | "structure",
-                // values of the properties can either be numbers, strings 
+                // values of the properties can either be numbers, strings
                 // or array of numbers.
+                //
                 // string properties are assumed to represent categories of
                 // data.
+                //
                 // the first dimension of the multidimensional property corresponds
                 // to the number atoms/structures, the second dimension corresponds
-                // to the size of the array of values per atom/structure. 
+                // to the size of the array of values per atom/structure.
                 "values": [1, 2, 3, ...] | ["first", "second", "first", ...] | [[1, 3, 5], [2, 4, 6], ...],
 
                 // OPTIONAL: units of the property' value
                 "units": "A/fs^2",
                 // OPTIONAL: free-form description of the property as a string
                 "description": "acceleration of the atoms in the structure ...",
-                // OPTIONAL: an array containing a single string of the name of the parameter if the property is mutidimensional
-                "parameter": ["name_parameter"]
+                // OPTIONAL: an array containing a single string of the name of
+                // the parameter (from the `parameters`` object below). This is
+                // required multidimensional properties
+                "parameter": ["parameter_name"]
             }
         }
         // OPTIONAL: list of parameters to be used with multidimensional properties
@@ -59,8 +63,8 @@ contains the following fields and values:
             // the second dimension of the associated multidimensional properties
             <name>: {
                 // an array of numbers containing the values of the parameter
-                // the size should correspond to the second dimension of the corresponding
-                // multidimensionl property
+                // the size should correspond to the second dimension of the
+                // corresponding multidimensional property
                 "values": [0, 0.1, 0.2]
 
                 // OPTIONAL free-form description of the parameter as a string
@@ -194,7 +198,7 @@ contains the following fields and values:
                     // make the molecule spin
                     "rotation": false,
                     // which axis system to use
-                    "axes": "none" | "xyz" | "abc",
+                    "axes": "none" | "xyz" | "abc",
                     // keep the orientation constant when loading a new structure
                     "keepOrientation": false,
                     // options related to atom-centered environments
