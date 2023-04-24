@@ -116,10 +116,10 @@ export function arrayMaxMin(values: number[]): { max: number; min: number } {
     let max = Number.NEGATIVE_INFINITY;
     let min = Number.POSITIVE_INFINITY;
     for (const value of values) {
-        if (value > max) {
+        if (value > max && isFinite(value)) {
             max = value;
         }
-        if (value < min) {
+        if (value < min && isFinite(value)) {
             min = value;
         }
     }
