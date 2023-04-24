@@ -733,7 +733,7 @@ export class PropertiesMap {
                 } as Data,
                 0
             );
-        });
+            });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
             const min = this._options.color.min.value;
@@ -765,54 +765,48 @@ export class PropertiesMap {
         const colorModeWarning = (values: number[], lastChange: string): boolean => {
             const mode = this._options.color.mode.value;
             const messages: ColorModeMessages = {
-                log: {
-                    allValuesNaN:
-                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values <= 0. After the log transformation, these values will be shown as NaN and will be colored in grey.',
-                },
-                sqrt: {
-                    allValuesNaN:
-                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values <= 0. After the sqrt transformation, these values will be shown as NaN and will be colored in grey.',
-                },
-                inverse: {
-                    allValuesNaN:
-                        'The selected color property contains only values = 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values = 0. After the inverse transformation, these values will be shown as NaN and will be colored in grey.',
-                },
+              log: {
+                allValuesNaN: 'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                someValuesNaN: 'The selected color property contains values <= 0. After the log transformation, these values will be shown as NaN and will be colored in grey.'
+              },
+              sqrt: {
+                allValuesNaN: 'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                someValuesNaN: 'The selected color property contains values <= 0. After the sqrt transformation, these values will be shown as NaN and will be colored in grey.'
+              },
+              inverse: {
+                allValuesNaN: 'The selected color property contains only values = 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                someValuesNaN: 'The selected color property contains values = 0. After the inverse transformation, these values will be shown as NaN and will be colored in grey.'
+              }
             };
-
+          
             const allValuesNaN = values.every((value) => isNaN(value));
             const someValuesNaN = values.some((value) => isNaN(value));
-
+          
             if (allValuesNaN) {
-                let message = messages[mode].allValuesNaN;
-                if (lastChange === 'property') {
-                    message = message.replace('color scale', 'property');
-                    this._options.color.property.reset();
-                } else {
-                    this._options.color.mode.reset();
-                }
-                sendWarning(message);
-                return false;
+              let message = messages[mode].allValuesNaN;
+              if (lastChange === 'property') {
+                message = message.replace('color scale', 'property');
+                this._options.color.property.reset();
+              } else {
+                this._options.color.mode.reset();
+              }
+              sendWarning(message);
+              return false;
             } else if (someValuesNaN) {
-                sendWarning(messages[mode].someValuesNaN);
-                return true;
+              sendWarning(messages[mode].someValuesNaN);
+              return true;
             } else {
-                return true;
+              return true;
             }
         };
-
+            
         this._options.color.mode.onchange.push(() => {
             const values = this._colors(0)[0] as number[];
             // Color mode warning needs to be called before setting min and max to avoid isFinite error
             if (colorModeWarning(values, 'mode')) {
                 const { min, max } = arrayMaxMin(values);
                 // We have to set min to infinity first, then max, and then min here
-                // to avoid sending a spurious warning in `colorRangeChange` below
+                // to avoid sending a spurious warning in `colorRangeChange` below 
                 // in case the new min is bigger than the old max.
                 this._options.color.min.value = Number.NEGATIVE_INFINITY;
                 this._options.color.max.value = max;
@@ -820,13 +814,11 @@ export class PropertiesMap {
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
-                    'coloraxis.colorbar.title.text': this._title(
-                        this._options.color.property.value
-                    ),
+                    'coloraxis.colorbar.title.text': this._title(this._options.color.property.value),
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
             }
-        });
+            });
 
         this._options.color.min.onchange.push(() => {
             colorRangeChange('min');
