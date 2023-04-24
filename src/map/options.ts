@@ -234,7 +234,7 @@ export class MapOptions extends OptionsGroup {
                     scaled = 1.0 / v;
                     break;
                 case 'log':
-                    scaled = Math.log(v);
+                    scaled = Math.log10(v);
                     break;
                 case 'sqrt':
                     scaled = Math.sqrt(v);

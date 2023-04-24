@@ -6,6 +6,13 @@
 /** A {@link WarningHandler} is called when a new warning is emitted */
 export type WarningHandler = (message: string) => void;
 
+export type ColorModeMessages = {
+    [key: string]: {
+        allValuesNaN: string;
+        someValuesNaN: string;
+    };
+};
+
 /** List of registered warnings handlers */
 const WARNINGS_HANDLERS: WarningHandler[] = [
     // eslint-disable-next-line no-console
