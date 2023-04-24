@@ -24,6 +24,7 @@ import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
+import { ColorModeMessages } from '../utils/warnings';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -691,21 +692,24 @@ export class PropertiesMap {
                 this._colorReset.disabled = false;
 
                 const values = this._colors(0)[0] as number[];
-                const { min, max } = arrayMaxMin(values);
+                // Color mode warning needs to be called before setting min and max to avoid isFinite error
+                if (colorModeWarning(values, 'property')) {
+                    const { min, max } = arrayMaxMin(values);
+                    // We have to set max first and min second here to avoid sending
+                    // a spurious warning in `colorRangeChange` below in case the
+                    // new min is bigger than the old max.
+                    this._options.color.min.value = Number.NEGATIVE_INFINITY;
+                    this._options.color.max.value = max;
+                    this._options.color.min.value = min;
+                    this._setScaleStep([min, max], 'color');
 
-                // We have to set max first and min second here to avoid sending
-                // a spurious warning in `colorRangeChange` below in case the
-                // new min is bigger than the old max.
-                this._options.color.max.value = max;
-                this._options.color.min.value = min;
-                this._setScaleStep([min, max], 'color');
-
-                this._relayout({
-                    'coloraxis.colorbar.title.text': this._title(
-                        this._options.color.property.value
-                    ),
-                    'coloraxis.showscale': true,
-                } as unknown as Layout);
+                    this._relayout({
+                        'coloraxis.colorbar.title.text': this._title(
+                            this._options.color.property.value
+                        ),
+                        'coloraxis.showscale': true,
+                    } as unknown as Layout);
+                }
             } else {
                 this._options.color.mode.disable();
                 this._options.color.min.disable();
@@ -758,21 +762,72 @@ export class PropertiesMap {
             } as unknown as Layout);
         };
 
+        const colorModeWarning = (values: number[], lastChange: string): boolean => {
+            const mode = this._options.color.mode.value;
+            const messages: ColorModeMessages = {
+                log: {
+                    allValuesNaN:
+                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                    someValuesNaN:
+                        'The selected color property contains values <= 0. After the log transformation, these values will be shown as NaN and will be colored in grey.',
+                },
+                sqrt: {
+                    allValuesNaN:
+                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                    someValuesNaN:
+                        'The selected color property contains values <= 0. After the sqrt transformation, these values will be shown as NaN and will be colored in grey.',
+                },
+                inverse: {
+                    allValuesNaN:
+                        'The selected color property contains only values = 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
+                    someValuesNaN:
+                        'The selected color property contains values = 0. After the inverse transformation, these values will be shown as NaN and will be colored in grey.',
+                },
+            };
+
+            const allValuesNaN = values.every((value) => isNaN(value));
+            const someValuesNaN = values.some((value) => isNaN(value));
+
+            if (allValuesNaN) {
+                let message = messages[mode].allValuesNaN;
+                if (lastChange === 'property') {
+                    message = message.replace('color scale', 'property');
+                    this._options.color.property.reset();
+                } else {
+                    this._options.color.mode.reset();
+                }
+                sendWarning(message);
+                return false;
+            } else if (someValuesNaN) {
+                sendWarning(messages[mode].someValuesNaN);
+                return true;
+            } else {
+                return true;
+            }
+        };
+
         this._options.color.mode.onchange.push(() => {
             const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
-            // We have to set max first and min second here to avoid sending
-            // a spurious warning in `colorRangeChange` below in case the
-            // new min is bigger than the old max.
-            this._options.color.max.value = max;
-            this._options.color.min.value = min;
-            this._setScaleStep([min, max], 'color');
+            // Color mode warning needs to be called before setting min and max to avoid isFinite error
+            if (colorModeWarning(values, 'mode')) {
+                const { min, max } = arrayMaxMin(values);
+                // We have to set min to infinity first, then max, and then min here
+                // to avoid sending a spurious warning in `colorRangeChange` below
+                // in case the new min is bigger than the old max.
+                this._options.color.min.value = Number.NEGATIVE_INFINITY;
+                this._options.color.max.value = max;
+                this._options.color.min.value = min;
+                this._setScaleStep([min, max], 'color');
 
-            this._relayout({
-                'coloraxis.colorbar.title.text': this._title(this._options.color.property.value),
-                'coloraxis.showscale': true,
-            } as unknown as Layout);
+                this._relayout({
+                    'coloraxis.colorbar.title.text': this._title(
+                        this._options.color.property.value
+                    ),
+                    'coloraxis.showscale': true,
+                } as unknown as Layout);
+            }
         });
+
         this._options.color.min.onchange.push(() => {
             colorRangeChange('min');
         });
@@ -1073,7 +1128,7 @@ export class PropertiesMap {
                 propertyTitle = '(' + propertyTitle + ')<sup>-1</sup>';
                 break;
             case 'log':
-                propertyTitle = 'log(' + propertyTitle + ')';
+                propertyTitle = 'log<sub>10</sub>(' + propertyTitle + ')';
                 break;
             case 'sqrt':
                 propertyTitle = 'sqrt(' + propertyTitle + ')';
