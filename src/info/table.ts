@@ -8,7 +8,6 @@ import assert from 'assert';
 import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
 import { plotMultiDimensionalProperties } from './plotting';
-import { getByID } from '../utils';
 
 /**
  * TableProperty holds the objects to show the properties in the info bar
@@ -27,7 +26,7 @@ interface TableProperty {
 }
 
 /** @hidden
- * A table to display the properties of the current selected structure/environement
+ * A table to display the properties of the current selected structure/environnement
  */
 export class Table {
     private _target: Target;
