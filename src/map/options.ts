@@ -212,44 +212,64 @@ export class MapOptions extends OptionsGroup {
     /** Get the plotly hovertemplate depending on `this._current.color` */
     public hovertemplate(): string {
         if (this.hasColors()) {
-            return this.color.property.value + ': %{marker.color:.2f}<extra></extra>';
+            let property = this.color.property.value;
+            switch (this.color.mode.value) {
+                case 'inverse':
+                    property = `(${property})<sup>-1</sup>`;
+                    break;
+                case 'log':
+                    property = `log(${property})`;
+                    break;
+                case 'sqrt':
+                    property = `sqrt(${property})`;
+                    break;
+                case 'linear':
+                    break;
+                default:
+                    break;
+            }
+
+            return property + ': %{marker.color:.2f}<extra></extra>';
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
     }
+
     /**
-     * Get the values to use as colors with the given plotly `trace`, or
-     * all of them if `trace === undefined`.
+     * Get the values to use as colors according to the user-selected property
+     * and scale
      */
-    public calculateColors(rawColors: number[]): number[] {
+    public calculateColors(rawColors: number[]): Array<number | string> {
         let scaleMode = this.color.mode.value;
         const { min, max } = arrayMaxMin(rawColors);
+        if (max === min) {
+            scaleMode = 'fixed';
+        }
+
         const values = rawColors.map((v: number) => {
-            let scaled = 0.5; // default
-            if (max === min) {
-                scaleMode = 'fixed';
-            }
+            let transformed = 0.5; // default
             switch (scaleMode) {
                 case 'inverse':
-                    scaled = 1.0 / v;
+                    transformed = 1.0 / v;
                     break;
                 case 'log':
-                    scaled = Math.log10(v);
+                    transformed = Math.log10(v);
                     break;
                 case 'sqrt':
-                    scaled = Math.sqrt(v);
+                    transformed = Math.sqrt(v);
                     break;
                 case 'linear':
-                    scaled = 1.0 * v;
+                    transformed = 1.0 * v;
                     break;
                 default:
                     // corresponds to 'constant'
-                    scaled = 0.5;
+                    transformed = 0.5;
                     break;
             }
-            // since we are using scalemode: 'area', square the scaled value
-            return scaled;
+
+            return isNaN(transformed) ? '#aaaaaa' : transformed;
         });
+
         return values;
     }
 
