@@ -12,6 +12,6 @@ overrides:
     options:
       tabWidth: 2
   - files:
-      - '*.html'
+      - '*.html.in'
     options:
       printWidth: 150

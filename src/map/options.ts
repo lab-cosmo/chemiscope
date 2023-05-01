@@ -473,7 +473,7 @@ export class MapOptions extends OptionsGroup {
             selectColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectColorProperty, 'value');
-        this.color.mode.bind(this.getModalElement('map-color-scale'), 'value');
+        this.color.mode.bind(this.getModalElement('map-color-transform'), 'value');
         this.color.min.bind(this.getModalElement('map-color-min'), 'value');
         this.color.max.bind(this.getModalElement('map-color-max'), 'value');
 
@@ -507,7 +507,7 @@ export class MapOptions extends OptionsGroup {
         }
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind(this.getModalElement('map-size-factor'), 'value');
-        this.size.mode.bind(this.getModalElement('map-size-scale'), 'value');
+        this.size.mode.bind(this.getModalElement('map-size-transform'), 'value');
         this.size.reverse.bind(this.getModalElement('map-size-reverse'), 'checked');
     }
 
