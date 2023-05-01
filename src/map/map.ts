@@ -727,8 +727,8 @@ export class PropertiesMap {
                 {
                     hovertemplate: this._options.hovertemplate(),
                     'marker.color': this._colors(0),
-                } as Data,
-                0
+                },
+                [0]
             );
         });
 
@@ -814,6 +814,14 @@ export class PropertiesMap {
                     'coloraxis.colorbar.title.text': this._colorTitle(),
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
+
+                this._restyle(
+                    {
+                        hovertemplate: this._options.hovertemplate(),
+                        'marker.color': this._colors(0),
+                    },
+                    [0]
+                );
             }
         });
 
@@ -1139,7 +1147,7 @@ export class PropertiesMap {
      * Get the color values to use with the given plotly `trace`, or all of
      * them if `trace === undefined`
      */
-    private _colors(trace?: number): Array<string | string[] | number | number[]> {
+    private _colors(trace?: number): Array<Array<string | number>> {
         let colors;
         if (this._options.hasColors()) {
             colors = this._property(this._options.color.property.value).values;
@@ -1154,7 +1162,7 @@ export class PropertiesMap {
             selected.push(data.color);
         }
 
-        return this._selectTrace<string | string[] | number | number[]>(values, selected, trace);
+        return this._selectTrace<Array<string | number>>(values, selected, trace);
     }
 
     /**
