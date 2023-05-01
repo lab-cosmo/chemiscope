@@ -703,9 +703,7 @@ export class PropertiesMap {
                     this._setScaleStep([min, max], 'color');
 
                     this._relayout({
-                        'coloraxis.colorbar.title.text': this._title(
-                            this._options.color.property.value
-                        ),
+                        'coloraxis.colorbar.title.text': this._colorTitle(),
                         'coloraxis.showscale': true,
                     } as unknown as Layout);
                 }
@@ -813,9 +811,7 @@ export class PropertiesMap {
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
-                    'coloraxis.colorbar.title.text': this._title(
-                        this._options.color.property.value
-                    ),
+                    'coloraxis.colorbar.title.text': this._colorTitle(),
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
             }
@@ -1009,7 +1005,7 @@ export class PropertiesMap {
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._title(this._options.color.property.value);
+        layout.coloraxis.colorbar.title.text = this._colorTitle();
         layout.coloraxis.colorbar.len = this._colorbarLen();
 
         // Create an empty plot and fill it below
@@ -1116,22 +1112,27 @@ export class PropertiesMap {
                 propertyTitle = name + ` / ${units}`;
             }
         }
+        return propertyTitle;
+    }
+
+    private _colorTitle(): string {
+        let title = this._title(this._options.color.property.value);
         switch (this._options.color.mode.value) {
             case 'inverse':
-                propertyTitle = '(' + propertyTitle + ')<sup>-1</sup>';
+                title = `(${title})<sup>-1</sup>`;
                 break;
             case 'log':
-                propertyTitle = 'log<sub>10</sub>(' + propertyTitle + ')';
+                title = `log(${title})`;
                 break;
             case 'sqrt':
-                propertyTitle = 'sqrt(' + propertyTitle + ')';
+                title = `sqrt(${title})`;
                 break;
             case 'linear':
                 break;
             default:
                 break;
         }
-        return propertyTitle;
+        return title;
     }
 
     /**
