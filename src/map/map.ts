@@ -24,7 +24,6 @@ import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
-import { ColorModeMessages } from '../utils/warnings';
 
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
@@ -693,7 +692,7 @@ export class PropertiesMap {
 
                 const values = this._colors(0)[0] as number[];
                 // Color mode warning needs to be called before setting min and max to avoid isFinite error
-                if (colorModeWarning(values, 'property')) {
+                if (canChangeColors(values, 'property')) {
                     const { min, max } = arrayMaxMin(values);
                     // We have to set max first and min second here to avoid sending
                     // a spurious warning in `colorRangeChange` below in case the
@@ -762,44 +761,38 @@ export class PropertiesMap {
             } as unknown as Layout);
         };
 
-        const colorModeWarning = (values: number[], lastChange: string): boolean => {
+        const canChangeColors = (values: number[], changed: string): boolean => {
             const mode = this._options.color.mode.value;
-            const messages: ColorModeMessages = {
-                log: {
-                    allValuesNaN:
-                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values <= 0. After the log transformation, these values will be shown as NaN and will be colored in grey.',
-                },
-                sqrt: {
-                    allValuesNaN:
-                        'The selected color property contains only values <= 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values <= 0. After the sqrt transformation, these values will be shown as NaN and will be colored in grey.',
-                },
-                inverse: {
-                    allValuesNaN:
-                        'The selected color property contains only values = 0. To display this property, select an appropriate scale. The color scale will be set to its last value.',
-                    someValuesNaN:
-                        'The selected color property contains values = 0. After the inverse transformation, these values will be shown as NaN and will be colored in grey.',
-                },
-            };
+
+            let invalidValues = '';
+            if (mode === 'log' || mode === 'sqrt') {
+                invalidValues = '<= 0';
+            } else if (mode === 'inverse') {
+                invalidValues = '== 0';
+            }
 
             const allValuesNaN = values.every((value) => isNaN(value));
             const someValuesNaN = values.some((value) => isNaN(value));
 
             if (allValuesNaN) {
-                let message = messages[mode].allValuesNaN;
-                if (lastChange === 'property') {
-                    message = message.replace('color scale', 'property');
+                sendWarning(
+                    `The selected property contains only values ${invalidValues}. ` +
+                        'To display this property, select an appropriate color scale. ' +
+                        `The ${changed} will be set to its last value.`
+                );
+
+                if (changed === 'property') {
                     this._options.color.property.reset();
                 } else {
                     this._options.color.mode.reset();
                 }
-                sendWarning(message);
+
                 return false;
             } else if (someValuesNaN) {
-                sendWarning(messages[mode].someValuesNaN);
+                sendWarning(
+                    `The selected property contains some values ${invalidValues}. ` +
+                        'These values will be colored in grey.'
+                );
                 return true;
             } else {
                 return true;
@@ -809,7 +802,7 @@ export class PropertiesMap {
         this._options.color.mode.onchange.push(() => {
             const values = this._colors(0)[0] as number[];
             // Color mode warning needs to be called before setting min and max to avoid isFinite error
-            if (colorModeWarning(values, 'mode')) {
+            if (canChangeColors(values, 'color scale')) {
                 const { min, max } = arrayMaxMin(values);
                 // We have to set min to infinity first, then max, and then min here
                 // to avoid sending a spurious warning in `colorRangeChange` below
