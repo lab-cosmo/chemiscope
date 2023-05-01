@@ -194,7 +194,9 @@ def _is_running_in_notebook():
 
     try:
         shell = get_ipython().__class__.__name__
-        if shell == "ZMQInteractiveShell":
+        # ZMQInteractiveShell is the standard Jupyter Kernel
+        # Interpreter is used by pyiodide
+        if shell in ["ZMQInteractiveShell", "Interpreter"]:
             return True
         elif shell == "TerminalInteractiveShell":
             return False
