@@ -8,6 +8,7 @@ import assert from 'assert';
 import {
     Environment,
     JsObject,
+    Property,
     Settings,
     Structure,
     UserStructure,
@@ -116,6 +117,8 @@ export class ViewersGrid {
     private _root: HTMLElement;
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
+    /// List of properties in the dataset
+    private _properties: { [name: string]: Property };
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
@@ -153,10 +156,12 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
+        properties: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
         this._structures = structures;
+        this._properties = properties;
         this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
@@ -695,7 +700,11 @@ export class ViewersGrid {
 
             // add a new widget if necessary
             if (!this._viewers.has(cellGUID)) {
-                const widget = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
+                const widget = new MoleculeViewer(
+                    this._getById<HTMLElement>(`gi-${cellGUID}`),
+                    this._indexer,
+                    this._properties,
+                );
 
                 widget.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {

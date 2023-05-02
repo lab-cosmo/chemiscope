@@ -14,6 +14,7 @@ import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../uti
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
+import { NumericProperties } from '../map/data';
 
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
@@ -47,6 +48,9 @@ export class StructureOptions extends OptionsGroup {
         // which colors for atoms not in the environment
         bgColor: HTMLOption<'string'>;
     };
+    public color: {
+        property: HTMLOption<'string'>;
+    };
 
     /// The Modal instance
     private _modal: Modal;
@@ -55,7 +59,10 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, positionSettings: PositioningCallback) {
+    constructor(root: HTMLElement,
+        properties: NumericProperties,
+        positionSettings: PositioningCallback
+    ) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -92,6 +99,10 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
+        this.color = {
+            property: new HTMLOption('string', ''),
+        };
+
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK'],
             'background atoms coloring'
@@ -116,7 +127,7 @@ export class StructureOptions extends OptionsGroup {
         this._openModal = openModal;
         root.appendChild(this._openModal);
 
-        this._bind();
+        this._bind(properties);
     }
 
     /** Get in a element in the modal from its id */
@@ -218,7 +229,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(): void {
+    private _bind(properties: NumericProperties): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
         this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
         this.bonds.bind(this.getModalElement('bonds'), 'checked');
@@ -229,6 +240,15 @@ export class StructureOptions extends OptionsGroup {
         this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');
         this.supercell[2].bind(this.getModalElement('supercell-c'), 'value');
+
+
+        const selectAtomColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
+        selectAtomColorProperty.options.length = 0;
+        selectAtomColorProperty.options.add(new Option('element', ''));
+        for (const key in properties) {
+            selectAtomColorProperty.options.add(new Option(key, key));
+        }
+        this.color.property.bind(selectAtomColorProperty, 'value');
 
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');

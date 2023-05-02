@@ -10,8 +10,10 @@ import { assignBonds } from './3dmol/assignBonds';
 
 import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
-import { Environment, Settings, Structure } from '../dataset';
+import { Environment, Property, Settings, Structure } from '../dataset';
 
+import { MapData } from '../map/data';
+import { EnvironmentIndexer } from '../indexer';
 import { StructureOptions } from './options';
 
 const IS_SAFARI =
@@ -147,14 +149,20 @@ export class MoleculeViewer {
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
-
+    // All known properties
+    private _data: MapData;
+    // environment indexer
+    private _indexer: EnvironmentIndexer;
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
      *
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
      */
-    constructor(element: string | HTMLElement) {
+    constructor(
+        element: string | HTMLElement,
+        indexer: EnvironmentIndexer,
+        properties: { [name: string]: Property }) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -209,9 +217,13 @@ export class MoleculeViewer {
         ];
 
         // Options reuse the same style sheets so they must be created after these.
-
-        this._options = new StructureOptions(this._root, (rect) =>
-            this.positionSettingsModal(rect)
+        this._indexer = indexer;
+        this._data = new MapData(properties);
+        const currentProperties = this._data[this._indexer.mode];
+        this._options = new StructureOptions(
+            this._root, 
+            currentProperties,
+            (rect) => this.positionSettingsModal(rect)
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
