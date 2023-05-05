@@ -35,7 +35,7 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties: Record<string, number>[]): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -55,6 +55,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         atoms.push({
             serial: i,
             elem: structure.names[i],
+            properties: properties[i],
             x: x,
             y: y,
             z: z,
@@ -315,7 +316,7 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, options: Partial<LoadOptions> = {}): void {
+    public load(structure: Structure, properties: Record<string, number>[], options: Partial<LoadOptions> = {}): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
@@ -386,7 +387,7 @@ export class MoleculeViewer {
             structure: structure,
             atomLabels: [],
         };
-        setup3DmolStructure(this._current.model, structure);
+        setup3DmolStructure(this._current.model, structure, properties);
         this._viewer.replicateUnitCell(
             this._options.supercell[0].value,
             this._options.supercell[1].value,
@@ -736,6 +737,14 @@ export class MoleculeViewer {
             this._enableEnvironmentSettings(value);
             restyleAndRender();
         });
+
+        this._options.color.property.onchange.push(() => {
+            if (this._options.color.property.value === '') {
+                this._options.color.property.enable();
+                this._viewer.render(); 
+            } else {
+                this._options.color.property.disable();
+        }});
 
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');

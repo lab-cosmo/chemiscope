@@ -121,7 +121,7 @@ export interface AtomSpec {
     /** Array of this atom's bond orders, corresponding to bonds identfied by 'bonds' */
     bondOrder: number[];
     /** Optional mapping of additional properties */
-    properties: unknown;
+    properties: Record<string, number>;
     /** Atom b factor data */
     b: number;
     /** If applicable, this atom's record entry from the input PDB file (used to output new PDB from models) */

@@ -99,10 +99,11 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
+        const propertiesName = Object.keys(properties);
         this.color = {
             property: new HTMLOption('string', ''),
         };
-
+        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK'],
             'background atoms coloring'

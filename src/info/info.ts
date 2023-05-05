@@ -129,6 +129,7 @@ export class EnvironmentInfo {
 
         if (this._indexer.mode === 'atom') {
             const atomProperties = filter(properties, (p) => p.target === 'atom');
+            console.log(atomProperties);
             this._atom = this._createAtom(atomProperties, parameters);
         }
 

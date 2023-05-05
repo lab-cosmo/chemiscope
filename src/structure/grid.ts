@@ -500,8 +500,7 @@ export class ViewersGrid {
                     options.highlight = indexes.atom;
                 }
             }
-
-            widget.load(this._structure(indexes.structure), options);
+            widget.load(this._structure(indexes.structure), properties, options); // add properties: Record<string, number>[];
             data.current = indexes;
         }
 
