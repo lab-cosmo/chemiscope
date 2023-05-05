@@ -35,7 +35,7 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties: Record<string, number>[]): void {
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties: Record<string, number>[] | undefined): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -46,20 +46,31 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, proper
         );
         model.setCrystMatrix(matrix);
     }
-
+    console.log(properties);
     const atoms = [];
     for (let i = 0; i < structure.size; i++) {
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        atoms.push({
-            serial: i,
-            elem: structure.names[i],
-            properties: properties[i],
-            x: x,
-            y: y,
-            z: z,
-        });
+        
+        if (properties !== undefined) {
+            atoms.push({
+                serial: i,
+                elem: structure.names[i],
+                properties: properties[i],
+                x: x,
+                y: y,
+                z: z,
+            });
+        } else {
+            atoms.push({
+                serial: i,
+                elem: structure.names[i],
+                x: x,
+                y: y,
+                z: z,
+            });
+        }
     }
 
     model.addAtoms(atoms);
@@ -316,7 +327,7 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, properties: Record<string, number>[], options: Partial<LoadOptions> = {}): void {
+    public load(structure: Structure, properties: Record<string, number>[] | undefined, options: Partial<LoadOptions> = {}): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();

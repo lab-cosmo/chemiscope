@@ -18,7 +18,7 @@ import { Table } from './table';
 import INFO_SVG from '../static/info.svg';
 import * as styles from '../styles';
 
-function filter<T extends Record<string, Property>>(
+export function filter<T extends Record<string, Property>>(
     obj: T,
     predicate: (o: Property) => boolean
 ): Record<string, Property> {
@@ -129,7 +129,6 @@ export class EnvironmentInfo {
 
         if (this._indexer.mode === 'atom') {
             const atomProperties = filter(properties, (p) => p.target === 'atom');
-            console.log(atomProperties);
             this._atom = this._createAtom(atomProperties, parameters);
         }
 

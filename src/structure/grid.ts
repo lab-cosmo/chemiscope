@@ -22,6 +22,8 @@ import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarnin
 
 import { LoadOptions, MoleculeViewer } from './viewer';
 
+import {filter} from '../info/info';
+
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
 import PNG_SVG from '../static/download-png.svg';
@@ -483,6 +485,24 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
+    private _getSelectedAtomProperties(indexes: Indexes): Record<string, number>[] | undefined {
+        const selectedAtomProperties: Record<string, number>[] = [];
+        const numberProperties = filter(this._properties, (p) => 
+            Object.values(p.values).every((v) => typeof v === 'number'));
+        const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
+
+        if (this._environments !== undefined) {
+            const structureEnvironments = this._environments[indexes.structure];
+            for (const structureEnvironment of structureEnvironments) {
+                for (const atomProperty in atomProperties) {
+                    selectedAtomProperties.push({ atomProperty: atomProperties[atomProperty].values[structureEnvironment.center] });
+            }};
+            return selectedAtomProperties;
+        } else {
+            return undefined;
+    
+    }};
+
     private _showInViewer(guid: GUID, indexes: Indexes): void {
         const data = this._viewers.get(guid);
         assert(data !== undefined);
@@ -500,7 +520,7 @@ export class ViewersGrid {
                     options.highlight = indexes.atom;
                 }
             }
-            widget.load(this._structure(indexes.structure), properties, options); // add properties: Record<string, number>[];
+            widget.load(this._structure(indexes.structure), this._getSelectedAtomProperties(indexes), options); // add properties: Record<string, number>[];
             data.current = indexes;
         }
 
