@@ -486,18 +486,20 @@ export class ViewersGrid {
     }
 
     private _getSelectedAtomProperties(indexes: Indexes): Record<string, number>[] | undefined {
-        const selectedAtomProperties: Record<string, number>[] = [];
+        const structureAtomProperties: Record<string, number>[] = [];
         const numberProperties = filter(this._properties, (p) => 
             Object.values(p.values).every((v) => typeof v === 'number'));
         const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
-
         if (this._environments !== undefined) {
             const structureEnvironments = this._environments[indexes.structure];
             for (const structureEnvironment of structureEnvironments) {
+                const singleAtomProperties: Record<string, number> = {};
                 for (const atomProperty in atomProperties) {
-                    selectedAtomProperties.push({ atomProperty: atomProperties[atomProperty].values[structureEnvironment.center] });
-            }};
-            return selectedAtomProperties;
+                    singleAtomProperties[atomProperty] = atomProperties[atomProperty].values[structureEnvironment.center] as number;
+            };
+            structureAtomProperties.push(singleAtomProperties);
+        };
+            return structureAtomProperties;
         } else {
             return undefined;
     

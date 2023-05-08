@@ -512,6 +512,7 @@ export declare class GLModel {
 
     public getInternalState(): { atoms: AtomSpec[]; frames: unknown[] };
     public setInternalState(state: { atoms: AtomSpec[]; frames: unknown[] }): void;
+    public setColorByProperty(sel:Partial<AtomSelectionSpec>, prop: string, scheme: Gradient|string, range?): void;
 }
 
 export declare class GLShape {}

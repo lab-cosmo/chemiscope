@@ -46,7 +46,6 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, proper
         );
         model.setCrystMatrix(matrix);
     }
-    console.log(properties);
     const atoms = [];
     for (let i = 0; i < structure.size; i++) {
         const x = structure.x[i];
@@ -750,8 +749,10 @@ export class MoleculeViewer {
         });
 
         this._options.color.property.onchange.push(() => {
-            if (this._options.color.property.value === '') {
+            if (this._options.color.property.value !== '') {
                 this._options.color.property.enable();
+                this._current?.model.setColorByProperty({}, this._options.color.property.value, new ($3Dmol as any).Gradient.RWB(-10, 10));
+                // this._updateStyle();
                 this._viewer.render(); 
             } else {
                 this._options.color.property.disable();
@@ -873,6 +874,7 @@ export class MoleculeViewer {
         const style: Partial<$3Dmol.AtomStyleSpec> = {
             sphere: {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
+                // colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(-10, 10)},
             },
         };
         if (this._options.bonds.value) {
