@@ -10,6 +10,8 @@ try:
 except ImportError:
     HAVE_ASE = False
 
+from ._shapes import _extract_shapes
+
 
 def _ase_valid_structures(frames):
     frames_list = list(frames)
@@ -166,6 +168,28 @@ def _ase_extract_properties(frames, only=None, environments=None):
             properties[name] = values
 
     return properties
+
+
+def _ase_extract_shapes(frames, environments=None):
+    """implementation of ``extract_shapes`` for ASE"""
+
+    shape_dictionaries = [_extract_shapes(frame) for frame in frames]
+
+    if any([sd is None for sd in shape_dictionaries]):
+        n_without = len([sd for sd in shape_dictionaries if sd is None])
+        raise ValueError(f"{n_without} frame(s) do not contain shape information.")
+
+    keys = list(set([k for sd in shape_dictionaries for k in sd.keys()]))
+
+    universal_keys = [k for k in keys if all([k in sd for sd in shape_dictionaries])]
+
+    if len(universal_keys) != len(keys):
+        warnings.warn(
+            "Only including shape keys {}, which are present in all frames. All other shape keys are omitted.".format(
+                ", ".join(universal_keys)
+            )
+        )
+    return {k: [sd[k] for sd in shape_dictionaries] for k in universal_keys}
 
 
 def _ase_all_atomic_environments(frames, cutoff):

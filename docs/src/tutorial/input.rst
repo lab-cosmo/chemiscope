@@ -49,6 +49,8 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.extract_properties
 
+.. autofunction:: chemiscope.extract_shapes
+
 .. autofunction:: chemiscope.composition_properties
 
 .. autofunction:: chemiscope.all_atomic_environments

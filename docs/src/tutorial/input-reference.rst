@@ -94,6 +94,23 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
+                // OPTIONAL: shapes to display on each site, if other than sphere.
+                //
+                // This should be given as a dictionary, where each entry contains
+                // a length N list of shape parameters, where the currently supported
+                // parameters are:
+                // {"kind": "ellipsoid", "semiaxes": [ax, ay, az], "orientation": [x, y, z, w]}
+                // {"kind": "sphere", "radius": r}
+                // {"kind": "custom", "vertices": [[x, y, z],...], "orientation": [x, y, z, w],
+                //  "simplices": [i, j, k, ...]}
+                // where "orientation" is an optional quaternion, [0, 0, 0, 1] where not
+                // specified. For custom shapes, if "simplices", referring to the indices
+                // of the facets, is not specified, a convex triangulation is computed using
+                // scipy.spatial.ConvexHull
+                // 
+                "shape": {"shape_1": [{"kind": "ellipsoid", "semiaxes": [1,1,2]},...],
+                          "shape_2": [{"kind": "sphere", "radius": 3},...],
+                         }
             },
             // other structures as needed
             ...

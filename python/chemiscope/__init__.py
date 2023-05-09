@@ -4,6 +4,7 @@ from .structures import (  # noqa
     all_atomic_environments,
     composition_properties,
     extract_properties,
+    extract_shapes,
     librascal_atomic_environments,
 )
 from .version import __version__  # noqa

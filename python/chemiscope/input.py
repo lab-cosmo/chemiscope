@@ -28,6 +28,7 @@ def create_input(
     properties=None,
     environments=None,
     settings=None,
+    shapes=None,
     parameters=None,
 ):
     """
@@ -43,6 +44,23 @@ def create_input(
         atom-centered environments should be drawn by default. Functions like
         :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
         can be used to generate the list of environments in simple cases.
+    :param dict shapes:
+        .. raw:: html
+
+            optional dictionary of shapes to have available for display.
+            ``shapes`` should have the format {string: list of shape parameters}, where the
+            list of shape parameters is a ragged list corresponding to frames and their
+            constituent environments. Shape parameters can be dictionaries with any of
+            the following forms:
+
+        - ``{"kind": "ellipsoid", "semiaxes": [number, number, number], "orientation": [number, number, number, number]}``,
+        - ``{"kind": "sphere", "radius": number}``,
+        - ``{"kind": "custom", "vertices": [[number, number, number], ...], "orientation": [number, number, number, number]}``
+
+        where ``orientation`` is an optional parameter corresponding to a quaternion
+        in ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
+        ``indices`` of the facets, is also optional, and will be determined by convex
+        triangulation when not provided.
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
@@ -198,6 +216,19 @@ def create_input(
         data["environments"] = _normalize_environments(environments, data["structures"])
         n_atoms = len(data["environments"])
 
+    if shapes is not None:
+        for key, values in shapes.items():
+            if len(values) != n_structures:
+                raise ValueError(
+                    f"Wrong size for `shapes`. `shapes` should be a dictionary of the form {{'shape_name': list of length {n_atoms}}}, but key {key} corresponds to a list of length {len(values)}"
+                )
+        else:
+            for struct in data["structures"]:
+                struct["shape"] = {}
+            for key, values in shapes.items():
+                for frame_values, struct in zip(values, data["structures"]):
+                    struct["shape"][key] = frame_values
+
     data["properties"] = {}
     if properties is not None:
         properties = _expand_properties(properties, n_structures, n_atoms)
@@ -295,6 +326,7 @@ def write_input(
     meta=None,
     properties=None,
     environments=None,
+    shapes=None,
     settings=None,
     parameters=None,
 ):
@@ -311,6 +343,23 @@ def write_input(
     :param list environments: optional list of (structure id, atom id, cutoff)
         specifying which atoms have properties attached and how far out
         atom-centered environments should be drawn by default.
+    :param dict shapes:
+        .. raw:: html
+
+            optional dictionary of shapes to have available for display.
+            ``shapes`` should have the format {string: list of shape parameters}, where the
+            list of shape parameters is a ragged list corresponding to frames and their
+            constituent environments. Shape parameters can be dictionaries with any of
+            the following forms:
+
+        - ``{"kind": "ellipsoid", "semiaxes": [number, number, number], "orientation": [number, number, number, number]}``,
+        - ``{"kind": "sphere", "radius": number}``,
+        - ``{"kind": "custom", "vertices": [[number, number, number], ...], "orientation": [number, number, number, number]}``
+
+        where ``orientation`` is an optional parameter corresponding to a quaternion
+        in ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
+        ``indices`` of the facets, is also optional, and will be determined by convex
+        triangulation when not provided.
     :param dict settings: optional dictionary of settings to use when displaying
         the data. Possible entries for the ``settings`` dictionary are documented
         in the chemiscope input file reference.
@@ -406,6 +455,7 @@ def write_input(
         meta=meta,
         properties=properties,
         environments=environments,
+        shapes=shapes,
         settings=settings,
         parameters=parameters,
     )
