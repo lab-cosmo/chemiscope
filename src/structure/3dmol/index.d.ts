@@ -1,7 +1,12 @@
 interface ElementColors {
     [name: string]: ColorSpec;
 }
+export declare class Gradient {
+    public Sinebow(min: number, max: number): number
+}
+  
 
+export declare function getPropertyRange(atomlist: AtomSpec[], prop: string): [number, number];
 export interface ViewerSpec {
     /** Callback function to be immediately executed on this viewer */
     callback: () => void; // TODO: actual type
@@ -273,6 +278,7 @@ export interface ColorschemeSpec {
     elementMap: ElementColors;
     // /** Allows the user to provide a function for setting the colorschemes. */
     // colorfunc: function;
+    gradient?: GradientType | string;
 }
 
 export interface CartoonStyleSpec {
@@ -512,7 +518,6 @@ export declare class GLModel {
 
     public getInternalState(): { atoms: AtomSpec[]; frames: unknown[] };
     public setInternalState(state: { atoms: AtomSpec[]; frames: unknown[] }): void;
-    public setColorByProperty(sel:Partial<AtomSelectionSpec>, prop: string, scheme: Gradient|string, range?): void;
 }
 
 export declare class GLShape {}

@@ -63,7 +63,7 @@
                 <div class="input-group input-group-sm">
                     <label class="input-group-text" for="atom-color-property">Atom color property:</label>
                     <select id="atom-color-property" class="form-select">
-                        <option value="" selected>element</option>
+                        <option value="">element</option>
                     </select>
                 </div>
 

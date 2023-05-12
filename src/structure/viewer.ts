@@ -35,7 +35,7 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties: Record<string, number>[] | undefined): void {
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties?: Record<string, number>[] | undefined): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -749,14 +749,9 @@ export class MoleculeViewer {
         });
 
         this._options.color.property.onchange.push(() => {
-            if (this._options.color.property.value !== '') {
-                this._options.color.property.enable();
-                this._current?.model.setColorByProperty({}, this._options.color.property.value, new ($3Dmol as any).Gradient.RWB(-10, 10));
-                // this._updateStyle();
-                this._viewer.render(); 
-            } else {
-                this._options.color.property.disable();
-        }});
+            this._updateStyle();
+            this._viewer.render();
+        });
 
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
@@ -871,15 +866,19 @@ export class MoleculeViewer {
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value);
+        // const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(propertyRange)} as $3Dmol.ColorschemeSpec;
         const style: Partial<$3Dmol.AtomStyleSpec> = {
             sphere: {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-                // colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(-10, 10)},
+                colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)},
             },
         };
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
+                colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)},
+
             };
         }
 

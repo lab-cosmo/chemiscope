@@ -485,11 +485,15 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
-    private _getSelectedAtomProperties(indexes: Indexes): Record<string, number>[] | undefined {
-        const structureAtomProperties: Record<string, number>[] = [];
+    private _getAtomProperties(): Record<string, Property> {
         const numberProperties = filter(this._properties, (p) => 
             Object.values(p.values).every((v) => typeof v === 'number'));
         const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
+        return atomProperties;
+    }
+    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number[]> {
+        const structureAtomProperties: Record<string, number[]> = [];
+        const atomProperties = this._getAtomProperties();
         if (this._environments !== undefined) {
             const structureEnvironments = this._environments[indexes.structure];
             for (const structureEnvironment of structureEnvironments) {
@@ -502,7 +506,6 @@ export class ViewersGrid {
             return structureAtomProperties;
         } else {
             return undefined;
-    
     }};
 
     private _showInViewer(guid: GUID, indexes: Indexes): void {
