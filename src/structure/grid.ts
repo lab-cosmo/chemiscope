@@ -57,9 +57,9 @@ function groupByStructure(
     return result as Environment[][];
 }
 
-interface WidgetGridData {
+interface ViewerGridData {
     /// the viewer itself
-    widget: MoleculeViewer;
+    viewer: MoleculeViewer;
     /// color associated with this viewer
     color: string;
     /// set of indexes currently displayed in this viewer
@@ -68,7 +68,7 @@ interface WidgetGridData {
 
 /**
  * The {@link ViewersGrid} class displays a grid of molecule or a crystal viewers
- * in 3D using {@link MoleculeViewer} widgets for rendering.
+ * in 3D using {@link MoleculeViewer} for rendering.
  */
 export class ViewersGrid {
     /** Callback used when the user select an environment */
@@ -125,10 +125,10 @@ export class ViewersGrid {
     /// The indexer translating between environments indexes and structure/atom
     /// indexes
     private _indexer: EnvironmentIndexer;
-    /// GUID of the currently active widget
+    /// GUID of the currently active viewer
     private _active: GUID;
-    /// Map of Widgets GUIDS to their color, widget, and current structure
-    private _viewers: Map<GUID, WidgetGridData>;
+    /// Map of cell GUIDS to their color, viewer, and current structure
+    private _cellsData: Map<GUID, ViewerGridData>;
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
 
@@ -173,8 +173,8 @@ export class ViewersGrid {
             }
         };
 
-        // Initializes with 1 widget upon opening.
-        this._viewers = new Map<GUID, WidgetGridData>();
+        // Initializes with 1 viewer upon opening.
+        this._cellsData = new Map<GUID, ViewerGridData>();
         this.onselect = () => {};
         this.onremove = () => {};
         this.oncreate = () => {};
@@ -203,7 +203,7 @@ export class ViewersGrid {
 
         this._setupGrid(1);
 
-        this._active = getFirstKey(this._viewers);
+        this._active = getFirstKey(this._cellsData);
         this.setActive(this._active);
     }
 
@@ -223,7 +223,7 @@ export class ViewersGrid {
      */
     public pinned(): Indexes[] {
         const result = [];
-        for (const data of this._viewers.values()) {
+        for (const data of this._cellsData.values()) {
             result.push(data.current);
         }
         return result;
@@ -250,23 +250,23 @@ export class ViewersGrid {
      *         if we already reached the viewer limit.
      */
     public addViewer(): { guid?: GUID; color: string } {
-        const newGUIDs = this._setupGrid(this._viewers.size + 1);
+        const newGUIDs = this._setupGrid(this._cellsData.size + 1);
         if (newGUIDs.length === 0) {
-            // no new widget, probably because we already have MAX_WIDGETS
+            // no new viewer, probably because we already have the maximum
             return { guid: undefined, color: '' };
         }
         assert(newGUIDs.length === 1);
         const newGUID = newGUIDs[0];
 
-        const newData = this._viewers.get(newGUID);
+        const newData = this._cellsData.get(newGUID);
         assert(newData !== undefined);
 
         for (const callback of this._onSettingChangeCallbacks) {
-            newData.widget.onSettingChange((keys, value) => {
+            newData.viewer.onSettingChange((keys, value) => {
                 // add the index of the viewer in the current grid of viewers
                 // at the front of the keys
                 let i = 0;
-                for (const currentGuid of this._viewers.keys()) {
+                for (const currentGuid of this._cellsData.keys()) {
                     if (newGUID === currentGuid) {
                         break;
                     }
@@ -288,38 +288,38 @@ export class ViewersGrid {
      */
     public removeViewer(guid: GUID): void {
         // don't remove the last viewer
-        assert(this._viewers.size > 1);
+        assert(this._cellsData.size > 1);
 
         // If we removed the active marker, change the active one
         if (this._active === guid) {
-            this.setActive(getFirstKey(this._viewers, guid));
+            this.setActive(getFirstKey(this._cellsData, guid));
         }
 
-        // remove HTML inserted by the widget
-        const data = this._viewers.get(guid);
+        // remove HTML inserted by the viewer
+        const data = this._cellsData.get(guid);
         assert(data !== undefined);
-        data.widget.remove();
+        data.viewer.remove();
 
-        // remove the cell containing the widget
+        // remove the cell containing the viewer
         const cell = this._getById(`gi-${guid}`);
         cell.remove();
 
-        this._viewers.delete(guid);
+        this._cellsData.delete(guid);
     }
 
     /**
      * Remove all HTML added by this {@link ViewersGrid} in the current document
      */
     public remove(): void {
-        for (const data of this._viewers.values()) {
-            data.widget.remove();
+        for (const data of this._cellsData.values()) {
+            data.viewer.remove();
         }
 
         this._shadow.host.remove();
     }
 
     /**
-     * Function to set the active widget for communicating with the map
+     * Function to set the active viewer for communicating with the map
      */
     public setActive(guid: GUID): void {
         const changeClasses = (guid: string, toggle: boolean) => {
@@ -336,7 +336,7 @@ export class ViewersGrid {
             cell.classList.toggle('chsp-structure-viewer-cell-active', toggle);
         };
 
-        const current = this._viewers.get(this._active);
+        const current = this._cellsData.get(this._active);
         assert(current !== undefined);
 
         // remove active classes from the previous active viewer
@@ -344,16 +344,16 @@ export class ViewersGrid {
 
         this._active = guid;
 
-        const newViewer = this._viewers.get(this._active);
-        assert(newViewer !== undefined);
+        const newData = this._cellsData.get(this._active);
+        assert(newData !== undefined);
 
         // links playback delay options
-        newViewer.widget._options.playbackDelay.onchange.push((value) => {
+        newData.viewer._options.playbackDelay.onchange.push((value) => {
             this.delayChanged(value);
         });
 
         // set the right initial value for playback delay
-        this.delayChanged(newViewer.widget._options.playbackDelay.value);
+        this.delayChanged(newData.viewer._options.playbackDelay.value);
 
         changeClasses(this._active, true);
     }
@@ -370,8 +370,8 @@ export class ViewersGrid {
      */
     public set positionSettingsModal(value: PositioningCallback) {
         this._positionSettingsModal = value;
-        for (const viewer of this._viewers.values()) {
-            viewer.widget.positionSettingsModal = value;
+        for (const data of this._cellsData.values()) {
+            data.viewer.positionSettingsModal = value;
         }
     }
 
@@ -387,9 +387,9 @@ export class ViewersGrid {
             return;
         }
 
-        assert(settings.length === this._viewers.size);
-        for (const [i, data] of enumerate(this._viewers.values())) {
-            data.widget.applySettings(settings[i]);
+        assert(settings.length === this._cellsData.size);
+        for (const [i, data] of enumerate(this._cellsData.values())) {
+            data.viewer.applySettings(settings[i]);
         }
     }
 
@@ -402,8 +402,8 @@ export class ViewersGrid {
      */
     public saveSettings(): Settings[] {
         const settings = [];
-        for (const data of this._viewers.values()) {
-            settings.push(data.widget.saveSettings());
+        for (const data of this._cellsData.values()) {
+            settings.push(data.viewer.saveSettings());
         }
         return settings;
     }
@@ -416,11 +416,11 @@ export class ViewersGrid {
      * There is currently no way to remove a callback.
      */
     public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
-        for (const guid of this._viewers.keys()) {
-            const data = this._viewers.get(guid);
+        for (const guid of this._cellsData.keys()) {
+            const data = this._cellsData.get(guid);
             assert(data !== undefined);
 
-            data.widget.onSettingChange((keys: string[], value: unknown) => {
+            data.viewer.onSettingChange((keys: string[], value: unknown) => {
                 keys = JSON.parse(JSON.stringify(keys)) as string[];
                 keys.unshift(this._getCurrentPositionInGrid(guid).toString());
 
@@ -439,18 +439,18 @@ export class ViewersGrid {
      * @return the GUID of the new viewer, or `undefined` if we already
      *         reached the viewer limit.
      */
-    private _duplicate(initial: GUID): WidgetGridData | undefined {
-        const data = this._viewers.get(initial);
+    private _duplicate(initial: GUID): ViewerGridData | undefined {
+        const data = this._cellsData.get(initial);
         assert(data !== undefined);
 
         const newGUID = this.addViewer().guid;
         if (newGUID === undefined) {
             return undefined;
         }
-        const newData = this._viewers.get(newGUID);
+        const newData = this._cellsData.get(newGUID);
         assert(newData !== undefined);
 
-        newData.widget.applySettings(data.widget.saveSettings());
+        newData.viewer.applySettings(data.viewer.saveSettings());
         this._showInViewer(newGUID, data.current);
         this.setActive(newGUID);
         return newData;
@@ -479,10 +479,10 @@ export class ViewersGrid {
     }
 
     private _showInViewer(guid: GUID, indexes: Indexes): void {
-        const data = this._viewers.get(guid);
+        const data = this._cellsData.get(guid);
         assert(data !== undefined);
 
-        const widget = data.widget;
+        const viewer = data.viewer;
         if (data.current.structure !== indexes.structure) {
             const options: Partial<LoadOptions> = {
                 trajectory: true,
@@ -496,16 +496,16 @@ export class ViewersGrid {
                 }
             }
 
-            widget.load(this._structure(indexes.structure), options);
+            viewer.load(this._structure(indexes.structure), options);
             data.current = indexes;
         }
 
         if (this._indexer.mode === 'atom') {
             if (data.current.atom !== indexes.atom) {
-                widget.highlight(indexes.atom);
+                viewer.highlight(indexes.atom);
             }
         } else {
-            widget.highlight(undefined);
+            viewer.highlight(undefined);
         }
 
         data.current = indexes;
@@ -518,7 +518,7 @@ export class ViewersGrid {
      */
     private _getNextColor(): string {
         const colors = [];
-        for (const data of this._viewers.values()) {
+        for (const data of this._cellsData.values()) {
             colors.push(data.color);
         }
         return getNextColor(colors);
@@ -544,7 +544,7 @@ export class ViewersGrid {
             // Do not set `cell.onclick = () => {this.active = GUID}`
             // because it will conflict with the button behavior
 
-            // add a button to activate the widget (i.e. set as `active`)
+            // add a button to set the cell/viewer as the active one
             const template = document.createElement('template');
             color = this._getNextColor();
             template.innerHTML = `<div
@@ -560,13 +560,13 @@ export class ViewersGrid {
             activate.onclick = () => {
                 this.setActive(cellGUID);
 
-                const data = this._viewers.get(this._active);
+                const data = this._cellsData.get(this._active);
                 assert(data !== undefined);
                 this.activeChanged(cellGUID, data.current);
             };
             cell.appendChild(activate);
 
-            // add a button to remove the widget
+            // add a button to remove the cell
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
                 style="top: 6px; right: 41px;">
@@ -575,18 +575,18 @@ export class ViewersGrid {
                 </button>`;
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
-                if (this._viewers.size === 1) {
+                if (this._cellsData.size === 1) {
                     sendWarning('can not remove the last viewer from the grid');
                     return;
                 }
 
                 this.onremove(cellGUID);
                 this.removeViewer(cellGUID);
-                this._setupGrid(this._viewers.size);
+                this._setupGrid(this._cellsData.size);
             };
             cell.appendChild(remove);
 
-            // add a button to duplicate the widget
+            // add a button to duplicate the cell
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
                 style="top: 6px; right: 76px;">
@@ -614,19 +614,19 @@ export class ViewersGrid {
             const downloadPNG = template.content.firstChild as HTMLElement;
 
             downloadPNG.onclick = () => {
-                const viewer = this._viewers.get(cellGUID);
-                assert(viewer !== undefined);
-                const widget = viewer.widget;
+                const data = this._cellsData.get(cellGUID);
+                assert(data !== undefined);
+                const viewer = data.viewer;
 
-                const structID = viewer.current.structure;
-                if (viewer.current.atom !== undefined) {
-                    const atomID = viewer.current.atom;
+                const structID = data.current.structure;
+                if (data.current.atom !== undefined) {
+                    const atomID = data.current.atom;
                     downloadURI(
-                        widget.exportPNG(),
+                        viewer.exportPNG(),
                         `chemiscope-structure-${structID + 1}-atom-${atomID + 1}.png`
                     );
                 } else {
-                    downloadURI(widget.exportPNG(), `chemiscope-structure-${structID + 1}.png`);
+                    downloadURI(viewer.exportPNG(), `chemiscope-structure-${structID + 1}.png`);
                 }
             };
 
@@ -642,26 +642,26 @@ export class ViewersGrid {
     }
 
     /**
-     * Function to initialize the grid instance for `this._nwidgets` cells and
-     * place onto the DOM element mapped in `this._root`. If more cells are
-     * needed, this function return the list of new cell GUID
+     * Function to initialize the grid instance for `nViewers` cells and place
+     * onto the DOM element mapped in `this._root`. If more cells are needed,
+     * this function return the list of new cell GUID
      */
     private _setupGrid(nViewers: number): GUID[] {
         const newGUID = [] as GUID[];
         if (nViewers < 1) {
-            sendWarning('Cannot delete last widget.');
+            sendWarning('Cannot delete last molecular viewer.');
             return newGUID;
         } else if (nViewers > this._maxViewers) {
-            sendWarning(`Viewer grid cannot contain more than ${this._maxViewers} widgets.`);
+            sendWarning(`Viewer grid cannot contain more than ${this._maxViewers} viewers.`);
             return newGUID;
         }
 
         // Determine best arrangement for the number of viewers requested
         const arrangement = this.bestGridArrangement(nViewers);
-        if (this._viewers.size > nViewers) {
-            sendWarning(`Warning: Eliminating last ${this._viewers.size - nViewers} viewers.`);
+        if (this._cellsData.size > nViewers) {
+            sendWarning(`Eliminating last ${this._cellsData.size - nViewers} viewers.`);
             let i = 0;
-            for (const guid of this._viewers.keys()) {
+            for (const guid of this._cellsData.keys()) {
                 if (i >= nViewers) {
                     this.removeViewer(guid);
                 }
@@ -673,10 +673,10 @@ export class ViewersGrid {
         let rowNum = 1;
         let colNum = 1;
 
-        const mapKeys = this._viewers.keys();
+        const mapKeys = this._cellsData.keys();
         for (let c = 0; c < nViewers; c++) {
             let cellGUID: GUID;
-            if (c >= this._viewers.size) {
+            if (c >= this._cellsData.size) {
                 cellGUID = generateGUID();
             } else {
                 cellGUID = mapKeys.next().value as GUID;
@@ -693,11 +693,11 @@ export class ViewersGrid {
                 colNum = 1;
             }
 
-            // add a new widget if necessary
-            if (!this._viewers.has(cellGUID)) {
-                const widget = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
+            // add a new cells if necessary
+            if (!this._cellsData.has(cellGUID)) {
+                const viewer = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
 
-                widget.onselect = (atom: number) => {
+                viewer.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
@@ -705,9 +705,9 @@ export class ViewersGrid {
                     // if the viewer is showing a bigger supercell than [1, 1, 1], the
                     // atom index can be outside of [0, natoms), so make sure it is
                     // inside this range.
-                    const data = this._viewers.get(this._active);
+                    const data = this._cellsData.get(this._active);
                     assert(data !== undefined);
-                    const natoms = widget.natoms();
+                    const natoms = viewer.natoms();
                     assert(natoms !== undefined);
                     const indexes = this._indexer.from_structure_atom(
                         data.current.structure,
@@ -719,35 +719,35 @@ export class ViewersGrid {
                         return;
                     }
 
-                    widget.highlight(atom);
+                    viewer.highlight(atom);
                     this.onselect(indexes);
                 };
 
                 const current = { atom: undefined, structure: -1, environment: -1 };
 
-                this._viewers.set(cellGUID, {
+                this._cellsData.set(cellGUID, {
                     color: color,
                     current: current,
-                    widget: widget,
+                    viewer: viewer,
                 });
 
                 if (this._positionSettingsModal !== undefined) {
-                    widget.positionSettingsModal = this._positionSettingsModal;
+                    viewer.positionSettingsModal = this._positionSettingsModal;
                 }
                 newGUID.push(cellGUID);
             }
         }
 
         // Force a refresh of the viewer in case the aspect ratio changed
-        for (const widgetData of this._viewers.values()) {
-            widgetData.widget.resize();
+        for (const data of this._cellsData.values()) {
+            data.viewer.resize();
         }
 
         return newGUID;
     }
 
     /**
-     * Function to return *optimal* arrangement of n widgets.
+     * Function to return *optimal* arrangement of n viewers in a grid.
      */
     private bestGridArrangement(n: number) {
         switch (n) {
@@ -772,7 +772,7 @@ export class ViewersGrid {
     /** get the current position in the viewer grid of a viewer by GUID */
     private _getCurrentPositionInGrid(guid: GUID): number {
         let position = 0;
-        for (const currentGuid of this._viewers.keys()) {
+        for (const currentGuid of this._cellsData.keys()) {
             if (guid === currentGuid) {
                 break;
             }

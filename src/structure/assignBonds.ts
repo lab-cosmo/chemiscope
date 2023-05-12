@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /// Bond assignment from position, taken directly from 3Dmol.js & adapted to
 /// TypeScript
 
 /// 3Dmol.js  is licensed under a BSD-3-Clause license.
 /// Copyright (c) 2014, University of Pittsburgh and contributors
 
-import { AtomSpec } from './index';
+import { AtomSpec } from '3dmol';
 
 // Covalent radii
 const COVALENT_RADII: Record<string, number> = {
@@ -88,30 +89,31 @@ function bondLength(elem: string): number {
 // based on distance alone
 function areConnected(atom1: AtomSpec, atom2: AtomSpec) {
     if (atom1.elem === 'X' || atom2.elem === 'X') return false;
-    let maxsq = bondLength(atom1.elem) + bondLength(atom2.elem);
+    let maxsq = bondLength(atom1.elem!) + bondLength(atom2.elem!);
     maxsq += 0.25; // fudge factor, especially important for md frames, also see 1i3d
     maxsq *= maxsq;
 
-    let xdiff = atom1.x - atom2.x;
+    let xdiff = atom1.x! - atom2.x!;
     xdiff *= xdiff;
     if (xdiff > maxsq) return false;
-    let ydiff = atom1.y - atom2.y;
+    let ydiff = atom1.y! - atom2.y!;
     ydiff *= ydiff;
     if (ydiff > maxsq) return false;
-    let zdiff = atom1.z - atom2.z;
+    let zdiff = atom1.z! - atom2.z!;
     zdiff *= zdiff;
     if (zdiff > maxsq) return false;
 
     const distSquared = xdiff + ydiff + zdiff;
 
-    if (isNaN(distSquared)) return false;
-    else if (distSquared < 0.5) return false;
-    // maybe duplicate position.
-    else if (distSquared > maxsq) return false;
-    else if (atom1.altLoc !== atom2.altLoc && atom1.altLoc !== ' ' && atom2.altLoc !== ' ')
+    if (isNaN(distSquared)) {
         return false;
-    // don't connect across alternate locations
-    else return true;
+    } else if (distSquared < 0.5) {
+        return false;
+    } else if (distSquared > maxsq) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 function findConnections(points: AtomSpec[], otherPoints: AtomSpec[]) {
@@ -122,19 +124,19 @@ function findConnections(points: AtomSpec[], otherPoints: AtomSpec[]) {
 
             if (areConnected(atom1, atom2)) {
                 //gracefully handle one-sided bonds
-                const a2i = atom1.bonds.indexOf(atom2.index);
-                const a1i = atom2.bonds.indexOf(atom1.index);
+                const a2i = atom1.bonds!.indexOf(atom2.index!);
+                const a1i = atom2.bonds!.indexOf(atom1.index!);
                 if (a2i === -1 && a1i === -1) {
-                    atom1.bonds.push(atom2.index);
-                    atom1.bondOrder.push(1);
-                    atom2.bonds.push(atom1.index);
-                    atom2.bondOrder.push(1);
+                    atom1.bonds!.push(atom2.index!);
+                    atom1.bondOrder!.push(1);
+                    atom2.bonds!.push(atom1.index!);
+                    atom2.bondOrder!.push(1);
                 } else if (a2i === -1) {
-                    atom1.bonds.push(atom2.index);
-                    atom1.bondOrder.push(atom2.bondOrder[a1i]);
+                    atom1.bonds!.push(atom2.index!);
+                    atom1.bondOrder!.push(atom2.bondOrder![a1i]);
                 } else if (a1i === -1) {
-                    atom2.bonds.push(atom1.index);
-                    atom2.bondOrder.push(atom1.bondOrder[a2i]);
+                    atom2.bonds!.push(atom1.index!);
+                    atom2.bondOrder!.push(atom1.bondOrder![a2i]);
                 }
             }
         }
@@ -157,9 +159,9 @@ export function assignBonds(atoms: AtomSpec[]): void {
 
     for (let index = 0; index < atoms.length; index++) {
         const atom = atoms[index];
-        const x = Math.floor(atom.x / MAX_BOND_LENGTH);
-        const y = Math.floor(atom.y / MAX_BOND_LENGTH);
-        const z = Math.floor(atom.z / MAX_BOND_LENGTH);
+        const x = Math.floor(atom.x! / MAX_BOND_LENGTH);
+        const y = Math.floor(atom.y! / MAX_BOND_LENGTH);
+        const z = Math.floor(atom.z! / MAX_BOND_LENGTH);
         if (!grid[x]) {
             grid[x] = {};
         }
@@ -203,11 +205,11 @@ export function assignBonds(atoms: AtomSpec[]): void {
                         const atom2 = points[j];
 
                         if (areConnected(atom1, atom2)) {
-                            if (atom1.bonds.indexOf(atom2.index) === -1) {
-                                atom1.bonds.push(atom2.index);
-                                atom1.bondOrder.push(1);
-                                atom2.bonds.push(atom1.index);
-                                atom2.bondOrder.push(1);
+                            if (atom1.bonds!.indexOf(atom2.index!) === -1) {
+                                atom1.bonds!.push(atom2.index!);
+                                atom1.bondOrder!.push(1);
+                                atom2.bonds!.push(atom1.index!);
+                                atom2.bondOrder!.push(1);
                             }
                         }
                     }

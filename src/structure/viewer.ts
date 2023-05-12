@@ -5,8 +5,8 @@
 
 import assert from 'assert';
 
-import { default as $3Dmol } from './3dmol';
-import { assignBonds } from './3dmol/assignBonds';
+import * as $3Dmol from '3dmol';
+import { assignBonds } from './assignBonds';
 
 import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
@@ -308,6 +308,11 @@ export class MoleculeViewer {
         // everything
         this.resize();
 
+        let previousDefaultCutoff = undefined;
+        if (this._highlighted !== undefined) {
+            previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
+        }
+
         // Deal with loading options
         this._environments = options.environments;
 
@@ -363,6 +368,7 @@ export class MoleculeViewer {
                 this._viewer.removeLabel(label);
             }
         }
+
         if (this._highlighted !== undefined) {
             this._viewer.removeModel(this._highlighted.model);
             this._highlighted = undefined;
@@ -390,19 +396,16 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-        assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
-        this._current.model.addAtomSpecs(['index']);
+        assignBonds(this._current.model.selectedAtoms({}));
 
         if (this._environments === undefined) {
             this._styles.noEnvs.replaceSync('.chsp-hide-if-no-environments { display: none; }');
-            this._changeHighlighted(undefined);
         } else {
             this._styles.noEnvs.replaceSync('');
-            this._changeHighlighted(options.highlight === undefined ? 0 : options.highlight);
-
             assert(this._environments.length === structure.size);
-
             this._setEnvironmentInteractions();
+            const newCenter = options.highlight === undefined ? 0 : options.highlight;
+            this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
         this._updateStyle();
@@ -438,8 +441,10 @@ export class MoleculeViewer {
         }
 
         assert(this._current !== undefined);
-        this._viewer.setClickable({ model: this._current.model, index: active }, true, (atom) =>
-            this._selectAtom(atom)
+        this._viewer.setClickable(
+            { model: this._current.model, index: active },
+            true,
+            (atom: $3Dmol.AtomSelectionSpec) => this._selectAtom(atom)
         );
 
         this._setHoverable(active);
@@ -455,7 +460,12 @@ export class MoleculeViewer {
      *               or `undefined` to disable highlighting.
      */
     public highlight(center?: number): void {
-        this._changeHighlighted(center);
+        let previousDefaultCutoff = undefined;
+        if (this._highlighted !== undefined) {
+            previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
+        }
+
+        this._changeHighlighted(center, previousDefaultCutoff);
         this._updateStyle();
 
         const centerView = this._options.environments.center.value;
@@ -513,42 +523,48 @@ export class MoleculeViewer {
         assert(n_atoms !== undefined);
         const hovered: Map<number, $3Dmol.GLModel> = new Map();
 
+        const hoverStart = (atom: $3Dmol.AtomSpec) => {
+            assert(atom.index !== undefined);
+            if (hovered.get(atom.index) !== undefined) {
+                // the 'hover' model for this atom already exists
+                return;
+            }
+
+            const model = this._viewer.addModel();
+            model.addAtoms([atom]);
+            model.setStyle({}, this._centralStyle(0.3));
+
+            // the atom in the new is still marked as clickable, but we only
+            // want the atom in the main model to react to interactions
+            const sel = model.selectedAtoms({});
+            sel[0].clickable = false;
+            sel[0].hoverable = false;
+
+            hovered.set(atom.index, model);
+            this._viewer.render();
+        };
+
+        const hoverStop = (atom: $3Dmol.AtomSpec) => {
+            assert(atom.index !== undefined);
+            const model = hovered.get(atom.index);
+            if (model === undefined) {
+                return;
+            }
+
+            this._viewer.removeModel(model);
+            hovered.delete(atom.index);
+            this._viewer.render();
+        };
+
         this._viewer.setHoverable(
             {
                 model: this._current.model,
                 index: active,
             },
             true,
-            (atom) => {
-                if (hovered.get(atom.index) !== undefined) {
-                    // the 'hover' model for this atom already exists
-                    return;
-                }
-
-                const model = this._viewer.addModel();
-                model.addAtoms([atom]);
-                model.setStyle({}, this._centralStyle(0.3));
-
-                // the atom is marked as clickable, reset flags
-                const sel = model.selectedAtoms({});
-                sel[0].clickable = false;
-                sel[0].hoverable = false;
-
-                hovered.set(atom.index, model);
-                this._viewer.render();
-            },
-            (atom) => {
-                const model = hovered.get(atom.index);
-                if (model === undefined) {
-                    return;
-                }
-
-                this._viewer.removeModel(model);
-                this._viewer.render();
-                hovered.delete(atom.index);
-            }
+            hoverStart,
+            hoverStop
         );
-        this._viewer.render();
     }
 
     private _connectOptions(): void {
@@ -564,10 +580,6 @@ export class MoleculeViewer {
             if (this._current === undefined) {
                 return;
             }
-
-            // move the atomic label a bit further away from the atom by
-            // monkey-patching 3Dmol
-            $3Dmol.SpriteAlignment.bottomLeft = new $3Dmol.Vector2(1.5, 1.5);
 
             if (showLabels) {
                 assert(this._current.atomLabels.length === 0);
@@ -592,7 +604,7 @@ export class MoleculeViewer {
                         fontColor: color,
                         fontSize: 14,
                         showBackground: false,
-                        alignment: 'bottomLeft',
+                        alignment: new $3Dmol.Vector2(2.0, 2.0),
                     });
                     this._current.atomLabels.push(label);
                 }
@@ -684,10 +696,11 @@ export class MoleculeViewer {
                 this._options.supercell[2].value,
                 this._current.model
             );
-            assignBonds(this._current.model.selectedAtoms({}) as $3Dmol.AtomSpec[]);
+            assignBonds(this._current.model.selectedAtoms({}));
 
             if (this._highlighted !== undefined) {
-                this._changeHighlighted(this._highlighted.center);
+                const previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
+                this._changeHighlighted(this._highlighted.center, previousDefaultCutoff);
             }
             if (this._environmentsEnabled()) {
                 this._setEnvironmentInteractions();
@@ -703,7 +716,8 @@ export class MoleculeViewer {
         this._options.environments.bgStyle.onchange.push(restyleAndRender);
         this._options.environments.cutoff.onchange.push(() => {
             if (this._highlighted !== undefined) {
-                this._changeHighlighted(this._highlighted.center);
+                const previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
+                this._changeHighlighted(this._highlighted.center, previousDefaultCutoff);
             }
             restyleAndRender();
         });
@@ -729,7 +743,7 @@ export class MoleculeViewer {
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
             assert(this._highlighted !== undefined);
-            this._options.environments.cutoff.value = this._cutoffAround(this._highlighted.center);
+            this._options.environments.cutoff.value = this._defaultCutoff(this._highlighted.center);
             restyleAndRender();
         };
 
@@ -795,7 +809,7 @@ export class MoleculeViewer {
     /**
      * Function called whenever the user click on an atom in the viewer
      */
-    private _selectAtom(atom: Partial<$3Dmol.AtomSpec>): void {
+    private _selectAtom(atom: $3Dmol.AtomSelectionSpec): void {
         // use atom.serial instead of atom.index to ensure we are getting the
         // id of the atom inside the central cell when using a supercell
         assert(atom.serial !== undefined);
@@ -976,7 +990,7 @@ export class MoleculeViewer {
     /**
      * Get the cutoff for the environment around the given `center`
      */
-    private _cutoffAround(center: number): number {
+    private _defaultCutoff(center: number): number {
         assert(this._environments !== undefined);
         const environment = this._environments[center];
         assert(environment !== undefined);
@@ -989,7 +1003,7 @@ export class MoleculeViewer {
      *
      * @param center index of the atom to highlight
      */
-    private _changeHighlighted(center?: number): void {
+    private _changeHighlighted(center?: number, previousDefaultCutoff?: number): void {
         if (this._highlighted !== undefined) {
             this._viewer.removeModel(this._highlighted.model);
         }
@@ -1009,13 +1023,9 @@ export class MoleculeViewer {
                 );
             }
 
-            let oldCutoff = undefined;
-            if (this._highlighted !== undefined) {
-                oldCutoff = this._cutoffAround(this._highlighted.center);
-            }
-
             // only change the cutoff if it was not changed manually by the user
-            if (oldCutoff === undefined || this._options.environments.cutoff.value === oldCutoff) {
+            const htmlCutoff = this._options.environments.cutoff.value;
+            if (previousDefaultCutoff === undefined || previousDefaultCutoff === htmlCutoff) {
                 this._options.environments.cutoff.value = environment.cutoff;
             }
 
