@@ -867,18 +867,20 @@ export class MoleculeViewer {
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
         const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value);
-        // const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(propertyRange)} as $3Dmol.ColorschemeSpec;
+
+        // swap the range so that the color scheme goes from blue to red
+        [propertyRange[0], propertyRange[1]] = [propertyRange[1], propertyRange[0]];
+        const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)};
         const style: Partial<$3Dmol.AtomStyleSpec> = {
             sphere: {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-                colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)},
+                colorscheme: colorScheme,
             },
         };
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
-                colorscheme: {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)},
-
+                colorscheme: colorScheme,
             };
         }
 
