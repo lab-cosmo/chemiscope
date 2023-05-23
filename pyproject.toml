@@ -2,7 +2,7 @@
 requires = [
     "setuptools",
     "wheel",
-    "jupyterlab",
+    "jupyterlab >=4.0",
 ]
 build-backend = "setuptools.build_meta"
 
