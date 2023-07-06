@@ -7,16 +7,23 @@ import sys
 import warnings
 
 from setuptools import setup
+from setuptools.command.bdist_egg import bdist_egg
 
-# customize dist directory if the user did not already request one, and if we
-# are running setup.py directly (i.e. not from pip)
-if not sys.argv[0].endswith("setup.py"):
-    change_dist_dir = False
 
-change_dist_dir = True
-for arg in sys.argv:
-    if "--dist-dir" in arg:
-        change_dist_dir = False
+class bdist_egg_disabled(bdist_egg):
+    """Disabled version of bdist_egg
+
+    Prevents setup.py install performing setuptools' default easy_install,
+    which it should never ever do.
+    """
+
+    def run(self):
+        sys.exit(
+            "Aborting implicit building of eggs. "
+            + "Use `pip install .` or `python setup.py bdist_wheel && pip "
+            + "uninstall chemiscope -y && pip install dist/chemiscope-*.whl` "
+            + "to install from source."
+        )
 
 
 def run_npm_build():
@@ -67,6 +74,9 @@ if __name__ == "__main__":
     run_npm_build()
 
     setup(
+        cmdclass={
+            "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
+        },
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (
