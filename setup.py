@@ -26,6 +26,51 @@ class bdist_egg_disabled(bdist_egg):
         )
 
 
+NPM_BUILD_INPUT = [
+    # source files
+    *glob.glob("src/**/*", recursive=True),
+    *glob.glob("python/jupyter/src/**/*", recursive=True),
+    # dependencies
+    "package.json",
+    "package-lock.json",
+    # build configuration
+    "tsconfig.json",
+    "webpack.config.ts",
+]
+
+NPM_BUILD_OUTPUT = [
+    "python/jupyter/nbextension/chemiscope.min.js",
+    "python/jupyter/labextension/package.json",
+]
+
+
+def needs_npm_build():
+    """
+    Determine if we need to re-build the JS code with npm by checking the modification
+    time for inputs & outputs of this build.
+    """
+    last_output_modification_time = -1
+    for file in NPM_BUILD_OUTPUT:
+        if os.path.exists(file):
+            last_output_modification_time = max(
+                os.path.getmtime(file), last_output_modification_time
+            )
+        else:
+            # if the file does not exists, we need to build
+            return True
+
+    last_input_modification_time = -1
+    for file in NPM_BUILD_INPUT:
+        if os.path.exists(file):
+            last_input_modification_time = max(
+                os.path.getmtime(file), last_input_modification_time
+            )
+        # if the file does not exists, we might be building a sdist which already
+        # contains the pre-built extensions
+
+    return last_output_modification_time < last_input_modification_time
+
+
 def run_npm_build():
     """Build the JavaScript code required by the jupyter widget using npm"""
     root = os.path.dirname(os.path.realpath(__file__))
@@ -69,9 +114,9 @@ if __name__ == "__main__":
     # labextension creates unpredictable file names, and `data_file` wants to
     # explicitly list all files one by one.
 
-    # TODO: this currently runs more than once because pip runs this function
-    # multiple times. Can we cache the outcome?
-    run_npm_build()
+    if needs_npm_build():
+        print("==== rebuilding the JS code with npm, this might take a while ...")
+        run_npm_build()
 
     setup(
         cmdclass={
