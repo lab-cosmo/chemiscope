@@ -849,7 +849,7 @@ def _add_shapes(structures, shapes):
 
     # Add the shapes to the structures
     for structure in structures:
-        structure["shape"] = {}
+        structure["shapes"] = {}
 
     for key, values in shapes.items():
         for structure, shapes_data in zip(structures, values):
@@ -867,7 +867,7 @@ def _add_shapes(structures, shapes):
                     convex_hull = scipy.spatial.ConvexHull(shape["vertices"])
                     shape["simplices"] = [s.tolist() for s in convex_hull.simplices]
 
-            structure["shape"][key] = shapes_data
+            structure["shapes"][key] = shapes_data
 
 
 def _check_valid_shape(shape):

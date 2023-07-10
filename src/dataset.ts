@@ -3,7 +3,8 @@
  * @module main
  */
 
-import { CustomShape, Ellipsoid, Sphere } from './shapes';
+import { CustomShape, Ellipsoid, Sphere } from './structure/shapes';
+import { CustomShapeData, EllipsoidData, SphereData } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
@@ -101,9 +102,15 @@ export interface Structure {
      */
     cell?: number[];
     /**
-     * shapes of the particles / atoms in the viewer
+     * possible shapes to display, multiple groups of shapes with different
+     * names are allowed
      */
-    shape?: { [name: string]: Record<string, unknown>[] };
+    shapes?: {
+        /**
+         * shapes of each particles / atoms
+         */
+        [name: string]: Array<CustomShapeData | EllipsoidData | SphereData>;
+    };
 }
 
 /**
@@ -313,14 +320,14 @@ function checkStructures(o: JsObject[]): [number, number] {
     // check to see if all structures have consistent shapes
     // placed after structure check to ensure that all structures
     // are first validated
-    if ('shape' in o[0]) {
-        const shapeList = Object.keys(o[0]['shape'] as Record<string, unknown>);
+    if ('shapes' in o[0]) {
+        const shapeList = Object.keys(o[0]['shapes'] as Record<string, unknown>);
         for (let i = 0; i < o.length; i++) {
             const structure = o[i];
-            if (!('shape' in structure)) {
+            if (!('shapes' in structure)) {
                 throw Error(`error in structure ${i}: "shape" is not defined.`);
             } else {
-                const shapes = structure['shape'] as Record<string, unknown>;
+                const shapes = structure['shapes'] as Record<string, unknown>;
                 for (const shapeKey of shapeList) {
                     if (!(shapeKey in shapes) || shapes[shapeKey] === undefined) {
                         throw Error(`error in structure ${i}: "${shapeKey}" is not defined.`);
@@ -338,7 +345,7 @@ function checkStructures(o: JsObject[]): [number, number] {
     } else {
         for (let i = 0; i < o.length; i++) {
             const structure = o[i];
-            if ('shape' in structure) {
+            if ('shapes' in structure) {
                 throw Error(`error in structure 0: "shape" is not defined.`);
                 break;
             }
@@ -382,12 +389,12 @@ export function checkStructure(s: JsObject): string {
         }
     }
 
-    if ('shape' in s) {
-        if (s['shape'] !== undefined) {
-            if (typeof s['shape'] !== 'object' || s['shape'] === null) {
-                return "'shape' must be an object";
+    if ('shapes' in s) {
+        if (s['shapes'] !== undefined) {
+            if (typeof s['shapes'] !== 'object' || s['shapes'] === null) {
+                return "'shapes' must be an object";
             } else {
-                for (const [key, array] of Object.entries(s['shape'] as Record<string, unknown>)) {
+                for (const [key, array] of Object.entries(s['shapes'] as Record<string, unknown>)) {
                     if (!Array.isArray(array)) {
                         return `shape['${key}'] must be an array`;
                     }

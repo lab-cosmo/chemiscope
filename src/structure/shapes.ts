@@ -1,16 +1,13 @@
 /**
- * @packageDocumentation
- * @module settings
  *
  * This file consists of shapes supported by chemiscope via 3dmol
  *
- * To add a new shape type, extend the `Shape` class and define the
- * inherited functions (`validateParams` and `outputTo3Dmol`).
- * `validateParams` should check a `ShapeData` object to see that
- * it has the correct parameters for the given type. `outputTo3Dmol`
- * should take a color and output a `CustomShapeSpec` (https://3dmol.csb.pitt.edu/doc/types.html#CustomShapeSpec)
- * object. You will also need to add any parameters for your shape
- * to ShapeData.
+ * To add a new shape type, extend the `Shape` class and define the inherited
+ * functions (`validateParams` and `outputTo3Dmol`). `validateParams` should
+ * check a `ShapeData` object to see that it has the correct parameters for the
+ * given type. `outputTo3Dmol` should take a color and output a
+ * `CustomShapeSpec` (https://3dmol.csb.pitt.edu/doc/types.html#CustomShapeSpec)
+ * object. You will also need to add any parameters for your shape to ShapeData.
  *
  * To add a new shape, you will also need to add code to `structure/viewer.ts`.
  */
@@ -24,27 +21,28 @@ export interface XYZ {
     y: number;
     z: number;
 }
+
 export interface SphereData {
+    kind: 'sphere';
     radius: number;
-    kind: string;
 }
 
 // Interface for ellipsoidal data, where
 // orientation is stored in the (w, x, y, z) convention
 export interface EllipsoidData {
+    kind: 'ellipsoid';
     semiaxes: [number, number, number];
     orientation?: [number, number, number, number];
-    kind: string;
 }
 
 // Interface for polytope data, where
 // orientation is stored in the (w, x, y, z) convention
 // and simplices refers to the indices of the facets
 export interface CustomShapeData {
+    kind: 'custom';
     vertices: [number, number, number][];
     simplices: [number, number, number][];
     orientation?: [number, number, number, number];
-    kind: string;
 }
 
 export type ShapeData = SphereData | EllipsoidData | CustomShapeData;

@@ -19,7 +19,7 @@ import {
     EllipsoidData,
     Sphere,
     SphereData,
-} from '../shapes';
+} from './shapes';
 
 import { StructureOptions } from './options';
 
@@ -418,17 +418,17 @@ export class MoleculeViewer {
             this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
-        if ('shape' in structure) {
-            if (structure['shape'] !== undefined) {
-                const selectShape = this._options.getModalElement<HTMLSelectElement>('shape');
-                selectShape.options.length = 0;
-                selectShape.options.add(new Option('off', ''));
-                for (const key of Object.keys(structure['shape'] as Record<string, unknown>)) {
-                    selectShape.options.add(new Option(key, key));
-                }
+        // update the options for shape visualization
 
-                this._options.shape.bind(selectShape, 'value');
+        if (structure.shapes !== undefined) {
+            const selectShape = this._options.getModalElement<HTMLSelectElement>('shapes');
+            selectShape.options.length = 0;
+            selectShape.options.add(new Option('off', ''));
+            for (const key of Object.keys(structure['shapes'])) {
+                selectShape.options.add(new Option(key, key));
             }
+
+            this._options.shape.bind(selectShape, 'value');
         }
 
         this._updateStyle();
@@ -905,34 +905,24 @@ export class MoleculeViewer {
 
         const structure = this._current.structure;
 
-        assert(!(structure.shape === undefined));
-        const current_shape = structure.shape[this._options.shape.value];
+        assert(!(structure.shapes === undefined));
+        const current_shape = structure.shapes[this._options.shape.value];
         assert(!(current_shape === undefined));
 
-        const A = this._options.supercell[0].value;
-        const B = this._options.supercell[1].value;
-        const C = this._options.supercell[2].value;
-        let cell = this._current.structure.cell as [
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number
-        ];
+        const supercell_a = this._options.supercell[0].value;
+        const supercell_b = this._options.supercell[1].value;
+        const supercell_c = this._options.supercell[2].value;
+        let cell = this._current.structure.cell;
 
-        if ((A > 1 || B > 1 || C > 1) && cell === undefined) {
+        if ((supercell_a > 1 || supercell_b > 1 || supercell_c > 1) && cell === undefined) {
             return;
         } else if (cell === undefined) {
             cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
         }
 
-        for (let a = 0; a < A; a++) {
-            for (let b = 0; b < B; b++) {
-                for (let c = 0; c < C; c++) {
+        for (let a = 0; a < supercell_a; a++) {
+            for (let b = 0; b < supercell_b; b++) {
+                for (let c = 0; c < supercell_c; c++) {
                     for (let i = 0; i < structure.size; i++) {
                         const name = structure.names[i];
                         const position: [number, number, number] = [
@@ -941,39 +931,31 @@ export class MoleculeViewer {
                             structure.z[i] + a * cell[2] + b * cell[5] + c * cell[8],
                         ];
 
-                        assert(
-                            current_shape[i]['kind'] === 'ellipsoid' ||
-                                current_shape[i]['kind'] === 'custom' ||
-                                current_shape[i]['kind'] === 'sphere'
-                        );
-                        if (current_shape[i]['kind'] === 'ellipsoid') {
-                            assert(Ellipsoid.validateParams(current_shape[i]) === '');
+                        if (current_shape[i].kind === 'ellipsoid') {
                             const data = current_shape[i] as unknown as EllipsoidData;
-                            const my_ellipsoid = new Ellipsoid(position, data);
+                            const shape = new Ellipsoid(position, data);
                             this._viewer.addCustom(
-                                my_ellipsoid.outputTo3Dmol(
-                                    $3Dmol.elementColors.Jmol[name] || 0x000000
-                                )
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
                             );
-                        } else if (current_shape[i]['kind'] === 'custom') {
-                            assert(CustomShape.validateParams(current_shape[i]) === '');
+                        } else if (current_shape[i].kind === 'custom') {
                             const data = current_shape[i] as unknown as CustomShapeData;
-                            const my_shape = new CustomShape(position, data);
+                            const shape = new CustomShape(position, data);
                             this._viewer.addCustom(
-                                my_shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
                             );
-                        } else if (current_shape[i]['kind'] === 'sphere') {
-                            assert(Sphere.validateParams(current_shape[i]) === '');
+                        } else {
+                            assert(current_shape[i].kind === 'sphere');
                             const data = current_shape[i] as unknown as SphereData;
-                            const my_sphere = new Sphere(position, data);
+                            const shape = new Sphere(position, data);
                             this._viewer.addCustom(
-                                my_sphere.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
                             );
                         }
                     }
                 }
             }
         }
+
         this._viewer.render();
     }
     /**

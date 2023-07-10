@@ -94,23 +94,32 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
-                // OPTIONAL: shapes to display on each site, if other than sphere.
+
+                // OPTIONAL: shapes to display on each site, if other than
+                // spheres. Multiple shapes groups with different names are
+                // supported.
                 //
-                // This should be given as a dictionary, where each entry contains
-                // a length N list of shape parameters, where the currently supported
-                // parameters are:
-                // {"kind": "ellipsoid", "semiaxes": [ax, ay, az], "orientation": [x, y, z, w]}
-                // {"kind": "sphere", "radius": r}
-                // {"kind": "custom", "vertices": [[x, y, z],...], "orientation": [x, y, z, w],
-                //  "simplices": [i, j, k, ...]}
-                // where "orientation" is an optional quaternion, [0, 0, 0, 1] where not
-                // specified. For custom shapes, if "simplices", referring to the indices
-                // of the facets, is not specified, a convex triangulation is computed using
-                // scipy.spatial.ConvexHull
-                // 
-                "shape": {"shape_1": [{"kind": "ellipsoid", "semiaxes": [1,1,2]},...],
-                          "shape_2": [{"kind": "sphere", "radius": 3},...],
-                         }
+                // Each shape group should be an array of "size" elements,
+                // describing the different shapes.
+                "shapes": {
+                    <name>: [
+                        // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
+                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2]},
+                        // Each shape can contain an OPTIONAL "orientation",
+                        // given as a `[x, y, z, w]` quaternion. Defaults to
+                        // [0, 0, 0, 1]
+                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2], "orientation": [0, 0, 0, 1]},
+                        // fully custom shape, from a list of vertices and
+                        // simplices (also called "indices" in WebGL)
+                        {
+                            "kind": "custom",
+                            "vertices": [[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+                            "indices": [[0, 1, 2]],
+                        },
+                        // more shapes as needed
+                        ...
+                    ],
+                }
             },
             // other structures as needed
             ...
