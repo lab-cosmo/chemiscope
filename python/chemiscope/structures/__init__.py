@@ -3,13 +3,14 @@ from ._ase import (
     _ase_all_atomic_environments,
     _ase_composition_properties,
     _ase_extract_properties,
-    _ase_extract_shapes,
     _ase_librascal_atomic_environments,
     _ase_list_atom_properties,
     _ase_list_structure_properties,
     _ase_to_json,
     _ase_valid_structures,
 )
+
+from ._ase import extract_lammps_shapes_from_ase  # noqa  isort: skip
 
 
 def _guess_adapter(frames):
@@ -86,21 +87,6 @@ def extract_properties(frames, only=None, environments=None):
 
     if adapter == "ASE":
         return _ase_extract_properties(frames, only, environments)
-    else:
-        raise Exception("reached unreachable code")
-
-
-def extract_shapes(frames):
-    """
-    Extract shapes defined in the ``frames`` in a chemiscope-compatible
-    format.
-
-    :param frames: iterable over structures (typically a list of frames)
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_extract_shapes(frames)
     else:
         raise Exception("reached unreachable code")
 

@@ -49,13 +49,13 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.extract_properties
 
-.. autofunction:: chemiscope.extract_shapes
-
 .. autofunction:: chemiscope.composition_properties
 
 .. autofunction:: chemiscope.all_atomic_environments
 
 .. autofunction:: chemiscope.librascal_atomic_environments
+
+.. autofunction:: chemiscope.extract_lammps_shapes_from_ase
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP

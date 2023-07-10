@@ -10,8 +10,6 @@ try:
 except ImportError:
     HAVE_ASE = False
 
-from ._shapes import _extract_shapes
-
 
 def _ase_valid_structures(frames):
     frames_list = list(frames)
@@ -170,28 +168,6 @@ def _ase_extract_properties(frames, only=None, environments=None):
     return properties
 
 
-def _ase_extract_shapes(frames, environments=None):
-    """implementation of ``extract_shapes`` for ASE"""
-
-    shape_dictionaries = [_extract_shapes(frame) for frame in frames]
-
-    if any([sd is None for sd in shape_dictionaries]):
-        n_without = len([sd for sd in shape_dictionaries if sd is None])
-        raise ValueError(f"{n_without} frame(s) do not contain shape information.")
-
-    keys = list(set([k for sd in shape_dictionaries for k in sd.keys()]))
-
-    universal_keys = [k for k in keys if all([k in sd for sd in shape_dictionaries])]
-
-    if len(universal_keys) != len(keys):
-        warnings.warn(
-            "Only including shape keys {}, which are present in all frames. All other shape keys are omitted.".format(
-                ", ".join(universal_keys)
-            )
-        )
-    return {k: [sd[k] for sd in shape_dictionaries] for k in universal_keys}
-
-
 def _ase_all_atomic_environments(frames, cutoff):
     "Extract all atomic environments out of a set of ASE Atoms objects"
     environments = []
@@ -326,3 +302,109 @@ def _is_convertible_to_property(value):
                 return True
             except Exception:
                 return False
+
+
+def extract_lammps_shapes_from_ase(frames, key="shape"):
+    """
+    Extract shapes from a LAMMPS data file read by ASE.
+
+    :param frames: list of ASE Atoms objects
+    :param key: name of the ASE property where the shape is stored
+    """
+
+    all_shapes = [_extract_lammps_shapes(frame, key=key) for frame in frames]
+
+    n_without = len([shapes for shapes in all_shapes if shapes is None])
+    if n_without != 0:
+        raise ValueError(f"{n_without} frame(s) do not contain shape information")
+
+    keys = set([k for shapes in all_shapes for k in shapes.keys()])
+
+    universal_keys = [k for k in keys if all([k in shapes for shapes in all_shapes])]
+
+    if len(universal_keys) != len(keys):
+        warnings.warn(
+            f"Only including shape keys [{', '.join(universal_keys)}], which are "
+            "present in all frames. All other shape keys are omitted."
+        )
+    return {k: [shapes[k] for shapes in all_shapes] for k in universal_keys}
+
+
+# Required parameters from different kinds of shapes
+SHAPE_PARAMETERS = {
+    "ellipsoid": "semiaxes",
+    "sphere": "radius",
+}
+
+
+def _extract_lammps_shapes(frame, key):
+    if key in frame.info:
+        if frame.info[key] not in SHAPE_PARAMETERS:
+            raise KeyError(
+                "The currently-supported shape in `extract_lammps_shapes_from_ase` are "
+                f"{list(SHAPE_PARAMETERS.keys())}, received '{frame.info[key]}'"
+            )
+
+        shape = _get_shape_params(key, frame.info[key], frame.info)
+        if "orientation" in frame.arrays:
+            return {
+                key: [
+                    {**shape, "orientation": list(o)}
+                    for o in frame.arrays["orientation"]
+                ]
+            }
+        else:
+            return {key: [shape for _ in frame]}
+
+    elif key in frame.arrays:
+        shapes = []
+        for atom_i, shape_key in enumerate(frame.arrays[key]):
+            if shape_key not in SHAPE_PARAMETERS:
+                raise KeyError(
+                    "The currently-supported shape types are {}, received {}.".format(
+                        ", ".join(SHAPE_PARAMETERS.keys()), shape_key
+                    )
+                )
+            shape = _get_shape_params_atom(
+                key,
+                shape_key,
+                frame.arrays,
+                atom_i,
+            )
+
+            if "orientation" in frame.arrays:
+                shape["orientation"] = list(frame.arrays["orientation"][atom_i])
+
+            shapes.append(shape)
+
+        return {key: shapes}
+
+
+def _get_shape_params(prefix, shape_kind, dictionary):
+    shape = {"kind": shape_kind}
+    parameter = SHAPE_PARAMETERS[shape_kind]
+    try:
+        shape[parameter] = dictionary[f"{prefix}_{parameter}"]
+    except KeyError:
+        raise KeyError(
+            f"Missing required parameter '{prefix}_{parameter}' for "
+            f"'{shape_kind}' shape"
+        )
+
+    return shape
+
+
+def _get_shape_params_atom(prefix, shape_kind, dictionary, atom_i):
+    """Extract shape parameters for a single atom"""
+
+    shape = {"kind": shape_kind}
+    parameter = SHAPE_PARAMETERS[shape_kind]
+    try:
+        shape[parameter] = dictionary[f"{prefix}_{parameter}"][atom_i]
+    except KeyError:
+        raise KeyError(
+            f"Missing required parameter '{prefix}_{parameter}' for "
+            f"'{shape_kind}' shape"
+        )
+
+    return shape
