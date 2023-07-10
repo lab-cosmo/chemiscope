@@ -1,7 +1,6 @@
 import unittest
 
 import ase
-import numpy as np
 
 import chemiscope
 
@@ -37,12 +36,56 @@ SHAPE_DEFAULTS = {
 }
 
 
+class TestShapes(unittest.TestCase):
+    def test_custom_shapes(self):
+        frame = ase.Atoms(
+            numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
+        )
+
+        shapes = {
+            "cubes": [
+                [
+                    {"kind": "custom", "vertices": CUBE_VERTICES},
+                    {
+                        "kind": "custom",
+                        "vertices": CUBE_VERTICES,
+                        "orientation": [1, 0, 0, 0],
+                    },
+                    {
+                        "kind": "custom",
+                        "vertices": CUBE_VERTICES,
+                        "simplices": CUBE_SIMPLICES,
+                    },
+                ],
+            ],
+            "other": [
+                [
+                    {"kind": "sphere", "radius": 0.3},
+                    {"kind": "ellipsoid", "semiaxes": [0.3, 0.2, 0.1]},
+                    {
+                        "kind": "ellipsoid",
+                        "semiaxes": [0.3, 0.2, 0.1],
+                        "orientation": [1, 0, 0, 0],
+                    },
+                ],
+            ],
+        }
+
+        data = chemiscope.create_input(frames=[frame], shapes=shapes)
+
+        result = data["structures"][0]["shape"]
+        self.assertEqual(list(result.keys()), ["cubes", "other"])
+
+        for key, values in result.items():
+            self.assertEqual(shapes[key][0], values)
+
+
 class TestShapesFromASE(unittest.TestCase):
     """Conversion of shape data in ASE to chemiscope JSON"""
 
     def setUp(self):
         self.frame = ase.Atoms(
-            numbers=np.zeros(3), positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
+            numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
         )
         self.frame.arrays["orientation"] = [
             [1, 0, 0, 0] for _ in range(len(self.frame))
@@ -181,11 +224,6 @@ class TestShapesFromASE(unittest.TestCase):
             cm.exception.args[0],
             "1 frame(s) do not contain shape information",
         )
-
-
-class TestShapesValidation(unittest.TestCase):
-    def test_custom_shapes(self):
-        pass
 
 
 if __name__ == "__main__":
