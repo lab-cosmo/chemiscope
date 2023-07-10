@@ -32,43 +32,39 @@ def create_input(
     parameters=None,
 ):
     """
-    Create a dictionary that can be saved to JSON using the format used by
-    the default chemiscope visualizer.
+    Create a dictionary that can be saved to JSON using the format used by the default
+    chemiscope visualizer.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
-                        objects are supported
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
+        are supported
+
     :param dict meta: optional metadata of the dataset, see below
+
     :param dict properties: optional dictionary of properties, see below
-    :param list environments: optional list of (structure id, atom id, cutoff)
-        specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default. Functions like
+
+    :param list environments: optional list of ``(structure id, atom id, cutoff)``
+        specifying which atoms have properties attached and how far out atom-centered
+        environments should be drawn by default. Functions like
         :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
         can be used to generate the list of environments in simple cases.
-    :param dict shapes:
-        .. raw:: html
 
-            optional dictionary of shapes to have available for display.
-            ``shapes`` should have the format {string: list of shape parameters}, where the
-            list of shape parameters is a ragged list corresponding to frames and their
-            constituent environments. Shape parameters can be dictionaries with any of
-            the following forms:
+    :param dict shapes: optional dictionary of shapes to have available for display,
+        see below. :py:func:`extract_lammps_shapes_from_ase` can automatically extract
+        shapes from a LAMMPS simulation.
 
-        - ``{"kind": "ellipsoid", "semiaxes": [number, number, number], "orientation": [number, number, number, number]}``,
-        - ``{"kind": "sphere", "radius": number}``,
-        - ``{"kind": "custom", "vertices": [[number, number, number], ...], "orientation": [number, number, number, number]}``
+    :param dict settings: optional dictionary of settings to use when displaying the
+        data. Possible entries for the ``settings`` dictionary are documented in the
+        chemiscope input file reference.
 
-        where ``orientation`` is an optional parameter corresponding to a quaternion
-        in ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
-        ``indices`` of the facets, is also optional, and will be determined by convex
-        triangulation when not provided.
-    :param dict settings: optional dictionary of settings to use when displaying
-        the data. Possible entries for the ``settings`` dictionary are documented
-        in the chemiscope input file reference.
     :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
 
-    The dataset metadata should be given in the ``meta`` dictionary, the
-    possible keys are:
+
+    Dataset metadata
+    ----------------
+
+    The dataset metadata should be given in the ``meta`` dictionary, the possible keys
+    are:
 
     .. code-block:: python
 
@@ -83,16 +79,19 @@ def create_input(
             ],
         }
 
-    Properties can be added with the ``properties`` parameter. This parameter
-    should be a dictionary containing one entry for each property. Properties
-    can be extracted from structures with :py:func:`extract_properties` or
+    Dataset properties
+    ------------------
+
+    Properties can be added with the ``properties`` parameter. This parameter should be
+    a dictionary containing one entry for each property. Properties can be extracted
+    from structures with :py:func:`extract_properties` or
     :py:func:`composition_properties`, or manually defined by the user.
 
     Each entry in the ``properties`` dictionary contains a ``target`` attribute
-    (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a
-    Python list of float or string; a 1D numpy array of numeric values; or a 2D
-    numpy array of numeric values. In the later case, multiple properties will
-    be generated along the second axis. For example, passing
+    (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a Python list
+    of float or string; a 1D numpy array of numeric values; or a 2D numpy array of
+    numeric values. In the later case, multiple properties will be generated along the
+    second axis. For example, passing
 
     .. code-block:: python
 
@@ -107,8 +106,8 @@ def create_input(
             }
         }
 
-    will generate four properties named ``cheese[1]``, ``cheese[2]``,
-    ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
+    will generate four properties named ``cheese[1]``, ``cheese[2]``, ``cheese[3]``, and
+    ``cheese[4]``, each containing 300 values.
 
     It is also possible to pass shortened representation of the properties, for
     instance:
@@ -119,13 +118,16 @@ def create_input(
             'cheese':  np.zeros((300, 4)),
         }
 
-    In this case, the type of property (structure or atom) would be deduced
-    by comparing the numbers atoms and structures in the dataset to the
-    length of provided list/np.ndarray.
+    In this case, the type of property (structure or atom) would be deduced by comparing
+    the numbers atoms and structures in the dataset to the length of provided
+    list/np.ndarray.
 
-    Finally, one can give 2D properties to be displayed as curves in the info
-    panel by setting a ``parameters`` in the property, and giving the corresponding
-    ``parameters`` values to this function. The previous example becomes:
+    Multi-dimensional properties
+    ----------------------------
+
+    One can give 2D properties to be displayed as curves in the info panel by setting a
+    ``parameters`` in the property, and giving the corresponding ``parameters`` values
+    to this function. The previous example becomes:
 
     .. code-block:: python
 
@@ -141,9 +143,9 @@ def create_input(
             }
         }
 
-    This input describes a 2D property ``cheese`` with 300 samples and 4 values
-    taken by the ``origin`` parameter. We also need to provide the
-    ``parameters`` values to this function:
+    This input describes a 2D property ``cheese`` with 300 samples and 4 values taken by
+    the ``origin`` parameter. We also need to provide the ``parameters`` values to this
+    function:
 
     .. code-block:: python
 
@@ -152,13 +154,67 @@ def create_input(
                 # an array of numbers containing the values of the parameter
                 # the size should correspond to the second dimension
                 # of the corresponding multidimensional property
-                'values': [0, 1, 2, 3]
+                'values': [0, 1, 2, 3],
                 # optional free-form description of the parameter as a string
-                'name': 'a short description of this parameter'
+                'name': 'a short description of this parameter',
                 # optional units of the values in the values array
-                'units': 'eV'
+                'units': 'eV',
             }
         }
+
+    Custom shapes
+    -------------
+
+    The ``shapes`` parameter should have the format ``{"<name>": list of list of
+    shapes}``, where the list of lists contains one list for each structure, itself
+    containing one shape dictionary for each atom/site.
+
+    .. code-block:: python
+
+        shapes = {
+            "shape name": [
+                [{"kind": "sphere", "radius": 0.3} for atom in frame]
+                for frame in frames
+            ]
+        }
+
+    The shape dictionary can have any of the following form:
+
+    .. code-block:: python
+
+        # Ellipsoid shape
+        shape = {
+            "kind": "ellipsoid",
+            "semiaxes": [float, float, float],
+            "orientation" [float, float, float, float], # optional
+        }
+
+        # Spherical shape
+        shape = {
+            "kind": "sphere",
+            "radius": float,
+        }
+
+        # Fully custom shape
+        shape = {
+            "kind": "custom",
+            "vertices": [
+                [float, float, float],
+                ...
+            ],
+            # `simplices` is optional
+            "simplices": [
+                [int, int, int],
+                ...
+            ],
+            # `orientation` is optional
+            "orientation" [float, float, float, float],
+        }
+
+    where ``orientation`` is an optional parameter corresponding to a quaternion in
+    ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
+    *indices* of the facets, is also optional, and will be determined by convex
+    triangulation when not provided.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
@@ -245,6 +301,7 @@ def create_input(
             raise ValueError(
                 f"expecting parameters to be a of type 'dict' not '{type(parameters)}'"
             )
+
         data["parameters"] = {}
         for key in parameters:
             param = {}
@@ -331,55 +388,49 @@ def write_input(
     parameters=None,
 ):
     """
-    Create the input JSON file used by the default chemiscope visualizer, and
-    save it to the given ``path``.
+    Create the input JSON file used by the default chemiscope visualizer, and save it to
+    the given ``path``.
 
-    :param str path: name of the file to use to save the json data. If it ends
-                     with '.gz', a gzip compressed file will be written
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
-                        objects are supported
+    :param str path: name of the file to use to save the json data. If it ends with
+        '.gz', a gzip compressed file will be written
+
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
+        are supported
+
     :param dict meta: optional metadata of the dataset
+
     :param dict properties: optional dictionary of additional properties
-    :param list environments: optional list of (structure id, atom id, cutoff)
-        specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default.
-    :param dict shapes:
-        .. raw:: html
 
-            optional dictionary of shapes to have available for display.
-            ``shapes`` should have the format {string: list of shape parameters}, where the
-            list of shape parameters is a ragged list corresponding to frames and their
-            constituent environments. Shape parameters can be dictionaries with any of
-            the following forms:
+    :param list environments: optional list of ``(structure id, atom id, cutoff)``
+        specifying which atoms have properties attached and how far out atom-centered
+        environments should be drawn by default.
 
-        - ``{"kind": "ellipsoid", "semiaxes": [number, number, number], "orientation": [number, number, number, number]}``,
-        - ``{"kind": "sphere", "radius": number}``,
-        - ``{"kind": "custom", "vertices": [[number, number, number], ...], "orientation": [number, number, number, number]}``
+    :param dict shapes: optional dictionary of shapes to have available for display.
+        See :py:func:`create_input` for more information on how to define shapes.
 
-        where ``orientation`` is an optional parameter corresponding to a quaternion
-        in ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
-        ``indices`` of the facets, is also optional, and will be determined by convex
-        triangulation when not provided.
-    :param dict settings: optional dictionary of settings to use when displaying
-        the data. Possible entries for the ``settings`` dictionary are documented
-        in the chemiscope input file reference.
+    :param dict settings: optional dictionary of settings to use when displaying the
+        data. Possible entries for the ``settings`` dictionary are documented in the
+        chemiscope input file reference.
+
     :param dict parameters: optional dictionary of parameters of multidimensional
         properties
 
-    This function uses :py:func:`create_input` to generate the input data, see
-    the documentation of this function for more information.
+    This function uses :py:func:`create_input` to generate the input data, see the
+    documentation of this function for more information.
 
-    Here is a quick example of generating a chemiscope input reading the
-    structures from a file that `ase <ase-io_>`_ can read, and performing PCA
-    using `sklearn`_ on a descriptor computed with another package.
+    Here is a quick example of generating a chemiscope input reading the structures from
+    a file that `ase <ase-io_>`_ can read, and performing PCA using `sklearn`_ on a
+    descriptor computed with another package.
 
     .. code-block:: python
 
         import ase
         from ase import io
         import numpy as np
+
         import sklearn
         from sklearn import decomposition
+
         import chemiscope
 
         frames = ase.io.read('trajectory.xyz', ':')
@@ -417,15 +468,16 @@ def write_input(
         dos_energy_grid = np.loadtxt(...)
         multidimensional_properties = {
             "DOS": {
-                target: "structure",
-                values: dos,
-                parameters: ["energy"],
+                "target": "structure",
+                "values": dos,
+                "parameters": ["energy"],
             }
         }
+
         multidimensional_parameters = {
             "energy": {
-                "values": dos_energy_grid
-                "units": "eV"
+                "values": dos_energy_grid,
+                "units": "eV",
             }
         }
 
