@@ -122,6 +122,18 @@ export class Shape {
         pos: [number, number, number],
         orientation: [number, number, number, number] = [0, 0, 0, 1]
     ) {
+        const quat_norm = Math.pow(
+            Math.pow(orientation[0], 2) +
+                Math.pow(orientation[1], 2) +
+                Math.pow(orientation[2], 2) +
+                Math.pow(orientation[3], 2),
+            0.5
+        );
+
+        if (Math.abs(quat_norm - 1) > 10e-6) {
+            throw Error('Non-normalized quaternions may cause some weird visuals.');
+        }
+
         this.quaternion = new Quaternion(
             orientation[0],
             orientation[1],
