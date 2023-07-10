@@ -901,7 +901,6 @@ export class MoleculeViewer {
             });
         }
 
-        assert(this._current.atomLabels.length === 0);
 
         const structure = this._current.structure;
 
