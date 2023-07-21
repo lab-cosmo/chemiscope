@@ -29,21 +29,22 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
+
             <div class="chsp-hide-if-no-cell">
                <div style="margin-bottom: 1.5em"></div>
                <h5 class="chsp-settings-section-title">Supercell</h5>
                <div class="chsp-settings-supercell">
                   <span class="input-group input-group-sm">
-                  <label class="input-group-text" for="supercell-a">X:</label>
-                  <input class="form-control chsp-supercell-count" id="supercell-a" type="number" min="1" max="10" />
+                     <label class="input-group-text" for="supercell-a">X:</label>
+                     <input class="form-control chsp-supercell-count" id="supercell-a" type="number" min="1" max="10" />
                   </span>
                   <span class="input-group input-group-sm">
-                  <label class="input-group-text" for="supercell-b">Y:</label>
-                  <input class="form-control chsp-supercell-count" id="supercell-b" type="number" min="1" max="10" />
+                     <label class="input-group-text" for="supercell-b">Y:</label>
+                     <input class="form-control chsp-supercell-count" id="supercell-b" type="number" min="1" max="10" />
                   </span>
                   <span class="input-group input-group-sm">
-                  <label class="input-group-text" for="supercell-c">Z:</label>
-                  <input class="form-control chsp-supercell-count" id="supercell-c" type="number" min="1" max="10" />
+                     <label class="input-group-text" for="supercell-c">Z:</label>
+                     <input class="form-control chsp-supercell-count" id="supercell-c" type="number" min="1" max="10" />
                   </span>
                   <button class="btn btn-primary btn-sm" id="reset-supercell">reset supercell</button>
                </div>
@@ -51,8 +52,7 @@
             <div style="margin-bottom: 0.8em"></div>
             <div class="input-group input-group-sm">
                <label class="input-group-text" for="shapes">Shapes:</label>
-               <select id="shapes" class="form-select title="which shape to show for the particle">
-               </select>
+               <select id="shapes" class="form-select" title="which shape to show for the particle"></select>
             </div>
             <div style="margin-bottom: 0.8em"></div>
             <div class="input-group input-group-sm">
@@ -76,8 +76,8 @@
                         for="env-center"
                         title="center automatically structure or environment in the viewport"
                         style="cursor: help"
-                        >
-                     center
+                     >
+                        center
                      </label>
                   </div>
                   <button
@@ -86,8 +86,8 @@
                      data-bs-toggle="collapse"
                      data-bs-target="#chsp-extra-env"
                      id="chsp-env-more"
-                     >
-                  more options
+                  >
+                     more options
                   </button>
                   <div class="collapse chsp-settings-extra-options" id="chsp-extra-env">
                      <div>
@@ -137,7 +137,7 @@
                <div class="chsp-settings-trajectory">
                   <div class="input-group input-group-sm">
                      <label class="input-group-text" for="playback-delay" title="playback delay in milliseconds" style="cursor: help">
-                     playback delay
+                        playback delay
                      </label>
                      <input id="playback-delay" class="form-control" type="number" min="100" value="700" step="100" />
                   </div>
@@ -148,8 +148,8 @@
                         for="keep-orientation"
                         title="keep the camera orientation when loading a new molecule"
                         style="cursor: help"
-                        >
-                     keep orientation
+                     >
+                        keep orientation
                      </label>
                   </div>
                </div>
