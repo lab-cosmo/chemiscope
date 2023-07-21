@@ -321,22 +321,22 @@ function checkStructures(o: JsObject[]): [number, number] {
     // placed after structure check to ensure that all structures
     // are first validated
     if ('shapes' in o[0]) {
-        const shapeList = Object.keys(o[0]['shapes'] as Record<string, unknown>);
+        const shapeList = Object.keys(o[0].shapes as object);
         for (let i = 0; i < o.length; i++) {
             const structure = o[i];
             if (!('shapes' in structure)) {
-                throw Error(`error in structure ${i}: "shape" is not defined.`);
+                throw Error(`error in structure ${i}: "shape" is not defined`);
             } else {
                 const shapes = structure['shapes'] as Record<string, unknown>;
-                for (const shapeKey of shapeList) {
-                    if (!(shapeKey in shapes) || shapes[shapeKey] === undefined) {
-                        throw Error(`error in structure ${i}: "${shapeKey}" is not defined.`);
+                for (const key of shapeList) {
+                    if (!(key in shapes) || shapes[key] === undefined) {
+                        throw Error(`error in structure ${i}: "${key}" is not defined`);
                     }
                 }
                 for (const key of Object.keys(shapes)) {
                     if (!shapeList.includes(key)) {
                         throw Error(
-                            `error in structure ${i}: "${key}" is defined, but was not for previous structures.`
+                            `error in structure ${i}: "${key}" is defined, but was not for previous structures`
                         );
                     }
                 }
@@ -346,8 +346,9 @@ function checkStructures(o: JsObject[]): [number, number] {
         for (let i = 0; i < o.length; i++) {
             const structure = o[i];
             if ('shapes' in structure) {
-                throw Error(`error in structure 0: "shape" is not defined.`);
-                break;
+                throw Error(
+                    `error in structure ${i}: "shape" is defined, but was not for previous structures`
+                );
             }
         }
     }
@@ -361,7 +362,7 @@ function checkStructures(o: JsObject[]): [number, number] {
  * structure.
  */
 export function checkStructure(s: JsObject): string {
-    if (typeof s !== 'object') {
+    if (typeof s !== 'object' || s === null) {
         throw Error('the structure must be a JavaScript object');
     }
 
@@ -390,45 +391,53 @@ export function checkStructure(s: JsObject): string {
     }
 
     if ('shapes' in s) {
-        if (s['shapes'] !== undefined) {
-            if (typeof s['shapes'] !== 'object' || s['shapes'] === null) {
-                return "'shapes' must be an object";
-            } else {
-                for (const [key, array] of Object.entries(s['shapes'] as Record<string, unknown>)) {
-                    if (!Array.isArray(array)) {
-                        return `shape['${key}'] must be an array`;
+        const shapes = s.shapes;
+
+        if (typeof shapes !== 'object' || shapes === null) {
+            return "'shapes' must be an object";
+        }
+
+        for (const [key, array] of Object.entries(s.shapes as object)) {
+            if (!Array.isArray(array)) {
+                return `shape['${key}'] must be an array`;
+            }
+
+            if (s.size > 0 && array.length !== s.size) {
+                return `wrong size for "shape['${key}']", expected ${s.size}, got ${array.length}`;
+            }
+
+            for (let i = 0; i < array.length; i++) {
+                const element = array[i] as unknown;
+                if (typeof element !== 'object' || element === null) {
+                    return "'shapes' entries must be objects";
+                }
+                const shape = element as JsObject;
+
+                if (!('kind' in shape)) {
+                    return `missing "kind" in shape for particle ${i}`;
+                }
+
+                if (typeof shape.kind !== 'string') {
+                    return `shapes 'kind' must be a string for particle ${i}`;
+                }
+
+                if (shape.kind === 'sphere') {
+                    const check = Sphere.validateParameters(shape);
+                    if (check !== '') {
+                        return check;
                     }
-                    if (s.size > 0 && array.length !== s.size) {
-                        return `wrong size for "shape['${key}']", expected ${s.size}, got ${array.length}`;
+                } else if (shape.kind === 'ellipsoid') {
+                    const check = Ellipsoid.validateParameters(shape);
+                    if (check !== '') {
+                        return check;
                     }
-                    for (const sss of array) {
-                        const ss = sss as Record<string, unknown>;
-                        if (!('kind' in ss)) {
-                            return `All shapes must have string 'kind' defined.`;
-                        }
-                        const kind = ss['kind'] as string;
-                        if (typeof kind !== 'string') {
-                            return `All shapes must have string 'kind' defined.`;
-                        }
-                        if (kind === 'ellipsoid') {
-                            const check = Ellipsoid.validateParams(ss);
-                            if (check !== '') {
-                                return check;
-                            }
-                        } else if (kind === 'custom') {
-                            const check = CustomShape.validateParams(ss);
-                            if (check !== '') {
-                                return check;
-                            }
-                        } else if (kind === 'sphere') {
-                            const check = Sphere.validateParams(ss);
-                            if (check !== '') {
-                                return check;
-                            }
-                        } else {
-                            return `Chemiscope currently only supports custom, ellipsoid, or sphere shapes, got ${kind}`;
-                        }
+                } else if (shape.kind === 'custom') {
+                    const check = CustomShape.validateParameters(shape);
+                    if (check !== '') {
+                        return check;
                     }
+                } else {
+                    return `Chemiscope currently only supports custom, ellipsoid, or sphere shapes, got ${shape.kind}`;
                 }
             }
         }

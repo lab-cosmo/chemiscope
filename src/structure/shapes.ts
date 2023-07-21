@@ -11,6 +11,7 @@
  *
  * To add a new shape, you will also need to add code to `structure/viewer.ts`.
  */
+import assert from 'assert';
 
 import { default as $3Dmol } from '3dmol';
 import { Quaternion } from '3dmol';
@@ -63,15 +64,18 @@ function crossXYZ(a: XYZ, b: XYZ): XYZ {
     };
 }
 
-function rotate_and_place(vertex: XYZ, quaternion: Quaternion, position: XYZ): XYZ {
-    const vquat = new Quaternion(vertex.x, vertex.y, vertex.z, 0);
-    vquat.multiplyQuaternions(quaternion.clone(), vquat);
-    vquat.multiply(quaternion.clone().inverse());
+function rotateAndPlace(vertex: XYZ, quaternion: Quaternion, position: XYZ): XYZ {
+    const vertexQuaternion = new Quaternion(vertex.x, vertex.y, vertex.z, 0);
+    vertexQuaternion.multiplyQuaternions(quaternion.clone(), vertexQuaternion);
+    vertexQuaternion.multiply(quaternion.clone().inverse());
 
-    return addXYZ({ x: vquat.x, y: vquat.y, z: vquat.z }, position);
+    return addXYZ(
+        { x: vertexQuaternion.x, y: vertexQuaternion.y, z: vertexQuaternion.z },
+        position
+    );
 }
 
-function find_center(a: XYZ[]): XYZ {
+function findCenter(a: XYZ[]): XYZ {
     let center: XYZ = { x: 0, y: 0, z: 0 };
     for (const v of a) {
         center = addXYZ(center, v);
@@ -82,7 +86,7 @@ function find_center(a: XYZ[]): XYZ {
     return center;
 }
 
-function determine_normals(vertices: XYZ[], simplices: [number, number, number][]): XYZ[] {
+function determineNormals(vertices: XYZ[], simplices: [number, number, number][]): XYZ[] {
     const vertexNormals: XYZ[] = [];
     const nFaces: number[] = [];
 
@@ -119,28 +123,11 @@ export class Shape {
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
     constructor(
-        pos: [number, number, number],
-        orientation: [number, number, number, number] = [0, 0, 0, 1]
+        [x, y, z]: [number, number, number],
+        [qx, qy, qz, qw]: [number, number, number, number] = [0, 0, 0, 1]
     ) {
-        const quat_norm = Math.pow(
-            Math.pow(orientation[0], 2) +
-                Math.pow(orientation[1], 2) +
-                Math.pow(orientation[2], 2) +
-                Math.pow(orientation[3], 2),
-            0.5
-        );
-
-        if (Math.abs(quat_norm - 1) > 10e-6) {
-            throw Error('Non-normalized quaternions may cause some weird visuals.');
-        }
-
-        this.quaternion = new Quaternion(
-            orientation[0],
-            orientation[1],
-            orientation[2],
-            orientation[3]
-        );
-        this.position = { x: pos[0], y: pos[1], z: pos[2] };
+        this.quaternion = new Quaternion(qx, qy, qz, qw);
+        this.position = { x, y, z };
     }
 
     // disabling eslint because it complains parameters is never used
@@ -156,7 +143,7 @@ export class Shape {
     }
 }
 
-function triangulate(
+function triangulateEllipsoid(
     semiaxes: [number, number, number],
     resolution: number = 20
 ): { vertices: XYZ[]; indices: number[] } {
@@ -186,9 +173,9 @@ function triangulate(
         }
     }
 
-    //Now triangulation. I believe that it needs a counterclockwise specification of vertices (else I have back-face)
-    //each triangle is specified with 3 indices (gl.TRIANGLES).
-
+    // Now triangulation. I believe that it needs a counterclockwise
+    // specification of vertices (else I have back-face) each triangle is
+    // specified with 3 indices (gl.TRIANGLES).
     const num_samples_omega = 360 / step_omega;
     const num_samples_eta = 180 / step_eta;
 
@@ -210,31 +197,61 @@ function triangulate(
     };
 }
 
+function validateOrientation(orientation: unknown, kind: string): string {
+    if (!Array.isArray(orientation) || orientation.length !== 4) {
+        return `"orientation" must be an array with 4 elements for "${kind}" shapes`;
+    }
+
+    const [qx, qy, qz, qw] = orientation as unknown[];
+    if (
+        typeof qx !== 'number' ||
+        typeof qy !== 'number' ||
+        typeof qz !== 'number' ||
+        typeof qw !== 'number'
+    ) {
+        return `"orientation" elements must be numbers for "${kind}" shapes`;
+    }
+
+    const norm2 = qx * qx + qy * qy + qz * qz + qw * qw;
+    if (Math.abs(norm2 - 1) > 1e-6) {
+        throw Error(`orientation must be normalized to 1 for "${kind}" shapes`);
+    }
+
+    return '';
+}
+
+function isPositiveInteger(o: unknown): boolean {
+    return typeof o === 'number' && Number.isInteger(o) && o >= 0;
+}
+
 export class Sphere extends Shape {
     public radius: number;
 
-    constructor(pos: [number, number, number] = [0, 0, 0], data: SphereData) {
-        super(pos);
+    constructor(position: [number, number, number] = [0, 0, 0], data: SphereData) {
+        super(position);
         this.radius = data.radius;
     }
 
-    public static validateParams(parameters: Record<string, unknown>): string {
-        if ('radius' in parameters) {
-            const radius = parameters['radius'];
-            if (typeof radius === 'number') {
-                return '';
-            } else {
-                return '`radius` should be a number.';
-            }
-        } else {
-            return '`radius` is a required parameter for type: `sphere`.';
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        assert(parameters.kind === 'sphere');
+
+        if (!('radius' in parameters)) {
+            return '"radius" is required for "sphere" shapes';
         }
+
+        if (typeof parameters.radius !== 'number') {
+            return '"radius" must be a number in "sphere" shape';
+        }
+
+        return '';
     }
-    /**
-     ** Following https://computergraphics.stackexchange.com/questions/7426/triangulation-of-vertices-of-an-ellipsoid
-     **/
+
     public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
-        const triangulation = triangulate([this.radius, this.radius, this.radius], resolution);
+        // Following https://computergraphics.stackexchange.com/questions/7426/triangulation-of-vertices-of-an-ellipsoid
+        const triangulation = triangulateEllipsoid(
+            [this.radius, this.radius, this.radius],
+            resolution
+        );
         const rawVertices = triangulation.vertices;
         const indices = triangulation.indices;
         const vertices: XYZ[] = [];
@@ -264,44 +281,46 @@ export class Sphere extends Shape {
 export class Ellipsoid extends Shape {
     public semiaxes: [number, number, number];
 
-    constructor(pos: [number, number, number] = [0, 0, 0], data: EllipsoidData) {
-        super(pos, data.orientation);
+    constructor(position: [number, number, number] = [0, 0, 0], data: EllipsoidData) {
+        super(position, data.orientation);
         this.semiaxes = data.semiaxes;
     }
 
-    public static validateParams(parameters: Record<string, unknown>): string {
-        if ('semiaxes' in parameters) {
-            const semiaxes = parameters['semiaxes'];
-            if (Array.isArray(semiaxes) && semiaxes.length === 3) {
-                if (
-                    typeof semiaxes[0] === 'number' &&
-                    typeof semiaxes[1] === 'number' &&
-                    typeof semiaxes[2] === 'number'
-                ) {
-                    return '';
-                } else {
-                    return '`semiaxes` must all be numbers.';
-                }
-            } else {
-                return '`semiaxes` must be a length 3 array.';
-            }
-        } else {
-            return '`semiaxes` is a required parameter for type `ellipsoid`.';
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        assert(parameters.kind === 'ellipsoid');
+
+        if (!('semiaxes' in parameters)) {
+            return '"semiaxes" is required for "ellipsoid" shapes';
         }
+
+        if (!Array.isArray(parameters.semiaxes) || parameters.semiaxes.length !== 3) {
+            return '"semiaxes" must be an array with 3 elements for "ellipsoid" shapes';
+        }
+
+        const [ax, ay, az] = parameters.semiaxes as unknown[];
+        if (typeof ax !== 'number' || typeof ay !== 'number' || typeof az !== 'number') {
+            return '"semiaxes" elements must be numbers for "ellipsoid" shapes';
+        }
+
+        if ('orientation' in parameters) {
+            const message = validateOrientation(parameters.orientation, 'ellipsoid');
+            if (message !== '') {
+                return message;
+            }
+        }
+
+        return '';
     }
 
-    /**
-     **
-     **/
     public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
-        const triangulation = triangulate(this.semiaxes, resolution);
+        const triangulation = triangulateEllipsoid(this.semiaxes, resolution);
         const rawVertices = triangulation.vertices;
         const indices = triangulation.indices;
         const vertices: XYZ[] = [];
         const normals: XYZ[] = [];
 
         for (const v of rawVertices) {
-            const newVertex: XYZ = rotate_and_place(v, this.quaternion, this.position);
+            const newVertex: XYZ = rotateAndPlace(v, this.quaternion, this.position);
             vertices.push(newVertex);
 
             const relativeVertex = subXYZ(newVertex, this.position);
@@ -325,8 +344,8 @@ export class CustomShape extends Shape {
     public vertices: XYZ[];
     public simplices: [number, number, number][];
 
-    constructor(pos: [number, number, number] = [0, 0, 0], data: CustomShapeData) {
-        super(pos, data.orientation);
+    constructor(position: [number, number, number] = [0, 0, 0], data: CustomShapeData) {
+        super(position, data.orientation);
 
         this.vertices = [];
         for (const v of data.vertices) {
@@ -335,46 +354,63 @@ export class CustomShape extends Shape {
         this.simplices = data.simplices;
     }
 
-    public static validateParams(parameters: Record<string, unknown>): string {
-        if ('vertices' in parameters) {
-            const vertices = parameters['vertices'];
-            if (Array.isArray(vertices)) {
-                for (const v of vertices) {
-                    if (Array.isArray(v) && v.length === 3) {
-                        if (
-                            typeof v[0] === 'number' &&
-                            typeof v[1] === 'number' &&
-                            typeof v[2] === 'number'
-                        ) {
-                            // pass
-                        } else {
-                            return 'All `vertices` must be numbers.';
-                        }
-                    } else {
-                        return 'Each element of `vertices` a length 3 array.';
-                    }
-                }
-            } else {
-                return '`vertices` an array.';
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        assert(parameters.kind === 'custom');
+
+        if (!('vertices' in parameters)) {
+            return '"vertices" is required for "custom" shapes';
+        }
+
+        if (!Array.isArray(parameters.vertices)) {
+            return '"vertices" must be an array for "custom" shapes';
+        }
+
+        for (const vertex of parameters.vertices as unknown[]) {
+            if (!Array.isArray(vertex) || vertex.length !== 3) {
+                return 'each entry in "vertices" must be an array with 3 elements for "custom" shapes';
             }
-        } else {
-            return '`vertices` is a required parameter for type `Poly3D`.';
+
+            const [x, y, z] = vertex as unknown[];
+            if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+                return 'each entry in "vertices" must be an array of numbers for "custom" shapes';
+            }
+        }
+
+        if ('simplices' in parameters) {
+            if (!Array.isArray(parameters.simplices)) {
+                return '"simplices" must be an array for "custom" shapes';
+            }
+
+            for (const simplex of parameters.simplices as unknown[]) {
+                if (!Array.isArray(simplex) || simplex.length !== 3) {
+                    return 'each entry in "simplices" must be an array with 3 elements for "custom" shapes';
+                }
+
+                const [x, y, z] = simplex as unknown[];
+                if (!isPositiveInteger(x) || !isPositiveInteger(y) || !isPositiveInteger(z)) {
+                    return 'each entry in "simplices" must be an array of integers for "custom" shapes';
+                }
+            }
+        }
+
+        if ('orientation' in parameters) {
+            const message = validateOrientation(parameters.orientation, 'custom');
+            if (message !== '') {
+                return message;
+            }
         }
 
         return '';
     }
 
-    /**
-     **
-     **/
     public outputTo3Dmol(color: $3Dmol.ColorSpec): $3Dmol.CustomShapeSpec {
         const indices = [];
         const vertices = [];
 
-        const center = find_center(this.vertices);
+        const center = findCenter(this.vertices);
 
         for (const v of this.vertices) {
-            vertices.push(rotate_and_place(subXYZ(v, center), this.quaternion, this.position));
+            vertices.push(rotateAndPlace(subXYZ(v, center), this.quaternion, this.position));
         }
 
         for (const s of this.simplices) {
@@ -385,7 +421,7 @@ export class CustomShape extends Shape {
 
         return {
             vertexArr: vertices,
-            normalArr: determine_normals(vertices, this.simplices),
+            normalArr: determineNormals(vertices, this.simplices),
             faceArr: indices,
             color: color,
         };

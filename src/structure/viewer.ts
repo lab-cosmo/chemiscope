@@ -892,6 +892,7 @@ export class MoleculeViewer {
 
         this._viewer.removeAllShapes();
 
+        // removeAllShapes also removes the unit cell, so let's add it back
         if (this._options.unitCell.value) {
             this._viewer.addUnitCell(this._current.model, {
                 box: { color: 'black' },
