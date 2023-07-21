@@ -153,6 +153,9 @@ export class MoleculeViewer {
         /// hide options related to environments if there are no environments
         /// for the current structure
         noEnvs: CSSStyleSheet;
+        /// hide options related to shapes if there is no shapes in the
+        /// current structure
+        noShape: CSSStyleSheet;
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
@@ -205,16 +208,19 @@ export class MoleculeViewer {
 
         const noCellStyle = new CSSStyleSheet();
         const noEnvsStyle = new CSSStyleSheet();
+        const noShapeStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
             noEnvs: noEnvsStyle,
+            noShape: noShapeStyle,
         };
 
         this._shadow.adoptedStyleSheets = [
             ...(containerElement.getRootNode() as ShadowRoot).adoptedStyleSheets,
             noCellStyle,
             noEnvsStyle,
+            noShapeStyle,
         ];
 
         // Options reuse the same style sheets so they must be created after these.
@@ -227,6 +233,7 @@ export class MoleculeViewer {
             ...this._options.modal.shadow.adoptedStyleSheets,
             noCellStyle,
             noEnvsStyle,
+            noShapeStyle,
         ];
 
         this._connectOptions();
@@ -419,8 +426,11 @@ export class MoleculeViewer {
         }
 
         // update the options for shape visualization
+        if (structure.shapes === undefined) {
+            this._styles.noShape.replaceSync('.chsp-hide-if-no-shapes { display: none; }');
+        } else {
+            this._styles.noShape.replaceSync('');
 
-        if (structure.shapes !== undefined) {
             const selectShape = this._options.getModalElement<HTMLSelectElement>('shapes');
             selectShape.options.length = 0;
             selectShape.options.add(new Option('off', ''));

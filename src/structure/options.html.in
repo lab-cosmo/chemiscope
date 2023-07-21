@@ -29,6 +29,12 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
+            <div class="chsp-hide-if-no-shapes" style="margin-top: 1em">
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="shapes" style="width: 5em">Shapes:</label>
+                  <select id="shapes" class="form-select" title="which shape to show for the particle"></select>
+               </div>
+            </div>
 
             <div class="chsp-hide-if-no-cell">
                <div style="margin-bottom: 1.5em"></div>
@@ -51,12 +57,7 @@
             </div>
             <div style="margin-bottom: 0.8em"></div>
             <div class="input-group input-group-sm">
-               <label class="input-group-text" for="shapes">Shapes:</label>
-               <select id="shapes" class="form-select" title="which shape to show for the particle"></select>
-            </div>
-            <div style="margin-bottom: 0.8em"></div>
-            <div class="input-group input-group-sm">
-               <label class="input-group-text" for="axes">Axes:</label>
+               <label class="input-group-text" for="axes" style="width: 5em">Axes:</label>
                <select id="axes" class="form-select">
                   <option value="off" selected>off</option>
                   <option value="xyz">xyz</option>
