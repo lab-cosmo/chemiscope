@@ -73,7 +73,7 @@ class TestShapes(unittest.TestCase):
 
         data = chemiscope.create_input(frames=[frame], shapes=shapes)
 
-        result = data["structures"][0]["shape"]
+        result = data["structures"][0]["shapes"]
         self.assertEqual(list(result.keys()), ["cubes", "other"])
 
         for key, values in result.items():
@@ -93,7 +93,7 @@ class TestShapesFromASE(unittest.TestCase):
 
     def test_no_shape(self):
         data = chemiscope.create_input(frames=[self.frame])
-        self.assertNotIn("shape", data["structures"][0])
+        self.assertNotIn("shapes", data["structures"][0])
 
     def test_bad_shape(self):
         frame = self.frame.copy()
@@ -109,24 +109,27 @@ class TestShapesFromASE(unittest.TestCase):
         )
 
     def test_shape_by_frame(self):
-        for key in SHAPE_DEFAULTS:
-            with self.subTest(shape=key):
+        for shape_kind in SHAPE_DEFAULTS:
+            with self.subTest(shape=shape_kind):
                 frame = self.frame.copy()
-                frame.info["shape"] = key
+                shape_name = "shape_name"
+                frame.info[shape_name] = shape_kind
 
-                parameter, value = SHAPE_DEFAULTS[key]
-                frame.info[f"shape_{parameter}"] = value
-                shapes = chemiscope.extract_lammps_shapes_from_ase([frame])
+                parameter, value = SHAPE_DEFAULTS[shape_kind]
+                frame.info[f"{shape_name}_{parameter}"] = value
+                shapes = chemiscope.extract_lammps_shapes_from_ase(
+                    [frame], key=shape_name
+                )
 
                 data = chemiscope.create_input(frames=[frame], shapes=shapes)
-                self.assertIn("shape", data["structures"][0])
+                self.assertIn("shapes", data["structures"][0])
 
                 self.assertTrue(
                     all(
                         [
                             parameter in ss
                             for s in data["structures"]
-                            for ss in s["shape"]["shape"]
+                            for ss in s["shapes"][shape_name]
                         ]
                     )
                 )
@@ -136,7 +139,7 @@ class TestShapesFromASE(unittest.TestCase):
                         [
                             "orientation" in ss
                             for s in data["structures"]
-                            for ss in s["shape"]["shape"]
+                            for ss in s["shapes"][shape_name]
                         ]
                     )
                 )
@@ -144,43 +147,49 @@ class TestShapesFromASE(unittest.TestCase):
                 self.assertTrue(
                     all(
                         [
-                            len(s["shape"]["shape"]) == len(frame)
+                            len(s["shapes"][shape_name]) == len(frame)
                             for s in data["structures"]
                         ]
                     )
                 )
 
-                frame.info.pop(f"shape_{parameter}")
+                frame.info.pop(f"{shape_name}_{parameter}")
                 with self.assertRaises(KeyError) as cm:
                     chemiscope.create_input(
                         frames=[frame],
-                        shapes=chemiscope.extract_lammps_shapes_from_ase([frame]),
+                        shapes=chemiscope.extract_lammps_shapes_from_ase(
+                            [frame], key=shape_name
+                        ),
                     )
 
                 self.assertEquals(
                     cm.exception.args[0],
-                    f"Missing required parameter 'shape_{parameter}' for '{key}' shape",
+                    f"Missing required parameter '{shape_name}_{parameter}' for "
+                    f"'{shape_kind}' shape",
                 )
 
     def test_by_index(self):
-        for key in SHAPE_DEFAULTS:
-            with self.subTest(shape=key):
+        for shape_kind in SHAPE_DEFAULTS:
+            with self.subTest(shape=shape_kind):
                 frame = self.frame.copy()
-                frame.arrays["shape"] = [key] * len(frame)
+                shape_name = "shape_name"
+                frame.arrays[shape_name] = [shape_kind] * len(frame)
 
-                parameter, value = SHAPE_DEFAULTS[key]
-                frame.arrays[f"shape_{parameter}"] = [value] * len(frame)
-                shapes = chemiscope.extract_lammps_shapes_from_ase([frame])
+                parameter, value = SHAPE_DEFAULTS[shape_kind]
+                frame.arrays[f"{shape_name}_{parameter}"] = [value] * len(frame)
+                shapes = chemiscope.extract_lammps_shapes_from_ase(
+                    [frame], key=shape_name
+                )
 
                 data = chemiscope.create_input(frames=[frame], shapes=shapes)
-                self.assertIn("shape", data["structures"][0])
+                self.assertIn("shapes", data["structures"][0])
 
                 self.assertTrue(
                     all(
                         [
                             parameter in ss
                             for s in data["structures"]
-                            for ss in s["shape"]["shape"]
+                            for ss in s["shapes"][shape_name]
                         ]
                     )
                 )
@@ -190,7 +199,7 @@ class TestShapesFromASE(unittest.TestCase):
                         [
                             "orientation" in ss
                             for s in data["structures"]
-                            for ss in s["shape"]["shape"]
+                            for ss in s["shapes"][shape_name]
                         ]
                     )
                 )
@@ -198,22 +207,25 @@ class TestShapesFromASE(unittest.TestCase):
                 self.assertTrue(
                     all(
                         [
-                            len(s["shape"]["shape"]) == len(frame)
+                            len(s["shapes"][shape_name]) == len(frame)
                             for s in data["structures"]
                         ]
                     )
                 )
 
-                frame.arrays.pop(f"shape_{parameter}")
+                frame.arrays.pop(f"{shape_name}_{parameter}")
                 with self.assertRaises(KeyError) as cm:
                     chemiscope.create_input(
                         frames=[frame],
-                        shapes=chemiscope.extract_lammps_shapes_from_ase([frame]),
+                        shapes=chemiscope.extract_lammps_shapes_from_ase(
+                            [frame], key=shape_name
+                        ),
                     )
 
                 self.assertEquals(
                     cm.exception.args[0],
-                    f"Missing required parameter 'shape_{parameter}' for '{key}' shape",
+                    f"Missing required parameter '{shape_name}_{parameter}' for "
+                    f"'{shape_kind}' shape",
                 )
 
     def test_no_shapes(self):
