@@ -55,6 +55,8 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.librascal_atomic_environments
 
+.. autofunction:: chemiscope.extract_lammps_shapes_from_ase
+
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
 

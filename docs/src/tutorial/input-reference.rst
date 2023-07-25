@@ -94,6 +94,32 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
+
+                // OPTIONAL: shapes to display on each site, if other than
+                // spheres. Multiple shapes groups with different names are
+                // supported.
+                //
+                // Each shape group should be an array of "size" elements,
+                // describing the different shapes.
+                "shapes": {
+                    <name>: [
+                        // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
+                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2]},
+                        // Each shape can contain an OPTIONAL "orientation",
+                        // given as a `[x, y, z, w]` quaternion. Defaults to
+                        // [0, 0, 0, 1]
+                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2], "orientation": [0, 0, 0, 1]},
+                        // fully custom shape, from a list of vertices and
+                        // simplices (also called "indices" in WebGL)
+                        {
+                            "kind": "custom",
+                            "vertices": [[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+                            "indices": [[0, 1, 2]],
+                        },
+                        // more shapes as needed
+                        ...
+                    ],
+                }
             },
             // other structures as needed
             ...

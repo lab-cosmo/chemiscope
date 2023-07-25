@@ -3,6 +3,7 @@ from .input import create_input, write_input  # noqa
 from .structures import (  # noqa
     all_atomic_environments,
     composition_properties,
+    extract_lammps_shapes_from_ase,
     extract_properties,
     librascal_atomic_environments,
 )

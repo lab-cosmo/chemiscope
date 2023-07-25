@@ -12,6 +12,15 @@ import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
+import {
+    CustomShape,
+    CustomShapeData,
+    Ellipsoid,
+    EllipsoidData,
+    Sphere,
+    SphereData,
+} from './shapes';
+
 import { StructureOptions } from './options';
 
 const IS_SAFARI =
@@ -144,6 +153,9 @@ export class MoleculeViewer {
         /// hide options related to environments if there are no environments
         /// for the current structure
         noEnvs: CSSStyleSheet;
+        /// hide options related to shapes if there is no shapes in the
+        /// current structure
+        noShape: CSSStyleSheet;
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
@@ -196,16 +208,19 @@ export class MoleculeViewer {
 
         const noCellStyle = new CSSStyleSheet();
         const noEnvsStyle = new CSSStyleSheet();
+        const noShapeStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
             noEnvs: noEnvsStyle,
+            noShape: noShapeStyle,
         };
 
         this._shadow.adoptedStyleSheets = [
             ...(containerElement.getRootNode() as ShadowRoot).adoptedStyleSheets,
             noCellStyle,
             noEnvsStyle,
+            noShapeStyle,
         ];
 
         // Options reuse the same style sheets so they must be created after these.
@@ -218,6 +233,7 @@ export class MoleculeViewer {
             ...this._options.modal.shadow.adoptedStyleSheets,
             noCellStyle,
             noEnvsStyle,
+            noShapeStyle,
         ];
 
         this._connectOptions();
@@ -380,6 +396,7 @@ export class MoleculeViewer {
             structure: structure,
             atomLabels: [],
         };
+
         setup3DmolStructure(this._current.model, structure);
         this._viewer.replicateUnitCell(
             this._options.supercell[0].value,
@@ -406,6 +423,22 @@ export class MoleculeViewer {
             this._setEnvironmentInteractions();
             const newCenter = options.highlight === undefined ? 0 : options.highlight;
             this._changeHighlighted(newCenter, previousDefaultCutoff);
+        }
+
+        // update the options for shape visualization
+        if (structure.shapes === undefined) {
+            this._styles.noShape.replaceSync('.chsp-hide-if-no-shapes { display: none; }');
+        } else {
+            this._styles.noShape.replaceSync('');
+
+            const selectShape = this._options.getModalElement<HTMLSelectElement>('shapes');
+            selectShape.options.length = 0;
+            selectShape.options.add(new Option('off', ''));
+            for (const key of Object.keys(structure['shapes'])) {
+                selectShape.options.add(new Option(key, key));
+            }
+
+            this._options.shape.bind(selectShape, 'value');
         }
 
         this._updateStyle();
@@ -680,6 +713,15 @@ export class MoleculeViewer {
             this._viewer.render();
         });
 
+        this._options.shape.onchange.push(() => {
+            if (this._current === undefined) {
+                return;
+            }
+
+            this._viewer.removeAllShapes();
+            this._updateStyle();
+            this._viewer.render();
+        });
         const changedSuperCell = () => {
             this._showSupercellInfo();
             if (this._current === undefined) {
@@ -825,6 +867,9 @@ export class MoleculeViewer {
             return;
         }
 
+        if (this._options.shape.value !== '') {
+            this._addShapes();
+        }
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
@@ -847,16 +892,94 @@ export class MoleculeViewer {
         this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
+    private _addShapes(): void {
+        if (this._current === undefined) {
+            return;
+        }
+        if (this._options.shape.value === '') {
+            return;
+        }
+
+        this._viewer.removeAllShapes();
+
+        // removeAllShapes also removes the unit cell, so let's add it back
+        if (this._options.unitCell.value) {
+            this._viewer.addUnitCell(this._current.model, {
+                box: { color: 'black' },
+                astyle: { hidden: true },
+                bstyle: { hidden: true },
+                cstyle: { hidden: true },
+            });
+        }
+
+        assert(this._current.atomLabels.length === 0);
+
+        const structure = this._current.structure;
+
+        assert(!(structure.shapes === undefined));
+        const current_shape = structure.shapes[this._options.shape.value];
+        assert(!(current_shape === undefined));
+
+        const supercell_a = this._options.supercell[0].value;
+        const supercell_b = this._options.supercell[1].value;
+        const supercell_c = this._options.supercell[2].value;
+        let cell = this._current.structure.cell;
+
+        if ((supercell_a > 1 || supercell_b > 1 || supercell_c > 1) && cell === undefined) {
+            return;
+        } else if (cell === undefined) {
+            cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+        }
+
+        for (let a = 0; a < supercell_a; a++) {
+            for (let b = 0; b < supercell_b; b++) {
+                for (let c = 0; c < supercell_c; c++) {
+                    for (let i = 0; i < structure.size; i++) {
+                        const name = structure.names[i];
+                        const position: [number, number, number] = [
+                            structure.x[i] + a * cell[0] + b * cell[3] + c * cell[6],
+                            structure.y[i] + a * cell[1] + b * cell[4] + c * cell[7],
+                            structure.z[i] + a * cell[2] + b * cell[5] + c * cell[8],
+                        ];
+
+                        if (current_shape[i].kind === 'ellipsoid') {
+                            const data = current_shape[i] as unknown as EllipsoidData;
+                            const shape = new Ellipsoid(position, data);
+                            this._viewer.addCustom(
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                            );
+                        } else if (current_shape[i].kind === 'custom') {
+                            const data = current_shape[i] as unknown as CustomShapeData;
+                            const shape = new CustomShape(position, data);
+                            this._viewer.addCustom(
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                            );
+                        } else {
+                            assert(current_shape[i].kind === 'sphere');
+                            const data = current_shape[i] as unknown as SphereData;
+                            const shape = new Sphere(position, data);
+                            this._viewer.addCustom(
+                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        this._viewer.render();
+    }
     /**
      * Get the main style used for all atoms/atoms inside the environment when
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
-        const style: Partial<$3Dmol.AtomStyleSpec> = {
-            sphere: {
+        const style: Partial<$3Dmol.AtomStyleSpec> = {};
+        if (this._options.shape.value === '') {
+            style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-            },
-        };
+            };
+        }
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
@@ -884,7 +1007,7 @@ export class MoleculeViewer {
                 hidden: !this._options.bonds.value,
             };
 
-            if (bgStyle === 'ball-stick') {
+            if (bgStyle === 'ball-stick' && this._options.shape.value === '') {
                 style.sphere = {
                     // slightly smaller scale than the main style
                     scale: 0.219,

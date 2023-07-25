@@ -22,6 +22,8 @@ export class StructureOptions extends OptionsGroup {
     public spaceFilling: HTMLOption<'boolean'>;
     /// should we show atoms labels
     public atomLabels: HTMLOption<'boolean'>;
+    /// if shapes are in the dataset, which set of shapes should we show
+    public shape: HTMLOption<'string'>;
     /// should we show unit cell information and lines
     public unitCell: HTMLOption<'boolean'>;
     /// number of repetitions in the `a/b/c` direction for the supercell
@@ -61,6 +63,7 @@ export class StructureOptions extends OptionsGroup {
         this.bonds = new HTMLOption('boolean', true);
         this.spaceFilling = new HTMLOption('boolean', false);
         this.atomLabels = new HTMLOption('boolean', false);
+        this.shape = new HTMLOption('string', '');
         this.unitCell = new HTMLOption('boolean', false);
         this.rotation = new HTMLOption('boolean', false);
 
@@ -220,6 +223,10 @@ export class StructureOptions extends OptionsGroup {
     /** Bind all options to the corresponding HTML elements */
     private _bind(): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
+
+        const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
+        this.shape.bind(selectShape, 'value');
+
         this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
         this.bonds.bind(this.getModalElement('bonds'), 'checked');
 

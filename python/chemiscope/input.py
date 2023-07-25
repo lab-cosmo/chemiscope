@@ -28,29 +28,43 @@ def create_input(
     properties=None,
     environments=None,
     settings=None,
+    shapes=None,
     parameters=None,
 ):
     """
-    Create a dictionary that can be saved to JSON using the format used by
-    the default chemiscope visualizer.
+    Create a dictionary that can be saved to JSON using the format used by the default
+    chemiscope visualizer.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
-                        objects are supported
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
+        are supported
+
     :param dict meta: optional metadata of the dataset, see below
+
     :param dict properties: optional dictionary of properties, see below
-    :param list environments: optional list of (structure id, atom id, cutoff)
-        specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default. Functions like
+
+    :param list environments: optional list of ``(structure id, atom id, cutoff)``
+        specifying which atoms have properties attached and how far out atom-centered
+        environments should be drawn by default. Functions like
         :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
         can be used to generate the list of environments in simple cases.
-    :param dict settings: optional dictionary of settings to use when displaying
-        the data. Possible entries for the ``settings`` dictionary are documented
-        in the chemiscope input file reference.
+
+    :param dict shapes: optional dictionary of shapes to have available for display,
+        see below. :py:func:`extract_lammps_shapes_from_ase` can automatically extract
+        shapes from a LAMMPS simulation.
+
+    :param dict settings: optional dictionary of settings to use when displaying the
+        data. Possible entries for the ``settings`` dictionary are documented in the
+        chemiscope input file reference.
+
     :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
 
-    The dataset metadata should be given in the ``meta`` dictionary, the
-    possible keys are:
+
+    Dataset metadata
+    ----------------
+
+    The dataset metadata should be given in the ``meta`` dictionary, the possible keys
+    are:
 
     .. code-block:: python
 
@@ -65,16 +79,19 @@ def create_input(
             ],
         }
 
-    Properties can be added with the ``properties`` parameter. This parameter
-    should be a dictionary containing one entry for each property. Properties
-    can be extracted from structures with :py:func:`extract_properties` or
+    Dataset properties
+    ------------------
+
+    Properties can be added with the ``properties`` parameter. This parameter should be
+    a dictionary containing one entry for each property. Properties can be extracted
+    from structures with :py:func:`extract_properties` or
     :py:func:`composition_properties`, or manually defined by the user.
 
     Each entry in the ``properties`` dictionary contains a ``target`` attribute
-    (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a
-    Python list of float or string; a 1D numpy array of numeric values; or a 2D
-    numpy array of numeric values. In the later case, multiple properties will
-    be generated along the second axis. For example, passing
+    (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a Python list
+    of float or string; a 1D numpy array of numeric values; or a 2D numpy array of
+    numeric values. In the later case, multiple properties will be generated along the
+    second axis. For example, passing
 
     .. code-block:: python
 
@@ -89,8 +106,8 @@ def create_input(
             }
         }
 
-    will generate four properties named ``cheese[1]``, ``cheese[2]``,
-    ``cheese[3]``,  and ``cheese[4]``, each containing 300 values.
+    will generate four properties named ``cheese[1]``, ``cheese[2]``, ``cheese[3]``, and
+    ``cheese[4]``, each containing 300 values.
 
     It is also possible to pass shortened representation of the properties, for
     instance:
@@ -101,13 +118,16 @@ def create_input(
             'cheese':  np.zeros((300, 4)),
         }
 
-    In this case, the type of property (structure or atom) would be deduced
-    by comparing the numbers atoms and structures in the dataset to the
-    length of provided list/np.ndarray.
+    In this case, the type of property (structure or atom) would be deduced by comparing
+    the numbers atoms and structures in the dataset to the length of provided
+    list/np.ndarray.
 
-    Finally, one can give 2D properties to be displayed as curves in the info
-    panel by setting a ``parameters`` in the property, and giving the corresponding
-    ``parameters`` values to this function. The previous example becomes:
+    Multi-dimensional properties
+    ----------------------------
+
+    One can give 2D properties to be displayed as curves in the info panel by setting a
+    ``parameters`` in the property, and giving the corresponding ``parameters`` values
+    to this function. The previous example becomes:
 
     .. code-block:: python
 
@@ -123,9 +143,9 @@ def create_input(
             }
         }
 
-    This input describes a 2D property ``cheese`` with 300 samples and 4 values
-    taken by the ``origin`` parameter. We also need to provide the
-    ``parameters`` values to this function:
+    This input describes a 2D property ``cheese`` with 300 samples and 4 values taken by
+    the ``origin`` parameter. We also need to provide the ``parameters`` values to this
+    function:
 
     .. code-block:: python
 
@@ -134,13 +154,67 @@ def create_input(
                 # an array of numbers containing the values of the parameter
                 # the size should correspond to the second dimension
                 # of the corresponding multidimensional property
-                'values': [0, 1, 2, 3]
+                'values': [0, 1, 2, 3],
                 # optional free-form description of the parameter as a string
-                'name': 'a short description of this parameter'
+                'name': 'a short description of this parameter',
                 # optional units of the values in the values array
-                'units': 'eV'
+                'units': 'eV',
             }
         }
+
+    Custom shapes
+    -------------
+
+    The ``shapes`` parameter should have the format ``{"<name>": list of list of
+    shapes}``, where the list of lists contains one list for each structure, itself
+    containing one shape dictionary for each atom/site.
+
+    .. code-block:: python
+
+        shapes = {
+            "shape name": [
+                [{"kind": "sphere", "radius": 0.3} for atom in frame]
+                for frame in frames
+            ]
+        }
+
+    The shape dictionary can have any of the following form:
+
+    .. code-block:: python
+
+        # Ellipsoid shape
+        shape = {
+            "kind": "ellipsoid",
+            "semiaxes": [float, float, float],
+            "orientation" [float, float, float, float], # optional
+        }
+
+        # Spherical shape
+        shape = {
+            "kind": "sphere",
+            "radius": float,
+        }
+
+        # Fully custom shape
+        shape = {
+            "kind": "custom",
+            "vertices": [
+                [float, float, float],
+                ...
+            ],
+            # `simplices` is optional
+            "simplices": [
+                [int, int, int],
+                ...
+            ],
+            # `orientation` is optional
+            "orientation" [float, float, float, float],
+        }
+
+    where ``orientation`` is an optional parameter corresponding to a quaternion in
+    ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
+    *indices* of the facets, is also optional, and will be determined by convex
+    triangulation when not provided.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
@@ -198,6 +272,9 @@ def create_input(
         data["environments"] = _normalize_environments(environments, data["structures"])
         n_atoms = len(data["environments"])
 
+    if shapes is not None:
+        _add_shapes(data["structures"], shapes)
+
     data["properties"] = {}
     if properties is not None:
         properties = _expand_properties(properties, n_structures, n_atoms)
@@ -214,6 +291,7 @@ def create_input(
             raise ValueError(
                 f"expecting parameters to be a of type 'dict' not '{type(parameters)}'"
             )
+
         data["parameters"] = {}
         for key in parameters:
             param = {}
@@ -295,42 +373,54 @@ def write_input(
     meta=None,
     properties=None,
     environments=None,
+    shapes=None,
     settings=None,
     parameters=None,
 ):
     """
-    Create the input JSON file used by the default chemiscope visualizer, and
-    save it to the given ``path``.
+    Create the input JSON file used by the default chemiscope visualizer, and save it to
+    the given ``path``.
 
-    :param str path: name of the file to use to save the json data. If it ends
-                     with '.gz', a gzip compressed file will be written
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_
-                        objects are supported
+    :param str path: name of the file to use to save the json data. If it ends with
+        '.gz', a gzip compressed file will be written
+
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
+        are supported
+
     :param dict meta: optional metadata of the dataset
+
     :param dict properties: optional dictionary of additional properties
-    :param list environments: optional list of (structure id, atom id, cutoff)
-        specifying which atoms have properties attached and how far out
-        atom-centered environments should be drawn by default.
-    :param dict settings: optional dictionary of settings to use when displaying
-        the data. Possible entries for the ``settings`` dictionary are documented
-        in the chemiscope input file reference.
+
+    :param list environments: optional list of ``(structure id, atom id, cutoff)``
+        specifying which atoms have properties attached and how far out atom-centered
+        environments should be drawn by default.
+
+    :param dict shapes: optional dictionary of shapes to have available for display.
+        See :py:func:`create_input` for more information on how to define shapes.
+
+    :param dict settings: optional dictionary of settings to use when displaying the
+        data. Possible entries for the ``settings`` dictionary are documented in the
+        chemiscope input file reference.
+
     :param dict parameters: optional dictionary of parameters of multidimensional
         properties
 
-    This function uses :py:func:`create_input` to generate the input data, see
-    the documentation of this function for more information.
+    This function uses :py:func:`create_input` to generate the input data, see the
+    documentation of this function for more information.
 
-    Here is a quick example of generating a chemiscope input reading the
-    structures from a file that `ase <ase-io_>`_ can read, and performing PCA
-    using `sklearn`_ on a descriptor computed with another package.
+    Here is a quick example of generating a chemiscope input reading the structures from
+    a file that `ase <ase-io_>`_ can read, and performing PCA using `sklearn`_ on a
+    descriptor computed with another package.
 
     .. code-block:: python
 
         import ase
         from ase import io
         import numpy as np
+
         import sklearn
         from sklearn import decomposition
+
         import chemiscope
 
         frames = ase.io.read('trajectory.xyz', ':')
@@ -368,15 +458,16 @@ def write_input(
         dos_energy_grid = np.loadtxt(...)
         multidimensional_properties = {
             "DOS": {
-                target: "structure",
-                values: dos,
-                parameters: ["energy"],
+                "target": "structure",
+                "values": dos,
+                "parameters": ["energy"],
             }
         }
+
         multidimensional_parameters = {
             "energy": {
-                "values": dos_energy_grid
-                "units": "eV"
+                "values": dos_energy_grid,
+                "units": "eV",
             }
         }
 
@@ -406,6 +497,7 @@ def write_input(
         meta=meta,
         properties=properties,
         environments=environments,
+        shapes=shapes,
         settings=settings,
         parameters=parameters,
     )
@@ -709,4 +801,144 @@ def _typetransform(data, name):
             raise Exception(
                 f"unsupported type in property '{name}' values: "
                 "should be string or number"
+            )
+
+
+def _add_shapes(structures, shapes):
+    if not isinstance(shapes, dict):
+        raise TypeError(f"`shapes` must be a dictionary, got {type(shapes)} instead")
+
+    # validate type and number of element for each entries in the shapes
+    for key, shapes_for_key in shapes.items():
+        if not isinstance(key, str):
+            raise TypeError(
+                f"the `shapes` dictionary keys must be strings, got {type(key)}"
+            )
+
+        if not isinstance(shapes_for_key, list):
+            raise TypeError(
+                "Each entry in `shapes` must be a list, "
+                f"got {type(shapes_for_key)} instead for '{key}'"
+            )
+
+        if len(shapes_for_key) != len(structures):
+            raise ValueError(
+                f"Each entry in `shapes` should be a list with {len(structures)} "
+                f"(number of frames) elements, got {len(shapes_for_key)} for '{key}'"
+            )
+
+            for structure_i in range(len(structures)):
+                shapes_for_structure = shapes_for_key[structure_i]
+                structure = structures[structure_i]
+
+                if not isinstance(shapes_for_structure, list):
+                    raise TypeError(
+                        f"Shapes for structure {structure_i} must be a list, "
+                        f"got {type(shapes_for_structure)} instead"
+                    )
+
+                if len(shapes_for_structure) != structure["size"]:
+                    raise ValueError(
+                        f"Each entry in `shapes[{key}][{structure_i}]` should be a "
+                        f"list with {structure['size']} (number of atoms) elements, "
+                        f"got {len(shapes_for_structure)}"
+                    )
+
+                for shape in shapes_for_structure:
+                    _check_valid_shape(shape)
+
+    # Add the shapes to the structures
+    for structure in structures:
+        structure["shapes"] = {}
+
+    for key, values in shapes.items():
+        for structure, shapes_data in zip(structures, values):
+            for shape in shapes_data:
+                if shape["kind"] == "custom" and "simplices" not in shape:
+                    try:
+                        import scipy.spatial
+
+                    except ImportError as e:
+                        raise RuntimeError(
+                            "Missing simplices in custom shape, and scipy is not "
+                            "installed"
+                        ) from e
+
+                    convex_hull = scipy.spatial.ConvexHull(shape["vertices"])
+                    shape["simplices"] = [s.tolist() for s in convex_hull.simplices]
+
+            structure["shapes"][key] = shapes_data
+
+
+def _check_valid_shape(shape):
+    if not isinstance(shape, dict):
+        raise TypeError(
+            f"individual shapes must be dictionaries, got {type(shape)} instead"
+        )
+
+    if shape["kind"] == "sphere":
+        for parameter in shape.keys():
+            if parameter not in ["radius", "orientation"]:
+                raise ValueError(
+                    f"unknown shape parameter '{parameter}' for 'sphere' shape kind"
+                )
+
+        if not isinstance(shape["radius"], float):
+            raise TypeError(
+                f"sphere shape 'radius' must be a float, got {type(shape['radius'])}"
+            )
+
+    elif shape["kind"] == "ellipsoid":
+        for parameter in shape.keys():
+            if parameter not in ["semiaxes", "orientation"]:
+                raise ValueError(
+                    f"unknown shape parameter '{parameter}' for 'ellipsoid' shape kind"
+                )
+
+        semiaxes_array = np.asarray(shape["semiaxes"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if not semiaxes_array.shape == (3,):
+            raise ValueError(
+                "'semiaxes' must be an array with 3 values for 'ellipsoid' shape kind"
+            )
+
+    elif shape["kind"] == "custom":
+        for parameter in shape.keys():
+            if parameter not in ["vertices", "simplices", "orientation"]:
+                raise ValueError(
+                    f"unknown shape parameter '{parameter}' for 'custom' shape kind"
+                )
+
+        vertices_array = np.asarray(shape["vertices"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if len(vertices_array.shape) != 2 or vertices_array.shape[1] != 3:
+            raise ValueError(
+                "'vertices' must be an Nx3 array values for 'custom' shape kind"
+            )
+
+        if "simplices" in shape:
+            simplices_array = np.asarray(shape["vertices"]).astype(
+                np.int32, casting="safe", subok=False, copy=False
+            )
+
+            if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
+                raise ValueError(
+                    "'simplices' must be an Nx3 array values for 'custom' shape kind"
+                )
+
+    else:
+        raise ValueError(f"unknown shape kind '{shape['kind']}'")
+
+    if "orientation" in shape:
+        orientation_array = np.asarray(shape["orientation"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if not orientation_array.shape == (4,):
+            raise ValueError(
+                "semiaxes must be an array with 4 values for 'ellipsoid' shape kind"
             )

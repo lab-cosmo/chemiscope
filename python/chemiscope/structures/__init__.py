@@ -10,6 +10,8 @@ from ._ase import (
     _ase_valid_structures,
 )
 
+from ._ase import extract_lammps_shapes_from_ase  # noqa  isort: skip
+
 
 def _guess_adapter(frames):
     """
