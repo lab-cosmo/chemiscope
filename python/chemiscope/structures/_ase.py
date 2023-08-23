@@ -1,6 +1,7 @@
 import warnings
 from collections import Counter
 
+from ._shapes import ellipsoid_from_tensor, arrow_from_vector
 import numpy as np
 
 try:
@@ -302,6 +303,66 @@ def _is_convertible_to_property(value):
                 return True
             except Exception:
                 return False
+
+
+def extract_vectors_from_ase(frames, key="forces", **kwargs):
+    """
+    Extract a vectorial atom property from a list of ase.Atoms
+    objects, and returns a list of arrow shapes. Besides the specific
+    parameters it also accepts the same parameters as
+    `array_from_vector`, which are used to define the style of the
+    arrows.
+
+    :param frames: list of ASE Atoms objects
+    :param key: name of the ASE atom property. Should contain
+       three components corresponding to x,y,z
+    """
+
+    vectors = []
+
+    for f in frames:
+        if key not in f.arrays:
+            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
+        values = f.arrays[key]
+        if len(values.shape) != 2 or values.shape[1] != 3:
+            raise ValueError(
+                f"Property array {key} has not the shape of a list of 3-vectors"
+            )
+
+        # makes a list of arrows to visualize the property
+        vectors.append([arrow_from_vector(v, **kwargs) for v in values])
+
+    return vectors
+
+
+def extract_tensors_from_ase(frames, key="tensor", **kwargs):
+    """
+    Extract a 3-tensor atom property from a list of ase.Atoms
+    objects, and returns a list of arrow shapes. Besides the specific
+    parameters it also accepts the same parameters as
+    `ellipsoid_from_tensor`, which are used to draw the shapes
+
+    :param frames: list of ASE Atoms objects
+    :param key: name of the ASE atom property. Should contain
+       nine components corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or
+       six components corresponding to xx,yy,zz,xy,xz,yz
+    """
+
+    tensors = []
+
+    for f in frames:
+        if key not in f.arrays:
+            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
+        values = f.arrays[key]
+        if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):
+            raise ValueError(
+                f"Property array {key} has not the shape of a list of 6 or 9-vectors"
+            )
+
+        # makes a list of arrows to visualize the property
+        tensors.append([ellipsoid_from_tensor(v, **kwargs) for v in values])
+
+    return tensors
 
 
 def extract_lammps_shapes_from_ase(frames, key="shape"):

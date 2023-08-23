@@ -30,9 +30,10 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def __init__(self, data, has_metadata):
         super().__init__()
+
         self.value = json.dumps(data)
         self.has_metadata = has_metadata
-        self.settings = {}
+        self.settings = data["settings"]
         self._settings_sync = True
 
     def save(self, path):
@@ -85,14 +86,15 @@ def show(
     properties=None,
     meta=None,
     environments=None,
+    shapes=None,
     settings=None,
     mode="default",
 ):
     """
     Show the dataset defined by the given ``frames`` and ``properties``
-    (optionally ``meta`` and ``environments`` as well) using a embedded chemiscope
-    visualizer inside a Jupyter notebook. These parameters have the same meaning
-    as in the :py:func:`chemiscope.create_input` function.
+    (optionally ``meta``, ``environments`` and ``shapes`` as well) using an embedded
+    chemiscope visualizer inside a Jupyter notebook. These parameters have the same
+    meaning as in the :py:func:`chemiscope.create_input` function.
 
     The ``mode`` keyword also allows overriding the default two-panels
     visualization to show only a structure panel (``mode = "structure"``) or the
@@ -167,6 +169,7 @@ def show(
         properties=properties,
         meta=meta,
         environments=environments,
+        shapes=shapes,
         settings=settings,
     )
 

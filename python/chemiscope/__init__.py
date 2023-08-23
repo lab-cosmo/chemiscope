@@ -2,8 +2,13 @@
 from .input import create_input, write_input  # noqa
 from .structures import (  # noqa
     all_atomic_environments,
+    arrow_from_vector,
+    center_shape,
     composition_properties,
+    ellipsoid_from_tensor,
     extract_lammps_shapes_from_ase,
+    extract_tensors_from_ase,
+    extract_vectors_from_ase,
     extract_properties,
     librascal_atomic_environments,
 )

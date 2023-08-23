@@ -85,6 +85,6 @@ html {
 
 /* hide the slider when showing the map only (no need for navigation)
   uses part() to access styling within the shadow DOM */
-.chemiscope-meta-and-map .chemiscope-info *::part(chsp-slider)  {
+.chemiscope-meta-and-map .chemiscope-info *::part(chsp-slider) {
     display: none;
 }
