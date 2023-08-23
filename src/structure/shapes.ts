@@ -75,17 +75,6 @@ function rotateAndPlace(vertex: XYZ, quaternion: Quaternion, position: XYZ): XYZ
     );
 }
 
-function findCenter(a: XYZ[]): XYZ {
-    let center: XYZ = { x: 0, y: 0, z: 0 };
-    for (const v of a) {
-        center = addXYZ(center, v);
-    }
-    center.x /= a.length;
-    center.y /= a.length;
-    center.z /= a.length;
-    return center;
-}
-
 function determineNormals(vertices: XYZ[], simplices: [number, number, number][]): XYZ[] {
     const vertexNormals: XYZ[] = [];
     const nFaces: number[] = [];
@@ -407,10 +396,8 @@ export class CustomShape extends Shape {
         const indices = [];
         const vertices = [];
 
-        const center = findCenter(this.vertices);
-
         for (const v of this.vertices) {
-            vertices.push(rotateAndPlace(subXYZ(v, center), this.quaternion, this.position));
+            vertices.push(rotateAndPlace(v, this.quaternion, this.position));
         }
 
         for (const s of this.simplices) {

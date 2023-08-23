@@ -10,7 +10,17 @@ from ._ase import (
     _ase_valid_structures,
 )
 
-from ._ase import extract_lammps_shapes_from_ase  # noqa  isort: skip
+from ._ase import (  # noqa  isort: skip
+    extract_lammps_shapes_from_ase,
+    extract_tensors_from_ase,
+    extract_vectors_from_ase,
+)
+
+from ._shapes import (  # noqa
+    arrow_from_vector,
+    center_shape,
+    ellipsoid_from_tensor,
+)
 
 
 def _guess_adapter(frames):

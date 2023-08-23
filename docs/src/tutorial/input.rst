@@ -57,6 +57,10 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.extract_lammps_shapes_from_ase
 
+.. autofunction:: chemiscope.ellipsoid_from_tensor
+
+.. autofunction:: chemiscope.arrow_from_vector
+
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
 
