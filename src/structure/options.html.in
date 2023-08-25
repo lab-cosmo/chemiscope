@@ -9,6 +9,10 @@
             <h5 class="chsp-settings-section-title">Representation</h5>
             <div class="chsp-settings-representation">
                <div class="form-check form-switch">
+                  <input class="form-check-input" id="atoms" type="checkbox" />
+                  <label class="form-check-label" for="atoms" title="show atoms as spheres">atoms</label>
+               </div>
+               <div class="form-check form-switch">
                   <input class="form-check-input" id="bonds" type="checkbox" />
                   <label class="form-check-label" for="bonds" title="show bonds between atoms">bonds</label>
                </div>

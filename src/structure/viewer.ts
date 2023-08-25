@@ -608,6 +608,7 @@ export class MoleculeViewer {
 
         this._options.spaceFilling.onchange.push(restyleAndRender);
         this._options.bonds.onchange.push(restyleAndRender);
+        this._options.atoms.onchange.push(restyleAndRender);
 
         this._options.atomLabels.onchange.push((showLabels) => {
             if (this._current === undefined) {
@@ -975,7 +976,7 @@ export class MoleculeViewer {
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
-        if (this._options.shape.value === '') {
+        if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
             };
