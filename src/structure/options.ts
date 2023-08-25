@@ -18,6 +18,8 @@ import HTML_OPTIONS from './options.html.in';
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
     public bonds: HTMLOption<'boolean'>;
+    /// should we show atoms
+    public atoms: HTMLOption<'boolean'>;
     /// should we use space filling representation
     public spaceFilling: HTMLOption<'boolean'>;
     /// should we show atoms labels
@@ -61,6 +63,7 @@ export class StructureOptions extends OptionsGroup {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
+        this.atoms = new HTMLOption('boolean', true);
         this.spaceFilling = new HTMLOption('boolean', false);
         this.atomLabels = new HTMLOption('boolean', false);
         this.shape = new HTMLOption('string', '');
@@ -229,6 +232,7 @@ export class StructureOptions extends OptionsGroup {
 
         this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
         this.bonds.bind(this.getModalElement('bonds'), 'checked');
+        this.atoms.bind(this.getModalElement('atoms'), 'checked');
 
         this.rotation.bind(this.getModalElement('rotation'), 'checked');
         this.unitCell.bind(this.getModalElement('unit-cell'), 'checked');
