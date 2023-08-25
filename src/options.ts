@@ -12,7 +12,7 @@ import { Settings } from './dataset';
  * Possible HTML attributes to attach to a setting
  */
 // this is mostly to catch typo early. Feel free to add more!
-type Attribute = 'value' | 'checked' | 'innerText';
+type Attribute = 'value' | 'checked' | 'innerText' | 'options';
 
 /// Type mapping for options
 interface OptionsTypeMap {
@@ -146,8 +146,17 @@ export class HTMLOption<T extends OptionsType> {
      */
     public changed(origin: OptionModificationOrigin) {
         for (const bound of this._boundList) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            (bound.element as any)[bound.attribute] = this._value;
+            if (bound.attribute === 'options') {
+                // options take a list of comma-separated values to allow multiple settings
+                const values = (this._value as string).split(',');
+                const element = bound.element as HTMLSelectElement;
+                for (const option of element.options) {
+                    option.selected = values.includes(option.value);
+                }
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                (bound.element as any)[bound.attribute] = this._value;
+            }
         }
 
         for (const callback of this.onchange) {
@@ -175,14 +184,27 @@ export class HTMLOption<T extends OptionsType> {
         }
         element = element as HTMLElement;
 
-        const listener = (event: Event) => {
-            assert(event.target !== null);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-            this._update((event.target as any)[attribute].toString(), 'DOM');
-        };
+        let listener: (event: Event) => void;
+        if (attribute === 'options') {
+            listener = (event: Event) => {
+                // we need a special handler for multi-select options
+                assert(event.target !== null);
+                const element = event.target as HTMLSelectElement;
+                const values: string[] = Array.from(element.options)
+                    .filter((option) => option.selected)
+                    .map((option) => option.value);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        (element as any)[attribute] = this._value;
+                this._update(values.toString(), 'DOM');
+            };
+        } else {
+            listener = (event: Event) => {
+                assert(event.target !== null);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+                this._update((event.target as any)[attribute].toString(), 'DOM');
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            (element as any)[attribute] = this._value;
+        }
         element.addEventListener('change', listener);
 
         this._boundList.push({ element, attribute, listener });

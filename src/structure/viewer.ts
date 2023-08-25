@@ -433,12 +433,15 @@ export class MoleculeViewer {
 
             const selectShape = this._options.getModalElement<HTMLSelectElement>('shapes');
             selectShape.options.length = 0;
-            selectShape.options.add(new Option('off', ''));
             for (const key of Object.keys(structure['shapes'])) {
                 selectShape.options.add(new Option(key, key));
             }
 
-            this._options.shape.bind(selectShape, 'value');
+            // leave space for up to 3 shapes in the settings, the other one
+            // will be accessible with a scrollbar
+            selectShape.size = Math.min(Object.keys(structure['shapes']).length, 3);
+
+            this._options.shape.bind(selectShape, 'options');
         }
 
         this._updateStyle();
@@ -916,52 +919,58 @@ export class MoleculeViewer {
         assert(this._current.atomLabels.length === 0);
 
         const structure = this._current.structure;
-
         assert(!(structure.shapes === undefined));
-        const current_shape = structure.shapes[this._options.shape.value];
-        assert(!(current_shape === undefined));
 
-        const supercell_a = this._options.supercell[0].value;
-        const supercell_b = this._options.supercell[1].value;
-        const supercell_c = this._options.supercell[2].value;
-        let cell = this._current.structure.cell;
+        const active_shapes = this._options.shape.value.split(',');
 
-        if ((supercell_a > 1 || supercell_b > 1 || supercell_c > 1) && cell === undefined) {
-            return;
-        } else if (cell === undefined) {
-            cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-        }
+        for (const shape of active_shapes) {
+            if (shape === '') {
+                continue;
+            }
+            assert(shape in structure.shapes);
+            const current_shape = structure.shapes[shape];
+            const supercell_a = this._options.supercell[0].value;
+            const supercell_b = this._options.supercell[1].value;
+            const supercell_c = this._options.supercell[2].value;
+            let cell = this._current.structure.cell;
 
-        for (let a = 0; a < supercell_a; a++) {
-            for (let b = 0; b < supercell_b; b++) {
-                for (let c = 0; c < supercell_c; c++) {
-                    for (let i = 0; i < structure.size; i++) {
-                        const name = structure.names[i];
-                        const position: [number, number, number] = [
-                            structure.x[i] + a * cell[0] + b * cell[3] + c * cell[6],
-                            structure.y[i] + a * cell[1] + b * cell[4] + c * cell[7],
-                            structure.z[i] + a * cell[2] + b * cell[5] + c * cell[8],
-                        ];
+            if ((supercell_a > 1 || supercell_b > 1 || supercell_c > 1) && cell === undefined) {
+                return;
+            } else if (cell === undefined) {
+                cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+            }
 
-                        if (current_shape[i].kind === 'ellipsoid') {
-                            const data = current_shape[i] as unknown as EllipsoidData;
-                            const shape = new Ellipsoid(position, data);
-                            this._viewer.addCustom(
-                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                            );
-                        } else if (current_shape[i].kind === 'custom') {
-                            const data = current_shape[i] as unknown as CustomShapeData;
-                            const shape = new CustomShape(position, data);
-                            this._viewer.addCustom(
-                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                            );
-                        } else {
-                            assert(current_shape[i].kind === 'sphere');
-                            const data = current_shape[i] as unknown as SphereData;
-                            const shape = new Sphere(position, data);
-                            this._viewer.addCustom(
-                                shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                            );
+            for (let a = 0; a < supercell_a; a++) {
+                for (let b = 0; b < supercell_b; b++) {
+                    for (let c = 0; c < supercell_c; c++) {
+                        for (let i = 0; i < structure.size; i++) {
+                            const name = structure.names[i];
+                            const position: [number, number, number] = [
+                                structure.x[i] + a * cell[0] + b * cell[3] + c * cell[6],
+                                structure.y[i] + a * cell[1] + b * cell[4] + c * cell[7],
+                                structure.z[i] + a * cell[2] + b * cell[5] + c * cell[8],
+                            ];
+
+                            if (current_shape[i].kind === 'ellipsoid') {
+                                const data = current_shape[i] as unknown as EllipsoidData;
+                                const shape = new Ellipsoid(position, data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                                );
+                            } else if (current_shape[i].kind === 'custom') {
+                                const data = current_shape[i] as unknown as CustomShapeData;
+                                const shape = new CustomShape(position, data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                                );
+                            } else {
+                                assert(current_shape[i].kind === 'sphere');
+                                const data = current_shape[i] as unknown as SphereData;
+                                const shape = new Sphere(position, data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
+                                );
+                            }
                         }
                     }
                 }

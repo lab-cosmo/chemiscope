@@ -35,8 +35,14 @@
             </div>
             <div class="chsp-hide-if-no-shapes" style="margin-top: 1em">
                <div class="input-group input-group-sm">
-                  <label class="input-group-text" for="shapes" style="width: 5em">Shapes:</label>
-                  <select id="shapes" class="form-select" title="which shape to show for the particle"></select>
+                  <label
+                     class="input-group-text"
+                     for="shapes"
+                     style="width: 5em"
+                     title="which shapes to display; hold CTRL/CMD to select multiple shapes"
+                     >Shapes:</label
+                  >
+                  <select id="shapes" class="form-select" multiple></select>
                </div>
             </div>
 
