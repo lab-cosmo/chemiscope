@@ -23,6 +23,12 @@ export interface XYZ {
     z: number;
 }
 
+export interface BaseShapeData {
+    kind: string;
+    settings:  {};
+    atom_settings: {};
+}
+
 export interface SphereData {
     kind: 'sphere';
     radius: number;
