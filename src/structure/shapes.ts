@@ -26,7 +26,8 @@ export interface XYZ {
 export interface BaseShapeData {
     kind: string;
     settings:  {};
-    atom_settings: {};
+    frame_settings: undefined | {};
+    atom_settings: undefined | {};
 }
 
 export interface SphereData {
