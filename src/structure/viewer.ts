@@ -10,7 +10,7 @@ import { assignBonds } from './assignBonds';
 
 import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
-import { Environment, Settings, Structure } from '../dataset';
+import { Environment, Property, Settings, Structure } from '../dataset';
 
 import {
     CustomShape,
@@ -21,6 +21,8 @@ import {
     SphereData,
 } from './shapes';
 
+import { MapData } from '../map/data';
+import { EnvironmentIndexer } from '../indexer';
 import { StructureOptions } from './options';
 
 const IS_SAFARI =
@@ -42,7 +44,7 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties?: Record<string, number>[] | undefined): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -53,19 +55,30 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         );
         model.setCrystMatrix(matrix);
     }
-
     const atoms = [];
     for (let i = 0; i < structure.size; i++) {
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        atoms.push({
-            serial: i,
-            elem: structure.names[i],
-            x: x,
-            y: y,
-            z: z,
-        });
+        
+        if (properties !== undefined) {
+            atoms.push({
+                serial: i,
+                elem: structure.names[i],
+                properties: properties[i],
+                x: x,
+                y: y,
+                z: z,
+            });
+        } else {
+            atoms.push({
+                serial: i,
+                elem: structure.names[i],
+                x: x,
+                y: y,
+                z: z,
+            });
+        }
     }
 
     model.addAtoms(atoms);
@@ -159,14 +172,20 @@ export class MoleculeViewer {
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
-
+    // All known properties
+    private _data: MapData;
+    // environment indexer
+    private _indexer: EnvironmentIndexer;
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
      *
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
      */
-    constructor(element: string | HTMLElement) {
+    constructor(
+        element: string | HTMLElement,
+        indexer: EnvironmentIndexer,
+        properties: { [name: string]: Property }) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -224,9 +243,13 @@ export class MoleculeViewer {
         ];
 
         // Options reuse the same style sheets so they must be created after these.
-
-        this._options = new StructureOptions(this._root, (rect) =>
-            this.positionSettingsModal(rect)
+        this._indexer = indexer;
+        this._data = new MapData(properties);
+        const currentProperties = this._data[this._indexer.mode];
+        this._options = new StructureOptions(
+            this._root, 
+            currentProperties,
+            (rect) => this.positionSettingsModal(rect)
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
@@ -319,7 +342,7 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, options: Partial<LoadOptions> = {}): void {
+    public load(structure: Structure, properties: Record<string, number>[] | undefined, options: Partial<LoadOptions> = {}): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
@@ -396,8 +419,7 @@ export class MoleculeViewer {
             structure: structure,
             atomLabels: [],
         };
-
-        setup3DmolStructure(this._current.model, structure);
+        setup3DmolStructure(this._current.model, structure, properties);
         this._viewer.replicateUnitCell(
             this._options.supercell[0].value,
             this._options.supercell[1].value,
@@ -785,6 +807,11 @@ export class MoleculeViewer {
             restyleAndRender();
         });
 
+        this._options.color.property.onchange.push(() => {
+            this._updateStyle();
+            this._viewer.render();
+        });
+
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
@@ -984,15 +1011,22 @@ export class MoleculeViewer {
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value);
+
+        // swap the range so that the color scheme goes from blue to red
+        [propertyRange[0], propertyRange[1]] = [propertyRange[1], propertyRange[0]];
+        const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)};
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
         if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
+                colorscheme: colorScheme,
             };
         }
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
+                colorscheme: colorScheme,
             };
         }
 

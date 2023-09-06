@@ -74,6 +74,13 @@
                   <option class="chsp-hide-if-no-cell" value="abc">abc</option>
                </select>
             </div>
+                <div style="margin-bottom: 0.8em"></div>
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="atom-color-property">Atom color property:</label>
+                    <select id="atom-color-property" class="form-select">
+                        <option value="">element</option>
+                    </select>
+                </div>
             <div class="chsp-hide-if-no-environments">
                <div style="margin-bottom: 1.5em"></div>
                <h5 class="chsp-settings-section-title">Environments</h5>
