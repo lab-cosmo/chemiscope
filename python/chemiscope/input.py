@@ -9,6 +9,8 @@ import warnings
 
 import numpy as np
 
+from copy import copy
+
 from .structures import (
     _list_atom_properties,
     _list_structure_properties,
@@ -273,7 +275,9 @@ def create_input(
         n_atoms = len(data["environments"])
 
     if shapes is not None:
-        _add_shapes(data["structures"], shapes)
+        # TODO check and sanitize
+        data["shapes"] = shapes
+        # _add_shapes(data["structures"], shapes)
 
     data["properties"] = {}
     if properties is not None:
@@ -815,18 +819,18 @@ def _add_shapes(structures, shapes):
                 f"the `shapes` dictionary keys must be strings, got {type(key)}"
             )
 
-        if not isinstance(shapes_for_key, list):
+        if not isinstance(shapes_for_key, dict):
             raise TypeError(
-                "Each entry in `shapes` must be a list, "
+                "Each entry in `shapes` must be a dictionary, "
                 f"got {type(shapes_for_key)} instead for '{key}'"
             )
 
-        if len(shapes_for_key) != len(structures):
-            raise ValueError(
-                f"Each entry in `shapes` should be a list with {len(structures)} "
-                f"(number of frames) elements, got {len(shapes_for_key)} for '{key}'"
-            )
-
+        for shape_key in shapes_for_key:
+            if shape_key not in ["kind", "settings", "frame_settings", "atom_settimgs"]:
+                raise ValueError(
+                    f"Invalid entry `f{shape_key}` in the specifications for shape `f{key}`"
+                    )
+        """
             for structure_i in range(len(structures)):
                 shapes_for_structure = shapes_for_key[structure_i]
                 structure = structures[structure_i]
@@ -846,6 +850,7 @@ def _add_shapes(structures, shapes):
 
                 for shape in shapes_for_structure:
                     _check_valid_shape(shape)
+        """
 
     # Add the shapes to the structures
     for structure in structures:
@@ -853,6 +858,7 @@ def _add_shapes(structures, shapes):
 
     for key, values in shapes.items():
         for structure, shapes_data in zip(structures, values):
+            """
             for shape in shapes_data:
                 if shape["kind"] == "custom" and "simplices" not in shape:
                     try:
@@ -866,7 +872,7 @@ def _add_shapes(structures, shapes):
 
                     convex_hull = scipy.spatial.ConvexHull(shape["vertices"])
                     shape["simplices"] = [s.tolist() for s in convex_hull.simplices]
-
+            """
             structure["shapes"][key] = shapes_data
 
 
@@ -876,8 +882,21 @@ def _check_valid_shape(shape):
             f"individual shapes must be dictionaries, got {type(shape)} instead"
         )
 
+    parameters = {}
+    if "settings" in shape:
+        parameters.update(shape["settings"])
+    if "frame_settings" in shape:
+        parameters.update(shape["frame_settings"])
+    if "atom_settings" in shape:
+        parameters.update(shape["atom_settings"])
+
+    if len(parameters) == 0 :
+        raise ValueError(
+            f"no settings provided for {shape['kind']} shape"
+        )
     if shape["kind"] == "sphere":
-        for parameter in shape.keys():
+
+        for parameter in parameters:
             if parameter not in ["radius", "orientation"]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'sphere' shape kind"
@@ -886,8 +905,8 @@ def _check_valid_shape(shape):
         if not isinstance(shape["radius"], float):
             raise TypeError(
                 f"sphere shape 'radius' must be a float, got {type(shape['radius'])}"
-            )
-
+            )  
+        """
     elif shape["kind"] == "ellipsoid":
         for parameter in shape.keys():
             if parameter not in ["semiaxes", "orientation"]:
@@ -928,8 +947,7 @@ def _check_valid_shape(shape):
             if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
                 raise ValueError(
                     "'simplices' must be an Nx3 array values for 'custom' shape kind"
-                )
-
+                ) """
     else:
         raise ValueError(f"unknown shape kind '{shape['kind']}'")
 

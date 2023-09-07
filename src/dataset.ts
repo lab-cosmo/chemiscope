@@ -4,7 +4,7 @@
  */
 
 import { CustomShape, Ellipsoid, Sphere } from './structure/shapes';
-import { CustomShapeData, EllipsoidData, SphereData } from './structure/shapes';
+import { ShapeData } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
@@ -20,6 +20,10 @@ export interface Dataset {
      * {@link Structure}.
      */
     structures: Structure[] | UserStructure[];
+    /**
+     * Dictionary containing shape information about the dataset.  
+     */
+    shapes?: { [name: string]: ShapeData };
     /**
      * List of properties for the structures (`target == "structure"`), or
      * atom-centered environments in the structures (`target == "atom"`).
@@ -107,9 +111,9 @@ export interface Structure {
      */
     shapes?: {
         /**
-         * shapes of each particles / atoms
+         * dictionary containing shape data
          */
-        [name: string]: Array<CustomShapeData | EllipsoidData | SphereData>;
+        [name: string]: Array<ShapeData>;
     };
 }
 
@@ -398,6 +402,7 @@ export function checkStructure(s: JsObject): string {
         }
 
         for (const [key, array] of Object.entries(s.shapes as object)) {
+            /*
             if (!Array.isArray(array)) {
                 return `shape['${key}'] must be an array`;
             }
@@ -439,7 +444,7 @@ export function checkStructure(s: JsObject): string {
                 } else {
                     return `Chemiscope currently only supports custom, ellipsoid, or sphere shapes, got ${shape.kind}`;
                 }
-            }
+            } MCCOMMENT*/
         }
     }
 

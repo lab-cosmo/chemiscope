@@ -23,16 +23,26 @@ export interface XYZ {
     z: number;
 }
 
-export interface BaseShapeData {
-    kind: string;
-    settings:  {};
-    frame_settings: undefined | {};
-    atom_settings: undefined | {};
+export interface BaseShapeSettings {
+    position: [number, number, number];    
 }
 
-export interface SphereData {
-    kind: 'sphere';
+export interface BaseShapeData {
+    kind: string;
+    settings:  undefined | Partial<BaseShapeSettings>;
+    frame_settings: undefined | Partial<BaseShapeSettings>;
+    atom_settings: undefined | Partial<BaseShapeSettings>;
+}
+
+export interface SphereSettings extends BaseShapeSettings{
     radius: number;
+}
+
+export interface SphereData extends BaseShapeData {
+    kind: 'sphere';
+    settings: undefined | Partial<SphereSettings>;
+    frame_settings: undefined | Partial<SphereSettings>;
+    atom_settings: undefined | Partial<SphereSettings>;
 }
 
 // Interface for ellipsoidal data, where
@@ -53,7 +63,7 @@ export interface CustomShapeData {
     orientation?: [number, number, number, number];
 }
 
-export type ShapeData = SphereData | EllipsoidData | CustomShapeData;
+export type ShapeData = SphereData ; //| EllipsoidData | CustomShapeData;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -223,9 +233,9 @@ function isPositiveInteger(o: unknown): boolean {
 export class Sphere extends Shape {
     public radius: number;
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: SphereData) {
+    constructor(position: [number, number, number] = [0, 0, 0], settings: SphereSettings) {
         super(position);
-        this.radius = data.radius;
+        this.radius = settings.radius;
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -321,9 +331,16 @@ export class Ellipsoid extends Shape {
 
             const relativeVertex = subXYZ(newVertex, this.position);
             const newNormal: XYZ = {
+                /*
+                I think these are wrong because the vertex has now been rotated so it's not aligned with the axes
                 x: relativeVertex.x / Math.pow(this.semiaxes[0], 2.0),
                 y: relativeVertex.y / Math.pow(this.semiaxes[1], 2.0),
                 z: relativeVertex.z / Math.pow(this.semiaxes[2], 2.0),
+                */
+                // this is also wrong, but possibly less wrong. 
+                x: relativeVertex.x,
+                y: relativeVertex.y,
+                z: relativeVertex.z,
             };
             normals.push(newNormal);
         }
