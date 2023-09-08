@@ -491,18 +491,21 @@ export class ViewersGrid {
         const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
         return atomProperties;
     }
-    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number[]> {
-        const structureAtomProperties: Record<string, number[]> = [];
-        const atomProperties = this._getAtomProperties();
-        if (this._environments !== undefined) {
-            const structureEnvironments = this._environments[indexes.structure];
-            for (const structureEnvironment of structureEnvironments) {
-                const singleAtomProperties: Record<string, number> = {};
-                for (const atomProperty in atomProperties) {
-                    singleAtomProperties[atomProperty] = atomProperties[atomProperty].values[structureEnvironment.center] as number;
-            };
-            structureAtomProperties.push(singleAtomProperties);
-        };
+    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number>[] | undefined {
+        const structureAtomProperties: Record<string, number>[] = [];
+        const allAtomProperties = this._getAtomProperties();
+        if (this._environments !== undefined && indexes !== undefined) {
+            const activeEnvironments = this._environments[indexes.structure];
+            for (const activeEnvironment of activeEnvironments) {
+                if (activeEnvironment !== undefined) {
+                    console.log(activeEnvironment.center);
+                    const singleAtomProperties: Record<string, number> = {};
+                    for (const propertyName in allAtomProperties) {
+                        singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
+                        console.log(propertyName, singleAtomProperties[propertyName]);
+                };
+                    structureAtomProperties.push(singleAtomProperties);
+        }};
             return structureAtomProperties;
         } else {
             return undefined;
@@ -525,7 +528,7 @@ export class ViewersGrid {
                     options.highlight = indexes.atom;
                 }
             }
-            widget.load(this._structure(indexes.structure), this._getSelectedAtomProperties(indexes), options); // add properties: Record<string, number>[];
+            viewer.load(this._structure(indexes.structure), this._getSelectedAtomProperties(indexes), options); // add properties: Record<string, number>[];
             data.current = indexes;
         }
 

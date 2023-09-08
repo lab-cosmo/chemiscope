@@ -1011,11 +1011,12 @@ export class MoleculeViewer {
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
-        const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value);
+        const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value) as [number, number];
 
         // swap the range so that the color scheme goes from blue to red
         [propertyRange[0], propertyRange[1]] = [propertyRange[1], propertyRange[0]];
         const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)};
+        // const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB()};
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
         if (this._options.atoms.value) {
             style.sphere = {
