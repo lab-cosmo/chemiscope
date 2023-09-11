@@ -14,7 +14,7 @@ import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../uti
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
-import { NumericProperties } from '../map/data';
+import { MapData } from '../map/data';
 
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
@@ -64,7 +64,7 @@ export class StructureOptions extends OptionsGroup {
     private _positionSettingsModal: PositioningCallback;
 
     constructor(root: HTMLElement,
-        properties: NumericProperties,
+        properties: MapData,
         positionSettings: PositioningCallback
     ) {
         super();
@@ -105,11 +105,13 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
-        const propertiesName = Object.keys(properties);
+        // validate atom properties for coloring
+        const propertiesName = Object.keys(properties["atom"]);
         this.color = {
             property: new HTMLOption('string', ''),
         };
         this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
+
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK'],
             'background atoms coloring'
@@ -236,7 +238,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(properties: NumericProperties): void {
+    private _bind(properties: MapData): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
@@ -257,7 +259,7 @@ export class StructureOptions extends OptionsGroup {
         const selectAtomColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
         selectAtomColorProperty.options.length = 0;
         selectAtomColorProperty.options.add(new Option('element', ''));
-        for (const key in properties) {
+        for (const key in properties["atom"]) {
             selectAtomColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectAtomColorProperty, 'value');

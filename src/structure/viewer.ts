@@ -245,10 +245,9 @@ export class MoleculeViewer {
         // Options reuse the same style sheets so they must be created after these.
         this._indexer = indexer;
         this._data = new MapData(properties);
-        const currentProperties = this._data[this._indexer.mode];
         this._options = new StructureOptions(
             this._root, 
-            currentProperties,
+            this._data,
             (rect) => this.positionSettingsModal(rect)
         );
 
