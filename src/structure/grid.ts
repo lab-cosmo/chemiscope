@@ -491,21 +491,21 @@ export class ViewersGrid {
         const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
         return atomProperties;
     }
-    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number>[] | undefined {
-        const structureAtomProperties: Record<string, number>[] = [];
+    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number | undefined>[] | undefined {
+        const structureAtomProperties: Record<string, number | undefined>[] = [];
         const allAtomProperties = this._getAtomProperties();
         if (this._environments !== undefined && indexes !== undefined) {
             const activeEnvironments = this._environments[indexes.structure];
             for (const activeEnvironment of activeEnvironments) {
-                if (activeEnvironment !== undefined) {
-                    console.log(activeEnvironment.center);
-                    const singleAtomProperties: Record<string, number> = {};
-                    for (const propertyName in allAtomProperties) {
+                const singleAtomProperties: Record<string, number | undefined> = {};
+                for (const propertyName in allAtomProperties) {
+                    if (activeEnvironment !== undefined) {
                         singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
-                        console.log(propertyName, singleAtomProperties[propertyName]);
-                };
-                    structureAtomProperties.push(singleAtomProperties);
-        }};
+                    } else {
+                        singleAtomProperties[propertyName] = undefined;
+                    }};
+                structureAtomProperties.push(singleAtomProperties);
+        };
             return structureAtomProperties;
         } else {
             return undefined;

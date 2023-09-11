@@ -44,7 +44,7 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties?: Record<string, number>[] | undefined): void {
+function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties?: Record<string, number | undefined>[] | undefined): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -342,7 +342,7 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, properties: Record<string, number>[] | undefined, options: Partial<LoadOptions> = {}): void {
+    public load(structure: Structure, properties: Record<string, number | undefined>[] | undefined, options: Partial<LoadOptions> = {}): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
@@ -808,10 +808,8 @@ export class MoleculeViewer {
         });
 
         this._options.color.property.onchange.push(() => {
-            this._updateStyle();
-            this._viewer.render();
+            restyleAndRender();
         });
-
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
