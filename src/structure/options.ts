@@ -64,10 +64,7 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement,
-        properties: MapData,
-        positionSettings: PositioningCallback
-    ) {
+    constructor(root: HTMLElement, properties: MapData, positionSettings: PositioningCallback) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -112,7 +109,7 @@ export class StructureOptions extends OptionsGroup {
         };
 
         // validate atom properties for coloring
-        const propertiesName = Object.keys(properties["atom"]);
+        const propertiesName = Object.keys(properties['atom']);
         this.color.property.validate = optionValidator(propertiesName.concat(['element']), 'color');
 
         this.environments.bgColor.validate = optionValidator(
@@ -258,11 +255,11 @@ export class StructureOptions extends OptionsGroup {
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');
         this.supercell[2].bind(this.getModalElement('supercell-c'), 'value');
 
-
-        const selectAtomColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
+        const selectAtomColorProperty =
+            this.getModalElement<HTMLSelectElement>('atom-color-property');
         // selectAtomColorProperty.options.length = 0;
         // selectAtomColorProperty.options.add(new Option('element', ''));
-        for (const key in properties["atom"]) {
+        for (const key in properties['atom']) {
             selectAtomColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectAtomColorProperty, 'value');

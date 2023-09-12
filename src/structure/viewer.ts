@@ -44,7 +44,11 @@ function defaultOpacity(): number {
  * @param model 3Dmol GLModel that will contain structure data
  * @param structure the structure to convert
  */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, properties?: Record<string, number | undefined>[] | undefined): void {
+function setup3DmolStructure(
+    model: $3Dmol.GLModel,
+    structure: Structure,
+    properties?: Record<string, number | undefined>[] | undefined
+): void {
     if (structure.cell !== undefined) {
         const cell = structure.cell;
         // prettier-ignore
@@ -60,7 +64,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure, proper
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        
+
         if (properties !== undefined) {
             atoms.push({
                 serial: i,
@@ -187,7 +191,8 @@ export class MoleculeViewer {
     constructor(
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
-        properties: { [name: string]: Property }) {
+        properties: { [name: string]: Property }
+    ) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -247,10 +252,8 @@ export class MoleculeViewer {
         // Options reuse the same style sheets so they must be created after these.
         this._indexer = indexer;
         this._data = new MapData(properties);
-        this._options = new StructureOptions(
-            this._root, 
-            this._data,
-            (rect) => this.positionSettingsModal(rect)
+        this._options = new StructureOptions(this._root, this._data, (rect) =>
+            this.positionSettingsModal(rect)
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
@@ -343,7 +346,11 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, properties: Record<string, number | undefined>[] | undefined, options: Partial<LoadOptions> = {}): void {
+    public load(
+        structure: Structure,
+        properties: Record<string, number | undefined>[] | undefined,
+        options: Partial<LoadOptions> = {}
+    ): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
@@ -813,10 +820,16 @@ export class MoleculeViewer {
             if (this._options.color.property.value !== 'element') {
                 this._options.color.map.enable();
                 if (this._properties !== undefined) {
-                    if (this._properties.some((record) => Object.values(record).some((v) => v === undefined))) {
-                        sendWarning("The selected structure has undefined properties for some atoms, these atoms will still be colored by element.");
+                    if (
+                        this._properties.some((record) =>
+                            Object.values(record).some((v) => v === undefined)
+                        )
+                    ) {
+                        sendWarning(
+                            'The selected structure has undefined properties for some atoms, these atoms will still be colored by element.'
+                        );
                     }
-                };
+                }
             } else {
                 this._options.color.map.disable();
                 this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
@@ -1024,13 +1037,22 @@ export class MoleculeViewer {
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
-        const [min, max] = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value) as [number, number];
+        const [min, max] = $3Dmol.getPropertyRange(
+            this._current?.model.selectedAtoms({}),
+            this._options.color.property.value
+        ) as [number, number];
         let colorScheme: { prop: string; gradient: $3Dmol.Gradient } | undefined;
         if (this._options.color.map.value === 'rwb') {
             // min and max are swapped to ensure red is used for high values, blue for low values
-            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(max, min) };
+            colorScheme = {
+                prop: this._options.color.property.value,
+                gradient: new $3Dmol.Gradient.RWB(max, min),
+            };
         } else if (this._options.color.map.value === 'sinebow') {
-            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(max, min) };
+            colorScheme = {
+                prop: this._options.color.property.value,
+                gradient: new $3Dmol.Gradient.Sinebow(max, min),
+            };
         }
 
         const style: Partial<$3Dmol.AtomStyleSpec> = {};

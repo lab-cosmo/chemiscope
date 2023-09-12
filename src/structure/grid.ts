@@ -22,7 +22,7 @@ import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarnin
 
 import { LoadOptions, MoleculeViewer } from './viewer';
 
-import {filter} from '../info/info';
+import { filter } from '../info/info';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -486,12 +486,15 @@ export class ViewersGrid {
     }
 
     private _getAtomProperties(): Record<string, Property> {
-        const numberProperties = filter(this._properties, (p) => 
-            Object.values(p.values).every((v) => typeof v === 'number'));
+        const numberProperties = filter(this._properties, (p) =>
+            Object.values(p.values).every((v) => typeof v === 'number')
+        );
         const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
         return atomProperties;
     }
-    private _getSelectedAtomProperties(indexes?: Indexes): Record<string, number | undefined>[] | undefined {
+    private _getSelectedAtomProperties(
+        indexes?: Indexes
+    ): Record<string, number | undefined>[] | undefined {
         const structureAtomProperties: Record<string, number | undefined>[] = [];
         const allAtomProperties = this._getAtomProperties();
         if (this._environments !== undefined && indexes !== undefined) {
@@ -500,16 +503,20 @@ export class ViewersGrid {
                 const singleAtomProperties: Record<string, number | undefined> | undefined = {};
                 for (const propertyName in allAtomProperties) {
                     if (activeEnvironment !== undefined) {
-                        singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
+                        singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[
+                            activeEnvironment.center
+                        ] as number;
                     } else {
                         singleAtomProperties[propertyName] = undefined;
-                    }};
+                    }
+                }
                 structureAtomProperties.push(singleAtomProperties);
-        };
+            }
             return structureAtomProperties;
         } else {
             return undefined;
-    }};
+        }
+    }
 
     private _showInViewer(guid: GUID, indexes: Indexes): void {
         const data = this._cellsData.get(guid);
@@ -528,7 +535,11 @@ export class ViewersGrid {
                     options.highlight = indexes.atom;
                 }
             }
-            viewer.load(this._structure(indexes.structure), this._getSelectedAtomProperties(indexes), options); // add properties: Record<string, number>[];
+            viewer.load(
+                this._structure(indexes.structure),
+                this._getSelectedAtomProperties(indexes),
+                options
+            ); // add properties: Record<string, number>[];
             data.current = indexes;
         }
 
@@ -730,7 +741,7 @@ export class ViewersGrid {
                 const viewer = new MoleculeViewer(
                     this._getById<HTMLElement>(`gi-${cellGUID}`),
                     this._indexer,
-                    this._properties,
+                    this._properties
                 );
 
                 viewer.onselect = (atom: number) => {
