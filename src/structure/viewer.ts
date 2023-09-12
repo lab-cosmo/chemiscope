@@ -807,8 +807,17 @@ export class MoleculeViewer {
         });
 
         this._options.color.property.onchange.push(() => {
+            if (this._options.color.property.value !== 'element') {
+                this._options.color.map.enable();
+            } else {
+                this._options.color.map.disable();
+                // const sel: Partial<$3Dmol.AtomStyleSpec> = {};
+                this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
+            }
             restyleAndRender();
         });
+        this._options.color.map.onchange.push(restyleAndRender);
+
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
@@ -1008,13 +1017,17 @@ export class MoleculeViewer {
      * highlighting a specific environment
      */
     private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
-        const propertyRange = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value) as [number, number];
+        const [min, max] = $3Dmol.getPropertyRange(this._current?.model.selectedAtoms({}), this._options.color.property.value) as [number, number];
+        let colorScheme: { prop: string; gradient: $3Dmol.Gradient } | undefined;
+        if (this._options.color.map.value === 'rwb') {
+            // min and max are swapped to ensure red is used for high values, blue for low values
+            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(max, min) };
+        } else if (this._options.color.map.value === 'sinebow') {
+            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(min, max) };
+        }
 
-        // swap the range so that the color scheme goes from blue to red
-        [propertyRange[0], propertyRange[1]] = [propertyRange[1], propertyRange[0]];
-        const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(propertyRange)};
-        // const colorScheme = {prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB()};
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
+
         if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,

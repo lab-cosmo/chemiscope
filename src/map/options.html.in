@@ -168,7 +168,7 @@
 
                <div class="collapse chsp-map-extra-options" id="map-size-extra" style="grid-template-columns: 1fr 1fr">
                   <div class="input-group input-group-sm">
-                     <label class="input-group-text" for="map-size-transform">transform:</label>
+                     <label class="input-group-text" for="map-size-transform ">transform:</label>
                      <select id="map-size-transform" class="form-select" disabled>
                         <option value="linear">linear</option>
                         <option value="log">log</option>

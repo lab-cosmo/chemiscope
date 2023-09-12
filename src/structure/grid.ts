@@ -501,8 +501,6 @@ export class ViewersGrid {
                 for (const propertyName in allAtomProperties) {
                     if (activeEnvironment !== undefined) {
                         singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
-                    } else {
-                        singleAtomProperties[propertyName] = undefined;
                     }};
                 structureAtomProperties.push(singleAtomProperties);
         };

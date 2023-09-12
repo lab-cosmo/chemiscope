@@ -54,6 +54,7 @@ export class StructureOptions extends OptionsGroup {
     };
     public color: {
         property: HTMLOption<'string'>;
+        map: HTMLOption<'string'>;
     };
 
     /// The Modal instance
@@ -105,12 +106,14 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
+        this.color = {
+            property: new HTMLOption('string', 'element'),
+            map: new HTMLOption('string', 'rwb'),
+        };
+
         // validate atom properties for coloring
         const propertiesName = Object.keys(properties["atom"]);
-        this.color = {
-            property: new HTMLOption('string', ''),
-        };
-        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
+        this.color.property.validate = optionValidator(propertiesName.concat(['element']), 'color');
 
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK'],
@@ -257,12 +260,15 @@ export class StructureOptions extends OptionsGroup {
 
 
         const selectAtomColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
-        selectAtomColorProperty.options.length = 0;
-        selectAtomColorProperty.options.add(new Option('element', ''));
+        // selectAtomColorProperty.options.length = 0;
+        // selectAtomColorProperty.options.add(new Option('element', ''));
         for (const key in properties["atom"]) {
             selectAtomColorProperty.options.add(new Option(key, key));
         }
         this.color.property.bind(selectAtomColorProperty, 'value');
+
+        const selectAtomColorMap = this.getModalElement<HTMLSelectElement>('atom-color-map');
+        this.color.map.bind(selectAtomColorMap, 'value');
 
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');

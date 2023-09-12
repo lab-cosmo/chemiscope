@@ -500,3 +500,12 @@
     margin-top: 3px;
     margin-bottom: 1px;
 }
+
+.chsp-atom-color-property {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1em;
+    margin: 0.5em 0;
+}

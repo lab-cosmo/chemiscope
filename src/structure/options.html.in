@@ -33,6 +33,21 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
+            <div class="chsp-atom-color-property">
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="atom-color-property">Color atoms by:</label>
+                  <select id="atom-color-property" class="form-select">
+                     <option value="element">element</option>
+                  </select>
+               </div>
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="atom-color-map">Color map:</label>
+                  <select id="atom-color-map" class="form-select" disabled>
+                     <option value="rwb">RWB</option>
+                     <option value="sinebow">Rainbow</option>
+                  </select>
+               </div>
+            </div>
             <div class="chsp-hide-if-no-shapes" style="margin-top: 1em">
                <div class="input-group input-group-sm">
                   <label
@@ -75,12 +90,6 @@
                </select>
             </div>
                 <div style="margin-bottom: 0.8em"></div>
-                <div class="input-group input-group-sm">
-                    <label class="input-group-text" for="atom-color-property">Atom color property:</label>
-                    <select id="atom-color-property" class="form-select">
-                        <option value="">element</option>
-                    </select>
-                </div>
             <div class="chsp-hide-if-no-environments">
                <div style="margin-bottom: 1.5em"></div>
                <h5 class="chsp-settings-section-title">Environments</h5>
