@@ -814,12 +814,11 @@ export class MoleculeViewer {
                 this._options.color.map.enable();
                 if (this._properties !== undefined) {
                     if (this._properties.some((record) => Object.values(record).some((v) => v === undefined))) {
-                        sendWarning("The selected structure has undefined properties for some atoms, these atoms will be colored in grey.");
+                        sendWarning("The selected structure has undefined properties for some atoms, these atoms will still be colored by element.");
                     }
                 };
             } else {
                 this._options.color.map.disable();
-                // const sel: Partial<$3Dmol.AtomStyleSpec> = {};
                 this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
             }
             restyleAndRender();

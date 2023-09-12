@@ -503,9 +503,9 @@ export class ViewersGrid {
                         singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
                     } else {
                         singleAtomProperties[propertyName] = undefined;
-                    };
+                    }};
                 structureAtomProperties.push(singleAtomProperties);
-        }};
+        };
             return structureAtomProperties;
         } else {
             return undefined;
