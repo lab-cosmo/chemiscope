@@ -497,13 +497,15 @@ export class ViewersGrid {
         if (this._environments !== undefined && indexes !== undefined) {
             const activeEnvironments = this._environments[indexes.structure];
             for (const activeEnvironment of activeEnvironments) {
-                const singleAtomProperties: Record<string, number | undefined> = {};
+                const singleAtomProperties: Record<string, number | undefined> | undefined = {};
                 for (const propertyName in allAtomProperties) {
                     if (activeEnvironment !== undefined) {
                         singleAtomProperties[propertyName] = allAtomProperties[propertyName].values[activeEnvironment.center] as number;
-                    }};
+                    } else {
+                        singleAtomProperties[propertyName] = undefined;
+                    };
                 structureAtomProperties.push(singleAtomProperties);
-        };
+        }};
             return structureAtomProperties;
         } else {
             return undefined;

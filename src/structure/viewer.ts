@@ -8,7 +8,7 @@ import assert from 'assert';
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './assignBonds';
 
-import { getElement, unreachable } from '../utils';
+import { getElement, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Property, Settings, Structure } from '../dataset';
 
@@ -172,6 +172,8 @@ export class MoleculeViewer {
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
+    // List of properties for the current structure
+    private _properties?: Record<string, number | undefined>[] | undefined;
     // All known properties
     private _data: MapData;
     // environment indexer
@@ -353,6 +355,7 @@ export class MoleculeViewer {
 
         // Deal with loading options
         this._environments = options.environments;
+        this._properties = properties;
 
         let keepOrientation: boolean;
         if (options.keepOrientation === undefined) {
@@ -809,6 +812,11 @@ export class MoleculeViewer {
         this._options.color.property.onchange.push(() => {
             if (this._options.color.property.value !== 'element') {
                 this._options.color.map.enable();
+                if (this._properties !== undefined) {
+                    if (this._properties.some((record) => Object.values(record).some((v) => v === undefined))) {
+                        sendWarning("The selected structure has undefined properties for some atoms, these atoms will be colored in grey.");
+                    }
+                };
             } else {
                 this._options.color.map.disable();
                 // const sel: Partial<$3Dmol.AtomStyleSpec> = {};
