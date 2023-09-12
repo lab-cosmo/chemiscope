@@ -1030,7 +1030,7 @@ export class MoleculeViewer {
             // min and max are swapped to ensure red is used for high values, blue for low values
             colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.RWB(max, min) };
         } else if (this._options.color.map.value === 'sinebow') {
-            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(min, max) };
+            colorScheme = { prop: this._options.color.property.value, gradient: new $3Dmol.Gradient.Sinebow(max, min) };
         }
 
         const style: Partial<$3Dmol.AtomStyleSpec> = {};

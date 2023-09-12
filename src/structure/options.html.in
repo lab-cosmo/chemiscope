@@ -43,8 +43,8 @@
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="atom-color-map">Color map:</label>
                   <select id="atom-color-map" class="form-select" disabled>
-                     <option value="rwb">RWB</option>
-                     <option value="sinebow">Rainbow</option>
+                     <option value="rwb">RWB (lowest values: blue, highest values: red)</option>
+                     <option value="sinebow">Rainbow (lowest values: purple, highest values: red</option>
                   </select>
                </div>
             </div>
