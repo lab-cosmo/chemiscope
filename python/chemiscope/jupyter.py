@@ -35,7 +35,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         self.value = json.dumps(data)
         self.has_metadata = has_metadata
-        self.settings = data["settings"]
+        if "settings" in data:
+            self.settings = data["settings"]
         self._settings_sync = True
 
     def save(self, path):
