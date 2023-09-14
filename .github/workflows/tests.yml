@@ -22,14 +22,17 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
       - name: configure access to git repositories in package-lock.json
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
-      - name: update npm
-        run: npm install -g npm
+
       - name: install npm dependencies
         run: npm ci
+
       - run: npm run build
+
       - run: sudo apt-get install xvfb
+
       # use xvfb to run the tests with a pseudo-display attached
       # so that the browsers started by karma think there is a screen
       - run: xvfb-run --auto-servernum npm test
