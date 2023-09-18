@@ -334,19 +334,14 @@ export class Ellipsoid extends Shape {
             const newVertex: XYZ = rotateAndPlace(v, this.orientation, this.position);
             vertices.push(newVertex);
 
-            const relativeVertex = subXYZ(newVertex, this.position);
-            const newNormal: XYZ = {
-                /*
-                I think these are wrong because the vertex has now been rotated so it's not aligned with the axes
-                x: relativeVertex.x / Math.pow(this.semiaxes[0], 2.0),
-                y: relativeVertex.y / Math.pow(this.semiaxes[1], 2.0),
-                z: relativeVertex.z / Math.pow(this.semiaxes[2], 2.0),
-                */
-                // this is also wrong, but possibly less wrong.
-                x: relativeVertex.x,
-                y: relativeVertex.y,
-                z: relativeVertex.z,
-            };
+            // the normal to the ellipsoid surface is best computed in the original
+            // coordinate system, and then rotated in place 
+            const newNormal: XYZ = rotateAndPlace({
+                x: v.x / Math.pow(this.semiaxes[0], 2.0),
+                y: v.y / Math.pow(this.semiaxes[1], 2.0),
+                z: v.z / Math.pow(this.semiaxes[2], 2.0),
+            }, this.orientation, {x:0, y:0, z:0});
+
             normals.push(newNormal);
         }
         return {
