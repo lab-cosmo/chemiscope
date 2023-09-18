@@ -359,10 +359,10 @@ def extract_tensors_from_ase(frames, key="tensor", **kwargs):
                 f"Property array {key} has not the shape of a list of 6 or 9-vectors"
             )
 
-        # makes a list of arrows to visualize the property
-        tensors.append([ellipsoid_from_tensor(v, **kwargs) for v in values])
+        # makes a list of ellipsoids to visualize the property
+        tensors = tensors + [ellipsoid_from_tensor(v, **kwargs) for v in values]
 
-    return tensors
+    return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})
 
 
 def extract_lammps_shapes_from_ase(frames, key="shape"):

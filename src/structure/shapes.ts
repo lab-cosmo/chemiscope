@@ -49,10 +49,12 @@ export interface SphereParameters extends BaseShapeParameters<SphereData> {
 
 // Interface for ellipsoidal data, where
 // orientation is stored in the (w, x, y, z) convention
-export interface EllipsoidData {
-    kind: 'ellipsoid';
+export interface EllipsoidData extends BaseShapeData {
     semiaxes: [number, number, number];
-    orientation?: [number, number, number, number];
+}
+
+export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> {
+    kind: 'ellipsoid';
 }
 
 // Interface for polytope data, where
@@ -65,8 +67,8 @@ export interface CustomShapeData {
     orientation?: [number, number, number, number];
 }
 
-export type ShapeData = SphereData; //| EllipsoidData | CustomShapeData;
-export type ShapeParameters = SphereParameters;
+export type ShapeData = SphereData | EllipsoidData; // | CustomShapeData;
+export type ShapeParameters = SphereParameters | EllipsoidParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -128,12 +130,12 @@ function determineNormals(vertices: XYZ[], simplices: [number, number, number][]
 export class Shape {
     public position: XYZ;
     /// orientation of the particle
-    public quaternion: Quaternion;
+    public orientation: Quaternion;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
-    constructor(data: Partial<ShapeData>) {
+    constructor(data: Partial<SphereData>) {
         let [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
-        this.quaternion = new Quaternion(qx, qy, qz, qw);
+        this.orientation = new Quaternion(qx, qy, qz, qw);
         let [x, y, z] = data.position || [0, 0, 0];
         this.position = { x, y, z };
     }
@@ -289,9 +291,9 @@ export class Sphere extends Shape {
 export class Ellipsoid extends Shape {
     public semiaxes: [number, number, number];
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: EllipsoidData) {
-        super({});
-        //super(position, data.orientation);
+    constructor(data: Partial<EllipsoidData>) {
+        super(data);
+        assert(data.semiaxes);
         this.semiaxes = data.semiaxes;
     }
 
@@ -329,7 +331,7 @@ export class Ellipsoid extends Shape {
         const normals: XYZ[] = [];
 
         for (const v of rawVertices) {
-            const newVertex: XYZ = rotateAndPlace(v, this.quaternion, this.position);
+            const newVertex: XYZ = rotateAndPlace(v, this.orientation, this.position);
             vertices.push(newVertex);
 
             const relativeVertex = subXYZ(newVertex, this.position);
@@ -424,7 +426,7 @@ export class CustomShape extends Shape {
         const vertices = [];
 
         for (const v of this.vertices) {
-            vertices.push(rotateAndPlace(v, this.quaternion, this.position));
+            vertices.push(rotateAndPlace(v, this.orientation, this.position));
         }
 
         for (const s of this.simplices) {

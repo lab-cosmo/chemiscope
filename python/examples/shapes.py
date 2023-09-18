@@ -52,8 +52,12 @@ cs = chemiscope.write_input(
                     {"radius": 1.5},
                     {"radius": 0.7},
                 ],
-                "atom": [{"radius": 1 + np.random.uniform()} for i in range(40)],
+                "atom": [{"radius": 1 + np.random.uniform()} for i in range(39)]
+                + [{"color": 0xC08000}],
             },
+        ),
+        "alpha": chemiscope.extract_tensors_from_ase(
+            alphaml, "alpha", force_positive=True, scale=0.2
         ),
     },
     settings={

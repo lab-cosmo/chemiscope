@@ -161,7 +161,6 @@ def ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False):
     quaternion = Rotation.from_matrix(rotation).as_quat()
 
     return dict(
-        kind="ellipsoid",
         semiaxes=[ax, ay, az],
         orientation=list(quaternion),
     )

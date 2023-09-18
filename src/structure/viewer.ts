@@ -958,7 +958,7 @@ export class MoleculeViewer {
                                 assert(i < current_shape.parameters.atom.length);
                                 const atom_pars = current_shape.parameters.atom[i];
                                 shape_data = { ...shape_data, ...atom_pars };
-
+                                console.log('atom pars', atom_pars);
                                 let position: [number, number, number] = [
                                     structure.x[i],
                                     structure.y[i],
@@ -980,8 +980,18 @@ export class MoleculeViewer {
                                         atom_pars.color || $3Dmol.elementColors.Jmol[name];
                                 }
 
-                                const shape = new Sphere(shape_data);
-                                this._viewer.addCustom(shape.outputTo3Dmol(shape_data.color));
+                                if (current_shape.kind === 'sphere') {
+                                    const shape = new Sphere(shape_data);
+                                    this._viewer.addCustom(
+                                        shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                    );
+                                } else if (current_shape.kind === 'ellipsoid') {
+                                    console.log('shape data', shape_data);
+                                    const shape = new Ellipsoid(shape_data);
+                                    this._viewer.addCustom(
+                                        shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                    );
+                                }
                                 /*
                                 if (current_shape[i].kind === 'ellipsoid') {
                                     const data = current_shape[i] as unknown as EllipsoidData;
@@ -1009,6 +1019,11 @@ export class MoleculeViewer {
                             // the shape is defined only at the structure level
                             if (current_shape.kind === 'sphere') {
                                 const shape = new Sphere(shape_data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                );
+                            } else if (current_shape.kind === 'ellipsoid') {
+                                const shape = new Ellipsoid(shape_data);
                                 this._viewer.addCustom(
                                     shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                 );
