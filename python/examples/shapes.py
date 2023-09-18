@@ -119,6 +119,16 @@ cs = chemiscope.write_input(
                 ],
             },
         ),
+        "arrows": dict(
+            kind="arrow",
+            parameters={
+                "global": {"base_radius": 0.2, "head_radius": 0.3, "head_length": 0.5},
+                "structure": [
+                    {"vector": [0, 0, 1], "color": 0xFF00B0},
+                    {"vector": [1, 1, 1], "color": 0xA0FF00},
+                ],
+            },
+        ),
         "structure_shape": dict(
             kind="sphere",
             parameters={

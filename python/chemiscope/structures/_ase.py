@@ -320,6 +320,19 @@ def extract_vectors_from_ase(frames, key="forces", **kwargs):
 
     vectors = []
 
+    # set shape parameters globally if they are all given
+    globs = {}
+    if "radius" in kwargs:
+        globs["base_radius"] = kwargs.pop("radius")
+        if "head_radius_scale" in kwargs:
+            globs["head_radius"] = globs["base_radius"] * kwargs.pop(
+                "head_radius_scale"
+            )
+        if "head_length_scale" in kwargs:
+            globs["head_length"] = globs["base_radius"] * kwargs.pop(
+                "head_length_scale"
+            )
+
     for f in frames:
         if key not in f.arrays:
             raise IndexError(f"Key {key} not found in `Atoms.arrays`")
@@ -330,9 +343,9 @@ def extract_vectors_from_ase(frames, key="forces", **kwargs):
             )
 
         # makes a list of arrows to visualize the property
-        vectors.append([arrow_from_vector(v, **kwargs) for v in values])
+        vectors = vectors + [arrow_from_vector(v, **kwargs) for v in values]
 
-    return vectors
+    return {"kind": "arrow", "parameters": {"global": globs, "atom": vectors}}
 
 
 def extract_tensors_from_ase(frames, key="tensor", **kwargs):

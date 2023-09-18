@@ -13,6 +13,7 @@ import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
 import {
+    Arrow,
     CustomShape,
     CustomShapeData,
     Ellipsoid,
@@ -990,6 +991,11 @@ export class MoleculeViewer {
                                     this._viewer.addCustom(
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                     );
+                                } else if (current_shape.kind === 'arrow') {
+                                    const shape = new Arrow(shape_data);
+                                    this._viewer.addCustom(
+                                        shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                    );
                                 } else {
                                     assert(current_shape.kind === 'custom');
                                     const shape = new CustomShape(shape_data);
@@ -1032,9 +1038,13 @@ export class MoleculeViewer {
                                 this._viewer.addCustom(
                                     shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                 );
+                            } else if (current_shape.kind === 'arrow') {
+                                const shape = new Arrow(shape_data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                );
                             } else {
                                 assert(current_shape.kind === 'custom');
-                                console.log(shape_data);
                                 const shape = new CustomShape(shape_data);
                                 this._viewer.addCustom(
                                     shape.outputTo3Dmol(shape_data.color || 0xffffff)

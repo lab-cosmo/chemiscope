@@ -47,14 +47,27 @@ export interface SphereParameters extends BaseShapeParameters<SphereData> {
     kind: 'sphere';
 }
 
-// Interface for ellipsoidal data, where
-// orientation is stored in the (w, x, y, z) convention
+// Interface for ellipsoidal data, where the shape
+// of the ellipsoid is given by the semiaxes, and the orientation
+// by the general `orientation` property
 export interface EllipsoidData extends BaseShapeData {
     semiaxes: [number, number, number];
 }
 
 export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> {
     kind: 'ellipsoid';
+}
+
+// Interface for arrow data
+export interface ArrowData extends BaseShapeData {
+    vector: [number, number, number];
+    base_radius?: number;
+    head_radius?: number;
+    head_length?: number;
+}
+
+export interface ArrowParameters extends BaseShapeParameters<ArrowData> {
+    kind: 'arrow';
 }
 
 // Interface for polytope data, where
@@ -69,8 +82,12 @@ export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeDa
     kind: 'custom';
 }
 
-export type ShapeData = SphereData | EllipsoidData | CustomShapeData;
-export type ShapeParameters = SphereParameters | EllipsoidParameters | CustomShapeParameters;
+export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData;
+export type ShapeParameters =
+    | SphereParameters
+    | EllipsoidParameters
+    | ArrowParameters
+    | CustomShapeParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -78,6 +95,14 @@ function addXYZ(a: XYZ, b: XYZ): XYZ {
 
 function subXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+}
+
+function multXYZ(a: XYZ, b: number): XYZ {
+    return { x: a.x * b, y: a.y * b, z: a.z * b };
+}
+
+function dotXYZ(a: XYZ, b: XYZ): number {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 function crossXYZ(a: XYZ, b: XYZ): XYZ {
@@ -353,6 +378,159 @@ export class Ellipsoid extends Shape {
         return {
             vertexArr: vertices,
             normalArr: normals,
+            faceArr: indices,
+            color: color,
+        };
+    }
+}
+
+function triangulateArrow(
+    vector: [number, number, number],
+    base_radius: number,
+    head_radius: number,
+    head_length: number,
+    resolution: number = 20
+): { vertices: XYZ[]; indices: number[] } {
+    const [x, y, z] = vector;
+    const tip: XYZ = { x, y, z };
+    const v_len = Math.sqrt(x * x + y * y + z * z);
+    const base_tip: XYZ = {
+        x: tip.x * (1 - head_length / v_len),
+        y: tip.y * (1 - head_length / v_len),
+        z: tip.z * (1 - head_length / v_len),
+    };
+
+    // generates a unit circle oriented in the right direction
+    const n_vec: XYZ = multXYZ(tip, 1.0 / v_len);
+
+    // Generate an arbitrary vector not collinear with n
+    let vx: XYZ;
+    if (n_vec.x != 0 || n_vec.y != 0) {
+        vx = { x: 0, y: 0, z: 1 };
+    } else {
+        vx = { x: 0, y: 1, z: 0 };
+    }
+
+    // generate orthogonal vectors in the plane defined by nvec
+    let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
+    u = multXYZ(u, 1.0 / Math.sqrt(dotXYZ(u, u)));
+    let v: XYZ = crossXYZ(u, n_vec);
+
+    // generate n_points in the plane defined by nvec, centered at vec
+    let circle_points: XYZ[] = [];
+    for (let i = 0; i < resolution; i++) {
+        circle_points.push(
+            addXYZ(
+                multXYZ(u, Math.cos((i * 2 * Math.PI) / resolution)),
+                multXYZ(v, Math.sin((i * 2 * Math.PI) / resolution))
+            )
+        );
+    }
+
+    let indices: number[] = [];
+    const vertices: XYZ[] = [];
+
+    vertices.push({ x: 0, y: 0, z: 0 });
+    for (let i = 0; i < resolution; i++) {
+        // nb replicated points are needed to get sharp edges
+        vertices.push(multXYZ(circle_points[i], base_radius));
+        vertices.push(multXYZ(circle_points[i], base_radius));
+        vertices.push(addXYZ(multXYZ(circle_points[i], base_radius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], base_radius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], head_radius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], head_radius), base_tip));
+        vertices.push(tip);
+        const i_seg = 1 + i * 7;
+        const i_next = 1 + ((i + 1) % resolution) * 7;
+        indices = [
+            ...indices,
+            ...[
+                0,
+                i_seg,
+                i_next, // cylinder base
+                i_seg + 1,
+                i_seg + 2,
+                i_next + 1,
+                i_next + 1,
+                i_seg + 2,
+                i_next + 2, // cylinder side
+                i_seg + 3,
+                i_seg + 4,
+                i_next + 3,
+                i_seg + 4,
+                i_next + 4,
+                i_next + 3, // head ring
+                i_seg + 5,
+                i_next + 5,
+                i_seg + 6, // tip
+            ],
+        ];
+    }
+    return {
+        vertices: vertices,
+        indices: indices,
+    };
+}
+
+export class Arrow extends Shape {
+    public vector: [number, number, number];
+    public base_radius: number;
+    public head_radius: number;
+    public head_length: number;
+
+    constructor(data: Partial<ArrowData>) {
+        super(data);
+        assert(data.vector);
+        this.vector = data.vector;
+        this.base_radius = data.base_radius || 0.1;
+        this.head_radius = data.head_radius || 0.15;
+        this.head_length = data.head_length || 0.2;
+    }
+
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        assert(parameters.kind === 'arrow');
+
+        if (!('vector' in parameters)) {
+            return '"vector" is required for "arrow" shapes';
+        }
+
+        if (!Array.isArray(parameters.vector) || parameters.vector.length !== 3) {
+            return '"vector" must be an array with 3 elements for "vector" shapes';
+        }
+
+        const [ax, ay, az] = parameters.vector as unknown[];
+        if (typeof ax !== 'number' || typeof ay !== 'number' || typeof az !== 'number') {
+            return '"vector" elements must be numbers for "vector" shapes';
+        }
+
+        return '';
+    }
+
+    public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
+        const triangulation = triangulateArrow(
+            this.vector,
+            this.base_radius,
+            this.head_radius,
+            this.head_length,
+            resolution
+        );
+        const rawVertices = triangulation.vertices;
+        const indices = triangulation.indices;
+        const vertices: XYZ[] = [];
+        const simplices: [number, number, number][] = [];
+
+        for (const v of rawVertices) {
+            const newVertex: XYZ = addXYZ(v, this.position);
+            vertices.push(newVertex);
+        }
+
+        for (let i = 0; i < indices.length / 3; i++) {
+            simplices.push([indices[3 * i], indices[3 * i + 1], indices[3 * i + 2]]);
+        }
+
+        return {
+            vertexArr: vertices,
+            normalArr: determineNormals(vertices, simplices),
             faceArr: indices,
             color: color,
         };
