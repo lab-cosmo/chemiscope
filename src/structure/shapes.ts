@@ -23,26 +23,27 @@ export interface XYZ {
     z: number;
 }
 
-export interface BaseShapeSettings {
-    position: [number, number, number];    
-}
-
 export interface BaseShapeData {
-    kind: string;
-    settings:  undefined | Partial<BaseShapeSettings>;
-    frame_settings: undefined | Partial<BaseShapeSettings>;
-    atom_settings: undefined | Partial<BaseShapeSettings>;
+    position: [number, number, number];    
+    orientation: [number, number, number, number];
+    color: $3Dmol.ColorSpec;
 }
 
-export interface SphereSettings extends BaseShapeSettings{
+export interface BaseShapeParameters<T> {
+    kind: string;
+    parameters: {
+        global: Partial<T>,
+        structure?: Array<Partial<T>>,
+        atom?: Array<Partial<T>>,
+    }
+}
+
+export interface SphereData extends BaseShapeData{
     radius: number;
 }
 
-export interface SphereData extends BaseShapeData {
+export interface SphereParameters  extends BaseShapeParameters<SphereData> {
     kind: 'sphere';
-    settings: undefined | Partial<SphereSettings>;
-    frame_settings: undefined | Partial<SphereSettings>;
-    atom_settings: undefined | Partial<SphereSettings>;
 }
 
 // Interface for ellipsoidal data, where
@@ -64,6 +65,7 @@ export interface CustomShapeData {
 }
 
 export type ShapeData = SphereData ; //| EllipsoidData | CustomShapeData;
+export type ShapeParameters = SphereParameters ; 
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -128,11 +130,10 @@ export class Shape {
     public quaternion: Quaternion;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
-    constructor(
-        [x, y, z]: [number, number, number],
-        [qx, qy, qz, qw]: [number, number, number, number] = [0, 0, 0, 1]
-    ) {
+    constructor( data: Partial<ShapeData> ) {
+        let [qx, qy, qz, qw] = data.orientation || [0,0,0,1];
         this.quaternion = new Quaternion(qx, qy, qz, qw);
+        let [x, y, z] = data.position || [0,0,0];
         this.position = { x, y, z };
     }
 
@@ -233,9 +234,9 @@ function isPositiveInteger(o: unknown): boolean {
 export class Sphere extends Shape {
     public radius: number;
 
-    constructor(position: [number, number, number] = [0, 0, 0], settings: SphereSettings) {
-        super(position);
-        this.radius = settings.radius;
+    constructor(data: Partial<SphereData>) {
+        super({"position": data.position});
+        this.radius = data.radius || 1.0 ;        
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -288,7 +289,8 @@ export class Ellipsoid extends Shape {
     public semiaxes: [number, number, number];
 
     constructor(position: [number, number, number] = [0, 0, 0], data: EllipsoidData) {
-        super(position, data.orientation);
+        super({});
+        //super(position, data.orientation);
         this.semiaxes = data.semiaxes;
     }
 
@@ -358,7 +360,7 @@ export class CustomShape extends Shape {
     public simplices: [number, number, number][];
 
     constructor(position: [number, number, number] = [0, 0, 0], data: CustomShapeData) {
-        super(position, data.orientation);
+        super({}); //position, data.orientation);
 
         this.vertices = [];
         for (const v of data.vertices) {

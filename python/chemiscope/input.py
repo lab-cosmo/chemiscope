@@ -174,10 +174,10 @@ def create_input(
     .. code-block:: python
 
         shapes = {
-            "shape name": [
-                [{"kind": "sphere", "radius": 0.3} for atom in frame]
-                for frame in frames
-            ]
+            "shape name": {
+                "kind" : "sphere",
+                "global" : { "radius" : 0.3 }
+            }
         }
 
     The shape dictionary can have any of the following form:

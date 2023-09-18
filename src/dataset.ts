@@ -4,7 +4,7 @@
  */
 
 import { CustomShape, Ellipsoid, Sphere } from './structure/shapes';
-import { ShapeData } from './structure/shapes';
+import { ShapeParameters, ShapeData } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
@@ -23,7 +23,7 @@ export interface Dataset {
     /**
      * Dictionary containing shape information about the dataset.  
      */
-    shapes?: { [name: string]: ShapeData };
+    shapes?: { [name: string]: ShapeParameters };
     /**
      * List of properties for the structures (`target == "structure"`), or
      * atom-centered environments in the structures (`target == "atom"`).
@@ -113,7 +113,7 @@ export interface Structure {
         /**
          * dictionary containing shape data
          */
-        [name: string]: Array<ShapeData>;
+        [name: string]: ShapeParameters;
     };
 }
 
@@ -240,6 +240,16 @@ export function validateDataset(o: JsObject): void {
         );
     }
 
+    if ('shapes' in o) {
+        checkShapes(o.shapes as Record<string, JsObject>,
+            structureCount,
+            envCount,
+            );
+        
+        assignShapes(o.shapes as { [name: string]: ShapeParameters }, 
+                     o.structures);
+    }
+        
     if (!('properties' in o)) {
         throw Error('missing "properties" key in then dataset');
     } else if (!(typeof o.properties === 'object' && o.properties !== null)) {
@@ -321,6 +331,16 @@ function checkStructures(o: JsObject[]): [number, number] {
         }
     }
 
+    return [o.length, atomsCount];
+}    
+
+function checkShapes( properties: Record<string, JsObject>,
+    structureCount: number,
+    envCount: number,
+    parameters?: Record<string, JsObject> | undefined
+) {
+
+    /*
     // check to see if all structures have consistent shapes
     // placed after structure check to ensure that all structures
     // are first validated
@@ -356,8 +376,35 @@ function checkStructures(o: JsObject[]): [number, number] {
             }
         }
     }
+  */
+}
 
-    return [o.length, atomsCount];
+function assignShapes(shapes:  { [name: string]: ShapeParameters }, 
+    structures : Structure[]) {
+
+    let atomsCount = 0;    
+    for (let i_structure = 0; i_structure<structures.length; i_structure++) {
+        const structure = structures[i_structure];
+        structure.shapes = {};
+        for (let [name, shape] of Object.entries(shapes)) {
+            let parameters = {
+                    global : shape.parameters.global,
+                    structure : shape.parameters.structure,
+                    atom: shape.parameters.atom,
+                };
+            if (parameters.structure) {
+                parameters.structure = [parameters.structure[i_structure]];
+            };
+            if (parameters.atom) {
+                parameters.atom = parameters.atom.slice(atomsCount, atomsCount+structure.size);
+            };
+            structure.shapes[name] = { 
+                "kind": shape.kind,
+                "parameters" : parameters
+            };            
+        }
+        atomsCount += structure.size;
+    }
 }
 
 /**

@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 
 import chemiscope
 
-# fetch structures from a librascal examples repo
+#  fetch structures from a librascal examples repo
 url = "https://raw.githubusercontent.com/cosmo-epfl/librascal-example-data/833b4336a7daf471e16993158322b3ea807b9d3f/inputs/molecule_conformers_dftb.xyz"
 structures_fn, _ = urllib.request.urlretrieve(url)
 
