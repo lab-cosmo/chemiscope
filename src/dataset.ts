@@ -4,7 +4,7 @@
  */
 
 import { CustomShape, Ellipsoid, Sphere } from './structure/shapes';
-import { ShapeParameters, ShapeData } from './structure/shapes';
+import { ShapeData, ShapeParameters } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
@@ -243,7 +243,7 @@ export function validateDataset(o: JsObject): void {
     if ('shapes' in o) {
         checkShapes(o.shapes as Record<string, JsObject>, structureCount, envCount);
 
-        assignShapes(o.shapes as { [name: string]: ShapeParameters }, o.structures);
+        assignShapes(o.shapes as { [name: string]: ShapeParameters }, o.structures as Structure[]);
     }
 
     if (!('properties' in o)) {
@@ -380,8 +380,8 @@ function assignShapes(shapes: { [name: string]: ShapeParameters }, structures: S
     for (let i_structure = 0; i_structure < structures.length; i_structure++) {
         const structure = structures[i_structure];
         structure.shapes = {};
-        for (let [name, shape] of Object.entries(shapes)) {
-            let parameters = {
+        for (const [name, shape] of Object.entries(shapes)) {
+            const parameters = {
                 global: shape.parameters.global,
                 structure: shape.parameters.structure,
                 atom: shape.parameters.atom,

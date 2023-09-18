@@ -958,7 +958,7 @@ export class MoleculeViewer {
                                 assert(i < current_shape.parameters.atom.length);
                                 const atom_pars = current_shape.parameters.atom[i];
                                 shape_data = { ...shape_data, ...atom_pars };
-                                console.log('atom pars', atom_pars);
+
                                 let position: [number, number, number] = [
                                     structure.x[i],
                                     structure.y[i],
@@ -986,7 +986,6 @@ export class MoleculeViewer {
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                     );
                                 } else if (current_shape.kind === 'ellipsoid') {
-                                    console.log('shape data', shape_data);
                                     const shape = new Ellipsoid(shape_data);
                                     this._viewer.addCustom(
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)

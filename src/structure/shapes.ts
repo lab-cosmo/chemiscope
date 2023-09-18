@@ -134,9 +134,9 @@ export class Shape {
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
     constructor(data: Partial<SphereData>) {
-        let [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
+        const [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
         this.orientation = new Quaternion(qx, qy, qz, qw);
-        let [x, y, z] = data.position || [0, 0, 0];
+        const [x, y, z] = data.position || [0, 0, 0];
         this.position = { x, y, z };
     }
 
