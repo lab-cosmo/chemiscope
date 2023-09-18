@@ -60,15 +60,17 @@ export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> 
 // Interface for polytope data, where
 // orientation is stored in the (w, x, y, z) convention
 // and simplices refers to the indices of the facets
-export interface CustomShapeData {
-    kind: 'custom';
+export interface CustomShapeData extends BaseShapeData {
     vertices: [number, number, number][];
     simplices: [number, number, number][];
-    orientation?: [number, number, number, number];
 }
 
-export type ShapeData = SphereData | EllipsoidData; // | CustomShapeData;
-export type ShapeParameters = SphereParameters | EllipsoidParameters;
+export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeData> {
+    kind: 'custom';
+}
+
+export type ShapeData = SphereData | EllipsoidData | CustomShapeData;
+export type ShapeParameters = SphereParameters | EllipsoidParameters | CustomShapeParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -335,12 +337,16 @@ export class Ellipsoid extends Shape {
             vertices.push(newVertex);
 
             // the normal to the ellipsoid surface is best computed in the original
-            // coordinate system, and then rotated in place 
-            const newNormal: XYZ = rotateAndPlace({
-                x: v.x / Math.pow(this.semiaxes[0], 2.0),
-                y: v.y / Math.pow(this.semiaxes[1], 2.0),
-                z: v.z / Math.pow(this.semiaxes[2], 2.0),
-            }, this.orientation, {x:0, y:0, z:0});
+            // coordinate system, and then rotated in place
+            const newNormal: XYZ = rotateAndPlace(
+                {
+                    x: v.x / Math.pow(this.semiaxes[0], 2.0),
+                    y: v.y / Math.pow(this.semiaxes[1], 2.0),
+                    z: v.z / Math.pow(this.semiaxes[2], 2.0),
+                },
+                this.orientation,
+                { x: 0, y: 0, z: 0 }
+            );
 
             normals.push(newNormal);
         }
@@ -357,8 +363,10 @@ export class CustomShape extends Shape {
     public vertices: XYZ[];
     public simplices: [number, number, number][];
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: CustomShapeData) {
-        super({}); //position, data.orientation);
+    constructor(data: Partial<CustomShapeData>) {
+        super(data);
+        assert(data.vertices);
+        assert(data.simplices);
 
         this.vertices = [];
         for (const v of data.vertices) {

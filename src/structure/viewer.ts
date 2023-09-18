@@ -990,6 +990,12 @@ export class MoleculeViewer {
                                     this._viewer.addCustom(
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                     );
+                                } else {
+                                    assert(current_shape.kind === 'custom');
+                                    const shape = new CustomShape(shape_data);
+                                    this._viewer.addCustom(
+                                        shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                    );
                                 }
                                 /*
                                 if (current_shape[i].kind === 'ellipsoid') {
@@ -1023,6 +1029,13 @@ export class MoleculeViewer {
                                 );
                             } else if (current_shape.kind === 'ellipsoid') {
                                 const shape = new Ellipsoid(shape_data);
+                                this._viewer.addCustom(
+                                    shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                );
+                            } else {
+                                assert(current_shape.kind === 'custom');
+                                console.log(shape_data);
+                                const shape = new CustomShape(shape_data);
                                 this._viewer.addCustom(
                                     shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                 );

@@ -42,7 +42,7 @@ class TestShapes(unittest.TestCase):
             numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
         )
 
-        #TODO re-enable after having fixed custom shapes
+        # TODO re-enable after having fixed custom shapes
         """ 
             "cubes": [
                 [
@@ -59,21 +59,25 @@ class TestShapes(unittest.TestCase):
                     },
                 ],
             ],"""
-        shapes = {        
+        shapes = {
             "spheres_structure": {
-                "kind" : "sphere",
-                "parameters" : {
-                    "global" : {"radius": 0.1},
-                    "structure" : [ {"position" : [1, 2, 3]} ],
-                }
+                "kind": "sphere",
+                "parameters": {
+                    "global": {"radius": 0.1},
+                    "structure": [{"position": [1, 2, 3]}],
+                },
             },
-            "ellipsoids_atoms" : {
-                "kind" : "ellipsoid",
-                "parameters" : {
-                    "global" : {"semiaxes": [0.3, 0.2, 0.1]},
-                    "atom" : [ {}, {"semiaxes": [0.1, 0.2, 0.3]}, {"orientation": [0.2,0.3,0.4,1]}],
-                }
-            }            
+            "ellipsoids_atoms": {
+                "kind": "ellipsoid",
+                "parameters": {
+                    "global": {"semiaxes": [0.3, 0.2, 0.1]},
+                    "atom": [
+                        {},
+                        {"semiaxes": [0.1, 0.2, 0.3]},
+                        {"orientation": [0.2, 0.3, 0.4, 1]},
+                    ],
+                },
+            },
         }
 
         data = chemiscope.create_input(frames=[frame], shapes=shapes)
