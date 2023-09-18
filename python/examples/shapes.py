@@ -1,5 +1,4 @@
 import numpy as np
-import ase
 import ase.io as aseio
 import chemiscope
 

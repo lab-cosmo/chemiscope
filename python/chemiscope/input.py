@@ -9,8 +9,6 @@ import warnings
 
 import numpy as np
 
-from copy import copy
-
 from .structures import (
     _list_atom_properties,
     _list_structure_properties,
