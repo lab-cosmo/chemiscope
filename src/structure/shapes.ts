@@ -24,7 +24,7 @@ export interface XYZ {
 }
 
 export interface BaseShapeData {
-    position: [number, number, number];    
+    position: [number, number, number];
     orientation: [number, number, number, number];
     color: $3Dmol.ColorSpec;
 }
@@ -32,17 +32,17 @@ export interface BaseShapeData {
 export interface BaseShapeParameters<T> {
     kind: string;
     parameters: {
-        global: Partial<T>,
-        structure?: Array<Partial<T>>,
-        atom?: Array<Partial<T>>,
-    }
+        global: Partial<T>;
+        structure?: Array<Partial<T>>;
+        atom?: Array<Partial<T>>;
+    };
 }
 
-export interface SphereData extends BaseShapeData{
+export interface SphereData extends BaseShapeData {
     radius: number;
 }
 
-export interface SphereParameters  extends BaseShapeParameters<SphereData> {
+export interface SphereParameters extends BaseShapeParameters<SphereData> {
     kind: 'sphere';
 }
 
@@ -64,8 +64,8 @@ export interface CustomShapeData {
     orientation?: [number, number, number, number];
 }
 
-export type ShapeData = SphereData ; //| EllipsoidData | CustomShapeData;
-export type ShapeParameters = SphereParameters ; 
+export type ShapeData = SphereData; //| EllipsoidData | CustomShapeData;
+export type ShapeParameters = SphereParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -130,10 +130,10 @@ export class Shape {
     public quaternion: Quaternion;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
-    constructor( data: Partial<ShapeData> ) {
-        let [qx, qy, qz, qw] = data.orientation || [0,0,0,1];
+    constructor(data: Partial<ShapeData>) {
+        let [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
         this.quaternion = new Quaternion(qx, qy, qz, qw);
-        let [x, y, z] = data.position || [0,0,0];
+        let [x, y, z] = data.position || [0, 0, 0];
         this.position = { x, y, z };
     }
 
@@ -235,8 +235,8 @@ export class Sphere extends Shape {
     public radius: number;
 
     constructor(data: Partial<SphereData>) {
-        super({"position": data.position});
-        this.radius = data.radius || 1.0 ;        
+        super({ position: data.position });
+        this.radius = data.radius || 1.0;
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -339,7 +339,7 @@ export class Ellipsoid extends Shape {
                 y: relativeVertex.y / Math.pow(this.semiaxes[1], 2.0),
                 z: relativeVertex.z / Math.pow(this.semiaxes[2], 2.0),
                 */
-                // this is also wrong, but possibly less wrong. 
+                // this is also wrong, but possibly less wrong.
                 x: relativeVertex.x,
                 y: relativeVertex.y,
                 z: relativeVertex.z,

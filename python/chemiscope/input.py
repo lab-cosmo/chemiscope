@@ -829,7 +829,7 @@ def _add_shapes(structures, shapes):
             if shape_key not in ["kind", "settings", "frame_settings", "atom_settimgs"]:
                 raise ValueError(
                     f"Invalid entry `f{shape_key}` in the specifications for shape `f{key}`"
-                    )
+                )
         """
             for structure_i in range(len(structures)):
                 shapes_for_structure = shapes_for_key[structure_i]
@@ -890,12 +890,9 @@ def _check_valid_shape(shape):
     if "atom_settings" in shape:
         parameters.update(shape["atom_settings"])
 
-    if len(parameters) == 0 :
-        raise ValueError(
-            f"no settings provided for {shape['kind']} shape"
-        )
+    if len(parameters) == 0:
+        raise ValueError(f"no settings provided for {shape['kind']} shape")
     if shape["kind"] == "sphere":
-
         for parameter in parameters:
             if parameter not in ["radius", "orientation"]:
                 raise ValueError(
@@ -905,7 +902,7 @@ def _check_valid_shape(shape):
         if not isinstance(shape["radius"], float):
             raise TypeError(
                 f"sphere shape 'radius' must be a float, got {type(shape['radius'])}"
-            )  
+            )
         """
     elif shape["kind"] == "ellipsoid":
         for parameter in shape.keys():

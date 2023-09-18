@@ -943,39 +943,45 @@ export class MoleculeViewer {
             for (let a = 0; a < supercell_a; a++) {
                 for (let b = 0; b < supercell_b; b++) {
                     for (let c = 0; c < supercell_c; c++) {
-                        let shape_data: Partial<ShapeData> = {... current_shape.parameters.global };
-                                                
-                        shape_data.position = [0.,0.,0.]; // defaults 
+                        let shape_data: Partial<ShapeData> = { ...current_shape.parameters.global };
+
+                        shape_data.position = [0, 0, 0]; // defaults
                         if (current_shape.parameters.structure) {
-                            shape_data = { ...shape_data, ...current_shape.parameters.structure[0]};
+                            shape_data = {
+                                ...shape_data,
+                                ...current_shape.parameters.structure[0],
+                            };
                         }
                         if (current_shape.parameters.atom) {
                             for (let i = 0; i < structure.size; i++) {
                                 const name = structure.names[i];
-                                assert(i<current_shape.parameters.atom.length);
+                                assert(i < current_shape.parameters.atom.length);
                                 const atom_pars = current_shape.parameters.atom[i];
-                                shape_data = {...shape_data, ...atom_pars };
-                                
-                                let position: [number, number, number] = [ structure.x[i], structure.y[i], structure.z[i] ];
+                                shape_data = { ...shape_data, ...atom_pars };
+
+                                let position: [number, number, number] = [
+                                    structure.x[i],
+                                    structure.y[i],
+                                    structure.z[i],
+                                ];
                                 if (atom_pars.position) {
                                     position = atom_pars.position;
                                 }
-                                
+
                                 position[0] += a * cell[0] + b * cell[3] + c * cell[6];
                                 position[1] += a * cell[1] + b * cell[4] + c * cell[7];
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];
-                                
+
                                 shape_data.position = position;
                                 if (atom_pars.color) {
                                     shape_data.color = atom_pars.color;
                                 } else {
-                                    shape_data.color = atom_pars.color || $3Dmol.elementColors.Jmol[name];
+                                    shape_data.color =
+                                        atom_pars.color || $3Dmol.elementColors.Jmol[name];
                                 }
-                                
+
                                 const shape = new Sphere(shape_data);
-                                this._viewer.addCustom(
-                                    shape.outputTo3Dmol(shape_data.color)
-                                );
+                                this._viewer.addCustom(shape.outputTo3Dmol(shape_data.color));
                                 /*
                                 if (current_shape[i].kind === 'ellipsoid') {
                                     const data = current_shape[i] as unknown as EllipsoidData;
@@ -1001,7 +1007,7 @@ export class MoleculeViewer {
                             }
                         } else {
                             // the shape is defined only at the structure level
-                            if (current_shape.kind === "sphere") {
+                            if (current_shape.kind === 'sphere') {
                                 const shape = new Sphere(shape_data);
                                 this._viewer.addCustom(
                                     shape.outputTo3Dmol(shape_data.color || 0xffffff)

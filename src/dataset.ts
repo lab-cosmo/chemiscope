@@ -21,7 +21,7 @@ export interface Dataset {
      */
     structures: Structure[] | UserStructure[];
     /**
-     * Dictionary containing shape information about the dataset.  
+     * Dictionary containing shape information about the dataset.
      */
     shapes?: { [name: string]: ShapeParameters };
     /**
@@ -241,15 +241,11 @@ export function validateDataset(o: JsObject): void {
     }
 
     if ('shapes' in o) {
-        checkShapes(o.shapes as Record<string, JsObject>,
-            structureCount,
-            envCount,
-            );
-        
-        assignShapes(o.shapes as { [name: string]: ShapeParameters }, 
-                     o.structures);
+        checkShapes(o.shapes as Record<string, JsObject>, structureCount, envCount);
+
+        assignShapes(o.shapes as { [name: string]: ShapeParameters }, o.structures);
     }
-        
+
     if (!('properties' in o)) {
         throw Error('missing "properties" key in then dataset');
     } else if (!(typeof o.properties === 'object' && o.properties !== null)) {
@@ -332,14 +328,14 @@ function checkStructures(o: JsObject[]): [number, number] {
     }
 
     return [o.length, atomsCount];
-}    
+}
 
-function checkShapes( properties: Record<string, JsObject>,
+function checkShapes(
+    properties: Record<string, JsObject>,
     structureCount: number,
     envCount: number,
     parameters?: Record<string, JsObject> | undefined
 ) {
-
     /*
     // check to see if all structures have consistent shapes
     // placed after structure check to ensure that all structures
@@ -379,29 +375,27 @@ function checkShapes( properties: Record<string, JsObject>,
   */
 }
 
-function assignShapes(shapes:  { [name: string]: ShapeParameters }, 
-    structures : Structure[]) {
-
-    let atomsCount = 0;    
-    for (let i_structure = 0; i_structure<structures.length; i_structure++) {
+function assignShapes(shapes: { [name: string]: ShapeParameters }, structures: Structure[]) {
+    let atomsCount = 0;
+    for (let i_structure = 0; i_structure < structures.length; i_structure++) {
         const structure = structures[i_structure];
         structure.shapes = {};
         for (let [name, shape] of Object.entries(shapes)) {
             let parameters = {
-                    global : shape.parameters.global,
-                    structure : shape.parameters.structure,
-                    atom: shape.parameters.atom,
-                };
+                global: shape.parameters.global,
+                structure: shape.parameters.structure,
+                atom: shape.parameters.atom,
+            };
             if (parameters.structure) {
                 parameters.structure = [parameters.structure[i_structure]];
-            };
+            }
             if (parameters.atom) {
-                parameters.atom = parameters.atom.slice(atomsCount, atomsCount+structure.size);
+                parameters.atom = parameters.atom.slice(atomsCount, atomsCount + structure.size);
+            }
+            structure.shapes[name] = {
+                kind: shape.kind,
+                parameters: parameters,
             };
-            structure.shapes[name] = { 
-                "kind": shape.kind,
-                "parameters" : parameters
-            };            
         }
         atomsCount += structure.size;
     }
