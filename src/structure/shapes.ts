@@ -15,6 +15,7 @@ import assert from 'assert';
 
 import { default as $3Dmol } from '3dmol';
 import { Quaternion } from '3dmol';
+import { ColorSpec } from '3dmol';
 
 // Just an interface to enforce XYZ-type coordinates
 export interface XYZ {
@@ -26,7 +27,7 @@ export interface XYZ {
 export interface BaseShapeData {
     position: [number, number, number];
     orientation: [number, number, number, number];
-    color: $3Dmol.ColorSpec;
+    color: ColorSpec;
 }
 
 export interface BaseShapeParameters<T> {
