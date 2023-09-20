@@ -1,11 +1,25 @@
-import numpy as np
+"""
+Extended shape visualization in chemiscope
+==========================================
+
+This example demonstrates how to visualize structure and atomic 
+properties in the structure panel, using different types of 
+visualizations (ellipsoids for tensors, arrows for vectors).
+The example also shows how to define custom shapes. 
+
+Note that the same parameters can be used with `chemiscope.show`
+to visualize an interactive widget in a Jupyter notebook.
+"""
 import ase.io as aseio
 import chemiscope
+import numpy as np
 
+# loads a dataset of structures 
+frames = aseio.read("alpha-mu.xyz", ":")
 
-alphaml = aseio.read("alphaml.xyz", ":")
-
-for a in alphaml:
+# converts the arrays from the format they are stored in to an array 
+# format that can be processed by the ASE utilities
+for a in frames:     
     a.arrays["alpha"] = np.array(
         [
             [axx, ayy, azz, axy, axz, ayz]
@@ -19,35 +33,28 @@ for a in alphaml:
             )
         ]
     )
-    a.arrays["alpha-vec"] = np.array(
-        [
-            [axx, ayy, azz]
-            for (axx, ayy, azz) in zip(
-                a.arrays["axx"], a.arrays["ayy"], a.arrays["azz"]
-            )
-        ]
-    )
 
-cs = chemiscope.write_input(
-    "shapes.json.gz",
-    frames=alphaml,
-    properties=chemiscope.extract_properties(alphaml, only=["alpha", "alpha-vec"]),
-    shapes={
-        "cube_smooth": dict(
+# here we define shapes that will later be used to create the input; 
+# input generation can also be achieved as a single call, but in practice
+# it is wise to define separate entities for better readability
+
+# cubes with smooth shading, centered on atoms. these are created as 
+# "custom" shapes and then are just scaled to atom-dependent sizes
+smooth_cubes = dict(
             kind="custom",
             parameters={
                 "global": {
-                    "vertices": [
-                        [0, 0, 0],
-                        [1, 0, 0],
-                        [0, 1, 0],
-                        [1, 1, 0],
-                        [0, 0, 1],
-                        [1, 0, 1],
-                        [0, 1, 1],
+                    "vertices": [  # this list defines the vertices
+                        [-1, -1, -1],
+                        [1, -1, -1],
+                        [-1, 1, -1],
+                        [1, 1, -1],
+                        [-1, -1, 1],
+                        [1, -1, 1],
+                        [-1, 1, 1],
                         [1, 1, 1],
                     ],
-                    "simplices": [
+                    "simplices": [ # and these are the indices of the vertices that form the triangular mesh
                         [0, 2, 1],
                         [1, 2, 3],
                         [4, 6, 5],
@@ -62,17 +69,25 @@ cs = chemiscope.write_input(
                         [3, 6, 7],
                     ],
                 },
-                "structure": [
-                    {"position": [0, 4, 0], "color": 0xFF0000},
-                    {"position": [3, 2, 1], "color": 0x00FF00},
-                ],
-            },
-        ),
-        "cube": dict(
+                # the cube is used at each atomic position, only difference being the scaling
+                "atom" : [  { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 } ,
+                            { "scale" : 0.4 }, { "scale" : 0.4 }, { "scale" : 0.4 }, { "scale" : 0.4 }, { "scale" : 0.4 },
+                            { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 },
+                            { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, 
+                            { "scale" : 0.5 },
+                            { "scale" : 0.4 }, { "scale" : 0.4 }, { "scale" : 0.4 },
+                            { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 }, { "scale" : 0.5 },
+                            { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 }, { "scale" : 0.2 } ]
+            },            
+        )
+
+# structure-based shapes. also demonstrates how to achieve sharp-edge shading. 
+# requires defining multiple times the same vertices
+sharp_cubes = dict( 
             kind="custom",
-            parameters={
+            parameters={   
                 "global": {
-                    "vertices": [
+                    "vertices": [  # in order to get "sharp" edges, you need to define separate vertices for each facet
                         [0, 0, 0],
                         [0, 1, 0],
                         [1, 1, 0],
@@ -98,7 +113,7 @@ cs = chemiscope.write_input(
                         [1, 1, 1],
                         [0, 1, 1],
                     ],
-                    "simplices": [
+                    "simplices": [ # simplices defining the mesh - two triangles per facet
                         [0, 1, 2],
                         [2, 3, 0],
                         [4, 5, 6],
@@ -113,59 +128,55 @@ cs = chemiscope.write_input(
                         [22, 23, 20],
                     ],
                 },
-                "structure": [
+                "structure": [ # structure positioning is relative to the origin of the axes
                     {"position": [0, 4, 0], "color": 0xFF0000},
                     {"position": [3, 2, 1], "color": 0x00FF00},
                 ],
             },
-        ),
-        "arrows": dict(
+        )
+
+chemiscope.write_input(
+    "shapes.json.gz",
+    frames=frames,
+    properties=chemiscope.extract_properties(frames, only=["alpha"]),
+    shapes={
+        # cubes with smooth shading, centered on atoms
+        "smooth_cubes": smooth_cubes,
+        # demonstrates showing a "global" shape for each structure
+        "cube": sharp_cubes,
+        "dipole": dict( # visualize something physical - dipole moments of the frames
             kind="arrow",
             parameters={
-                "global": {"base_radius": 0.2, "head_radius": 0.3, "head_length": 0.5},
-                "structure": [
-                    {"vector": [0, 0, 1], "color": 0xFF00B0},
-                    {"vector": [1, 1, 1], "color": 0xA0FF00},
+                "global": {"base_radius": 0.2, "head_radius": 0.3, "head_length": 0.5, "color": 0xFF00B0},
+                "structure": [                    
+                    {"vector": frames[0].info['dipole_ccsd'].tolist()},
+                    {"vector": frames[0].info['dipole_ccsd'].tolist()},
                 ],
             },
-        ),
-        "structure_shape": dict(
-            kind="sphere",
-            parameters={
-                "global": {"radius": 1.0},
-                "structure": [
-                    {"position": [0, 0, 0], "color": 0xFF0000},
-                    {"position": [1, 2, 3], "color": 0x00FF00},
-                ],
-            },
-        ),
-        "atom_shape": dict(
-            kind="sphere",
-            parameters={
-                "global": {"radius": 1.0},
-                "structure": [
-                    {"radius": 1.5},
-                    {"radius": 0.7},
-                ],
-                "atom": [{"radius": 1 + np.random.uniform()} for i in range(39)]
-                + [{"color": 0xC08000}],
-            },
-        ),
-        "alpha": chemiscope.extract_tensors_from_ase(
-            alphaml, "alpha", force_positive=True, scale=0.2
+        ), 
+        "alpha": chemiscope.extract_tensors_from_ase( # atomic decomposition of the polarizability as ellipsoids. use utility to extract from the ASE frames
+            frames, "alpha", force_positive=True, scale=0.2
         ),
     },
-    settings={
+    settings={   # the write_input function also allows defining the default visualization settings
+        "map": {
+            "x": {"property":"alpha[1]"},
+            "y": {"property":"alpha[2]"},
+            "z": {"property":"alpha[3]"},
+            "palette":"seismic","color":{"property":""},
+        },
         "structure": [
             {
                 "spaceFilling": False,
                 "atomLabels": False,
-                "shape": "cube",
+                "atoms" : False,
+                "shape": "alpha,dipole",  # multiple shapes can be visualized at the same time!
                 "axes": "off",
                 "keepOrientation": False,
                 "playbackDelay": 700,
+                "environments":{"activated":True,"bgColor":"CPK","bgStyle":"licorice","center":False,"cutoff":0.5}
             }
         ]
     },
-    environments=chemiscope.all_atomic_environments(alphaml),
+    environments=chemiscope.all_atomic_environments(frames),
 )
