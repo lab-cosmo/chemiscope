@@ -27,6 +27,7 @@ export interface XYZ {
 export interface BaseShapeData {
     position: [number, number, number];
     orientation?: [number, number, number, number];
+    scale?: number;
     color?: ColorSpec;
 }
 
@@ -158,6 +159,8 @@ export class Shape {
     public position: XYZ;
     /// orientation of the particle
     public orientation: Quaternion;
+    /// scaling factor
+    public scale: number;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
     constructor(data: Partial<SphereData>) {
@@ -165,6 +168,7 @@ export class Shape {
         this.orientation = new Quaternion(qx, qy, qz, qw);
         const [x, y, z] = data.position || [0, 0, 0];
         this.position = { x, y, z };
+        this.scale = data.scale || 1.0;
     }
 
     // disabling eslint because it complains parameters is never used
@@ -265,8 +269,8 @@ export class Sphere extends Shape {
     public radius: number;
 
     constructor(data: Partial<SphereData>) {
-        super({ position: data.position });
-        this.radius = data.radius || 1.0;
+        super(data);
+        this.radius = (data.radius || 1.0) * this.scale;
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -321,7 +325,7 @@ export class Ellipsoid extends Shape {
     constructor(data: Partial<EllipsoidData>) {
         super(data);
         assert(data.semiaxes);
-        this.semiaxes = data.semiaxes;
+        this.semiaxes = [ this.scale * data.semiaxes[0], this.scale * data.semiaxes[1], this.scale * data.semiaxes[2] ];
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -481,10 +485,10 @@ export class Arrow extends Shape {
     constructor(data: Partial<ArrowData>) {
         super(data);
         assert(data.vector);
-        this.vector = data.vector;
-        this.base_radius = data.base_radius || 0.1;
-        this.head_radius = data.head_radius || 0.15;
-        this.head_length = data.head_length || 0.2;
+        this.vector = [this.scale*data.vector[0], this.scale*data.vector[1], this.scale*data.vector[2] ];
+        this.base_radius = this.scale*(data.base_radius || 0.1);
+        this.head_radius = this.scale*(data.head_radius || 0.15);
+        this.head_length = this.scale*(data.head_length || 0.2);
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -548,7 +552,7 @@ export class CustomShape extends Shape {
 
         this.vertices = [];
         for (const v of data.vertices) {
-            this.vertices.push({ x: v[0], y: v[1], z: v[2] });
+            this.vertices.push({ x: v[0]*this.scale, y: v[1]*this.scale, z: v[2]*this.scale });
         }
         this.simplices = data.simplices;
     }

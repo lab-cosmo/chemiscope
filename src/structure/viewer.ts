@@ -1003,28 +1003,6 @@ export class MoleculeViewer {
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                     );
                                 }
-                                /*
-                                if (current_shape[i].kind === 'ellipsoid') {
-                                    const data = current_shape[i] as unknown as EllipsoidData;
-                                    const shape = new Ellipsoid(position, data);
-                                    this._viewer.addCustom(
-                                        shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                                    );
-                                } else if (current_shape[i].kind === 'custom') {
-                                    const data = current_shape[i] as unknown as CustomShapeData;
-                                    const shape = new CustomShape(position, data);
-                                    this._viewer.addCustom(
-                                        shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                                    );
-                                } else {
-                                    assert(current_shape[i].kind === 'sphere');
-                                    const data = current_shape[i] as unknown as SphereData;
-                                    const shape = new Sphere(position, data);
-                                    this._viewer.addCustom(
-                                        shape.outputTo3Dmol($3Dmol.elementColors.Jmol[name] || 0x000000)
-                                    );
-                                }
-                                */
                             }
                         } else {
                             // the shape is defined only at the structure level
