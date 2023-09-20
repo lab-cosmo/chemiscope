@@ -305,7 +305,38 @@ def _is_convertible_to_property(value):
                 return False
 
 
-def extract_vectors_from_ase(frames, key="forces", **kwargs):
+def _extract_key_from_ase(frame, key, target=None):
+    """
+    Extract a property from either the atomic array of info fields
+    of an ase.Atoms frame. Defaults to atoms if no target is specified,
+    and also returns the actual target it picked the key from.
+    """
+
+    if target is None:
+        if key in frame.arrays:  # defaults to atom target
+            target = "atom"
+        elif key in frame.info:
+            target = "structure"
+        else:
+            raise IndexError(
+                f"Key {key} not found in neither `Atoms.arrays` or `Atoms.info`"
+            )
+
+    if target == "atom":
+        try:
+            values = frame.arrays[key]
+        except:
+            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
+    if target == "structure":
+        try:
+            values = frame.info[key]
+        except:
+            raise IndexError(f"Key {key} not found in `Atoms.info`")
+
+    return values, target
+
+
+def extract_vectors_from_ase(frames, key="forces", target=None, **kwargs):
     """
     Extract a vectorial atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
@@ -334,9 +365,7 @@ def extract_vectors_from_ase(frames, key="forces", **kwargs):
             )
 
     for f in frames:
-        if key not in f.arrays:
-            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
-        values = f.arrays[key]
+        values, target = _extract_key_from_ase(f, key, target)
         if len(values.shape) != 2 or values.shape[1] != 3:
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 3-vectors"
@@ -345,10 +374,13 @@ def extract_vectors_from_ase(frames, key="forces", **kwargs):
         # makes a list of arrows to visualize the property
         vectors = vectors + [arrow_from_vector(v, **kwargs) for v in values]
 
-    return {"kind": "arrow", "parameters": {"global": globs, "atom": vectors}}
+    if target == "atom":
+        return {"kind": "arrow", "parameters": {"global": globs, "atom": vectors}}
+    else:
+        return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def extract_tensors_from_ase(frames, key="tensor", **kwargs):
+def extract_tensors_from_ase(frames, key="tensor", target=None, **kwargs):
     """
     Extract a 3-tensor atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
@@ -364,9 +396,8 @@ def extract_tensors_from_ase(frames, key="tensor", **kwargs):
     tensors = []
 
     for f in frames:
-        if key not in f.arrays:
-            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
-        values = f.arrays[key]
+        values, target = _extract_key_from_ase(f, key, target)
+
         if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 6 or 9-vectors"
@@ -375,7 +406,10 @@ def extract_tensors_from_ase(frames, key="tensor", **kwargs):
         # makes a list of ellipsoids to visualize the property
         tensors = tensors + [ellipsoid_from_tensor(v, **kwargs) for v in values]
 
-    return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})
+    if target == "atom":
+        return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})
+    else:
+        return dict(kind="ellipsoid", parameters={"global": {}, "structure": tensors})
 
 
 def extract_lammps_shapes_from_ase(frames, key="shape"):

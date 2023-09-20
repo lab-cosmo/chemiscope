@@ -165,7 +165,7 @@ def create_input(
     Custom shapes
     -------------
 
-    The ``shapes`` parameter should have the format ``["<name>": shape_definition ]}``, 
+    The ``shapes`` parameter should have the format ``["<name>": shape_definition ]}``,
     where each shape is defined as a dictionary containing the kind of shape, and its
     parameters
 
@@ -190,15 +190,15 @@ def create_input(
 
     Each of these can contain some or all of the parameters associated with each shape,
     and the parameters for each shape are obtained by combining the parameters from the
-    most general to the most specific - the parameters for atom `k` that is part of 
-    structure `j` are obtained as 
+    most general to the most specific - the parameters for atom `k` that is part of
+    structure `j` are obtained as
 
     .. code-block:: python
 
         global_parameters.update(structure_j).update(atom_k)
 
-    If given, the `structure` parameters list should contain one entry per structure, and 
-    the `atom` parameters list should be a flat list with one entry per atom and structure. 
+    If given, the `structure` parameters list should contain one entry per structure, and
+    the `atom` parameters list should be a flat list with one entry per atom and structure.
     All shapes accept a few general parameters, and some specific ones
 
     .. code-block:: python
@@ -208,14 +208,14 @@ def create_input(
             "position" : [float, float, float], # centering (defaults to origin for structure, atom position for atom)
             "scale" : float,  # scaling of the size of the shape
             "orientation" [float, float, float, float], # optional, given as quaternion
-            "color" : string | hex code # e.g. 0xFF0000 
+            "color" : string | hex code # e.g. 0xFF0000
         }
 
         # "kind" : "sphere"
-        {            
+        {
             "radius": float,
         }
-        
+
         # "kind" : "ellipsoid"
         {
             "semiaxes": [float, float, float],
@@ -224,13 +224,13 @@ def create_input(
         # "kind" : "arrow"
         {   # "orientation" is redundant and hence ignored
             "vector" : [float, float, float],  # orientation and shape of the arrow
-            "base_radius" : float, 
-            "head_radius" : float,    
-            "head_length" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough  
+            "base_radius" : float,
+            "head_radius" : float,
+            "head_length" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough
         }
 
         # "kind" : "custom"
-        {        
+        {
             "vertices": [ # list of vertices
                 [float, float, float],
                 ...
@@ -241,8 +241,8 @@ def create_input(
             ],
         }
 
-    ``orientation`` is provided as a quaternion in ``x, y, z, w`` format. 
-    For ``custom`` shapes, ``simplices``, refer to the *indices* of the vertices. If omitted, the mesh will be 
+    ``orientation`` is provided as a quaternion in ``x, y, z, w`` format.
+    For ``custom`` shapes, ``simplices``, refer to the *indices* of the vertices. If omitted, the mesh will be
     determined by convex.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html

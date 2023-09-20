@@ -325,7 +325,11 @@ export class Ellipsoid extends Shape {
     constructor(data: Partial<EllipsoidData>) {
         super(data);
         assert(data.semiaxes);
-        this.semiaxes = [ this.scale * data.semiaxes[0], this.scale * data.semiaxes[1], this.scale * data.semiaxes[2] ];
+        this.semiaxes = [
+            this.scale * data.semiaxes[0],
+            this.scale * data.semiaxes[1],
+            this.scale * data.semiaxes[2],
+        ];
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -485,10 +489,14 @@ export class Arrow extends Shape {
     constructor(data: Partial<ArrowData>) {
         super(data);
         assert(data.vector);
-        this.vector = [this.scale*data.vector[0], this.scale*data.vector[1], this.scale*data.vector[2] ];
-        this.base_radius = this.scale*(data.base_radius || 0.1);
-        this.head_radius = this.scale*(data.head_radius || 0.15);
-        this.head_length = this.scale*(data.head_length || 0.2);
+        this.vector = [
+            this.scale * data.vector[0],
+            this.scale * data.vector[1],
+            this.scale * data.vector[2],
+        ];
+        this.base_radius = this.scale * (data.base_radius || 0.1);
+        this.head_radius = this.scale * (data.head_radius || 0.15);
+        this.head_length = this.scale * (data.head_length || 0.2);
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -552,7 +560,11 @@ export class CustomShape extends Shape {
 
         this.vertices = [];
         for (const v of data.vertices) {
-            this.vertices.push({ x: v[0]*this.scale, y: v[1]*this.scale, z: v[2]*this.scale });
+            this.vertices.push({
+                x: v[0] * this.scale,
+                y: v[1] * this.scale,
+                z: v[2] * this.scale,
+            });
         }
         this.simplices = data.simplices;
     }

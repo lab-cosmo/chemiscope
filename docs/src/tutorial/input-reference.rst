@@ -94,36 +94,43 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
-
-                // OPTIONAL: shapes to display on each site, if other than
-                // spheres. Multiple shapes groups with different names are
-                // supported.
-                //
-                // Each shape group should be an array of "size" elements,
-                // describing the different shapes.
-                "shapes": {
-                    <name>: [
-                        // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
-                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2]},
-                        // Each shape can contain an OPTIONAL "orientation",
-                        // given as a `[x, y, z, w]` quaternion. Defaults to
-                        // [0, 0, 0, 1]
-                        {"kind": "ellipsoid", "semiaxes": [1, 1, 2], "orientation": [0, 0, 0, 1]},
-                        // fully custom shape, from a list of vertices and
-                        // simplices (also called "indices" in WebGL)
-                        {
-                            "kind": "custom",
-                            "vertices": [[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-                            "indices": [[0, 1, 2]],
-                        },
-                        // more shapes as needed
-                        ...
-                    ],
-                }
             },
             // other structures as needed
             ...
         ],
+
+        // OPTIONAL: shapes to display in the structure viewer. 
+        // Multiple shapes groups with different names are supported.
+        //
+        // Each shape is defined by parameters that can be specified globally,
+        // at the structure level, or for individual atoms 
+        "shapes": {
+            <name>: {
+                "kind" : "sphere",
+                "parameters" : {
+                    "global" : { <global_parameters_dictionary> },
+                    "structure" : [ <list_of_structure_parameter_dictionaries> ],
+                    "atom" : [ <list_of_atom_parameter_dictionaries> ]
+                }
+            },
+            // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
+            <other_name>: {
+                "kind" : "ellipsoid"
+                "parameters" : {
+                    "global" : {}, 
+                    "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
+                }
+            },
+            // Custom shapes
+            <yet_another> : {
+                "kind" : "custom",
+                "parameters" : {
+                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2, ...]] }, 
+                    "atom" : [ {"scale" : 1}, {"scale" : 0.5}, ... ]
+                }
+            }
+                            
+        }
 
         // OPTIONAL: atom-centered environments descriptions
         //
