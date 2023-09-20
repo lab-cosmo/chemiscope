@@ -325,12 +325,12 @@ def _extract_key_from_ase(frame, key, target=None):
     if target == "atom":
         try:
             values = frame.arrays[key]
-        except:
+        except IndexError:
             raise IndexError(f"Key {key} not found in `Atoms.arrays`")
     if target == "structure":
         try:
             values = frame.info[key]
-        except:
+        except IndexError:
             raise IndexError(f"Key {key} not found in `Atoms.info`")
 
     return values, target
