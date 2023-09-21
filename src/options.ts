@@ -261,7 +261,6 @@ export class HTMLOption<T extends OptionsType> {
         this.validate(updated);
         this._previous_value = this.value;
         this._value = updated;
-
         this.changed(origin);
     }
 }

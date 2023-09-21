@@ -165,7 +165,7 @@ def create_input(
     Custom shapes
     -------------
 
-    The ``shapes`` parameter should have the format ``["<name>": shape_definition ]}``,
+    The ``shapes`` option should have the format ``{"<name>": shape_definition }``,
     where each shape is defined as a dictionary containing the kind of shape, and its
     parameters
 

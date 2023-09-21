@@ -228,7 +228,7 @@ export class StructureOptions extends OptionsGroup {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
-        this.shape.bind(selectShape, 'value');
+        this.shape.bind(selectShape, 'options');
 
         this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
         this.bonds.bind(this.getModalElement('bonds'), 'checked');
