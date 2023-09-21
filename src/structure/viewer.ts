@@ -432,7 +432,6 @@ export class MoleculeViewer {
             this._styles.noShape.replaceSync('.chsp-hide-if-no-shapes { display: none; }');
         } else {
             this._styles.noShape.replaceSync('');
-
             const selectShape = this._options.getModalElement<HTMLSelectElement>('shapes');
             selectShape.options.length = 0;
             for (const key of Object.keys(structure['shapes'])) {
@@ -443,7 +442,9 @@ export class MoleculeViewer {
             // will be accessible with a scrollbar
             selectShape.size = Math.min(Object.keys(structure['shapes']).length, 3);
 
-            this._options.shape.bind(selectShape, 'options');
+            // set the highlighting to reflect the options
+
+            this._options.shape.bind(selectShape, 'multival');
         }
 
         this._updateStyle();
