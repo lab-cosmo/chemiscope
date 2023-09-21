@@ -125,7 +125,7 @@ contains the following fields and values:
             <yet_another> : {
                 "kind" : "custom",
                 "parameters" : {
-                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2, ...]] }, 
+                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2], ...] }, 
                     "atom" : [ {"scale" : 1}, {"scale" : 0.5}, ... ]
                 }
             }
