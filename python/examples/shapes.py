@@ -36,12 +36,14 @@ for a in frames:
             )
         ]
     )
+
+    # interatomic separations (used to orient "stuff" later on)
     dists = a.get_all_distances(mic=True)
     np.fill_diagonal(dists, np.max(dists))
     for i in range(len(a)):
         nneigh = dists[i].argmin()
         vec = a.get_distance(i, nneigh, vector=True, mic=True)
-        R = np.zeros((3,3))
+        R = np.zeros((3, 3))
         R[:, -1] = vec
         quaternions.append(Rotation.from_matrix(R).as_quat())
 
@@ -146,8 +148,9 @@ sharp_cubes = dict(
         ],
     },
 )
-# structure-based shapes. also demonstrates how to achieve sharp-edge shading.
-# requires defining multiple times the same vertices
+
+# loads vertices and simplices from an external file
+# and use it to draw a very irreverent molecule
 irreverent_dict = np.load("data/irreverence.npz")
 irreverent_shape = dict(
     kind="custom",
@@ -156,12 +159,11 @@ irreverent_shape = dict(
             "vertices": irreverent_dict["vertices"].tolist(),
             "simplices": irreverent_dict["simplices"].tolist(),
             "scale": 0.02,
-            "color": 0xFF00B0,
         },
         "atom": [
             {"orientation": quaternions[i].tolist()}
-            for i in range(len(frames[0])+len(frames[1]))
-        ]
+            for i in range(len(frames[0]) + len(frames[1]))
+        ],
     },
 )
 # dipole moments visualized as arrows. this is just to demonstrate manual insertion,
