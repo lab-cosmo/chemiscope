@@ -10,6 +10,7 @@ The example also shows how to define custom shapes.
 Note that the same parameters can be used with `chemiscope.show`
 to visualize an interactive widget in a Jupyter notebook.
 """
+
 import ase.io as aseio
 import chemiscope
 import numpy as np
@@ -127,7 +128,11 @@ sharp_cubes = dict(
         },
         "structure": [  # structure positioning is relative to the origin of the axes
             {"position": [0, 4, 0], "color": 0xFF0000},
-            {"position": [3, 2, 1], "color": 0x00FF00},
+            {
+                "position": [3, 2, 1],
+                "color": 0x00FF00,
+                "orientation": [0.2, 0.4, 0.1, 1],
+            },
         ],
     },
 )
