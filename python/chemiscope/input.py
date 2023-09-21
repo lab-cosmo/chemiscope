@@ -171,12 +171,12 @@ def create_input(
 
     .. code-block:: python
 
-        shapes = [
+        shapes = {
             "shape name": {
                 "kind" : "sphere",
                 "parameters" : shape_parameters
             }
-        ]
+        }
 
     Each parameters block defines `global`, `structure` and `atom` - level parameters.
 
@@ -632,7 +632,7 @@ def _expand_properties(short_properties, n_structures, n_atoms):
     .. code-block:: python
 
         properties = {
-            'aple': {
+            'apple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 'units': 'random / fs',

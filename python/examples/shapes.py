@@ -40,7 +40,7 @@ for a in frames:
 
 # cubes with smooth shading, centered on atoms. these are created as
 # "custom" shapes and then are just scaled to atom-dependent sizes
-atom_sizes = { "O": 0.4, "N": 0.5, "C": 0.45, "H" : 0.2}
+atom_sizes = {"O": 0.4, "N": 0.5, "C": 0.45, "H": 0.2}
 smooth_cubes = dict(
     kind="custom",
     parameters={
@@ -71,7 +71,10 @@ smooth_cubes = dict(
             ],
         },
         # the cube is used at each atomic position, only difference being the scaling
-        "atom": [ {"scale": atom_sizes[label]} for label in (list(frames[0].symbols)+list(frames[1].symbols)) ]            
+        "atom": [
+            {"scale": atom_sizes[label]}
+            for label in (list(frames[0].symbols) + list(frames[1].symbols))
+        ],
     },
 )
 
