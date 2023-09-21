@@ -106,7 +106,7 @@ contains the following fields and values:
         // at the structure level, or for individual atoms 
         "shapes": {
             <name>: {
-                "kind" : "sphere",
+                "kind" : <"sphere", "ellipsoid", "arrow", "custom">,
                 "parameters" : {
                     "global" : { <global_parameters_dictionary> },
                     "structure" : [ <list_of_structure_parameter_dictionaries> ],
