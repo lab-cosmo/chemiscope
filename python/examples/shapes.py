@@ -13,10 +13,12 @@ to visualize an interactive widget in a Jupyter notebook.
 import ase.io as aseio
 import chemiscope
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 # loads a dataset of structures
 frames = aseio.read("data/alpha-mu.xyz", ":")
 
+quaternions = []
 # converts the arrays from the format they are stored in to an array
 # format that can be processed by the ASE utilities
 for a in frames:
@@ -33,6 +35,14 @@ for a in frames:
             )
         ]
     )
+    dists = a.get_all_distances(mic=True)
+    np.fill_diagonal(dists, np.max(dists))
+    for i in range(len(a)):
+        nneigh = dists[i].argmin()
+        vec = a.get_distance(i, nneigh, vector=True, mic=True)
+        R = np.zeros((3,3))
+        R[:, -1] = vec
+        quaternions.append(Rotation.from_matrix(R).as_quat())
 
 # here we define shapes that will later be used to create the input;
 # input generation can also be achieved as a single call, but in practice
@@ -131,6 +141,24 @@ sharp_cubes = dict(
         ],
     },
 )
+# structure-based shapes. also demonstrates how to achieve sharp-edge shading.
+# requires defining multiple times the same vertices
+irreverent_dict = np.load("data/irreverence.npz")
+irreverent_shape = dict(
+    kind="custom",
+    parameters={
+        "global": {
+            "vertices": irreverent_dict["vertices"].tolist(),
+            "simplices": irreverent_dict["simplices"].tolist(),
+            "scale": 0.02,
+            "color": 0xFF00B0,
+        },
+        "atom": [
+            {"orientation": quaternions[i].tolist()}
+            for i in range(len(frames[0])+len(frames[1]))
+        ]
+    },
+)
 # dipole moments visualized as arrows. this is just to demonstrate manual insertion,
 # see below to extract directly from the ASE info
 dipoles_manual = (
@@ -145,7 +173,7 @@ dipoles_manual = (
             },
             "structure": [
                 {"vector": frames[0].info["dipole_ccsd"].tolist()},
-                {"vector": frames[0].info["dipole_ccsd"].tolist()},
+                {"vector": frames[1].info["dipole_ccsd"].tolist()},
             ],
         },
     ),
@@ -175,6 +203,8 @@ chemiscope.write_input(
         "alpha": chemiscope.extract_tensors_from_ase(
             frames, "alpha", force_positive=True, scale=0.2
         ),
+        # shapes with a bit of flair
+        "irreverence": irreverent_shape,
     },
     settings={  # the write_input function also allows defining the default visualization settings
         "map": {
