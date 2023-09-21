@@ -100,7 +100,7 @@ def create_input(
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 # optional: property unit
-                'unit': 'random / fs',
+                'units': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
             }
@@ -136,7 +136,7 @@ def create_input(
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 # optional: property unit
-                'unit': 'random / fs',
+                'units': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
                 'parameters': ['origin'],
@@ -622,7 +622,7 @@ def _expand_properties(short_properties, n_structures, n_atoms):
             'apple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
+                'units': 'random / fs',
             }
             'orange' : np.zeros((100, 42)),
             'banana' : np.zeros((300, 17)),
@@ -635,7 +635,7 @@ def _expand_properties(short_properties, n_structures, n_atoms):
             'aple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
+                'units': 'random / fs',
             }
             'orange': {
                 'target': 'structure'

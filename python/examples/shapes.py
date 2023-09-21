@@ -15,7 +15,7 @@ import chemiscope
 import numpy as np
 
 # loads a dataset of structures
-frames = aseio.read("alpha-mu.xyz", ":")
+frames = aseio.read("data/alpha-mu.xyz", ":")
 
 # converts the arrays from the format they are stored in to an array
 # format that can be processed by the ASE utilities
@@ -40,6 +40,7 @@ for a in frames:
 
 # cubes with smooth shading, centered on atoms. these are created as
 # "custom" shapes and then are just scaled to atom-dependent sizes
+atom_sizes = { "O": 0.4, "N": 0.5, "C": 0.45, "H" : 0.2}
 smooth_cubes = dict(
     kind="custom",
     parameters={
@@ -70,48 +71,7 @@ smooth_cubes = dict(
             ],
         },
         # the cube is used at each atomic position, only difference being the scaling
-        "atom": [
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.5},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.4},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.5},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-            {"scale": 0.2},
-        ],
+        "atom": [ {"scale": atom_sizes[label]} for label in (list(frames[0].symbols)+list(frames[1].symbols)) ]            
     },
 )
 
@@ -188,9 +148,9 @@ dipoles_manual = (
     ),
 )
 
-dipoles_auto = chemiscope.extract_vectors_from_ase(frames, "dipole_ccsd")
+dipoles_auto = chemiscope.extract_vectors_from_ase(frames, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
-dipoles_auto["global"] = {
+dipoles_auto["parameters"]["global"] = {
     "base_radius": 0.2,
     "head_radius": 0.3,
     "head_length": 0.5,
@@ -198,7 +158,7 @@ dipoles_auto["global"] = {
 }
 
 chemiscope.write_input(
-    "shapes.json.gz",
+    "alphamu-shapes.json.gz",
     frames=frames,
     properties=chemiscope.extract_properties(frames, only=["alpha"]),
     shapes={

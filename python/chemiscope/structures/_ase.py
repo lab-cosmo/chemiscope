@@ -366,7 +366,9 @@ def extract_vectors_from_ase(frames, key="forces", target=None, **kwargs):
 
     for f in frames:
         values, target = _extract_key_from_ase(f, key, target)
-        if len(values.shape) != 2 or values.shape[1] != 3:
+        if target == "structure":
+            values = values.reshape(1,-1)
+        if len(values.shape) != 2 or values.shape[1] != 3:            
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 3-vectors"
             )
@@ -397,8 +399,9 @@ def extract_tensors_from_ase(frames, key="tensor", target=None, **kwargs):
 
     for f in frames:
         values, target = _extract_key_from_ase(f, key, target)
-
-        if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):
+        if target == "structure":
+            values = values.reshape(1,-1)        
+        if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):            
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 6 or 9-vectors"
             )
