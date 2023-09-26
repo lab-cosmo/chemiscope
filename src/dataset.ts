@@ -4,7 +4,7 @@
  */
 
 import { param } from 'jquery';
-import { CustomShape, Ellipsoid, Sphere, Arrow } from './structure/shapes';
+import { Arrow, CustomShape, Ellipsoid, Sphere } from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
@@ -247,15 +247,15 @@ export function validateDataset(o: JsObject): void {
             structureCount,
             envCount
         );
-        if (check_shape != '') {
-            throw 'Error checking shape definitions: ' + check_shape;
+        if (check_shape !== '') {
+            throw Error('Error checking shape definitions: ' + check_shape);
         }
         const check_assign = assignShapes(
             o.shapes as { [name: string]: ShapeParameters },
             o.structures as Structure[]
         );
-        if (check_assign != '') {
-            throw 'Error assigning shapes to structures: ' + check_assign;
+        if (check_assign !== '') {
+            throw Error('Error assigning shapes to structures: ' + check_assign);
         }
     }
 
@@ -352,7 +352,8 @@ function checkShapes(
         return "'shapes' must be an object";
     }
 
-    for (const [key, shape] of Object.entries(shapes as object)) {
+    for (const [key, o_shape] of Object.entries(shapes as object)) {
+        const shape = o_shape as ShapeParameters;
         if (!('kind' in shape)) {
             return `missing "kind" in shape ${key}`;
         }
@@ -361,20 +362,11 @@ function checkShapes(
             return `shapes 'kind' must be a string for shape ${key}`;
         }
 
-        if (
-            shape.kind !== 'sphere' &&
-            shape.kind !== 'ellipsoid' &&
-            shape.kind !== 'arrow' &&
-            shape.kind !== 'custom'
-        ) {
-            return `Chemiscope currently only supports custom, ellipsoid, or sphere shapes, got ${shape.kind}`;
-        }
-
         if (!('parameters' in shape)) {
             return `missing "parameters" in shape ${key}`;
         }
 
-        const parameters = shape.parameters as Record<string, ShapeParameters>;
+        const parameters = shape.parameters;
 
         if ('structure' in parameters) {
             const s_parameters = parameters.structure;
