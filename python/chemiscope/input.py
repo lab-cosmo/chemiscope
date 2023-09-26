@@ -856,8 +856,8 @@ def _add_shapes(structures, shapes):
                 )
 
         base_shape = shapes_for_key["settings"]
-        frame_settings = shapes_for_keys.get("frame_settings", None)
-        atom_settings = shapes_for_keys.get("atom_settings", None)
+        frame_settings = shapes_for_key.get("frame_settings", None)
+        atom_settings = shapes_for_key.get("atom_settings", None)
         atom_counter = 0
 
         for structure_i in range(len(structures)):
