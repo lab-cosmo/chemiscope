@@ -409,7 +409,7 @@ function triangulateArrow(
 
     // Generate an arbitrary vector not collinear with n
     let vx: XYZ;
-    if (n_vec.x != 0 || n_vec.y != 0) {
+    if (n_vec.x !== 0.0 || n_vec.y !== 0.0) {
         vx = { x: 0, y: 0, z: 1 };
     } else {
         vx = { x: 0, y: 1, z: 0 };
@@ -418,10 +418,10 @@ function triangulateArrow(
     // generate orthogonal vectors in the plane defined by nvec
     let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
     u = multXYZ(u, 1.0 / Math.sqrt(dotXYZ(u, u)));
-    let v: XYZ = crossXYZ(u, n_vec);
+    const v: XYZ = crossXYZ(u, n_vec);
 
     // generate n_points in the plane defined by nvec, centered at vec
-    let circle_points: XYZ[] = [];
+    const circle_points: XYZ[] = [];
     for (let i = 0; i < resolution; i++) {
         circle_points.push(
             addXYZ(

@@ -12,16 +12,7 @@ import { getElement, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
-import {
-    Arrow,
-    CustomShape,
-    CustomShapeData,
-    Ellipsoid,
-    EllipsoidData,
-    ShapeData,
-    Sphere,
-    SphereData,
-} from './shapes';
+import { Arrow, CustomShape, Ellipsoid, ShapeData, Sphere } from './shapes';
 
 import { StructureOptions } from './options';
 

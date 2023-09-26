@@ -3,7 +3,6 @@
  * @module main
  */
 
-import { param } from 'jquery';
 import { Arrow, CustomShape, Ellipsoid, Sphere } from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
 
