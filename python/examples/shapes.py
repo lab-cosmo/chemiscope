@@ -186,7 +186,7 @@ dipoles_manual = (
     ),
 )
 
-dipoles_auto = chemiscope.extract_vectors_from_ase(frames, "dipole_ccsd", scale=0.5)
+dipoles_auto = chemiscope.ase_vectors_to_arrows(frames, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
 dipoles_auto["parameters"]["global"] = {
     "base_radius": 0.2,
@@ -207,7 +207,7 @@ chemiscope.write_input(
         # (molecular) electric dipole
         "dipole": dipoles_auto,
         # atomic decomposition of the polarizability as ellipsoids. use utility to extract from the ASE frames
-        "alpha": chemiscope.extract_tensors_from_ase(
+        "alpha": chemiscope.ase_tensors_to_arrows(
             frames, "alpha", force_positive=True, scale=0.2
         ),
         # shapes with a bit of flair

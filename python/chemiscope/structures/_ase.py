@@ -336,7 +336,7 @@ def _extract_key_from_ase(frame, key, target=None):
     return values, target
 
 
-def extract_vectors_from_ase(frames, key="forces", target=None, **kwargs):
+def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     """
     Extract a vectorial atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
@@ -382,7 +382,7 @@ def extract_vectors_from_ase(frames, key="forces", target=None, **kwargs):
         return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def extract_tensors_from_ase(frames, key="tensor", target=None, **kwargs):
+def ase_tensors_to_arrows(frames, key="tensor", target=None, **kwargs):
     """
     Extract a 3-tensor atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific

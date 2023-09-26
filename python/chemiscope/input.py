@@ -198,16 +198,16 @@ def create_input(
         global_parameters.update(structure_j).update(atom_k)
 
     If given, the `structure` parameters list should contain one entry per structure, and
-    the `atom` parameters list should be a flat list with one entry per atom and structure.
+    the `atom` parameters list should be a flat list corresponding to the atoms of each consecutive structure.
     All shapes accept a few general parameters, and some specific ones
 
     .. code-block:: python
 
-        # general prameters
+        # general parameters
         {
             "position" : [float, float, float], # centering (defaults to origin for structure, atom position for atom)
             "scale" : float,  # scaling of the size of the shape
-            "orientation" [float, float, float, float], # optional, given as quaternion
+            "orientation" [float, float, float, float], # optional, given as quaternion in (x, y, z, w) format
             "color" : string | hex code # e.g. 0xFF0000
         }
 
@@ -235,15 +235,12 @@ def create_input(
                 [float, float, float],
                 ...
             ],
-            "simplices": [  # mesh triangulation - will be done automatically if omitted
+            "simplices": [  # mesh triangulation (optional); computed via convex triangulation where omitted
                 [int, int, int],  # indices refer to the list of vertices
                 ...
             ],
         }
 
-    ``orientation`` is provided as a quaternion in ``x, y, z, w`` format.
-    For ``custom`` shapes, ``simplices``, refer to the *indices* of the vertices. If omitted, the mesh will be
-    determined by convex.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
@@ -304,7 +301,6 @@ def create_input(
     if shapes is not None:
         # TODO check and sanitize
         data["shapes"] = shapes
-        # _add_shapes(data["structures"], shapes)
 
     data["properties"] = {}
     if properties is not None:
