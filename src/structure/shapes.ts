@@ -398,6 +398,11 @@ function triangulateArrow(
     const [x, y, z] = vector;
     const tip: XYZ = { x, y, z };
     const v_len = Math.sqrt(x * x + y * y + z * z);
+    if (head_length > v_len) {
+        // if the head is longer than the vector, then draw a "squashed tip"
+        // to visualize accurately small vectors
+        head_length = v_len;
+    }
     const base_tip: XYZ = {
         x: tip.x * (1 - head_length / v_len),
         y: tip.y * (1 - head_length / v_len),
