@@ -274,8 +274,6 @@ export class Sphere extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'sphere');
-
         if (!('radius' in parameters)) {
             return '"radius" is required for "sphere" shapes';
         }
@@ -333,8 +331,6 @@ export class Ellipsoid extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'ellipsoid');
-
         if (!('semiaxes' in parameters)) {
             return '"semiaxes" is required for "ellipsoid" shapes';
         }
@@ -439,6 +435,7 @@ function triangulateArrow(
     const vertices: XYZ[] = [];
 
     vertices.push({ x: 0, y: 0, z: 0 });
+    // the arrow is built as a surface of revolution, by stacking _|\ motifs
     for (let i = 0; i < resolution; i++) {
         // nb replicated points are needed to get sharp edges
         vertices.push(multXYZ(circle_points[i], base_radius));
@@ -500,8 +497,6 @@ export class Arrow extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'arrow');
-
         if (!('vector' in parameters)) {
             return '"vector" is required for "arrow" shapes';
         }
@@ -570,8 +565,6 @@ export class CustomShape extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'custom');
-
         if (!('vertices' in parameters)) {
             return '"vertices" is required for "custom" shapes';
         }

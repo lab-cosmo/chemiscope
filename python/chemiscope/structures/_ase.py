@@ -382,10 +382,10 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
         return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def ase_tensors_to_arrows(frames, key="tensor", target=None, **kwargs):
+def ase_tensors_to_ellipsoids(frames, key="tensor", target=None, **kwargs):
     """
-    Extract a 3-tensor atom property from a list of ase.Atoms
-    objects, and returns a list of arrow shapes. Besides the specific
+    Extract a 2-tensor atom property from a list of ase.Atoms
+    objects, and returns a list of ellipsoids shapes. Besides the specific
     parameters it also accepts the same parameters as
     `ellipsoid_from_tensor`, which are used to draw the shapes
 

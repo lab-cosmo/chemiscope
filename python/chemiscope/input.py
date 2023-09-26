@@ -190,8 +190,8 @@ def create_input(
 
     Each of these can contain some or all of the parameters associated with each shape,
     and the parameters for each shape are obtained by combining the parameters from the
-    most general to the most specific, i.e., if there is a duplicate key in the  `global` and `atom` 
-    fields, the value within the `atom` field will supercede the `global` field for that atom. 
+    most general to the most specific, i.e., if there is a duplicate key in the  `global` and `atom`
+    fields, the value within the `atom` field will supersede the `global` field for that atom.
     The parameters for atom `k` that is part of structure `j` are obtained as
 
     .. code-block:: python

@@ -143,7 +143,7 @@ sharp_cubes = dict(
             {
                 "position": [3, 2, 1],
                 "color": 0x00FF00,
-                "orientation": [0.2, 0.4, 0.1, 1],
+                "orientation": [0.5, -0.5, 0, 1 / np.sqrt(2)],
             },
         ],
     },
@@ -207,7 +207,7 @@ chemiscope.write_input(
         # (molecular) electric dipole
         "dipole": dipoles_auto,
         # atomic decomposition of the polarizability as ellipsoids. use utility to extract from the ASE frames
-        "alpha": chemiscope.ase_tensors_to_arrows(
+        "alpha": chemiscope.ase_tensors_to_ellipsoids(
             frames, "alpha", force_positive=True, scale=0.2
         ),
         # shapes with a bit of flair
