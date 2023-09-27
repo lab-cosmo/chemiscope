@@ -49,7 +49,7 @@ def create_input(
         can be used to generate the list of environments in simple cases.
 
     :param dict shapes: optional dictionary of shapes to have available for display,
-        see below. 
+        see below.
 
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
@@ -299,8 +299,7 @@ def create_input(
         n_atoms = len(data["environments"])
 
     if shapes is not None:
-        # TODO check and sanitize
-        data["shapes"] = shapes
+        data["shapes"] = _validate_shapes(data["structures"], shapes)
 
     data["properties"] = {}
     if properties is not None:
@@ -831,7 +830,7 @@ def _typetransform(data, name):
             )
 
 
-def _add_shapes(structures, shapes):
+def _validate_shapes(structures, shapes):
     if not isinstance(shapes, dict):
         raise TypeError(f"`shapes` must be a dictionary, got {type(shapes)} instead")
 
@@ -849,60 +848,65 @@ def _add_shapes(structures, shapes):
             )
 
         for shape_key in shapes_for_key:
-            if shape_key not in ["kind", "settings", "frame_settings", "atom_settimgs"]:
+            if shape_key not in ["kind", "parameters"]:
                 raise ValueError(
-                    f"Invalid entry `f{shape_key}` in the specifications for shape `f{key}`"
+                    f"Invalid entry `{shape_key}` in the specifications for shape `{key}`"
                 )
 
-        base_shape = shapes_for_key["settings"]
-        frame_settings = shapes_for_key.get("frame_settings", None)
-        atom_settings = shapes_for_key.get("atom_settings", None)
+        base_shape = shapes_for_key["parameters"].get("global", {})
+        structure_parameters = shapes_for_key["parameters"].get("structure", None)
+        atom_parameters = shapes_for_key["parameters"].get("atom", None)
         atom_counter = 0
 
         for structure_i in range(len(structures)):
-            if frame_settings is not None and len(frame_settings) <= structure_i:
+            if (
+                structure_parameters is not None
+                and len(structure_parameters) <= structure_i
+            ):
                 raise TypeError(
-                    f"frame_settings must be a list with length {(len(structures))}, "
-                    f"got length={len(frame_settings)} instead"
+                    f"structure_parameters must be a list with length {(len(structures))}, "
+                    f"got length={len(structure_parameters)} instead"
                 )
-
-            for _ in range(len(structures[structure_i])):
-                if atom_settings is not None and len(atom_settings) <= atom_counter:
+            for _ in range(structures[structure_i]["size"]):
+                if atom_parameters is not None and len(atom_parameters) <= atom_counter:
                     raise TypeError(
-                        f"atom_settings must be a list coinciding to the atomic environments, "
-                        f"got length={len(atom_settings)} instead"
+                        f"atom_parameters must be a list coinciding to the atomic environments, "
+                        f"got length={len(atom_parameters)} instead"
                     )
+
                 shape = {
-                    "settings": base_shape,
-                    "frame_settings": frame_settings[structure_i],
-                    "atom_settings": atom_settings[atom_counter],
+                    "kind": shapes_for_key["kind"],
+                    "parameters": {
+                        "global": base_shape,
+                        "structure": structure_parameters[structure_i]
+                        if structure_parameters is not None
+                        else {},
+                        "atom": atom_parameters[atom_counter]
+                        if atom_parameters is not None
+                        else {},
+                    },
                 }
                 _check_valid_shape(shape)
                 atom_counter += 1
 
-    # Add the shapes to the structures
-    for structure in structures:
-        structure["shapes"] = {}
+    for key, shape in shapes.items():
+        if (
+            shape["kind"] == "custom"
+            and "vertices" in shape["parameters"]
+            and "simplices" not in shape["parameters"]
+        ):
+            try:
+                import scipy.spatial
+            except ImportError as e:
+                raise RuntimeError(
+                    "Missing simplices in custom shape, and scipy is not " "installed"
+                ) from e
 
-    for key, values in shapes.items():
-        for structure, shapes_data in zip(structures, values):
-            for shape in shapes_data:
-                if shape["kind"] == "custom" and "simplices" not in shape["settings"]:
-                    try:
-                        import scipy.spatial
-                    except ImportError as e:
-                        raise RuntimeError(
-                            "Missing simplices in custom shape, and scipy is not "
-                            "installed"
-                        ) from e
-
-                    convex_hull = scipy.spatial.ConvexHull(
-                        shape["settings"]["vertices"]
-                    )
-                    shape["settings"]["simplices"] = [
-                        s.tolist() for s in convex_hull.simplices
-                    ]
-            structure["shapes"][key] = shapes_data
+            convex_hull = scipy.spatial.ConvexHull(shape["parameters"]["vertices"])
+            shape["parameters"]["simplices"] = [
+                s.tolist() for s in convex_hull.simplices
+            ]
+    return shapes
 
 
 def _check_valid_shape(shape):
@@ -911,36 +915,37 @@ def _check_valid_shape(shape):
             f"individual shapes must be dictionaries, got {type(shape)} instead"
         )
 
+    always_okay = ["orientation", "scale", "position", "color"]
     parameters = {}
-    if "settings" in shape:
-        parameters.update(shape["settings"])
-    if "frame_settings" in shape:
-        parameters.update(shape["frame_settings"])
-    if "atom_settings" in shape:
-        parameters.update(shape["atom_settings"])
+    if "parameters" in shape:
+        parameters.update(shape["parameters"]["global"])
+    if "structure" in shape["parameters"]:
+        parameters.update(shape["parameters"]["structure"])
+    if "atom" in shape["parameters"]:
+        parameters.update(shape["parameters"]["atom"])
 
     if len(parameters) == 0:
-        raise ValueError(f"no settings provided for {shape['kind']} shape")
+        raise ValueError(f"no parameters provided for {shape['kind']} shape")
     if shape["kind"] == "sphere":
         for parameter in parameters:
-            if parameter not in ["radius", "orientation"]:
+            if parameter not in ["radius", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'sphere' shape kind"
                 )
 
-        if not isinstance(shape["radius"], float):
+        if not isinstance(parameters["radius"], float):
             raise TypeError(
-                f"sphere shape 'radius' must be a float, got {type(shape['radius'])}"
+                f"sphere shape 'radius' must be a float, got {type(parameters['radius'])}"
             )
 
     elif shape["kind"] == "ellipsoid":
-        for parameter in shape.keys():
-            if parameter not in ["semiaxes", "orientation"]:
+        for parameter in parameters.keys():
+            if parameter not in ["semiaxes", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'ellipsoid' shape kind"
                 )
 
-        semiaxes_array = np.asarray(shape["semiaxes"]).astype(
+        semiaxes_array = np.asarray(parameters["semiaxes"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
@@ -950,13 +955,13 @@ def _check_valid_shape(shape):
             )
 
     elif shape["kind"] == "custom":
-        for parameter in shape.keys():
-            if parameter not in ["vertices", "simplices", "orientation"]:
+        for parameter in parameters.keys():
+            if parameter not in ["vertices", "simplices", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'custom' shape kind"
                 )
 
-        vertices_array = np.asarray(shape["vertices"]).astype(
+        vertices_array = np.asarray(parameters["vertices"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
@@ -965,20 +970,42 @@ def _check_valid_shape(shape):
                 "'vertices' must be an Nx3 array values for 'custom' shape kind"
             )
 
-        if "simplices" in shape:
-            simplices_array = np.asarray(shape["vertices"]).astype(
-                np.int32, casting="safe", subok=False, copy=False
+        if "simplices" in parameter:
+            simplices_array = np.asarray(parameters["vertices"]).astype(
+                int, casting="safe", subok=False, copy=False
             )
 
             if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
                 raise ValueError(
                     "'simplices' must be an Nx3 array values for 'custom' shape kind"
                 )
+    elif shape["kind"] == "arrow":
+        if not isinstance(parameters["base_radius"], float):
+            raise TypeError(
+                f"sphere shape 'base_radius' must be a float, got {type(parameters['radius'])}"
+            )
+        if not isinstance(parameters["head_radius"], float):
+            raise TypeError(
+                f"sphere shape 'head_radius' must be a float, got {type(parameters['radius'])}"
+            )
+        if not isinstance(parameters["head_length"], float):
+            raise TypeError(
+                f"sphere shape 'head_length' must be a float, got {type(parameters['radius'])}"
+            )
+
+        vector_array = np.asarray(parameters["vector"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if not vector_array.shape == (3,):
+            raise ValueError(
+                "'vector' must be an array with 3 values for 'arrow' shape kind"
+            )
     else:
         raise ValueError(f"unknown shape kind '{shape['kind']}'")
 
-    if "orientation" in shape:
-        orientation_array = np.asarray(shape["orientation"]).astype(
+    if "orientation" in parameters:
+        orientation_array = np.asarray(parameters["orientation"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
