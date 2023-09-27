@@ -274,8 +274,6 @@ export class Sphere extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'sphere');
-
         if (!('radius' in parameters)) {
             return '"radius" is required for "sphere" shapes';
         }
@@ -333,8 +331,6 @@ export class Ellipsoid extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'ellipsoid');
-
         if (!('semiaxes' in parameters)) {
             return '"semiaxes" is required for "ellipsoid" shapes';
         }
@@ -402,6 +398,11 @@ function triangulateArrow(
     const [x, y, z] = vector;
     const tip: XYZ = { x, y, z };
     const v_len = Math.sqrt(x * x + y * y + z * z);
+    if (head_length > v_len) {
+        // if the head is longer than the vector, then draw a "squashed tip"
+        // to visualize accurately small vectors
+        head_length = v_len;
+    }
     const base_tip: XYZ = {
         x: tip.x * (1 - head_length / v_len),
         y: tip.y * (1 - head_length / v_len),
@@ -413,7 +414,7 @@ function triangulateArrow(
 
     // Generate an arbitrary vector not collinear with n
     let vx: XYZ;
-    if (n_vec.x != 0 || n_vec.y != 0) {
+    if (n_vec.x !== 0.0 || n_vec.y !== 0.0) {
         vx = { x: 0, y: 0, z: 1 };
     } else {
         vx = { x: 0, y: 1, z: 0 };
@@ -422,10 +423,10 @@ function triangulateArrow(
     // generate orthogonal vectors in the plane defined by nvec
     let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
     u = multXYZ(u, 1.0 / Math.sqrt(dotXYZ(u, u)));
-    let v: XYZ = crossXYZ(u, n_vec);
+    const v: XYZ = crossXYZ(u, n_vec);
 
     // generate n_points in the plane defined by nvec, centered at vec
-    let circle_points: XYZ[] = [];
+    const circle_points: XYZ[] = [];
     for (let i = 0; i < resolution; i++) {
         circle_points.push(
             addXYZ(
@@ -439,6 +440,7 @@ function triangulateArrow(
     const vertices: XYZ[] = [];
 
     vertices.push({ x: 0, y: 0, z: 0 });
+    // the arrow is built as a surface of revolution, by stacking _|\ motifs
     for (let i = 0; i < resolution; i++) {
         // nb replicated points are needed to get sharp edges
         vertices.push(multXYZ(circle_points[i], base_radius));
@@ -500,8 +502,6 @@ export class Arrow extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'arrow');
-
         if (!('vector' in parameters)) {
             return '"vector" is required for "arrow" shapes';
         }
@@ -570,8 +570,6 @@ export class CustomShape extends Shape {
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'custom');
-
         if (!('vertices' in parameters)) {
             return '"vertices" is required for "custom" shapes';
         }

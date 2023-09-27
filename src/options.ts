@@ -200,7 +200,8 @@ export class HTMLOption<T extends OptionsType> {
             const values = (this._value as string).split(',');
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             for (const option of (element as any).options) {
-                option.selected = values.includes(option.value);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                option.selected = values.includes(option.value as string);
             }
         } else {
             listener = (event: Event) => {

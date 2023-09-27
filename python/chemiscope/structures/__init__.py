@@ -11,8 +11,8 @@ from ._ase import (
 )
 
 from ._ase import (  # noqa  isort: skip
-    extract_tensors_from_ase,
-    extract_vectors_from_ase,
+    ase_vectors_to_arrows,
+    ase_tensors_to_ellipsoids,
 )
 
 from ._shapes import (  # noqa

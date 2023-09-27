@@ -46,7 +46,7 @@ chemiscope.write_input(
     properties=properties,
     # visualize forces as vectors
     shapes={
-        "forces": chemiscope.extract_vectors_from_ase(
+        "forces": chemiscope.ase_vectors_to_arrows(
             frames, "forces", scale=1, radius=0.15
         )
     },
