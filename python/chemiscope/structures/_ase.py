@@ -415,32 +415,6 @@ def extract_tensors_from_ase(frames, key="tensor", target=None, **kwargs):
         return dict(kind="ellipsoid", parameters={"global": {}, "structure": tensors})
 
 
-def extract_lammps_shapes_from_ase(frames, key="shape"):
-    """
-    Extract shapes from a LAMMPS data file read by ASE.
-
-    :param frames: list of ASE Atoms objects
-    :param key: name of the ASE property where the shape is stored
-    """
-
-    all_shapes = [_extract_lammps_shapes(frame, key=key) for frame in frames]
-
-    n_without = len([shapes for shapes in all_shapes if shapes is None])
-    if n_without != 0:
-        raise ValueError(f"{n_without} frame(s) do not contain shape information")
-
-    keys = set([k for shapes in all_shapes for k in shapes.keys()])
-
-    universal_keys = [k for k in keys if all([k in shapes for shapes in all_shapes])]
-
-    if len(universal_keys) != len(keys):
-        warnings.warn(
-            f"Only including shape keys [{', '.join(universal_keys)}], which are "
-            "present in all frames. All other shape keys are omitted."
-        )
-    return {k: [shapes[k] for shapes in all_shapes] for k in universal_keys}
-
-
 # Required parameters from different kinds of shapes
 SHAPE_PARAMETERS = {
     "ellipsoid": "semiaxes",

@@ -49,8 +49,7 @@ def create_input(
         can be used to generate the list of environments in simple cases.
 
     :param dict shapes: optional dictionary of shapes to have available for display,
-        see below. :py:func:`extract_lammps_shapes_from_ase` can automatically extract
-        shapes from a LAMMPS simulation.
+        see below. 
 
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the

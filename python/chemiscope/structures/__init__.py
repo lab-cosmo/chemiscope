@@ -11,7 +11,6 @@ from ._ase import (
 )
 
 from ._ase import (  # noqa  isort: skip
-    extract_lammps_shapes_from_ase,
     extract_tensors_from_ase,
     extract_vectors_from_ase,
 )
