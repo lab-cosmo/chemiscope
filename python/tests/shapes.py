@@ -175,9 +175,7 @@ class TestShapes(unittest.TestCase):
     def test_shape_errors(self):
         for shape, errortype, message in INVALID_SHAPES:
             with self.assertRaises(errortype) as cm:
-                chemiscope.create_input(
-                    frames=[DEFAULT_FRAME], shapes={"shape": shape}
-                )
+                chemiscope.create_input(frames=[DEFAULT_FRAME], shapes={"shape": shape})
                 self.assertEqual(cm.message, message)
 
 
