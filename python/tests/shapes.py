@@ -79,7 +79,7 @@ INVALID_SHAPES = [
             },
         },
         ValueError,
-        f"unknown shape parameter 'diameter' for 'sphere' shape kind",
+        "unknown shape parameter 'diameter' for 'sphere' shape kind",
     ],
     [
         {
@@ -99,7 +99,7 @@ INVALID_SHAPES = [
             },
         },
         ValueError,
-        f"unknown shape parameter 'radius' for 'ellipsoid' shape kind",
+        "unknown shape parameter 'radius' for 'ellipsoid' shape kind",
     ],
     [
         {
@@ -114,7 +114,7 @@ INVALID_SHAPES = [
     [
         {"kind": "custom", "parameters": {"global": {"radius": 1.0}}},
         ValueError,
-        f"unknown shape parameter 'radius' for 'custom' shape kind",
+        "unknown shape parameter 'radius' for 'custom' shape kind",
     ],
     [
         {
@@ -148,7 +148,7 @@ INVALID_SHAPES = [
     [
         {"kind": "garbage", "parameters": {"radius": None}},
         ValueError,
-        f"unknown shape kind 'garbage'",
+        "unknown shape kind 'garbage'",
     ],
 ]
 
@@ -175,7 +175,7 @@ class TestShapes(unittest.TestCase):
     def test_shape_errors(self):
         for shape, errortype, message in INVALID_SHAPES:
             with self.assertRaises(errortype) as cm:
-                data = chemiscope.create_input(
+                chemiscope.create_input(
                     frames=[DEFAULT_FRAME], shapes={"shape": shape}
                 )
                 self.assertEqual(cm.message, message)
