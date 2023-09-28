@@ -89,7 +89,7 @@ INVALID_SHAPES = [
             },
         },
         TypeError,
-        f"sphere shape 'radius' must be a float, got str",
+        "sphere shape 'radius' must be a float, got str",
     ],
     [
         {
