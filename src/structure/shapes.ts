@@ -72,7 +72,7 @@ export interface ArrowParameters extends BaseShapeParameters<ArrowData> {
 }
 
 // Interface for polytope data, where
-// orientation is stored in the (w, x, y, z) convention
+// orientation is stored in the (x, y, z, w) convention
 // and simplices refers to the indices of the facets
 export interface CustomShapeData extends BaseShapeData {
     vertices: [number, number, number][];
