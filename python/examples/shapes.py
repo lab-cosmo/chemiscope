@@ -17,7 +17,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 # loads a dataset of structures
-frames = aseio.read("data/alpha-mu.xyz", ":")
+frames = ase.io.read("data/alpha-mu.xyz", ":")
 
 quaternions = []
 # converts the arrays from the format they are stored in to an array
