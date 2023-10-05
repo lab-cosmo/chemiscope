@@ -40,6 +40,7 @@ export interface BaseShapeParameters<T> {
     };
 }
 
+// orientation does not make sense for a sphere
 export interface SphereData extends BaseShapeData {
     radius: number;
 }
@@ -59,12 +60,12 @@ export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> 
     kind: 'ellipsoid';
 }
 
-// Interface for arrow data
+// Interface for arrow data (avoids orientation options, since it's redundant)
 export interface ArrowData extends BaseShapeData {
     vector: [number, number, number];
-    base_radius?: number;
-    head_radius?: number;
-    head_length?: number;
+    baseRadius?: number;
+    headRadius?: number;
+    headLength?: number;
 }
 
 export interface ArrowParameters extends BaseShapeParameters<ArrowData> {
@@ -163,7 +164,7 @@ export class Shape {
     public scale: number;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
-    constructor(data: Partial<SphereData>) {
+    constructor(data: Partial<ShapeData>) {
         const [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
         this.orientation = new Quaternion(qx, qy, qz, qw);
         const [x, y, z] = data.position || [0, 0, 0];
@@ -278,6 +279,10 @@ export class Sphere extends Shape {
             return '"radius" is required for "sphere" shapes';
         }
 
+        if ('orientation' in parameters) {
+            return '"orientation" has no effect on a sphere shape';
+        }
+
         if (typeof parameters.radius !== 'number') {
             return '"radius" must be a number in "sphere" shape';
         }
@@ -390,23 +395,23 @@ export class Ellipsoid extends Shape {
 
 function triangulateArrow(
     vector: [number, number, number],
-    base_radius: number,
-    head_radius: number,
-    head_length: number,
+    baseRadius: number,
+    headRadius: number,
+    headLength: number,
     resolution: number = 20
 ): { vertices: XYZ[]; indices: number[] } {
     const [x, y, z] = vector;
     const tip: XYZ = { x, y, z };
     const v_len = Math.sqrt(x * x + y * y + z * z);
-    if (head_length > v_len) {
+    if (headLength > v_len) {
         // if the head is longer than the vector, then draw a "squashed tip"
         // to visualize accurately small vectors
-        head_length = v_len;
+        headLength = v_len;
     }
     const base_tip: XYZ = {
-        x: tip.x * (1 - head_length / v_len),
-        y: tip.y * (1 - head_length / v_len),
-        z: tip.z * (1 - head_length / v_len),
+        x: tip.x * (1 - headLength / v_len),
+        y: tip.y * (1 - headLength / v_len),
+        z: tip.z * (1 - headLength / v_len),
     };
 
     // generates a unit circle oriented in the right direction
@@ -443,12 +448,12 @@ function triangulateArrow(
     // the arrow is built as a surface of revolution, by stacking _|\ motifs
     for (let i = 0; i < resolution; i++) {
         // nb replicated points are needed to get sharp edges
-        vertices.push(multXYZ(circle_points[i], base_radius));
-        vertices.push(multXYZ(circle_points[i], base_radius));
-        vertices.push(addXYZ(multXYZ(circle_points[i], base_radius), base_tip));
-        vertices.push(addXYZ(multXYZ(circle_points[i], base_radius), base_tip));
-        vertices.push(addXYZ(multXYZ(circle_points[i], head_radius), base_tip));
-        vertices.push(addXYZ(multXYZ(circle_points[i], head_radius), base_tip));
+        vertices.push(multXYZ(circle_points[i], baseRadius));
+        vertices.push(multXYZ(circle_points[i], baseRadius));
+        vertices.push(addXYZ(multXYZ(circle_points[i], baseRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], baseRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], headRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], headRadius), base_tip));
         vertices.push(tip);
         const i_seg = 1 + i * 7;
         const i_next = 1 + ((i + 1) % resolution) * 7;
@@ -484,9 +489,9 @@ function triangulateArrow(
 
 export class Arrow extends Shape {
     public vector: [number, number, number];
-    public base_radius: number;
-    public head_radius: number;
-    public head_length: number;
+    public baseRadius: number;
+    public headRadius: number;
+    public headLength: number;
 
     constructor(data: Partial<ArrowData>) {
         super(data);
@@ -496,9 +501,9 @@ export class Arrow extends Shape {
             this.scale * data.vector[1],
             this.scale * data.vector[2],
         ];
-        this.base_radius = this.scale * (data.base_radius || 0.1);
-        this.head_radius = this.scale * (data.head_radius || 0.15);
-        this.head_length = this.scale * (data.head_length || 0.2);
+        this.baseRadius = this.scale * (data.baseRadius || 0.1);
+        this.headRadius = this.scale * (data.headRadius || 0.15);
+        this.headLength = this.scale * (data.headLength || 0.2);
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
@@ -515,15 +520,19 @@ export class Arrow extends Shape {
             return '"vector" elements must be numbers for "vector" shapes';
         }
 
+        if ('orientation' in parameters) {
+            return '"orientation" cannot be used on "arrow" shapes. define "vector" instead';
+        }
+
         return '';
     }
 
     public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
         const triangulation = triangulateArrow(
             this.vector,
-            this.base_radius,
-            this.head_radius,
-            this.head_length,
+            this.baseRadius,
+            this.headRadius,
+            this.headLength,
             resolution
         );
         const rawVertices = triangulation.vertices;
