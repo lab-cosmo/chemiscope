@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Creating chemiscope input files &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <script src="../_static/documentation_options.js?v=8e576371"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Input file reference" href="input-reference.html" />
+    <link rel="prev" title="Different panels and settings" href="panels.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="panels.html" title="Previous Chapter: Different panels and settings"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Different pan...</span>
+    </a>
+  </li>
+  <li>
+    <a href="input-reference.html" title="Next Chapter: Input file reference"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Input file reference &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="panels.html">Different panels and settings</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Creating chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input-reference.html">Input file reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sharing.html">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="creating-chemiscope-input-files">
+<span id="input-format"></span><h1>Creating chemiscope input files<a class="headerlink" href="#creating-chemiscope-input-files" title="Link to this heading">¶</a></h1>
+<p>When using the default chemiscope interface, all the structures and properties
+in a dataset are loaded from a single JSON file. This sections describe how to
+generate such JSON file, either using a pre-existing python script that does
+most of the work for you, or by writing the JSON file directly. Since the
+resulting JSON file can be quite large and thus harder to share with
+collaborators, the default chemiscope interface also allows to load JSON files
+compressed with gzip.</p>
+<p>tl;dr if you would like to generate a simple chemiscope for your dataset, we
+have a <a class="reference external" href="https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu">Google Colab notebook</a>
+that can help!</p>
+<section id="tools-able-to-create-chemiscope-input">
+<h2>Tools able to create chemiscope input<a class="headerlink" href="#tools-able-to-create-chemiscope-input" title="Link to this heading">¶</a></h2>
+<section id="chemiscope-python-module">
+<h3><code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> Python module<a class="headerlink" href="#chemiscope-python-module" title="Link to this heading">¶</a></h3>
+<p>The easiest way to create a JSON input file is to use the <code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> Python
+module. Install the package with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">chemiscope</span></code>, and use
+<a class="reference internal" href="#chemiscope.write_input" title="chemiscope.write_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.write_input()</span></code></a> or <a class="reference internal" href="#chemiscope.create_input" title="chemiscope.create_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.create_input()</span></code></a> in your
+own script to generate the JSON file.</p>
+<p>If all the properties you want to include into chemiscope are already stored in
+a file <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/io/io.html">ase</a> can read, the <code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> python package also install a
+<a class="reference internal" href="#chemiscope-input-cli">chemiscope-input</a> command line script.</p>
+<p>Note that chemiscope does not compute structural representations or
+dimensionality reduction, and you need to do this yourself or use another
+package such as ASAP.</p>
+</section>
+<section id="asap">
+<h3><code class="docutils literal notranslate"><span class="pre">ASAP</span></code><a class="headerlink" href="#asap" title="Link to this heading">¶</a></h3>
+<p>The <a class="reference external" href="https://github.com/BingqingCheng/ASAP">ASAP</a> structural analysis package is another tool that can directly
+generate an output in chemiscope format.</p>
+</section>
+</section>
+<section id="chemiscope-functions-reference">
+<h2><code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> functions reference<a class="headerlink" href="#chemiscope-functions-reference" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.write_input">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">write_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.write_input" title="Link to this definition">¶</a></dt>
+<dd><p>Create the input JSON file used by the default chemiscope visualizer, and save it to
+the given <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – name of the file to use to save the json data. If it ends with
+‘.gz’, a gzip compressed file will be written</p></li>
+<li><p><strong>frames</strong> (<em>list</em>) – list of atomic structures. For now, only <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/atoms.html">ase.Atoms</a> objects
+are supported</p></li>
+<li><p><strong>meta</strong> (<em>dict</em>) – optional metadata of the dataset</p></li>
+<li><p><strong>properties</strong> (<em>dict</em>) – optional dictionary of additional properties</p></li>
+<li><p><strong>environments</strong> (<em>list</em>) – optional list of <code class="docutils literal notranslate"><span class="pre">(structure</span> <span class="pre">id,</span> <span class="pre">atom</span> <span class="pre">id,</span> <span class="pre">cutoff)</span></code>
+specifying which atoms have properties attached and how far out atom-centered
+environments should be drawn by default.</p></li>
+<li><p><strong>shapes</strong> (<em>dict</em>) – optional dictionary of shapes to have available for display.
+See <a class="reference internal" href="#chemiscope.create_input" title="chemiscope.create_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_input()</span></code></a> for more information on how to define shapes.</p></li>
+<li><p><strong>settings</strong> (<em>dict</em>) – optional dictionary of settings to use when displaying the
+data. Possible entries for the <code class="docutils literal notranslate"><span class="pre">settings</span></code> dictionary are documented in the
+chemiscope input file reference.</p></li>
+<li><p><strong>parameters</strong> (<em>dict</em>) – optional dictionary of parameters of multidimensional
+properties</p></li>
+</ul>
+</dd>
+</dl>
+<p>This function uses <a class="reference internal" href="#chemiscope.create_input" title="chemiscope.create_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_input()</span></code></a> to generate the input data, see the
+documentation of this function for more information.</p>
+<p>Here is a quick example of generating a chemiscope input reading the structures from
+a file that <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/io/io.html">ase</a> can read, and performing PCA using <a class="reference external" href="https://scikit-learn.org/">sklearn</a> on a
+descriptor computed with another package.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase</span>
+<span class="kn">from</span> <span class="nn">ase</span> <span class="kn">import</span> <span class="n">io</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">sklearn</span>
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">decomposition</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+
+<span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;trajectory.xyz&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">)</span>
+
+<span class="c1"># example property 1: list containing the energy of each structure,</span>
+<span class="c1"># from calculations performed beforehand</span>
+<span class="n">energies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;energies.txt&#39;</span><span class="p">)</span>
+
+<span class="c1"># example property 2: PCA projection computed using sklearn.</span>
+<span class="c1"># X contains a multi-dimensional descriptor of the structure</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="o">...</span> <span class="p">)</span>
+<span class="n">pca</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">decomposition</span><span class="o">.</span><span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;PCA&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;atom&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">pca</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;PCA of per-atom representation of the structures&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;energies&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">energies</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;kcal/mol&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c1"># additional properties coming from the trajectory</span>
+<span class="n">frame_properties</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">extract_properties</span><span class="p">(</span>
+    <span class="n">frames</span><span class="p">,</span>
+    <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;classification&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># additional multidimensional properties to be plotted</span>
+<span class="n">dos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c1"># load the 2D data</span>
+<span class="n">dos_energy_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">multidimensional_properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;DOS&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">dos</span><span class="p">,</span>
+        <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;energy&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">multidimensional_parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;energy&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">dos_energy_grid</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;eV&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># merge all properties together</span>
+<span class="n">properties</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">frame_properties</span><span class="p">)</span>
+<span class="n">properties</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">multidimensional_properties</span><span class="p">)</span>
+
+<span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;chemiscope.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
+    <span class="c1"># This is required to display properties with `target: &quot;atom&quot;`</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">all_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">),</span>
+    <span class="c1"># this is necessary to plot the multidimensional data</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">multidimensional_parameters</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.create_input">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">create_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.create_input" title="Link to this definition">¶</a></dt>
+<dd><p>Create a dictionary that can be saved to JSON using the format used by the default
+chemiscope visualizer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> (<em>list</em>) – list of atomic structures. For now, only <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/atoms.html">ase.Atoms</a> objects
+are supported</p></li>
+<li><p><strong>meta</strong> (<em>dict</em>) – optional metadata of the dataset, see below</p></li>
+<li><p><strong>properties</strong> (<em>dict</em>) – optional dictionary of properties, see below</p></li>
+<li><p><strong>environments</strong> (<em>list</em>) – optional list of <code class="docutils literal notranslate"><span class="pre">(structure</span> <span class="pre">id,</span> <span class="pre">atom</span> <span class="pre">id,</span> <span class="pre">cutoff)</span></code>
+specifying which atoms have properties attached and how far out atom-centered
+environments should be drawn by default. Functions like
+<a class="reference internal" href="#chemiscope.all_atomic_environments" title="chemiscope.all_atomic_environments"><code class="xref py py-func docutils literal notranslate"><span class="pre">all_atomic_environments()</span></code></a> or <a class="reference internal" href="#chemiscope.librascal_atomic_environments" title="chemiscope.librascal_atomic_environments"><code class="xref py py-func docutils literal notranslate"><span class="pre">librascal_atomic_environments()</span></code></a>
+can be used to generate the list of environments in simple cases.</p></li>
+<li><p><strong>shapes</strong> (<em>dict</em>) – optional dictionary of shapes to have available for display,
+see below.</p></li>
+<li><p><strong>settings</strong> (<em>dict</em>) – optional dictionary of settings to use when displaying the
+data. Possible entries for the <code class="docutils literal notranslate"><span class="pre">settings</span></code> dictionary are documented in the
+chemiscope input file reference.</p></li>
+<li><p><strong>parameters</strong> (<em>dict</em>) – optional dictionary of parameters for multidimensional
+properties, see below</p></li>
+</ul>
+</dd>
+</dl>
+<section id="dataset-metadata">
+<h3>Dataset metadata<a class="headerlink" href="#dataset-metadata" title="Link to this heading">¶</a></h3>
+<p>The dataset metadata should be given in the <code class="docutils literal notranslate"><span class="pre">meta</span></code> dictionary, the possible keys
+are:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;...&#39;</span><span class="p">,</span>         <span class="c1"># str, dataset name</span>
+    <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;...&#39;</span><span class="p">,</span>  <span class="c1"># str, dataset description</span>
+    <span class="s1">&#39;authors&#39;</span><span class="p">:</span> <span class="p">[</span>           <span class="c1"># list of str, dataset authors, OPTIONAL</span>
+        <span class="s1">&#39;...&#39;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;references&#39;</span><span class="p">:</span> <span class="p">[</span>        <span class="c1"># list of str, references for this dataset,</span>
+        <span class="s1">&#39;...&#39;</span><span class="p">,</span>             <span class="c1"># OPTIONAL</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="dataset-properties">
+<h3>Dataset properties<a class="headerlink" href="#dataset-properties" title="Link to this heading">¶</a></h3>
+<p>Properties can be added with the <code class="docutils literal notranslate"><span class="pre">properties</span></code> parameter. This parameter should be
+a dictionary containing one entry for each property. Properties can be extracted
+from structures with <a class="reference internal" href="#chemiscope.extract_properties" title="chemiscope.extract_properties"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_properties()</span></code></a> or
+<a class="reference internal" href="#chemiscope.composition_properties" title="chemiscope.composition_properties"><code class="xref py py-func docutils literal notranslate"><span class="pre">composition_properties()</span></code></a>, or manually defined by the user.</p>
+<p>Each entry in the <code class="docutils literal notranslate"><span class="pre">properties</span></code> dictionary contains a <code class="docutils literal notranslate"><span class="pre">target</span></code> attribute
+(<code class="docutils literal notranslate"><span class="pre">'atom'</span></code> or <code class="docutils literal notranslate"><span class="pre">'structure'</span></code>) and a set of values. <code class="docutils literal notranslate"><span class="pre">values</span></code> can be a Python list
+of float or string; a 1D numpy array of numeric values; or a 2D numpy array of
+numeric values. In the later case, multiple properties will be generated along the
+second axis. For example, passing</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cheese&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;atom&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">300</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+        <span class="c1"># optional: property unit</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;random / fs&#39;</span><span class="p">,</span>
+        <span class="c1"># optional: property description</span>
+        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;a random property for example&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>will generate four properties named <code class="docutils literal notranslate"><span class="pre">cheese[1]</span></code>, <code class="docutils literal notranslate"><span class="pre">cheese[2]</span></code>, <code class="docutils literal notranslate"><span class="pre">cheese[3]</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">cheese[4]</span></code>, each containing 300 values.</p>
+<p>It is also possible to pass shortened representation of the properties, for
+instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cheese&#39;</span><span class="p">:</span>  <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">300</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>In this case, the type of property (structure or atom) would be deduced by comparing
+the numbers atoms and structures in the dataset to the length of provided
+list/np.ndarray.</p>
+</section>
+<section id="multi-dimensional-properties">
+<h3>Multi-dimensional properties<a class="headerlink" href="#multi-dimensional-properties" title="Link to this heading">¶</a></h3>
+<p>One can give 2D properties to be displayed as curves in the info panel by setting a
+<code class="docutils literal notranslate"><span class="pre">parameters</span></code> in the property, and giving the corresponding <code class="docutils literal notranslate"><span class="pre">parameters</span></code> values
+to this function. The previous example becomes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cheese&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;atom&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">300</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+        <span class="c1"># optional: property unit</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;random / fs&#39;</span><span class="p">,</span>
+        <span class="c1"># optional: property description</span>
+        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;a random property for example&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;origin&#39;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This input describes a 2D property <code class="docutils literal notranslate"><span class="pre">cheese</span></code> with 300 samples and 4 values taken by
+the <code class="docutils literal notranslate"><span class="pre">origin</span></code> parameter. We also need to provide the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> values to this
+function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;origin&#39;</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="c1"># an array of numbers containing the values of the parameter</span>
+        <span class="c1"># the size should correspond to the second dimension</span>
+        <span class="c1"># of the corresponding multidimensional property</span>
+        <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+        <span class="c1"># optional free-form description of the parameter as a string</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;a short description of this parameter&#39;</span><span class="p">,</span>
+        <span class="c1"># optional units of the values in the values array</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;eV&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-shapes">
+<h3>Custom shapes<a class="headerlink" href="#custom-shapes" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">shapes</span></code> option should have the format <code class="docutils literal notranslate"><span class="pre">{&quot;&lt;name&gt;&quot;:</span> <span class="pre">shape_definition</span> <span class="pre">}</span></code>,
+where each shape is defined as a dictionary containing the kind of shape, and its
+parameters</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">shapes</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;shape name&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;kind&quot;</span> <span class="p">:</span> <span class="s2">&quot;sphere&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;parameters&quot;</span> <span class="p">:</span> <span class="n">shape_parameters</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Each parameters block defines <cite>global</cite>, <cite>structure</cite> and <cite>atom</cite> - level parameters.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;global&quot;</span> <span class="p">:</span> <span class="n">global_parameters</span><span class="p">,</span>
+    <span class="s2">&quot;structure&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="n">structure_1</span><span class="p">,</span> <span class="n">structure_2</span><span class="p">,</span> <span class="o">....</span> <span class="p">],</span>
+    <span class="s2">&quot;atom&quot;&quot; : [ atom_1, atom_2, .... ]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Each of these can contain some or all of the parameters associated with each shape,
+and the parameters for each shape are obtained by combining the parameters from the
+most general to the most specific, i.e., if there is a duplicate key in the  <cite>global</cite> and <cite>atom</cite>
+fields, the value within the <cite>atom</cite> field will supersede the <cite>global</cite> field for that atom.
+The parameters for atom <cite>k</cite> that is part of structure <cite>j</cite> are obtained as</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">global_parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">structure_j</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">atom_k</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If given, the <cite>structure</cite> parameters list should contain one entry per structure, and
+the <cite>atom</cite> parameters list should be a flat list corresponding to the atoms of each consecutive structure.
+All shapes accept a few general parameters, and some specific ones</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># general parameters</span>
+<span class="p">{</span>
+    <span class="s2">&quot;position&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="c1"># centering (defaults to origin for structure, atom position for atom)</span>
+    <span class="s2">&quot;scale&quot;</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># scaling of the size of the shape</span>
+    <span class="s2">&quot;orientation&quot;</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="c1"># optional, given as quaternion in (x, y, z, w) format</span>
+    <span class="s2">&quot;color&quot;</span> <span class="p">:</span> <span class="n">string</span> <span class="o">|</span> <span class="nb">hex</span> <span class="n">code</span> <span class="c1"># e.g. 0xFF0000</span>
+<span class="p">}</span>
+
+<span class="c1"># &quot;kind&quot; : &quot;sphere&quot;</span>
+<span class="p">{</span>
+    <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># &quot;kind&quot; : &quot;ellipsoid&quot;</span>
+<span class="p">{</span>
+    <span class="s2">&quot;semiaxes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="c1"># &quot;kind&quot; : &quot;arrow&quot;</span>
+<span class="p">{</span>   <span class="c1"># &quot;orientation&quot; is redundant and hence ignored</span>
+    <span class="s2">&quot;vector&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>  <span class="c1"># orientation and shape of the arrow</span>
+    <span class="s2">&quot;base_radius&quot;</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="s2">&quot;head_radius&quot;</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="s2">&quot;head_length&quot;</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>   <span class="c1"># the tip of the arrow is at the end of the segment. it&#39;ll extend past the base point if the arrow is not long enough</span>
+<span class="p">}</span>
+
+<span class="c1"># &quot;kind&quot; : &quot;custom&quot;</span>
+<span class="p">{</span>
+    <span class="s2">&quot;vertices&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="c1"># list of vertices</span>
+        <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;simplices&quot;</span><span class="p">:</span> <span class="p">[</span>  <span class="c1"># mesh triangulation (optional); computed via convex triangulation where omitted</span>
+        <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>  <span class="c1"># indices refer to the list of vertices</span>
+        <span class="o">...</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.extract_properties">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">extract_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.extract_properties" title="Link to this definition">¶</a></dt>
+<dd><p>Extract properties defined in the <code class="docutils literal notranslate"><span class="pre">frames</span></code> in a chemiscope-compatible
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – iterable over structures (typically a list of frames)</p></li>
+<li><p><strong>only</strong> – optional, list of strings. If not <code class="docutils literal notranslate"><span class="pre">None</span></code>, only properties
+with a name from this list are included in the output.</p></li>
+<li><p><strong>environments</strong> – optional, list of environments (described as
+<code class="docutils literal notranslate"><span class="pre">(structure</span> <span class="pre">id,</span> <span class="pre">center</span> <span class="pre">id,</span> <span class="pre">cutoff)</span></code>) to include when extracting the
+atomic properties.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.composition_properties">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">composition_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.composition_properties" title="Link to this definition">¶</a></dt>
+<dd><p>Generate properties containing the chemical composition of the given
+<code class="docutils literal notranslate"><span class="pre">frames</span></code>.</p>
+<p>This create two atomic properties: <code class="docutils literal notranslate"><span class="pre">symbol</span></code> (string) and <code class="docutils literal notranslate"><span class="pre">number</span></code> (int);
+and multiple structure properties: <code class="docutils literal notranslate"><span class="pre">composition</span></code> and <code class="docutils literal notranslate"><span class="pre">n_{element}</span></code> for
+each elements in the dataset. The properties are then returned in chemiscope
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – iterable over structures (typically a list of frames)</p></li>
+<li><p><strong>environments</strong> – optional, list of environments (described as
+<code class="docutils literal notranslate"><span class="pre">(structure</span> <span class="pre">id,</span> <span class="pre">center</span> <span class="pre">id,</span> <span class="pre">cutoff)</span></code>) to include when generating the
+atomic properties.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.all_atomic_environments">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">all_atomic_environments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.all_atomic_environments" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a list of environments containing all the atoms in the given
+<code class="docutils literal notranslate"><span class="pre">frames</span></code>. The optional spherical <code class="docutils literal notranslate"><span class="pre">cutoff</span></code> radius is used to display the
+environments in chemiscope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – iterable over structures (typically a list of frames)</p></li>
+<li><p><strong>cutoff</strong> (<em>float</em>) – spherical cutoff radius used when displaying the
+environments</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.librascal_atomic_environments">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">librascal_atomic_environments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.librascal_atomic_environments" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the list of environments for the given <code class="docutils literal notranslate"><span class="pre">frames</span></code>, matching the
+behavior used by librascal when computing descriptors for only a subset of
+the atomic centers. The optional spherical <code class="docutils literal notranslate"><span class="pre">cutoff</span></code> radius is used to
+display the environments in chemiscope.</p>
+<p>Only <code class="docutils literal notranslate"><span class="pre">ase.Atoms</span></code> are supported for the <code class="docutils literal notranslate"><span class="pre">frames</span></code> since that’s what
+librascal uses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – iterable over <code class="docutils literal notranslate"><span class="pre">ase.Atoms</span></code></p></li>
+<li><p><strong>cutoff</strong> (<em>float</em>) – spherical cutoff radius used when displaying the
+environments</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.ellipsoid_from_tensor">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">ellipsoid_from_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.ellipsoid_from_tensor" title="Link to this definition">¶</a></dt>
+<dd><p>Returns an ellipsoid (semiaxes + quaternion) representation of a positive definite
+tensor (e.g. a polarizability), in the form required by the chemiscope input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> – a positive-definite tensor (3x3 or a 6-array [xx,yy,zz,xy,xz,yz])</p></li>
+<li><p><strong>scale</strong> – conversion from the units of the tensor to the units of the atomic
+positions (usually Å)</p></li>
+<li><p><strong>force_positive</strong> – takes the absolute value of eigenvalues, to handle
+non-positive tensors</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.arrow_from_vector">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">arrow_from_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_radius_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_length_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.arrow_from_vector" title="Link to this definition">¶</a></dt>
+<dd><p>Draws an arrow from the origin to the specified 3D position. Returns a custom shape
+in the form required by the chemiscope input. Use <cite>None</cite> for the arrow shape
+parameters to leave them undefined (so that they can be specified in the global
+parameters).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale</strong> – conversion from the units of the vector to the units of the atomic
+positions (usually Å)</p></li>
+<li><p><strong>radius</strong> – radius of the stem of the arrow (same units as the atomic positions,
+typically Å)</p></li>
+<li><p><strong>head_radius_scale</strong> – radius of the arrow tip, relative to the stem radius</p></li>
+<li><p><strong>head_length_scale</strong> – length of the arrow tip, relative to the stem radius</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.ase_vectors_to_arrows">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">ase_vectors_to_arrows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'forces'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.ase_vectors_to_arrows" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a vectorial atom property from a list of ase.Atoms
+objects, and returns a list of arrow shapes. Besides the specific
+parameters it also accepts the same parameters as
+<cite>array_from_vector</cite>, which are used to define the style of the
+arrows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – list of ASE Atoms objects</p></li>
+<li><p><strong>key</strong> – name of the ASE atom property. Should contain
+three components corresponding to x,y,z</p></li>
+<li><p><strong>target</strong> – whether the properties should be associated with
+the entire structure, or each atom (<cite>structure</cite> or <cite>atom</cite>).
+defaults to autodetection</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chemiscope.ase_tensors_to_ellipsoids">
+<span class="sig-prename descclassname"><span class="pre">chemiscope.</span></span><span class="sig-name descname"><span class="pre">ase_tensors_to_ellipsoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#chemiscope.ase_tensors_to_ellipsoids" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a 2-tensor atom property from a list of ase.Atoms
+objects, and returns a list of ellipsoids shapes. Besides the specific
+parameters it also accepts the same parameters as
+<cite>ellipsoid_from_tensor</cite>, which are used to draw the shapes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – list of ASE Atoms objects</p></li>
+<li><p><strong>key</strong> – name of the ASE atom property. Should contain
+nine components corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or
+six components corresponding to xx,yy,zz,xy,xz,yz</p></li>
+<li><p><strong>target</strong> – whether the properties should be associated with
+the entire structure, or each atom (<cite>structure</cite> or <cite>atom</cite>).
+defaults to autodetection</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="chemiscope-input-command-line-interface">
+<span id="chemiscope-input-cli"></span><h2><code class="docutils literal notranslate"><span class="pre">chemiscope-input</span></code> command line interface<a class="headerlink" href="#chemiscope-input-command-line-interface" title="Link to this heading">¶</a></h2>
+<p><p>
+    Command-line utility to generate an input for chemiscope — the interactive
+    structure-property explorer. Parses an input file containing atomic
+    structures using the ASE I/O module, and converts it into a JSON file that
+    can be loaded in chemiscope. Frame and environment properties must be
+    written in the same file containing atomic structures: we recommend the
+    extended xyz format, which is flexible and simple. In all cases, this
+    utility will simply write to the JSON file anything that is readable by
+    ASE.
+    </p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">-</span><span class="nb">input</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">o</span> <span class="n">OUTPUT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">properties</span> <span class="n">PROPERTIES</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">--</span><span class="n">only</span><span class="o">-</span><span class="n">atoms</span> <span class="o">|</span> <span class="o">--</span><span class="n">only</span><span class="o">-</span><span class="n">structures</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cutoff</span> <span class="n">CUTOFF</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">name</span> <span class="n">NAME</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">--</span><span class="n">description</span> <span class="n">DESCRIPTION</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">authors</span> <span class="p">[</span><span class="n">AUTHORS</span> <span class="o">...</span><span class="p">]]</span>
+                 <span class="p">[</span><span class="o">--</span><span class="n">references</span> <span class="p">[</span><span class="n">REFERENCES</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">settings</span> <span class="n">SETTINGS</span><span class="p">]</span>
+                 <span class="nb">input</span>
+</pre></div>
+</div>
+<section id="chemiscope-input-positional-arguments">
+<h3>positional arguments<a class="headerlink" href="#chemiscope-input-positional-arguments" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p id="chemiscope-input-input"><a class="reference internal" href="#chemiscope-input-input" title="chemiscope-input input"><strong><code class="docutils literal notranslate"><span class="pre">input</span></code></strong></a> - input file containing the structures and properties (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+</ul>
+</section>
+<section id="chemiscope-input-options">
+<h3>options<a class="headerlink" href="#chemiscope-input-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p id="chemiscope-input--h"><span id="chemiscope-input---help"></span><a class="reference internal" href="#chemiscope-input--h" title="chemiscope-input -h"><strong><code class="docutils literal notranslate"><span class="pre">-h</span></code></strong></a>, <a class="reference internal" href="#chemiscope-input---help" title="chemiscope-input --help"><strong><code class="docutils literal notranslate"><span class="pre">--help</span></code></strong></a> - show this help message and exit</p></li>
+<li><p id="chemiscope-input--o"><span id="chemiscope-input---output"></span><a class="reference internal" href="#chemiscope-input--o" title="chemiscope-input -o"><strong><code class="docutils literal notranslate"><span class="pre">-o</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">OUTPUT</span></code>, <a class="reference internal" href="#chemiscope-input---output" title="chemiscope-input --output"><strong><code class="docutils literal notranslate"><span class="pre">--output</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">OUTPUT</span></code> - chemiscope output file in JSON format (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+<li><p id="chemiscope-input---properties"><a class="reference internal" href="#chemiscope-input---properties" title="chemiscope-input --properties"><strong><code class="docutils literal notranslate"><span class="pre">--properties</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">PROPERTIES</span></code> - comma-separated list of properties that should be extracted. defaults to all</p></li>
+<li><p id="chemiscope-input---only-atoms"><a class="reference internal" href="#chemiscope-input---only-atoms" title="chemiscope-input --only-atoms"><strong><code class="docutils literal notranslate"><span class="pre">--only-atoms</span></code></strong></a> - only use per-atom properties from the input file</p></li>
+<li><p id="chemiscope-input---only-structures"><a class="reference internal" href="#chemiscope-input---only-structures" title="chemiscope-input --only-structures"><strong><code class="docutils literal notranslate"><span class="pre">--only-structures</span></code></strong></a> - only use per-structure properties from the input file (default)</p></li>
+<li><p id="chemiscope-input---cutoff"><a class="reference internal" href="#chemiscope-input---cutoff" title="chemiscope-input --cutoff"><strong><code class="docutils literal notranslate"><span class="pre">--cutoff</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">CUTOFF</span></code> - spherical cutoff radius that should be visualized around environments (default: <code class="docutils literal notranslate"><span class="pre">3.5</span></code>)</p></li>
+<li><p id="chemiscope-input---name"><a class="reference internal" href="#chemiscope-input---name" title="chemiscope-input --name"><strong><code class="docutils literal notranslate"><span class="pre">--name</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">NAME</span></code> - name of the dataset (default: <code class="docutils literal notranslate"></code>)</p></li>
+<li><p id="chemiscope-input---description"><a class="reference internal" href="#chemiscope-input---description" title="chemiscope-input --description"><strong><code class="docutils literal notranslate"><span class="pre">--description</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">DESCRIPTION</span></code> - description of the dataset (default: <code class="docutils literal notranslate"></code>)</p></li>
+<li><p id="chemiscope-input---authors"><a class="reference internal" href="#chemiscope-input---authors" title="chemiscope-input --authors"><strong><code class="docutils literal notranslate"><span class="pre">--authors</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">AUTHORS</span></code> - list of dataset authors (default: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)</p></li>
+<li><p id="chemiscope-input---references"><a class="reference internal" href="#chemiscope-input---references" title="chemiscope-input --references"><strong><code class="docutils literal notranslate"><span class="pre">--references</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">REFERENCES</span></code> - list of references for the dataset (default: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)</p></li>
+<li><p id="chemiscope-input---settings"><a class="reference internal" href="#chemiscope-input---settings" title="chemiscope-input --settings"><strong><code class="docutils literal notranslate"><span class="pre">--settings</span></code></strong></a> <code class="docutils literal notranslate"><span class="pre">SETTINGS</span></code> - visualization settings, as a JSON string, following the chemiscope format (default: <code class="docutils literal notranslate"></code>)</p></li>
+</ul>
+</section>
+</p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

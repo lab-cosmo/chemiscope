@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Chemiscope as a library &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/chemiscope.css?v=05a7503b" />
+    <script src="_static/documentation_options.js?v=8e576371"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Jupyter notebooks" href="tutorial/jupyter.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="index.html">Documentation</a></li>        
+  <li>
+    <a href="tutorial/jupyter.html" title="Previous Chapter: Jupyter notebooks"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Jupyter notebooks</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">User tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/input.html">Creating chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/input-reference.html">Input file reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/sharing.html">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="chemiscope-as-a-library">
+<h1>Chemiscope as a library<a class="headerlink" href="#chemiscope-as-a-library" title="Link to this heading">¶</a></h1>
+<p>It is possible to use chemiscope as a software library when writing your own
+web-based interface. This page document how to get the library and give a few
+usage examples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should also look at the <a class="reference external" href="api/index.html">API documentation</a> for a list
+of all public classes, interfaces and functions in chemiscope.</p>
+</div>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
+<p>Chemiscope relies on different external dependencies that you should load in all
+the HTML pages using it. You can serve these from your own web server, or use a
+CDN to deliver them.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://getbootstrap.com/">Bootstrap</a> for HTML styling and basic UI;</p></li>
+<li><p>3Dmol.js relies on the ubiquitous <a class="reference external" href="https://jquery.com/">JQuery</a></p></li>
+</ul>
+</section>
+<section id="getting-and-building-the-code">
+<h2>Getting and building the code<a class="headerlink" href="#getting-and-building-the-code" title="Link to this heading">¶</a></h2>
+<section id="pre-built-version">
+<h3>Pre-built version<a class="headerlink" href="#pre-built-version" title="Link to this heading">¶</a></h3>
+<p>The easiest way to do so is to download the latest release from <a class="reference external" href="https://github.com/lab-cosmo/chemiscope/releases">the release
+page</a> on GitHub. The main
+file is <code class="docutils literal notranslate"><span class="pre">chemiscope.min.js</span></code>, containing the code required to create the
+default visualizer. This file exports a single global object <code class="docutils literal notranslate"><span class="pre">Chemiscope</span></code>,
+which contains references to</p>
+<ul class="simple">
+<li><p><a class="reference external" href="api/classes/DefaultVisualizer.html">Chemiscope.DefaultVisualizer</a></p></li>
+<li><p><a class="reference external" href="api/index.html#addWarningHandler">Chemiscope.addWarningHandler</a></p></li>
+<li><p><a class="reference external" href="api/classes/MetadataPanel.html">Chemiscope.MetadataPanel</a></p></li>
+<li><p><a class="reference external" href="api/classes/ViewersGrid.html">Chemiscope.ViewersGrid</a></p></li>
+<li><p><a class="reference external" href="api/classes/PropertiesMap.html">Chemiscope.PropertiesMap</a></p></li>
+<li><p><a class="reference external" href="api/classes/EnvironmentInfo.html">Chemiscope.EnvironmentInfo</a></p></li>
+<li><p><a class="reference external" href="api/classes/EnvironmentIndexer.html">Chemiscope.EnvironmentIndexer</a></p></li>
+</ul>
+<p>Partial builds are also available, in particular <code class="docutils literal notranslate"><span class="pre">molecule-viewer.min.js</span></code>
+which only contains code related to <a class="reference external" href="api/classes/MoleculeViewer.html">Chemiscope.MoleculeViewer</a>, making the minified JavaScript file much smaller. Other
+partial builds containing only part of chemiscope can be added upon request.</p>
+</section>
+<section id="build-from-sources">
+<h3>Build from sources<a class="headerlink" href="#build-from-sources" title="Link to this heading">¶</a></h3>
+<p>Chemiscope is written in TypeScript, a statically typed language which compiles
+to JavaScript. It uses the standard JavaScript ecosystem tools for dependency
+management, <code class="docutils literal notranslate"><span class="pre">npm</span></code>. To build chemiscope from sources, you will first need to
+get the sources, either as an archive from <a class="reference external" href="https://github.com/lab-cosmo/chemiscope/releases">the release page</a>, or using git</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lab-cosmo/chemiscope
+</pre></div>
+</div>
+<p>You will also need <a class="reference external" href="https://nodejs.org/en/">node.js</a> and <a class="reference external" href="https://docs.npmjs.com/cli/npm">npm</a>, which you can install with your favorite
+package manager.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>chemiscope
+npm<span class="w"> </span>install
+npm<span class="w"> </span>run<span class="w"> </span>build
+</pre></div>
+</div>
+<p>This should create a <code class="docutils literal notranslate"><span class="pre">dist</span></code> directory, containing all the minified JavaScript
+libraries.</p>
+</section>
+<section id="usage-inside-a-javascript-project">
+<h3>Usage inside a JavaScript project<a class="headerlink" href="#usage-inside-a-javascript-project" title="Link to this heading">¶</a></h3>
+<p>If you already have a JavaScript project using <code class="docutils literal notranslate"><span class="pre">npm</span></code> or <code class="docutils literal notranslate"><span class="pre">yarn</span></code>, you can use
+the version of Chemiscope available on npm. Add it to your project with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>install<span class="w"> </span>chemiscope
+</pre></div>
+</div>
+<p>And import the library inside your own code using</p>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">Chemiscope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;chemiscope&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If your are using TypeScript, definition files are also provided with the npm
+package, and should give you auto-completion, inline documentation and interface
+checking.</p>
+</section>
+</section>
+<section id="usage-example">
+<h2>Usage example<a class="headerlink" href="#usage-example" title="Link to this heading">¶</a></h2>
+<p>Below is the minimal HTML and JavaScript code needed to load and use the default
+chemiscope interface. Additional code would be required to load the dataset,
+using JSON files or directly.</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;utf-8&quot;</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Chemiscope basic example<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+
+        <span class="cm">&lt;!-- Load all dependencies --&gt;</span>
+        <span class="cm">&lt;!-- jquery --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">script</span>
+            <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js&quot;</span>
+            <span class="na">integrity</span><span class="o">=</span><span class="s">&quot;sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=&quot;</span>
+            <span class="na">crossorigin</span><span class="o">=</span><span class="s">&quot;anonymous&quot;</span>
+        <span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+        <span class="cm">&lt;!-- Chemiscope code and default viewer code --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">script</span> <span class="na">defer</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;chemiscope.min.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+        <span class="cm">&lt;!-- Create basic DOM element for the different panels to live in --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;meta&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;map&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;structure&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;width: 400px; height: 400px&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;info&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="cm">&lt;!-- We appreciate a citation back to the main chemiscope website --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;font-size: x-small; float: right&quot;</span><span class="p">&gt;</span> powered by <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;https://chemiscope.org&quot;</span><span class="p">&gt;</span>chemiscope<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="c1">// show errors in the webpage</span>
+<span class="w">        </span><span class="nb">window</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">insertAdjacentHTML</span><span class="p">(</span><span class="s1">&#39;beforebegin&#39;</span><span class="p">,</span><span class="w"> </span><span class="sb">`&lt;div style=&quot;margin: auto; color: red;&quot;&gt;ERROR: </span><span class="si">${</span><span class="nx">error</span><span class="si">}</span><span class="sb">&lt;/div&gt;`</span><span class="p">);</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="c1">// load data from anywhere</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">dataset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">structures</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">properties</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">environments</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded (optional)</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// id of the different elements</span>
+<span class="w">            </span><span class="nx">map</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;map&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;meta&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">info</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">structure</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;DOMContentLoaded&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// once all javascript have been loaded, we can setup the</span>
+<span class="w">            </span><span class="c1">// DefaultVisualizer instance.</span>
+<span class="w">            </span><span class="nx">Chemiscope</span><span class="p">.</span><span class="nx">DefaultVisualizer</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">dataset</span><span class="p">);</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

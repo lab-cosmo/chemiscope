@@ -1,0 +1,190 @@
+:root {
+    --header-height: 50px;
+    --footer-height: 40px;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 35px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: var(--footer-height);
+    padding-top: 12px;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 0.8rem;
+}
+
+.footer .container {
+    max-width: 1140px;
+}
+
+.footer a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+header {
+    background-color: #2c3e50;
+    width: 100%;
+    height: var(--header-height);
+}
+
+.navbar {
+    max-width: 1140px;
+    margin-bottom: 1em;
+    z-index: 999;
+    background-color: inherit;
+}
+
+.references a {
+    color: grey;
+}
+
+#loading {
+    font-size: 6em;
+    margin: auto;
+    text-align: center;
+    color: grey;
+    position: absolute;
+    z-index: 100000;
+    left: 50%;
+}
+
+main.container-fluid {
+    margin: 1.5em 0em calc(1.5em + var(--header-height)) 0em;
+    width: 100%;
+}
+
+@media screen and (min-width: 1200px) {
+    main.container-fluid {
+        margin: 2em 2em calc(2em + var(--header-height)) 2em;
+        width: calc(100% - 4em);
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    main.container-fluid {
+        margin: 2em auto calc(2em + var(--header-height)) auto;
+        width: 1500px;
+    }
+}
+
+main .ratio {
+    margin: auto;
+}
+
+main .ratio > * {
+    display: flex;
+    flex-flow: column;
+}
+
+.ratio-5x7 {
+    overflow-y: hidden;
+}
+
+.ratio-5x7::before {
+    padding-top: 140%;
+}
+
+@media screen and (min-width: 768px) {
+    .ratio-5x7 {
+        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+    }
+
+    main .ratio {
+        /* set the width to fit the vertical space, and the height will be set automatically */
+        max-width: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+    }
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.pop-on-top {
+    z-index: 100;
+    position: absolute;
+    width: 80%;
+    left: 50%;
+    margin-left: -40%;
+}
+
+#chemiscope-meta {
+    width: max-content;
+    height: max-content;
+    position: absolute;
+    top: 0;
+    left: 2em;
+    font-size: 16pt;
+}
+
+#chemiscope-map {
+    display: block;
+}
+
+#chemiscope-structure {
+    flex: 1 1 auto;
+}
+
+#chemiscope-info {
+    flex: 0 1 auto;
+    width: 100%;
+}
+
+#upload {
+    width: 280px;
+}
+
+#open-save-menu {
+    background-color: #e2e6ea;
+    border-color: #ced4da;
+}
+
+#open-save-menu:hover {
+    background-color: #f8f9fa;
+}
+
+.grid-1-1 {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-1-1-1 {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.width-10em {
+    width: 10em;
+}
+
+.btn-outline-secondary-less-hover:hover {
+    color: inherit;
+    background-color: #f2f2f2;
+}
+
+.hidden-input-file {
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
