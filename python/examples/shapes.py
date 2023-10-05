@@ -11,13 +11,13 @@ Note that the same parameters can be used with `chemiscope.show`
 to visualize an interactive widget in a Jupyter notebook.
 """
 
-import ase.io as aseio
+import ase.io
 import chemiscope
 import numpy as np
 from scipy.spatial.transform import Rotation
 
 # loads a dataset of structures
-frames = aseio.read("data/alpha-mu.xyz", ":")
+frames = ase.io.read("data/alpha-mu.xyz", ":")
 
 quaternions = []
 # converts the arrays from the format they are stored in to an array
@@ -196,7 +196,7 @@ dipoles_auto["parameters"]["global"] = {
 }
 
 chemiscope.write_input(
-    "alphamu-shapes.json.gz",
+    "shapes-example.json.gz",
     frames=frames,
     properties=chemiscope.extract_properties(frames, only=["alpha"]),
     shapes={
