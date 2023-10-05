@@ -347,6 +347,9 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     :param frames: list of ASE Atoms objects
     :param key: name of the ASE atom property. Should contain
        three components corresponding to x,y,z
+    :param target: whether the properties should be associated with
+       the entire structure, or each atom (`structure` or `atom`).
+       defaults to autodetection
     """
 
     vectors = []
@@ -393,6 +396,9 @@ def ase_tensors_to_ellipsoids(frames, key, target=None, **kwargs):
     :param key: name of the ASE atom property. Should contain
        nine components corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or
        six components corresponding to xx,yy,zz,xy,xz,yz
+    :param target: whether the properties should be associated with
+       the entire structure, or each atom (`structure` or `atom`).
+       defaults to autodetection
     """
 
     tensors = []

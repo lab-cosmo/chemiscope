@@ -113,6 +113,21 @@ contains the following fields and values:
                     "atom" : [ <list_of_atom_parameter_dictionaries> ]
                 }
             },
+            // Sphere shapes, with the given `radius`
+            <other_name>: {
+                "kind" : "sphere"
+                "parameters" : {
+                    "global" : { "radius" : 0.2 }                    
+                }
+            },
+            // Arrow, with the given shape parameters, and `vector` direction
+            <other_name>: {
+                "kind" : "sphere"
+                "parameters" : {
+                    "global" : { "baseRadius" : 0.2, 'headRadius': 0.3, 'headLength' : 0.4 },
+                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
+                }
+            },
             // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
             <other_name>: {
                 "kind" : "ellipsoid"
@@ -121,11 +136,14 @@ contains the following fields and values:
                     "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
                 }
             },
-            // Custom shapes
+            // Custom shapes. Must provide list of vertices, and the vertex
+            // indices associated with simplices (the latter are autocalculated)
+            // if omitted
             <yet_another> : {
                 "kind" : "custom",
                 "parameters" : {
-                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2], ...] }, 
+                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2], ...],
+                                 "simplices" : [[0,1,2], [1,3,4], [0,5,5]] }, 
                     "atom" : [ {"scale" : 1}, {"scale" : 0.5}, ... ]
                 }
             }
