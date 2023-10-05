@@ -11,7 +11,7 @@ Note that the same parameters can be used with `chemiscope.show`
 to visualize an interactive widget in a Jupyter notebook.
 """
 
-import ase.io as aseio
+import ase.io
 import chemiscope
 import numpy as np
 from scipy.spatial.transform import Rotation
