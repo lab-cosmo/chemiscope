@@ -305,7 +305,38 @@ def _is_convertible_to_property(value):
                 return False
 
 
-def extract_vectors_from_ase(frames, key="forces", **kwargs):
+def _extract_key_from_ase(frame, key, target=None):
+    """
+    Extract a property from either the atomic array of info fields
+    of an ase.Atoms frame. Defaults to atoms if no target is specified,
+    and also returns the actual target it picked the key from.
+    """
+
+    if target is None:
+        if key in frame.arrays:  # defaults to atom target
+            target = "atom"
+        elif key in frame.info:
+            target = "structure"
+        else:
+            raise IndexError(
+                f"Key {key} not found in neither `Atoms.arrays` or `Atoms.info`"
+            )
+
+    if target == "atom":
+        try:
+            values = frame.arrays[key]
+        except IndexError:
+            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
+    if target == "structure":
+        try:
+            values = frame.info[key]
+        except IndexError:
+            raise IndexError(f"Key {key} not found in `Atoms.info`")
+
+    return values, target
+
+
+def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     """
     Extract a vectorial atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
@@ -316,29 +347,48 @@ def extract_vectors_from_ase(frames, key="forces", **kwargs):
     :param frames: list of ASE Atoms objects
     :param key: name of the ASE atom property. Should contain
        three components corresponding to x,y,z
+    :param target: whether the properties should be associated with
+       the entire structure, or each atom (`structure` or `atom`).
+       defaults to autodetection
     """
 
     vectors = []
 
+    # set shape parameters globally if they are all given
+    globs = {}
+    if "radius" in kwargs:
+        globs["base_radius"] = kwargs.pop("radius")
+        if "head_radius_scale" in kwargs:
+            globs["head_radius"] = globs["base_radius"] * kwargs.pop(
+                "head_radius_scale"
+            )
+        if "head_length_scale" in kwargs:
+            globs["head_length"] = globs["base_radius"] * kwargs.pop(
+                "head_length_scale"
+            )
+
     for f in frames:
-        if key not in f.arrays:
-            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
-        values = f.arrays[key]
+        values, target = _extract_key_from_ase(f, key, target)
+        if target == "structure":
+            values = values.reshape(1, -1)
         if len(values.shape) != 2 or values.shape[1] != 3:
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 3-vectors"
             )
 
         # makes a list of arrows to visualize the property
-        vectors.append([arrow_from_vector(v, **kwargs) for v in values])
+        vectors = vectors + [arrow_from_vector(v, **kwargs) for v in values]
 
-    return vectors
+    if target == "atom":
+        return {"kind": "arrow", "parameters": {"global": globs, "atom": vectors}}
+    else:
+        return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def extract_tensors_from_ase(frames, key="tensor", **kwargs):
+def ase_tensors_to_ellipsoids(frames, key, target=None, **kwargs):
     """
-    Extract a 3-tensor atom property from a list of ase.Atoms
-    objects, and returns a list of arrow shapes. Besides the specific
+    Extract a 2-tensor atom property from a list of ase.Atoms
+    objects, and returns a list of ellipsoids shapes. Besides the specific
     parameters it also accepts the same parameters as
     `ellipsoid_from_tensor`, which are used to draw the shapes
 
@@ -346,49 +396,29 @@ def extract_tensors_from_ase(frames, key="tensor", **kwargs):
     :param key: name of the ASE atom property. Should contain
        nine components corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or
        six components corresponding to xx,yy,zz,xy,xz,yz
+    :param target: whether the properties should be associated with
+       the entire structure, or each atom (`structure` or `atom`).
+       defaults to autodetection
     """
 
     tensors = []
 
     for f in frames:
-        if key not in f.arrays:
-            raise IndexError(f"Key {key} not found in `Atoms.arrays`")
-        values = f.arrays[key]
+        values, target = _extract_key_from_ase(f, key, target)
+        if target == "structure":
+            values = values.reshape(1, -1)
         if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):
             raise ValueError(
                 f"Property array {key} has not the shape of a list of 6 or 9-vectors"
             )
 
-        # makes a list of arrows to visualize the property
-        tensors.append([ellipsoid_from_tensor(v, **kwargs) for v in values])
+        # makes a list of ellipsoids to visualize the property
+        tensors = tensors + [ellipsoid_from_tensor(v, **kwargs) for v in values]
 
-    return tensors
-
-
-def extract_lammps_shapes_from_ase(frames, key="shape"):
-    """
-    Extract shapes from a LAMMPS data file read by ASE.
-
-    :param frames: list of ASE Atoms objects
-    :param key: name of the ASE property where the shape is stored
-    """
-
-    all_shapes = [_extract_lammps_shapes(frame, key=key) for frame in frames]
-
-    n_without = len([shapes for shapes in all_shapes if shapes is None])
-    if n_without != 0:
-        raise ValueError(f"{n_without} frame(s) do not contain shape information")
-
-    keys = set([k for shapes in all_shapes for k in shapes.keys()])
-
-    universal_keys = [k for k in keys if all([k in shapes for shapes in all_shapes])]
-
-    if len(universal_keys) != len(keys):
-        warnings.warn(
-            f"Only including shape keys [{', '.join(universal_keys)}], which are "
-            "present in all frames. All other shape keys are omitted."
-        )
-    return {k: [shapes[k] for shapes in all_shapes] for k in universal_keys}
+    if target == "atom":
+        return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})
+    else:
+        return dict(kind="ellipsoid", parameters={"global": {}, "structure": tensors})
 
 
 # Required parameters from different kinds of shapes

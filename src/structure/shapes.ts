@@ -15,6 +15,7 @@ import assert from 'assert';
 
 import { default as $3Dmol } from '3dmol';
 import { Quaternion } from '3dmol';
+type ColorSpec = number | string | { r: number; g: number; b: number; a?: number }; // mysterious compile errors if I import from 3dmol
 
 // Just an interface to enforce XYZ-type coordinates
 export interface XYZ {
@@ -23,30 +24,72 @@ export interface XYZ {
     z: number;
 }
 
-export interface SphereData {
-    kind: 'sphere';
+export interface BaseShapeData {
+    position: [number, number, number];
+    orientation?: [number, number, number, number];
+    scale?: number;
+    color?: ColorSpec;
+}
+
+export interface BaseShapeParameters<T> {
+    kind: string;
+    parameters: {
+        global: Partial<T>;
+        structure?: Array<Partial<T>>;
+        atom?: Array<Partial<T>>;
+    };
+}
+
+// orientation does not make sense for a sphere
+export interface SphereData extends BaseShapeData {
     radius: number;
 }
 
-// Interface for ellipsoidal data, where
-// orientation is stored in the (w, x, y, z) convention
-export interface EllipsoidData {
-    kind: 'ellipsoid';
+export interface SphereParameters extends BaseShapeParameters<SphereData> {
+    kind: 'sphere';
+}
+
+// Interface for ellipsoidal data, where the shape
+// of the ellipsoid is given by the semiaxes, and the orientation
+// by the general `orientation` property
+export interface EllipsoidData extends BaseShapeData {
     semiaxes: [number, number, number];
-    orientation?: [number, number, number, number];
+}
+
+export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> {
+    kind: 'ellipsoid';
+}
+
+// Interface for arrow data (avoids orientation options, since it's redundant)
+export interface ArrowData extends BaseShapeData {
+    vector: [number, number, number];
+    baseRadius?: number;
+    headRadius?: number;
+    headLength?: number;
+}
+
+export interface ArrowParameters extends BaseShapeParameters<ArrowData> {
+    kind: 'arrow';
 }
 
 // Interface for polytope data, where
-// orientation is stored in the (w, x, y, z) convention
+// orientation is stored in the (x, y, z, w) convention
 // and simplices refers to the indices of the facets
-export interface CustomShapeData {
-    kind: 'custom';
+export interface CustomShapeData extends BaseShapeData {
     vertices: [number, number, number][];
     simplices: [number, number, number][];
-    orientation?: [number, number, number, number];
 }
 
-export type ShapeData = SphereData | EllipsoidData | CustomShapeData;
+export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeData> {
+    kind: 'custom';
+}
+
+export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData;
+export type ShapeParameters =
+    | SphereParameters
+    | EllipsoidParameters
+    | ArrowParameters
+    | CustomShapeParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -54,6 +97,14 @@ function addXYZ(a: XYZ, b: XYZ): XYZ {
 
 function subXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+}
+
+function multXYZ(a: XYZ, b: number): XYZ {
+    return { x: a.x * b, y: a.y * b, z: a.z * b };
+}
+
+function dotXYZ(a: XYZ, b: XYZ): number {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 function crossXYZ(a: XYZ, b: XYZ): XYZ {
@@ -108,15 +159,17 @@ function determineNormals(vertices: XYZ[], simplices: [number, number, number][]
 export class Shape {
     public position: XYZ;
     /// orientation of the particle
-    public quaternion: Quaternion;
+    public orientation: Quaternion;
+    /// scaling factor
+    public scale: number;
 
     // orientation is passed to 3dmol in the (x, y, z, w) convention
-    constructor(
-        [x, y, z]: [number, number, number],
-        [qx, qy, qz, qw]: [number, number, number, number] = [0, 0, 0, 1]
-    ) {
-        this.quaternion = new Quaternion(qx, qy, qz, qw);
+    constructor(data: Partial<ShapeData>) {
+        const [qx, qy, qz, qw] = data.orientation || [0, 0, 0, 1];
+        this.orientation = new Quaternion(qx, qy, qz, qw);
+        const [x, y, z] = data.position || [0, 0, 0];
         this.position = { x, y, z };
+        this.scale = data.scale || 1.0;
     }
 
     // disabling eslint because it complains parameters is never used
@@ -216,16 +269,18 @@ function isPositiveInteger(o: unknown): boolean {
 export class Sphere extends Shape {
     public radius: number;
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: SphereData) {
-        super(position);
-        this.radius = data.radius;
+    constructor(data: Partial<SphereData>) {
+        super(data);
+        this.radius = (data.radius || 1.0) * this.scale;
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'sphere');
-
         if (!('radius' in parameters)) {
             return '"radius" is required for "sphere" shapes';
+        }
+
+        if ('orientation' in parameters) {
+            return '"orientation" has no effect on a sphere shape';
         }
 
         if (typeof parameters.radius !== 'number') {
@@ -270,14 +325,17 @@ export class Sphere extends Shape {
 export class Ellipsoid extends Shape {
     public semiaxes: [number, number, number];
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: EllipsoidData) {
-        super(position, data.orientation);
-        this.semiaxes = data.semiaxes;
+    constructor(data: Partial<EllipsoidData>) {
+        super(data);
+        assert(data.semiaxes);
+        this.semiaxes = [
+            this.scale * data.semiaxes[0],
+            this.scale * data.semiaxes[1],
+            this.scale * data.semiaxes[2],
+        ];
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'ellipsoid');
-
         if (!('semiaxes' in parameters)) {
             return '"semiaxes" is required for "ellipsoid" shapes';
         }
@@ -309,15 +367,21 @@ export class Ellipsoid extends Shape {
         const normals: XYZ[] = [];
 
         for (const v of rawVertices) {
-            const newVertex: XYZ = rotateAndPlace(v, this.quaternion, this.position);
+            const newVertex: XYZ = rotateAndPlace(v, this.orientation, this.position);
             vertices.push(newVertex);
 
-            const relativeVertex = subXYZ(newVertex, this.position);
-            const newNormal: XYZ = {
-                x: relativeVertex.x / Math.pow(this.semiaxes[0], 2.0),
-                y: relativeVertex.y / Math.pow(this.semiaxes[1], 2.0),
-                z: relativeVertex.z / Math.pow(this.semiaxes[2], 2.0),
-            };
+            // the normal to the ellipsoid surface is best computed in the original
+            // coordinate system, and then rotated in place
+            const newNormal: XYZ = rotateAndPlace(
+                {
+                    x: v.x / Math.pow(this.semiaxes[0], 2.0),
+                    y: v.y / Math.pow(this.semiaxes[1], 2.0),
+                    z: v.z / Math.pow(this.semiaxes[2], 2.0),
+                },
+                this.orientation,
+                { x: 0, y: 0, z: 0 }
+            );
+
             normals.push(newNormal);
         }
         return {
@@ -329,23 +393,192 @@ export class Ellipsoid extends Shape {
     }
 }
 
+function triangulateArrow(
+    vector: [number, number, number],
+    baseRadius: number,
+    headRadius: number,
+    headLength: number,
+    resolution: number = 20
+): { vertices: XYZ[]; indices: number[] } {
+    const [x, y, z] = vector;
+    const tip: XYZ = { x, y, z };
+    const v_len = Math.sqrt(x * x + y * y + z * z);
+    if (headLength > v_len) {
+        // if the head is longer than the vector, then draw a "squashed tip"
+        // to visualize accurately small vectors
+        headLength = v_len;
+    }
+    const base_tip: XYZ = {
+        x: tip.x * (1 - headLength / v_len),
+        y: tip.y * (1 - headLength / v_len),
+        z: tip.z * (1 - headLength / v_len),
+    };
+
+    // generates a unit circle oriented in the right direction
+    const n_vec: XYZ = multXYZ(tip, 1.0 / v_len);
+
+    // Generate an arbitrary vector not collinear with n
+    let vx: XYZ;
+    if (n_vec.x !== 0.0 || n_vec.y !== 0.0) {
+        vx = { x: 0, y: 0, z: 1 };
+    } else {
+        vx = { x: 0, y: 1, z: 0 };
+    }
+
+    // generate orthogonal vectors in the plane defined by nvec
+    let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
+    u = multXYZ(u, 1.0 / Math.sqrt(dotXYZ(u, u)));
+    const v: XYZ = crossXYZ(u, n_vec);
+
+    // generate n_points in the plane defined by nvec, centered at vec
+    const circle_points: XYZ[] = [];
+    for (let i = 0; i < resolution; i++) {
+        circle_points.push(
+            addXYZ(
+                multXYZ(u, Math.cos((i * 2 * Math.PI) / resolution)),
+                multXYZ(v, Math.sin((i * 2 * Math.PI) / resolution))
+            )
+        );
+    }
+
+    let indices: number[] = [];
+    const vertices: XYZ[] = [];
+
+    vertices.push({ x: 0, y: 0, z: 0 });
+    // the arrow is built as a surface of revolution, by stacking _|\ motifs
+    for (let i = 0; i < resolution; i++) {
+        // nb replicated points are needed to get sharp edges
+        vertices.push(multXYZ(circle_points[i], baseRadius));
+        vertices.push(multXYZ(circle_points[i], baseRadius));
+        vertices.push(addXYZ(multXYZ(circle_points[i], baseRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], baseRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], headRadius), base_tip));
+        vertices.push(addXYZ(multXYZ(circle_points[i], headRadius), base_tip));
+        vertices.push(tip);
+        const i_seg = 1 + i * 7;
+        const i_next = 1 + ((i + 1) % resolution) * 7;
+        indices = [
+            ...indices,
+            ...[
+                0,
+                i_seg,
+                i_next, // cylinder base
+                i_seg + 1,
+                i_seg + 2,
+                i_next + 1,
+                i_next + 1,
+                i_seg + 2,
+                i_next + 2, // cylinder side
+                i_seg + 3,
+                i_seg + 4,
+                i_next + 3,
+                i_seg + 4,
+                i_next + 4,
+                i_next + 3, // head ring
+                i_seg + 5,
+                i_next + 5,
+                i_seg + 6, // tip
+            ],
+        ];
+    }
+    return {
+        vertices: vertices,
+        indices: indices,
+    };
+}
+
+export class Arrow extends Shape {
+    public vector: [number, number, number];
+    public baseRadius: number;
+    public headRadius: number;
+    public headLength: number;
+
+    constructor(data: Partial<ArrowData>) {
+        super(data);
+        assert(data.vector);
+        this.vector = [
+            this.scale * data.vector[0],
+            this.scale * data.vector[1],
+            this.scale * data.vector[2],
+        ];
+        this.baseRadius = this.scale * (data.baseRadius || 0.1);
+        this.headRadius = this.scale * (data.headRadius || 0.15);
+        this.headLength = this.scale * (data.headLength || 0.2);
+    }
+
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        if (!('vector' in parameters)) {
+            return '"vector" is required for "arrow" shapes';
+        }
+
+        if (!Array.isArray(parameters.vector) || parameters.vector.length !== 3) {
+            return '"vector" must be an array with 3 elements for "vector" shapes';
+        }
+
+        const [ax, ay, az] = parameters.vector as unknown[];
+        if (typeof ax !== 'number' || typeof ay !== 'number' || typeof az !== 'number') {
+            return '"vector" elements must be numbers for "vector" shapes';
+        }
+
+        if ('orientation' in parameters) {
+            return '"orientation" cannot be used on "arrow" shapes. define "vector" instead';
+        }
+
+        return '';
+    }
+
+    public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
+        const triangulation = triangulateArrow(
+            this.vector,
+            this.baseRadius,
+            this.headRadius,
+            this.headLength,
+            resolution
+        );
+        const rawVertices = triangulation.vertices;
+        const indices = triangulation.indices;
+        const vertices: XYZ[] = [];
+        const simplices: [number, number, number][] = [];
+
+        for (const v of rawVertices) {
+            const newVertex: XYZ = addXYZ(v, this.position);
+            vertices.push(newVertex);
+        }
+
+        for (let i = 0; i < indices.length / 3; i++) {
+            simplices.push([indices[3 * i], indices[3 * i + 1], indices[3 * i + 2]]);
+        }
+
+        return {
+            vertexArr: vertices,
+            normalArr: determineNormals(vertices, simplices),
+            faceArr: indices,
+            color: color,
+        };
+    }
+}
+
 export class CustomShape extends Shape {
     public vertices: XYZ[];
     public simplices: [number, number, number][];
 
-    constructor(position: [number, number, number] = [0, 0, 0], data: CustomShapeData) {
-        super(position, data.orientation);
+    constructor(data: Partial<CustomShapeData>) {
+        super(data);
+        assert(data.vertices);
+        assert(data.simplices);
 
         this.vertices = [];
         for (const v of data.vertices) {
-            this.vertices.push({ x: v[0], y: v[1], z: v[2] });
+            this.vertices.push({
+                x: v[0] * this.scale,
+                y: v[1] * this.scale,
+                z: v[2] * this.scale,
+            });
         }
         this.simplices = data.simplices;
     }
 
     public static validateParameters(parameters: Record<string, unknown>): string {
-        assert(parameters.kind === 'custom');
-
         if (!('vertices' in parameters)) {
             return '"vertices" is required for "custom" shapes';
         }
@@ -397,7 +630,7 @@ export class CustomShape extends Shape {
         const vertices = [];
 
         for (const v of this.vertices) {
-            vertices.push(rotateAndPlace(v, this.quaternion, this.position));
+            vertices.push(rotateAndPlace(v, this.orientation, this.position));
         }
 
         for (const s of this.simplices) {

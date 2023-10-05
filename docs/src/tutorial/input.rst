@@ -55,11 +55,13 @@ generate an output in chemiscope format.
 
 .. autofunction:: chemiscope.librascal_atomic_environments
 
-.. autofunction:: chemiscope.extract_lammps_shapes_from_ase
-
 .. autofunction:: chemiscope.ellipsoid_from_tensor
 
 .. autofunction:: chemiscope.arrow_from_vector
+
+.. autofunction:: chemiscope.ase_vectors_to_arrows
+
+.. autofunction:: chemiscope.ase_tensors_to_ellipsoids
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP

@@ -187,7 +187,7 @@ export class StructureOptions extends OptionsGroup {
         // Position modal near the actual viewer
         openModal.addEventListener('click', () => {
             // only set style once, on first open, and keep previous position
-            // on next open to keep the 'draged-to' position
+            // on next open to keep the 'dragged-to' position
             if (modalDialog.getAttribute('data-initial-modal-positions-set') === null) {
                 modalDialog.setAttribute('data-initial-modal-positions-set', 'true');
 
@@ -206,7 +206,6 @@ export class StructureOptions extends OptionsGroup {
                 modalDialog.style.top = `${top}px`;
                 modalDialog.style.left = `${left}px`;
             }
-
             modal.open();
         });
 
@@ -228,7 +227,7 @@ export class StructureOptions extends OptionsGroup {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
-        this.shape.bind(selectShape, 'value');
+        this.shape.bind(selectShape, 'multival');
 
         this.spaceFilling.bind(this.getModalElement('space-filling'), 'checked');
         this.bonds.bind(this.getModalElement('bonds'), 'checked');

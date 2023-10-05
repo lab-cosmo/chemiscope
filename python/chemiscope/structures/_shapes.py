@@ -48,11 +48,13 @@ def _oriented_circle(radius, vec, n_points=20):
 
 
 def arrow_from_vector(
-    vec, scale=1.0, radius=0.1, head_radius_scale=1.75, head_length_scale=4, n_points=16
+    vec, scale=1.0, radius=0.1, head_radius_scale=1.75, head_length_scale=2.0
 ):
     """
     Draws an arrow from the origin to the specified 3D position. Returns a custom shape
-    in the form required by the chemiscope input.
+    in the form required by the chemiscope input. Use `None` for the arrow shape
+    parameters to leave them undefined (so that they can be specified in the global
+    parameters).
 
     :param scale: conversion from the units of the vector to the units of the atomic
         positions (usually Å)
@@ -60,45 +62,17 @@ def arrow_from_vector(
         typically Å)
     :param head_radius_scale: radius of the arrow tip, relative to the stem radius
     :param head_length_scale: length of the arrow tip, relative to the stem radius
-    :param n_points: resolution of the discretization of the shape
     """
 
-    tip = np.asarray(vec, dtype=float) * scale
-    head_tip = tip + tip / np.linalg.norm(tip) * radius * head_length_scale
-    circle = _oriented_circle(1.0, tip, n_points)
-    base_circle = radius * circle
-    stem_circle = radius * circle + tip
-    head_circle = radius * head_radius_scale * circle + tip
+    data = {"vector": [v * scale for v in vec]}
+    if radius is not None:
+        data["base_radius"] = radius
+    if head_radius_scale is not None:
+        data["head_radius"] = radius * head_radius_scale
+    if head_length_scale is not None:
+        data["head_length"] = radius * head_length_scale
 
-    arrow = dict(
-        kind="custom",
-        vertices=[head_tip.tolist()]
-        + head_circle.tolist()
-        + stem_circle.tolist()
-        + base_circle.tolist()
-        + [[0, 0, 0]],
-        simplices=(
-            [[0, i, i + 1] for i in range(1, n_points)]
-            + [[0, n_points, 1]]
-            + [[i, i + 1, i + 1 + n_points] for i in range(1, n_points)]
-            + [[n_points, 1, n_points + 1]]
-            + [[i + n_points, i, i + 1 + n_points] for i in range(1, n_points)]
-            + [[2 * n_points, n_points, n_points + 1]]
-            + [[i, i + 1, i + 1 + n_points] for i in range(1 + n_points, 2 * n_points)]
-            + [[2 * n_points, 1 + n_points, 2 * n_points + 1]]
-            + [
-                [i + n_points, i, i + 1 + n_points]
-                for i in range(1 + n_points, 2 * n_points)
-            ]
-            + [[3 * n_points, 2 * n_points, 2 * n_points + 1]]
-            + [
-                [3 * n_points + 1, i, i + 1]
-                for i in range(1 + 2 * n_points, 3 * n_points)
-            ]
-            + [[3 * n_points + 1, 3 * n_points, 2 * n_points + 1]]
-        ),
-    )
-    return arrow
+    return data
 
 
 def ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False):
@@ -161,7 +135,6 @@ def ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False):
     quaternion = Rotation.from_matrix(rotation).as_quat()
 
     return dict(
-        kind="ellipsoid",
         semiaxes=[ax, ay, az],
         orientation=list(quaternion),
     )

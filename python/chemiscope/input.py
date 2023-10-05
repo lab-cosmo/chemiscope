@@ -49,8 +49,7 @@ def create_input(
         can be used to generate the list of environments in simple cases.
 
     :param dict shapes: optional dictionary of shapes to have available for display,
-        see below. :py:func:`extract_lammps_shapes_from_ase` can automatically extract
-        shapes from a LAMMPS simulation.
+        see below.
 
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
@@ -100,7 +99,7 @@ def create_input(
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 # optional: property unit
-                'unit': 'random / fs',
+                'units': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
             }
@@ -136,7 +135,7 @@ def create_input(
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
                 # optional: property unit
-                'unit': 'random / fs',
+                'units': 'random / fs',
                 # optional: property description
                 'description': 'a random property for example',
                 'parameters': ['origin'],
@@ -165,56 +164,83 @@ def create_input(
     Custom shapes
     -------------
 
-    The ``shapes`` parameter should have the format ``{"<name>": list of list of
-    shapes}``, where the list of lists contains one list for each structure, itself
-    containing one shape dictionary for each atom/site.
+    The ``shapes`` option should have the format ``{"<name>": shape_definition }``,
+    where each shape is defined as a dictionary containing the kind of shape, and its
+    parameters
 
     .. code-block:: python
 
         shapes = {
-            "shape name": [
-                [{"kind": "sphere", "radius": 0.3} for atom in frame]
-                for frame in frames
-            ]
+            "shape name": {
+                "kind" : "sphere",
+                "parameters" : shape_parameters
+            }
         }
 
-    The shape dictionary can have any of the following form:
+    Each parameters block defines `global`, `structure` and `atom` - level parameters.
 
     .. code-block:: python
 
-        # Ellipsoid shape
-        shape = {
-            "kind": "ellipsoid",
-            "semiaxes": [float, float, float],
-            "orientation" [float, float, float, float], # optional
+        parameters = {
+            "global" : global_parameters,
+            "structure" : [ structure_1, structure_2, .... ],
+            "atom"" : [ atom_1, atom_2, .... ]
         }
 
-        # Spherical shape
-        shape = {
-            "kind": "sphere",
+    Each of these can contain some or all of the parameters associated with each shape,
+    and the parameters for each shape are obtained by combining the parameters from the
+    most general to the most specific, i.e., if there is a duplicate key in the  `global` and `atom`
+    fields, the value within the `atom` field will supersede the `global` field for that atom.
+    The parameters for atom `k` that is part of structure `j` are obtained as
+
+    .. code-block:: python
+
+        global_parameters.update(structure_j).update(atom_k)
+
+    If given, the `structure` parameters list should contain one entry per structure, and
+    the `atom` parameters list should be a flat list corresponding to the atoms of each consecutive structure.
+    All shapes accept a few general parameters, and some specific ones
+
+    .. code-block:: python
+
+        # general parameters
+        {
+            "position" : [float, float, float], # centering (defaults to origin for structure, atom position for atom)
+            "scale" : float,  # scaling of the size of the shape
+            "orientation" [float, float, float, float], # optional, given as quaternion in (x, y, z, w) format
+            "color" : string | hex code # e.g. 0xFF0000
+        }
+
+        # "kind" : "sphere"
+        {
             "radius": float,
         }
 
-        # Fully custom shape
-        shape = {
-            "kind": "custom",
-            "vertices": [
+        # "kind" : "ellipsoid"
+        {
+            "semiaxes": [float, float, float],
+        }
+
+        # "kind" : "arrow"
+        {   # "orientation" is redundant and hence ignored
+            "vector" : [float, float, float],  # orientation and shape of the arrow
+            "base_radius" : float,
+            "head_radius" : float,
+            "head_length" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough
+        }
+
+        # "kind" : "custom"
+        {
+            "vertices": [ # list of vertices
                 [float, float, float],
                 ...
             ],
-            # `simplices` is optional
-            "simplices": [
-                [int, int, int],
+            "simplices": [  # mesh triangulation (optional); computed via convex triangulation where omitted
+                [int, int, int],  # indices refer to the list of vertices
                 ...
             ],
-            # `orientation` is optional
-            "orientation" [float, float, float, float],
         }
 
-    where ``orientation`` is an optional parameter corresponding to a quaternion in
-    ``x, y, z, w`` format. For ``custom`` shapes, ``simplices``, referring to the
-    *indices* of the facets, is also optional, and will be determined by convex
-    triangulation when not provided.
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
@@ -273,7 +299,7 @@ def create_input(
         n_atoms = len(data["environments"])
 
     if shapes is not None:
-        _add_shapes(data["structures"], shapes)
+        data["shapes"] = _validate_shapes(data["structures"], shapes)
 
     data["properties"] = {}
     if properties is not None:
@@ -591,7 +617,7 @@ def _expand_properties(short_properties, n_structures, n_atoms):
             'apple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
+                'units': 'random / fs',
             }
             'orange' : np.zeros((100, 42)),
             'banana' : np.zeros((300, 17)),
@@ -601,10 +627,10 @@ def _expand_properties(short_properties, n_structures, n_atoms):
     .. code-block:: python
 
         properties = {
-            'aple': {
+            'apple': {
                 'target': 'atom',
                 'values': np.zeros((300, 4)),
-                'unit': 'random / fs',
+                'units': 'random / fs',
             }
             'orange': {
                 'target': 'structure'
@@ -804,7 +830,7 @@ def _typetransform(data, name):
             )
 
 
-def _add_shapes(structures, shapes):
+def _validate_shapes(structures, shapes):
     if not isinstance(shapes, dict):
         raise TypeError(f"`shapes` must be a dictionary, got {type(shapes)} instead")
 
@@ -815,59 +841,72 @@ def _add_shapes(structures, shapes):
                 f"the `shapes` dictionary keys must be strings, got {type(key)}"
             )
 
-        if not isinstance(shapes_for_key, list):
+        if not isinstance(shapes_for_key, dict):
             raise TypeError(
-                "Each entry in `shapes` must be a list, "
+                "Each entry in `shapes` must be a dictionary, "
                 f"got {type(shapes_for_key)} instead for '{key}'"
             )
 
-        if len(shapes_for_key) != len(structures):
-            raise ValueError(
-                f"Each entry in `shapes` should be a list with {len(structures)} "
-                f"(number of frames) elements, got {len(shapes_for_key)} for '{key}'"
-            )
+        for shape_key in shapes_for_key:
+            if shape_key not in ["kind", "parameters"]:
+                raise ValueError(
+                    f"Invalid entry `{shape_key}` in the specifications for shape `{key}`"
+                )
 
-            for structure_i in range(len(structures)):
-                shapes_for_structure = shapes_for_key[structure_i]
-                structure = structures[structure_i]
+        base_shape = shapes_for_key["parameters"].get("global", {})
+        structure_parameters = shapes_for_key["parameters"].get("structure", None)
+        atom_parameters = shapes_for_key["parameters"].get("atom", None)
+        atom_counter = 0
 
-                if not isinstance(shapes_for_structure, list):
+        for structure_i in range(len(structures)):
+            if (
+                structure_parameters is not None
+                and len(structure_parameters) <= structure_i
+            ):
+                raise TypeError(
+                    f"structure_parameters must be a list with length {(len(structures))}, "
+                    f"got length={len(structure_parameters)} instead"
+                )
+            for _ in range(structures[structure_i]["size"]):
+                if atom_parameters is not None and len(atom_parameters) <= atom_counter:
                     raise TypeError(
-                        f"Shapes for structure {structure_i} must be a list, "
-                        f"got {type(shapes_for_structure)} instead"
+                        f"atom_parameters must be a list coinciding to the atomic environments, "
+                        f"got length={len(atom_parameters)} instead"
                     )
 
-                if len(shapes_for_structure) != structure["size"]:
-                    raise ValueError(
-                        f"Each entry in `shapes[{key}][{structure_i}]` should be a "
-                        f"list with {structure['size']} (number of atoms) elements, "
-                        f"got {len(shapes_for_structure)}"
-                    )
+                shape = {
+                    "kind": shapes_for_key["kind"],
+                    "parameters": {
+                        "global": base_shape,
+                        "structure": structure_parameters[structure_i]
+                        if structure_parameters is not None
+                        else {},
+                        "atom": atom_parameters[atom_counter]
+                        if atom_parameters is not None
+                        else {},
+                    },
+                }
+                _check_valid_shape(shape)
+                atom_counter += 1
 
-                for shape in shapes_for_structure:
-                    _check_valid_shape(shape)
+    for key, shape in shapes.items():
+        if (
+            shape["kind"] == "custom"
+            and "vertices" in shape["parameters"]
+            and "simplices" not in shape["parameters"]
+        ):
+            try:
+                import scipy.spatial
+            except ImportError as e:
+                raise RuntimeError(
+                    "Missing simplices in custom shape, and scipy is not " "installed"
+                ) from e
 
-    # Add the shapes to the structures
-    for structure in structures:
-        structure["shapes"] = {}
-
-    for key, values in shapes.items():
-        for structure, shapes_data in zip(structures, values):
-            for shape in shapes_data:
-                if shape["kind"] == "custom" and "simplices" not in shape:
-                    try:
-                        import scipy.spatial
-
-                    except ImportError as e:
-                        raise RuntimeError(
-                            "Missing simplices in custom shape, and scipy is not "
-                            "installed"
-                        ) from e
-
-                    convex_hull = scipy.spatial.ConvexHull(shape["vertices"])
-                    shape["simplices"] = [s.tolist() for s in convex_hull.simplices]
-
-            structure["shapes"][key] = shapes_data
+            convex_hull = scipy.spatial.ConvexHull(shape["parameters"]["vertices"])
+            shape["parameters"]["simplices"] = [
+                s.tolist() for s in convex_hull.simplices
+            ]
+    return shapes
 
 
 def _check_valid_shape(shape):
@@ -876,26 +915,37 @@ def _check_valid_shape(shape):
             f"individual shapes must be dictionaries, got {type(shape)} instead"
         )
 
+    always_okay = ["orientation", "scale", "position", "color"]
+    parameters = {}
+    if "parameters" in shape:
+        parameters.update(shape["parameters"]["global"])
+    if "structure" in shape["parameters"]:
+        parameters.update(shape["parameters"]["structure"])
+    if "atom" in shape["parameters"]:
+        parameters.update(shape["parameters"]["atom"])
+
+    if len(parameters) == 0:
+        raise ValueError(f"no parameters provided for {shape['kind']} shape")
     if shape["kind"] == "sphere":
-        for parameter in shape.keys():
-            if parameter not in ["radius", "orientation"]:
+        for parameter in parameters:
+            if parameter not in ["radius", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'sphere' shape kind"
                 )
 
-        if not isinstance(shape["radius"], float):
+        if not isinstance(parameters["radius"], float):
             raise TypeError(
-                f"sphere shape 'radius' must be a float, got {type(shape['radius'])}"
+                f"sphere shape 'radius' must be a float, got {type(parameters['radius'])}"
             )
 
     elif shape["kind"] == "ellipsoid":
-        for parameter in shape.keys():
-            if parameter not in ["semiaxes", "orientation"]:
+        for parameter in parameters.keys():
+            if parameter not in ["semiaxes", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'ellipsoid' shape kind"
                 )
 
-        semiaxes_array = np.asarray(shape["semiaxes"]).astype(
+        semiaxes_array = np.asarray(parameters["semiaxes"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
@@ -905,13 +955,13 @@ def _check_valid_shape(shape):
             )
 
     elif shape["kind"] == "custom":
-        for parameter in shape.keys():
-            if parameter not in ["vertices", "simplices", "orientation"]:
+        for parameter in parameters.keys():
+            if parameter not in ["vertices", "simplices", *always_okay]:
                 raise ValueError(
                     f"unknown shape parameter '{parameter}' for 'custom' shape kind"
                 )
 
-        vertices_array = np.asarray(shape["vertices"]).astype(
+        vertices_array = np.asarray(parameters["vertices"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
@@ -920,21 +970,42 @@ def _check_valid_shape(shape):
                 "'vertices' must be an Nx3 array values for 'custom' shape kind"
             )
 
-        if "simplices" in shape:
-            simplices_array = np.asarray(shape["vertices"]).astype(
-                np.int32, casting="safe", subok=False, copy=False
+        if "simplices" in parameter:
+            simplices_array = np.asarray(parameters["vertices"]).astype(
+                int, casting="safe", subok=False, copy=False
             )
 
             if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
                 raise ValueError(
                     "'simplices' must be an Nx3 array values for 'custom' shape kind"
                 )
+    elif shape["kind"] == "arrow":
+        if not isinstance(parameters["base_radius"], float):
+            raise TypeError(
+                f"sphere shape 'base_radius' must be a float, got {type(parameters['radius'])}"
+            )
+        if not isinstance(parameters["head_radius"], float):
+            raise TypeError(
+                f"sphere shape 'head_radius' must be a float, got {type(parameters['radius'])}"
+            )
+        if not isinstance(parameters["head_length"], float):
+            raise TypeError(
+                f"sphere shape 'head_length' must be a float, got {type(parameters['radius'])}"
+            )
 
+        vector_array = np.asarray(parameters["vector"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if not vector_array.shape == (3,):
+            raise ValueError(
+                "'vector' must be an array with 3 values for 'arrow' shape kind"
+            )
     else:
         raise ValueError(f"unknown shape kind '{shape['kind']}'")
 
-    if "orientation" in shape:
-        orientation_array = np.asarray(shape["orientation"]).astype(
+    if "orientation" in parameters:
+        orientation_array = np.asarray(parameters["orientation"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 

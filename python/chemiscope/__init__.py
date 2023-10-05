@@ -6,9 +6,8 @@ from .structures import (  # noqa
     center_shape,
     composition_properties,
     ellipsoid_from_tensor,
-    extract_lammps_shapes_from_ase,
-    extract_tensors_from_ase,
-    extract_vectors_from_ase,
+    ase_vectors_to_arrows,
+    ase_tensors_to_ellipsoids,
     extract_properties,
     librascal_atomic_environments,
 )

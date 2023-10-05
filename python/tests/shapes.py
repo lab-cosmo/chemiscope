@@ -3,6 +3,7 @@ import unittest
 import ase
 
 import chemiscope
+import numpy as np
 
 CUBE_VERTICES = [
     [0, 0, 0],
@@ -30,212 +31,152 @@ CUBE_SIMPLICES = [
     [3, 6, 7],
 ]
 
+DEFAULT_FRAME = ase.Atoms(
+    numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
+)
 SHAPE_DEFAULTS = {
-    "ellipsoid": ("semiaxes", [1, 2, 1]),
-    "sphere": ("radius", 1.0),
+    "spheres_structure": {
+        "kind": "sphere",
+        "parameters": {
+            "global": {"radius": 0.1},
+        },
+    },
+    "ellipsoids_atoms": {
+        "kind": "ellipsoid",
+        "parameters": {
+            "global": {"semiaxes": [0.3, 0.2, 0.1]},
+            "atom": [
+                {},
+                {"semiaxes": [0.1, 0.2, 0.3]},
+                {"orientation": [0.2, 0.3, 0.4, 1]},
+            ],
+        },
+    },
+    "cubes1_structure": {
+        "kind": "custom",
+        "parameters": {"global": {"vertices": CUBE_VERTICES}},
+    },
+    "cubes2_structure": {
+        "kind": "custom",
+        "parameters": {
+            "global": {"vertices": CUBE_VERTICES, "scale": 1.0},
+            "atom": [{"orientation": [1, 0, 0, 0]}, {"scale": 0.5}, {}],
+        },
+    },
+    "cubes3_structure": {
+        "kind": "custom",
+        "parameters": {
+            "global": {"vertices": CUBE_VERTICES, "simplices": CUBE_SIMPLICES},
+        },
+    },
 }
+INVALID_SHAPES = [
+    [
+        {
+            "kind": "sphere",
+            "parameters": {
+                "global": {"diameter": 0.1},
+            },
+        },
+        ValueError,
+        "unknown shape parameter 'diameter' for 'sphere' shape kind",
+    ],
+    [
+        {
+            "kind": "sphere",
+            "parameters": {
+                "global": {"radius": "A"},
+            },
+        },
+        TypeError,
+        "sphere shape 'radius' must be a float, got str",
+    ],
+    [
+        {
+            "kind": "ellipsoid",
+            "parameters": {
+                "global": {"radius": [0.3, 0.2, 0.1]},
+            },
+        },
+        ValueError,
+        "unknown shape parameter 'radius' for 'ellipsoid' shape kind",
+    ],
+    [
+        {
+            "kind": "ellipsoid",
+            "parameters": {
+                "global": {"semiaxes": ["A"]},
+            },
+        },
+        TypeError,
+        "'semiaxes' must be an array with 3 values for 'ellipsoid' shape kind",
+    ],
+    [
+        {"kind": "custom", "parameters": {"global": {"radius": 1.0}}},
+        ValueError,
+        "unknown shape parameter 'radius' for 'custom' shape kind",
+    ],
+    [
+        {
+            "kind": "custom",
+            "parameters": {"global": {"vertices": np.array(CUBE_VERTICES)[:, :2]}},
+        },
+        ValueError,
+        "'vertices' must be an Nx3 array values for 'custom' shape kind",
+    ],
+    [
+        {
+            "kind": "custom",
+            "parameters": {"global": {"simplices": np.array(CUBE_SIMPLICES)[:, :2]}},
+        },
+        KeyError,
+        "'vertices'",
+    ],
+    [
+        {
+            "kind": "custom",
+            "parameters": {
+                "global": {
+                    "vertices": np.array(CUBE_VERTICES)[:, :2],
+                    "simplices": np.array(CUBE_SIMPLICES)[:, :2],
+                }
+            },
+        },
+        ValueError,
+        "'simplices' must be an Nx3 array values for 'custom' shape kind",
+    ],
+    [
+        {"kind": "garbage", "parameters": {"radius": None}},
+        ValueError,
+        "unknown shape kind 'garbage'",
+    ],
+]
 
 
 class TestShapes(unittest.TestCase):
     def test_custom_shapes(self):
-        frame = ase.Atoms(
-            numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
+        data = chemiscope.create_input(frames=[DEFAULT_FRAME], shapes=SHAPE_DEFAULTS)
+
+        result = data["shapes"]
+        self.assertEqual(
+            list(result.keys()),
+            [
+                "spheres_structure",
+                "ellipsoids_atoms",
+                "cubes1_structure",
+                "cubes2_structure",
+                "cubes3_structure",
+            ],
         )
-
-        shapes = {
-            "cubes": [
-                [
-                    {"kind": "custom", "vertices": CUBE_VERTICES},
-                    {
-                        "kind": "custom",
-                        "vertices": CUBE_VERTICES,
-                        "orientation": [1, 0, 0, 0],
-                    },
-                    {
-                        "kind": "custom",
-                        "vertices": CUBE_VERTICES,
-                        "simplices": CUBE_SIMPLICES,
-                    },
-                ],
-            ],
-            "other": [
-                [
-                    {"kind": "sphere", "radius": 0.3},
-                    {"kind": "ellipsoid", "semiaxes": [0.3, 0.2, 0.1]},
-                    {
-                        "kind": "ellipsoid",
-                        "semiaxes": [0.3, 0.2, 0.1],
-                        "orientation": [1, 0, 0, 0],
-                    },
-                ],
-            ],
-        }
-
-        data = chemiscope.create_input(frames=[frame], shapes=shapes)
-
-        result = data["structures"][0]["shapes"]
-        self.assertEqual(list(result.keys()), ["cubes", "other"])
 
         for key, values in result.items():
-            self.assertEqual(shapes[key][0], values)
+            self.assertEqual(SHAPE_DEFAULTS[key], values)
 
-
-class TestShapesFromASE(unittest.TestCase):
-    """Conversion of shape data in ASE to chemiscope JSON"""
-
-    def setUp(self):
-        self.frame = ase.Atoms(
-            numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
-        )
-        self.frame.arrays["orientation"] = [
-            [1, 0, 0, 0] for _ in range(len(self.frame))
-        ]
-
-    def test_no_shape(self):
-        data = chemiscope.create_input(frames=[self.frame])
-        self.assertNotIn("shapes", data["structures"][0])
-
-    def test_bad_shape(self):
-        frame = self.frame.copy()
-        frame.info["shape"] = "invalid"
-
-        with self.assertRaises(KeyError) as cm:
-            chemiscope.extract_lammps_shapes_from_ase([frame])
-
-        self.assertEqual(
-            cm.exception.args[0],
-            "The currently-supported shape in `extract_lammps_shapes_from_ase` are "
-            "['ellipsoid', 'sphere'], received 'invalid'",
-        )
-
-    def test_shape_by_frame(self):
-        for shape_kind in SHAPE_DEFAULTS:
-            with self.subTest(shape=shape_kind):
-                frame = self.frame.copy()
-                shape_name = "shape_name"
-                frame.info[shape_name] = shape_kind
-
-                parameter, value = SHAPE_DEFAULTS[shape_kind]
-                frame.info[f"{shape_name}_{parameter}"] = value
-                shapes = chemiscope.extract_lammps_shapes_from_ase(
-                    [frame], key=shape_name
-                )
-
-                data = chemiscope.create_input(frames=[frame], shapes=shapes)
-                self.assertIn("shapes", data["structures"][0])
-
-                self.assertTrue(
-                    all(
-                        [
-                            parameter in ss
-                            for s in data["structures"]
-                            for ss in s["shapes"][shape_name]
-                        ]
-                    )
-                )
-
-                self.assertTrue(
-                    all(
-                        [
-                            "orientation" in ss
-                            for s in data["structures"]
-                            for ss in s["shapes"][shape_name]
-                        ]
-                    )
-                )
-
-                self.assertTrue(
-                    all(
-                        [
-                            len(s["shapes"][shape_name]) == len(frame)
-                            for s in data["structures"]
-                        ]
-                    )
-                )
-
-                frame.info.pop(f"{shape_name}_{parameter}")
-                with self.assertRaises(KeyError) as cm:
-                    chemiscope.create_input(
-                        frames=[frame],
-                        shapes=chemiscope.extract_lammps_shapes_from_ase(
-                            [frame], key=shape_name
-                        ),
-                    )
-
-                self.assertEquals(
-                    cm.exception.args[0],
-                    f"Missing required parameter '{shape_name}_{parameter}' for "
-                    f"'{shape_kind}' shape",
-                )
-
-    def test_by_index(self):
-        for shape_kind in SHAPE_DEFAULTS:
-            with self.subTest(shape=shape_kind):
-                frame = self.frame.copy()
-                shape_name = "shape_name"
-                frame.arrays[shape_name] = [shape_kind] * len(frame)
-
-                parameter, value = SHAPE_DEFAULTS[shape_kind]
-                frame.arrays[f"{shape_name}_{parameter}"] = [value] * len(frame)
-                shapes = chemiscope.extract_lammps_shapes_from_ase(
-                    [frame], key=shape_name
-                )
-
-                data = chemiscope.create_input(frames=[frame], shapes=shapes)
-                self.assertIn("shapes", data["structures"][0])
-
-                self.assertTrue(
-                    all(
-                        [
-                            parameter in ss
-                            for s in data["structures"]
-                            for ss in s["shapes"][shape_name]
-                        ]
-                    )
-                )
-
-                self.assertTrue(
-                    all(
-                        [
-                            "orientation" in ss
-                            for s in data["structures"]
-                            for ss in s["shapes"][shape_name]
-                        ]
-                    )
-                )
-
-                self.assertTrue(
-                    all(
-                        [
-                            len(s["shapes"][shape_name]) == len(frame)
-                            for s in data["structures"]
-                        ]
-                    )
-                )
-
-                frame.arrays.pop(f"{shape_name}_{parameter}")
-                with self.assertRaises(KeyError) as cm:
-                    chemiscope.create_input(
-                        frames=[frame],
-                        shapes=chemiscope.extract_lammps_shapes_from_ase(
-                            [frame], key=shape_name
-                        ),
-                    )
-
-                self.assertEquals(
-                    cm.exception.args[0],
-                    f"Missing required parameter '{shape_name}_{parameter}' for "
-                    f"'{shape_kind}' shape",
-                )
-
-    def test_no_shapes(self):
-        with self.assertRaises(ValueError) as cm:
-            chemiscope.extract_lammps_shapes_from_ase([self.frame])
-
-        self.assertEqual(
-            cm.exception.args[0],
-            "1 frame(s) do not contain shape information",
-        )
+    def test_shape_errors(self):
+        for shape, errortype, message in INVALID_SHAPES:
+            with self.assertRaises(errortype) as cm:
+                chemiscope.create_input(frames=[DEFAULT_FRAME], shapes={"shape": shape})
+                self.assertEqual(cm.message, message)
 
 
 if __name__ == "__main__":

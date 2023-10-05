@@ -12,7 +12,7 @@ import { Settings } from './dataset';
  * Possible HTML attributes to attach to a setting
  */
 // this is mostly to catch typo early. Feel free to add more!
-type Attribute = 'value' | 'checked' | 'innerText' | 'options';
+type Attribute = 'value' | 'checked' | 'innerText' | 'multival';
 
 /// Type mapping for options
 interface OptionsTypeMap {
@@ -146,7 +146,7 @@ export class HTMLOption<T extends OptionsType> {
      */
     public changed(origin: OptionModificationOrigin) {
         for (const bound of this._boundList) {
-            if (bound.attribute === 'options') {
+            if (bound.attribute === 'multival') {
                 // options take a list of comma-separated values to allow multiple settings
                 const values = (this._value as string).split(',');
                 const element = bound.element as HTMLSelectElement;
@@ -185,7 +185,7 @@ export class HTMLOption<T extends OptionsType> {
         element = element as HTMLElement;
 
         let listener: (event: Event) => void;
-        if (attribute === 'options') {
+        if (attribute === 'multival') {
             listener = (event: Event) => {
                 // we need a special handler for multi-select options
                 assert(event.target !== null);
@@ -196,6 +196,13 @@ export class HTMLOption<T extends OptionsType> {
 
                 this._update(values.toString(), 'DOM');
             };
+            // also initializes the state of the option list
+            const values = (this._value as string).split(',');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            for (const option of (element as any).options) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                option.selected = values.includes(option.value as string);
+            }
         } else {
             listener = (event: Event) => {
                 assert(event.target !== null);
@@ -261,7 +268,6 @@ export class HTMLOption<T extends OptionsType> {
         this.validate(updated);
         this._previous_value = this.value;
         this._value = updated;
-
         this.changed(origin);
     }
 }
