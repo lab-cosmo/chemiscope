@@ -196,7 +196,7 @@ dipoles_auto["parameters"]["global"] = {
 }
 
 chemiscope.write_input(
-    "alphamu-shapes.json.gz",
+    "shapes-example.json.gz",
     frames=frames,
     properties=chemiscope.extract_properties(frames, only=["alpha"]),
     shapes={
