@@ -5,6 +5,7 @@ import * as tmp from 'tmp';
 
 const ALL_EXAMPLES = [
     'CSD-1000R.json.gz',
+    'AlphaMu.json.gz',
     'Arginine-Dipeptide.json.gz',
     'Qm7b.json.gz',
     'Azaphenacenes.json.gz',
