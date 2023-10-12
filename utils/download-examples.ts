@@ -9,6 +9,7 @@ const ALL_EXAMPLES = [
     'Arginine-Dipeptide.json.gz',
     'Qm7b.json.gz',
     'Azaphenacenes.json.gz',
+    'ROY-GCH.json.gz',
     'Zeolites.json.gz',
 ];
 
