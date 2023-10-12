@@ -702,31 +702,41 @@ def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     _validate_property(name, property)
 
     data = {}
+    values = property["values"]
     if not multidimensional:
-        if isinstance(property["values"], list):
-            data[name] = {
-                "target": property["target"],
-                "values": _typetransform(property["values"], name),
-            }
-        elif isinstance(property["values"], np.ndarray):
-            if len(property["values"].shape) == 1:
+        if isinstance(values, list):
+            if isinstance(values[0], list):
+                for i in range(len(values[0])):
+                    try:
+                        values_i = [v[i] for v in values]
+                    except IndexError:
+                        raise IndexError("List property has inconsistent size")
+                    data[f"{name}[{i + 1}]"] = {
+                        "target": property["target"],
+                        "values": _typetransform(values_i, name),
+                    }
+            else:
                 data[name] = {
                     "target": property["target"],
-                    "values": _typetransform(list(property["values"]), name),
+                    "values": _typetransform(values, name),
                 }
-            elif len(property["values"].shape) == 2:
-                if property["values"].shape[1] == 1:
+        elif isinstance(values, np.ndarray):
+            if len(values.shape) == 1:
+                data[name] = {
+                    "target": property["target"],
+                    "values": _typetransform(list(values), name),
+                }
+            elif len(values.shape) == 2:
+                if values.shape[1] == 1:
                     data[name] = {
                         "target": property["target"],
-                        "values": _typetransform(list(property["values"]), name),
+                        "values": _typetransform(list(values), name),
                     }
                 else:
-                    for i in range(property["values"].shape[1]):
+                    for i in range(values.shape[1]):
                         data[f"{name}[{i + 1}]"] = {
                             "target": property["target"],
-                            "values": _typetransform(
-                                list(property["values"][:, i]), name
-                            ),
+                            "values": _typetransform(list(values[:, i]), name),
                         }
             else:
                 raise Exception("unsupported ndarray property")
@@ -737,12 +747,12 @@ def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     else:
         assert isinstance(property["parameters"][0], str)
 
-        values = []
-        for i in range(len(property["values"])):
-            values += [_typetransform(list(property["values"][i]), name)]
+        ndvalues = []
+        for i in range(len(values)):
+            ndvalues += [_typetransform(list(values[i]), name)]
         data[name] = {
             "target": property["target"],
-            "values": values,
+            "values": ndvalues,
             "parameters": property["parameters"],
         }
 
