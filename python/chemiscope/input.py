@@ -224,9 +224,9 @@ def create_input(
         # "kind" : "arrow"
         {   # "orientation" is redundant and hence ignored
             "vector" : [float, float, float],  # orientation and shape of the arrow
-            "base_radius" : float,
-            "head_radius" : float,
-            "head_length" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough
+            "baseRadius" : float,
+            "headRadius" : float,
+            "headLength" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough
         }
 
         # "kind" : "custom"
@@ -980,17 +980,17 @@ def _check_valid_shape(shape):
                     "'simplices' must be an Nx3 array values for 'custom' shape kind"
                 )
     elif shape["kind"] == "arrow":
-        if not isinstance(parameters["base_radius"], float):
+        if not isinstance(parameters["baseRadius"], float):
             raise TypeError(
-                f"sphere shape 'base_radius' must be a float, got {type(parameters['radius'])}"
+                f"sphere shape 'baseRadius' must be a float, got {type(parameters['baseRadius'])}"
             )
-        if not isinstance(parameters["head_radius"], float):
+        if not isinstance(parameters["headRadius"], float):
             raise TypeError(
-                f"sphere shape 'head_radius' must be a float, got {type(parameters['radius'])}"
+                f"sphere shape 'headRadius' must be a float, got {type(parameters['headRadius'])}"
             )
-        if not isinstance(parameters["head_length"], float):
+        if not isinstance(parameters["headLength"], float):
             raise TypeError(
-                f"sphere shape 'head_length' must be a float, got {type(parameters['radius'])}"
+                f"sphere shape 'headLength' must be a float, got {type(parameters['headLength'])}"
             )
 
         vector_array = np.asarray(parameters["vector"]).astype(
