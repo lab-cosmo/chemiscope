@@ -33,6 +33,59 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
+            <div class="chsp-atom-color-property">
+
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="atom-color-property">color:</label>
+                  <select id="atom-color-property" class="form-select">
+                     <option value="element">element</option>
+                  </select>
+               </div>
+
+               <button
+                  id="atom-color-more-options"
+                  class="btn btn-sm btn-secondary chsp-extra-options-btn"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#atom-color-extra"
+               >
+                  more options
+               </button>
+
+               <div class="collapse" id="atom-color-extra" style="grid-column: auto / span 2; margin-top: 0.3em">
+                  <div class="chsp-atom-extra-options">
+                     <div class="input-group input-group-sm">
+                        <label class="input-group-text" for="atom-color-transform">transform:</label>
+                        <select id="atom-color-transform" class="form-select" disabled>
+                           <option value="linear">linear</option>
+                           <option value="log">log10</option>
+                           <option value="sqrt">sqrt</option>
+                           <option value="inverse">inverse</option>
+                        </select>
+                     </div>
+
+                     <div class="input-group input-group-sm">
+                        <label id="atom-color-min-label" class="input-group-text" for="atom-color-min"> min: </label>
+                        <input id="atom-color-min" class="form-control" type="number" step="any" />
+                     </div>
+
+                     <div class="input-group input-group-sm">
+                        <label id="atom-color-max-label" class="input-group-text" for="atom-color-max"> max: </label>
+                        <input id="atom-color-max" class="form-control" type="number" step="any" />
+                     </div>
+                  </div>
+
+                  <div class="chsp-atom-extra-options" style="grid-template-columns: 1fr 1fr">
+                     <div class="input-group input-group-sm">
+                        <label class="input-group-text" for="atom-color-palette"> palette: </label>
+                        <select id="atom-color-palette" class="form-select"></select>
+                     </div>
+
+                     <button class="btn btn-sm btn-secondary" type="button" id="atom-color-reset" style="width: 100%">reset min/max</button>
+                  </div>
+               </div>
+
+            </div>
             <div class="chsp-hide-if-no-shapes" style="margin-top: 1em">
                <div class="input-group input-group-sm">
                   <label
@@ -74,6 +127,7 @@
                   <option class="chsp-hide-if-no-cell" value="abc">abc</option>
                </select>
             </div>
+                <div style="margin-bottom: 0.8em"></div>
             <div class="chsp-hide-if-no-environments">
                <div style="margin-bottom: 1.5em"></div>
                <h5 class="chsp-settings-section-title">Environments</h5>
@@ -115,6 +169,7 @@
                      <div class="input-group input-group-sm">
                         <label class="input-group-text" for="env-bg-color">color</label>
                         <select id="env-bg-color" class="form-select">
+                           <option value="prop">prop</option>
                            <option value="CPK">CPK</option>
                            <option value="grey">grey</option>
                         </select>

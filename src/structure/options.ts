@@ -14,6 +14,7 @@ import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../uti
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
+import { MapData, NumericProperties } from '../map/data';
 
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
@@ -51,6 +52,13 @@ export class StructureOptions extends OptionsGroup {
         // which colors for atoms not in the environment
         bgColor: HTMLOption<'string'>;
     };
+    public color: {
+        property: HTMLOption<'string'>;
+        mode: HTMLOption<'string'>;
+        min: HTMLOption<'number'>;
+        max: HTMLOption<'number'>;
+        palette: HTMLOption<'string'>;
+    };
 
     /// The Modal instance
     private _modal: Modal;
@@ -59,7 +67,7 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, positionSettings: PositioningCallback) {
+    constructor(root: HTMLElement, positionSettings: PositioningCallback, properties?: MapData) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -98,8 +106,30 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
+        const propertiesName = properties ? Object.keys(properties['atom']) : [];
+
+        this.color = {
+            property: new HTMLOption('string', 'element'),
+            min: new HTMLOption('number', 0),
+            max: new HTMLOption('number', 0),
+            mode: new HTMLOption('string', 'linear'),
+            palette: new HTMLOption('string', 'Rwb'),
+        };
+
+        // validate atom properties for coloring
+        if (properties && Object.keys(properties['atom']).includes('element')) {
+            this.color.property.validate = optionValidator(propertiesName, 'color');
+        } else {
+            this.color.property.validate = optionValidator(
+                propertiesName.concat(['element']),
+                'color'
+            );
+        }
+        this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
+        this.color.palette.validate = optionValidator(['Rwb', 'Roygb', 'Sinebow'], 'palette');
+
         this.environments.bgColor.validate = optionValidator(
-            ['grey', 'CPK'],
+            ['grey', 'CPK', 'prop'],
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
@@ -121,8 +151,11 @@ export class StructureOptions extends OptionsGroup {
         ).adoptedStyleSheets;
         this._openModal = openModal;
         root.appendChild(this._openModal);
-
-        this._bind();
+        if (properties) {
+            this._bind(properties['atom']);
+        } else {
+            this._bind({});
+        }
     }
 
     /** Get in a element in the modal from its id */
@@ -157,6 +190,13 @@ export class StructureOptions extends OptionsGroup {
                 );
             }
             delete settings.packedCell;
+        }
+        if ('color' in settings) {
+            const color = settings.color as Settings;
+            if ('scale' in color) {
+                color.mode = color.scale;
+                delete color.scale;
+            }
         }
         super.applySettings(settings);
     }
@@ -223,7 +263,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(): void {
+    private _bind(atom: NumericProperties): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
@@ -239,6 +279,29 @@ export class StructureOptions extends OptionsGroup {
         this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');
         this.supercell[2].bind(this.getModalElement('supercell-c'), 'value');
+
+        // ======= data used as color values
+        const selectColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
+        // first option is 'element'
+        selectColorProperty.options.length = 0;
+        if (!Object.keys(atom).includes('element')) {
+            selectColorProperty.options.add(new Option('element', 'element'));
+        }
+        for (const key in atom) {
+            selectColorProperty.options.add(new Option(key, key));
+        }
+        this.color.property.bind(selectColorProperty, 'value');
+        this.color.mode.bind(this.getModalElement('atom-color-transform'), 'value');
+        this.color.min.bind(this.getModalElement('atom-color-min'), 'value');
+        this.color.max.bind(this.getModalElement('atom-color-max'), 'value');
+
+        // ======= color palette
+        const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
+        selectPalette.options.length = 0;
+        for (const key of ['Rwb', 'Roygb', 'Sinebow']) {
+            selectPalette.options.add(new Option(key, key));
+        }
+        this.color.palette.bind(selectPalette, 'value');
 
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');

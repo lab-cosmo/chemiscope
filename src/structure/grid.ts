@@ -8,6 +8,7 @@ import assert from 'assert';
 import {
     Environment,
     JsObject,
+    Property,
     Settings,
     Structure,
     UserStructure,
@@ -20,6 +21,8 @@ import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
 import { LoadOptions, MoleculeViewer } from './viewer';
+
+import { filter } from '../info/info';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
@@ -116,6 +119,8 @@ export class ViewersGrid {
     private _root: HTMLElement;
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
+    /// List of properties in the dataset
+    private _properties: { [name: string]: Property };
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
@@ -153,10 +158,16 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
+        properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
         this._structures = structures;
+        if (properties === undefined) {
+            this._properties = {};
+        } else {
+            this._properties = properties;
+        }
         this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
@@ -478,6 +489,41 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
+    private _getAtomProperties(): Record<string, Property> {
+        const numberProperties = filter(this._properties, (p) =>
+            Object.values(p.values).every((v) => typeof v === 'number')
+        );
+        const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
+        return atomProperties;
+    }
+
+    private _getSelectedAtomProperties(
+        indexes?: Indexes
+    ): Record<string, (number | undefined)[]> | undefined {
+        const structureAtomProperties: Record<string, (number | undefined)[]> = {};
+        const allAtomProperties = this._getAtomProperties();
+        if (this._environments !== undefined && indexes !== undefined) {
+            const activeEnvironments = this._environments[indexes.structure];
+            for (const propertyName in allAtomProperties) {
+                structureAtomProperties[propertyName] = [];
+                for (const activeEnvironment of activeEnvironments) {
+                    if (activeEnvironment !== undefined) {
+                        structureAtomProperties[propertyName].push(
+                            allAtomProperties[propertyName].values[
+                                activeEnvironment.center
+                            ] as number
+                        );
+                    } else {
+                        structureAtomProperties[propertyName].push(undefined);
+                    }
+                }
+            }
+            return structureAtomProperties;
+        } else {
+            return undefined;
+        }
+    }
+
     private _showInViewer(guid: GUID, indexes: Indexes): void {
         const data = this._cellsData.get(guid);
         assert(data !== undefined);
@@ -496,7 +542,11 @@ export class ViewersGrid {
                 }
             }
 
-            viewer.load(this._structure(indexes.structure), options);
+            viewer.load(
+                this._structure(indexes.structure),
+                this._getSelectedAtomProperties(indexes),
+                options
+            );
             data.current = indexes;
         }
 
@@ -695,7 +745,11 @@ export class ViewersGrid {
 
             // add a new cells if necessary
             if (!this._cellsData.has(cellGUID)) {
-                const viewer = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
+                const viewer = new MoleculeViewer(
+                    this._getById<HTMLElement>(`gi-${cellGUID}`),
+                    this._indexer,
+                    this._properties
+                );
 
                 viewer.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
