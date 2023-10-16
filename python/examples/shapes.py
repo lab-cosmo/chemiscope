@@ -173,9 +173,9 @@ dipoles_manual = (
         kind="arrow",
         parameters={
             "global": {
-                "base_radius": 0.2,
-                "head_radius": 0.3,
-                "head_length": 0.5,
+                "baseRadius": 0.2,
+                "headRadius": 0.3,
+                "headLength": 0.5,
                 "color": 0xFF00B0,
             },
             "structure": [
@@ -189,9 +189,9 @@ dipoles_manual = (
 dipoles_auto = chemiscope.ase_vectors_to_arrows(frames, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
 dipoles_auto["parameters"]["global"] = {
-    "base_radius": 0.2,
-    "head_radius": 0.3,
-    "head_length": 0.5,
+    "baseRadius": 0.2,
+    "headRadius": 0.3,
+    "headLength": 0.5,
     "color": 0xFF00B0,
 }
 

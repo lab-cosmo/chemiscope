@@ -66,11 +66,11 @@ def arrow_from_vector(
 
     data = {"vector": [v * scale for v in vec]}
     if radius is not None:
-        data["base_radius"] = radius
+        data["baseRadius"] = radius
     if head_radius_scale is not None:
-        data["head_radius"] = radius * head_radius_scale
+        data["headRadius"] = radius * head_radius_scale
     if head_length_scale is not None:
-        data["head_length"] = radius * head_length_scale
+        data["headLength"] = radius * head_length_scale
 
     return data
 

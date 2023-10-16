@@ -341,7 +341,7 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     Extract a vectorial atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
     parameters it also accepts the same parameters as
-    `array_from_vector`, which are used to define the style of the
+    `arrow_from_vector`, which are used to define the style of the
     arrows.
 
     :param frames: list of ASE Atoms objects
@@ -357,15 +357,11 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     # set shape parameters globally if they are all given
     globs = {}
     if "radius" in kwargs:
-        globs["base_radius"] = kwargs.pop("radius")
+        globs["baseRadius"] = kwargs.pop("radius")
         if "head_radius_scale" in kwargs:
-            globs["head_radius"] = globs["base_radius"] * kwargs.pop(
-                "head_radius_scale"
-            )
+            globs["headRadius"] = globs["baseRadius"] * kwargs.pop("head_radius_scale")
         if "head_length_scale" in kwargs:
-            globs["head_length"] = globs["base_radius"] * kwargs.pop(
-                "head_length_scale"
-            )
+            globs["headLength"] = globs["baseRadius"] * kwargs.pop("head_length_scale")
 
     for f in frames:
         values, target = _extract_key_from_ase(f, key, target)
