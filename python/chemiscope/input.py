@@ -704,22 +704,15 @@ def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     data = {}
     values = property["values"]
     if not multidimensional:
+        if isinstance(values, list) and isinstance(values[0], list):
+            # convert to ndarray so we can use the parser below
+            values = np.array(values)
         if isinstance(values, list):
-            if isinstance(values[0], list):
-                for i in range(len(values[0])):
-                    try:
-                        values_i = [v[i] for v in values]
-                    except IndexError:
-                        raise IndexError("List property has inconsistent size")
-                    data[f"{name}[{i + 1}]"] = {
-                        "target": property["target"],
-                        "values": _typetransform(values_i, name),
-                    }
-            else:
-                data[name] = {
-                    "target": property["target"],
-                    "values": _typetransform(values, name),
-                }
+            # deal with simple list
+            data[name] = {
+                "target": property["target"],
+                "values": _typetransform(values, name),
+            }
         elif isinstance(values, np.ndarray):
             if len(values.shape) == 1:
                 data[name] = {
