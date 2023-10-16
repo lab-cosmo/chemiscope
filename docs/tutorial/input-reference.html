@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Input file reference &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <script src="../_static/documentation_options.js?v=8e576371"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sharing datasets with collaborators" href="sharing.html" />
+    <link rel="prev" title="Creating chemiscope input files" href="input.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="input.html" title="Previous Chapter: Creating chemiscope input files"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Creating chem...</span>
+    </a>
+  </li>
+  <li>
+    <a href="sharing.html" title="Next Chapter: Sharing datasets with collaborators"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Sharing datas... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Creating chemiscope input files</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Input file reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sharing.html">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="input-file-reference">
+<span id="input-reference"></span><h1>Input file reference<a class="headerlink" href="#input-file-reference" title="Link to this heading">¶</a></h1>
+<p>If you can not or do not want to use the <code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> python package to create
+your input files, you can also directly write the JSON file conforming to the
+schema described here. The input file follows closely the <a class="reference external" href="api/interfaces/main.dataset.html">Dataset</a> typescript
+interface used in the library. Using a pseudo-JSON format, the file should
+contains the following fields and values:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// metadata of the dataset. `description`, `authors` and `references`</span>
+<span class="w">    </span><span class="c1">// will be rendered as markdown.</span>
+<span class="w">    </span><span class="s2">&quot;meta&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// the name of the dataset</span>
+<span class="w">        </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;this is my name&quot;</span>
+<span class="w">        </span><span class="c1">// description of the dataset, OPTIONAL</span>
+<span class="w">        </span><span class="s2">&quot;description&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;This contains data from ...&quot;</span>
+<span class="w">        </span><span class="c1">// authors of the dataset, OPTIONAL</span>
+<span class="w">        </span><span class="s2">&quot;authors&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Mr Green, green@example.com&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="c1">// references for the dataset, OPTIONAL</span>
+<span class="w">        </span><span class="s2">&quot;references&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s2">&quot;&#39;A new molecular construction&#39;, Journal of Random Words 19 (1923) pp 3333, DOI: 10.0000/0001100&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;&#39;nice website&#39; http://example.com&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="c1">// list of properties in this dataset</span>
+<span class="w">    </span><span class="s2">&quot;properties&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Each property have at least a name, a target and some values.</span>
+<span class="w">        </span><span class="c1">// Optional entries for the units and descriptions can also be added.</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// the property target: is it defined per atom or for the full</span>
+<span class="w">            </span><span class="c1">// structures</span>
+<span class="w">            </span><span class="s2">&quot;target&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;atom&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// values of the properties can either be numbers, strings</span>
+<span class="w">            </span><span class="c1">// or array of numbers.</span>
+<span class="w">            </span><span class="c1">//</span>
+<span class="w">            </span><span class="c1">// string properties are assumed to represent categories of</span>
+<span class="w">            </span><span class="c1">// data.</span>
+<span class="w">            </span><span class="c1">//</span>
+<span class="w">            </span><span class="c1">// the first dimension of the multidimensional property corresponds</span>
+<span class="w">            </span><span class="c1">// to the number atoms/structures, the second dimension corresponds</span>
+<span class="w">            </span><span class="c1">// to the size of the array of values per atom/structure.</span>
+<span class="w">            </span><span class="s2">&quot;values&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="p">...]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;first&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;second&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;first&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">...]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">[[</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="mf">5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">4</span><span class="p">,</span><span class="w"> </span><span class="mf">6</span><span class="p">],</span><span class="w"> </span><span class="p">...],</span>
+
+<span class="w">            </span><span class="c1">// OPTIONAL: units of the property&#39; value</span>
+<span class="w">            </span><span class="s2">&quot;units&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;A/fs^2&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// OPTIONAL: free-form description of the property as a string</span>
+<span class="w">            </span><span class="s2">&quot;description&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;acceleration of the atoms in the structure ...&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// OPTIONAL: an array containing a single string of the name of</span>
+<span class="w">            </span><span class="c1">// the parameter (from the `parameters`` object below). This is</span>
+<span class="w">            </span><span class="c1">// required multidimensional properties</span>
+<span class="w">            </span><span class="s2">&quot;parameter&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;parameter_name&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// OPTIONAL: list of parameters to be used with multidimensional properties</span>
+<span class="w">    </span><span class="s2">&quot;parameters&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// each Parameter must have a name, and an array of values that should match</span>
+<span class="w">        </span><span class="c1">// the second dimension of the associated multidimensional properties</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// an array of numbers containing the values of the parameter</span>
+<span class="w">            </span><span class="c1">// the size should correspond to the second dimension of the</span>
+<span class="w">            </span><span class="c1">// corresponding multidimensional property</span>
+<span class="w">            </span><span class="s2">&quot;values&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">]</span>
+
+<span class="w">            </span><span class="c1">// OPTIONAL free-form description of the parameter as a string</span>
+<span class="w">            </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;a short description of this parameter&quot;</span>
+<span class="w">            </span><span class="c1">// OPTIONAL units of the values in the values array</span>
+<span class="w">            </span><span class="s2">&quot;units&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;eV&quot;</span>
+
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// list of structures in this dataset</span>
+<span class="w">    </span><span class="s2">&quot;structures&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// number of atoms in the structure</span>
+<span class="w">            </span><span class="s2">&quot;size&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">42</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// names of the atoms in the structure</span>
+<span class="w">            </span><span class="s2">&quot;names&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">...],</span>
+<span class="w">            </span><span class="c1">// x cartesian coordinate of all the atoms, in Angstroms</span>
+<span class="w">            </span><span class="s2">&quot;x&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="mf">5.2</span><span class="p">,</span><span class="w"> </span><span class="p">...],</span>
+<span class="w">            </span><span class="c1">// y cartesian coordinate of all the atoms, in Angstroms</span>
+<span class="w">            </span><span class="s2">&quot;y&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">5.7</span><span class="p">,</span><span class="w"> </span><span class="mf">7</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">2.4</span><span class="p">,</span><span class="w"> </span><span class="p">...],</span>
+<span class="w">            </span><span class="c1">// z cartesian coordinate of all the atoms, in Angstroms</span>
+<span class="w">            </span><span class="s2">&quot;z&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">8.1</span><span class="p">,</span><span class="w"> </span><span class="mf">2.9</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.3</span><span class="p">,</span><span class="w"> </span><span class="p">...],</span>
+<span class="w">            </span><span class="c1">// OPTIONAL: unit cell of the system, if any.</span>
+<span class="w">            </span><span class="c1">//</span>
+<span class="w">            </span><span class="c1">// This should be given as [ax ay az bx by bz cx cy cz], where</span>
+<span class="w">            </span><span class="c1">// a, b, and c are the unit cell vectors. All values are</span>
+<span class="w">            </span><span class="c1">// expressed in Angstroms.</span>
+<span class="w">            </span><span class="s2">&quot;cell&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">10</span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// other structures as needed</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">    </span><span class="p">],</span>
+
+<span class="w">    </span><span class="c1">// OPTIONAL: shapes to display in the structure viewer.</span>
+<span class="w">    </span><span class="c1">// Multiple shapes groups with different names are supported.</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// Each shape is defined by parameters that can be specified globally,</span>
+<span class="w">    </span><span class="c1">// at the structure level, or for individual atoms</span>
+<span class="w">    </span><span class="s2">&quot;shapes&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s2">&quot;kind&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">&lt;</span><span class="s2">&quot;sphere&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ellipsoid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;arrow&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;custom&quot;</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;parameters&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s2">&quot;global&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">global_parameters_dictionary</span><span class="o">&gt;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="s2">&quot;structure&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">list_of_structure_parameter_dictionaries</span><span class="o">&gt;</span><span class="w"> </span><span class="p">],</span>
+<span class="w">                </span><span class="s2">&quot;atom&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">list_of_atom_parameter_dictionaries</span><span class="o">&gt;</span><span class="w"> </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Sphere shapes, with the given `radius`</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">other_name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s2">&quot;kind&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;sphere&quot;</span>
+<span class="w">            </span><span class="s2">&quot;parameters&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s2">&quot;global&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;radius&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.2</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Arrow, with the given shape parameters, and `vector` direction</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">other_name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s2">&quot;kind&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;sphere&quot;</span>
+<span class="w">            </span><span class="s2">&quot;parameters&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s2">&quot;global&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;baseRadius&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;headRadius&#39;</span><span class="o">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;headLength&#39;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="s2">&quot;atom&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;vector&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0</span><span class="p">,</span><span class="mf">0</span><span class="p">,</span><span class="mf">1</span><span class="p">]},</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;vector&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0</span><span class="p">,</span><span class="mf">1</span><span class="p">,</span><span class="mf">1</span><span class="p">]},</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">other_name</span><span class="o">&gt;:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s2">&quot;kind&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;ellipsoid&quot;</span>
+<span class="w">            </span><span class="s2">&quot;parameters&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s2">&quot;global&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">                </span><span class="s2">&quot;structure&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;semiaxes&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">]},</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Custom shapes. Must provide list of vertices, and the vertex</span>
+<span class="w">        </span><span class="c1">// indices associated with simplices (the latter are autocalculated)</span>
+<span class="w">        </span><span class="c1">// if omitted</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">yet_another</span><span class="o">&gt;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="s2">&quot;kind&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s2">&quot;parameters&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="s2">&quot;global&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;vertices&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[[</span><span class="nx">x1</span><span class="p">,</span><span class="nx">y1</span><span class="p">,</span><span class="nx">z1</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="nx">x2</span><span class="p">,</span><span class="nx">y2</span><span class="p">,</span><span class="nx">z2</span><span class="p">],</span><span class="w"> </span><span class="p">...],</span>
+<span class="w">                             </span><span class="s2">&quot;simplices&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[[</span><span class="mf">0</span><span class="p">,</span><span class="mf">1</span><span class="p">,</span><span class="mf">2</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="mf">3</span><span class="p">,</span><span class="mf">4</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">0</span><span class="p">,</span><span class="mf">5</span><span class="p">,</span><span class="mf">5</span><span class="p">]]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="s2">&quot;atom&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">},</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">]</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// OPTIONAL: atom-centered environments descriptions</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// If present, there should be one environment for each atom in each</span>
+<span class="w">    </span><span class="c1">// structure.</span>
+<span class="w">    </span><span class="s2">&quot;environments&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// index of the structure in the above structures list</span>
+<span class="w">            </span><span class="s2">&quot;structure&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// index of the central atom in structures</span>
+<span class="w">            </span><span class="s2">&quot;center&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">8</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// spherical cutoff radius, expressed in Angstroms</span>
+<span class="w">            </span><span class="s2">&quot;cutoff&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">3.5</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// more environments</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">    </span><span class="p">]</span>
+
+<span class="w">    </span><span class="c1">// OPTIONAL: setting for each panel</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// Adding these values allow to setup how a given dataset should be</span>
+<span class="w">    </span><span class="c1">// visualized in chemiscope.</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// Each value inside the settings group is optional</span>
+<span class="w">    </span><span class="s2">&quot;settings&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// settings related to the map</span>
+<span class="w">        </span><span class="s2">&quot;map&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// x axis settings</span>
+<span class="w">            </span><span class="s2">&quot;x&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// name of the property to use for this axis, this must be</span>
+<span class="w">                </span><span class="c1">// one of the key from the root `properties` table.</span>
+<span class="w">                </span><span class="s2">&quot;property&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;name&gt;&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// should the axis use linear or logarithmic scaling</span>
+<span class="w">                </span><span class="s2">&quot;scale&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;linear&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;log&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// lower bound of the axis</span>
+<span class="w">                </span><span class="s2">&quot;min&quot;</span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">0.23</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// upper bound of the axis</span>
+<span class="w">                </span><span class="s2">&quot;max&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1.42</span><span class="p">,</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">// y axis setting, using the the same keys as x axis setting</span>
+<span class="w">            </span><span class="s2">&quot;y&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">// z axis setting, using the the same keys as x axis setting</span>
+<span class="w">            </span><span class="s2">&quot;z&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// property can be set to an empty string to get a 2D map</span>
+<span class="w">                </span><span class="s2">&quot;property&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">// name of the property to use for markers symbols, this must be</span>
+<span class="w">            </span><span class="c1">// one of the key from the root `properties` table. The</span>
+<span class="w">            </span><span class="c1">// associated property should have string values</span>
+<span class="w">            </span><span class="s2">&quot;symbol&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;name&gt;&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// point color setting, using the the same keys as x axis setting</span>
+<span class="w">            </span><span class="s2">&quot;color&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// property can be set to an empty string for uniform color</span>
+<span class="w">                </span><span class="s2">&quot;property&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">// Color palette to use, default to &#39;inferno&#39;</span>
+<span class="w">            </span><span class="s2">&quot;palette&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;cividis&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// settings related to the markers sizes</span>
+<span class="w">            </span><span class="s2">&quot;size&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// scaling factor for the axis, between 1 and 100</span>
+<span class="w">                </span><span class="s2">&quot;factor&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">55</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// mode to scale the markers with respect to the properties</span>
+<span class="w">                  </span><span class="c1">// `constant`: all markers are same size, scaled by `factor`</span>
+<span class="w">                  </span><span class="c1">// `linear`: markers are directly proportional to the property</span>
+<span class="w">                  </span><span class="c1">// `log`: markers are proportional to the logarithm of the property</span>
+<span class="w">                  </span><span class="c1">// `sqrt`: markers are proportional to the square root of the property</span>
+<span class="w">                  </span><span class="c1">// `inverse`: markers are inversely proportional to the property</span>
+<span class="w">                </span><span class="s2">&quot;mode&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;linear&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;log&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;sqrt | &quot;</span><span class="nx">inverse</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// name of the property to use for the markers size, this</span>
+<span class="w">                </span><span class="c1">// must be one of the key from the root `properties` table.</span>
+<span class="w">                </span><span class="s2">&quot;property&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;name&gt;&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// if false, markers scale from smallest to largest property value</span>
+<span class="w">                </span><span class="c1">// if true, marker scale from largest to smallest property value</span>
+<span class="w">                </span><span class="c1">// in the case of `inverse` scaling, this is reversed.</span>
+<span class="w">                </span><span class="s2">&quot;reverse&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Settings related to the structure viewers grid. This is an array</span>
+<span class="w">        </span><span class="c1">// containing the settings for each separate viewer</span>
+<span class="w">        </span><span class="s2">&quot;structure&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// show bonds between atoms</span>
+<span class="w">                </span><span class="s2">&quot;bonds&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">//use space filling representation</span>
+<span class="w">                </span><span class="s2">&quot;spaceFilling&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// show atoms labels</span>
+<span class="w">                </span><span class="s2">&quot;atomLabels&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// show unit cell information and lines</span>
+<span class="w">                </span><span class="s2">&quot;unitCell&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// displayed unit cell as a packed cell</span>
+<span class="w">                </span><span class="s2">&quot;packedCell&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// number of repetitions in the `a/b/c` direction for the supercell</span>
+<span class="w">                </span><span class="s2">&quot;supercell&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">],</span>
+<span class="w">                </span><span class="c1">// make the molecule spin</span>
+<span class="w">                </span><span class="s2">&quot;rotation&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// which axis system to use</span>
+<span class="w">                </span><span class="s2">&quot;axes&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;none&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;xyz&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;abc&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// keep the orientation constant when loading a new structure</span>
+<span class="w">                </span><span class="s2">&quot;keepOrientation&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                </span><span class="c1">// options related to atom-centered environments</span>
+<span class="w">                </span><span class="s2">&quot;environments&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="c1">// should we display environments &amp; environments options</span>
+<span class="w">                    </span><span class="s2">&quot;activated&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">                    </span><span class="c1">// automatically center the environment when loading it</span>
+<span class="w">                    </span><span class="s2">&quot;center&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">                    </span><span class="c1">// the cutoff value for spherical environments</span>
+<span class="w">                    </span><span class="s2">&quot;cutoff&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">3.5</span>
+<span class="w">                    </span><span class="c1">// which style for atoms not in the environment</span>
+<span class="w">                    </span><span class="s2">&quot;bgStyle&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;licorice&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;ball-stick&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;hide&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="c1">// which colors for atoms not in the environment</span>
+<span class="w">                    </span><span class="s2">&quot;bgColor&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;grey&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;CPK&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">// ...</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">        </span><span class="c1">// List of environments to display (up to 9). These environments</span>
+<span class="w">        </span><span class="c1">// will be shown in the structure viewer grid and indicated on</span>
+<span class="w">        </span><span class="c1">// the map.</span>
+<span class="w">        </span><span class="c1">//</span>
+<span class="w">        </span><span class="c1">// This list should containg 0-based indexes of the environment in</span>
+<span class="w">        </span><span class="c1">// the root &quot;environments&quot; object; or of the structure in the root</span>
+<span class="w">        </span><span class="c1">// &quot;environments&quot; if no environments are present.</span>
+<span class="w">        </span><span class="c1">//</span>
+<span class="w">        </span><span class="c1">// If both this list and the &quot;structure&quot; settings list above are</span>
+<span class="w">        </span><span class="c1">// present, they should have the same size and will be used together</span>
+<span class="w">        </span><span class="c1">// (first element of &quot;structure&quot; setting used for the first &quot;pinned&quot;</span>
+<span class="w">        </span><span class="c1">// value; and so on).</span>
+<span class="w">        </span><span class="c1">//</span>
+<span class="w">        </span><span class="c1">// This defaults to [0], i.e. showing only the first</span>
+<span class="w">        </span><span class="c1">// environment/structure.</span>
+<span class="w">        </span><span class="s2">&quot;pinned&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="mf">33</span><span class="p">,</span><span class="w"> </span><span class="mf">67</span><span class="p">,</span><span class="w"> </span><span class="mf">12</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

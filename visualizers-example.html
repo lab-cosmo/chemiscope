@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8" />
+        <title>Visualizer examples</title>
+
+        <!-- jquery -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- bootstrap -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+            crossorigin="anonymous">
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- The code for StructureVisualizer -->
+        <script type="text/javascript" src="chemiscope.min.js"></script>
+
+        <style>
+            .description {
+                width: 600px;
+                margin: 1em auto 1em auto;
+                padding: 8px;
+            }
+
+            .viewer {
+                width: 600px;
+                height: 400px;
+                margin: auto;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1 style="text-align: center; margin-bottom: 1em">DefaultVisualizer example</h1>
+        <main class="container-fluid">
+            <div class="row">
+                <div class="col" style="padding: 0">
+                    <div id="chemiscope-meta"></div>
+                    <div class="ratio ratio-1x1">
+                        <div id="chemiscope-map" style="position: absolute"></div>
+                    </div>
+                </div>
+
+                <div class="col" style="padding: 0">
+                    <div>
+                        <div id="chemiscope-structure" style="height: 600px"></div>
+                        <div id="chemiscope-info"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <h1 style="text-align: center; margin-bottom: 1em">StructureVisualizer example</h1>
+        <main class="container-fluid">
+            <div id="chemiscope-structure-meta"></div>
+            <div>
+                <div id="chemiscope-structure-structure" style="height: 600px"></div>
+                <div id="chemiscope-structure-info"></div>
+            </div>
+        </main>
+        <h1 style="text-align: center; margin-bottom: 1em">MapVisualizer example</h1>
+        <main class="container-fluid">
+            <div id="chemiscope-map-meta"></div>
+            <div>
+                <div id="chemiscope-map-map" style="height: 600px"></div>
+                <div id="chemiscope-map-info"></div>
+            </div>
+        </main>
+    </body>
+
+    <script type="text/javascript">
+        // prettier-ignore
+        const crystalData = {
+         meta : { name: "Crystal" },
+         properties : { index: { target:'structure', values: [0, 1] }, parity: { target:'structure', values: [1, -1] } },
+         structures : [ {
+            size: 8,
+            names: ["C", "C", "C", "C", "C", "C", "C", "C"],
+            x: [0.39589082, 0.39589082, 1.63234082, 1.63234082, 0.39589082, 0.39589082, 1.63234082, 1.63234082],
+            y: [1.56386071, 3.06796929, 4.50090951, 0.13092049, 0.84082421, 3.79100579, 1.18871093, 3.44311907],
+            z: [4.50090951, 0.13092049, 3.06796929, 1.56386071, 1.18871093, 3.44311907, 3.79100579, 0.84082421],
+            cell: [2.4729, 2.8361778918473426e-16, 2.8361778918473426e-16, 0.0, 4.63183, 2.8361778918473426e-16, 0.0, 0.0, 4.63183],
+        }, {
+            size: 8,
+            names: ["C", "C", "C", "C", "C", "C", "C", "C"],
+            x: [-0.39589082, -0.39589082, -1.63234082, -1.63234082, -0.39589082, -0.39589082, -1.63234082, -1.63234082],
+            y: [-1.56386071, -3.06796929, -4.50090951, -0.13092049, -0.84082421, -3.79100579, -1.18871093, -3.44311907],
+            z: [-4.50090951, -0.13092049, -3.06796929, -1.56386071, -1.18871093, -3.44311907, -3.79100579, -0.84082421],
+            cell: [2.4729, 2.8361778918473426e-16, 2.8361778918473426e-16, 0.0, 4.63183, 2.8361778918473426e-16, 0.0, 0.0, 4.63183],
+        } ] }
+
+        const config = {
+            info: document.querySelector('#chemiscope-info'),
+            map: document.querySelector('#chemiscope-map'),
+            meta: document.querySelector('#chemiscope-meta'),
+            structure: document.querySelector('#chemiscope-structure'),
+            maxStructureViewers: 4,
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultview = new Chemiscope.DefaultVisualizer(config, crystalData);
+        });
+
+        const structureConfig = {
+            info: document.querySelector('#chemiscope-structure-info'),
+            meta: document.querySelector('#chemiscope-structure-meta'),
+            structure: document.querySelector('#chemiscope-structure-structure'),
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stuctureview = new Chemiscope.StructureVisualizer(structureConfig, crystalData);
+        });
+
+        const mapConfig = {
+            info: document.querySelector('#chemiscope-map-info'),
+            meta: document.querySelector('#chemiscope-map-meta'),
+            map: document.querySelector('#chemiscope-map-map'),
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapview = new Chemiscope.MapVisualizer(mapConfig, crystalData);
+        });
+    </script>
+</html>

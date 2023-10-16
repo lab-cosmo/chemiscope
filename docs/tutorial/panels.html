@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Different panels and settings &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <script src="../_static/documentation_options.js?v=8e576371"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Creating chemiscope input files" href="input.html" />
+    <link rel="prev" title="Introduction to structural properties" href="properties.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="properties.html" title="Previous Chapter: Introduction to structural properties"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Introduction ...</span>
+    </a>
+  </li>
+  <li>
+    <a href="input.html" title="Next Chapter: Creating chemiscope input files"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Creating chem... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Creating chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input-reference.html">Input file reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sharing.html">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="different-panels-and-settings">
+<h1>Different panels and settings<a class="headerlink" href="#different-panels-and-settings" title="Link to this heading">¶</a></h1>
+<p>The default chemiscope visualizer is organized in three main panels: the map,
+the structure viewer and the environment information display. Additionally,
+clicking on the dataset title (on top of the map) will display some metadata
+about the dataset (description, authors, references). This section will
+present each one, as well as the main settings accessible to customize the
+display.</p>
+<p>The map is a 2D or 3D scatter plot showing properties for all the environments
+in the dataset. You can set which properties (structural or physical) should be
+used a the x, y, and potentially z axis; as well as for color and size of the
+points. Additionally, properties which have string values (an not numeric
+values) can be used as category data to set the symbols used for the points. To
+open the settings modal window, click on the hamburger menu (the ☰ symbol) on
+the left of the dataset title.</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/map.png"><img alt="../_images/map.png" src="../_images/map.png" style="width: 80%;" /></a>
+<figcaption>
+<p><span class="caption-text">The map panel in 2D mode and the related settings</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The structure panel is a 3D molecular viewer based on <a class="reference external" href="https://3dmol.csb.pitt.edu/">3Dmol.js</a>. The settings are
+accessible through the hamburger menu (☰) on the right of the viewer. The
+settings are grouped into <strong>representation</strong> (how is the molecule rendered);
+<strong>supercell</strong> (how many copies of the unit cell to display); <strong>environments</strong>
+(how atom-centered environments are displayed); <strong>camera</strong> (reset the camera in
+along one of the given axis); and <strong>trajectory</strong> (playback related settings).</p>
+<figure class="align-default" id="id2">
+<a class="reference internal image-reference" href="../_images/structure.png"><img alt="../_images/structure.png" src="../_images/structure.png" style="width: 80%;" /></a>
+<figcaption>
+<p><span class="caption-text">The structure panel and related settings</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Finally, the environments information panel features sliders and text input to
+allow for an easy selection of the environment of interest. The play button on
+the left of the sliders activates the trajectory playback, looping over the
+structures in the datasets or the atoms in a structure. By clicking on the
+labels at the top (<em>structure XXX</em> and*atom XXX*), one can hide or show the
+full property tables. These tables show all properties in the dataset for the
+currently selected environment.</p>
+<figure class="align-default" id="id3">
+<a class="reference internal image-reference" href="../_images/info.png"><img alt="../_images/info.png" src="../_images/info.png" style="width: 40%;" /></a>
+<figcaption>
+<p><span class="caption-text">The environment information panel fully expanded</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

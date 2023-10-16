@@ -1,0 +1,16 @@
+.body {
+    max-width: 1000px !important;
+}
+
+pre {
+    color: black;
+}
+
+.admonition.note a {
+    color: white;
+    text-decoration: underline;
+}
+
+.admonition.note a:hover {
+    color: #18bc9c;
+}

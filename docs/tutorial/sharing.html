@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sharing datasets with collaborators &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <script src="../_static/documentation_options.js?v=8e576371"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Jupyter notebooks" href="jupyter.html" />
+    <link rel="prev" title="Input file reference" href="input-reference.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="input-reference.html" title="Previous Chapter: Input file reference"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Input file reference</span>
+    </a>
+  </li>
+  <li>
+    <a href="jupyter.html" title="Next Chapter: Jupyter notebooks"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Jupyter notebooks &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Creating chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input-reference.html">Input file reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="sharing-datasets-with-collaborators">
+<h1>Sharing datasets with collaborators<a class="headerlink" href="#sharing-datasets-with-collaborators" title="Link to this heading">¶</a></h1>
+<p>Once you have converted your data in the <a class="reference internal" href="input.html#input-format"><span class="std std-ref">format used by chemiscope</span></a>, you might want to share it with collaborators. There are
+multiple ways to do this, we’ll go over them in this section.</p>
+<section id="online-visualizer-at-chemiscope-org">
+<h2>Online visualizer at chemiscope.org<a class="headerlink" href="#online-visualizer-at-chemiscope-org" title="Link to this heading">¶</a></h2>
+<section id="uploading-datasets">
+<h3>Uploading datasets<a class="headerlink" href="#uploading-datasets" title="Link to this heading">¶</a></h3>
+<p>The simplest way to share chemiscope dataset is to send the corresponding file
+(<code class="docutils literal notranslate"><span class="pre">my-dataset.json</span></code> or <code class="docutils literal notranslate"><span class="pre">my-dataset.json.gz</span></code>) to your collaborators.</p>
+<p>They can then load this file from the main chemiscope website:
+<a class="reference external" href="https://chemiscope.org/">https://chemiscope.org/</a>. Here they can use the <em>Load/Save</em> menu to upload the
+dataset to the website.</p>
+</section>
+<section id="loading-from-an-url">
+<h3>Loading from an URL<a class="headerlink" href="#loading-from-an-url" title="Link to this heading">¶</a></h3>
+<p>You can also host your dataset in any publicly accessible web server such as
+your home page. Given a file hosted at
+<code class="docutils literal notranslate"><span class="pre">https://university.edu/~myself/dataset.json</span></code>, you can then load this file
+directly in chemiscope by going to
+<code class="docutils literal notranslate"><span class="pre">https://chemiscope.org/?load=https://university.edu/~myself/dataset.json</span></code>.
+This allow you to create links to directly open a given dataset in the main
+chemiscope website, loading such dataset from your own webpage.</p>
+<p>In general, you can set the <code class="docutils literal notranslate"><span class="pre">load</span></code> GET parameter on <code class="docutils literal notranslate"><span class="pre">https://chemiscope.org</span></code>
+to any url-encoded URL, and chemiscope will try to load the dataset from this
+URL.</p>
+</section>
+<section id="saving-visualization-state">
+<h3>Saving visualization state<a class="headerlink" href="#saving-visualization-state" title="Link to this heading">¶</a></h3>
+<p>You can save the current visualization settings from the website using the
+<em>Load/Save</em> menu. This will allow you to download a JSON file, which you can use
+later to reset visualization state.</p>
+<p>If you are loading a file from an URL by creating a link that looks like
+<code class="docutils literal notranslate"><span class="pre">https://chemiscope.org/?load=https://university.edu/dataset.json.gz</span></code>, you can
+use the <code class="docutils literal notranslate"><span class="pre">settings</span></code> GET parameter to specify the URL of saved settings:
+<code class="docutils literal notranslate"><span class="pre">https://chemiscope.org/?load=https://university.edu/dataset.json.gz&amp;settings=https://university.edu/settings.json</span></code></p>
+</section>
+</section>
+<section id="standalone-offline-visualizer">
+<h2>Standalone offline visualizer<a class="headerlink" href="#standalone-offline-visualizer" title="Link to this heading">¶</a></h2>
+<p>There are some cases where you do not want to depend on an online tool when
+sharing your dataset, such as scientific article supplementation information.
+For these use cases, a standalone, offline visualizer exists that uses the same
+input file format as the default interface. You can download the latest version
+of the standalone viewer at
+<a class="reference download external" download="" href="https://chemiscope.org/chemiscope_standalone.html"><code class="xref download docutils literal notranslate"><span class="pre">https://chemiscope.org/chemiscope_standalone.html</span></code></a>.</p>
+<p>This file contains all the required HTML and JavaScript code for chemiscope. You
+can then add your own dataset by adding the corresponding JSON file at the end
+of the <code class="docutils literal notranslate"><span class="pre">chemiscope_standalone.html</span></code> file.</p>
+<p><strong>WARNING:</strong> Only JSON, not compressed JSON (<code class="docutils literal notranslate"><span class="pre">.json.gz</span></code>) files are supported
+with the standalone HTML visualizer.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat<span class="w"> </span>chemiscope_standalone.html<span class="w"> </span>my-dataset.json<span class="w"> </span>&gt;<span class="w"> </span>my-dataset.html
+</pre></div>
+</div>
+<p>You can then share the <code class="docutils literal notranslate"><span class="pre">my-dataset.html</span></code> file with others, who can open it in
+any web browser.</p>
+<p>To re-build the <code class="docutils literal notranslate"><span class="pre">chemiscope_standalone.html</span></code> file from sources, please follow
+the steps below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lab-cosmo/chemiscope
+<span class="nb">cd</span><span class="w"> </span>chemiscope
+npm<span class="w"> </span>install
+npm<span class="w"> </span>run<span class="w"> </span>build
+python3<span class="w"> </span>./utils/generate_standalone.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

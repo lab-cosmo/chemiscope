@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Introduction to structural properties &#8212; chemiscope 0.5.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <script src="../_static/documentation_options.js?v=8e576371"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Different panels and settings" href="panels.html" />
+    <link rel="prev" title="User tutorial" href="index.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="index.html" title="Previous Chapter: User tutorial"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; User tutorial</span>
+    </a>
+  </li>
+  <li>
+    <a href="panels.html" title="Next Chapter: Different panels and settings"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Different pan... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Creating chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input-reference.html">Input file reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sharing.html">Sharing datasets with collaborators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#getting-and-building-the-code">Getting and building the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../embedding.html#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="introduction-to-structural-properties">
+<h1>Introduction to structural properties<a class="headerlink" href="#introduction-to-structural-properties" title="Link to this heading">¶</a></h1>
+<p>Before we get started, we will introduce a few concepts that underlie the
+concept and the usage of chemiscope. Chemiscope is designed to help navigating
+<em>structure-property maps</em>, i.e. 2D or 3D representations of a set of
+atomic scale entities that reflect how structure influences materials
+properties.</p>
+<p>Chemiscope can work with two kinds of entities: full structures, or
+atom-centred environments. A structure consists in a set of atoms, possibly
+representing the periodic repeat unit of an infinite structure. An
+environment consists in a set of atoms that surround a central atom,
+In both cases, these entities are fully defined by the position and nature
+of the atoms present in the structure, or in the neighborhood of the
+environment center.</p>
+<p>For each structure or environment, one may have computed <em>properties</em>,
+e.g. the cohesive energy of a molecule, or the NMR chemical shielding of
+a nucleus, or <em>structural representations</em>, i.e. functions of the
+spatial arrangement of the atoms that incorporate some fundamental
+symmetries to achieve a description of the structure that is as complete
+as possible, yet concise. Examples of such representations are for instance
+<a class="reference external" href="soap">atom density representationis</a> or <a class="reference external" href="Behler-Parrinello">Behler-Parrinello
+symmetry functions</a>. These representations are usually
+high-dimensional vectors, hard to visualize and interpret. For this reason, one
+usually applies a dimensionality reduction algorithm, such as <a class="reference external" href="https://en.wikipedia.org/wiki/Principal_component_analysis">PCA</a>, <a class="reference external" href="https://doi.org/10.1073/pnas.1108486108">sketch-map</a>,
+<em>etc.</em>   The interpretation of the resulting  will differ depending on both the
+descriptor used to represent the structures or environments and the
+dimensionality reduction algorithm applied.</p>
+<p>Chemiscope simplifies visualizing the correlations between structural
+representations and properties associated with structures and environments,
+by representing in an interactive fashion these atomic-scale entities as points
+on a map, and by associating these points with an explicit, 3D visualization
+of the structure of the material or molecule.</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/mol-to-map.svg"><img alt="../_images/mol-to-map.svg" src="../_images/mol-to-map.svg" width="65%" /></a>
+<figcaption>
+<p><span class="caption-text">Illustration of the process used to create structural properties from a
+molecule.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Chemiscope is completly agnostic with respect to how properties and structural
+representations are generated, and do not provide any facilities to generate them.
+In the rest of this document, we will refer to properties describing
+the structure of an environment or structure as <em>structural properties</em>
+and other associated properties associated (such as energy, density, …) as
+<em>physical properties</em>.</p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
