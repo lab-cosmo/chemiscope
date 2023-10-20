@@ -57,7 +57,7 @@ function groupByStructure(
         Array.from({ length: structures[i].size })
     );
 
-    for (let i=0; i<environments.length; i++) {
+    for (let i = 0; i < environments.length; i++) {
         const env = environments[i];
         result[env.structure][env.center] = {
             environment: i,
@@ -502,7 +502,7 @@ export class ViewersGrid {
     }
 
     private _getSelectedAtomProperties(
-        structure: number,
+        structure: number
     ): Record<string, (number | undefined)[]> | undefined {
         const structureAtomProperties: Record<string, (number | undefined)[]> = {};
         if (this._environments !== undefined) {
