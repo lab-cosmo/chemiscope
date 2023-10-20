@@ -797,6 +797,12 @@ export class MoleculeViewer {
         // ======= color settings
         // setup state when the property changes
         const ColorPropertyChanges = () => {
+            const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
+                string,
+                (number | undefined)[]
+            >;
+            const property: string = this._options.color.property.value;
+
             if (this._options.color.property.value !== 'element') {
                 this._options.color.mode.enable();
                 this._options.color.mode.value = 'linear';
@@ -814,10 +820,23 @@ export class MoleculeViewer {
                         )
                     ) {
                         sendWarning(
-                            'The selected structure has undefined properties for some atoms, these atoms will still be colored by element.'
+                            'The selected structure has undefined properties for some atoms, these atoms will still be colored in dark gray.'
                         );
                     }
                 }
+                // Use map to extract the specified property values into an array
+                const values: number[] = properties[property].filter(
+                    (value) => !isNaN(Number(value))
+                ) as number[];
+                // To change min and max values when the mode has been changed
+                const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
+                // We have to set max first and min second here to avoid sending
+                // a spurious warning in `colorRangeChange` below in case the
+                // new min is bigger than the old max.
+                this._options.color.min.value = Number.NEGATIVE_INFINITY;
+                this._options.color.max.value = max;
+                this._options.color.min.value = min;
+                this._setScaleStep([min, max]);
             } else {
                 this._options.color.mode.disable();
                 this._options.color.min.disable();
@@ -829,24 +848,6 @@ export class MoleculeViewer {
 
                 this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
             }
-            const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
-                string,
-                (number | undefined)[]
-            >;
-            const property: string = this._options.color.property.value;
-            // Use map to extract the specified property values into an array
-            const values: number[] = properties[property].filter(
-                (value) => !isNaN(Number(value))
-            ) as number[];
-            // To change min and max values when the mode has been changed
-            const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
-            // We have to set max first and min second here to avoid sending
-            // a spurious warning in `colorRangeChange` below in case the
-            // new min is bigger than the old max.
-            this._options.color.min.value = Number.NEGATIVE_INFINITY;
-            this._options.color.max.value = max;
-            this._options.color.min.value = min;
-            this._setScaleStep([min, max]);
             restyleAndRender();
         };
         this._options.color.property.onchange.push(ColorPropertyChanges);
@@ -878,23 +879,29 @@ export class MoleculeViewer {
             const property: string = this._options.color.property.value;
             const mode: string = this._options.color.mode.value;
 
-            if (mode === 'log') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? Math.log10(Number(value)) : NaN
-                );
-            } else if (mode === 'sqrt') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? Math.sqrt(Number(value)) : NaN
-                );
-            } else if (mode === 'inverse') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? 1 / Number(value) : NaN
-                );
+            if (property !== 'element' && mode === ('log' || 'sqrt' || 'inverse')) {
+                properties[property] = properties[property].map((value) => {
+                    if (value !== null) {
+                        if (!isNaN(Number(value))) {
+                            if (mode === 'log') {
+                                return Math.log10(Number(value));
+                            } else if (mode === 'sqrt') {
+                                return Math.sqrt(Number(value));
+                            } else if (mode === 'inverse') {
+                                return 1 / Number(value);
+                            }
+                        } else {
+                            return NaN;
+                        }
+                    } else {
+                        return value;
+                    }
+                });
             }
 
             // Use map to extract the specified property values into an array
             const values: number[] = properties[property].filter(
-                (value) => !isNaN(Number(value))
+                (value) => value !== null && !isNaN(Number(value))
             ) as number[];
             // To change min and max values when the mode has been changed
             const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
@@ -1229,19 +1236,24 @@ export class MoleculeViewer {
                 string,
                 (number | undefined)[]
             >;
-
-            if (mode === 'log') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? Math.log10(Number(value)) : NaN
-                );
-            } else if (mode === 'sqrt') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? Math.sqrt(Number(value)) : NaN
-                );
-            } else if (mode === 'inverse') {
-                properties[property] = properties[property].map((value) =>
-                    !isNaN(Number(value)) ? 1 / Number(value) : NaN
-                );
+            if (property !== 'element' && mode === ('log' || 'sqrt' || 'inverse')) {
+                properties[property] = properties[property].map((value) => {
+                    if (value !== null) {
+                        if (!isNaN(Number(value))) {
+                            if (mode === 'log') {
+                                return Math.log10(Number(value));
+                            } else if (mode === 'sqrt') {
+                                return Math.sqrt(Number(value));
+                            } else if (mode === 'inverse') {
+                                return 1 / Number(value);
+                            }
+                        } else {
+                            return NaN;
+                        }
+                    } else {
+                        return value;
+                    }
+                });
             }
         }
 
@@ -1265,7 +1277,9 @@ export class MoleculeViewer {
             return (atom: $3Dmol.AtomSpec) => {
                 assert(atom.serial !== undefined);
                 const atomProperty = properties?.[property]?.[atom.serial];
-                if (isNaN(Number(atomProperty))) {
+                if (atomProperty === null) {
+                    return 0x222222;
+                } else if (isNaN(Number(atomProperty))) {
                     return 'gray';
                 } else {
                     return grad.valueToHex(Number(atomProperty));
