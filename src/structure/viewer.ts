@@ -10,12 +10,10 @@ import { assignBonds } from './assignBonds';
 
 import { getElement, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
-import { Environment, Property, Settings, Structure } from '../dataset';
+import { Environment, Settings, Structure } from '../dataset';
 
 import { Arrow, CustomShape, Ellipsoid, ShapeData, Sphere } from './shapes';
 
-import { MapData } from '../map/data';
-import { EnvironmentIndexer } from '../indexer';
 import { StructureOptions } from './options';
 
 const IS_SAFARI =
@@ -156,10 +154,6 @@ export class MoleculeViewer {
     private _environments?: (Environment | undefined)[];
     // List of properties for the current structure
     private _properties?: Record<string, (number | undefined)[]> | undefined;
-    // All known properties
-    private _data: MapData;
-    // environment indexer
-    private _indexer: EnvironmentIndexer;
     // Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
     // Button used to see more color options
@@ -171,11 +165,7 @@ export class MoleculeViewer {
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
      */
-    constructor(
-        element: string | HTMLElement,
-        indexer: EnvironmentIndexer,
-        properties: { [name: string]: Property }
-    ) {
+    constructor(element: string | HTMLElement, propertiesName: string[]) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -232,13 +222,10 @@ export class MoleculeViewer {
             noShapeStyle,
         ];
 
-        // Options reuse the same style sheets so they must be created after these.
-        this._indexer = indexer;
-        this._data = new MapData(properties);
         this._options = new StructureOptions(
             this._root,
             (rect) => this.positionSettingsModal(rect),
-            this._data
+            propertiesName
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
@@ -859,7 +846,7 @@ export class MoleculeViewer {
             this._options.color.min.value = Number.NEGATIVE_INFINITY;
             this._options.color.max.value = max;
             this._options.color.min.value = min;
-            this._setScaleStep([min, max], 'color');
+            this._setScaleStep([min, max]);
             restyleAndRender();
         };
         this._options.color.property.onchange.push(ColorPropertyChanges);
@@ -878,7 +865,7 @@ export class MoleculeViewer {
                 }
                 return;
             }
-            this._setScaleStep([min, max], 'color');
+            this._setScaleStep([min, max]);
         };
 
         // ======= color mode/transform
@@ -916,7 +903,7 @@ export class MoleculeViewer {
             this._options.color.min.value = Number.NEGATIVE_INFINITY;
             this._options.color.max.value = max;
             this._options.color.min.value = min;
-            this._setScaleStep([min, max], 'color');
+            this._setScaleStep([min, max]);
 
             restyleAndRender();
         });
@@ -948,7 +935,7 @@ export class MoleculeViewer {
             const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
             this._options.color.min.value = min;
             this._options.color.max.value = max;
-            this._setScaleStep([min, max], 'color');
+            this._setScaleStep([min, max]);
 
             restyleAndRender();
         };
@@ -1217,20 +1204,20 @@ export class MoleculeViewer {
         if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-                colorfunc: this.color_function(),
+                colorfunc: this.colorFunction(),
             } as unknown as $3Dmol.SphereStyleSpec;
         }
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
-                colorfunc: this.color_function(),
+                colorfunc: this.colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
         }
 
         return style;
     }
 
-    private color_function() {
+    private colorFunction() {
         // JSON.parse & JSON.stringify to make a deep copy of the properties to avoid modifying the original ones
         let properties: Record<string, (number | undefined)[]> | undefined = {};
         const property: string = this._options.color.property.value;
@@ -1276,10 +1263,12 @@ export class MoleculeViewer {
 
         if (property !== 'element') {
             return (atom: $3Dmol.AtomSpec) => {
-                if (isNaN(Number(properties?.[property]?.[Number(atom.serial)]))) {
+                assert(atom.serial !== undefined);
+                const atomProperty = properties?.[property]?.[atom.serial];
+                if (isNaN(Number(atomProperty))) {
                     return 'gray';
                 } else {
-                    return grad.valueToHex(Number(properties?.[property]?.[Number(atom.serial)]));
+                    return grad.valueToHex(Number(atomProperty));
                 }
             };
         }
@@ -1332,7 +1321,7 @@ export class MoleculeViewer {
                     radius: 0.149,
                     opacity: defaultOpacity(),
                     hidden: !this._options.bonds.value,
-                    colorfunc: this.color_function(),
+                    colorfunc: this.colorFunction(),
                 } as unknown as $3Dmol.StickStyleSpec;
             }
 
@@ -1341,7 +1330,7 @@ export class MoleculeViewer {
                     // slightly smaller scale than the main style
                     scale: this._options.spaceFilling.value ? 0.999 : 0.219,
                     opacity: defaultOpacity(),
-                    colorfunc: this.color_function(),
+                    colorfunc: this.colorFunction(),
                 } as unknown as $3Dmol.SphereStyleSpec;
             }
         } else {
@@ -1568,12 +1557,12 @@ export class MoleculeViewer {
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private _setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
+    private _setScaleStep(axisBounds: number[]): void {
         if (axisBounds !== undefined) {
             // round to 10 decimal places so it does not break in Firefox
             const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = this._options.getModalElement<HTMLInputElement>(`atom-${name}-min`);
-            const maxElement = this._options.getModalElement<HTMLInputElement>(`atom-${name}-max`);
+            const minElement = this._options.getModalElement<HTMLInputElement>(`atom-color-min`);
+            const maxElement = this._options.getModalElement<HTMLInputElement>(`atom-color-max`);
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }

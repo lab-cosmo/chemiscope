@@ -120,7 +120,7 @@ export class ViewersGrid {
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
     /// List of properties in the dataset
-    private _properties: { [name: string]: Property };
+    private _properties: Record<string, Property>;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
@@ -166,7 +166,11 @@ export class ViewersGrid {
         if (properties === undefined) {
             this._properties = {};
         } else {
-            this._properties = properties;
+            const numberProperties = filter(properties, (p) =>
+                Object.values(p.values).every((v) => typeof v === 'number')
+            );
+            const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
+            this._properties = atomProperties;
         }
         this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures, environments);
@@ -489,27 +493,18 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
-    private _getAtomProperties(): Record<string, Property> {
-        const numberProperties = filter(this._properties, (p) =>
-            Object.values(p.values).every((v) => typeof v === 'number')
-        );
-        const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
-        return atomProperties;
-    }
-
     private _getSelectedAtomProperties(
         indexes?: Indexes
     ): Record<string, (number | undefined)[]> | undefined {
         const structureAtomProperties: Record<string, (number | undefined)[]> = {};
-        const allAtomProperties = this._getAtomProperties();
         if (this._environments !== undefined && indexes !== undefined) {
             const activeEnvironments = this._environments[indexes.structure];
-            for (const propertyName in allAtomProperties) {
+            for (const propertyName in this._properties) {
                 structureAtomProperties[propertyName] = [];
                 for (const activeEnvironment of activeEnvironments) {
                     if (activeEnvironment !== undefined) {
                         structureAtomProperties[propertyName].push(
-                            allAtomProperties[propertyName].values[
+                            this._properties[propertyName].values[
                                 activeEnvironment.center
                             ] as number
                         );
@@ -745,10 +740,10 @@ export class ViewersGrid {
 
             // add a new cells if necessary
             if (!this._cellsData.has(cellGUID)) {
+                const propertiesName = this._properties ? Object.keys(this._properties) : [];
                 const viewer = new MoleculeViewer(
                     this._getById<HTMLElement>(`gi-${cellGUID}`),
-                    this._indexer,
-                    this._properties
+                    propertiesName
                 );
 
                 viewer.onselect = (atom: number) => {

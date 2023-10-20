@@ -14,7 +14,6 @@ import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../uti
 
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
-import { MapData, NumericProperties } from '../map/data';
 
 export class StructureOptions extends OptionsGroup {
     /// should we show bonds
@@ -67,7 +66,11 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, positionSettings: PositioningCallback, properties?: MapData) {
+    constructor(
+        root: HTMLElement,
+        positionSettings: PositioningCallback,
+        propertiesName?: string[]
+    ) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -106,8 +109,6 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
-        const propertiesName = properties ? Object.keys(properties['atom']) : [];
-
         this.color = {
             property: new HTMLOption('string', 'element'),
             min: new HTMLOption('number', 0),
@@ -116,8 +117,12 @@ export class StructureOptions extends OptionsGroup {
             palette: new HTMLOption('string', 'Rwb'),
         };
 
+        // Handling undefined propertiesName:
+        if (propertiesName === undefined) {
+            propertiesName = [];
+        }
         // validate atom properties for coloring
-        if (properties && Object.keys(properties['atom']).includes('element')) {
+        if (propertiesName.includes('element')) {
             this.color.property.validate = optionValidator(propertiesName, 'color');
         } else {
             this.color.property.validate = optionValidator(
@@ -151,11 +156,7 @@ export class StructureOptions extends OptionsGroup {
         ).adoptedStyleSheets;
         this._openModal = openModal;
         root.appendChild(this._openModal);
-        if (properties) {
-            this._bind(properties['atom']);
-        } else {
-            this._bind({});
-        }
+        this._bind(propertiesName);
     }
 
     /** Get in a element in the modal from its id */
@@ -263,7 +264,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(atom: NumericProperties): void {
+    private _bind(propertiesName: string[]): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
@@ -284,11 +285,11 @@ export class StructureOptions extends OptionsGroup {
         const selectColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
         // first option is 'element'
         selectColorProperty.options.length = 0;
-        if (!Object.keys(atom).includes('element')) {
+        if (!propertiesName.includes('element')) {
             selectColorProperty.options.add(new Option('element', 'element'));
         }
-        for (const key in atom) {
-            selectColorProperty.options.add(new Option(key, key));
+        for (const property of propertiesName) {
+            selectColorProperty.options.add(new Option(property, property));
         }
         this.color.property.bind(selectColorProperty, 'value');
         this.color.mode.bind(this.getModalElement('atom-color-transform'), 'value');
