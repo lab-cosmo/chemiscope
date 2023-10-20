@@ -1264,7 +1264,7 @@ export class MoleculeViewer {
 
         let grad: $3Dmol.Gradient = new $3Dmol.Gradient.RWB(max, min);
 
-        if (this._options.color.palette.value === 'Rwb') {
+        if (this._options.color.palette.value === 'bwr') {
             // min and max are swapped to ensure red is used for high values, blue for low values
             grad = new $3Dmol.Gradient.RWB(max, min);
         } else if (this._options.color.palette.value === 'Roygb') {

@@ -114,7 +114,7 @@ export class StructureOptions extends OptionsGroup {
             min: new HTMLOption('number', 0),
             max: new HTMLOption('number', 0),
             mode: new HTMLOption('string', 'linear'),
-            palette: new HTMLOption('string', 'Rwb'),
+            palette: new HTMLOption('string', 'bwr'),
         };
 
         // Handling undefined propertiesName:
@@ -131,7 +131,7 @@ export class StructureOptions extends OptionsGroup {
             );
         }
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
-        this.color.palette.validate = optionValidator(['Rwb', 'Roygb', 'Sinebow'], 'palette');
+        this.color.palette.validate = optionValidator(['bwr', 'Roygb', 'Sinebow'], 'palette');
 
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK', 'prop'],
@@ -299,7 +299,7 @@ export class StructureOptions extends OptionsGroup {
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
         selectPalette.options.length = 0;
-        for (const key of ['Rwb', 'Roygb', 'Sinebow']) {
+        for (const key of ['bwr', 'Roygb', 'Sinebow']) {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');
