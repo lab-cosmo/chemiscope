@@ -34,6 +34,9 @@ homepage = "https://chemiscope.org"
 documentation = "https://chemiscope.org/docs/"
 repository = "https://github.com/lab-cosmo/chemiscope"
 
+[project.scripts]
+chemiscope-input = "chemiscope.main:main"
+
 ### ======================================================================== ###
 
 [build-system]
