@@ -1,5 +1,4 @@
 /**
- *
  * This file consists of shapes supported by chemiscope via 3dmol
  *
  * To add a new shape type, extend the `Shape` class and define the inherited
@@ -10,6 +9,9 @@
  * object. You will also need to add any parameters for your shape to ShapeData.
  *
  * To add a new shape, you will also need to add code to `structure/viewer.ts`.
+ * 
+ * @packageDocumentation
+ * @module structure
  */
 import assert from 'assert';
 
@@ -31,7 +33,7 @@ export interface BaseShapeData {
     color?: ColorSpec;
 }
 
-export interface BaseShapeParameters<T> {
+export interface BaseShapeParameters<T> {  
     kind: string;
     parameters: {
         global: Partial<T>;
@@ -45,17 +47,16 @@ export interface SphereData extends BaseShapeData {
     radius: number;
 }
 
+/** Parameters for a spherical shape */
 export interface SphereParameters extends BaseShapeParameters<SphereData> {
     kind: 'sphere';
 }
 
-// Interface for ellipsoidal data, where the shape
-// of the ellipsoid is given by the semiaxes, and the orientation
-// by the general `orientation` property
 export interface EllipsoidData extends BaseShapeData {
     semiaxes: [number, number, number];
 }
 
+/** Parameters for an ellipsoid */
 export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> {
     kind: 'ellipsoid';
 }
@@ -68,6 +69,7 @@ export interface ArrowData extends BaseShapeData {
     headLength?: number;
 }
 
+/** Parameters for an arrow shape */
 export interface ArrowParameters extends BaseShapeParameters<ArrowData> {
     kind: 'arrow';
 }
@@ -80,11 +82,25 @@ export interface CustomShapeData extends BaseShapeData {
     simplices: [number, number, number][];
 }
 
+/** Parameters for a custom shape */
 export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeData> {
     kind: 'custom';
 }
 
 export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData;
+
+/**
+* Describes a shape, to be displayed alongside an atomic structure.
+* `kind` is a string that defines what shape should be displayed.
+* `parameters` contains three levels of specification:
+* `global` applies to all structures and/or all atomic environments;
+* `structure` is a list that defines parameters that are specific of
+* each structure in the dataset - there should be one set of parameters
+* per structure;
+* `atom` is a list that defines environment-specific shapers - there 
+* should be one set of parameter for each environment defined in the
+* dataset. 
+*/
 export type ShapeParameters =
     | SphereParameters
     | EllipsoidParameters
