@@ -28,11 +28,11 @@ import {
     sendWarning,
 } from './utils';
 import {
-    ShapeParameters,
-    SphereParameters,
-    EllipsoidParameters,
     ArrowParameters,
     CustomShapeParameters,
+    EllipsoidParameters,
+    ShapeParameters,
+    SphereParameters,
 } from './structure/shapes';
 
 import './static/chemiscope.css';
