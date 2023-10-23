@@ -9,16 +9,11 @@ from ._ase import (
     _ase_to_json,
     _ase_valid_structures,
 )
+from ._shapes import arrow_from_vector, center_shape, ellipsoid_from_tensor  # noqa
 
 from ._ase import (  # noqa  isort: skip
     ase_vectors_to_arrows,
     ase_tensors_to_ellipsoids,
-)
-
-from ._shapes import (  # noqa
-    arrow_from_vector,
-    center_shape,
-    ellipsoid_from_tensor,
 )
 
 

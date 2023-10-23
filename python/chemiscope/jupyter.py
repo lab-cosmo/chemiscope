@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import gzip
 import json
+import warnings
 
 import ipywidgets
 from traitlets import Bool, Dict, Unicode
 
 from .input import create_input
 from .version import __version__
-
-import warnings
 
 # this needs to match the version/name defined in
 # python/jupyter/src/labextension.ts
@@ -62,9 +61,18 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     def _repr_html_(self):
         if not _is_running_in_notebook():
             return """
-    <div style="width: 100%; background-color: #f8d7da; color: #721c24;  border: 1px solid #f5c6cb; padding: 15px; font-size: 16px; box-sizing: border-box; text-align: center;">
-        Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
-    </div>
+<div
+    style="width: 100%;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    font-size: 16px;
+    box-sizing: border-box;
+    text-align: center;"
+>
+    Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
+</div>
             """
         else:
             return self.__repr__()

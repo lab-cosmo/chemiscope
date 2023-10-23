@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import json
+
 from .input import write_input
 from .structures import all_atomic_environments, extract_properties
-import json
 
 
 def _chemiscope_input_parser():
