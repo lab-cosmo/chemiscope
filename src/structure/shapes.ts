@@ -9,7 +9,7 @@
  * object. You will also need to add any parameters for your shape to ShapeData.
  *
  * To add a new shape, you will also need to add code to `structure/viewer.ts`.
- * 
+ *
  * @packageDocumentation
  * @module structure
  */
@@ -33,7 +33,7 @@ export interface BaseShapeData {
     color?: ColorSpec;
 }
 
-export interface BaseShapeParameters<T> {  
+export interface BaseShapeParameters<T> {
     kind: string;
     parameters: {
         global: Partial<T>;
@@ -90,17 +90,17 @@ export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeDa
 export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData;
 
 /**
-* Describes a shape, to be displayed alongside an atomic structure.
-* `kind` is a string that defines what shape should be displayed.
-* `parameters` contains three levels of specification:
-* `global` applies to all structures and/or all atomic environments;
-* `structure` is a list that defines parameters that are specific of
-* each structure in the dataset - there should be one set of parameters
-* per structure;
-* `atom` is a list that defines environment-specific shapers - there 
-* should be one set of parameter for each environment defined in the
-* dataset. 
-*/
+ * Describes a shape, to be displayed alongside an atomic structure.
+ * `kind` is a string that defines what shape should be displayed.
+ * `parameters` contains three levels of specification:
+ * `global` applies to all structures and/or all atomic environments;
+ * `structure` is a list that defines parameters that are specific of
+ * each structure in the dataset - there should be one set of parameters
+ * per structure;
+ * `atom` is a list that defines environment-specific shapers - there
+ * should be one set of parameter for each environment defined in the
+ * dataset.
+ */
 export type ShapeParameters =
     | SphereParameters
     | EllipsoidParameters

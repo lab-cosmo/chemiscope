@@ -32,7 +32,7 @@ import {
     SphereParameters,
     EllipsoidParameters,
     ArrowParameters,
-    CustomShapeParameters
+    CustomShapeParameters,
 } from './structure/shapes';
 
 import './static/chemiscope.css';
