@@ -1247,13 +1247,14 @@ export class MoleculeViewer {
 
         let grad: $3Dmol.Gradient = new $3Dmol.Gradient.RWB(max, min);
 
-        if (this._options.color.palette.value === 'bwr') {
-            // min and max are swapped to ensure red is used for high values, blue for low values
+        if (this._options.color.palette.value === 'BWR') {
+            // min and max are swapped to ensure red is used for high values,
+            // blue for low values
             grad = new $3Dmol.Gradient.RWB(max, min);
-        } else if (this._options.color.palette.value === 'Roygb') {
-            grad = new $3Dmol.Gradient.ROYGB(max, min);
+        } else if (this._options.color.palette.value === 'ROYGB') {
+            grad = new $3Dmol.Gradient.ROYGB(min, max);
         } else if (this._options.color.palette.value === 'Sinebow') {
-            grad = new $3Dmol.Gradient.Sinebow(max, min);
+            grad = new $3Dmol.Gradient.Sinebow(min, max);
         }
 
         return (atom: $3Dmol.AtomSpec) => {
