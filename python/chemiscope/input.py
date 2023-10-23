@@ -189,25 +189,30 @@ def create_input(
 
     Each of these can contain some or all of the parameters associated with each shape,
     and the parameters for each shape are obtained by combining the parameters from the
-    most general to the most specific, i.e., if there is a duplicate key in the  `global` and `atom`
-    fields, the value within the `atom` field will supersede the `global` field for that atom.
-    The parameters for atom `k` that is part of structure `j` are obtained as
+    most general to the most specific, i.e., if there is a duplicate key in the
+    `global` and `atom` fields, the value within the `atom` field will supersede the
+    `global` field for that atom. The parameters for atom `k` that is part of structure
+    `j` are obtained as
 
     .. code-block:: python
 
         global_parameters.update(structure_j).update(atom_k)
 
-    If given, the `structure` parameters list should contain one entry per structure, and
-    the `atom` parameters list should be a flat list corresponding to the atoms of each consecutive structure.
-    All shapes accept a few general parameters, and some specific ones
+    If given, the `structure` parameters list should contain one entry per structure,
+    and the `atom` parameters list should be a flat list corresponding to the atoms of
+    each consecutive structure. All shapes accept a few general parameters, and some
+    specific ones
 
     .. code-block:: python
 
         # general parameters
         {
-            "position" : [float, float, float], # centering (defaults to origin for structure, atom position for atom)
-            "scale" : float,  # scaling of the size of the shape
-            "orientation" [float, float, float, float], # optional, given as quaternion in (x, y, z, w) format
+            # centering (defaults to origin for structure, atom position for atom)
+            "position" : [float, float, float],
+            # scaling of the size of the shape
+            "scale" : float,
+            # optional, given as quaternion in (x, y, z, w) format
+            "orientation" [float, float, float, float],
             "color" : string | hex code # e.g. 0xFF0000
         }
 
@@ -226,7 +231,9 @@ def create_input(
             "vector" : [float, float, float],  # orientation and shape of the arrow
             "baseRadius" : float,
             "headRadius" : float,
-            "headLength" : float,   # the tip of the arrow is at the end of the segment. it'll extend past the base point if the arrow is not long enough
+            # the tip of the arrow is at the end of the segment.
+            # It will extend past the base point if the arrow is not long enough
+            "headLength" : float,
         }
 
         # "kind" : "custom"
@@ -235,7 +242,9 @@ def create_input(
                 [float, float, float],
                 ...
             ],
-            "simplices": [  # mesh triangulation (optional); computed via convex triangulation where omitted
+            # mesh triangulation (optional); computed via convex triangulation
+            # where omitted
+            "simplices": [
                 [int, int, int],  # indices refer to the list of vertices
                 ...
             ],
@@ -853,7 +862,8 @@ def _validate_shapes(structures, shapes):
         for shape_key in shapes_for_key:
             if shape_key not in ["kind", "parameters"]:
                 raise ValueError(
-                    f"Invalid entry `{shape_key}` in the specifications for shape `{key}`"
+                    f"Invalid entry `{shape_key}` in the specification "
+                    f"for shape `{key}`"
                 )
 
         base_shape = shapes_for_key["parameters"].get("global", {})
@@ -867,14 +877,14 @@ def _validate_shapes(structures, shapes):
                 and len(structure_parameters) <= structure_i
             ):
                 raise TypeError(
-                    f"structure_parameters must be a list with length {(len(structures))}, "
-                    f"got length={len(structure_parameters)} instead"
+                    f"structure_parameters must be a list with {(len(structures))} "
+                    f"elements, got {len(structure_parameters)}"
                 )
             for _ in range(structures[structure_i]["size"]):
                 if atom_parameters is not None and len(atom_parameters) <= atom_counter:
                     raise TypeError(
-                        f"atom_parameters must be a list coinciding to the atomic environments, "
-                        f"got length={len(atom_parameters)} instead"
+                        f"atom_parameters must be a list coinciding to the atomic "
+                        f"environments, got {len(atom_parameters)} elements"
                     )
 
                 shape = {
@@ -938,7 +948,8 @@ def _check_valid_shape(shape):
 
         if not isinstance(parameters["radius"], float):
             raise TypeError(
-                f"sphere shape 'radius' must be a float, got {type(parameters['radius'])}"
+                "sphere shape 'radius' must be a float, got "
+                f"{type(parameters['radius'])}"
             )
 
     elif shape["kind"] == "ellipsoid":
@@ -985,15 +996,18 @@ def _check_valid_shape(shape):
     elif shape["kind"] == "arrow":
         if not isinstance(parameters["baseRadius"], float):
             raise TypeError(
-                f"sphere shape 'baseRadius' must be a float, got {type(parameters['baseRadius'])}"
+                "sphere shape 'baseRadius' must be a float, "
+                f"got {type(parameters['baseRadius'])}"
             )
         if not isinstance(parameters["headRadius"], float):
             raise TypeError(
-                f"sphere shape 'headRadius' must be a float, got {type(parameters['headRadius'])}"
+                "sphere shape 'headRadius' must be a float, "
+                f"got {type(parameters['headRadius'])}"
             )
         if not isinstance(parameters["headLength"], float):
             raise TypeError(
-                f"sphere shape 'headLength' must be a float, got {type(parameters['headLength'])}"
+                "sphere shape 'headLength' must be a float, "
+                f"got {type(parameters['headLength'])}"
             )
 
         vector_array = np.asarray(parameters["vector"]).astype(
