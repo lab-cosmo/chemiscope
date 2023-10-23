@@ -153,7 +153,7 @@ export class MoleculeViewer {
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
     // List of properties for the current structure
-    private _properties?: Record<string, (number | undefined)[]> | undefined;
+    private _properties?: Record<string, (number | undefined)[]>;
     // Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
     // Button used to see more color options
@@ -1211,53 +1211,57 @@ export class MoleculeViewer {
         if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-                colorfunc: this.colorFunction(),
+                colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.SphereStyleSpec;
         }
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
-                colorfunc: this.colorFunction(),
+                colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
         }
 
         return style;
     }
 
-    private colorFunction() {
-        // JSON.parse & JSON.stringify to make a deep copy of the properties to avoid modifying the original ones
-        let properties: Record<string, (number | undefined)[]> | undefined = {};
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
+        if (this._properties === undefined) {
+            return undefined;
+        }
+
         const property: string = this._options.color.property.value;
+        if (property === 'element') {
+            return undefined;
+        }
+        assert(Object.keys(this._properties).includes(property));
+
         const mode: string = this._options.color.mode.value;
 
-        if (this._properties !== undefined) {
-            // JSON.parse & JSON.stringify to make a deep copy of the properties to avoid modifying the original ones
-            properties = JSON.parse(JSON.stringify(this._properties)) as Record<
-                string,
-                (number | undefined)[]
-            >;
-            if (
-                property !== 'element' &&
-                (mode === 'log' || mode === 'sqrt' || mode === 'inverse')
-            ) {
-                properties[property] = properties[property].map((value) => {
-                    if (value !== null) {
-                        if (!isNaN(Number(value))) {
-                            if (mode === 'log') {
-                                return Math.log10(Number(value));
-                            } else if (mode === 'sqrt') {
-                                return Math.sqrt(Number(value));
-                            } else if (mode === 'inverse') {
-                                return 1 / Number(value);
-                            }
-                        } else {
-                            return NaN;
-                        }
-                    } else {
-                        return value;
-                    }
-                });
+        // JSON.parse & JSON.stringify to make a deep copy of the properties to
+        // avoid modifying the original ones.
+        //
+        // This also transforms all `undefined` values into `null`
+        let currentProperty = JSON.parse(JSON.stringify(this._properties[property])) as Array<
+            number | null
+        >;
+
+        if (mode === 'log' || mode === 'sqrt' || mode === 'inverse') {
+            let transform = (x: number) => x;
+            if (mode === 'log') {
+                transform = Math.log10;
+            } else if (mode === 'sqrt') {
+                transform = Math.sqrt;
+            } else if (mode === 'inverse') {
+                transform = (x) => 1 / x;
             }
+
+            currentProperty = currentProperty.map((value) => {
+                if (value !== null && !isNaN(value)) {
+                    return transform(value);
+                } else {
+                    return value;
+                }
+            });
         }
 
         const [min, max]: [number, number] = [
@@ -1276,19 +1280,19 @@ export class MoleculeViewer {
             grad = new $3Dmol.Gradient.Sinebow(max, min);
         }
 
-        if (property !== 'element') {
-            return (atom: $3Dmol.AtomSpec) => {
-                assert(atom.serial !== undefined);
-                const atomProperty = properties?.[property]?.[atom.serial];
-                if (atomProperty === null) {
-                    return 0x222222;
-                } else if (isNaN(Number(atomProperty))) {
-                    return 'gray';
-                } else {
-                    return grad.valueToHex(Number(atomProperty));
-                }
-            };
-        }
+        return (atom: $3Dmol.AtomSpec) => {
+            assert(atom.serial !== undefined);
+            const value = currentProperty[atom.serial];
+            if (value === null) {
+                // missing values
+                return 0xdddddd;
+            } else if (isNaN(value)) {
+                // NaN values
+                return 0x222222;
+            } else {
+                return grad.valueToHex(value);
+            }
+        };
     }
 
     /**
@@ -1338,7 +1342,7 @@ export class MoleculeViewer {
                     radius: 0.149,
                     opacity: defaultOpacity(),
                     hidden: !this._options.bonds.value,
-                    colorfunc: this.colorFunction(),
+                    colorfunc: this._colorFunction(),
                 } as unknown as $3Dmol.StickStyleSpec;
             }
 
@@ -1347,7 +1351,7 @@ export class MoleculeViewer {
                     // slightly smaller scale than the main style
                     scale: this._options.spaceFilling.value ? 0.999 : 0.219,
                     opacity: defaultOpacity(),
-                    colorfunc: this.colorFunction(),
+                    colorfunc: this._colorFunction(),
                 } as unknown as $3Dmol.SphereStyleSpec;
             }
         } else {
