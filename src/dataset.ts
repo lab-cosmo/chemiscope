@@ -22,6 +22,9 @@ export interface Dataset {
     structures: Structure[] | UserStructure[];
     /**
      * Dictionary containing shape information about the dataset.
+     * Each shape is associated with a name that will also be used in the GUI,
+     * and the definition of the type and parameters of each shape is given by
+     * in the {@link ShapeParameters} dictionary.
      */
     shapes?: { [name: string]: ShapeParameters };
     /**

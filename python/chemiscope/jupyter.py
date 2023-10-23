@@ -123,9 +123,17 @@ def show(
     dataset for which properties (or frames) are not available.
 
     When inside a jupyter notebook, the returned object will create a new
-    chemiscope visualizer displaying the dataset. The returned object also have
-    a ``save`` function that can be used to save the dataset to a ``.json`` or
-    ``.json.gz`` file to load it in the main website later.
+    chemiscope visualizer displaying the dataset. The object exposes a
+    `settings` traitlet, that allows to modify the visualization options
+    (possibly even linking the parameters to another widget). Printing the value
+    of the `settings` property is also a good way to see a full list of the
+    available options.
+
+    The returned object also have a ``save`` function that can be used to save
+    the dataset to a ``.json`` or ``.json.gz`` file to load it in the main website
+    later. The visualization options will be those used in the active widget, so
+    this is also a good way to tweak the appearence of the visualization before
+    saving it.
 
     .. code-block:: python
 
@@ -145,6 +153,11 @@ def show(
         widget
         # ...
 
+        # NB: due to how traitlet work, you should always set the value of
+        # the `settings` property. Only the properties that are explicitly
+        # indicated will be modified.
+        widget.settings = { "map": { "palette": "seismic" } }
+        widget.settings["map"]["palette"] = "viridis" # << does nothing!
 
         # Save the file for later use
         widget.save("dataset.json")
