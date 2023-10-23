@@ -17,7 +17,7 @@ import numpy as np
 frames = ase.io.read("data/alpha-mu.xyz", ":")
 
 # converts the arrays from the format they are stored in to an array
-# format that can be processed by the ASE utilities
+# format, and computes scalar quantities to display as atom coloring
 for a in frames:
     a.arrays["polarizability"] = np.array(
         [
@@ -47,13 +47,17 @@ for a in frames:
         a.arrays["alpha_eigenvalues"][:, 2] - a.arrays["alpha_eigenvalues"][:, 0]
     )
 
+
+# now we just write the chemiscope datafile
 chemiscope.write_input(
     "colors-example.json.gz",
     frames=frames,
+    # properties can be extracted from the ASE.Atoms frames
     properties=chemiscope.extract_properties(
         frames, only=["polarizability", "anisotropy", "alpha_eigenvalues"]
     ),
-    settings={  # the write_input function also allows defining the default visualization settings
+    # the write_input function also allows defining the default visualization settings
+    settings={  
         "map": {
             "x": {"property": "alpha_eigenvalues[1]"},
             "y": {"property": "alpha_eigenvalues[2]"},
@@ -76,9 +80,12 @@ chemiscope.write_input(
                     "center": False,
                     "cutoff": 4,
                 },
+                # these are the color visualization options
                 "color": {"property": "anisotropy", "min": 1, "max": 15},
             }
         ],
     },
+    # these are atomic properties - in order to view them in the map panel, we must 
+    # indicate that all atoms are environment centers
     environments=chemiscope.all_atomic_environments(frames),
 )
