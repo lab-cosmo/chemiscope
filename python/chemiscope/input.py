@@ -14,12 +14,6 @@ from .structures import (
     _list_structure_properties,
     frames_to_json,
 )
-from .version import __version__
-
-if tuple(map(int, __version__.split("."))) >= (0, 6, 0):
-    raise Exception(
-        "this is a reminder to remove the warning about automatic properties extraction"
-    )
 
 
 def create_input(
@@ -391,13 +385,6 @@ def create_input(
                 if len(properties_list) != 0:
                     properties_list += " and "
                 properties_list += "[" + ", ".join(atom_properties) + "]"
-
-            if len(properties_list) != 0:
-                warnings.warn(
-                    "chemiscope behavior changed to no longer include properties "
-                    "from the structure objects. Use `chemiscope.extract_properties` "
-                    f"to also visualize these properties ({properties_list})"
-                )
 
     return data
 
