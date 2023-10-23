@@ -69,7 +69,7 @@ export class StructureOptions extends OptionsGroup {
     constructor(
         root: HTMLElement,
         positionSettings: PositioningCallback,
-        propertiesName?: string[]
+        propertiesName: string[] = []
     ) {
         super();
 

@@ -799,7 +799,7 @@ export class MoleculeViewer {
         const ColorPropertyChanges = () => {
             const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
                 string,
-                (number | undefined)[]
+                number[]
             >;
             const property: string = this._options.color.property.value;
 
@@ -827,7 +827,7 @@ export class MoleculeViewer {
                 // Use map to extract the specified property values into an array
                 const values: number[] = properties[property].filter(
                     (value) => !isNaN(Number(value))
-                ) as number[];
+                );
                 // To change min and max values when the mode has been changed
                 const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
                 // We have to set max first and min second here to avoid sending
@@ -1236,7 +1236,10 @@ export class MoleculeViewer {
                 string,
                 (number | undefined)[]
             >;
-            if (property !== 'element' && mode === ('log' || 'sqrt' || 'inverse')) {
+            if (
+                property !== 'element' &&
+                (mode === 'log' || mode === 'sqrt' || mode === 'inverse')
+            ) {
                 properties[property] = properties[property].map((value) => {
                     if (value !== null) {
                         if (!isNaN(Number(value))) {

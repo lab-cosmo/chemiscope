@@ -28,7 +28,8 @@ import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
 import PNG_SVG from '../static/download-png.svg';
 
-interface SelectiveEnvironment extends Environment {
+/// Extension of `Environment` adding the global index of the environment
+interface NumberedEnvironment extends Environment {
     environment: number;
 }
 
@@ -48,7 +49,7 @@ interface SelectiveEnvironment extends Environment {
 function groupByStructure(
     structures: (Structure | UserStructure)[],
     environments?: Environment[]
-): SelectiveEnvironment[][] | undefined {
+): NumberedEnvironment[][] | undefined {
     if (environments === undefined) {
         return undefined;
     }
@@ -65,7 +66,7 @@ function groupByStructure(
         };
     }
 
-    return result as SelectiveEnvironment[][];
+    return result as NumberedEnvironment[][];
 }
 
 interface ViewerGridData {
@@ -127,12 +128,12 @@ export class ViewersGrid {
     private _root: HTMLElement;
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
-    /// List of properties in the dataset
-    private _properties: Record<string, Property>;
+    /// List of per-atom properties in the dataset
+    private _properties: Record<string, number[]>;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
-    private _environments?: SelectiveEnvironment[][];
+    private _environments?: NumberedEnvironment[][];
     /// Maximum number of allowed structure viewers
     private _maxViewers: number;
     /// The indexer translating between environments indexes and structure/atom
@@ -178,7 +179,14 @@ export class ViewersGrid {
                 Object.values(p.values).every((v) => typeof v === 'number')
             );
             const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
-            this._properties = atomProperties;
+
+            const props: Record<string, number[]> = Object.fromEntries(
+                Object.entries(atomProperties).map(([key, value]) => [
+                    key,
+                    value.values as number[],
+                ])
+            );
+            this._properties = props;
         }
         this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures, environments);
@@ -512,9 +520,7 @@ export class ViewersGrid {
                 for (const activeEnvironment of activeEnvironments) {
                     if (activeEnvironment !== undefined) {
                         structureAtomProperties[propertyName].push(
-                            this._properties[propertyName].values[
-                                activeEnvironment.environment
-                            ] as number
+                            this._properties[propertyName][activeEnvironment.environment]
                         );
                     } else {
                         structureAtomProperties[propertyName].push(undefined);
