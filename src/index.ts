@@ -5,12 +5,13 @@ import { DisplayMode, EnvironmentIndexer, Indexes } from './indexer';
 import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
-import { LoadOptions, MoleculeViewer, ViewersGrid } from './structure';
+import { LoadOptions, MoleculeViewer, StructureOptions, ViewersGrid } from './structure';
 
 import {
     Dataset,
     Environment,
     Metadata,
+    Parameter,
     Property,
     Settings,
     Structure,
@@ -26,6 +27,13 @@ import {
     getNextColor,
     sendWarning,
 } from './utils';
+import {
+    ShapeParameters,
+    SphereParameters,
+    EllipsoidParameters,
+    ArrowParameters,
+    CustomShapeParameters
+} from './structure/shapes';
 
 import './static/chemiscope.css';
 
@@ -745,17 +753,24 @@ export {
     // dataset definitions
     Dataset,
     Metadata,
+    Parameter,
     Property,
     Target,
     Structure,
     UserStructure,
     Environment,
     Settings,
+    ShapeParameters,
+    SphereParameters,
+    EllipsoidParameters,
+    ArrowParameters,
+    CustomShapeParameters,
     // different panels
     MetadataPanel,
     PropertiesMap,
     ViewersGrid,
     MoleculeViewer,
+    StructureOptions,
     LoadOptions,
     EnvironmentInfo,
     EnvironmentIndexer,
