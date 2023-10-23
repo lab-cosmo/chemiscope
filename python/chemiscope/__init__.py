@@ -3,11 +3,11 @@ from .input import create_input, write_input  # noqa
 from .structures import (  # noqa
     all_atomic_environments,
     arrow_from_vector,
+    ase_tensors_to_ellipsoids,
+    ase_vectors_to_arrows,
     center_shape,
     composition_properties,
     ellipsoid_from_tensor,
-    ase_vectors_to_arrows,
-    ase_tensors_to_ellipsoids,
     extract_properties,
     librascal_atomic_environments,
 )
