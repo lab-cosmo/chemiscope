@@ -8,7 +8,7 @@ import assert from 'assert';
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './assignBonds';
 
-import { getElement, sendWarning, unreachable } from '../utils';
+import { arrayMaxMin, getElement, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
@@ -796,14 +796,10 @@ export class MoleculeViewer {
 
         // ======= color settings
         // setup state when the property changes
-        const ColorPropertyChanges = () => {
-            const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
-                string,
-                number[]
-            >;
-            const property: string = this._options.color.property.value;
+        const colorPropertyChanged = () => {
+            const property = this._options.color.property.value;
 
-            if (this._options.color.property.value !== 'element') {
+            if (property !== 'element') {
                 this._options.color.mode.enable();
                 this._options.color.mode.value = 'linear';
                 this._options.color.min.enable();
@@ -813,23 +809,17 @@ export class MoleculeViewer {
                 this._colorMoreOptions.disabled = false;
                 this._options.color.palette.enable();
 
-                if (this._properties !== undefined) {
-                    if (
-                        Object.values(this._properties || {}).some((prop) =>
-                            prop.some((v) => v === undefined)
-                        )
-                    ) {
-                        sendWarning(
-                            'The selected structure has undefined properties for some atoms, these atoms will still be colored in dark gray.'
-                        );
-                    }
+                const values = this._colorValues(property, 'linear');
+
+                if (values.some((v) => v === null)) {
+                    sendWarning(
+                        'The selected structure has undefined properties for some atoms, these atoms will be colored in light gray.'
+                    );
                 }
-                // Use map to extract the specified property values into an array
-                const values: number[] = properties[property].filter(
-                    (value) => !isNaN(Number(value))
-                );
+
                 // To change min and max values when the mode has been changed
-                const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
+                const { max, min } = arrayMaxMin(values);
+
                 // We have to set max first and min second here to avoid sending
                 // a spurious warning in `colorRangeChange` below in case the
                 // new min is bigger than the old max.
@@ -850,7 +840,7 @@ export class MoleculeViewer {
             }
             restyleAndRender();
         };
-        this._options.color.property.onchange.push(ColorPropertyChanges);
+        this._options.color.property.onchange.push(colorPropertyChanged);
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
             const min = this._options.color.min.value;
@@ -871,40 +861,14 @@ export class MoleculeViewer {
 
         // ======= color mode/transform
         this._options.color.mode.onchange.push(() => {
-            // JSON.parse & JSON.stringify to make a deep copy of the properties to avoid modifying the original ones
-            const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
-                string,
-                (number | undefined)[]
-            >;
-            const property: string = this._options.color.property.value;
-            const mode: string = this._options.color.mode.value;
+            const property = this._options.color.property.value;
+            assert(property !== 'element');
+            const mode = this._options.color.mode.value;
 
-            if (property !== 'element' && mode === ('log' || 'sqrt' || 'inverse')) {
-                properties[property] = properties[property].map((value) => {
-                    if (value !== null) {
-                        if (!isNaN(Number(value))) {
-                            if (mode === 'log') {
-                                return Math.log10(Number(value));
-                            } else if (mode === 'sqrt') {
-                                return Math.sqrt(Number(value));
-                            } else if (mode === 'inverse') {
-                                return 1 / Number(value);
-                            }
-                        } else {
-                            return NaN;
-                        }
-                    } else {
-                        return value;
-                    }
-                });
-            }
-
-            // Use map to extract the specified property values into an array
-            const values: number[] = properties[property].filter(
-                (value) => value !== null && !isNaN(Number(value))
-            ) as number[];
+            const values = this._colorValues(property, mode);
             // To change min and max values when the mode has been changed
-            const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
+            const { min, max } = arrayMaxMin(values);
+
             // to avoid sending a spurious warning in `colorRangeChange` below
             // in case the new min is bigger than the old max.
             this._options.color.min.value = Number.NEGATIVE_INFINITY;
@@ -1224,18 +1188,13 @@ export class MoleculeViewer {
         return style;
     }
 
-    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
-        if (this._properties === undefined) {
-            return undefined;
-        }
-
-        const property: string = this._options.color.property.value;
-        if (property === 'element') {
-            return undefined;
-        }
+    /**
+     * Get the values that should be used to color atoms when coloring them
+     * according to properties
+     */
+    private _colorValues(property: string, mode: string): Array<number | null> {
+        assert(this._properties !== undefined);
         assert(Object.keys(this._properties).includes(property));
-
-        const mode: string = this._options.color.mode.value;
 
         // JSON.parse & JSON.stringify to make a deep copy of the properties to
         // avoid modifying the original ones.
@@ -1264,6 +1223,26 @@ export class MoleculeViewer {
             });
         }
 
+        return currentProperty;
+    }
+
+    /**
+     * Get a function computing the atom color, that can be used as 3Dmol
+     * `colorfunc`
+     */
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
+        if (this._properties === undefined) {
+            return undefined;
+        }
+
+        const property = this._options.color.property.value;
+        if (property === 'element') {
+            return undefined;
+        }
+
+        const mode = this._options.color.mode.value;
+
+        const currentProperty = this._colorValues(property, mode);
         const [min, max]: [number, number] = [
             this._options.color.min.value,
             this._options.color.max.value,
