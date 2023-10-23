@@ -117,10 +117,6 @@ export class StructureOptions extends OptionsGroup {
             palette: new HTMLOption('string', 'bwr'),
         };
 
-        // Handling undefined propertiesName:
-        if (propertiesName === undefined) {
-            propertiesName = [];
-        }
         // validate atom properties for coloring
         if (propertiesName.includes('element')) {
             this.color.property.validate = optionValidator(propertiesName, 'color');

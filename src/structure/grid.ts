@@ -30,7 +30,7 @@ import PNG_SVG from '../static/download-png.svg';
 
 /// Extension of `Environment` adding the global index of the environment
 interface NumberedEnvironment extends Environment {
-    environment: number;
+    index: number;
 }
 
 /**
@@ -61,7 +61,7 @@ function groupByStructure(
     for (let i = 0; i < environments.length; i++) {
         const env = environments[i];
         result[env.structure][env.center] = {
-            environment: i,
+            index: i,
             ...env,
         };
     }
@@ -509,25 +509,33 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
-    private _getSelectedAtomProperties(
+    /**
+     * Get the values of the properties for all the atoms in the current structure
+     *
+     * @param structure index of the current structure
+     * @returns
+     */
+    private _propertiesForStructure(
         structure: number
     ): Record<string, (number | undefined)[]> | undefined {
-        const structureAtomProperties: Record<string, (number | undefined)[]> = {};
+        const properties: Record<string, (number | undefined)[]> = {};
+
         if (this._environments !== undefined) {
-            const activeEnvironments = this._environments[structure];
-            for (const propertyName in this._properties) {
-                structureAtomProperties[propertyName] = [];
-                for (const activeEnvironment of activeEnvironments) {
-                    if (activeEnvironment !== undefined) {
-                        structureAtomProperties[propertyName].push(
-                            this._properties[propertyName][activeEnvironment.environment]
-                        );
+            const environments = this._environments[structure];
+            for (const name in this._properties) {
+                const values = this._properties[name];
+
+                properties[name] = [];
+                for (const environment of environments) {
+                    if (environment !== undefined) {
+                        properties[name].push(values[environment.index]);
                     } else {
-                        structureAtomProperties[propertyName].push(undefined);
+                        properties[name].push(undefined);
                     }
                 }
             }
-            return structureAtomProperties;
+
+            return properties;
         } else {
             return undefined;
         }
@@ -553,7 +561,7 @@ export class ViewersGrid {
 
             viewer.load(
                 this._structure(indexes.structure),
-                this._getSelectedAtomProperties(indexes.structure),
+                this._propertiesForStructure(indexes.structure),
                 options
             );
             data.current = indexes;
