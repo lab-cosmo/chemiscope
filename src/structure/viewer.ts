@@ -800,8 +800,8 @@ export class MoleculeViewer {
             const property = this._options.color.property.value;
 
             if (property !== 'element') {
-                this._options.color.mode.enable();
-                this._options.color.mode.value = 'linear';
+                this._options.color.transform.enable();
+                this._options.color.transform.value = 'linear';
                 this._options.color.min.enable();
                 this._options.color.max.enable();
 
@@ -817,7 +817,7 @@ export class MoleculeViewer {
                     );
                 }
 
-                // To change min and max values when the mode has been changed
+                // To change min and max values when the transform has been changed
                 const { max, min } = arrayMaxMin(values);
 
                 // We have to set max first and min second here to avoid sending
@@ -828,7 +828,7 @@ export class MoleculeViewer {
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
             } else {
-                this._options.color.mode.disable();
+                this._options.color.transform.disable();
                 this._options.color.min.disable();
                 this._options.color.max.disable();
 
@@ -859,14 +859,14 @@ export class MoleculeViewer {
             this._setScaleStep([min, max]);
         };
 
-        // ======= color mode/transform
-        this._options.color.mode.onchange.push(() => {
+        // ======= color transform
+        this._options.color.transform.onchange.push(() => {
             const property = this._options.color.property.value;
             assert(property !== 'element');
-            const mode = this._options.color.mode.value;
+            const transform = this._options.color.transform.value;
 
-            const values = this._colorValues(property, mode);
-            // To change min and max values when the mode has been changed
+            const values = this._colorValues(property, transform);
+            // To change min and max values when the transform has been changed
             const { min, max } = arrayMaxMin(values);
 
             // to avoid sending a spurious warning in `colorRangeChange` below
@@ -892,7 +892,7 @@ export class MoleculeViewer {
         });
 
         // ======= color reset
-        const ResetColor = () => {
+        this._colorReset.addEventListener('click', () => {
             const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
                 string,
                 (number | undefined)[]
@@ -902,15 +902,14 @@ export class MoleculeViewer {
             const values: number[] = properties[property].filter(
                 (value) => !isNaN(Number(value))
             ) as number[];
-            // To change min and max values when the mode has been changed
+            // To change min and max values when the transform has been changed
             const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
 
             restyleAndRender();
-        };
-        this._colorReset.addEventListener('click', ResetColor);
+        });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
@@ -1192,7 +1191,7 @@ export class MoleculeViewer {
      * Get the values that should be used to color atoms when coloring them
      * according to properties
      */
-    private _colorValues(property: string, mode: string): Array<number | null> {
+    private _colorValues(property: string, transform: string): Array<number | null> {
         assert(this._properties !== undefined);
         assert(Object.keys(this._properties).includes(property));
 
@@ -1204,24 +1203,22 @@ export class MoleculeViewer {
             number | null
         >;
 
-        if (mode === 'log' || mode === 'sqrt' || mode === 'inverse') {
-            let transform = (x: number) => x;
-            if (mode === 'log') {
-                transform = Math.log10;
-            } else if (mode === 'sqrt') {
-                transform = Math.sqrt;
-            } else if (mode === 'inverse') {
-                transform = (x) => 1 / x;
-            }
-
-            currentProperty = currentProperty.map((value) => {
-                if (value !== null && !isNaN(value)) {
-                    return transform(value);
-                } else {
-                    return value;
-                }
-            });
+        let transformFunc = (x: number) => x;
+        if (transform === 'log') {
+            transformFunc = Math.log10;
+        } else if (transform === 'sqrt') {
+            transformFunc = Math.sqrt;
+        } else if (transform === 'inverse') {
+            transformFunc = (x) => 1 / x;
         }
+
+        currentProperty = currentProperty.map((value) => {
+            if (value !== null && !isNaN(value)) {
+                return transformFunc(value);
+            } else {
+                return value;
+            }
+        });
 
         return currentProperty;
     }
@@ -1240,9 +1237,9 @@ export class MoleculeViewer {
             return undefined;
         }
 
-        const mode = this._options.color.mode.value;
+        const transform = this._options.color.transform.value;
 
-        const currentProperty = this._colorValues(property, mode);
+        const currentProperty = this._colorValues(property, transform);
         const [min, max]: [number, number] = [
             this._options.color.min.value,
             this._options.color.max.value,

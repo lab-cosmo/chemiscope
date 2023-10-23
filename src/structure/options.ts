@@ -53,7 +53,7 @@ export class StructureOptions extends OptionsGroup {
     };
     public color: {
         property: HTMLOption<'string'>;
-        mode: HTMLOption<'string'>;
+        transform: HTMLOption<'string'>;
         min: HTMLOption<'number'>;
         max: HTMLOption<'number'>;
         palette: HTMLOption<'string'>;
@@ -113,7 +113,7 @@ export class StructureOptions extends OptionsGroup {
             property: new HTMLOption('string', 'element'),
             min: new HTMLOption('number', 0),
             max: new HTMLOption('number', 0),
-            mode: new HTMLOption('string', 'linear'),
+            transform: new HTMLOption('string', 'linear'),
             palette: new HTMLOption('string', 'bwr'),
         };
 
@@ -126,7 +126,10 @@ export class StructureOptions extends OptionsGroup {
                 'color'
             );
         }
-        this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
+        this.color.transform.validate = optionValidator(
+            ['linear', 'log', 'sqrt', 'inverse'],
+            'transform'
+        );
         this.color.palette.validate = optionValidator(['bwr', 'Roygb', 'Sinebow'], 'palette');
 
         this.environments.bgColor.validate = optionValidator(
@@ -187,13 +190,6 @@ export class StructureOptions extends OptionsGroup {
                 );
             }
             delete settings.packedCell;
-        }
-        if ('color' in settings) {
-            const color = settings.color as Settings;
-            if ('scale' in color) {
-                color.mode = color.scale;
-                delete color.scale;
-            }
         }
         super.applySettings(settings);
     }
@@ -288,7 +284,7 @@ export class StructureOptions extends OptionsGroup {
             selectColorProperty.options.add(new Option(property, property));
         }
         this.color.property.bind(selectColorProperty, 'value');
-        this.color.mode.bind(this.getModalElement('atom-color-transform'), 'value');
+        this.color.transform.bind(this.getModalElement('atom-color-transform'), 'value');
         this.color.min.bind(this.getModalElement('atom-color-min'), 'value');
         this.color.max.bind(this.getModalElement('atom-color-max'), 'value');
 
