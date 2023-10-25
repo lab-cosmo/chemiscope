@@ -101,6 +101,7 @@ class MapWidget(ChemiscopeWidgetBase):
     def __init__(self, data, has_metadata):
         super().__init__(data, has_metadata)
 
+
 def load(path, mode="default"):
     """
     Loads a dataset from given ``path``.
@@ -117,48 +118,49 @@ def load(path, mode="default"):
 
         widget = chemiscope.load("dataset.json")
 
-    .. 
+    ..
     """
-    
+
     if mode not in ["default", "structure", "map"]:
         raise ValueError(
             f"invalid mode '{mode}' in chemiscope.load, expected one of "
             "'default', 'structure' or 'map'"
         )
 
-    if  mode == "default":
+    if mode == "default":
         widget_class = ChemiscopeWidget
-    
+
     elif mode == "structure":
         widget_class = StructureWidget
-    
+
     elif mode == "map":
         widget_class = MapWidget
-    
+
     if path.endswith(".gz"):
-        with  gzip.open(path, "rt") as f:
+        with gzip.open(path, "rt") as f:
             dict_input = json.load(f)
     elif path.endswith(".json"):
         with open(path, "rt") as f:
             dict_input = json.load(f)
     else:
-        raise ValueError("invalid file format in chemiscope.load,\
-                         expected .json or .json.gz")
+        raise ValueError(
+            "invalid file format in chemiscope.load,\
+                         expected .json or .json.gz"
+        )
 
     try:
         meta = dict_input["meta"]
-        
+
         if meta is {"name": " "}:
             has_metadata = False
         else:
             has_metadata = True
-    
+
     except KeyError:
         raise ValueError("missing metadata in chemiscope.load")
-    
 
     return widget_class(dict_input, has_metadata=has_metadata)
-    
+
 
 def show(
     frames=None,
