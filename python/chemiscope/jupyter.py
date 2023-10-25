@@ -116,7 +116,7 @@ def show_input(path, mode="default"):
 
         import chemiscope
 
-        widget = chemiscope.load("dataset.json")
+        widget = chemiscope.show_input("dataset.json")
 
     ..
     """
