@@ -57,6 +57,5 @@ html_favicon = "../_static/chemiscope-icon.png"
 
 templates_path = [os.path.join("..", "_templates")]
 
-
 def setup(app):
     app.add_css_file("css/chemiscope.css")

@@ -38,11 +38,15 @@ back to the `chemiscope`_ homepage is the preferred form of acknowledgement.
 
 What's in this documentation?
 -----------------------------
+.. toctree::
+    :hidden:
+    
+    Chemiscope visualizer <self>
 
 .. toctree::
     :maxdepth: 2
-
-    tutorial/index
+    
+    manual/index
     embedding
 
 
