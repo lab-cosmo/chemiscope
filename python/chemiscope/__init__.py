@@ -17,6 +17,6 @@ try:
     # only import the chemiscope.show function if we have ipywidgets installed.
     import ipywidgets  # noqa
 
-    from .jupyter import show  # noqa
+    from .jupyter import show, show_input  # noqa
 except ImportError:
     pass
