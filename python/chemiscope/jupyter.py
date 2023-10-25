@@ -102,13 +102,13 @@ class MapWidget(ChemiscopeWidgetBase):
         super().__init__(data, has_metadata)
 
 
-def load(path, mode="default"):
+def show_input(path, mode="default"):
     """
-    Loads a dataset from given ``path``.
+    Loads and shows the chemiscope widget in ``path``.
     If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed
     JSON string.
 
-    :param str path: load the dataset from path.
+    :param str path: load the chemiscope widget from path.
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
 
