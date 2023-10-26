@@ -972,7 +972,7 @@ def _check_valid_shape(shape):
             )
 
         if "simplices" in parameter:
-            simplices_array = np.asarray(parameters["vertices"]).astype(
+            simplices_array = np.asarray(parameters["simplices"]).astype(
                 int, casting="safe", subok=False, copy=False
             )
 
