@@ -8,7 +8,7 @@ import assert from 'assert';
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './assignBonds';
 
-import { getElement, unreachable } from '../utils';
+import { arrayMaxMin, getElement, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
@@ -152,6 +152,12 @@ export class MoleculeViewer {
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
+    // List of properties for the current structure
+    private _properties?: Record<string, (number | undefined)[]>;
+    // Button used to reset the range of color axis
+    private _colorReset: HTMLButtonElement;
+    // Button used to see more color options
+    private _colorMoreOptions: HTMLButtonElement;
 
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
@@ -159,7 +165,7 @@ export class MoleculeViewer {
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
      */
-    constructor(element: string | HTMLElement) {
+    constructor(element: string | HTMLElement, propertiesName: string[]) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
@@ -216,10 +222,10 @@ export class MoleculeViewer {
             noShapeStyle,
         ];
 
-        // Options reuse the same style sheets so they must be created after these.
-
-        this._options = new StructureOptions(this._root, (rect) =>
-            this.positionSettingsModal(rect)
+        this._options = new StructureOptions(
+            this._root,
+            (rect) => this.positionSettingsModal(rect),
+            propertiesName
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
@@ -228,6 +234,9 @@ export class MoleculeViewer {
             noEnvsStyle,
             noShapeStyle,
         ];
+        this._colorReset = this._options.getModalElement<HTMLButtonElement>('atom-color-reset');
+        this._colorMoreOptions =
+            this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
 
         this._connectOptions();
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
@@ -312,10 +321,16 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param options options for the new structure
      */
-    public load(structure: Structure, options: Partial<LoadOptions> = {}): void {
+    public load(
+        structure: Structure,
+        properties?: Record<string, (number | undefined)[]> | undefined,
+        options: Partial<LoadOptions> = {}
+    ): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
         this.resize();
+
+        this._properties = properties;
 
         let previousDefaultCutoff = undefined;
         if (this._highlighted !== undefined) {
@@ -779,6 +794,128 @@ export class MoleculeViewer {
             restyleAndRender();
         });
 
+        // ======= color settings
+        // setup state when the property changes
+        const colorPropertyChanged = () => {
+            const property = this._options.color.property.value;
+
+            if (property !== 'element') {
+                this._options.color.transform.enable();
+                this._options.color.transform.value = 'linear';
+                this._options.color.min.enable();
+                this._options.color.max.enable();
+
+                this._colorReset.disabled = false;
+                this._colorMoreOptions.disabled = false;
+                this._options.color.palette.enable();
+
+                const values = this._colorValues(property, 'linear');
+
+                if (values.some((v) => v === null)) {
+                    sendWarning(
+                        'The selected structure has undefined properties for some atoms, these atoms will be colored in light gray.'
+                    );
+                }
+
+                // To change min and max values when the transform has been changed
+                const { max, min } = arrayMaxMin(values);
+
+                // We have to set max first and min second here to avoid sending
+                // a spurious warning in `colorRangeChange` below in case the
+                // new min is bigger than the old max.
+                this._options.color.min.value = Number.NEGATIVE_INFINITY;
+                this._options.color.max.value = max;
+                this._options.color.min.value = min;
+                this._setScaleStep([min, max]);
+            } else {
+                this._options.color.transform.disable();
+                this._options.color.min.disable();
+                this._options.color.max.disable();
+
+                this._colorReset.disabled = true;
+                this._colorMoreOptions.disabled = true;
+                this._options.color.palette.disable();
+
+                this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
+            }
+            restyleAndRender();
+        };
+        this._options.color.property.onchange.push(colorPropertyChanged);
+
+        const colorRangeChange = (minOrMax: 'min' | 'max') => {
+            const min = this._options.color.min.value;
+            const max = this._options.color.max.value;
+            if (min > max) {
+                sendWarning(
+                    `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
+                );
+                if (minOrMax === 'min') {
+                    this._options.color.min.reset();
+                } else {
+                    this._options.color.max.reset();
+                }
+                return;
+            }
+            this._setScaleStep([min, max]);
+        };
+
+        // ======= color transform
+        this._options.color.transform.onchange.push(() => {
+            const property = this._options.color.property.value;
+            assert(property !== 'element');
+            const transform = this._options.color.transform.value;
+
+            const values = this._colorValues(property, transform);
+            // To change min and max values when the transform has been changed
+            const { min, max } = arrayMaxMin(values);
+
+            // to avoid sending a spurious warning in `colorRangeChange` below
+            // in case the new min is bigger than the old max.
+            this._options.color.min.value = Number.NEGATIVE_INFINITY;
+            this._options.color.max.value = max;
+            this._options.color.min.value = min;
+            this._setScaleStep([min, max]);
+
+            restyleAndRender();
+        });
+
+        // ======= color min
+        this._options.color.min.onchange.push(() => {
+            colorRangeChange('min');
+            restyleAndRender();
+        });
+
+        // ======= color max
+        this._options.color.max.onchange.push(() => {
+            colorRangeChange('max');
+            restyleAndRender();
+        });
+
+        // ======= color reset
+        this._colorReset.addEventListener('click', () => {
+            const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
+                string,
+                (number | undefined)[]
+            >;
+            const property: string = this._options.color.property.value;
+            // Use map to extract the specified property values into an array
+            const values: number[] = properties[property].filter(
+                (value) => !isNaN(Number(value))
+            ) as number[];
+            // To change min and max values when the transform has been changed
+            const [min, max]: [number, number] = [Math.min(...values), Math.max(...values)];
+            this._options.color.min.value = min;
+            this._options.color.max.value = max;
+            this._setScaleStep([min, max]);
+
+            restyleAndRender();
+        });
+
+        // ======= color palette
+        this._options.color.palette.onchange.push(() => {
+            restyleAndRender();
+        });
+
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
@@ -1037,15 +1174,102 @@ export class MoleculeViewer {
         if (this._options.atoms.value) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-            };
+                colorfunc: this._colorFunction(),
+            } as unknown as $3Dmol.SphereStyleSpec;
         }
         if (this._options.bonds.value) {
             style.stick = {
                 radius: 0.15,
-            };
+                colorfunc: this._colorFunction(),
+            } as unknown as $3Dmol.StickStyleSpec;
         }
 
         return style;
+    }
+
+    /**
+     * Get the values that should be used to color atoms when coloring them
+     * according to properties
+     */
+    private _colorValues(property: string, transform: string): Array<number | null> {
+        assert(this._properties !== undefined);
+        assert(Object.keys(this._properties).includes(property));
+
+        // JSON.parse & JSON.stringify to make a deep copy of the properties to
+        // avoid modifying the original ones.
+        //
+        // This also transforms all `undefined` values into `null`
+        let currentProperty = JSON.parse(JSON.stringify(this._properties[property])) as Array<
+            number | null
+        >;
+
+        let transformFunc = (x: number) => x;
+        if (transform === 'log') {
+            transformFunc = Math.log10;
+        } else if (transform === 'sqrt') {
+            transformFunc = Math.sqrt;
+        } else if (transform === 'inverse') {
+            transformFunc = (x) => 1 / x;
+        }
+
+        currentProperty = currentProperty.map((value) => {
+            if (value !== null && !isNaN(value)) {
+                return transformFunc(value);
+            } else {
+                return value;
+            }
+        });
+
+        return currentProperty;
+    }
+
+    /**
+     * Get a function computing the atom color, that can be used as 3Dmol
+     * `colorfunc`
+     */
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
+        if (this._properties === undefined) {
+            return undefined;
+        }
+
+        const property = this._options.color.property.value;
+        if (property === 'element') {
+            return undefined;
+        }
+
+        const transform = this._options.color.transform.value;
+
+        const currentProperty = this._colorValues(property, transform);
+        const [min, max]: [number, number] = [
+            this._options.color.min.value,
+            this._options.color.max.value,
+        ];
+
+        let grad: $3Dmol.Gradient = new $3Dmol.Gradient.RWB(max, min);
+
+        if (this._options.color.palette.value === 'BWR') {
+            // min and max are swapped to ensure red is used for high values,
+            // blue for low values
+            grad = new $3Dmol.Gradient.RWB(max, min);
+        } else if (this._options.color.palette.value === 'ROYGB') {
+            grad = new $3Dmol.Gradient.ROYGB(min, max);
+        } else if (this._options.color.palette.value === 'Sinebow') {
+            grad = new $3Dmol.Gradient.Sinebow(min, max);
+        }
+
+        return (atom: $3Dmol.AtomSpec) => {
+            assert(atom.serial !== undefined);
+            const value = currentProperty[atom.serial];
+            if (value === null) {
+                // missing values
+                return 0xdddddd;
+            } else if (isNaN(value)) {
+                // NaN values
+                return 0x222222;
+            } else {
+                return grad.valueToHex(value);
+            }
+        };
     }
 
     /**
@@ -1069,7 +1293,7 @@ export class MoleculeViewer {
             if (bgStyle === 'ball-stick' && this._options.shape.value === '') {
                 style.sphere = {
                     // slightly smaller scale than the main style
-                    scale: 0.219,
+                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
                     opacity: defaultOpacity(),
                 };
             }
@@ -1087,6 +1311,25 @@ export class MoleculeViewer {
 
             if (style.sphere !== undefined) {
                 style.sphere.color = 0x808080;
+            }
+        } else if (bgColor === 'prop') {
+            if (style.stick !== undefined) {
+                style.stick = {
+                    // slightly smaller radius than the main style
+                    radius: 0.149,
+                    opacity: defaultOpacity(),
+                    hidden: !this._options.bonds.value,
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.StickStyleSpec;
+            }
+
+            if (style.sphere !== undefined) {
+                style.sphere = {
+                    // slightly smaller scale than the main style
+                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
+                    opacity: defaultOpacity(),
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.SphereStyleSpec;
             }
         } else {
             unreachable();
@@ -1309,5 +1552,17 @@ export class MoleculeViewer {
                 showBackground: false,
             }),
         };
+    }
+
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    private _setScaleStep(axisBounds: number[]): void {
+        if (axisBounds !== undefined) {
+            // round to 10 decimal places so it does not break in Firefox
+            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
+            const minElement = this._options.getModalElement<HTMLInputElement>(`atom-color-min`);
+            const maxElement = this._options.getModalElement<HTMLInputElement>(`atom-color-max`);
+            minElement.step = `${step}`;
+            maxElement.step = `${step}`;
+        }
     }
 }

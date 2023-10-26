@@ -8,6 +8,7 @@ import assert from 'assert';
 import {
     Environment,
     JsObject,
+    Property,
     Settings,
     Structure,
     UserStructure,
@@ -21,9 +22,16 @@ import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarnin
 
 import { LoadOptions, MoleculeViewer } from './viewer';
 
+import { filter } from '../info/info';
+
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
 import PNG_SVG from '../static/download-png.svg';
+
+/// Extension of `Environment` adding the global index of the environment
+interface NumberedEnvironment extends Environment {
+    index: number;
+}
 
 /**
  * Create a list of environments grouped together by structure.
@@ -41,7 +49,7 @@ import PNG_SVG from '../static/download-png.svg';
 function groupByStructure(
     structures: (Structure | UserStructure)[],
     environments?: Environment[]
-): Environment[][] | undefined {
+): NumberedEnvironment[][] | undefined {
     if (environments === undefined) {
         return undefined;
     }
@@ -50,11 +58,15 @@ function groupByStructure(
         Array.from({ length: structures[i].size })
     );
 
-    for (const env of environments) {
-        result[env.structure][env.center] = env;
+    for (let i = 0; i < environments.length; i++) {
+        const env = environments[i];
+        result[env.structure][env.center] = {
+            index: i,
+            ...env,
+        };
     }
 
-    return result as Environment[][];
+    return result as NumberedEnvironment[][];
 }
 
 interface ViewerGridData {
@@ -116,10 +128,12 @@ export class ViewersGrid {
     private _root: HTMLElement;
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
+    /// List of per-atom properties in the dataset
+    private _properties: Record<string, number[]>;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
-    private _environments?: Environment[][];
+    private _environments?: NumberedEnvironment[][];
     /// Maximum number of allowed structure viewers
     private _maxViewers: number;
     /// The indexer translating between environments indexes and structure/atom
@@ -153,10 +167,27 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
+        properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
         this._structures = structures;
+        if (properties === undefined) {
+            this._properties = {};
+        } else {
+            const numberProperties = filter(properties, (p) =>
+                Object.values(p.values).every((v) => typeof v === 'number')
+            );
+            const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
+
+            const props: Record<string, number[]> = Object.fromEntries(
+                Object.entries(atomProperties).map(([key, value]) => [
+                    key,
+                    value.values as number[],
+                ])
+            );
+            this._properties = props;
+        }
         this._resolvedStructures = new Array<Structure>(structures.length);
         this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
@@ -478,6 +509,38 @@ export class ViewersGrid {
         return this._resolvedStructures[index];
     }
 
+    /**
+     * Get the values of the properties for all the atoms in the current structure
+     *
+     * @param structure index of the current structure
+     * @returns
+     */
+    private _propertiesForStructure(
+        structure: number
+    ): Record<string, (number | undefined)[]> | undefined {
+        const properties: Record<string, (number | undefined)[]> = {};
+
+        if (this._environments !== undefined) {
+            const environments = this._environments[structure];
+            for (const name in this._properties) {
+                const values = this._properties[name];
+
+                properties[name] = [];
+                for (const environment of environments) {
+                    if (environment !== undefined) {
+                        properties[name].push(values[environment.index]);
+                    } else {
+                        properties[name].push(undefined);
+                    }
+                }
+            }
+
+            return properties;
+        } else {
+            return undefined;
+        }
+    }
+
     private _showInViewer(guid: GUID, indexes: Indexes): void {
         const data = this._cellsData.get(guid);
         assert(data !== undefined);
@@ -496,7 +559,11 @@ export class ViewersGrid {
                 }
             }
 
-            viewer.load(this._structure(indexes.structure), options);
+            viewer.load(
+                this._structure(indexes.structure),
+                this._propertiesForStructure(indexes.structure),
+                options
+            );
             data.current = indexes;
         }
 
@@ -695,7 +762,11 @@ export class ViewersGrid {
 
             // add a new cells if necessary
             if (!this._cellsData.has(cellGUID)) {
-                const viewer = new MoleculeViewer(this._getById<HTMLElement>(`gi-${cellGUID}`));
+                const propertiesName = this._properties ? Object.keys(this._properties) : [];
+                const viewer = new MoleculeViewer(
+                    this._getById<HTMLElement>(`gi-${cellGUID}`),
+                    propertiesName
+                );
 
                 viewer.onselect = (atom: number) => {
                     if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {

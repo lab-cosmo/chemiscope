@@ -51,6 +51,13 @@ export class StructureOptions extends OptionsGroup {
         // which colors for atoms not in the environment
         bgColor: HTMLOption<'string'>;
     };
+    public color: {
+        property: HTMLOption<'string'>;
+        transform: HTMLOption<'string'>;
+        min: HTMLOption<'number'>;
+        max: HTMLOption<'number'>;
+        palette: HTMLOption<'string'>;
+    };
 
     /// The Modal instance
     private _modal: Modal;
@@ -59,7 +66,11 @@ export class StructureOptions extends OptionsGroup {
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
 
-    constructor(root: HTMLElement, positionSettings: PositioningCallback) {
+    constructor(
+        root: HTMLElement,
+        positionSettings: PositioningCallback,
+        propertiesName: string[] = []
+    ) {
         super();
 
         this.bonds = new HTMLOption('boolean', true);
@@ -98,8 +109,31 @@ export class StructureOptions extends OptionsGroup {
             cutoff: new HTMLOption('number', 4.0),
         };
 
+        this.color = {
+            property: new HTMLOption('string', 'element'),
+            min: new HTMLOption('number', 0),
+            max: new HTMLOption('number', 0),
+            transform: new HTMLOption('string', 'linear'),
+            palette: new HTMLOption('string', 'BWR'),
+        };
+
+        // validate atom properties for coloring
+        if (propertiesName.includes('element')) {
+            this.color.property.validate = optionValidator(propertiesName, 'color');
+        } else {
+            this.color.property.validate = optionValidator(
+                propertiesName.concat(['element']),
+                'color'
+            );
+        }
+        this.color.transform.validate = optionValidator(
+            ['linear', 'log', 'sqrt', 'inverse'],
+            'transform'
+        );
+        this.color.palette.validate = optionValidator(['BWR', 'ROYGB', 'Sinebow'], 'palette');
+
         this.environments.bgColor.validate = optionValidator(
-            ['grey', 'CPK'],
+            ['grey', 'CPK', 'prop'],
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
@@ -121,8 +155,7 @@ export class StructureOptions extends OptionsGroup {
         ).adoptedStyleSheets;
         this._openModal = openModal;
         root.appendChild(this._openModal);
-
-        this._bind();
+        this._bind(propertiesName);
     }
 
     /** Get in a element in the modal from its id */
@@ -223,7 +256,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Bind all options to the corresponding HTML elements */
-    private _bind(): void {
+    private _bind(propertiesName: string[]): void {
         this.atomLabels.bind(this.getModalElement('atom-labels'), 'checked');
 
         const selectShape = this.getModalElement<HTMLSelectElement>('shapes');
@@ -239,6 +272,29 @@ export class StructureOptions extends OptionsGroup {
         this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');
         this.supercell[2].bind(this.getModalElement('supercell-c'), 'value');
+
+        // ======= data used as color values
+        const selectColorProperty = this.getModalElement<HTMLSelectElement>('atom-color-property');
+        // first option is 'element'
+        selectColorProperty.options.length = 0;
+        if (!propertiesName.includes('element')) {
+            selectColorProperty.options.add(new Option('element', 'element'));
+        }
+        for (const property of propertiesName) {
+            selectColorProperty.options.add(new Option(property, property));
+        }
+        this.color.property.bind(selectColorProperty, 'value');
+        this.color.transform.bind(this.getModalElement('atom-color-transform'), 'value');
+        this.color.min.bind(this.getModalElement('atom-color-min'), 'value');
+        this.color.max.bind(this.getModalElement('atom-color-max'), 'value');
+
+        // ======= color palette
+        const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
+        selectPalette.options.length = 0;
+        for (const key of ['BWR', 'ROYGB', 'Sinebow']) {
+            selectPalette.options.add(new Option(key, key));
+        }
+        this.color.palette.bind(selectPalette, 'value');
 
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');

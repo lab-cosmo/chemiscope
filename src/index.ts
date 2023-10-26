@@ -198,6 +198,7 @@ class DefaultVisualizer {
             config.structure,
             this._indexer,
             dataset.structures,
+            dataset.properties,
             dataset.environments,
             config.maxStructureViewers
         );
@@ -492,6 +493,7 @@ class StructureVisualizer {
             config.structure,
             this._indexer,
             dataset.structures,
+            dataset.properties,
             dataset.environments,
             1 // only allow one structure
         );
