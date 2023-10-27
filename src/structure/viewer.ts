@@ -69,6 +69,14 @@ interface LabeledArrow {
     arrow: $3Dmol.GLShape;
 }
 
+interface ColorBar {
+    min: $3Dmol.Label;
+    mid: $3Dmol.Label;
+    max: $3Dmol.Label;
+    prop: $3Dmol.Label;
+    grad: $3Dmol.Label;
+}
+
 /** Possible options passed to `MoleculeViewer.load` */
 export interface LoadOptions {
     /** Supercell to display (default: [1, 1, 1]) */
@@ -124,6 +132,8 @@ export class MoleculeViewer {
     };
     /// Axes shown, if any
     private _axes?: [LabeledArrow, LabeledArrow, LabeledArrow];
+    /// Color bar shown, if any
+    private _colorBar?: ColorBar;
 
     /// Representation options from the HTML side
     public _options: StructureOptions;
@@ -795,9 +805,26 @@ export class MoleculeViewer {
         });
 
         // ======= color settings
+        // Function to remove the existing color bar
+        const colorBarUpdate = (action: string, min?: number, max?: number) => {
+            if (action === "delete") {
+                if (this._colorBar !== undefined) {
+                    this._viewer.removeLabel(this._colorBar.min);
+                    this._viewer.removeLabel(this._colorBar.mid);
+                    this._viewer.removeLabel(this._colorBar.max);
+                    this._viewer.removeLabel(this._colorBar.prop);
+                    this._viewer.removeLabel(this._colorBar.grad);
+                    this._colorBar = undefined;
+                }
+            } else {
+                assert(min !== undefined && max !== undefined);
+                this._colorBar = this._addColorBar(min, max);
+            }
+        };
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
+            colorBarUpdate("delete");
 
             if (property !== 'element') {
                 this._options.color.transform.enable();
@@ -827,6 +854,10 @@ export class MoleculeViewer {
                 this._options.color.max.value = max;
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
+                // remove the existing color bar
+                colorBarUpdate("delete");
+                // add the color bar
+                colorBarUpdate("add", min, max);
             } else {
                 this._options.color.transform.disable();
                 this._options.color.min.disable();
@@ -857,6 +888,10 @@ export class MoleculeViewer {
                 return;
             }
             this._setScaleStep([min, max]);
+            // remove the existing color bar
+            colorBarUpdate("delete");
+            // add the color bar
+            colorBarUpdate("add", min, max);
         };
 
         // ======= color transform
@@ -875,6 +910,10 @@ export class MoleculeViewer {
             this._options.color.max.value = max;
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
+            // remove the existing color bar
+            colorBarUpdate("delete");
+            // add the color bar
+            colorBarUpdate("add", min, max);
 
             restyleAndRender();
         });
@@ -907,12 +946,20 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
+            // remove the existing color bar
+            colorBarUpdate("delete");
+            // add the color bar
+            colorBarUpdate("add", min, max);
 
             restyleAndRender();
         });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
+            // remove the existing color bar
+            colorBarUpdate("delete");
+            // add the color bar
+            colorBarUpdate("add", this._options.color.min.value, this._options.color.max.value);
             restyleAndRender();
         });
 
@@ -1564,5 +1611,105 @@ export class MoleculeViewer {
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }
+    }
+
+    /**
+     * Add a color bar corresponding to the color palette and the atom
+     * properties displaying the minimum and maximum values
+     */
+    private _addColorBar(
+        min: number, 
+        max: number
+    ): ColorBar {
+        let mid = (min + max) / 2;
+        min = Math.round(min * 100) / 100;
+        mid = Math.round(mid * 100) / 100;
+        max = Math.round(max * 100) / 100;
+        const palette = this._options.color.palette.value;
+        const property = this._options.color.property.value;
+        let [color1, color2, color3, color4, color5] = ["", "", "", "", ""];
+        if (palette === 'Rwb') {
+            [color1, color2, color3] = ["red", "white", "blue"];
+        } else if (palette === 'Roygb') {
+            [color1, color2, color3, color4, color5] = ["red", "orange", "yellow", "green", "blue"];
+        } else if (palette === 'Sinebow') {
+            [color1, color2, color3] = ["red", "green", "blue"];
+        }
+        const gradImgPath = this._generateGradientImage(color1, color2, color3, color4, color5, 10, 100);
+        return {
+            min: this._viewer.addLabel( JSON.stringify(min), this._genColorBarValSpec(21, 5) ),
+            mid: this._viewer.addLabel( JSON.stringify(mid), this._genColorBarValSpec(21, 55) ),
+            max: this._viewer.addLabel( JSON.stringify(max), this._genColorBarValSpec(21, 105) ),
+            prop: this._viewer.addLabel( property, this._genColorBarValSpec(0, 125) ),
+            grad: this._viewer.addLabel(":)", {
+                position: new $3Dmol.Vector3(0, 5, 0),
+                backgroundImage: gradImgPath,
+                borderColor: "black",
+                borderOpacity: 1,
+                borderThickness: 1,
+                fontColor: 'white',
+                fontSize: 16,
+                fontOpacity: 0,
+                inFront: true,
+                useScreen: true,
+            }),
+        };
+    }
+
+    /** Generate a LabelSpec for the key values in the color bar */
+    private _genColorBarValSpec(
+        xPosition: number,
+        yPosition: number
+    ): $3Dmol.LabelSpec {
+        return {
+            alignment: "centerLeft",
+            position: new $3Dmol.Vector3(xPosition, yPosition, 0),
+            font: "Rockwell",
+            fontColor: 'black',
+            fontSize: 10,
+            showBackground: false,
+            inFront: true,
+            useScreen: true,
+        };
+    }
+
+    /** Create a gradient.png file for the color bar */
+    private _generateGradientImage(
+        color1: string,
+        color2: string,
+        color3: string,
+        color4: string,
+        color5: string,
+        width: number,
+        height: number
+    ): HTMLCanvasElement {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+    
+        const ctx = canvas.getContext('2d');
+    
+        if (!ctx) {
+            throw new Error('Could not get 2D context from canvas');
+        }
+    
+        // Create a linear gradient from colorStart to colorEnd
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        if (color4 === "") {
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(0.5, color2);
+            gradient.addColorStop(1, color3);
+        } else {
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(0.25, color2);
+            gradient.addColorStop(0.5, color3);
+            gradient.addColorStop(0.75, color4);
+            gradient.addColorStop(1, color5);
+        }
+    
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        return canvas;
     }
 }
