@@ -1625,9 +1625,9 @@ export class MoleculeViewer {
         const palette = this._options.color.palette.value;
         const property = this._options.color.property.value;
         let [color1, color2, color3, color4, color5] = ['', '', '', '', ''];
-        if (palette === 'Rwb') {
-            [color1, color2, color3] = ['red', 'white', 'blue'];
-        } else if (palette === 'Roygb') {
+        if (palette === 'BWR') {
+            [color1, color2, color3] = ['blue', 'white', 'red'];
+        } else if (palette === 'ROYGB') {
             [color1, color2, color3, color4, color5] = ['red', 'orange', 'yellow', 'green', 'blue'];
         } else if (palette === 'Sinebow') {
             [color1, color2, color3] = ['red', 'green', 'blue'];
@@ -1642,9 +1642,9 @@ export class MoleculeViewer {
             100
         );
         return {
-            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(21, 5)),
+            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(21, 105)),
             mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(21, 55)),
-            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(21, 105)),
+            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(21, 5)),
             prop: this._viewer.addLabel(property, this._genColorBarValSpec(0, 125)),
             grad: this._viewer.addLabel(':)', {
                 position: new $3Dmol.Vector3(0, 5, 0),
@@ -1698,15 +1698,15 @@ export class MoleculeViewer {
         // Create a linear gradient from colorStart to colorEnd
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
         if (color4 === '') {
-            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color1);
             gradient.addColorStop(0.5, color2);
-            gradient.addColorStop(1, color3);
+            gradient.addColorStop(0, color3);
         } else {
-            gradient.addColorStop(0, color1);
-            gradient.addColorStop(0.25, color2);
+            gradient.addColorStop(1, color1);
+            gradient.addColorStop(0.75, color2);
             gradient.addColorStop(0.5, color3);
-            gradient.addColorStop(0.75, color4);
-            gradient.addColorStop(1, color5);
+            gradient.addColorStop(0.25, color4);
+            gradient.addColorStop(0, color5);
         }
 
         ctx.fillStyle = gradient;
