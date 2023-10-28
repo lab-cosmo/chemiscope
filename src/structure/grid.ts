@@ -481,8 +481,8 @@ export class ViewersGrid {
         const newData = this._cellsData.get(newGUID);
         assert(newData !== undefined);
 
-        newData.viewer.applySettings(data.viewer.saveSettings());
         this._showInViewer(newGUID, data.current);
+        newData.viewer.applySettings(data.viewer.saveSettings());
         this.setActive(newGUID);
         return newData;
     }
