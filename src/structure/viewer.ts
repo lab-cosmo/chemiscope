@@ -817,7 +817,6 @@ export class MoleculeViewer {
                     this._colorBar = undefined;
                 }
             } else {
-                console.log(this._viewer);
                 assert(min !== undefined && max !== undefined);
                 this._colorBar = this._addColorBar(min, max);
             }
@@ -1644,9 +1643,9 @@ export class MoleculeViewer {
         );
         return {
             min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, 11)),
-            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20+50, 11)),
-            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20+100, 11)),
-            prop: this._viewer.addLabel(property, this._genColorBarValSpec(20+50, 22)),
+            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20 + 50, 11)),
+            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20 + 100, 11)),
+            prop: this._viewer.addLabel(property, this._genColorBarValSpec(20 + 50, 22)),
             grad: this._viewer.addLabel('.', {
                 position: new $3Dmol.Vector3(20, 2, 0),
                 backgroundImage: gradImgPath,
