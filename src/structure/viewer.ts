@@ -817,6 +817,7 @@ export class MoleculeViewer {
                     this._colorBar = undefined;
                 }
             } else {
+                console.log(this._viewer);
                 assert(min !== undefined && max !== undefined);
                 this._colorBar = this._addColorBar(min, max);
             }
@@ -1638,22 +1639,22 @@ export class MoleculeViewer {
             color3,
             color4,
             color5,
-            10,
-            100
+            100,
+            2
         );
         return {
-            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(21, 105)),
-            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(21, 55)),
-            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(21, 5)),
-            prop: this._viewer.addLabel(property, this._genColorBarValSpec(0, 125)),
-            grad: this._viewer.addLabel(':)', {
-                position: new $3Dmol.Vector3(0, 5, 0),
+            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, 11)),
+            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20+50, 11)),
+            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20+100, 11)),
+            prop: this._viewer.addLabel(property, this._genColorBarValSpec(20+50, 22)),
+            grad: this._viewer.addLabel('.', {
+                position: new $3Dmol.Vector3(20, 2, 0),
                 backgroundImage: gradImgPath,
                 borderColor: 'black',
                 borderOpacity: 1,
                 borderThickness: 1,
                 fontColor: 'white',
-                fontSize: 16,
+                fontSize: 2,
                 fontOpacity: 0,
                 inFront: true,
                 useScreen: true,
@@ -1664,11 +1665,11 @@ export class MoleculeViewer {
     /** Generate a LabelSpec for the key values in the color bar */
     private _genColorBarValSpec(xPosition: number, yPosition: number): $3Dmol.LabelSpec {
         return {
-            alignment: 'centerLeft',
+            alignment: 'topCenter',
             position: new $3Dmol.Vector3(xPosition, yPosition, 0),
-            font: 'Rockwell',
+            font: 'sans',
             fontColor: 'black',
-            fontSize: 10,
+            fontSize: 14,
             showBackground: false,
             inFront: true,
             useScreen: true,
@@ -1696,7 +1697,7 @@ export class MoleculeViewer {
         }
 
         // Create a linear gradient from colorStart to colorEnd
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
         if (color4 === '') {
             gradient.addColorStop(1, color1);
             gradient.addColorStop(0.5, color2);
