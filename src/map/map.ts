@@ -1015,6 +1015,7 @@ export class PropertiesMap {
         layout.coloraxis.cmax = this._options.color.max.value;
         layout.coloraxis.colorbar.title.text = this._colorTitle();
         layout.coloraxis.colorbar.len = this._colorbarLen();
+        layout.coloraxis.showscale = this._options.hasColors();
 
         // Create an empty plot and fill it below
         Plotly.newPlot(

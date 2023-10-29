@@ -262,7 +262,7 @@ export class MapOptions extends OptionsGroup {
                     transformed = 1.0 * v;
                     break;
                 default:
-                    // corresponds to 'constant'
+                    // corresponds to 'fixed'
                     transformed = 0.5;
                     break;
             }
