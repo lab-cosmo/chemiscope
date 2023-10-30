@@ -657,33 +657,21 @@ export class PropertiesMap {
         this._options.z.max.onchange.push(rangeChange('zaxis', this._options.z, 'max'));
 
         // ======= color axis settings
-        // setup initial state of the color settings
-        if (this._options.color.mode.value === '') {
-            this._options.color.property.disable();
-            this._options.color.min.disable();
-            this._options.color.max.disable();
-            this._colorReset.disabled = true;
-
-            this._options.color.min.value = 0;
-            this._options.color.max.value = 0;
-        } else {
-            this._options.color.property.enable();
-            this._options.color.mode.enable();
-            this._options.color.min.enable();
-            this._options.color.max.enable();
-            this._colorReset.disabled = false;
-
+        if (this._options.hasColors()) {
+            // setup initial color range (must do before setting up events)
             const values = this._colors(0)[0] as number[];
             const { min, max } = arrayMaxMin(values);
 
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
+        } else {
+            this._options.color.min.value = 0;
+            this._options.color.max.value = 0;
         }
 
         this._options.color.property.onchange.push(() => {
-            if (this._options.color.property.value !== '') {
-                this._options.color.property.enable();
+            if (this._options.hasColors()) {
                 this._options.color.mode.enable();
                 this._options.color.min.enable();
                 this._options.color.max.enable();
@@ -844,6 +832,19 @@ export class PropertiesMap {
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
         };
+
+        // setup initial state of the color GUI
+        this._options.color.property.enable();
+        if (this._options.hasColors()) {
+            this._options.color.mode.enable();
+            this._options.color.min.enable();
+            this._options.color.max.enable();
+            this._colorReset.disabled = false;
+        } else {
+            this._options.color.min.disable();
+            this._options.color.max.disable();
+            this._colorReset.disabled = true;
+        }
 
         // ======= color palette
         this._options.palette.onchange.push(() => {
@@ -1015,6 +1016,7 @@ export class PropertiesMap {
         layout.coloraxis.cmax = this._options.color.max.value;
         layout.coloraxis.colorbar.title.text = this._colorTitle();
         layout.coloraxis.colorbar.len = this._colorbarLen();
+        layout.coloraxis.showscale = this._options.hasColors();
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
