@@ -8,7 +8,8 @@ structures or only proeprties.
 Once created, it is possible to interact with the widget using a traitlet interface, modeled after 
 `Jupyter widgets <http://ipywidgets.readthedocs.io>`_.
 
-``chemiscope.show`` reference
----------------------------
+Creating a chemiscope widget
+----------------------------
 
 .. autofunction:: chemiscope.show
+.. autofunction:: chemiscope.show_input
