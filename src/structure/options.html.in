@@ -33,8 +33,7 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
-            <div class="chsp-atom-color-property">
-
+            <div class="chsp-atom-color-property chsp-hide-if-no-atom-properties">               
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="atom-color-property">color:</label>
                   <select id="atom-color-property" class="form-select">

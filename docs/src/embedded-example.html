@@ -23,13 +23,18 @@
         <div id="structure" style="width: 400px; height: 400px"></div>
         <div id="info"></div>
         <!-- We appreciate a citation back to the main chemiscope website -->
-        <span style="font-size: x-small; float: right"> powered by <a href="https://chemiscope.org">chemiscope</a> </span>
+        <span style="font-size: x-small; float: right">
+            powered by <a href="https://chemiscope.org">chemiscope</a>
+        </span>
     </body>
 
     <script type="text/javascript">
         // show errors in the webpage
         window.onerror = (error) => {
-            document.body.insertAdjacentHTML('beforebegin', `<div style="margin: auto; color: red;">ERROR: ${error}</div>`);
+            document.body.insertAdjacentHTML(
+                'beforebegin',
+                `<div style="margin: auto; color: red;">ERROR: ${error}</div>`
+            );
         };
     </script>
 

@@ -159,6 +159,9 @@ export class MoleculeViewer {
         /// hide options related to shapes if there is no shapes in the
         /// current structure
         noShape: CSSStyleSheet;
+        /// hide options related to atom coloring if there are no atom properties
+        /// in the current structure
+        noProperties: CSSStyleSheet;        
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
@@ -218,11 +221,13 @@ export class MoleculeViewer {
         const noCellStyle = new CSSStyleSheet();
         const noEnvsStyle = new CSSStyleSheet();
         const noShapeStyle = new CSSStyleSheet();
+        const noPropsStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
             noEnvs: noEnvsStyle,
             noShape: noShapeStyle,
+            noProperties: noPropsStyle,
         };
 
         this._shadow.adoptedStyleSheets = [
@@ -230,6 +235,7 @@ export class MoleculeViewer {
             noCellStyle,
             noEnvsStyle,
             noShapeStyle,
+            noPropsStyle,
         ];
 
         this._options = new StructureOptions(
@@ -243,6 +249,7 @@ export class MoleculeViewer {
             noCellStyle,
             noEnvsStyle,
             noShapeStyle,
+            noPropsStyle,
         ];
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('atom-color-reset');
         this._colorMoreOptions =
@@ -443,6 +450,11 @@ export class MoleculeViewer {
             this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
+        if (this._properties === undefined) {
+            this._styles.noProperties.replaceSync('.chsp-hide-if-no-atom-properties { display: none; }');
+        } else {
+            this._styles.noProperties.replaceSync('');
+        }
         // update the options for shape visualization
         if (structure.shapes === undefined) {
             this._styles.noShape.replaceSync('.chsp-hide-if-no-shapes { display: none; }');
