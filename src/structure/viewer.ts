@@ -161,7 +161,7 @@ export class MoleculeViewer {
         noShape: CSSStyleSheet;
         /// hide options related to atom coloring if there are no atom properties
         /// in the current structure
-        noProperties: CSSStyleSheet;        
+        noProperties: CSSStyleSheet;
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
@@ -451,7 +451,9 @@ export class MoleculeViewer {
         }
 
         if (this._properties === undefined) {
-            this._styles.noProperties.replaceSync('.chsp-hide-if-no-atom-properties { display: none; }');
+            this._styles.noProperties.replaceSync(
+                '.chsp-hide-if-no-atom-properties { display: none; }'
+            );
         } else {
             this._styles.noProperties.replaceSync('');
         }
@@ -1625,6 +1627,28 @@ export class MoleculeViewer {
         }
     }
 
+    // this is duplicated from map.ts - should really move all this stuff in a utils module
+    // and uniform the names and modes of operation
+    private _colorTitle(): string {
+        let title = this._options.color.property.value;
+        switch (this._options.color.transform.value) {
+            case 'inverse':
+                title = `(${title})⁻¹`;
+                break;
+            case 'log':
+                title = `log₁₀(${title})`;
+                break;
+            case 'sqrt':
+                title = `√(${title})`;
+                break;
+            case 'linear':
+                break;
+            default:
+                break;
+        }
+        return title;
+    }
+
     /**
      * Add a color bar corresponding to the color palette and the atom
      * properties displaying the minimum and maximum values
@@ -1635,7 +1659,8 @@ export class MoleculeViewer {
         mid = Math.round(mid * 100) / 100;
         max = Math.round(max * 100) / 100;
         const palette = this._options.color.palette.value;
-        const property = this._options.color.property.value;
+        const title = this._colorTitle();
+
         let [color1, color2, color3, color4, color5] = ['', '', '', '', ''];
         if (palette === 'BWR') {
             [color1, color2, color3] = ['blue', 'white', 'red'];
@@ -1657,7 +1682,7 @@ export class MoleculeViewer {
             min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, 11)),
             mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20 + 50, 11)),
             max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20 + 100, 11)),
-            prop: this._viewer.addLabel(property, this._genColorBarValSpec(20 + 50, 22)),
+            prop: this._viewer.addLabel(title, this._genColorBarValSpec(20 + 50, 22)),
             grad: this._viewer.addLabel('.', {
                 position: new $3Dmol.Vector3(20, 2, 0),
                 backgroundImage: gradImgPath,
