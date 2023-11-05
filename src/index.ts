@@ -524,7 +524,23 @@ class StructureVisualizer {
             this.info.playbackDelay = delay;
         };
 
-        const initial = { environment: 0, structure: 0, atom: 0 };
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        // if we have sparse environments, make sure to use the first
+        // environment actually part of the dataset
+        if (dataset.environments !== undefined) {
+            initial = this._indexer.from_environment(0);
+        }
+
+        if (dataset.settings && dataset.settings.pinned) {
+            if (
+                !Array.isArray(dataset.settings.pinned) ||
+                typeof dataset.settings.pinned[0] !== 'number'
+            ) {
+                throw Error('settings.pinned must be an array of numbers');
+            }
+            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
+        }
+
         this.structure.show(initial);
         this.info.show(initial);
 
@@ -582,7 +598,7 @@ class StructureVisualizer {
 }
 
 /**
- * Configuration for the {@link StructureVisualizer}
+ * Configuration for the {@link MapVisualizer}
  */
 export interface MapConfig {
     /** Id of the DOM element to use to display metadata */
@@ -670,7 +686,24 @@ class MapVisualizer {
             this.map.select(indexes);
         };
 
-        const initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+        let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+
+        // if we have sparse environments, make sure to use the first
+        // environment actually part of the dataset
+        if (dataset.environments !== undefined) {
+            initial = this._indexer.from_environment(0);
+        }
+
+        if (dataset.settings && dataset.settings.pinned) {
+            if (
+                !Array.isArray(dataset.settings.pinned) ||
+                typeof dataset.settings.pinned[0] !== 'number'
+            ) {
+                throw Error('settings.pinned must be an array of numbers');
+            }
+            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
+        }
+
         this.map.addMarker('map-0' as GUID, 'red', initial);
         this.info.show(initial);
     }
