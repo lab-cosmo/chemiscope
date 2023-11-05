@@ -700,7 +700,9 @@ def _linearize(name, property, n_structures, n_centers, multidimensional=False):
     data = {}
     values = property["values"]
     if not multidimensional:
-        if isinstance(values, list) and isinstance(values[0], list):
+        if isinstance(values, list) and (
+            isinstance(values[0], list) or isinstance(values[0], np.ndarray)
+        ):
             # convert to ndarray so we can use the parser below
             values = np.array(values)
         if isinstance(values, list):
