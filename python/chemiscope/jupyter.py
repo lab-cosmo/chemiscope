@@ -31,7 +31,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def __init__(self, data, has_metadata):
         super().__init__()
-
         self.value = json.dumps(data)
         self.has_metadata = has_metadata
         if "settings" in data:
@@ -57,6 +56,24 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
+
+    def __repr__(self, max_length=64):
+        # string representation of the chemiscope widget, outputs that are too large
+        class_name = self.__class__.__name__
+        string_repr = ""
+
+        for key, value in json.loads(
+            self.value
+        ).items():  # loops over meta, structures, settings, ...
+            value_repr = repr(value)
+            truncated_repr = (
+                (value_repr[:max_length] + "...}")
+                if len(value_repr) > max_length
+                else value_repr
+            )
+            string_repr += f"{key}={truncated_repr}, "
+
+        return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
         if not _is_running_in_notebook():
