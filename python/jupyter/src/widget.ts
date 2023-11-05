@@ -92,13 +92,6 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        // HACK: resize Plotly when inserted. It currently render itself at full
-        // width and then needs to be resized. For more on this, see
-        // https://github.com/lab-cosmo/chemiscope/pull/181#discussion_r693005307
-        element.addEventListener('DOMNodeInserted', () => {
-            window.dispatchEvent(new Event('resize'));
-        });
-
         addWarningHandler((message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
@@ -266,13 +259,6 @@ export class MapView extends ChemiscopeBaseView {
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
-
-        // HACK: resize Plotly when inserted. It currently render itself at full
-        // width and then needs to be resized. For more on this, see
-        // https://github.com/lab-cosmo/chemiscope/pull/181#discussion_r693005307
-        element.addEventListener('DOMNodeInserted', () => {
-            window.dispatchEvent(new Event('resize'));
-        });
 
         addWarningHandler((message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
