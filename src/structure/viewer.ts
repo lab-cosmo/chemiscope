@@ -819,26 +819,20 @@ export class MoleculeViewer {
         });
 
         // ======= color settings
-        // Function to remove the existing color bar
-        const colorBarUpdate = (action: string, min?: number, max?: number) => {
-            if (action === 'delete') {
-                if (this._colorBar !== undefined) {
-                    this._viewer.removeLabel(this._colorBar.min);
-                    this._viewer.removeLabel(this._colorBar.mid);
-                    this._viewer.removeLabel(this._colorBar.max);
-                    this._viewer.removeLabel(this._colorBar.prop);
-                    this._viewer.removeLabel(this._colorBar.grad);
-                    this._colorBar = undefined;
-                }
-            } else {
-                assert(min !== undefined && max !== undefined);
-                this._colorBar = this._addColorBar(min, max);
+        // To call the function above if the window is resized
+        window.addEventListener('resize', () => {
+            if (this._options.color.property.value !== 'element') {
+                this.colorBarUpdate(
+                    'update',
+                    this._options.color.min.value,
+                    this._options.color.max.value
+                );
             }
-        };
+        });
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
-            colorBarUpdate('delete');
+            this.colorBarUpdate('delete');
 
             if (property !== 'element') {
                 this._options.color.transform.enable();
@@ -868,10 +862,8 @@ export class MoleculeViewer {
                 this._options.color.max.value = max;
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
-                // remove the existing color bar
-                colorBarUpdate('delete');
-                // add the color bar
-                colorBarUpdate('add', min, max);
+                // update the color bar
+                this.colorBarUpdate('update', min, max);
             } else {
                 this._options.color.transform.disable();
                 this._options.color.min.disable();
@@ -902,10 +894,8 @@ export class MoleculeViewer {
                 return;
             }
             this._setScaleStep([min, max]);
-            // remove the existing color bar
-            colorBarUpdate('delete');
-            // add the color bar
-            colorBarUpdate('add', min, max);
+            // update the color bar
+            this.colorBarUpdate('update', min, max);
         };
 
         // ======= color transform
@@ -924,10 +914,8 @@ export class MoleculeViewer {
             this._options.color.max.value = max;
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
-            // remove the existing color bar
-            colorBarUpdate('delete');
-            // add the color bar
-            colorBarUpdate('add', min, max);
+            // update the color bar
+            this.colorBarUpdate('update', min, max);
 
             restyleAndRender();
         });
@@ -960,20 +948,16 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
-            // remove the existing color bar
-            colorBarUpdate('delete');
-            // add the color bar
-            colorBarUpdate('add', min, max);
+            // update the color bar
+            this.colorBarUpdate('update', min, max);
 
             restyleAndRender();
         });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
-            // remove the existing color bar
-            colorBarUpdate('delete');
-            // add the color bar
-            colorBarUpdate('add', this._options.color.min.value, this._options.color.max.value);
+            // update the color bar
+            this.colorBarUpdate('update', this._options.color.min.value, this._options.color.max.value);
             restyleAndRender();
         });
 
@@ -1669,22 +1653,41 @@ export class MoleculeViewer {
         } else if (palette === 'Sinebow') {
             [color1, color2, color3] = ['red', 'green', 'blue'];
         }
+
+        // To take the width of the viewer.
+        const screenWidth = this._viewer.container?.clientWidth;
+        // To take the height of the viewer.
+        const screenHeight = this._viewer.container?.clientHeight;
+        assert(screenWidth !== undefined && screenHeight !== undefined);
+        let gradWidth = screenWidth - 205;
+        let gradHeight = 0.02 * screenHeight + 6;
+        let gradPosShift = 0;
+        if (gradWidth > 250) {
+            gradWidth = 250;
+        }
+        if (gradWidth < 60) {
+            gradWidth = 60;
+            gradPosShift = 30;
+        }
+        if (gradHeight > 20) {
+            gradHeight = 20;
+        }
         const gradImgPath = this._generateGradientImage(
             color1,
             color2,
             color3,
             color4,
             color5,
-            100,
-            2
+            gradWidth,
+            gradHeight,
         );
         return {
-            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, 11)),
-            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20 + 50, 11)),
-            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20 + 100, 11)),
-            prop: this._viewer.addLabel(title, this._genColorBarValSpec(20 + 50, 22)),
+            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, gradHeight + gradPosShift + 2)),
+            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20 + gradWidth/2, gradHeight + gradPosShift + 2)),
+            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20 + gradWidth, gradHeight + gradPosShift + 2)),
+            prop: this._viewer.addLabel(title, this._genColorBarValSpec(20 + gradWidth/2, gradHeight + gradPosShift + 16)),
             grad: this._viewer.addLabel('.', {
-                position: new $3Dmol.Vector3(20, 2, 0),
+                position: new $3Dmol.Vector3(20, gradPosShift + 4, 0),
                 backgroundImage: gradImgPath,
                 borderColor: 'black',
                 borderOpacity: 1,
@@ -1735,15 +1738,15 @@ export class MoleculeViewer {
         // Create a linear gradient from colorStart to colorEnd
         const gradient = ctx.createLinearGradient(0, 0, width, 0);
         if (color4 === '') {
-            gradient.addColorStop(1, color1);
+            gradient.addColorStop(1, color3);
             gradient.addColorStop(0.5, color2);
-            gradient.addColorStop(0, color3);
+            gradient.addColorStop(0, color1);
         } else {
-            gradient.addColorStop(1, color1);
-            gradient.addColorStop(0.75, color2);
+            gradient.addColorStop(1, color5);
+            gradient.addColorStop(0.75, color4);
             gradient.addColorStop(0.5, color3);
-            gradient.addColorStop(0.25, color4);
-            gradient.addColorStop(0, color5);
+            gradient.addColorStop(0.25, color2);
+            gradient.addColorStop(0, color1);
         }
 
         ctx.fillStyle = gradient;
@@ -1751,4 +1754,35 @@ export class MoleculeViewer {
 
         return canvas;
     }
+
+    /**
+     * This function is used to delete and/or add a color bar.
+     * It is a public function because it has to be called
+     * when another viewer is created or removed from the grid
+     * in order to update the size of the color bar.
+     */
+    public colorBarUpdate = (action: string, min?: number, max?: number) => {
+        if (this._options.color.property.value !== 'element') {
+            if (action === 'delete' || action === 'update') {
+                if (this._colorBar !== undefined) {
+                    this._viewer.removeLabel(this._colorBar.min);
+                    this._viewer.removeLabel(this._colorBar.mid);
+                    this._viewer.removeLabel(this._colorBar.max);
+                    this._viewer.removeLabel(this._colorBar.prop);
+                    this._viewer.removeLabel(this._colorBar.grad);
+                    this._colorBar = undefined;
+                }
+            }
+            if (action === 'add' || action === 'update') {
+                if (min === undefined) {
+                    min = this._options.color.min.value;
+                }
+                if (max === undefined) {
+                    max = this._options.color.max.value;
+                }
+                assert(min !== undefined && max !== undefined);
+                this._colorBar = this._addColorBar(min, max);
+            }
+        }
+    };
 }
