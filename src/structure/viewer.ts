@@ -957,7 +957,11 @@ export class MoleculeViewer {
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
             // update the color bar
-            this.colorBarUpdate('update', this._options.color.min.value, this._options.color.max.value);
+            this.colorBarUpdate(
+                'update',
+                this._options.color.min.value,
+                this._options.color.max.value
+            );
             restyleAndRender();
         });
 
@@ -1679,13 +1683,25 @@ export class MoleculeViewer {
             color4,
             color5,
             gradWidth,
-            gradHeight,
+            gradHeight
         );
         return {
-            min: this._viewer.addLabel(JSON.stringify(min), this._genColorBarValSpec(20, gradHeight + gradPosShift + 2)),
-            mid: this._viewer.addLabel(JSON.stringify(mid), this._genColorBarValSpec(20 + gradWidth/2, gradHeight + gradPosShift + 2)),
-            max: this._viewer.addLabel(JSON.stringify(max), this._genColorBarValSpec(20 + gradWidth, gradHeight + gradPosShift + 2)),
-            prop: this._viewer.addLabel(title, this._genColorBarValSpec(20 + gradWidth/2, gradHeight + gradPosShift + 16)),
+            min: this._viewer.addLabel(
+                JSON.stringify(min),
+                this._genColorBarValSpec(20, gradHeight + gradPosShift + 2)
+            ),
+            mid: this._viewer.addLabel(
+                JSON.stringify(mid),
+                this._genColorBarValSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 2)
+            ),
+            max: this._viewer.addLabel(
+                JSON.stringify(max),
+                this._genColorBarValSpec(20 + gradWidth, gradHeight + gradPosShift + 2)
+            ),
+            prop: this._viewer.addLabel(
+                title,
+                this._genColorBarValSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 16)
+            ),
             grad: this._viewer.addLabel('.', {
                 position: new $3Dmol.Vector3(20, gradPosShift + 4, 0),
                 backgroundImage: gradImgPath,

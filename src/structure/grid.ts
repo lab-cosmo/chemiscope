@@ -655,7 +655,7 @@ export class ViewersGrid {
                     if (data !== undefined) {
                         data.viewer.colorBarUpdate('update');
                     }
-                };
+                }
             };
             cell.appendChild(remove);
 
