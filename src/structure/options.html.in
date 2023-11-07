@@ -37,7 +37,7 @@
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="atom-color-property">color:</label>
                   <select id="atom-color-property" class="form-select">
-                     <option value="element">element</option>
+                     <option value="element">element (CPK)</option>
                   </select>
                </div>
 
@@ -168,7 +168,7 @@
                      <div class="input-group input-group-sm">
                         <label class="input-group-text" for="env-bg-color">color</label>
                         <select id="env-bg-color" class="form-select">
-                           <option value="prop">prop</option>
+                           <option value="prop">property</option>
                            <option value="CPK">CPK</option>
                            <option value="grey">grey</option>
                         </select>
