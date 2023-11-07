@@ -290,7 +290,10 @@ def _is_convertible_to_property(value):
     Check whether a value is convertible to a chemiscope property, i.e. if it is
     a string or something convertible to float.
     """
-    if isinstance(value, (bytes, str)):
+    if isinstance(value, (bytes, str)) or (
+        (isinstance(value, list) or isinstance(value, np.ndarray))
+        and isinstance(value[0], str)
+    ):
         # string types
         return True
     else:

@@ -1024,11 +1024,20 @@ export class PropertiesMap {
             traces,
             layout as Partial<Layout>,
             DEFAULT_CONFIG as unknown as Config
-        ).catch((e) =>
-            setTimeout(() => {
-                throw e;
+        )
+            .then(() => {
+                // In some cases (e.g. in Jupyter notebooks) plotly does not comply
+                // with the dimensions of its container unless it receives a resize
+                // event _after_ it has loaded. This triggers the event.
+                window.requestAnimationFrame(() => {
+                    window.dispatchEvent(new Event('resize'));
+                });
             })
-        );
+            .catch((e) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
         this._plot.classList.add('chsp-map');
         this._plotFix = fixPlot(this._plot);
 
