@@ -114,7 +114,7 @@ export class StructureOptions extends OptionsGroup {
             min: new HTMLOption('number', 0),
             max: new HTMLOption('number', 0),
             transform: new HTMLOption('string', 'linear'),
-            palette: new HTMLOption('string', 'BWR'),
+            palette: new HTMLOption('string', 'inferno'),
         };
 
         // validate atom properties for coloring
@@ -130,7 +130,21 @@ export class StructureOptions extends OptionsGroup {
             ['linear', 'log', 'sqrt', 'inverse'],
             'transform'
         );
-        this.color.palette.validate = optionValidator(['BWR', 'ROYGB', 'Sinebow'], 'palette');
+        this.color.palette.validate = optionValidator(
+            [
+                'inferno',
+                'magma',
+                'plasma',
+                'viridis',
+                'cividis',
+                'seismic',
+                'brg',
+                'twilight (periodic)',
+                'twilight dark (periodic)',
+                'hsv (periodic)',
+            ],
+            'palette'
+        );
 
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK', 'prop'],
@@ -291,7 +305,18 @@ export class StructureOptions extends OptionsGroup {
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
         selectPalette.options.length = 0;
-        for (const key of ['BWR', 'ROYGB', 'Sinebow']) {
+        for (const key of [
+            'inferno',
+            'magma',
+            'plasma',
+            'viridis',
+            'cividis',
+            'seismic',
+            'brg',
+            'twilight (periodic)',
+            'twilight dark (periodic)',
+            'hsv (periodic)',
+        ]) {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');

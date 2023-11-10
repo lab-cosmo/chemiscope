@@ -16,6 +16,8 @@ import { Arrow, CustomShape, Ellipsoid, ShapeData, Sphere } from './shapes';
 
 import { StructureOptions } from './options';
 
+import { COLOR_MAPS } from '../map/colorscales';
+
 const IS_SAFARI =
     navigator.vendor !== undefined &&
     navigator.vendor.indexOf('Apple') > -1 &&
@@ -1294,17 +1296,12 @@ export class MoleculeViewer {
             this._options.color.max.value,
         ];
 
-        let grad: $3Dmol.Gradient = new $3Dmol.Gradient.RWB(max, min);
-
-        if (this._options.color.palette.value === 'BWR') {
-            // min and max are swapped to ensure red is used for high values,
-            // blue for low values
-            grad = new $3Dmol.Gradient.RWB(max, min);
-        } else if (this._options.color.palette.value === 'ROYGB') {
-            grad = new $3Dmol.Gradient.ROYGB(min, max);
-        } else if (this._options.color.palette.value === 'Sinebow') {
-            grad = new $3Dmol.Gradient.Sinebow(min, max);
+        const palette = COLOR_MAPS[this._options.color.palette.value];
+        const colors: string[] = [];
+        for (let c = 0; c < palette.length; c++) {
+            colors.push(palette[c][1]);
         }
+        const grad: $3Dmol.Gradient = new $3Dmol.Gradient.CustomLinear(min, max, colors);
 
         return (atom: $3Dmol.AtomSpec) => {
             assert(atom.serial !== undefined);
@@ -1316,7 +1313,11 @@ export class MoleculeViewer {
                 // NaN values
                 return 0x222222;
             } else {
-                return grad.valueToHex(value);
+                if (Number.isFinite(min) && Number.isFinite(max)) {
+                    return grad.valueToHex(value);
+                } else {
+                    return 0x222222;
+                }
             }
         };
     }
@@ -1649,15 +1650,6 @@ export class MoleculeViewer {
         const palette = this._options.color.palette.value;
         const title = this._colorTitle();
 
-        let [color1, color2, color3, color4, color5] = ['', '', '', '', ''];
-        if (palette === 'BWR') {
-            [color1, color2, color3] = ['blue', 'white', 'red'];
-        } else if (palette === 'ROYGB') {
-            [color1, color2, color3, color4, color5] = ['red', 'orange', 'yellow', 'green', 'blue'];
-        } else if (palette === 'Sinebow') {
-            [color1, color2, color3] = ['red', 'green', 'blue'];
-        }
-
         // To take the width of the viewer.
         const screenWidth = this._viewer.container?.clientWidth;
         // To take the height of the viewer.
@@ -1676,15 +1668,7 @@ export class MoleculeViewer {
         if (gradHeight > 20) {
             gradHeight = 20;
         }
-        const gradImgPath = this._generateGradientImage(
-            color1,
-            color2,
-            color3,
-            color4,
-            color5,
-            gradWidth,
-            gradHeight
-        );
+        const gradImgPath = this._generateGradientImage(palette, gradWidth, gradHeight);
         return {
             min: this._viewer.addLabel(
                 JSON.stringify(min),
@@ -1733,17 +1717,14 @@ export class MoleculeViewer {
 
     /** Create a gradient.png file for the color bar */
     private _generateGradientImage(
-        color1: string,
-        color2: string,
-        color3: string,
-        color4: string,
-        color5: string,
+        palette: string,
         width: number,
         height: number
     ): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
+        const mapColor = COLOR_MAPS[palette];
 
         const ctx = canvas.getContext('2d');
 
@@ -1753,16 +1734,8 @@ export class MoleculeViewer {
 
         // Create a linear gradient from colorStart to colorEnd
         const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        if (color4 === '') {
-            gradient.addColorStop(1, color3);
-            gradient.addColorStop(0.5, color2);
-            gradient.addColorStop(0, color1);
-        } else {
-            gradient.addColorStop(1, color5);
-            gradient.addColorStop(0.75, color4);
-            gradient.addColorStop(0.5, color3);
-            gradient.addColorStop(0.25, color2);
-            gradient.addColorStop(0, color1);
+        for (let c = 0; c < mapColor.length; c++) {
+            gradient.addColorStop(Number(mapColor[c][0]), mapColor[c][1]);
         }
 
         ctx.fillStyle = gradient;
