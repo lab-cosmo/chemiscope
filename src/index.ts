@@ -379,7 +379,7 @@ class DefaultVisualizer {
             this.structure.applySettings(settings.structure as Settings[]);
         }
     }
-
+    
     /**
      * Add the given `callback` to be called whenever a setting changes. The
      * callback will be given the path to the settings as a list of keys; and
@@ -402,6 +402,16 @@ class DefaultVisualizer {
             callback(keys, value);
         });
     }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
+    }
+
+    /*public onSelectedChange(callback: (keys: string[], value: unknown) => void): void {
+        this.info.onSelectedChange( (keys, value) ==> {
+            callback(keys, value);
+        });
+    }*/
 
     /**
      * Get the dataset used to create the current visualization
@@ -525,6 +535,7 @@ class StructureVisualizer {
         };
 
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
@@ -594,6 +605,10 @@ class StructureVisualizer {
 
             callback(keys, value);
         });
+    }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
     }
 }
 
@@ -751,6 +766,10 @@ class MapVisualizer {
 
             callback(keys, value);
         });
+    }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
     }
 }
 

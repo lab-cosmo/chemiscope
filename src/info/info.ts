@@ -395,4 +395,8 @@ export class EnvironmentInfo {
         assert(indexes !== undefined);
         return indexes;
     }
+
+    public getSelected(): Indexes {
+        return this._indexes()
+    }
 }
