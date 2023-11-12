@@ -1291,13 +1291,13 @@ export class MoleculeViewer {
         const transform = this._options.color.transform.value;
 
         const currentProperty = this._colorValues(property, transform);
-        const [min, max]: [number, number] = [
-            this._options.color.min.value,
-            this._options.color.max.value,
-        ];
+        const min: number = this._options.color.min.value;
+        const max: number = this._options.color.max.value;
 
         const palette = COLOR_MAPS[this._options.color.palette.value];
         const colors: string[] = [];
+        // NB: 3Dmol does not consider midpoints. Palettes should be given as
+        // uniformly spaced colors, otherwise the mapping will be incorrect
         for (let c = 0; c < palette.length; c++) {
             colors.push(palette[c][1]);
         }
