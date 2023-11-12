@@ -12,6 +12,9 @@ import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
 
+// share colormaps with the map widget
+import { COLOR_MAPS } from '../map/colorscales';
+
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
 
@@ -130,22 +133,7 @@ export class StructureOptions extends OptionsGroup {
             ['linear', 'log', 'sqrt', 'inverse'],
             'transform'
         );
-        this.color.palette.validate = optionValidator(
-            [
-                'inferno',
-                'magma',
-                'plasma',
-                'viridis',
-                'cividis',
-                'seismic',
-                'brg',
-                'bwr',
-                'twilight (periodic)',
-                'twilight dark (periodic)',
-                'hsv (periodic)',
-            ],
-            'palette'
-        );
+        this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK', 'prop'],
@@ -308,19 +296,7 @@ export class StructureOptions extends OptionsGroup {
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
         selectPalette.options.length = 0;
-        for (const key of [
-            'inferno',
-            'magma',
-            'plasma',
-            'viridis',
-            'cividis',
-            'seismic',
-            'brg',
-            'bwr',
-            'twilight (periodic)',
-            'twilight dark (periodic)',
-            'hsv (periodic)',
-        ]) {
+        for (const key in COLOR_MAPS) {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');
