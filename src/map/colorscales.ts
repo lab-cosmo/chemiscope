@@ -616,6 +616,12 @@ const SEISMIC: RGBColorMap = [
     [1.0, [128, 0, 0]],
 ];
 
+const BWR: RGBColorMap = [
+    [0.0, [0, 0, 255]],
+    [0.5, [255, 255, 255]],
+    [1.0, [255, 0, 0]],
+];
+
 const BRG: RGBColorMap = [
     [0.0, [0, 0, 255]],
     [0.0159, [8, 0, 248]],
@@ -697,6 +703,7 @@ export const COLOR_MAPS: ColorMaps = {
     cividis: rgb_to_plotly(CIVIDIS),
     seismic: rgb_to_plotly(SEISMIC),
     brg: rgb_to_plotly(BRG),
+    bwr: rgb_to_plotly(BWR),
     'twilight (periodic)': rgb_to_plotly(TWILIGHT),
     'twilight dark (periodic)': rgb_to_plotly(TWILIGHT_SHIFTED),
     'hsv (periodic)': rgb_to_plotly(HSV),

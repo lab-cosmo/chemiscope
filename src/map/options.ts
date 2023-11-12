@@ -401,7 +401,7 @@ export class MapOptions extends OptionsGroup {
                 // scale width of the larger modal-lg class
                 modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
                 // minimum width so that text in rows remains on a single line
-                modalDialog.style.minWidth = `400px`;
+                modalDialog.style.minWidth = `500px`;
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';

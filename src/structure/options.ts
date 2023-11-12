@@ -139,6 +139,7 @@ export class StructureOptions extends OptionsGroup {
                 'cividis',
                 'seismic',
                 'brg',
+                'bwr',
                 'twilight (periodic)',
                 'twilight dark (periodic)',
                 'hsv (periodic)',
@@ -247,6 +248,8 @@ export class StructureOptions extends OptionsGroup {
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;
+                modalDialog.style.minWidth = `400px`;
+
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
@@ -313,6 +316,7 @@ export class StructureOptions extends OptionsGroup {
             'cividis',
             'seismic',
             'brg',
+            'bwr',
             'twilight (periodic)',
             'twilight dark (periodic)',
             'hsv (periodic)',
