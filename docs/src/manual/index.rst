@@ -4,7 +4,7 @@ User manual
 This manual presents an overview of how to interact with the chemiscope viewer
 in its "standard" implementation - including the web tool and the jupyter widget. 
 It does not discuss in detail how to build a low-dimensional representation of 
-a chemical dataset - chemiscope is just a viewer, and there are many tools available
+a chemical dataset - chemiscope is solely a viewer, and there are many tools available
 to perform this kind of analyses. 
 
 This section starts introducing the concept of structural and physical properties, 

@@ -11,7 +11,7 @@ properties.
 Chemiscope can work with two kinds of entities: full structures, or
 atom-centred environments. A structure consists in a set of atoms, possibly
 representing the periodic repeat unit of an infinite structure. An
-environment consists in a set of atoms that surround a central atom,
+environment consists in a set of atoms that surround a central atom.
 In both cases, these entities are fully defined by the position and nature
 of the atoms present in the structure, or in the neighborhood of the
 environment center.
@@ -26,7 +26,7 @@ as possible, yet concise. Examples of such representations are for instance
 symmetry functions <Behler-Parrinello>`_. These representations are usually
 high-dimensional vectors, hard to visualize and interpret. For this reason, one
 usually applies a dimensionality reduction algorithm, such as `PCA`_, `sketch-map`_,
-`PCovR`_, *etc.*   The interpretation of the resulting  will differ depending on
+`PCovR`_, *etc.*  The interpretation of the resulting descriptor will differ depending on
 both the descriptor used to represent the structures or environments and the
 dimensionality reduction algorithm applied.
 

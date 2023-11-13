@@ -4,7 +4,7 @@ Creating chemiscope input files
 ===============================
 
 When using the default chemiscope interface, all the structures and properties
-in a dataset are loaded from a single JSON file. This sections describe how to
+in a dataset are loaded from a single JSON file. These sections describe how to
 generate such JSON file, either using a pre-existing python script that does
 most of the work for you, or by writing the JSON file directly. Since the
 resulting JSON file can be quite large and thus harder to share with
