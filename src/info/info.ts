@@ -51,6 +51,10 @@ interface Info {
 export class EnvironmentInfo {
     /** Callback used when the user changes one of the sliders value */
     public onchange: (indexes: Indexes) => void;
+
+    /** Callback used when the selection is changed, no matter the source */
+    public onselection?: () => void;;
+
     /** delay in ms between "frames" during playback over structures/atoms */
     public playbackDelay: number;
 
@@ -138,6 +142,7 @@ export class EnvironmentInfo {
 
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes): void {
+        console.log("info/show");
         const previousStructure = this._indexes().structure;
 
         this._structure.number.value = `${indexes.structure + 1}`;
@@ -162,6 +167,11 @@ export class EnvironmentInfo {
                 this._atom.slider.update(indexes.atom);
                 this._atom.table.show(indexes);
             }
+        }
+
+        if (this.onselection !== undefined) {
+            console.log("info show trigger onselection");
+            this.onselection();
         }
     }
 
@@ -220,6 +230,7 @@ export class EnvironmentInfo {
         };
 
         slider.onchange = () => {
+            console.log("slider/onchange");
             const structure = this._structure.slider.value();
 
             if (this._atom !== undefined) {
@@ -256,6 +267,7 @@ export class EnvironmentInfo {
         number.max = this._indexer.structuresCount().toString();
 
         number.onchange = () => {
+            console.log("number/onchange");
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value

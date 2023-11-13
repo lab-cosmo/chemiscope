@@ -86,6 +86,8 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
                 const selection = this.model.get('selection') as Indexes;
                 console.log("selection update", selection);
+            
+                (this.visualizer as DefaultVisualizer).select(selection);
                 // for the moment does nothing
             },
             this
@@ -95,7 +97,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected _updatePythonSelection(): void {
         if (this.visualizer !== undefined) {
             const selection = this.visualizer.getSelected();
-
+            console.log("getting selection ", selection);
             // save current settings of settings_sync
             const sync_state = this.model.get('_settings_sync') as unknown;
 
@@ -175,13 +177,14 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void DefaultVisualizer.load(config, data)
-            .then((visualizer) => {
+            .then((visualizer) => {                
                 this.visualizer = visualizer;
                 // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => this._updatePythonSettings());
-                this.visualizer.onSelection = (() => this._updatePythonSelection());
+                this.visualizer.onSettingChange(() => this._updatePythonSettings());                
+                this.visualizer.info.onselection = (() => this._updatePythonSelection());
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._updatePythonSelection();
             })
             .catch((e: Error) => {
                 // eslint-disable-next-line no-console

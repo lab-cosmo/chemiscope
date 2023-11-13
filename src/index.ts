@@ -171,7 +171,7 @@ class DefaultVisualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
     public meta: MetadataPanel;
-    public structure: ViewersGrid;
+    public structure: ViewersGrid;    
 
     private _indexer: EnvironmentIndexer;
     // Stores raw input input so we can give it back later
@@ -214,7 +214,7 @@ class DefaultVisualizer {
 
         this.structure.onselect = (indexes) => {
             this.map.select(indexes);
-            this.info.show(indexes);
+            this.info.show(indexes);            
         };
 
         this.structure.onremove = (guid) => {
@@ -240,8 +240,9 @@ class DefaultVisualizer {
         );
 
         this.map.onselect = (indexes) => {
+            console.log("map onselect");
             this.info.show(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes);            
         };
 
         this.map.activeChanged = (guid, indexes) => {
@@ -256,9 +257,14 @@ class DefaultVisualizer {
             this._indexer,
             dataset.parameters
         );
+
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
             this.structure.show(indexes);
+            if (this.info.onselection !== undefined) {
+                console.log("info onchange", indexes);
+                this.info.onselection();
+            }
         };
 
         this.structure.delayChanged = (delay) => {
@@ -407,6 +413,11 @@ class DefaultVisualizer {
         return this.info.getSelected();
     }
 
+    public select(indexes: Indexes) {
+        console.log("selecting"); 
+        this.map.select(indexes);        
+        this.info.show(indexes);
+    }
     /*public onSelectedChange(callback: (keys: string[], value: unknown) => void): void {
         this.info.onSelectedChange( (keys, value) ==> {
             callback(keys, value);
