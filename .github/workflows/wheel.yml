@@ -2,7 +2,7 @@ name: Build Python wheel
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: '*'
   pull_request:
     # Check all PR
