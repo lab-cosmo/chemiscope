@@ -4,7 +4,7 @@ Creating chemiscope input files
 ===============================
 
 When using the default chemiscope interface, all the structures and properties
-in a dataset are loaded from a single JSON file. This sections describe how to
+in a dataset are loaded from a single JSON file. These sections describe how to
 generate such JSON file, either using a pre-existing python script that does
 most of the work for you, or by writing the JSON file directly. Since the
 resulting JSON file can be quite large and thus harder to share with
@@ -27,18 +27,17 @@ module. Install the package with ``pip install chemiscope``, and use
 own script to generate the JSON file.
 
 If all the properties you want to include into chemiscope are already stored in
-a file `ase`_ can read, the ``chemiscope`` python package also install a
+a file `ase`_ can read, the ``chemiscope`` python package also installs a
 `chemiscope-input <chemiscope-input-cli_>`_ command line script.
 
 Note that chemiscope does not compute structural representations or
-dimensionality reduction, and you need to do this yourself or use another
-package such as ASAP.
-
-``ASAP``
-^^^^^^^^
-
+dimensionality reduction, and the command line interface works iff
+there are mappable quantities in the file. You can generate such representations
+or reductions with packages such as `ASAP`_ or
+`scikit-matter`_.
 The `ASAP`_ structural analysis package is another tool that can directly
 generate an output in chemiscope format.
+
 
 ``chemiscope`` functions reference
 ----------------------------------
@@ -65,6 +64,7 @@ generate an output in chemiscope format.
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
+.. _scikit-matter: https://scikit-matter.readthedocs.io/en/latest/
 
 
 .. _chemiscope-input-cli:

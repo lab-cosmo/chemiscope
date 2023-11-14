@@ -129,7 +129,7 @@ def show_input(path, mode="default"):
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
 
-        .. code-block:: python
+    .. code-block:: python
 
         import chemiscope
 

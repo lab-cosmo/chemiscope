@@ -1,7 +1,7 @@
 name: Build website
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   pull_request:
     # Check all PR
@@ -42,8 +42,8 @@ jobs:
           cp -r docs/build/html/ gh-pages/docs/
           rm -f gh-pages/examples/.gitignore
       - name: deploy website to gh-pages
-        # only deploy website from master
-        if: github.ref == 'refs/heads/master'
+        # only deploy website from main 
+        if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
