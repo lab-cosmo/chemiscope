@@ -2,7 +2,7 @@ Chemiscope as a library
 =======================
 
 It is possible to use chemiscope as a software library when writing your own
-web-based interface. This page document how to get the library and give a few
+web-based interface. This page documents how to get the library and provides a few
 usage examples.
 
 .. note::
@@ -95,7 +95,7 @@ And import the library inside your own code using
 
     const Chemiscope = require("chemiscope");
 
-If your are using TypeScript, definition files are also provided with the npm
+If you are using TypeScript, definition files are also provided with the npm
 package, and should give you auto-completion, inline documentation and interface
 checking.
 

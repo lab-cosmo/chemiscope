@@ -43,7 +43,25 @@ issue](https://github.com/lab-cosmo/chemiscope/issues/new) with your question;
 or send an email to the developers (you can find these emails on the lab
 webpage: https://www.epfl.ch/labs/cosmo/people/)
 
-## Getting and running the code
+## Getting the python package and using chemiscope in Jupyter notebooks
+
+Using chemiscope in a Jupyter notebook should be as easy as
+````bash
+pip install chemiscope
+```
+This also allows to generate chemiscope JSON files that can be viewed on
+http://chemiscope.org
+
+If you need to build and install a development version, you should 
+have all the npm stack installed, and then just run
+
+```bash
+git clone https://github.com/lab-cosmo/chemiscope
+cd chemiscope
+pip install .
+```
+
+## Getting and running the web app locally
 
 ```bash
 git clone https://github.com/lab-cosmo/chemiscope
