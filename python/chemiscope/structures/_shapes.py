@@ -132,7 +132,7 @@ def ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False):
         raise RuntimeError(
             "scipy is required to construct ellipsoids from tensors"
         ) from e
-    quaternion = Rotation.from_matrix(rotation).as_quat()
+    quaternion = Rotation.from_matrix(rotation.T).as_quat()
 
     return dict(
         semiaxes=[ax, ay, az],
