@@ -3,11 +3,9 @@
  * @module map
  */
 
-import { ColorScale } from './plotly/plotly-scatter';
-
 type RGBColorMap = [number, [number, number, number]][];
 
-function rgb_to_plotly(colormap: RGBColorMap): ColorScale {
+function rgb_to_plotly(colormap: RGBColorMap): [number, string][] {
     return colormap.map((c) => {
         return [c[0], `rgb(${c[1][0]}, ${c[1][1]}, ${c[1][2]})`] as [number, string];
     });
@@ -690,7 +688,7 @@ const BRG: RGBColorMap = [
 ];
 
 interface ColorMaps {
-    [key: string]: ColorScale;
+    [key: string]: [number, string][];
 }
 
 /* eslint-disable sort-keys */

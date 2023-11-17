@@ -117,7 +117,7 @@ export class StructureOptions extends OptionsGroup {
             min: new HTMLOption('number', 0),
             max: new HTMLOption('number', 0),
             transform: new HTMLOption('string', 'linear'),
-            palette: new HTMLOption('string', 'inferno'),
+            palette: new HTMLOption('string', 'bwr'),
         };
 
         // validate atom properties for coloring
@@ -136,7 +136,7 @@ export class StructureOptions extends OptionsGroup {
         this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.environments.bgColor.validate = optionValidator(
-            ['grey', 'CPK', 'prop'],
+            ['grey', 'CPK', 'property'],
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
