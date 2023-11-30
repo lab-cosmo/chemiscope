@@ -12,6 +12,9 @@ import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
 
+// share colormaps with the map widget
+import { COLOR_MAPS } from '../map/colorscales';
+
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
 
@@ -114,7 +117,7 @@ export class StructureOptions extends OptionsGroup {
             min: new HTMLOption('number', 0),
             max: new HTMLOption('number', 0),
             transform: new HTMLOption('string', 'linear'),
-            palette: new HTMLOption('string', 'BWR'),
+            palette: new HTMLOption('string', 'bwr'),
         };
 
         // validate atom properties for coloring
@@ -130,10 +133,10 @@ export class StructureOptions extends OptionsGroup {
             ['linear', 'log', 'sqrt', 'inverse'],
             'transform'
         );
-        this.color.palette.validate = optionValidator(['BWR', 'ROYGB', 'Sinebow'], 'palette');
+        this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.environments.bgColor.validate = optionValidator(
-            ['grey', 'CPK', 'prop'],
+            ['grey', 'CPK', 'property'],
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
@@ -233,6 +236,8 @@ export class StructureOptions extends OptionsGroup {
 
                 // set width first, since setting position can influence it
                 modalDialog.style.width = `${modalDialog.offsetWidth}px`;
+                modalDialog.style.minWidth = `400px`;
+
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
                 modalDialog.style.position = 'fixed';
@@ -291,7 +296,7 @@ export class StructureOptions extends OptionsGroup {
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('atom-color-palette');
         selectPalette.options.length = 0;
-        for (const key of ['BWR', 'ROYGB', 'Sinebow']) {
+        for (const key in COLOR_MAPS) {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');

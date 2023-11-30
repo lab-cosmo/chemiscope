@@ -1141,10 +1141,10 @@ export class PropertiesMap {
                 title = `(${title})<sup>-1</sup>`;
                 break;
             case 'log':
-                title = `log(${title})`;
+                title = `log<sub>10</sub>(${title})`;
                 break;
             case 'sqrt':
-                title = `sqrt(${title})`;
+                title = `&#x221A;(${title})`;
                 break;
             case 'linear':
                 break;

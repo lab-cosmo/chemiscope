@@ -1,5 +1,5 @@
 <div id="structure-settings" class="modal chemiscope-modal fade" tabindex="-1">
-   <div class="modal-dialog">
+   <div class="modal-dialog modal-lg">
       <div class="modal-content">
          <div class="modal-header chsp-modal-header">
             <h4 class="modal-title">Visualizer settings</h4>
@@ -33,12 +33,11 @@
                   <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
                </div>
             </div>
-            <div class="chsp-atom-color-property">
-
+            <div class="chsp-atom-color-property chsp-hide-if-no-atom-properties">               
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="atom-color-property">color:</label>
                   <select id="atom-color-property" class="form-select">
-                     <option value="element">element</option>
+                     <option value="element">element (CPK)</option>
                   </select>
                </div>
 
@@ -169,7 +168,7 @@
                      <div class="input-group input-group-sm">
                         <label class="input-group-text" for="env-bg-color">color</label>
                         <select id="env-bg-color" class="form-select">
-                           <option value="prop">prop</option>
+                           <option value="property">property</option>
                            <option value="CPK">CPK</option>
                            <option value="grey">grey</option>
                         </select>
