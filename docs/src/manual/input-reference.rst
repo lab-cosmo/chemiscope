@@ -263,7 +263,9 @@ contains the following fields and values:
                         // which style for atoms not in the environment
                         "bgStyle": "licorice" | "ball-stick" | "hide",
                         // which colors for atoms not in the environment
-                        "bgColor": "grey" | "CPK",
+                        // it is possible to color those atoms by the property
+                        // currently selected
+                        "bgColor": "grey" | "CPK" | "property",
                     };
                 },
                 // ...
