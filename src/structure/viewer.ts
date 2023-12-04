@@ -866,7 +866,7 @@ export class MoleculeViewer {
                 this._options.color.max.value = max;
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
-                // update the color bar
+                // Add the color bar
                 this.colorBarUpdate('update');
             } else {
                 this._options.color.transform.disable();
@@ -899,7 +899,9 @@ export class MoleculeViewer {
             }
             this._setScaleStep([min, max]);
             // update the color bar
-            this.colorBarUpdate('update');
+            if (this._options.color.property.value !== 'element') {
+                this.colorBarUpdate('update');
+            }
         };
 
         // ======= color transform
@@ -1046,6 +1048,11 @@ export class MoleculeViewer {
     /**
      * Update the styles of all atoms as required
      */
+    private _stupidColor(color: string): (() => string) {
+        return () => {
+            return color;
+        };
+    }
     private _updateStyle(): void {
         if (this._current === undefined) {
             return;
@@ -1057,9 +1064,31 @@ export class MoleculeViewer {
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
+            if (this._options.color.property.value !== 'element') {
+                alert('no environments to highlight');
+            }
+            const selection = { or: [
+                { index: 3 },
+                { within: { distance: this._options.environments.cutoff.value, sel: { index: 3 } } },
+            ],
+            };
+            this._highlighted = {
+                model: this._viewer.createModelFrom(selection),
+                center: 3,
+            };
+            this._viewer.removeModel(this._highlighted.model);
+            this._highlighted = undefined;
             this._current.model.setStyle({}, this._mainStyle());
             this._viewer.render();
             return;
+        } else {
+            if (this._options.color.property.value !== 'element') {
+                alert('highlighting environments');
+            }
+        }
+
+        if (this._options.color.property.value !== 'element') {
+            alert('following code part 1');
         }
 
         assert(this._highlighted !== undefined);
@@ -1071,6 +1100,10 @@ export class MoleculeViewer {
             this._centralStyle(0.4),
             /* add: */ true
         );
+
+        if (this._options.color.property.value !== 'element') {
+            alert('following code part 2');
+        }
 
         // and the environment around the central atom with main style
         this._highlighted.model.setStyle({}, this._mainStyle());
@@ -1744,20 +1777,18 @@ export class MoleculeViewer {
      * in order to update the size of the color bar.
      */
     public colorBarUpdate = (action: 'update' | 'add' | 'delete') => {
-        if (this._options.color.property.value !== 'element') {
-            if (action === 'delete' || action === 'update') {
-                if (this._colorBar !== undefined) {
-                    this._viewer.removeLabel(this._colorBar.min);
-                    this._viewer.removeLabel(this._colorBar.mid);
-                    this._viewer.removeLabel(this._colorBar.max);
-                    this._viewer.removeLabel(this._colorBar.property);
-                    this._viewer.removeLabel(this._colorBar.gradient);
-                    this._colorBar = undefined;
-                }
+        if (action === 'delete' || action === 'update') {
+            if (this._colorBar !== undefined) {
+                this._viewer.removeLabel(this._colorBar.min);
+                this._viewer.removeLabel(this._colorBar.mid);
+                this._viewer.removeLabel(this._colorBar.max);
+                this._viewer.removeLabel(this._colorBar.property);
+                this._viewer.removeLabel(this._colorBar.gradient);
+                this._colorBar = undefined;
             }
-            if (action === 'add' || action === 'update') {
-                this._colorBar = this._addColorBar();
-            }
+        }
+        if (action === 'add' || action === 'update') {
+            this._colorBar = this._addColorBar();
         }
     };
 }
