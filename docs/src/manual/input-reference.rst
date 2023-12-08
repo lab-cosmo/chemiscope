@@ -236,6 +236,8 @@ contains the following fields and values:
                 {
                     // show bonds between atoms
                     "bonds": true,
+                    // show the atoms
+                    "atoms": true,
                     //use space filling representation
                     "spaceFilling": false,
                     // show atoms labels
@@ -266,6 +268,35 @@ contains the following fields and values:
                         // it is possible to color those atoms by the property
                         // currently selected
                         "bgColor": "grey" | "CPK" | "property",
+                    };
+                    // options related to the coloring of the atoms
+                    "color": {
+                        // name of the property to use for coloring, this must be
+                        // one of the key from the root `properties` table.
+                        // the default value is "element"
+                        "property": "element" | "<name>",
+                        // if the atoms should not be colored by element,
+                        // this is the transformation to apply to the property
+                        // the default value is "linear"
+                        // if the value of the selected property value of an atom
+                        // is missing, the atom will be colored in light grey
+                        // if the value is not a real number or infinite,
+                        // the atom will be colored in dark grey
+                        "transform": "linear" | "log10" | "sqrt" | "inverse",
+                        // minimum property value to use for the color scale
+                        // the color corresponding to this value will be used
+                        // for atoms with a smaller value
+                        // the min value should not be bigger than the max value
+                        "min": "<number>",
+                        // maximum property value to use for the color scale
+                        // the color corresponding to this value will be used
+                        // for atoms with a bigger value
+                        // the max value should not be bigger than the min value
+                        "max": "<number>",
+                        // color palette used to color the atoms, default to 'bwr'
+                        // coloring atoms from blue to white to red according to
+                        // the property value.
+                        "palette": "bwr",
                     };
                 },
                 // ...
