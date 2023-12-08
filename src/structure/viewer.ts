@@ -12,7 +12,7 @@ import { arrayMaxMin, getElement, sendWarning, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
-import { Arrow, CustomShape, Ellipsoid, ShapeData, Sphere } from './shapes';
+import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere } from './shapes';
 
 import { StructureOptions } from './options';
 
@@ -1166,6 +1166,11 @@ export class MoleculeViewer {
                                     );
                                 } else if (current_shape.kind === 'ellipsoid') {
                                     const shape = new Ellipsoid(shape_data);
+                                    this._viewer.addCustom(
+                                        shape.outputTo3Dmol(shape_data.color || 0xffffff)
+                                    );
+                                } else if (current_shape.kind === 'cylinder') {
+                                    const shape = new Cylinder(shape_data);
                                     this._viewer.addCustom(
                                         shape.outputTo3Dmol(shape_data.color || 0xffffff)
                                     );
