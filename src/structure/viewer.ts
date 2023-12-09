@@ -1065,7 +1065,7 @@ export class MoleculeViewer {
         // main style
         if (!this._environmentsEnabled()) {
             if (this._options.color.property.value !== 'element') {
-                alert('no environments to highlight');
+                console.log('no environments to highlight');
             }
             const selection = { or: [
                 { index: 3 },
@@ -1083,12 +1083,12 @@ export class MoleculeViewer {
             return;
         } else {
             if (this._options.color.property.value !== 'element') {
-                alert('highlighting environments');
+                console.log('highlighting environments');
             }
         }
 
         if (this._options.color.property.value !== 'element') {
-            alert('following code part 1');
+            console.log('following code part 1');
         }
 
         assert(this._highlighted !== undefined);
@@ -1102,7 +1102,7 @@ export class MoleculeViewer {
         );
 
         if (this._options.color.property.value !== 'element') {
-            alert('following code part 2');
+            console.log('following code part 2');
         }
 
         // and the environment around the central atom with main style
