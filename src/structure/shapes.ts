@@ -17,7 +17,6 @@ import assert from 'assert';
 
 import { default as $3Dmol } from '3dmol';
 import { Quaternion } from '3dmol';
-import { MoleculeViewer } from './viewer';
 type ColorSpec = number | string | { r: number; g: number; b: number; a?: number }; // mysterious compile errors if I import from 3dmol
 
 // Just an interface to enforce XYZ-type coordinates
@@ -471,7 +470,7 @@ function triangulateArrow(
         );
     }
 
-    let indices: number[] = [];
+    const indices: number[] = [];
     const vertices: XYZ[] = [];
 
     vertices.push({ x: 0, y: 0, z: 0 });
@@ -613,7 +612,7 @@ function triangulateCylinder(
     u = multXYZ(u, radius / Math.sqrt(dotXYZ(u, u)));
     const v: XYZ = crossXYZ(u, n_vec);
 
-    let indices: number[] = [];
+    const indices: number[] = [];
     const vertices: XYZ[] = [];
 
     vertices.push({ x: 0, y: 0, z: 0 });
@@ -847,6 +846,7 @@ export function add_shapes(
     if (shape.vertexArr && Array.isArray(shape_list.color)) {
         const newcolor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
         const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(newcolor);
+        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         shape_list.color.push(...newcolors);
     }
 }
