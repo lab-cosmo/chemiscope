@@ -1101,10 +1101,9 @@ export class MoleculeViewer {
         assert(!(structure.shapes === undefined));
 
         const active_shapes = this._options.shape.value.split(',');
-        const startTime = Date.now();
 
         // consolidates all shapes in a single CustomShapeSpec
-        var all_shapes: $3Dmol.CustomShapeSpec = {
+        const all_shapes: $3Dmol.CustomShapeSpec = {
             vertexArr: [],
             normalArr: [],
             faceArr: [],
@@ -1253,7 +1252,7 @@ export class MoleculeViewer {
                 }
             }
         }
-        const doneTime = Date.now();
+
         if (Array.isArray(all_shapes.faceArr) && all_shapes.faceArr.length > 0) {
             // adds all shapes that have been accumulated
             this._viewer.addCustom(all_shapes);
