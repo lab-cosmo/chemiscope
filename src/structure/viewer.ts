@@ -1112,7 +1112,7 @@ export class MoleculeViewer {
 
         // color function for atoms
         const colorfunc = this._colorFunction();
-        let atomspec: $3Dmol.AtomSpec = {};
+        const atomspec: $3Dmol.AtomSpec = {};
 
         for (const shape of active_shapes) {
             if (shape === '') {
