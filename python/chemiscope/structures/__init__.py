@@ -14,6 +14,7 @@ from ._shapes import arrow_from_vector, center_shape, ellipsoid_from_tensor  # n
 from ._ase import (  # noqa  isort: skip
     ase_vectors_to_arrows,
     ase_tensors_to_ellipsoids,
+    ase_make_paths,
 )
 
 

@@ -499,3 +499,84 @@ def _get_shape_params_atom(prefix, shape_kind, dictionary, atom_i):
         )
 
     return shape
+
+
+def ase_make_paths(bead_frames):
+    """
+    Takes a list of lists of ase.Atoms objects, corresponding to
+    the trajectories of the beads of a path integral calculation.
+    Returns a consolidated trajectory in which all beads are in the
+    same frame, together with propertie and shapes that help visualize
+    the path integral. The various pieces are returned as a dictionary
+    and can be passed directly to `create_input` and related functions.
+
+    :param bead_frames: list of lists of ASE Atoms objects. the outer
+       list corresponds to the bead index
+    """
+
+    nbeads, nframes, natoms = (
+        len(bead_frames),
+        len(bead_frames[0]),
+        len(bead_frames[0][0]),
+    )
+
+    # creates frames with all beads
+    full_frames = []
+    for i in range(nframes):
+        struc = bead_frames[0][i].copy()
+        for k in range(1, nbeads):
+            struc += bead_frames[k][i]
+        full_frames.append(struc)
+
+    atom_id = [
+        j
+        for i in range(nframes)  # frame
+        for k in range(nbeads)  # bead
+        for j in range(natoms)  # atom
+    ]
+    bead_id = [
+        k
+        for i in range(nframes)  # frame
+        for k in range(nbeads)  # bead
+        for j in range(natoms)  # atom
+    ]
+
+    paths_shapes = dict(
+        kind="cylinder",
+        parameters={
+            "global": {"radius": 0.2},
+            "atom": [
+                {
+                    "vector": full_frames[i]
+                    .get_distance(
+                        k * natoms + j,
+                        ((k + 1) % nbeads) * natoms + j,
+                        mic=True,
+                        vector=True,
+                    )
+                    .tolist(),
+                }
+                for i in range(nframes)  # frame
+                for k in range(nbeads)  # bead
+                for j in range(natoms)  # atom
+            ],
+        },
+    )
+    return {
+        "frames": full_frames,
+        "shapes": {"paths": paths_shapes},
+        "properties": {"atom_id": atom_id, "bead_id": bead_id},
+        "settings": {
+            "structure": [
+                {
+                    "atoms": True,
+                    "bonds": False,
+                    "shape": "paths",
+                    "unitCell": bool(full_frames[0].pbc[0]),
+                    "environments": {"activated": False},
+                    "color": {"property": "atom_id", "palette": "hsv (periodic)"},
+                }
+            ]
+        },
+        "environments": _ase_all_atomic_environments(full_frames, 4.0),
+    }
