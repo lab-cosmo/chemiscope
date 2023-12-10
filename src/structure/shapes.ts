@@ -17,6 +17,7 @@ import assert from 'assert';
 
 import { default as $3Dmol } from '3dmol';
 import { Quaternion } from '3dmol';
+import { MoleculeViewer } from './viewer';
 type ColorSpec = number | string | { r: number; g: number; b: number; a?: number }; // mysterious compile errors if I import from 3dmol
 
 // Just an interface to enforce XYZ-type coordinates
@@ -164,13 +165,14 @@ function determineNormals(vertices: XYZ[], simplices: [number, number, number][]
     }
 
     for (const s of simplices) {
-        const faceNormal: XYZ = crossXYZ(
-            subXYZ(vertices[s[1]], vertices[s[0]]),
-            subXYZ(vertices[s[2]], vertices[s[0]])
-        );
-
         for (const ss of s) {
-            vertexNormals[ss] = addXYZ(vertexNormals[ss], faceNormal);
+            vertexNormals[ss] = addXYZ(
+                vertexNormals[ss],
+                crossXYZ(
+                    subXYZ(vertices[s[1]], vertices[s[0]]),
+                    subXYZ(vertices[s[2]], vertices[s[0]])
+                )
+            );
             nFaces[ss] += 1;
         }
     }
@@ -485,8 +487,7 @@ function triangulateArrow(
         vertices.push(tip);
         const i_seg = 1 + i * 7;
         const i_next = 1 + ((i + 1) % resolution) * 7;
-        indices = [
-            ...indices,
+        indices.push(
             ...[
                 0,
                 i_seg,
@@ -506,8 +507,8 @@ function triangulateArrow(
                 i_seg + 5,
                 i_next + 5,
                 i_seg + 6, // tip
-            ],
-        ];
+            ]
+        );
     }
     return {
         vertices: vertices,
@@ -608,19 +609,9 @@ function triangulateCylinder(
 
     // generate orthogonal vectors in the plane defined by nvec
     let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
-    u = multXYZ(u, 1.0 / Math.sqrt(dotXYZ(u, u)));
+    // builds with the right radius immediately
+    u = multXYZ(u, radius / Math.sqrt(dotXYZ(u, u)));
     const v: XYZ = crossXYZ(u, n_vec);
-
-    // generate n_points in the plane defined by nvec, centered at vec
-    const circle_points: XYZ[] = [];
-    for (let i = 0; i < resolution; i++) {
-        circle_points.push(
-            addXYZ(
-                multXYZ(u, Math.cos((i * 2 * Math.PI) / resolution)),
-                multXYZ(v, Math.sin((i * 2 * Math.PI) / resolution))
-            )
-        );
-    }
 
     let indices: number[] = [];
     const vertices: XYZ[] = [];
@@ -629,15 +620,20 @@ function triangulateCylinder(
     vertices.push(tip);
     // the cylinder is built as a surface of revolution, by stacking |_| motifs
     for (let i = 0; i < resolution; i++) {
+        // generate n_points in the plane defined by nvec, centered at vec
+        const base_point = addXYZ(
+            multXYZ(u, Math.cos((i * 2 * Math.PI) / resolution)),
+            multXYZ(v, Math.sin((i * 2 * Math.PI) / resolution))
+        );
         // nb replicated points are needed to get sharp edges
-        vertices.push(multXYZ(circle_points[i], radius));
-        vertices.push(multXYZ(circle_points[i], radius));
-        vertices.push(addXYZ(multXYZ(circle_points[i], radius), tip));
-        vertices.push(addXYZ(multXYZ(circle_points[i], radius), tip));
+        vertices.push(base_point);
+        vertices.push(base_point);
+        const tip_point = addXYZ(base_point, tip);
+        vertices.push(tip_point);
+        vertices.push(tip_point);
         const i_seg = 2 + i * 4;
         const i_next = 2 + ((i + 1) % resolution) * 4;
-        indices = [
-            ...indices,
+        indices.push(
             ...[
                 0,
                 i_seg,
@@ -651,8 +647,8 @@ function triangulateCylinder(
                 i_seg + 3,
                 1,
                 i_next + 3, // cylinder top
-            ],
-        ];
+            ]
+        );
     }
     return {
         vertices: vertices,
@@ -708,13 +704,15 @@ export class Cylinder extends Shape {
             vertices.push(newVertex);
         }
 
-        for (let i = 0; i < indices.length / 3; i++) {
-            simplices.push([indices[3 * i], indices[3 * i + 1], indices[3 * i + 2]]);
+        for (let i = 0; i < indices.length; i += 3) {
+            simplices.push(indices.slice(i, i + 3) as [number, number, number]);
         }
+
+        const normals = determineNormals(vertices, simplices);
 
         return {
             vertexArr: vertices,
-            normalArr: determineNormals(vertices, simplices),
+            normalArr: normals,
             faceArr: indices,
             color: color,
         };
@@ -808,5 +806,47 @@ export class CustomShape extends Shape {
             faceArr: indices,
             color: color,
         };
+    }
+}
+
+export function add_shapes(
+    shape_list: $3Dmol.CustomShapeSpec,
+    shape: $3Dmol.CustomShapeSpec,
+    viewer: $3Dmol.GLViewer,
+    max_vertices: number = 0
+): void {
+    // Dumps shapes if the number of vertices exceeds a set threshold
+    if (shape_list.vertexArr && shape.vertexArr && max_vertices > 0) {
+        if (shape_list.vertexArr.length + shape.vertexArr.length >= max_vertices) {
+            // adds to the viewer and resets the list
+            viewer.addCustom(shape_list);
+            shape_list.vertexArr.length = 0;
+            if (Array.isArray(shape_list.normalArr)) {
+                shape_list.normalArr.length = 0;
+            }
+            if (Array.isArray(shape_list.faceArr)) {
+                shape_list.faceArr.length = 0;
+            }
+            if (Array.isArray(shape_list.color)) {
+                shape_list.color.length = 0;
+            }
+        }
+    }
+    // Consolidates a list of shapes to add them all at once
+    if (shape_list.faceArr && shape.faceArr && shape_list.vertexArr) {
+        const shift = shape_list.vertexArr.length ?? 0;
+        const shiftedFaceArr = shape.faceArr.map((value) => value + shift);
+        shape_list.faceArr.push(...shiftedFaceArr);
+    }
+    if (shape_list.vertexArr && shape.vertexArr) {
+        shape_list.vertexArr?.push(...shape.vertexArr);
+    }
+    if (shape_list.normalArr && shape.normalArr) {
+        shape_list.normalArr?.push(...shape.normalArr);
+    }
+    if (shape.vertexArr && Array.isArray(shape_list.color)) {
+        const newcolor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
+        const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(newcolor);
+        shape_list.color.push(...newcolors);
     }
 }
