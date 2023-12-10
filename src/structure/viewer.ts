@@ -1110,6 +1110,10 @@ export class MoleculeViewer {
             color: [],
         };
 
+        // color function for atoms
+        const colorfunc = this._colorFunction();
+        let atomspec: $3Dmol.AtomSpec = {};
+
         for (const shape of active_shapes) {
             if (shape === '') {
                 continue;
@@ -1162,9 +1166,11 @@ export class MoleculeViewer {
                                 shape_data.position = position;
                                 if (atom_pars.color) {
                                     shape_data.color = atom_pars.color;
+                                } else if (colorfunc) {
+                                    atomspec.serial = i;
+                                    shape_data.color = colorfunc(atomspec);
                                 } else {
-                                    shape_data.color =
-                                        atom_pars.color || $3Dmol.elementColors.Jmol[name];
+                                    shape_data.color = $3Dmol.elementColors.Jmol[name];
                                 }
 
                                 if (current_shape.kind === 'sphere') {
