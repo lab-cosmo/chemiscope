@@ -845,7 +845,9 @@ export function add_shapes(
     }
     if (shape.vertexArr && Array.isArray(shape_list.color)) {
         const newcolor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
-        const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(newcolor) as $3Dmol.ColorSpec[];
+        const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(
+            newcolor
+        ) as $3Dmol.ColorSpec[];
         //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         shape_list.color.push(...newcolors);
     }
