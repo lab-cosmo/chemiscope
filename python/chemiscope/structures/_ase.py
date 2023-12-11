@@ -506,7 +506,7 @@ def ase_merge_pi_frames(bead_frames):
     Takes a list of lists of ase.Atoms objects, corresponding to
     the trajectories of the beads of a path integral calculation.
     Returns a consolidated trajectory in which all beads are in the
-    same frame, together with propertie and shapes that help visualize
+    same frame, together with properties and shapes that help visualize
     the path integral. The various pieces are returned as a dictionary
     and can be passed directly to `create_input` and related functions.
 
