@@ -220,6 +220,13 @@ def create_input(
             "semiaxes": [float, float, float],
         }
 
+        # "kind" : "cylinder"
+        {   # "orientation" is redundant and hence ignored
+            "vector" : [float, float, float],  # orientation and shape of the cylinder
+            # the tip of the cylinder is at the end of the segment.
+            "radius" : float,
+        }
+
         # "kind" : "arrow"
         {   # "orientation" is redundant and hence ignored
             "vector" : [float, float, float],  # orientation and shape of the arrow
@@ -982,20 +989,34 @@ def _check_valid_shape(shape):
                 raise ValueError(
                     "'simplices' must be an Nx3 array values for 'custom' shape kind"
                 )
+    elif shape["kind"] == "cylinder":
+        if not isinstance(parameters["radius"], float):
+            raise TypeError(
+                "cylinder shape 'radius' must be a float, "
+                f"got {type(parameters['radius'])}"
+            )
+        vector_array = np.asarray(parameters["vector"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+
+        if not vector_array.shape == (3,):
+            raise ValueError(
+                "'vector' must be an array with 3 values for 'cylinder' shape kind"
+            )
     elif shape["kind"] == "arrow":
         if not isinstance(parameters["baseRadius"], float):
             raise TypeError(
-                "sphere shape 'baseRadius' must be a float, "
+                "arrow shape 'baseRadius' must be a float, "
                 f"got {type(parameters['baseRadius'])}"
             )
         if not isinstance(parameters["headRadius"], float):
             raise TypeError(
-                "sphere shape 'headRadius' must be a float, "
+                "arrow shape 'headRadius' must be a float, "
                 f"got {type(parameters['headRadius'])}"
             )
         if not isinstance(parameters["headLength"], float):
             raise TypeError(
-                "sphere shape 'headLength' must be a float, "
+                "arrow shape 'headLength' must be a float, "
                 f"got {type(parameters['headLength'])}"
             )
 

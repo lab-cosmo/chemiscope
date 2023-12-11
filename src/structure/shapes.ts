@@ -61,6 +61,17 @@ export interface EllipsoidParameters extends BaseShapeParameters<EllipsoidData> 
     kind: 'ellipsoid';
 }
 
+// Interface for cylinder data (avoids orientation options, since it's redundant)
+export interface CylinderData extends BaseShapeData {
+    vector: [number, number, number];
+    radius?: number;
+}
+
+/** Parameters for an arrow shape */
+export interface CylinderParameters extends BaseShapeParameters<CylinderData> {
+    kind: 'cylinder';
+}
+
 // Interface for arrow data (avoids orientation options, since it's redundant)
 export interface ArrowData extends BaseShapeData {
     vector: [number, number, number];
@@ -87,7 +98,7 @@ export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeDa
     kind: 'custom';
 }
 
-export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData;
+export type ShapeData = SphereData | EllipsoidData | ArrowData | CylinderData | CustomShapeData;
 
 /**
  * Describes a shape, to be displayed alongside an atomic structure.
@@ -104,6 +115,7 @@ export type ShapeData = SphereData | EllipsoidData | ArrowData | CustomShapeData
 export type ShapeParameters =
     | SphereParameters
     | EllipsoidParameters
+    | CylinderParameters
     | ArrowParameters
     | CustomShapeParameters;
 
@@ -152,13 +164,14 @@ function determineNormals(vertices: XYZ[], simplices: [number, number, number][]
     }
 
     for (const s of simplices) {
-        const faceNormal: XYZ = crossXYZ(
-            subXYZ(vertices[s[1]], vertices[s[0]]),
-            subXYZ(vertices[s[2]], vertices[s[0]])
-        );
-
         for (const ss of s) {
-            vertexNormals[ss] = addXYZ(vertexNormals[ss], faceNormal);
+            vertexNormals[ss] = addXYZ(
+                vertexNormals[ss],
+                crossXYZ(
+                    subXYZ(vertices[s[1]], vertices[s[0]]),
+                    subXYZ(vertices[s[2]], vertices[s[0]])
+                )
+            );
             nFaces[ss] += 1;
         }
     }
@@ -457,7 +470,7 @@ function triangulateArrow(
         );
     }
 
-    let indices: number[] = [];
+    const indices: number[] = [];
     const vertices: XYZ[] = [];
 
     vertices.push({ x: 0, y: 0, z: 0 });
@@ -473,8 +486,7 @@ function triangulateArrow(
         vertices.push(tip);
         const i_seg = 1 + i * 7;
         const i_next = 1 + ((i + 1) % resolution) * 7;
-        indices = [
-            ...indices,
+        indices.push(
             ...[
                 0,
                 i_seg,
@@ -494,8 +506,8 @@ function triangulateArrow(
                 i_seg + 5,
                 i_next + 5,
                 i_seg + 6, // tip
-            ],
-        ];
+            ]
+        );
     }
     return {
         vertices: vertices,
@@ -568,6 +580,138 @@ export class Arrow extends Shape {
         return {
             vertexArr: vertices,
             normalArr: determineNormals(vertices, simplices),
+            faceArr: indices,
+            color: color,
+        };
+    }
+}
+
+function triangulateCylinder(
+    vector: [number, number, number],
+    radius: number,
+    resolution: number = 20
+): { vertices: XYZ[]; indices: number[] } {
+    const [x, y, z] = vector;
+    const tip: XYZ = { x, y, z };
+    const v_len = Math.sqrt(x * x + y * y + z * z);
+
+    // generates a unit circle oriented in the right direction
+    const n_vec: XYZ = multXYZ(tip, 1.0 / v_len);
+
+    // Generate an arbitrary vector not collinear with n
+    let vx: XYZ;
+    if (n_vec.x !== 0.0 || n_vec.y !== 0.0) {
+        vx = { x: 0, y: 0, z: 1 };
+    } else {
+        vx = { x: 0, y: 1, z: 0 };
+    }
+
+    // generate orthogonal vectors in the plane defined by nvec
+    let u: XYZ = addXYZ(vx, multXYZ(n_vec, -dotXYZ(vx, n_vec)));
+    // builds with the right radius immediately
+    u = multXYZ(u, radius / Math.sqrt(dotXYZ(u, u)));
+    const v: XYZ = crossXYZ(u, n_vec);
+
+    const indices: number[] = [];
+    const vertices: XYZ[] = [];
+
+    vertices.push({ x: 0, y: 0, z: 0 });
+    vertices.push(tip);
+    // the cylinder is built as a surface of revolution, by stacking |_| motifs
+    for (let i = 0; i < resolution; i++) {
+        // generate n_points in the plane defined by nvec, centered at vec
+        const base_point = addXYZ(
+            multXYZ(u, Math.cos((i * 2 * Math.PI) / resolution)),
+            multXYZ(v, Math.sin((i * 2 * Math.PI) / resolution))
+        );
+        // nb replicated points are needed to get sharp edges
+        vertices.push(base_point);
+        vertices.push(base_point);
+        const tip_point = addXYZ(base_point, tip);
+        vertices.push(tip_point);
+        vertices.push(tip_point);
+        const i_seg = 2 + i * 4;
+        const i_next = 2 + ((i + 1) % resolution) * 4;
+        indices.push(
+            ...[
+                0,
+                i_seg,
+                i_next, // cylinder base
+                i_seg + 1,
+                i_seg + 2,
+                i_next + 1,
+                i_next + 1,
+                i_seg + 2,
+                i_next + 2, // cylinder side
+                i_seg + 3,
+                1,
+                i_next + 3, // cylinder top
+            ]
+        );
+    }
+    return {
+        vertices: vertices,
+        indices: indices,
+    };
+}
+
+export class Cylinder extends Shape {
+    public vector: [number, number, number];
+    public radius: number;
+
+    constructor(data: Partial<CylinderData>) {
+        super(data);
+        assert(data.vector);
+        this.vector = [
+            this.scale * data.vector[0],
+            this.scale * data.vector[1],
+            this.scale * data.vector[2],
+        ];
+        this.radius = this.scale * (data.radius || 0.1);
+    }
+
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        if (!('vector' in parameters)) {
+            return '"vector" is required for "arrow" shapes';
+        }
+
+        if (!Array.isArray(parameters.vector) || parameters.vector.length !== 3) {
+            return '"vector" must be an array with 3 elements for "vector" shapes';
+        }
+
+        const [ax, ay, az] = parameters.vector as unknown[];
+        if (typeof ax !== 'number' || typeof ay !== 'number' || typeof az !== 'number') {
+            return '"vector" elements must be numbers for "vector" shapes';
+        }
+
+        if ('orientation' in parameters) {
+            return '"orientation" cannot be used on "cylinder" shapes. define "vector" instead';
+        }
+
+        return '';
+    }
+
+    public outputTo3Dmol(color: $3Dmol.ColorSpec, resolution: number = 20): $3Dmol.CustomShapeSpec {
+        const triangulation = triangulateCylinder(this.vector, this.radius, resolution);
+        const rawVertices = triangulation.vertices;
+        const indices = triangulation.indices;
+        const vertices: XYZ[] = [];
+        const simplices: [number, number, number][] = [];
+
+        for (const v of rawVertices) {
+            const newVertex: XYZ = addXYZ(v, this.position);
+            vertices.push(newVertex);
+        }
+
+        for (let i = 0; i < indices.length; i += 3) {
+            simplices.push(indices.slice(i, i + 3) as [number, number, number]);
+        }
+
+        const normals = determineNormals(vertices, simplices);
+
+        return {
+            vertexArr: vertices,
+            normalArr: normals,
             faceArr: indices,
             color: color,
         };
@@ -661,5 +805,50 @@ export class CustomShape extends Shape {
             faceArr: indices,
             color: color,
         };
+    }
+}
+
+export function add_shapes(
+    shape_list: $3Dmol.CustomShapeSpec,
+    shape: $3Dmol.CustomShapeSpec,
+    viewer: $3Dmol.GLViewer,
+    max_vertices: number = 0
+): void {
+    // Dumps shapes if the number of vertices exceeds a set threshold
+    if (shape_list.vertexArr && shape.vertexArr && max_vertices > 0) {
+        if (shape_list.vertexArr.length + shape.vertexArr.length >= max_vertices) {
+            // adds to the viewer and resets the list
+            viewer.addCustom(shape_list);
+            shape_list.vertexArr.length = 0;
+            if (Array.isArray(shape_list.normalArr)) {
+                shape_list.normalArr.length = 0;
+            }
+            if (Array.isArray(shape_list.faceArr)) {
+                shape_list.faceArr.length = 0;
+            }
+            if (Array.isArray(shape_list.color)) {
+                shape_list.color.length = 0;
+            }
+        }
+    }
+    // Consolidates a list of shapes to add them all at once
+    if (shape_list.faceArr && shape.faceArr && shape_list.vertexArr) {
+        const shift = shape_list.vertexArr.length ?? 0;
+        const shiftedFaceArr = shape.faceArr.map((value) => value + shift);
+        shape_list.faceArr.push(...shiftedFaceArr);
+    }
+    if (shape_list.vertexArr && shape.vertexArr) {
+        shape_list.vertexArr?.push(...shape.vertexArr);
+    }
+    if (shape_list.normalArr && shape.normalArr) {
+        shape_list.normalArr?.push(...shape.normalArr);
+    }
+    if (shape.vertexArr && Array.isArray(shape_list.color)) {
+        const newcolor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
+        const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(
+            newcolor
+        ) as $3Dmol.ColorSpec[];
+        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        shape_list.color.push(...newcolors);
     }
 }

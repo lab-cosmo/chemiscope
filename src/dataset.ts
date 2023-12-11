@@ -3,7 +3,7 @@
  * @module main
  */
 
-import { Arrow, CustomShape, Ellipsoid, Sphere } from './structure/shapes';
+import { Arrow, CustomShape, Cylinder, Ellipsoid, Sphere } from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
 
 /** A dataset containing all the data to be displayed. */
@@ -403,6 +403,8 @@ function validateShape(kind: string, parameters: Record<string, unknown>): strin
         return Ellipsoid.validateParameters(parameters);
     } else if (kind === 'arrow') {
         return Arrow.validateParameters(parameters);
+    } else if (kind === 'cylinder') {
+        return Cylinder.validateParameters(parameters);
     } else if (kind === 'custom') {
         return CustomShape.validateParameters(parameters);
     }
