@@ -3,7 +3,7 @@ from .input import create_input, write_input  # noqa: F401
 from .structures import (  # noqa: F401
     all_atomic_environments,
     arrow_from_vector,
-    ase_make_paths,
+    ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
     center_shape,

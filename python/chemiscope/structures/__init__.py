@@ -16,7 +16,7 @@ from ._shapes import (  # noqa: F401
 )
 
 from ._ase import (  # noqa: F401
-    ase_make_paths,
+    ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
 )

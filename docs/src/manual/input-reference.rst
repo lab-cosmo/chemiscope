@@ -106,7 +106,7 @@ contains the following fields and values:
         // at the structure level, or for individual atoms 
         "shapes": {
             <name>: {
-                "kind" : <"sphere", "ellipsoid", "arrow", "custom">,
+                "kind" : <"sphere", "ellipsoid", "cylinder", "arrow", "custom">,
                 "parameters" : {
                     "global" : { <global_parameters_dictionary> },
                     "structure" : [ <list_of_structure_parameter_dictionaries> ],
@@ -120,14 +120,6 @@ contains the following fields and values:
                     "global" : { "radius" : 0.2 }                    
                 }
             },
-            // Arrow, with the given shape parameters, and `vector` direction
-            <other_name>: {
-                "kind" : "sphere"
-                "parameters" : {
-                    "global" : { "baseRadius" : 0.2, 'headRadius': 0.3, 'headLength' : 0.4 },
-                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
-                }
-            },
             // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
             <other_name>: {
                 "kind" : "ellipsoid"
@@ -136,6 +128,22 @@ contains the following fields and values:
                     "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
                 }
             },
+            // Cylinder, with the given radiys, and `vector` direction
+            <other_name>: {
+                "kind" : "cylinder"
+                "parameters" : {
+                    "global" : { "radius" : 0.2 },
+                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
+                }
+            },
+            // Arrow, with the given shape parameters, and `vector` direction
+            <other_name>: {
+                "kind" : "arrow"
+                "parameters" : {
+                    "global" : { "baseRadius" : 0.2, 'headRadius': 0.3, 'headLength' : 0.4 },
+                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
+                }
+            },            
             // Custom shapes. Must provide list of vertices, and the vertex
             // indices associated with simplices (the latter are autocalculated)
             // if omitted

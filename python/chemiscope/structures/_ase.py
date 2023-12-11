@@ -501,7 +501,7 @@ def _get_shape_params_atom(prefix, shape_kind, dictionary, atom_i):
     return shape
 
 
-def ase_make_paths(bead_frames):
+def ase_merge_pi_frames(bead_frames):
     """
     Takes a list of lists of ase.Atoms objects, corresponding to
     the trajectories of the beads of a path integral calculation.
