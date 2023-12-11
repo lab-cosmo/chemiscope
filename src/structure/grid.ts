@@ -650,12 +650,6 @@ export class ViewersGrid {
                 this.onremove(cellGUID);
                 this.removeViewer(cellGUID);
                 this._setupGrid(this._cellsData.size);
-                for (const guid of this._cellsData.keys()) {
-                    const data = this._cellsData.get(guid);
-                    if (data !== undefined) {
-                        data.viewer.colorBarUpdate('update');
-                    }
-                }
             };
             cell.appendChild(remove);
 
@@ -674,12 +668,6 @@ export class ViewersGrid {
                     return;
                 }
                 this.oncreate(this.active, data.color, data.current);
-                for (const guid of this._cellsData.keys()) {
-                    const data = this._cellsData.get(guid);
-                    if (data !== undefined) {
-                        data.viewer.colorBarUpdate('update');
-                    }
-                }
             };
             cell.appendChild(duplicate);
 

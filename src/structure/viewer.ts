@@ -198,7 +198,6 @@ export class MoleculeViewer {
         this._shadow.appendChild(this._root);
 
         this._root.style.position = 'relative';
-        // this._root.id = this.guid;
         this._root.style.width = '100%';
         this._root.style.height = '100%';
 
@@ -324,6 +323,7 @@ export class MoleculeViewer {
      */
     public resize(): void {
         this._viewer.resize();
+        this._updateColorBar();
     }
 
     /**
@@ -830,13 +830,14 @@ export class MoleculeViewer {
         // To call the function above if the window is resized
         window.addEventListener('resize', () => {
             if (this._options.color.property.value !== 'element') {
-                this.colorBarUpdate('update');
+                this._updateColorBar();
             }
         });
+
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
-            this.colorBarUpdate('delete');
+            this._deleteColorBar();
 
             if (property !== 'element') {
                 this._options.color.transform.enable();
@@ -866,8 +867,7 @@ export class MoleculeViewer {
                 this._options.color.max.value = max;
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
-                // update the color bar
-                this.colorBarUpdate('update');
+                this._updateColorBar();
             } else {
                 this._options.color.transform.disable();
                 this._options.color.min.disable();
@@ -898,8 +898,7 @@ export class MoleculeViewer {
                 return;
             }
             this._setScaleStep([min, max]);
-            // update the color bar
-            this.colorBarUpdate('update');
+            this._updateColorBar();
         };
 
         // ======= color transform
@@ -918,8 +917,7 @@ export class MoleculeViewer {
             this._options.color.max.value = max;
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
-            // update the color bar
-            this.colorBarUpdate('update');
+            this._updateColorBar();
 
             restyleAndRender();
         });
@@ -952,16 +950,14 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
-            // update the color bar
-            this.colorBarUpdate('update');
+            this._updateColorBar();
 
             restyleAndRender();
         });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
-            // update the color bar
-            this.colorBarUpdate('update');
+            this._updateColorBar();
             restyleAndRender();
         });
 
@@ -1745,19 +1741,19 @@ export class MoleculeViewer {
         return {
             min: this._viewer.addLabel(
                 JSON.stringify(min),
-                this._ColorBarLabelsSpec(20, gradHeight + gradPosShift + 2)
+                this._colorBarLabelsSpec(20, gradHeight + gradPosShift + 2)
             ),
             mid: this._viewer.addLabel(
                 JSON.stringify(mid),
-                this._ColorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 2)
+                this._colorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 2)
             ),
             max: this._viewer.addLabel(
                 JSON.stringify(max),
-                this._ColorBarLabelsSpec(20 + gradWidth, gradHeight + gradPosShift + 2)
+                this._colorBarLabelsSpec(20 + gradWidth, gradHeight + gradPosShift + 2)
             ),
             property: this._viewer.addLabel(
                 title,
-                this._ColorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 16)
+                this._colorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 16)
             ),
             gradient: this._viewer.addLabel('.', {
                 position: new $3Dmol.Vector3(20, gradPosShift + 4, 0),
@@ -1775,7 +1771,7 @@ export class MoleculeViewer {
     }
 
     /** Generate a LabelSpec for the key values in the color bar */
-    private _ColorBarLabelsSpec(xPosition: number, yPosition: number): $3Dmol.LabelSpec {
+    private _colorBarLabelsSpec(xPosition: number, yPosition: number): $3Dmol.LabelSpec {
         return {
             alignment: 'topCenter',
             position: new $3Dmol.Vector3(xPosition, yPosition, 0),
@@ -1788,27 +1784,21 @@ export class MoleculeViewer {
         };
     }
 
-    /**
-     * This function is used to delete and/or add a color bar.
-     * It is a public function because it has to be called
-     * when another viewer is created or removed from the grid
-     * in order to update the size of the color bar.
-     */
-    public colorBarUpdate = (action: 'update' | 'add' | 'delete') => {
-        if (this._options.color.property.value !== 'element') {
-            if (action === 'delete' || action === 'update') {
-                if (this._colorBar !== undefined) {
-                    this._viewer.removeLabel(this._colorBar.min);
-                    this._viewer.removeLabel(this._colorBar.mid);
-                    this._viewer.removeLabel(this._colorBar.max);
-                    this._viewer.removeLabel(this._colorBar.property);
-                    this._viewer.removeLabel(this._colorBar.gradient);
-                    this._colorBar = undefined;
-                }
-            }
-            if (action === 'add' || action === 'update') {
-                this._colorBar = this._addColorBar();
-            }
+    private _deleteColorBar() {
+        if (this._colorBar !== undefined) {
+            this._viewer.removeLabel(this._colorBar.min);
+            this._viewer.removeLabel(this._colorBar.mid);
+            this._viewer.removeLabel(this._colorBar.max);
+            this._viewer.removeLabel(this._colorBar.property);
+            this._viewer.removeLabel(this._colorBar.gradient);
+            this._colorBar = undefined;
         }
-    };
+    }
+
+    private _updateColorBar() {
+        this._deleteColorBar();
+        if (this._options.color.property.value !== 'element') {
+            this._colorBar = this._addColorBar();
+        }
+    }
 }
