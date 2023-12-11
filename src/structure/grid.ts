@@ -356,7 +356,7 @@ export class ViewersGrid {
         const changeClasses = (guid: string, toggle: boolean) => {
             // change tooltip text in the active marker
             const button = this._getById(`chsp-activate-${guid}`);
-            button.classList.toggle('chsp-active-structure', toggle);
+            button.classList.toggle('chsp-active-pin', toggle);
             assert(button.parentElement !== null);
             const tooltip = button.parentElement.querySelector('.chsp-tooltip');
             assert(tooltip !== null);
@@ -612,16 +612,16 @@ export class ViewersGrid {
             // because it will conflict with the button behavior
 
             // add a button to set the cell/viewer as the active one
-            const template = document.createElement('template');
             color = this._getNextColor();
+            const template = document.createElement('template');
             template.innerHTML = `<div
-                class="chsp-has-tooltip"
-                style="position: absolute; top: 7px; right: 160px;">
+                class="chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
+                style="position: absolute; top: 6px; left: 6px; display: flex">
                     <div id="chsp-activate-${cellGUID}"
-                         class="chsp-structure-marker"
-                         style="background-color: ${color}; top: 13px; right: 0px;"
+                         class="chsp-pin-marker"
+                         style="background-color: ${color}; position: relative; margin: auto;"
                     ></div>
-                    <span class="chsp-tooltip">WILL BE FILLED LATER</span>
+                    <span class="chsp-tooltip chsp-tooltip-right">WILL BE FILLED LATER</span>
                 </div>`;
             const activate = template.content.firstChild as HTMLElement;
             activate.onclick = () => {
@@ -636,9 +636,9 @@ export class ViewersGrid {
             // add a button to remove the cell
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
-                style="top: 6px; right: 41px;">
+                style="top: 6px; right: 32px;">
                     <span>${CLOSE_SVG}</span>
-                    <span class="chsp-tooltip">Remove viewer</span>
+                    <span class="chsp-tooltip chsp-tooltip-below">Remove viewer</span>
                 </button>`;
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
@@ -656,9 +656,9 @@ export class ViewersGrid {
             // add a button to duplicate the cell
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
-                style="top: 6px; right: 76px;">
-                    <span>${DUPLICATE_SVG}</span>
-                    <span class="chsp-tooltip">Duplicate viewer</span>
+                style="top: 6px; right: 60px;">
+                    <span style="position: absolute; top: 2px; right: 5px;">${DUPLICATE_SVG}</span>
+                    <span class="chsp-tooltip chsp-tooltip-below">Duplicate viewer</span>
                 </button>`;
             const duplicate = template.content.firstChild as HTMLElement;
 
@@ -674,9 +674,9 @@ export class ViewersGrid {
             // add a button to download PNG
             template.innerHTML = `<button
                 class="btn btn-light btn-sm chsp-has-tooltip chsp-viewer-button chsp-viewer-action-button"
-                style="top: 6px; right: 111px;">
+                style="top: 6px; right: 90px;">
                     <span>${PNG_SVG}</span>
-                    <span class="chsp-tooltip">Download PNG</span>
+                    <span class="chsp-tooltip chsp-tooltip-below">Download PNG</span>
                 </button>`;
             const downloadPNG = template.content.firstChild as HTMLElement;
 
