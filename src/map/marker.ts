@@ -16,7 +16,7 @@ export class MarkerData {
 
     constructor(guid: string, color: string, environment: number, visible: boolean = true) {
         const marker = document.createElement('div');
-        marker.classList.add('chsp-structure-marker');
+        marker.classList.add('chsp-pin-marker', 'chsp-map-pin-marker');
         marker.id = `chsp-selected-${guid}`;
         marker.style.backgroundColor = color;
         this.marker = marker;
@@ -52,12 +52,12 @@ export class MarkerData {
 
     // Changes the marker properties to active marker properties
     public activate(): void {
-        this.marker.classList.toggle('chsp-active-structure', true);
+        this.marker.classList.toggle('chsp-active-pin', true);
     }
 
     // Changes the marker properties to inactive marker properties
     public deactivate(): void {
-        this.marker.classList.toggle('chsp-active-structure', false);
+        this.marker.classList.toggle('chsp-active-pin', false);
     }
 
     // Remove this marker

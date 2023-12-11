@@ -312,6 +312,8 @@ export class MoleculeViewer {
             },
             { capture: true }
         );
+
+        window.addEventListener('resize', () => this.resize());
     }
 
     /**
@@ -853,13 +855,6 @@ export class MoleculeViewer {
         });
 
         // ======= color settings
-        // To call the function above if the window is resized
-        window.addEventListener('resize', () => {
-            if (this._options.color.property.value !== 'element') {
-                this._updateColorBar();
-            }
-        });
-
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
@@ -1714,39 +1709,23 @@ export class MoleculeViewer {
      * properties displaying the minimum and maximum values
      */
     private _addColorBar(): ColorBar {
-        let min = this._options.color.min.value;
-        let max = this._options.color.max.value;
-        let mid = (min + max) / 2;
-        min = Math.round(min * 100) / 100;
-        mid = Math.round(mid * 100) / 100;
-        max = Math.round(max * 100) / 100;
         const palette = this._options.color.palette.value;
         const title = this._colorTitle();
 
-        // To take the width of the viewer.
-        const screenWidth = this._viewer.container?.clientWidth;
-        // To take the height of the viewer.
-        const screenHeight = this._viewer.container?.clientHeight;
-        assert(screenWidth !== undefined && screenHeight !== undefined);
-        let gradWidth = screenWidth - 205;
-        let gradHeight = 0.02 * screenHeight + 6;
-        let gradPosShift = 0;
-        if (gradWidth > 250) {
-            gradWidth = 250;
-        }
-        if (gradWidth < 60) {
-            gradWidth = 60;
-            gradPosShift = 30;
-        }
-        if (gradHeight > 20) {
-            gradHeight = 20;
-        }
+        const viewerWidth = this._viewer.container?.clientWidth;
+        const viewerHeight = this._viewer.container?.clientHeight;
+        assert(viewerWidth !== undefined && viewerHeight !== undefined);
+        const width = 20;
+        const horizontalShift = 5;
+
+        const titleHeight = 30;
+        const height = viewerHeight - (titleHeight + 50);
 
         // Create the color bar gradient using canvas
         const gradientCanvas = document.createElement('canvas');
 
-        gradientCanvas.width = gradWidth;
-        gradientCanvas.height = gradHeight;
+        gradientCanvas.width = width;
+        gradientCanvas.height = height;
         const mapColor = COLOR_MAPS[palette];
 
         const ctx = gradientCanvas.getContext('2d');
@@ -1756,33 +1735,61 @@ export class MoleculeViewer {
         }
 
         // Create a linear gradient from colorStart to colorEnd
-        const gradient = ctx.createLinearGradient(0, 0, gradWidth, 0);
+        const gradient = ctx.createLinearGradient(0, height, 0, 0);
         for (let c = 0; c < mapColor.length; c++) {
             gradient.addColorStop(mapColor[c][0], mapColor[c][1]);
         }
 
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, gradWidth, gradHeight);
+        ctx.fillRect(0, 0, width, height);
+
+        const min = this._options.color.min.value;
+        const max = this._options.color.max.value;
+        const mid = (min + max) / 2;
 
         return {
             min: this._viewer.addLabel(
-                JSON.stringify(min),
-                this._colorBarLabelsSpec(20, gradHeight + gradPosShift + 2)
+                fixedWidthFloat(min) + '-',
+                this._colorBarLabelsSpec({
+                    x: viewerWidth - (horizontalShift + width - 5),
+                    y: viewerHeight - (titleHeight + 8),
+                    alignment: 'centerRight',
+                    fontSize: 14,
+                })
             ),
             mid: this._viewer.addLabel(
-                JSON.stringify(mid),
-                this._colorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 2)
+                fixedWidthFloat(mid) + '-',
+                this._colorBarLabelsSpec({
+                    x: viewerWidth - (horizontalShift + width - 5),
+                    y: viewerHeight - (titleHeight + height / 2),
+                    alignment: 'centerRight',
+                    fontSize: 14,
+                })
             ),
             max: this._viewer.addLabel(
-                JSON.stringify(max),
-                this._colorBarLabelsSpec(20 + gradWidth, gradHeight + gradPosShift + 2)
+                fixedWidthFloat(max) + '-',
+                this._colorBarLabelsSpec({
+                    x: viewerWidth - (horizontalShift + width - 5),
+                    y: viewerHeight - (titleHeight + height - 8),
+                    alignment: 'centerRight',
+                    fontSize: 14,
+                })
             ),
             property: this._viewer.addLabel(
                 title,
-                this._colorBarLabelsSpec(20 + gradWidth / 2, gradHeight + gradPosShift + 16)
+                this._colorBarLabelsSpec({
+                    x: viewerWidth - 6,
+                    y: viewerHeight - 15,
+                    alignment: 'centerRight',
+                    fontSize: 16,
+                })
             ),
             gradient: this._viewer.addLabel('.', {
-                position: new $3Dmol.Vector3(20, gradPosShift + 4, 0),
+                position: new $3Dmol.Vector3(
+                    viewerWidth - (width + horizontalShift),
+                    viewerHeight - (height + titleHeight),
+                    0
+                ),
                 backgroundImage: gradientCanvas,
                 borderColor: 'black',
                 borderOpacity: 1,
@@ -1797,16 +1804,22 @@ export class MoleculeViewer {
     }
 
     /** Generate a LabelSpec for the key values in the color bar */
-    private _colorBarLabelsSpec(xPosition: number, yPosition: number): $3Dmol.LabelSpec {
+    private _colorBarLabelsSpec(options: {
+        x: number;
+        y: number;
+        alignment: string;
+        fontSize: number;
+    }): $3Dmol.LabelSpec {
         return {
-            alignment: 'topCenter',
-            position: new $3Dmol.Vector3(xPosition, yPosition, 0),
+            alignment: options.alignment,
+            position: new $3Dmol.Vector3(options.x, options.y, 0),
             font: 'sans',
             fontColor: 'black',
-            fontSize: 14,
+            fontSize: options.fontSize,
             showBackground: false,
             inFront: true,
             useScreen: true,
+            backgroundColor: 'red',
         };
     }
 
@@ -1825,6 +1838,49 @@ export class MoleculeViewer {
         this._deleteColorBar();
         if (this._options.color.property.value !== 'element') {
             this._colorBar = this._addColorBar();
+        }
+    }
+}
+
+/** Try to format a float to ensure it fits in a 4 characters limit */
+function fixedWidthFloat(value: number): string {
+    if (value === 0) {
+        return '0';
+    } else if (value > 0) {
+        // we can use the full 4 characters for the number
+        if (value < 10000 && value > 0.009) {
+            if (Number.isInteger(value)) {
+                return value.toString();
+            } else {
+                // convert to fixed format with 3 decimals, then truncate to fit
+                // in 4 characters
+                let result = value.toFixed(3).substring(0, 4);
+                if (result[3] === '.') {
+                    result = result.substring(0, 3);
+                }
+                return result;
+            }
+        } else {
+            // convert to exponential format with no decimal part
+            return value.toExponential(0).replace('+', '');
+        }
+    } else {
+        // we only have 3 characters, we need one for the '-' sign
+        if (value > -1000 && value < -0.09) {
+            if (Number.isInteger(value)) {
+                return value.toString();
+            } else {
+                // convert to fixed format with 2 decimals, then truncate to fit in
+                // 4 characters
+                let result = value.toFixed(3).substring(0, 4);
+                if (result[3] === '.') {
+                    result = result.substring(0, 3);
+                }
+                return result;
+            }
+        } else {
+            // convert to exponential format with no decimal part
+            return value.toExponential(0).replace('+', '');
         }
     }
 }

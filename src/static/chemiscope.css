@@ -54,49 +54,59 @@
     visibility: hidden;
     background: #69738a;
     color: white;
-    padding: 8px 10px;
+    padding: 6px;
     font-size: 12px;
     line-height: 12px;
     white-space: nowrap;
-    margin-right: -18px;
     border-radius: 2px;
     text-align: center;
     display: inline-block;
-    top: 30px;
-    left: -60px;
-    /* Position the tooltip text - see examples below! */
+    width: 9em;
     position: absolute;
     z-index: 100000;
+}
+
+.chsp-tooltip-right {
+    top: 0px;
+    right: -9.5em;
+}
+
+.chsp-tooltip-below {
+    top: 35px;
+    left: -3.5em;
 }
 
 .chsp-has-tooltip:hover .chsp-tooltip {
     visibility: visible;
 }
 
-.chsp-structure-marker {
+.chsp-pin-marker {
     border-radius: 50%;
     border: solid 1px black;
     --size: 12px;
     width: var(--size);
     height: var(--size);
-    position: absolute;
-    /* ensure the top/right/left/bottom positioning is relative to the center of the div */
-    transform: translate(calc(-50% + var(--size)), -50%);
     z-index: 10;
 }
 
-.chsp-structure-marker:hover {
+.chsp-map-pin-marker {
+    position: absolute;
+    /* ensure the top/right/left/bottom positioning is relative to the center of the div */
+    transform: translate(calc(-50% + var(--size)), -50%);
+}
+
+.chsp-pin-marker:hover {
     --size: 20px;
     cursor: pointer;
 }
 
-/* This class is added on top of .chsp-structure-marker for the active structure */
-.chsp-active-structure {
+/* This class is added on top of .chsp-pin-marker for the active pinned structure/environment */
+.chsp-active-pin {
     border-width: 2px;
     --size: 20px;
 }
 
-.chsp-active-structure:hover {
+.chsp-active-pin:hover {
     --size: 22px;
     cursor: default;
 }
