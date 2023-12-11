@@ -138,6 +138,13 @@ export class MoleculeViewer {
         /// 3Dmol Model containing only atoms inside the spherical cutoff
         model: $3Dmol.GLModel;
     };
+    /// Information about the last highlighted environment
+    private _lastHighlighted?: {
+        /// index of the central atom
+        center: number;
+        /// user-specified cutoff
+        cutoff: number;
+    };
     /// Axes shown, if any
     private _axes?: [LabeledArrow, LabeledArrow, LabeledArrow];
     /// Color bar shown, if any
@@ -823,6 +830,25 @@ export class MoleculeViewer {
         // Deal with activation/de-activation of environments
         this._options.environments.activated.onchange.push((value) => {
             this._enableEnvironmentSettings(value);
+
+            if (value) {
+                assert(this._lastHighlighted !== undefined);
+                // add the 3DMol model for highlighted environment
+                this._options.environments.cutoff.value = this._lastHighlighted.cutoff;
+                const center = this._lastHighlighted.center;
+                const previousDefaultCutoff = this._defaultCutoff(center);
+                this._changeHighlighted(center, previousDefaultCutoff);
+            } else {
+                assert(this._highlighted !== undefined);
+                // remove the 3DMol model for highlighted environment
+                this._viewer.removeModel(this._highlighted.model);
+                // keep information about the last highlighted point around
+                this._lastHighlighted = {
+                    center: this._highlighted.center,
+                    cutoff: this._options.environments.cutoff.value,
+                };
+            }
+
             restyleAndRender();
         });
 
@@ -1050,22 +1076,22 @@ export class MoleculeViewer {
         if (this._options.shape.value !== '') {
             this._addShapes();
         }
+
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
             this._current.model.setStyle({}, this._mainStyle());
-            this._viewer.render();
             return;
         }
 
         assert(this._highlighted !== undefined);
         // otherwise, render all atoms with hidden/background style
         this._current.model.setStyle({}, this._hiddenStyle());
-        // the central atom with central/highlighted style
+        // and the central atom with central/highlighted style
         this._current.model.setStyle(
             { index: this._highlighted.center },
             this._centralStyle(0.4),
-            /* add: */ true
+            /* add */ true
         );
 
         // and the environment around the central atom with main style
