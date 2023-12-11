@@ -235,8 +235,9 @@ export class StructureOptions extends OptionsGroup {
                 );
 
                 // set width first, since setting position can influence it
-                modalDialog.style.width = `${modalDialog.offsetWidth}px`;
-                modalDialog.style.minWidth = `400px`;
+                modalDialog.style.width = `${modalDialog.offsetWidth / 1.5}px`;
+                // minimum width so that text in rows remains on a single line
+                modalDialog.style.minWidth = `500px`;
 
                 // unset margins when using position: fixed
                 modalDialog.style.margin = '0';
