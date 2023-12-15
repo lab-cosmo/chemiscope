@@ -157,9 +157,13 @@ export class ChemiscopeApp {
 
         this.visualizer.structure.positionSettingsModal = (rect) => {
             const structureRect = getByID('chemiscope-structure').getBoundingClientRect();
+            let left = structureRect.left - rect.width + 25;
+            if (left < 25) {
+                left = 25;
+            }
             return {
                 top: structureRect.top,
-                left: structureRect.left - rect.width - 25,
+                left: left,
             };
         };
 
