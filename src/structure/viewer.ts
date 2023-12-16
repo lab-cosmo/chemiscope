@@ -1058,7 +1058,7 @@ export class MoleculeViewer {
         this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
-    private _addAxes(value: string): void {        
+    private _addAxes(value: string): void {
         if (this._axes !== undefined) {
             this._viewer.removeShape(this._axes[0].arrow);
             this._viewer.removeLabel(this._axes[0].label);
@@ -1117,7 +1117,7 @@ export class MoleculeViewer {
 
         // removeAllShapes also removes the axes, so let's add them back
         this._addAxes(this._options.axes.value);
-        
+
         assert(this._current.atomLabels.length === 0);
 
         const structure = this._current.structure;
