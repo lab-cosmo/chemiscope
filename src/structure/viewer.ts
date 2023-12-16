@@ -704,42 +704,7 @@ export class MoleculeViewer {
             }
         });
 
-        this._options.axes.onchange.push((value) => {
-            if (this._axes !== undefined) {
-                this._viewer.removeShape(this._axes[0].arrow);
-                this._viewer.removeLabel(this._axes[0].label);
-                this._viewer.removeShape(this._axes[1].arrow);
-                this._viewer.removeLabel(this._axes[1].label);
-                this._viewer.removeShape(this._axes[2].arrow);
-                this._viewer.removeLabel(this._axes[2].label);
-                this._axes = undefined;
-            }
-
-            if (value === 'off') {
-                // nothing to do
-            } else if (value === 'xyz') {
-                this._axes = [
-                    this._addLabeledArrow([2, 0, 0], 'red', 'X'),
-                    this._addLabeledArrow([0, 2, 0], 'green', 'Y'),
-                    this._addLabeledArrow([0, 0, 2], 'blue', 'Z'),
-                ];
-            } else if (value === 'abc') {
-                if (this._current === undefined || this._current.structure.cell === undefined) {
-                    return;
-                }
-                const cell = this._current.structure.cell;
-                const a: [number, number, number] = [cell[0], cell[1], cell[2]];
-                const b: [number, number, number] = [cell[3], cell[4], cell[5]];
-                const c: [number, number, number] = [cell[6], cell[7], cell[8]];
-                this._axes = [
-                    this._addLabeledArrow(a, 'red', 'A'),
-                    this._addLabeledArrow(b, 'green', 'B'),
-                    this._addLabeledArrow(c, 'blue', 'C'),
-                ];
-            }
-
-            this._viewer.render();
-        });
+        this._options.axes.onchange.push((value) => this._addAxes(value));
 
         this._options.rotation.onchange.push((rotate) => {
             if (rotate) {
@@ -1093,6 +1058,43 @@ export class MoleculeViewer {
         this._highlighted.model.setStyle({}, this._mainStyle());
     }
 
+    private _addAxes(value: string): void {        
+        if (this._axes !== undefined) {
+            this._viewer.removeShape(this._axes[0].arrow);
+            this._viewer.removeLabel(this._axes[0].label);
+            this._viewer.removeShape(this._axes[1].arrow);
+            this._viewer.removeLabel(this._axes[1].label);
+            this._viewer.removeShape(this._axes[2].arrow);
+            this._viewer.removeLabel(this._axes[2].label);
+            this._axes = undefined;
+        }
+
+        if (value === 'off') {
+            // nothing to do
+        } else if (value === 'xyz') {
+            this._axes = [
+                this._addLabeledArrow([2, 0, 0], 'red', 'X'),
+                this._addLabeledArrow([0, 2, 0], 'green', 'Y'),
+                this._addLabeledArrow([0, 0, 2], 'blue', 'Z'),
+            ];
+        } else if (value === 'abc') {
+            if (this._current === undefined || this._current.structure.cell === undefined) {
+                return;
+            }
+            const cell = this._current.structure.cell;
+            const a: [number, number, number] = [cell[0], cell[1], cell[2]];
+            const b: [number, number, number] = [cell[3], cell[4], cell[5]];
+            const c: [number, number, number] = [cell[6], cell[7], cell[8]];
+            this._axes = [
+                this._addLabeledArrow(a, 'red', 'A'),
+                this._addLabeledArrow(b, 'green', 'B'),
+                this._addLabeledArrow(c, 'blue', 'C'),
+            ];
+        }
+
+        this._viewer.render();
+    }
+
     private _addShapes(): void {
         if (this._current === undefined) {
             return;
@@ -1102,6 +1104,7 @@ export class MoleculeViewer {
         }
 
         this._viewer.removeAllShapes();
+
         // removeAllShapes also removes the unit cell, so let's add it back
         if (this._options.unitCell.value) {
             this._viewer.addUnitCell(this._current.model, {
@@ -1112,6 +1115,9 @@ export class MoleculeViewer {
             });
         }
 
+        // removeAllShapes also removes the axes, so let's add them back
+        this._addAxes(this._options.axes.value);
+        
         assert(this._current.atomLabels.length === 0);
 
         const structure = this._current.structure;
