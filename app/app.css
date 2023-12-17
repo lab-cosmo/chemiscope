@@ -1,5 +1,5 @@
 :root {
-    --header-height: 50px;
+    --header-height: 48px;
     --footer-height: 30px;
 }
 
@@ -89,6 +89,7 @@ main .ratio > * {
 
 .ratio-5x7 {
     overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 .ratio-5x7::before {
