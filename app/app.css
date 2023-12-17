@@ -39,7 +39,7 @@ header {
 }
 
 .navbar {
-    max-width: 1140px;
+    max-width: 1100px;
     margin-bottom: 1em;
     z-index: 999;
     background-color: inherit;
@@ -64,22 +64,23 @@ main.container-fluid {
     width: 100%;
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 900px) {
     main.container-fluid {
         margin: 2em 2em calc(2em + var(--header-height)) 2em;
         width: calc(100% - 4em);
     }
 }
 
-@media screen and (min-width: 1500px) {
+@media screen and (min-width: 1200px) {
     main.container-fluid {
         margin: 2em auto calc(2em + var(--header-height)) auto;
-        width: 1500px;
+        width: 1200px;
     }
 }
 
 main .ratio {
     margin: auto;
+    width: 90%; 
 }
 
 main .ratio > * {
@@ -98,12 +99,13 @@ main .ratio > * {
 
 @media screen and (min-width: 768px) {
     .ratio-5x7 {
-        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));        
     }
 
     main .ratio {
         /* set the width to fit the vertical space, and the height will be set automatically */
         max-width: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        width: 100%;
     }
 }
 
