@@ -1174,7 +1174,7 @@ export class MoleculeViewer {
                             for (let i = 0; i < structure.size; i++) {
                                 const name = structure.names[i];
                                 assert(i < current_shape.parameters.atom.length);
-                                let atom_pars = {
+                                const atom_pars = {
                                     ...shape_data,
                                     ...current_shape.parameters.atom[i],
                                 };
