@@ -17,6 +17,7 @@ import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, add_shapes 
 import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
+import { sensitiveHeaders } from 'http2';
 
 const IS_SAFARI =
     navigator.vendor !== undefined &&
@@ -314,6 +315,10 @@ export class MoleculeViewer {
         );
 
         window.addEventListener('resize', () => this.resize());
+        // waits for loading of widget, then triggers a redraw. fixes some glitches on the Jupyter side
+        window.requestAnimationFrame(() => {
+            window.dispatchEvent(new Event('resize'));
+        });
     }
 
     /**
@@ -823,7 +828,6 @@ export class MoleculeViewer {
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
-            this._deleteColorBar();
 
             if (property !== 'element') {
                 this._options.color.transform.enable();
@@ -853,7 +857,6 @@ export class MoleculeViewer {
                 this._options.color.max.value = max;
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max]);
-                this._updateColorBar();
             } else {
                 this._options.color.transform.disable();
                 this._options.color.min.disable();
@@ -865,6 +868,8 @@ export class MoleculeViewer {
 
                 this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
             }
+
+            this._updateColorBar();
             restyleAndRender();
         };
         this._options.color.property.onchange.push(colorPropertyChanged);
@@ -885,6 +890,7 @@ export class MoleculeViewer {
             }
             this._setScaleStep([min, max]);
             this._updateColorBar();
+            restyleAndRender();
         };
 
         // ======= color transform
@@ -904,7 +910,6 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
             this._updateColorBar();
-
             restyleAndRender();
         });
 
@@ -937,7 +942,6 @@ export class MoleculeViewer {
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
             this._updateColorBar();
-
             restyleAndRender();
         });
 
@@ -1170,8 +1174,10 @@ export class MoleculeViewer {
                             for (let i = 0; i < structure.size; i++) {
                                 const name = structure.names[i];
                                 assert(i < current_shape.parameters.atom.length);
-                                const atom_pars = current_shape.parameters.atom[i];
-                                shape_data = { ...shape_data, ...atom_pars };
+                                const atom_pars = {
+                                    ...shape_data,
+                                    ...current_shape.parameters.atom[i],
+                                };
 
                                 let position: [number, number, number] = [
                                     structure.x[i],
@@ -1186,55 +1192,57 @@ export class MoleculeViewer {
                                 position[1] += a * cell[1] + b * cell[4] + c * cell[7];
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];
 
-                                shape_data.position = position;
-                                if (atom_pars.color) {
-                                    shape_data.color = atom_pars.color;
-                                } else if (colorfunc) {
-                                    atomspec.serial = i;
-                                    shape_data.color = colorfunc(atomspec);
-                                } else {
-                                    shape_data.color = $3Dmol.elementColors.Jmol[name];
+                                atom_pars.position = position;
+                                // obey explicit color specification if given,
+                                // otherwise color as the corresponding atom
+                                if (!atom_pars.color) {
+                                    if (colorfunc) {
+                                        atomspec.serial = i;
+                                        atom_pars.color = colorfunc(atomspec);
+                                    } else {
+                                        atom_pars.color = $3Dmol.elementColors.Jmol[name];
+                                    }
                                 }
 
                                 if (current_shape.kind === 'sphere') {
-                                    const shape = new Sphere(shape_data);
+                                    const shape = new Sphere(atom_pars);
                                     //this._viewer.addCustom(
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(shape_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'ellipsoid') {
-                                    const shape = new Ellipsoid(shape_data);
+                                    const shape = new Ellipsoid(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(shape_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'cylinder') {
-                                    const shape = new Cylinder(shape_data);
+                                    const shape = new Cylinder(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(shape_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'arrow') {
-                                    const shape = new Arrow(shape_data);
+                                    const shape = new Arrow(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(shape_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else {
                                     assert(current_shape.kind === 'custom');
-                                    const shape = new CustomShape(shape_data);
+                                    const shape = new CustomShape(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(shape_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
