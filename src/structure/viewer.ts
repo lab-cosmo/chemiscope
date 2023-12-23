@@ -1174,8 +1174,10 @@ export class MoleculeViewer {
                             for (let i = 0; i < structure.size; i++) {
                                 const name = structure.names[i];
                                 assert(i < current_shape.parameters.atom.length);
-                                const atom_pars = current_shape.parameters.atom[i];
-                                let atom_data = { ...shape_data, ...atom_pars };
+                                let atom_pars = {
+                                    ...shape_data,
+                                    ...current_shape.parameters.atom[i],
+                                };
 
                                 let position: [number, number, number] = [
                                     structure.x[i],
@@ -1190,57 +1192,57 @@ export class MoleculeViewer {
                                 position[1] += a * cell[1] + b * cell[4] + c * cell[7];
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];
 
-                                atom_data.position = position;
+                                atom_pars.position = position;
                                 // obey explicit color specification if given,
                                 // otherwise color as the corresponding atom
-                                if (!atom_data.color) {
+                                if (!atom_pars.color) {
                                     if (colorfunc) {
                                         atomspec.serial = i;
-                                        atom_data.color = colorfunc(atomspec);
+                                        atom_pars.color = colorfunc(atomspec);
                                     } else {
-                                        atom_data.color = $3Dmol.elementColors.Jmol[name];
+                                        atom_pars.color = $3Dmol.elementColors.Jmol[name];
                                     }
                                 }
 
                                 if (current_shape.kind === 'sphere') {
-                                    const shape = new Sphere(atom_data);
+                                    const shape = new Sphere(atom_pars);
                                     //this._viewer.addCustom(
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(atom_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'ellipsoid') {
-                                    const shape = new Ellipsoid(atom_data);
+                                    const shape = new Ellipsoid(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(atom_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'cylinder') {
-                                    const shape = new Cylinder(atom_data);
+                                    const shape = new Cylinder(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(atom_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else if (current_shape.kind === 'arrow') {
-                                    const shape = new Arrow(atom_data);
+                                    const shape = new Arrow(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(atom_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
                                 } else {
                                     assert(current_shape.kind === 'custom');
-                                    const shape = new CustomShape(atom_data);
+                                    const shape = new CustomShape(atom_pars);
                                     add_shapes(
                                         all_shapes,
-                                        shape.outputTo3Dmol(atom_data.color || 0xffffff),
+                                        shape.outputTo3Dmol(atom_pars.color || 0xffffff),
                                         this._viewer,
                                         32768
                                     );
