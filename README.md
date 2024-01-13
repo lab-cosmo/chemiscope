@@ -1,6 +1,6 @@
 # Chemiscope: interactive structure-property explorer for materials and molecules
 
-![tests](https://github.com/lab-cosmo/chemiscope/workflows/Tests%20&%20Lints/badge.svg)
+![tests](https://github.com/lab-cosmo/chemiscope/workflows/Tests%20&%20Lints/badge.svg?branch=main)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02117/status.svg)](https://doi.org/10.21105/joss.02117)
 
 Chemiscope is a graphical tool for the interactive exploration of materials and
