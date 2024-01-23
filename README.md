@@ -28,7 +28,7 @@ acknowledgement.
 ## [Documentation](https://chemiscope.org/docs/)
 
 You may be interested in particular about how to [create a visualization of your
-own dataset](https://chemiscope.org/docs/tutorial/input.html).
+own dataset](https://chemiscope.org/docs/manual/input.html).
 
 If you would like to generate a simple chemiscope for your dataset, we
 have a [Google Colab notebook](https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu)
