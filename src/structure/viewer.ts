@@ -1184,10 +1184,14 @@ export class MoleculeViewer {
                                     structure.y[i],
                                     structure.z[i],
                                 ];
-                                if (atom_pars.position) {
-                                    position = atom_pars.position;
+
+                                // only overrides the atom position if it's given explicitly
+                                const atom_position = current_shape.parameters.atom[i].position;
+                                if (atom_position !== undefined) {
+                                    position = atom_position;
                                 }
 
+                                // adds supercell offset
                                 position[0] += a * cell[0] + b * cell[3] + c * cell[6];
                                 position[1] += a * cell[1] + b * cell[4] + c * cell[7];
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];

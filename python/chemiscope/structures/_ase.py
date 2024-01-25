@@ -1,4 +1,5 @@
 import warnings
+from inspect import signature
 from collections import Counter
 
 import numpy as np
@@ -345,8 +346,8 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
     Extract a vectorial atom property from a list of ase.Atoms
     objects, and returns a list of arrow shapes. Besides the specific
     parameters it also accepts the same parameters as
-    `arrow_from_vector`, which are used to define the style of the
-    arrows.
+    :py:func:`arrow_from_vector`, which are used to define the
+    style of the arrows.
 
     :param frames: list of ASE Atoms objects
     :param key: name of the ASE atom property. Should contain
@@ -358,14 +359,22 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
 
     vectors = []
 
-    # set shape parameters globally if they are all given
+    # set shape parameters globally to reduce size of the arrow list
     globs = {}
-    if "radius" in kwargs:
-        globs["baseRadius"] = kwargs.pop("radius")
-        if "head_radius_scale" in kwargs:
-            globs["headRadius"] = globs["baseRadius"] * kwargs.pop("head_radius_scale")
-        if "head_length_scale" in kwargs:
-            globs["headLength"] = globs["baseRadius"] * kwargs.pop("head_length_scale")
+    defaults = signature(arrow_from_vector).parameters
+    globs["baseRadius"] = (
+        kwargs.pop("radius") if ("radius" in kwargs) else defaults["radius"].default
+    )
+    globs["headRadius"] = globs["baseRadius"] * (
+        kwargs.pop("head_radius_scale")
+        if ("head_radius_scale" in kwargs)
+        else defaults["head_radius_scale"].default
+    )
+    globs["headLength"] = globs["baseRadius"] * (
+        kwargs.pop("head_length_scale")
+        if ("head_length_scale" in kwargs)
+        else defaults["head_length_scale"].default
+    )
 
     for f in frames:
         values, target = _extract_key_from_ase(f, key, target)
@@ -377,7 +386,12 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
             )
 
         # makes a list of arrows to visualize the property
-        vectors = vectors + [arrow_from_vector(v, **kwargs) for v in values]
+        vectors = vectors + [
+            arrow_from_vector(
+                v, radius=None, head_radius_scale=None, head_length_scale=None, **kwargs
+            )
+            for v in values
+        ]
 
     if target == "atom":
         return {"kind": "arrow", "parameters": {"global": globs, "atom": vectors}}
