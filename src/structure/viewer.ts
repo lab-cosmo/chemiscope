@@ -17,7 +17,6 @@ import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, add_shapes 
 import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
-import { sensitiveHeaders } from 'http2';
 
 const IS_SAFARI =
     navigator.vendor !== undefined &&
