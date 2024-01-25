@@ -350,6 +350,9 @@ function checkShapes(
     structureCount: number,
     envCount: number
 ): string {
+    // checks only that the shape and naming of shape options is correct.
+    // validity of the actual options is assessed in assignShapes
+
     if (typeof shapes !== 'object' || shapes === null) {
         return "'shapes' must be an object";
     }
@@ -415,7 +418,10 @@ function assignShapes(
     shapes: { [name: string]: ShapeParameters },
     structures: Structure[]
 ): string {
-    // creates shapes associated with actual structures by combining all the information given in the definition
+    // creates shapes associated with actual structures by picking slices of the full
+    // arrays. it also tests the shape validity, and for that it builds (but does not store)
+    // the fully expanded parameters for each shape
+
     let atomsCount = 0;
     for (let i_structure = 0; i_structure < structures.length; i_structure++) {
         const structure = structures[i_structure];
