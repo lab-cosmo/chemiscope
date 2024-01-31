@@ -8,6 +8,7 @@ import './widget.css';
 
 import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings } from '../../../src/dataset';
+import { Indexes } from '../../../src/indexer';
 
 const PlausibleTracker = Plausible({
     domain: 'jupyter.chemiscope.org',
@@ -66,6 +67,43 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.model.set('_settings_sync', false);
             this.model.save_changes();
             this.model.set('settings', settings);
+            this.model.save_changes();
+            this.model.set('_settings_sync', sync_state);
+            this.model.save_changes();
+        }
+    }
+
+    protected _bindPythonSelection(): void {
+        // update settings on the JS side when they are changed in Python
+        this.model.on(
+            'change:selection',
+            () => {
+                // only trigger a visualizer update if required.
+                // this is also used to avoid an infinite loop when settings are changed JS-side
+                if (!this.model.get('_settings_sync')) {
+                    return;
+                }
+
+                const selection = this.model.get('selection') as Indexes;
+                console.log("selection update", selection);
+            
+                (this.visualizer as DefaultVisualizer).select(selection);
+                // for the moment does nothing
+            },
+            this
+        );
+    }
+
+    protected _updatePythonSelection(): void {
+        if (this.visualizer !== undefined) {
+            const selection = this.visualizer.getSelected();
+            console.log("getting selection ", selection);
+            // save current settings of settings_sync
+            const sync_state = this.model.get('_settings_sync') as unknown;
+
+            this.model.set('_settings_sync', false);
+            this.model.save_changes();
+            this.model.set('selection', selection);
             this.model.save_changes();
             this.model.set('_settings_sync', sync_state);
             this.model.save_changes();
@@ -135,15 +173,18 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         };
 
         this._bindPythonSettings();
+        this._bindPythonSelection();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void DefaultVisualizer.load(config, data)
-            .then((visualizer) => {
+            .then((visualizer) => {                
                 this.visualizer = visualizer;
                 // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                this.visualizer.onSettingChange(() => this._updatePythonSettings());                
+                this.visualizer.info.onselection = (() => this._updatePythonSelection());
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._updatePythonSelection();
             })
             .catch((e: Error) => {
                 // eslint-disable-next-line no-console
@@ -216,6 +257,7 @@ export class StructureView extends ChemiscopeBaseView {
         };
 
         this._bindPythonSettings();
+        this._bindPythonSelection();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void StructureVisualizer.load(config, data)
@@ -298,6 +340,7 @@ export class MapView extends ChemiscopeBaseView {
         };
 
         this._bindPythonSettings();
+        this._bindPythonSelection();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
         void MapVisualizer.load(config, data)

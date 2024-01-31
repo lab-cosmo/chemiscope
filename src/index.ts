@@ -171,7 +171,7 @@ class DefaultVisualizer {
     public map: PropertiesMap;
     public info: EnvironmentInfo;
     public meta: MetadataPanel;
-    public structure: ViewersGrid;
+    public structure: ViewersGrid;    
 
     private _indexer: EnvironmentIndexer;
     // Stores raw input input so we can give it back later
@@ -214,7 +214,7 @@ class DefaultVisualizer {
 
         this.structure.onselect = (indexes) => {
             this.map.select(indexes);
-            this.info.show(indexes);
+            this.info.show(indexes);            
         };
 
         this.structure.onremove = (guid) => {
@@ -240,8 +240,9 @@ class DefaultVisualizer {
         );
 
         this.map.onselect = (indexes) => {
+            console.log("map onselect");
             this.info.show(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes);            
         };
 
         this.map.activeChanged = (guid, indexes) => {
@@ -256,9 +257,14 @@ class DefaultVisualizer {
             this._indexer,
             dataset.parameters
         );
+
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
             this.structure.show(indexes);
+            if (this.info.onselection !== undefined) {
+                console.log("info onchange", indexes);
+                this.info.onselection();
+            }
         };
 
         this.structure.delayChanged = (delay) => {
@@ -379,7 +385,7 @@ class DefaultVisualizer {
             this.structure.applySettings(settings.structure as Settings[]);
         }
     }
-
+    
     /**
      * Add the given `callback` to be called whenever a setting changes. The
      * callback will be given the path to the settings as a list of keys; and
@@ -402,6 +408,21 @@ class DefaultVisualizer {
             callback(keys, value);
         });
     }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
+    }
+
+    public select(indexes: Indexes) {
+        console.log("selecting"); 
+        this.map.select(indexes);        
+        this.info.show(indexes);
+    }
+    /*public onSelectedChange(callback: (keys: string[], value: unknown) => void): void {
+        this.info.onSelectedChange( (keys, value) ==> {
+            callback(keys, value);
+        });
+    }*/
 
     /**
      * Get the dataset used to create the current visualization
@@ -525,6 +546,7 @@ class StructureVisualizer {
         };
 
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
+
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
@@ -594,6 +616,10 @@ class StructureVisualizer {
 
             callback(keys, value);
         });
+    }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
     }
 }
 
@@ -751,6 +777,10 @@ class MapVisualizer {
 
             callback(keys, value);
         });
+    }
+
+    public getSelected(): Indexes {
+        return this.info.getSelected();
     }
 }
 

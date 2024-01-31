@@ -25,8 +25,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     # change what's being displayed by chemiscope, but you need to assign a full
     # dictionary (`widget.settings["map"]["x"]["property"] = "foo"` will not
     # work, but `widget.settings = updated_settings` will).
-    settings = Dict().tag(sync=True)
-    # switch to disable automatic update of settings
+    settings = Dict().tag(sync=True)    
+    selection = Dict().tag(sync=True)
+    # switch to disable automatic update of settings (& se;lection)
     _settings_sync = Bool().tag(sync=True)
 
     def __init__(self, data, has_metadata):
