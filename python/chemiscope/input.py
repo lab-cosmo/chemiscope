@@ -463,6 +463,14 @@ def write_input(
         X = np.array( ... )
         pca = sklearn.decomposition.PCA(n_components=3).fit_transform(X)
 
+        # if the ASE frames also contain additional data, they can be easily
+        # extracted as a dictionary using a simple utility function
+        frame_properties = chemiscope.extract_properties(
+            frames,
+            only=["temperature", "classification"]
+        )
+
+        # alternatively, properties can also be defined manually
         properties = {
             "PCA": {
                 "target": "atom",
@@ -475,12 +483,6 @@ def write_input(
                 "units": "kcal/mol",
             },
         }
-
-        # additional properties coming from the trajectory
-        frame_properties = chemiscope.extract_properties(
-            frames,
-            only=["temperature", "classification"]
-        )
 
         # additional multidimensional properties to be plotted
         dos = np.loadtxt(...) # load the 2D data
@@ -887,12 +889,16 @@ def _validate_shapes(structures, shapes):
                     "kind": shapes_for_key["kind"],
                     "parameters": {
                         "global": base_shape,
-                        "structure": structure_parameters[structure_i]
-                        if structure_parameters is not None
-                        else {},
-                        "atom": atom_parameters[atom_counter]
-                        if atom_parameters is not None
-                        else {},
+                        "structure": (
+                            structure_parameters[structure_i]
+                            if structure_parameters is not None
+                            else {}
+                        ),
+                        "atom": (
+                            atom_parameters[atom_counter]
+                            if atom_parameters is not None
+                            else {}
+                        ),
                     },
                 }
                 _check_valid_shape(shape)
