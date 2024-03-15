@@ -1,3 +1,5 @@
+.. _user-manual:
+
 User manual
 ===========
 
@@ -22,6 +24,6 @@ extension, which can be used to explore a dataset directly inside a jupyter note
     properties
     panels
     input
-    input-reference
-    sharing
+    python
     jupyter
+    sharing
