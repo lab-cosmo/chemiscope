@@ -22,7 +22,10 @@ export default class Collapse {
      * @param _element The element to be made collapsible. It should have the
      *  .collapse class.
      */
-    constructor(private _element: HTMLElement, root: HTMLElement) {
+    constructor(
+        private _element: HTMLElement,
+        root: HTMLElement
+    ) {
         this._horizontal = this._element.classList.contains('horizontal');
         this._property = this._horizontal ? 'width' : 'height';
 
