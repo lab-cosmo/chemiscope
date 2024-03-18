@@ -887,12 +887,16 @@ def _validate_shapes(structures, shapes):
                     "kind": shapes_for_key["kind"],
                     "parameters": {
                         "global": base_shape,
-                        "structure": structure_parameters[structure_i]
-                        if structure_parameters is not None
-                        else {},
-                        "atom": atom_parameters[atom_counter]
-                        if atom_parameters is not None
-                        else {},
+                        "structure": (
+                            structure_parameters[structure_i]
+                            if structure_parameters is not None
+                            else {}
+                        ),
+                        "atom": (
+                            atom_parameters[atom_counter]
+                            if atom_parameters is not None
+                            else {}
+                        ),
                     },
                 }
                 _check_valid_shape(shape)

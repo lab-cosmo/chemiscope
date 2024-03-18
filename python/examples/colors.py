@@ -7,6 +7,7 @@ This example demonstrates how to color atoms based on scalar properties.
 Note that the same parameters can be used with `chemiscope.show` to visualize an
 interactive widget in a Jupyter notebook.
 """
+
 import ase.io
 import numpy as np
 
