@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: ['16.x', '18.x', '20.x']
+        node-version: ['18.x', '20.x', '21.x']
     steps:
       - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
