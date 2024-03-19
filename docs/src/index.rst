@@ -43,11 +43,12 @@ What's in this documentation?
     :hidden:
     
     Chemiscope visualizer <self>
-
+   
 .. toctree::
     :maxdepth: 2
     
-    manual/index
+    examples
+    manual/index    
     embedding
 
 
