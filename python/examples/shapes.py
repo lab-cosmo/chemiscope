@@ -140,9 +140,9 @@ sharp_cubes = dict(
             ],
         },
         "structure": [  # structure positioning is relative to the origin of the axes
-            {"position": [0, 4, 0], "color": 0xFF0000},
+            {"position": [12, 14, 12], "color": 0xFF0000},
             {
-                "position": [3, 2, 1],
+                "position": [15, 14, 12],
                 "color": 0x00FF00,
                 "orientation": [0.5, -0.5, 0, 1 / np.sqrt(2)],
             },
@@ -180,8 +180,14 @@ dipoles_manual = (
                 "color": 0xFF00B0,
             },
             "structure": [
-                {"vector": frames[0].info["dipole_ccsd"].tolist()},
-                {"vector": frames[1].info["dipole_ccsd"].tolist()},
+                {
+                    "position": [12, 12, 12],
+                    "vector": frames[0].info["dipole_ccsd"].tolist(),
+                },
+                {
+                    "position": [12, 12, 12],
+                    "vector": frames[1].info["dipole_ccsd"].tolist(),
+                },
             ],
         },
     ),
@@ -195,6 +201,10 @@ dipoles_auto["parameters"]["global"] = {
     "headLength": 0.5,
     "color": 0xFF00B0,
 }
+for d in dipoles_auto["parameters"][
+    "structure"
+]:  # center the dipoles close to the molecule
+    d["position"] = [11, 11, 11]
 
 chemiscope.write_input(
     "shapes-example.json.gz",
