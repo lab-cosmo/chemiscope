@@ -23,7 +23,7 @@ anisotropy = []
 
 for frame in frames:
     # center in the box
-    frame.positions += frame.cell.diagonal()*0.5
+    frame.positions += frame.cell.diagonal() * 0.5
     for axx, ayy, azz, axy, axz, ayz in zip(
         frame.arrays["axx"],
         frame.arrays["ayy"],

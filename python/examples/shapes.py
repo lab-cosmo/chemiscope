@@ -23,7 +23,7 @@ quaternions = []
 # converts the arrays from the format they are stored in to an array
 # format that can be processed by the ASE utilities
 for a in frames:
-    a.positions += a.cell.diagonal()*0.5
+    a.positions += a.cell.diagonal() * 0.5
     a.arrays["alpha"] = np.array(
         [
             [axx, ayy, azz, axy, axz, ayz]

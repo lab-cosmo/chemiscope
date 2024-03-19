@@ -21,10 +21,10 @@ import chemiscope
 # load structures
 frames = ase.io.read("data/trajectory.xyz", ":")
 
-# load the SOAP-PCA descriptors. chemiscope does not provide 
-# analysis routines, but you can look up for instance 
+# load the SOAP-PCA descriptors. chemiscope does not provide
+# analysis routines, but you can look up for instance
 # scikit-matter as a package to do dimensionality reduction
-# analyses. 
+# analyses.
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_struc = np.loadtxt("data/trajectory-pca_structure.dat")
 
