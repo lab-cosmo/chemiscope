@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .input import create_input, write_input  # noqa: F401
+from .input import create_input, quick_settings, write_input  # noqa: F401
 from .structures import (  # noqa: F401
     all_atomic_environments,
     arrow_from_vector,
