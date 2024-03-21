@@ -22,7 +22,13 @@ chemiscope.write_input(
     path="showcase.json.gz",
     frames=frames,
     # quickly extract properties from the ASE frames
-    properties=chemiscope.extract_properties(frames, only=["dipole_ccsd", "ccsd_pol"])
+    properties=chemiscope.extract_properties(frames, only=["dipole_ccsd", "ccsd_pol"]),
     meta=dict(name="Dipole and polarizability"),
-    settings=dict(map=dict(x={"property":"ccsd_pol[1]"}, y={"property":"ccsd_pol[2]"}, color={"property":"dipole_ccsd[1]"}))
+    settings={
+        "map": {
+            "x": {"property": "ccsd_pol[1]"},
+            "y": {"property": "ccsd_pol[2]"},
+            "color": {"property": "dipole_ccsd[1]"},
+        }
+    },
 )
