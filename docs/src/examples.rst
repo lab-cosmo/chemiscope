@@ -17,8 +17,8 @@ visualization).
 .. figure:: img/example_base.png
     :align: center
 
-    Trajectory data from a MD simulation of allyl alcohol, including 
-    visualization of force data
+    Simple visualization of molecular data from an ASE input file that
+    contains both structure and properties
     
 .. raw:: html
 
