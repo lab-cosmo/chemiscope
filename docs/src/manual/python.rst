@@ -40,6 +40,8 @@ in the main folder.
 
 .. autofunction:: chemiscope.create_input
 
+.. autofunction:: chemiscope.quick_settings
+
 .. autofunction:: chemiscope.extract_properties
 
 .. autofunction:: chemiscope.composition_properties

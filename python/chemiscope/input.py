@@ -597,25 +597,25 @@ def quick_settings(
     """A utility function to return a ``settings`` dictionary with the most basic
     options for a chemiscope viewer (e.g. what to show on the axes).
 
-    :param x str: The property to show on the x axis of the map.
+    :param str x: The property to show on the x axis of the map.
 
-    :param y str: The property to show on the y axis of the map.
+    :param str y: The property to show on the y axis of the map.
 
-    :param z str: The property to show on the z axis of the map.
+    :param str z: The property to show on the z axis of the map.
 
-    :param color str: The property to use to color the map.
+    :param str color: The property to use to color the map.
 
-    :param size str: The property to use to determine data point size.
+    :param str size: The property to use to determine data point size.
 
-    :param symbol str: The (categorical) property to use to determine point markers.
+    :param str symbol: The (categorical) property to use to determine point markers.
 
-    :param trajectory bool: A boolean flag that sets some default options suitable
+    :param bool trajectory: A boolean flag that sets some default options suitable
         to view trajectory data.
 
-    :param map_settings dict: Additional settings for the map (following the
+    :param dict map_settings: Additional settings for the map (following the
             chemiscope settings schema).
 
-    :param structure_settings dict: Additional settings for the
+    :param dict structure_settings: Additional settings for the
             structure viewer (following the chemiscope settings schema).
     """
 
