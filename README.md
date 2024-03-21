@@ -1,6 +1,6 @@
 # Chemiscope: interactive structure-property explorer for materials and molecules
 
-![tests](https://github.com/lab-cosmo/chemiscope/workflows/Tests%20&%20Lints/badge.svg?branch=main)
+[![Tests](https://github.com/lab-cosmo/chemiscope/actions/workflows/tests.yml/badge.svg)](https://github.com/lab-cosmo/chemiscope/actions/workflows/tests.yml)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02117/status.svg)](https://doi.org/10.21105/joss.02117)
 
 Chemiscope is a graphical tool for the interactive exploration of materials and
@@ -46,14 +46,16 @@ webpage: https://www.epfl.ch/labs/cosmo/people/)
 ## Getting the python package and using chemiscope in Jupyter notebooks
 
 Using chemiscope in a Jupyter notebook should be as easy as
-````bash
+
+```bash
 pip install chemiscope
 ```
+
 This also allows to generate chemiscope JSON files that can be viewed on
 http://chemiscope.org
 
-If you need to build and install a development version, you should 
-have all the npm stack installed, and then just run
+If you need to build and install a development version, you should have all the
+npm stack installed, and then just run
 
 ```bash
 git clone https://github.com/lab-cosmo/chemiscope
