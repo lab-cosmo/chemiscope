@@ -2,7 +2,7 @@ Sharing datasets with collaborators
 ===================================
 
 Once you have converted your data in the :ref:`format used by chemiscope
-<input-format>`, you might want to share it with collaborators. There are
+<input>`, you might want to share it with collaborators. There are
 multiple ways to do this, we'll go over them in this section.
 
 Online visualizer at chemiscope.org

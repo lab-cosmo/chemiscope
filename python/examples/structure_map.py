@@ -21,14 +21,19 @@ import chemiscope
 # load structures
 frames = ase.io.read("data/trajectory.xyz", ":")
 
-# load the SOAP-PCA descriptors
+# load the SOAP-PCA descriptors. chemiscope does not provide
+# analysis routines, but you can look up for instance
+# scikit-matter as a package to do dimensionality reduction
+# analyses.
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_struc = np.loadtxt("data/trajectory-pca_structure.dat")
 
 # when both environments and structure property are present
 # only environment properties are shown. still they can be stored,
 # and future versions of chemiscope may allow switching between
-# the two modes
+# the two modes.
+# NB: if there are properties stored in the ASE frames, you can extract
+#     them with chemiscope.extract_properties(frames)
 properties = {
     # concise definition of a property, with just an array and the type
     # inferred by the size

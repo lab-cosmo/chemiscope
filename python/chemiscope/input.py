@@ -463,6 +463,14 @@ def write_input(
         X = np.array( ... )
         pca = sklearn.decomposition.PCA(n_components=3).fit_transform(X)
 
+        # if the ASE frames also contain additional data, they can be easily
+        # extracted as a dictionary using a simple utility function
+        frame_properties = chemiscope.extract_properties(
+            frames,
+            only=["temperature", "classification"]
+        )
+
+        # alternatively, properties can also be defined manually
         properties = {
             "PCA": {
                 "target": "atom",
@@ -475,12 +483,6 @@ def write_input(
                 "units": "kcal/mol",
             },
         }
-
-        # additional properties coming from the trajectory
-        frame_properties = chemiscope.extract_properties(
-            frames,
-            only=["temperature", "classification"]
-        )
 
         # additional multidimensional properties to be plotted
         dos = np.loadtxt(...) # load the 2D data
@@ -579,6 +581,62 @@ def _normalize_environments(environments, structures):
         )
 
     return cleaned
+
+
+def quick_settings(
+    x="",
+    y="",
+    z="",
+    color="",
+    size="",
+    symbol="",
+    trajectory=False,
+    map_settings={},
+    structure_settings={},
+):
+    """A utility function to return a ``settings`` dictionary with the most basic
+    options for a chemiscope viewer (e.g. what to show on the axes).
+
+    :param str x: The property to show on the x axis of the map.
+
+    :param str y: The property to show on the y axis of the map.
+
+    :param str z: The property to show on the z axis of the map.
+
+    :param str color: The property to use to color the map.
+
+    :param str size: The property to use to determine data point size.
+
+    :param str symbol: The (categorical) property to use to determine point markers.
+
+    :param bool trajectory: A boolean flag that sets some default options suitable
+        to view trajectory data.
+
+    :param dict map_settings: Additional settings for the map (following the
+            chemiscope settings schema).
+
+    :param dict structure_settings: Additional settings for the
+            structure viewer (following the chemiscope settings schema).
+    """
+
+    return {
+        "map": {
+            "x": {"property": x},
+            "y": {"property": y},
+            "z": {"property": z},
+            "color": {"property": color},
+            "size": {"property": size},
+            "symbol": symbol,
+        }
+        | map_settings,
+        "structure": [
+            {
+                "keepOrientation": trajectory,
+                "playbackDelay": 10 if trajectory else 700,
+            }
+            | structure_settings
+        ],
+    }
 
 
 def _normalize_metadata(meta):

@@ -1,3 +1,5 @@
+.. _dev-manual:
+
 Chemiscope as a library
 =======================
 

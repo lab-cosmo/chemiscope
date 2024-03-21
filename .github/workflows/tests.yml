@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.11']
+        python-version: ['3.9', '3.11']
     steps:
       - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with

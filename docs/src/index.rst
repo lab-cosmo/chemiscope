@@ -6,8 +6,9 @@ interactive structure/property explorer for materials and molecules. The goal of
 chemiscope is to provide interactive exploration of large databases of materials
 and molecules and help researchers to find structure-properties correlations
 inside such databases. The screenshot below shows an example of such database
-being visualized with chemiscope. The first part of this documentation describes
-the default interface of chemiscope and how to use it with your own database.
+being visualized with chemiscope. The :ref:`first part of this documentation <user-manual>`
+describes the default interface of chemiscope and how to use it with your own database,
+both using the stand-alone viewer or the :ref:`jupyter widget <jupyter>`.
 
 .. figure:: img/screenshot.png
     :align: center
@@ -17,8 +18,8 @@ the default interface of chemiscope and how to use it with your own database.
 
 Chemiscope is built around re-usable components, that can be arranged in
 different manners to create visualization adapted to different kinds of data. The
-second part of this documentation explains how to build the code and use it in
-your own website to create new interfaces.
+:ref:`second part of this documentation <dev-manual>` explains how to build the 
+code and use it in your own website to create new interfaces.
 
 Citing chemiscope
 -----------------
@@ -42,11 +43,12 @@ What's in this documentation?
     :hidden:
     
     Chemiscope visualizer <self>
-
+   
 .. toctree::
     :maxdepth: 2
     
-    manual/index
+    examples
+    manual/index    
     embedding
 
 
