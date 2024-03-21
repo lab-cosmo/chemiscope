@@ -37,11 +37,11 @@ visualization).
 
     <h2>Trajectory data</h2>
 
-.. figure:: img/example_pca.png
+.. figure:: img/example_md.png
     :align: center
 
     Trajectory data from a MD simulation of allyl alcohol, including 
-    visualization of force data
+    visualization of force data.
 
 .. raw:: html
 
@@ -60,10 +60,12 @@ visualization).
 
     <h2>Structure-property maps</h2>
 
-.. figure:: img/example_md.png
+.. figure:: img/example_pca.png
     :align: center
 
-    PCA map of the atomic environments in a dataset of allyl alcohol configurations
+    PCA map of the atomic environments in a dataset of allyl alcohol configurations. 
+    The three group of points correspond to O environments, to the OH-bearing carbon,
+    and to the aliphatic carbon environments.
 
 .. raw:: html
 
