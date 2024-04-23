@@ -444,12 +444,17 @@ export class MoleculeViewer {
         };
 
         setup3DmolStructure(this._current.model, structure);
-        this._viewer.replicateUnitCell(
-            this._options.supercell[0].value,
-            this._options.supercell[1].value,
-            this._options.supercell[2].value,
-            this._current.model
-        );
+        const supercell_a = this._options.supercell[0].value;
+        const supercell_b = this._options.supercell[1].value;
+        const supercell_c = this._options.supercell[2].value;
+        if (!(supercell_a === 1 && supercell_b === 1 && supercell_c === 1)) {
+            this._viewer.replicateUnitCell(
+                this._options.supercell[0].value,
+                this._options.supercell[1].value,
+                this._options.supercell[2].value,
+                this._current.model
+            );
+        }
 
         if (this._options.unitCell.value) {
             this._viewer.addUnitCell(this._current.model, {
@@ -755,12 +760,17 @@ export class MoleculeViewer {
             const atoms = this._current.model.selectedAtoms({});
             this._current.model.removeAtoms(atoms.splice(this._current.structure.size));
 
-            this._viewer.replicateUnitCell(
-                this._options.supercell[0].value,
-                this._options.supercell[1].value,
-                this._options.supercell[2].value,
-                this._current.model
-            );
+            const supercell_a = this._options.supercell[0].value;
+            const supercell_b = this._options.supercell[1].value;
+            const supercell_c = this._options.supercell[2].value;
+            if (!(supercell_a === 1 && supercell_b === 1 && supercell_c === 1)) {
+                this._viewer.replicateUnitCell(
+                    this._options.supercell[0].value,
+                    this._options.supercell[1].value,
+                    this._options.supercell[2].value,
+                    this._current.model
+                );
+            }
             assignBonds(this._current.model.selectedAtoms({}));
 
             if (this._highlighted !== undefined) {
