@@ -6,12 +6,9 @@ on:
     # Check all PR
 
 jobs:
-  # Javascript tests and linting
+  # Javascript linting
   npm-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ['18.x', '20.x', '21.x']
     steps:
       - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
@@ -20,22 +17,15 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '21.x'
           cache: 'npm'
 
       - name: configure access to git repositories in package-lock.json
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
-
       - name: install npm dependencies
         run: npm ci
-
       - run: npm run build
-
-      - run: sudo apt-get install xvfb
-
-      # use xvfb to run the tests with a pseudo-display attached
-      # so that the browsers started by karma think there is a screen
-      - run: xvfb-run --auto-servernum npm test
+      - run: npm test
 
   # Python unit tests
   python-test:
