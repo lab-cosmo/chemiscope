@@ -39,6 +39,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 sphinx_gallery_conf = {
     "examples_dirs": os.path.join(ROOT, "python", "examples"),
     "gallery_dirs": "examples",
+    "filename_pattern": ".*",
 }
 
 # -- Options for HTML output -------------------------------------------------
