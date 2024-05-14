@@ -1,8 +1,10 @@
-import sphinx_bootstrap_theme
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.join("..", "..")), "python"))
+import sphinx_bootstrap_theme
+
+ROOT = os.path.abspath(os.path.join("..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "python"))
 import chemiscope  # noqa
 
 # -- Project information -----------------------------------------------------
@@ -22,6 +24,7 @@ release = chemiscope.__version__
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx_argparse_cli",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -32,6 +35,11 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+
+sphinx_gallery_conf = {
+    "examples_dirs": os.path.join(ROOT, "python", "examples"),
+    "gallery_dirs": "examples",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
