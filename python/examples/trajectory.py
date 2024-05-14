@@ -2,15 +2,16 @@
 Trajectory plotting
 ===================
 
-This example demonstrates the visualization of trajectory 
-data. It also includes visualization of atomic forces. 
+This example demonstrates the visualization of trajectory data. It also includes
+visualization of atomic forces.
 
-The same parameters can be used with `chemiscope.show`
-to visualize an interactive widget in a Jupyter notebook.
+The same parameters can be used with `chemiscope.show` to visualize an interactive
+widget in a Jupyter notebook.
 """
 
-import numpy as np
 import ase.io
+import numpy as np
+
 import chemiscope
 
 # load structures
@@ -36,10 +37,16 @@ chemiscope.write_input(
     # of the data, authors and references
     meta={
         "name": "Allyl alcohol MD trajectory.",
-        "description": "This dataset contains data from a DFTB+ trajectory of allyl alcohol.",
+        "description": (
+            "This dataset contains data from a DFTB+ trajectory of allyl alcohol."
+        ),
         "authors": ["The chemiscope developers"],
         "references": [
-            'G. Fraux, R. Cersonsky, and M. Ceriotti, "Chemiscope: interactive structure-property explorer for materials and molecules," JOSS 5(51), 2117 (2020).'
+            (
+                "G. Fraux, R. Cersonsky, and M. Ceriotti, "
+                '"Chemiscope: interactive structure-property explorer for materials '
+                'and molecules," JOSS 5(51), 2117 (2020).'
+            )
         ],
     },
     frames=frames,
