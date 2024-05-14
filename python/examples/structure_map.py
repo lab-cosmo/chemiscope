@@ -2,20 +2,18 @@
 Structure-property maps in chemiscope
 =====================================
 
-This example demonstrates the visualization of structures 
-(or environments) using data-driven descriptors of their 
-geometry, to cluster together similar motifs. 
-Here the geometric descriptors have been computed by 
-PCA starting from SOAP representations, but are provided
-as text files to avoid external dependencies for the 
-example. 
+This example demonstrates the visualization of structures (or environments) using
+data-driven descriptors of their geometry, to cluster together similar motifs. Here the
+geometric descriptors have been computed by PCA starting from SOAP representations, but
+are provided as text files to avoid external dependencies for the example.
 
-The same parameters can be used with `chemiscope.show`
-to visualize an interactive widget in a Jupyter notebook.
+The same parameters can be used with `chemiscope.show` to visualize an interactive
+widget in a Jupyter notebook.
 """
 
-import numpy as np
 import ase.io
+import numpy as np
+
 import chemiscope
 
 # load structures
@@ -65,10 +63,17 @@ chemiscope.write_input(
     # of the data, authors and references
     meta={
         "name": "Allyl alcohol PCA map",
-        "description": "This dataset contains a PCA map of the C and O environments from a few frames out of a MD simulation of allyl alcohol, C3H5OH.",
+        "description": (
+            "This dataset contains a PCA map of the C and O environments "
+            "from a few frames out of a MD simulation of allyl alcohol, C3H5OH."
+        ),
         "authors": ["The chemiscope developers"],
         "references": [
-            'G. Fraux, R. Cersonsky, and M. Ceriotti, "Chemiscope: interactive structure-property explorer for materials and molecules," JOSS 5(51), 2117 (2020).'
+            (
+                "G. Fraux, R. Cersonsky, and M. Ceriotti, "
+                '"Chemiscope: interactive structure-property explorer for materials '
+                'and molecules," JOSS 5(51), 2117 (2020).'
+            )
         ],
     },
     frames=frames,

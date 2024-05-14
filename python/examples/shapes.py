@@ -2,19 +2,20 @@
 Extended shape visualization in chemiscope
 ==========================================
 
-This example demonstrates how to visualize structure and atomic 
-properties in the structure panel, using different types of 
+This example demonstrates how to visualize structure and atomic
+properties in the structure panel, using different types of
 predefined shapes (ellipsoids for tensors, arrows for vectors).
-The example also shows how to define custom shapes. 
+The example also shows how to define custom shapes.
 
 Note that the same parameters can be used with `chemiscope.show`
 to visualize an interactive widget in a Jupyter notebook.
 """
 
 import ase.io
-import chemiscope
 import numpy as np
 from scipy.spatial.transform import Rotation
+
+import chemiscope
 
 # loads a dataset of structures
 frames = ase.io.read("data/alpha-mu.xyz", ":")
@@ -59,7 +60,8 @@ smooth_cubes = dict(
     kind="custom",
     parameters={
         "global": {
-            "vertices": [  # this list defines the vertices
+            # this list defines the vertices
+            "vertices": [
                 [-1, -1, -1],
                 [1, -1, -1],
                 [-1, 1, -1],
@@ -69,7 +71,8 @@ smooth_cubes = dict(
                 [-1, 1, 1],
                 [1, 1, 1],
             ],
-            "simplices": [  # and these are the indices of the vertices that form the triangular mesh
+            # and these are the indices of the vertices that form the triangular mesh
+            "simplices": [
                 [0, 2, 1],
                 [1, 2, 3],
                 [4, 6, 5],
@@ -98,7 +101,9 @@ sharp_cubes = dict(
     kind="custom",
     parameters={
         "global": {
-            "vertices": [  # in order to get "sharp" edges, you need to define separate vertices for each facet
+            # in order to get "sharp" edges, you need to define separate vertices for
+            # each facet
+            "vertices": [
                 [0, 0, 0],
                 [0, 1, 0],
                 [1, 1, 0],
@@ -124,7 +129,8 @@ sharp_cubes = dict(
                 [1, 1, 1],
                 [0, 1, 1],
             ],
-            "simplices": [  # simplices defining the mesh - two triangles per facet
+            # simplices defining the mesh - two triangles per facet
+            "simplices": [
                 [0, 1, 2],
                 [2, 3, 0],
                 [4, 5, 6],
@@ -139,7 +145,8 @@ sharp_cubes = dict(
                 [22, 23, 20],
             ],
         },
-        "structure": [  # structure positioning is relative to the origin of the axes
+        # structure positioning is relative to the origin of the axes
+        "structure": [
             {"position": [12, 14, 12], "color": 0xFF0000},
             {
                 "position": [15, 14, 12],
@@ -217,14 +224,16 @@ chemiscope.write_input(
         "cube": sharp_cubes,
         # (molecular) electric dipole
         "dipole": dipoles_auto,
-        # atomic decomposition of the polarizability as ellipsoids. use utility to extract from the ASE frames
+        # atomic decomposition of the polarizability as ellipsoids. use utility to
+        # extract from the ASE frames
         "alpha": chemiscope.ase_tensors_to_ellipsoids(
             frames, "alpha", force_positive=True, scale=0.2
         ),
         # shapes with a bit of flair
         "irreverence": irreverent_shape,
     },
-    settings={  # the write_input function also allows defining the default visualization settings
+    # the write_input function also allows defining the default visualization settings
+    settings={
         "map": {
             "x": {"property": "alpha[1]"},
             "y": {"property": "alpha[2]"},
@@ -237,7 +246,8 @@ chemiscope.write_input(
                 "spaceFilling": False,
                 "atomLabels": False,
                 "atoms": False,
-                "shape": "alpha,dipole",  # multiple shapes can be visualized at the same time!
+                # multiple shapes can be visualized at the same time!
+                "shape": "alpha,dipole",
                 "axes": "off",
                 "keepOrientation": False,
                 "playbackDelay": 700,
