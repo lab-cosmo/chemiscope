@@ -1,30 +1,30 @@
-function startLoading() {
-    getByID('loading').style.display = 'block';
+// function startLoading() {
+//     getByID('loading').style.display = 'block';
 
-    const main = document.getElementsByTagName('main')[0];
-    main.onclick = () => {};
-    main.style.opacity = '0.3';
-}
+//     const main = document.getElementsByTagName('main')[0];
+//     main.onclick = () => {};
+//     main.style.opacity = '0.3';
+// }
 
-function stopLoading() {
-    getByID('loading').style.display = 'none';
+// function stopLoading() {
+//     getByID('loading').style.display = 'none';
 
-    const main = document.getElementsByTagName('main')[0];
-    main.onclick = null;
-    main.style.opacity = '1';
-}
+//     const main = document.getElementsByTagName('main')[0];
+//     main.onclick = null;
+//     main.style.opacity = '1';
+// }
 
-function hideLoader() {
-    // Remove loader element
-    var loader = document.getElementById('loader');
-    if (loader) {
-        loader.parentNode.removeChild(loader);
-    }
-}
+// function hideLoader() {
+//     // Remove loader element
+//     var loader = document.getElementById('loader');
+//     if (loader) {
+//         loader.parentNode.removeChild(loader);
+//     }
+// }
 
 async function loadChemiscopeSphinxGallery(divId, dataset) {
-    showLoader(divId);
-    setTimeout(() => {}, 1000)
+    // showLoader(divId);
+    // setTimeout(() => {}, 1000)
     const root = document.getElementById(divId);
     root.innerHTML = `
         <div style="display: flex; flex-wrap: wrap;">
@@ -44,6 +44,6 @@ async function loadChemiscopeSphinxGallery(divId, dataset) {
         meta: 'chemiscope-meta',
         structure: 'chemiscope-structure',
     };
-    // const visualizer = await Chemiscope.DefaultVisualizer.load(config, dataset);
+    const visualizer = await Chemiscope.DefaultVisualizer.load(config, dataset);
     // hideLoader(divId);
 };
