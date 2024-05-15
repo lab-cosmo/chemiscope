@@ -1,7 +1,14 @@
+# TODO
+# 1. <p> 
+# 2. <script>
+# 3. check it is in sphinx gallery
+
 # -*- coding: utf-8 -*-
 import gzip
 import json
 import warnings
+import random
+from docutils import nodes
 
 import ipywidgets
 from traitlets import Bool, Dict, Unicode
@@ -14,7 +21,10 @@ from .version import __version__
 PACKAGE_NAME = "chemiscope"
 PACKAGE_VERSION = __version__
 
-
+def is_sphinx_gallery():
+    # TODO
+    return True
+    
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
     _view_module_version = Unicode(PACKAGE_VERSION).tag(sync=True)
@@ -76,20 +86,42 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
+        if is_sphinx_gallery():
+            # TODO id should be unique -> id = random()
+            return f"""
+                <!-- Load all dependencies -->
+                <!-- jquery -->
+                <script
+                    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+                    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"
+                ></script>
+
+                <!-- Chemiscope code and default viewer code -->
+                <script src="../../../_static/js/chemiscope.min.js"></script>
+
+                <!-- HTML Viewer code -->
+                <script async="async" src="../../../_static/js/chemischope-sphinx-gallery.js"></script>
+
+                <div id="sphinx-gallery"></div>
+                <script>
+                    loadChemiscopeSphinxGallery("sphinx-gallery", {self.value});
+                </script>
+            """
+
         if not _is_running_in_notebook():
             return """
-<div
-    style="width: 100%;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    padding: 15px;
-    font-size: 16px;
-    box-sizing: border-box;
-    text-align: center;"
->
-    Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
-</div>
+                <div
+                    style="width: 100%;
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                    padding: 15px;
+                    font-size: 16px;
+                    box-sizing: border-box;
+                    text-align: center;"
+                >
+                    Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
+                </div>
             """
         else:
             return self.__repr__()
@@ -241,7 +273,7 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
-    if not _is_running_in_notebook():
+    if not _is_running_in_notebook() and not is_sphinx_gallery():
         warnings.warn("chemiscope.show only works inside a jupyter notebook")
 
     has_metadata = meta is not None

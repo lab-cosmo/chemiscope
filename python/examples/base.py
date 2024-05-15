@@ -32,3 +32,7 @@ chemiscope.write_input(
         x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
     ),
 )
+
+# cs = chemiscope.show(frames, mode="structure")
+# cs
+chemiscope.show(frames, properties=chemiscope.extract_properties(frames), mode="structure")
