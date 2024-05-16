@@ -1,0 +1,9 @@
+#loading {
+    font-size: 2em;
+    margin: auto;
+    text-align: center;
+    color: grey;
+    position: absolute;
+    z-index: 100000;
+    left: 50%;
+}

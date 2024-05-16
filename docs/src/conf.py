@@ -69,5 +69,3 @@ templates_path = [os.path.join("..", "_templates")]
 
 def setup(app):
     app.add_css_file("css/chemiscope.css")
-    app.add_js_file('js/chemiscope.min.js')
-    app.add_js_file('js/sphinx-gallery-chemischope.js')

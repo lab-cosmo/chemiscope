@@ -1,14 +1,8 @@
-# TODO
-# 1. <p> 
-# 2. <script>
-# 3. check it is in sphinx gallery
-
 # -*- coding: utf-8 -*-
 import gzip
 import json
 import warnings
-import random
-from docutils import nodes
+import inspect
 
 import ipywidgets
 from traitlets import Bool, Dict, Unicode
@@ -21,10 +15,6 @@ from .version import __version__
 PACKAGE_NAME = "chemiscope"
 PACKAGE_VERSION = __version__
 
-def is_sphinx_gallery():
-    # TODO
-    return True
-    
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
     _view_module_version = Unicode(PACKAGE_VERSION).tag(sync=True)
@@ -87,7 +77,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def _repr_html_(self):
         if is_sphinx_gallery():
-            # TODO id should be unique -> id = random()
             return f"""
                 <!-- Load all dependencies -->
                 <!-- jquery -->
@@ -102,7 +91,17 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 <!-- HTML Viewer code -->
                 <script async="async" src="../../../_static/js/chemischope-sphinx-gallery.js"></script>
 
-                <div id="sphinx-gallery"></div>
+                <!-- font-awesome -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
+                <link rel="icon" type="image/png" href="chemiscope-icon.png" sizes="32x32" />
+
+                <!-- CSS styles -->
+                <link rel="stylesheet" href="_static/chemischope-sphinx-gallery.css" type="text/css" />
+
+                <div id="loading">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </div>
+                <div id="sphinx-gallery" />
                 <script>
                     loadChemiscopeSphinxGallery("sphinx-gallery", {self.value});
                 </script>
@@ -349,4 +348,15 @@ def _is_running_in_notebook():
         else:
             return False
     except NameError:
+        return False
+
+
+def is_sphinx_gallery():
+    try:
+        stack = inspect.stack()
+        for frame in stack:
+            if 'sphinx_gallery' in frame.filename:
+                return True
+        return False
+    except Exception:
         return False
