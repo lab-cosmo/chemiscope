@@ -17,6 +17,7 @@ async function loadChemiscopeSphinxGallery(divId, dataset) {
         hideLoader(divId);
     }
 }
+
 function generateChemiscopeHTML(config) {
     return `
         <div style="display: flex; flex-wrap: wrap;">
@@ -31,9 +32,16 @@ function generateChemiscopeHTML(config) {
         </div>`;
 }
 
-function toggleLoader(divId, show) {
+function showLoader(divId) {
     const loader = document.getElementById(`${divId}-loading`);
     if (loader) {
-        loader.style.display = show ? "block" : "none";
+        loader.style.display = "block";
+    }
+}
+
+function hideLoader(divId) {
+    const loader = document.getElementById(`${divId}-loading`);
+    if (loader) {
+        loader.style.display = "none";
     }
 }
