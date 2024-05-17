@@ -3,9 +3,9 @@ import shutil
 
 from sphinx_gallery.scrapers import matplotlib_scraper
 
-class SphinxGalleryScrapper:
+class SphinxGalleryScraper:
     def __repr__(self):
-        return 'SphinxGalleryScrapper'
+        return 'SphinxGalleryScraper'
 
     def __call__(self, block, block_vars, gallery_conf):
         variables = block_vars.get("example_globals", {})
@@ -24,7 +24,7 @@ class SphinxGalleryScrapper:
             # Use the custom html content
             widget._repr_html_ = lambda: self.generate_html_content(widget.value)
 
-        # Use sphinx-gallery standard scrapper
+        # Use sphinx-gallery standard scraper
         return matplotlib_scraper(block, block_vars, gallery_conf)
 
     def copy_chemiscope_files(self, target_dir, files):
