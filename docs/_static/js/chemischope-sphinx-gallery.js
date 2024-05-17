@@ -1,20 +1,31 @@
 async function loadChemiscopeSphinxGallery(divId, dataset) {
-    showLoader(divId);
-    const config = {
-        map: `${divId}-map`,
-        info: `${divId}-info`,
-        meta: `${divId}-meta`,
-        structure: `${divId}-structure`,
-    };
-    const root = document.getElementById(divId);
-    root.innerHTML = generateChemiscopeHTML(config);
+    // Handle warnings
+    Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 
+    // Display loader
+    toggleLoaderVisible(divId, true);
+
+    // Load visialisation
     try {
+        const config = {
+            map: `${divId}-map`,
+            info: `${divId}-info`,
+            meta: `${divId}-meta`,
+            structure: `${divId}-structure`,
+        };
+        const root = document.getElementById(divId);
+        root.innerHTML = generateChemiscopeHTML(config);
         await Chemiscope.DefaultVisualizer.load(config, dataset);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        hideLoader(divId);
+    }
+
+    // Display errors
+    catch (error) {
+        displayWarning(divId, error)
+    }
+
+    // Hide loader
+    finally {
+        toggleLoaderVisible(divId, false);
     }
 }
 
@@ -32,16 +43,29 @@ function generateChemiscopeHTML(config) {
         </div>`;
 }
 
-function showLoader(divId) {
+function toggleLoaderVisible(divId, visible = true) {
     const loader = document.getElementById(`${divId}-loading`);
     if (loader) {
-        loader.style.display = "block";
+        loader.style.display = visible ? "block" : "none";
     }
 }
 
-function hideLoader(divId) {
-    const loader = document.getElementById(`${divId}-loading`);
-    if (loader) {
-        loader.style.display = "none";
+function hideElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.display = "none";
+    } else {
+        console.error(`Element ${elementId} is not found`);
     }
+}
+
+function displayWarning(divId, message) {
+    const display = document.getElementById(`${divId}-warning-display`);
+    display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'flex';
+
+    // Automatically remove the warning after 4s
+    setTimeout(() => {
+        display.style.display = 'none';
+    }, 4000);
 }

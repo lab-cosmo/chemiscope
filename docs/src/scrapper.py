@@ -8,11 +8,11 @@ class SphinxGalleryScrapper:
         variables = block_vars.get("example_globals")
         widget = variables.get("___")
         if widget:
-            div_id = "sphinx-gallery-" + str(id(self))            
-            widget._repr_html_ = lambda: self.generate_html_content(div_id, widget.value)
+            widget._repr_html_ = lambda: self.generate_html_content(widget.value)
         return matplotlib_scraper(block, block_vars, gallery_conf)
 
-    def generate_html_content(self, div_id, dataset):
+    def generate_html_content(self, dataset):
+        div_id = "sphinx-gallery-" + str(id(self))
         html_content = f"""
             <!-- Load all dependencies -->
             <!-- jquery -->
@@ -34,6 +34,17 @@ class SphinxGalleryScrapper:
             <!-- CSS styles -->
             <link rel="stylesheet" href="../../../_static/chemischope-sphinx-gallery.css" type="text/css" />
             
+            <div id="{div_id}-warning-display" style="display: none; flex-wrap: wrap; border: 1px solid #f0ad4e; background-color: #fcf8e3; color: #8a6d3b; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="flex: 1"></p>
+                <button
+                    type="button"
+                    style="position: relative; float: right; font-size: 3em; line-height: 1; color: inherit; text-shadow: none; background-color: transparent; border: 0; -webkit-appearance: none;"
+                    aria-label="Close"
+                    onclick=hideElement("{div_id}-warning-display")
+                >&times;</button>
+            </div>
+            <div style="padding: 0.5rem 1.25rem">&nbsp;</div>
+
             <div id="{div_id}-loading">
                 <i class="fa fa-spinner fa-spin"></i>
             </div>
