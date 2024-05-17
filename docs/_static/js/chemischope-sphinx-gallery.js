@@ -2,33 +2,32 @@
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
 async function loadChemiscopeSphinxGallery(divId, dataset) {
-    // Handle warnings by displaying them
+    // Handle warnings
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 
-    // Display the loading spinner
-    toggleLoaderVisible(divId, true);
+    // Display loading
+    toggleLoadingVisible(divId, true);
 
+    // Load the visualizer
     try {
-        // Configuration for the Chemiscope visualizer
         const config = {
             map: `${divId}-map`,
             info: `${divId}-info`,
             meta: `${divId}-meta`,
             structure: `${divId}-structure`,
         };
-
-        // Get the root element and set its inner HTML to the generated content
         const root = document.getElementById(divId);
         root.innerHTML = generateChemiscopeHTML(config);
-
-        // Load the visualizer with the provided configuration and dataset
         await Chemiscope.DefaultVisualizer.load(config, dataset);
-    } catch (error) {
-        // Display any errors that occur during loading
+    }
+    // Display errors
+    catch (error) {
         displayWarning(divId, error);
-    } finally {
-        // Hide the loading spinner
-        toggleLoaderVisible(divId, false);
+    }
+
+    // Hide loading
+    finally {
+        toggleLoadingVisible(divId, false);
     }
 }
 
@@ -52,7 +51,7 @@ function generateChemiscopeHTML(config) {
 /**
  * Toggles the visibility of the loader spinner
  */
-function toggleLoaderVisible(divId, visible = true) {
+function toggleLoadingVisible(divId, visible = true) {
     const loader = document.getElementById(`${divId}-loading`);
     if (loader) {
         loader.style.display = visible ? "block" : "none";
