@@ -1,34 +1,40 @@
+/**
+ * Asynchronously loads the Chemiscope visualization for the dataset
+ */
 async function loadChemiscopeSphinxGallery(divId, dataset) {
-    // Handle warnings
+    // Handle warnings by displaying them
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 
-    // Display loader
+    // Display the loading spinner
     toggleLoaderVisible(divId, true);
 
-    // Load visialisation
     try {
+        // Configuration for the Chemiscope visualizer
         const config = {
             map: `${divId}-map`,
             info: `${divId}-info`,
             meta: `${divId}-meta`,
             structure: `${divId}-structure`,
         };
+
+        // Get the root element and set its inner HTML to the generated content
         const root = document.getElementById(divId);
         root.innerHTML = generateChemiscopeHTML(config);
+
+        // Load the visualizer with the provided configuration and dataset
         await Chemiscope.DefaultVisualizer.load(config, dataset);
-    }
-
-    // Display errors
-    catch (error) {
-        displayWarning(divId, error)
-    }
-
-    // Hide loader
-    finally {
+    } catch (error) {
+        // Display any errors that occur during loading
+        displayWarning(divId, error);
+    } finally {
+        // Hide the loading spinner
         toggleLoaderVisible(divId, false);
     }
 }
 
+/**
+ * Generates the HTML content for the Chemiscope visualizer
+ */
 function generateChemiscopeHTML(config) {
     return `
         <div style="display: flex; flex-wrap: wrap;">
@@ -43,6 +49,9 @@ function generateChemiscopeHTML(config) {
         </div>`;
 }
 
+/**
+ * Toggles the visibility of the loader spinner
+ */
 function toggleLoaderVisible(divId, visible = true) {
     const loader = document.getElementById(`${divId}-loading`);
     if (loader) {
@@ -50,6 +59,9 @@ function toggleLoaderVisible(divId, visible = true) {
     }
 }
 
+/**
+ * Hides the specified element
+ */
 function hideElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
@@ -59,12 +71,15 @@ function hideElement(elementId) {
     }
 }
 
+/**
+ * Displays a warning message in the specified div
+ */
 function displayWarning(divId, message) {
     const display = document.getElementById(`${divId}-warning-display`);
     display.getElementsByTagName('p')[0].innerText = message;
     display.style.display = 'flex';
 
-    // Automatically remove the warning after 4s
+    // Automatically remove the warning after 4 seconds
     setTimeout(() => {
         display.style.display = 'none';
     }, 4000);

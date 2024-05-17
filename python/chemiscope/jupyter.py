@@ -1,6 +1,5 @@
 """
 TODO
-- show warnings correctly
 - jquery warning in console ?
 """
 # -*- coding: utf-8 -*-
