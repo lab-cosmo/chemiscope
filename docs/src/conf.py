@@ -3,6 +3,9 @@ import sys
 
 import sphinx_bootstrap_theme
 
+sys.path.insert(0, os.path.abspath('.'))
+from scrapper import SphinxGalleryScrapper
+
 ROOT = os.path.abspath(os.path.join("..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "python"))
 import chemiscope  # noqa
@@ -40,6 +43,7 @@ sphinx_gallery_conf = {
     "examples_dirs": os.path.join(ROOT, "python", "examples"),
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
+    "image_scrapers": ('matplotlib', SphinxGalleryScrapper()),
 }
 
 # -- Options for HTML output -------------------------------------------------

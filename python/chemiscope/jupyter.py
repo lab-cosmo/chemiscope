@@ -1,8 +1,12 @@
+"""
+TODO
+- show warnings correctly
+- jquery warning in console ?
+"""
 # -*- coding: utf-8 -*-
 import gzip
 import json
 import warnings
-import inspect
 
 import ipywidgets
 from traitlets import Bool, Dict, Unicode
@@ -76,38 +80,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
-        if is_running_in_sphinx_gallery():
-            div_id = "sphinx-gallery-" + str(id(self))
-            return f"""
-                <!-- Load all dependencies -->
-                <!-- jquery -->
-                <script
-                    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
-                    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"
-                ></script>
-
-                <!-- Chemiscope code and default viewer code -->
-                <script src="../../../_static/js/chemiscope.min.js"></script>
-
-                <!-- HTML Viewer code -->
-                <script async="async" src="../../../_static/js/chemischope-sphinx-gallery.js"></script>
-
-                <!-- font-awesome -->
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
-                <link rel="icon" type="image/png" href="chemiscope-icon.png" sizes="32x32" />
-
-                <!-- CSS styles -->
-                <link rel="stylesheet" href="_static/chemischope-sphinx-gallery.css" type="text/css" />
-                
-                <div id="{div_id}-loading">
-                    <i class="fa fa-spinner fa-spin"></i>
-                </div>
-                <div id="{div_id}" />
-                <script>
-                    loadChemiscopeSphinxGallery("{div_id}", {self.value});
-                </script>
-            """
-
         if not _is_running_in_notebook():
             return """
                 <div
@@ -273,7 +245,7 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
-    if not _is_running_in_notebook() and not is_running_in_sphinx_gallery():
+    if not _is_running_in_notebook():
         warnings.warn("chemiscope.show only works inside a jupyter notebook")
 
     has_metadata = meta is not None
@@ -349,15 +321,4 @@ def _is_running_in_notebook():
         else:
             return False
     except NameError:
-        return False
-
-
-def is_running_in_sphinx_gallery():
-    try:
-        stack = inspect.stack()
-        for frame in stack:
-            if 'sphinx_gallery' in frame.filename:
-                return True
-        return False
-    except Exception:
         return False

@@ -33,6 +33,6 @@ chemiscope.write_input(
     ),
 )
 
-chemiscope.show(frames, properties=chemiscope.extract_properties(frames), mode="structure")
+chemiscope.show(frames, properties=chemiscope.extract_properties(frames)) 
 # cs = chemiscope.show(frames, properties=chemiscope.extract_properties(frames), mode="structure") 
 # print(cs._repr_html_())
