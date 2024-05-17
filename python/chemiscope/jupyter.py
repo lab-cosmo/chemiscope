@@ -76,7 +76,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
-        if is_sphinx_gallery():
+        if is_running_in_sphinx_gallery():
+            div_id = "sphinx-gallery-" + str(id(self))
             return f"""
                 <!-- Load all dependencies -->
                 <!-- jquery -->
@@ -97,13 +98,13 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
                 <!-- CSS styles -->
                 <link rel="stylesheet" href="_static/chemischope-sphinx-gallery.css" type="text/css" />
-
-                <div id="loading">
+                
+                <div id="{div_id}-loading">
                     <i class="fa fa-spinner fa-spin"></i>
                 </div>
-                <div id="sphinx-gallery" />
+                <div id="{div_id}" />
                 <script>
-                    loadChemiscopeSphinxGallery("sphinx-gallery", {self.value});
+                    loadChemiscopeSphinxGallery("{div_id}", {self.value});
                 </script>
             """
 
@@ -272,7 +273,7 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
-    if not _is_running_in_notebook() and not is_sphinx_gallery():
+    if not _is_running_in_notebook() and not is_running_in_sphinx_gallery():
         warnings.warn("chemiscope.show only works inside a jupyter notebook")
 
     has_metadata = meta is not None
@@ -351,7 +352,7 @@ def _is_running_in_notebook():
         return False
 
 
-def is_sphinx_gallery():
+def is_running_in_sphinx_gallery():
     try:
         stack = inspect.stack()
         for frame in stack:
