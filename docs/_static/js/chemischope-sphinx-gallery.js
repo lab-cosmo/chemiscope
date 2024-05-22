@@ -1,7 +1,7 @@
 /**
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
-async function loadChemiscopeSphinxGallery(divId, dataset) {
+async function loadChemiscopeSphinxGallery(divId, filePath) {
     // Handle warnings
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 
@@ -10,16 +10,22 @@ async function loadChemiscopeSphinxGallery(divId, dataset) {
 
     // Load the visualizer
     try {
+        const dataset = await fetchDataset(filePath);
+
+        // Setup visualizer config
         const config = {
             map: `${divId}-map`,
             info: `${divId}-info`,
             meta: `${divId}-meta`,
             structure: `${divId}-structure`,
         };
+
+        // Render Chemiscope Visualizer
         const root = document.getElementById(divId);
         root.innerHTML = generateChemiscopeHTML(config);
         await Chemiscope.DefaultVisualizer.load(config, dataset);
     }
+
     // Display errors
     catch (error) {
         displayWarning(divId, error);
@@ -29,6 +35,32 @@ async function loadChemiscopeSphinxGallery(divId, dataset) {
     finally {
         toggleLoadingVisible(divId, false);
     }
+}
+
+/**
+ * Loads the dataset and handled gzipped JSON with NaN values
+ */
+async function fetchDataset(path) {
+    // Load file
+    const response = await fetch(path);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${path}: ${response.statusText}`);
+    }
+
+    // Get as json
+    const buffer = await response.arrayBuffer();
+    const decompressedData = pako.inflate(new Uint8Array(buffer), { to: 'string' });
+    return parseJsonWithNaN(decompressedData);
+}
+
+/**
+ * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+ * module output them, and they can be useful.
+ */
+function parseJsonWithNaN(text) {
+    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (_key, value) => {
+        return value === '***NaN***' ? NaN : value;
+    });
 }
 
 /**

@@ -6,7 +6,7 @@ import sphinx_bootstrap_theme
 ROOT = os.path.abspath(os.path.join("..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "python"))
 import chemiscope  # noqa
-from chemiscope.sphinx_gallery import ChemiscopeScraper
+from chemiscope.sphinx_gallery import ChemiscopeScraper, copy_additional_files
 
 # -- Project information -----------------------------------------------------
 
@@ -71,3 +71,4 @@ templates_path = [os.path.join("..", "_templates")]
 
 def setup(app):
     app.add_css_file("css/chemiscope.css")
+    app.connect("build-finished", copy_additional_files)
