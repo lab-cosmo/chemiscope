@@ -33,4 +33,4 @@ chemiscope.write_input(
     ),
 )
 
-chemiscope.show(frames, properties=chemiscope.extract_properties(frames)) 
+chemiscope.show(frames, properties=chemiscope.extract_properties(frames))

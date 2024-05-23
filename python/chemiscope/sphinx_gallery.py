@@ -1,5 +1,6 @@
 import os
 import shutil
+from PIL import Image
 
 from sphinx_gallery.scrapers import matplotlib_scraper
 
@@ -15,6 +16,9 @@ class ChemiscopeScraper:
             path_png = block_vars.get("image_path_iterator").next()
             path_json = path_png.replace(".png", ".json.gz")
             widget.save(path_json)
+            
+            # Work around to use the sphynx-gallery generated name for the non-image extension (.json.gz)
+            self.save_empty_png(path_png)
 
             # Use the custom html content
             widget._repr_html_ = lambda: self.generate_html_content(os.path.basename(path_json))
@@ -59,6 +63,12 @@ class ChemiscopeScraper:
                 loadChemiscopeSphinxGallery("{div_id}", "{filename}");
             </script>
         """
+
+    def save_empty_png(self, path):
+        img = Image.new('RGBA', (1, 1), color=(0, 0, 0, 0))
+        img.save(path)
+        print(f"Empty PNG image created at {path}")
+        return path
 
 def copy_additional_files(app, exception):
     if exception:
