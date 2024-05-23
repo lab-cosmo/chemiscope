@@ -26,11 +26,6 @@ class ChemiscopeScraper:
         div_id = "sphinx-gallery-" + str(id(self))
         return f"""
             <!-- Load all dependencies -->
-            <!-- JQuery -->
-            <script
-                src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
-                integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"
-            ></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
 
             <!-- JS scripts -->
