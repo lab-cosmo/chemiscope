@@ -8,15 +8,20 @@ Use `chemiscope.show` in a Jupyter notebook for interactive visualization
 
 """
 
-import ase.io
+# %%
+#
 
+import ase.io
 import chemiscope
 
-# load structures
+# %%
+# Load structures from an extended xyz file
+
 frames = ase.io.read("data/showcase.xyz", ":")
 
-# write the chemiscope input file. use `chemiscope.show` to view directly in a
-# Jupyter environment
+# %%
+# Write a chemiscope input file.
+
 chemiscope.write_input(
     path="showcase.json.gz",
     frames=frames,
@@ -32,5 +37,8 @@ chemiscope.write_input(
         x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
     ),
 )
+
+# %%
+# Use `chemiscope.show` to view directly in a Jupyter environment
 
 chemiscope.show(frames, properties=chemiscope.extract_properties(frames))
