@@ -10,13 +10,15 @@ class ChemiscopeScraper:
 
     def __call__(self, block, block_vars, gallery_conf):
         variables = block_vars.get("example_globals", {})
+        iterator = block_vars.get("image_path_iterator")
         widget = variables.get("___")
+
         if widget:
             # Save the dataset to json
-            path_png = block_vars.get("image_path_iterator").next()
+            path_png = iterator.next()
             path_json = path_png.replace(".png", ".json.gz")
             widget.save(path_json)
-            
+
             # Work around to use the sphynx-gallery generated name for the non-image extension (.json.gz)
             self.save_empty_png(path_png)
 
@@ -27,47 +29,21 @@ class ChemiscopeScraper:
         return matplotlib_scraper(block, block_vars, gallery_conf)
 
     def generate_html_content(self, filename):
-        div_id = "sphinx-gallery-" + str(id(self))
-        return f"""
-            <!-- Load all dependencies -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+        # Generate the unique id
+        div_id = f"sphinx-gallery-{id(self)}"
 
-            <!-- JS scripts -->
-            <script src="static/js/chemiscope.min.js"></script>
-            <script src="static/js/chemischope-sphinx-gallery.js"></script>
+        # Read the template html file
+        current_folder_path = os.path.dirname(__file__)
+        template_path = os.path.join(current_folder_path, "static", "html", "chemischope-sphinx-gallery.html")
+        with open(template_path, "r") as file:
+            html_template = file.read()
 
-            <!-- CSS styles -->
-            <link rel="stylesheet" href="static/css/chemischope-sphinx-gallery.css" type="text/css" />
-
-            <!-- Warning Display -->
-            <div id="{div_id}-warning-display" class="chemiscope-sphinx-gallery-warning">
-                <p></p>
-                <button
-                    type="button"
-                    aria-label="Close"
-                    onclick="hideElement('{div_id}-warning-display')"
-                >&times;</button>
-            </div>
-            <div style="padding: 0.5rem 1.25rem" />
-
-            <!-- Loading Spinner -->
-            <div id="{div_id}-loading" class="chemiscope-sphinx-gallery-spinner">
-                <img src="static/loading-icon.svg" alt="Loading icon" />
-            </div>
-
-            <!-- Chemiscope Visualization -->
-            <div id="{div_id}" />
-
-            <!-- Load Visualization Script -->
-            <script>
-                loadChemiscopeSphinxGallery("{div_id}", "{filename}");
-            </script>
-        """
+        # Replace html placeholders with actual values
+        return html_template.replace("{{div_id}}", div_id).replace("{{filename}}", filename)
 
     def save_empty_png(self, path):
         img = Image.new('RGBA', (1, 1), color=(0, 0, 0, 0))
         img.save(path)
-        print(f"Empty PNG image created at {path}")
         return path
 
 def copy_additional_files(app, exception):
@@ -81,20 +57,20 @@ def copy_additional_files(app, exception):
         return
 
     # Copy files from source to build directory
-    src_dir = os.path.join(app.srcdir, gallery_dirs)
-    build_dir = os.path.join(app.outdir, gallery_dirs)
     try:
-        copy_files(src_dir, build_dir)
-        copy_static_files(build_dir)
+        copy_files(app.srcdir, app.outdir, gallery_dirs)
+        copy_static_files(app.outdir)
     except Exception as e:
         print(f"Error copying files: {e}")
 
-def copy_files(src_dir, build_dir):
-    for root, _, files in os.walk(src_dir):
+def copy_files(src_dir, build_dir, gallery_dirs):
+    source_gallery_dir = os.path.join(src_dir, gallery_dirs)
+    build_gallery_dir = os.path.join(build_dir, gallery_dirs)
+    for root, _, files in os.walk(source_gallery_dir):
         for file in files:
             if file.endswith(".json.gz"):
                 src_file = os.path.join(root, file)
-                dst_file = os.path.join(build_dir, file)
+                dst_file = os.path.join(build_gallery_dir, file)
                 copy_file(src_file, dst_file)
 
 def copy_file(src_file, dst_file):
