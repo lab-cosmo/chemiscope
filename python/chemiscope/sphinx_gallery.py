@@ -34,12 +34,11 @@ class ChemiscopeScraper:
             <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
 
             <!-- JS scripts -->
-            <script src="../../../_static/js/chemiscope.min.js"></script>
-            <script src="../../../_static/js/chemischope-sphinx-gallery.js"></script>
+            <script src="static/js/chemiscope.min.js"></script>
+            <script src="static/js/chemischope-sphinx-gallery.js"></script>
 
             <!-- CSS styles -->
-            <link rel="stylesheet" href="../../../_static/css/chemischope-sphinx-gallery.css" type="text/css" />
-            <link rel="icon" type="image/png" href="../../../_static/chemiscope-icon.png" sizes="32x32" />
+            <link rel="stylesheet" href="static/css/chemischope-sphinx-gallery.css" type="text/css" />
 
             <!-- Warning Display -->
             <div id="{div_id}-warning-display" class="chemiscope-sphinx-gallery-warning">
@@ -54,7 +53,7 @@ class ChemiscopeScraper:
 
             <!-- Loading Spinner -->
             <div id="{div_id}-loading" class="chemiscope-sphinx-gallery-spinner">
-                <img src="../../../_static/loading-icon.svg" alt="Loading icon" />
+                <img src="static/loading-icon.svg" alt="Loading icon" />
             </div>
 
             <!-- Chemiscope Visualization -->
@@ -81,6 +80,7 @@ def copy_additional_files(app, exception):
     build_dir = os.path.join(app.outdir, gallery_dirs)
     try:
         copy_files(src_dir, build_dir)
+        copy_static_files(build_dir)
     except Exception as e:
         print(f"Error copying files: {e}")
 
@@ -96,3 +96,20 @@ def copy_file(src_file, dst_file):
     dst_dir = os.path.dirname(dst_file)
     os.makedirs(dst_dir, exist_ok=True)
     shutil.copyfile(src_file, dst_file)
+
+def copy_static_files(build_dir):
+    current_file_dir = os.path.dirname(__file__)
+    static_dir = os.path.join(current_file_dir, "static")
+    files_to_copy = [
+        "js/chemischope-sphinx-gallery.js", "js/chemiscope.min.js",
+        "loading-icon.svg", "css/chemischope-sphinx-gallery.css"
+    ]
+
+    # Copy each static file to the static directory in the build directory
+    for file_name in files_to_copy:
+        src_file = os.path.join(static_dir, file_name)
+        dst_file = os.path.join(build_dir, 'static', file_name)
+        try:
+            copy_file(src_file, dst_file)
+        except Exception as e:
+            print(f"Error copying {src_file} to {dst_file}: {e}")
