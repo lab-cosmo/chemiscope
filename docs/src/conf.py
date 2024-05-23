@@ -6,7 +6,6 @@ import sphinx_bootstrap_theme
 ROOT = os.path.abspath(os.path.join("..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "python"))
 import chemiscope  # noqa
-from chemiscope.sphinx_gallery import ChemiscopeScraper, copy_additional_files
 
 # -- Project information -----------------------------------------------------
 
@@ -26,6 +25,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_argparse_cli",
     "sphinx_gallery.gen_gallery",
+    "chemiscope.sphinx_gallery"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -41,7 +41,6 @@ sphinx_gallery_conf = {
     "examples_dirs": os.path.join(ROOT, "python", "examples"),
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
-    "image_scrapers": ('matplotlib', ChemiscopeScraper()),
     "within_subsection_order": 'ExampleTitleSortKey',
 }
 
@@ -72,4 +71,3 @@ templates_path = [os.path.join("..", "_templates")]
 
 def setup(app):
     app.add_css_file("css/chemiscope.css")
-    app.connect("build-finished", copy_additional_files)

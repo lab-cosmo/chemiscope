@@ -1,7 +1,3 @@
-"""
-TODO
-- jquery warning in console ?
-"""
 # -*- coding: utf-8 -*-
 import gzip
 import json

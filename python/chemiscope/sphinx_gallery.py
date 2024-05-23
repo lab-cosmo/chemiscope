@@ -1,17 +1,37 @@
 import os
 import shutil
 from PIL import Image
+import warnings
 
 from sphinx_gallery.scrapers import matplotlib_scraper
 
+warnings.filterwarnings("ignore", category=UserWarning, message='chemiscope.show only works inside a jupyter notebook')
+
+def setup(app):
+    setup_image_scrapers(app)
+    app.connect("build-finished", copy_additional_files)
+
+def setup_image_scrapers(app):
+    # Check if the 'image_scrapper' was already added to conf
+    sphinx_gallery_conf = app.config.sphinx_gallery_conf
+    if 'image_scrapers' not in sphinx_gallery_conf:
+        sphinx_gallery_conf['image_scrapers'] = []
+
+    # Add custom scrapper
+    sphinx_gallery_conf['image_scrapers'].append(ChemiscopeScraper())
+    app.config.sphinx_gallery_conf.update(sphinx_gallery_conf)
+
 class ChemiscopeScraper:
+    """Custom scraper for Chemiscope visualizations"""
+
     def __repr__(self):
         return "ChemiscopeScraper"
 
     def __call__(self, block, block_vars, gallery_conf):
+        """Process code blocks to generate chemiscope widget"""
         variables = block_vars.get("example_globals", {})
         iterator = block_vars.get("image_path_iterator")
-        widget = variables.get("___")
+        widget = variables.get("___") # TODO : fix to use multiple widgets on the same page
 
         if widget:
             # Save the dataset to json
@@ -47,6 +67,7 @@ class ChemiscopeScraper:
         return path
 
 def copy_additional_files(app, exception):
+    """Copy additional files after the build is finished"""
     if exception:
         return
 
@@ -64,6 +85,7 @@ def copy_additional_files(app, exception):
         print(f"Error copying files: {e}")
 
 def copy_files(src_dir, build_dir, gallery_dirs):
+    """Copy json files from source to build directory"""
     source_gallery_dir = os.path.join(src_dir, gallery_dirs)
     build_gallery_dir = os.path.join(build_dir, gallery_dirs)
     for root, _, files in os.walk(source_gallery_dir):
@@ -85,7 +107,6 @@ def copy_static_files(build_dir):
         "js/chemischope-sphinx-gallery.js", "js/chemiscope.min.js",
         "loading-icon.svg", "css/chemischope-sphinx-gallery.css"
     ]
-
     # Copy each static file to the static directory in the build directory
     for file_name in files_to_copy:
         src_file = os.path.join(static_dir, file_name)
