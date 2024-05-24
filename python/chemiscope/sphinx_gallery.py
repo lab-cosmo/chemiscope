@@ -3,6 +3,7 @@ import shutil
 from PIL import Image
 import warnings
 import uuid
+import sysconfig
 from chemiscope.jupyter import ChemiscopeWidget, StructureWidget, MapWidget
 
 from sphinx_gallery.scrapers import matplotlib_scraper
@@ -16,6 +17,7 @@ warnings.filterwarnings(
 
 def setup(app):
     setup_image_scrapers(app)
+    # app.connect("builder-inited", copy_chemiscope_min_js)
     app.connect("build-finished", copy_additional_files)
 
 
@@ -81,12 +83,15 @@ class ChemiscopeScraper:
         )
         with open(template_path, "r") as file:
             html_template = file.read()
+            
+        chemiscope_src_file = get_chemiscope_src_file()
 
         # Replace html placeholders with actual values
         return (
             html_template.replace("{{div_id}}", div_id)
             .replace("{{filename}}", filename)
             .replace("{{mode}}", mode)
+            # .replace("{{chemiscope_src_file}}", chemiscope_src_file)
         )
 
     def save_empty_png(self, path):
@@ -149,3 +154,27 @@ def copy_static_files(build_gallery_dir):
             copy_file(src_file, dst_file)
         except Exception as e:
             print(f"Error copying {src_file} to {dst_file}: {e}")
+
+
+def copy_chemiscope_min_js(_app):
+    src_file = get_chemiscope_src_file()
+    current_file_dir = os.path.dirname(__file__)
+    dst_file = os.path.join(current_file_dir, "static", "js", "chemiscope.min.js")
+    try:
+        copy_file(src_file, dst_file)
+    except Exception as e:
+        print(f"Error copying {src_file} to {dst_file}: {e}")
+
+
+def get_install_prefix():
+    return sysconfig.get_paths()["data"]
+
+
+def get_chemiscope_src_file():
+    prefix = get_install_prefix()
+    chemiscope_dir = os.path.join(prefix, "share", "chemiscope")
+    src_file = os.path.join(chemiscope_dir, "chemiscope.min.js")
+    if not os.path.exists(src_file):
+        print(f"Chemiscope file not found at: {src_file}")
+        return
+    return src_file

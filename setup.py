@@ -106,7 +106,7 @@ def run_npm_build():
             )
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
-
+        subprocess.run("npm run build", check=True, shell=True)
 
 if __name__ == "__main__":
     # we need to run npm build outside of the call to setup to be able to get
@@ -151,6 +151,12 @@ if __name__ == "__main__":
             (
                 "share/jupyter/labextensions/chemiscope/static",
                 glob.glob("python/jupyter/labextension/static/*"),
+            ),
+            (
+                "share/chemiscope",
+                [
+                    "dist/chemiscope.min.js"
+                ],
             ),
         ],
     )
