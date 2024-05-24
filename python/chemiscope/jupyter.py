@@ -14,6 +14,7 @@ from .version import __version__
 PACKAGE_NAME = "chemiscope"
 PACKAGE_VERSION = __version__
 
+
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
     _view_module_version = Unicode(PACKAGE_VERSION).tag(sync=True)

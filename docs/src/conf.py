@@ -25,7 +25,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_argparse_cli",
     "sphinx_gallery.gen_gallery",
-    "chemiscope.sphinx_gallery"
+    "chemiscope.sphinx_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -41,7 +41,7 @@ sphinx_gallery_conf = {
     "examples_dirs": os.path.join(ROOT, "python", "examples"),
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
-    "within_subsection_order": 'ExampleTitleSortKey',
+    "within_subsection_order": "ExampleTitleSortKey",
 }
 
 # -- Options for HTML output -------------------------------------------------

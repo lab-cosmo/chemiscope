@@ -1,7 +1,7 @@
 /**
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
-async function loadChemiscopeSphinxGallery(divId, filePath) {
+async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode) {
     // Handle warnings
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 

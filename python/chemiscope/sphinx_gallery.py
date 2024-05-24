@@ -3,6 +3,7 @@ import shutil
 from PIL import Image
 import warnings
 import uuid
+from chemiscope.jupyter import ChemiscopeWidget, StructureWidget, MapWidget
 
 from sphinx_gallery.scrapers import matplotlib_scraper
 
@@ -49,18 +50,27 @@ class ChemiscopeScraper:
             path_json = path_png.replace(".png", ".json.gz")
             widget.save(path_json)
 
+            if type(widget) is ChemiscopeWidget:
+                mode = "default"
+            elif type(widget) is StructureWidget:
+                mode = "structure"
+            elif type(widget) is MapWidget:
+                mode = "map"
+            else:
+                raise TypeError("Scraped widget is not a chemiscope widget")
+
             # Work around to use the sphynx-gallery generated name for the non-image extension (.json.gz)
             self.save_empty_png(path_png)
 
             # Use the custom html content
             widget._repr_html_ = lambda: self.generate_html_content(
-                os.path.basename(path_json)
+                os.path.basename(path_json), mode
             )
 
         # Use sphinx-gallery standard scrapper
         return matplotlib_scraper(block, block_vars, gallery_conf)
 
-    def generate_html_content(self, filename):
+    def generate_html_content(self, filename, mode="default"):
         # Generate a unique id for the chemiscope div
         div_id = f"sphinx-gallery-{uuid.uuid4()}"
 
@@ -73,8 +83,10 @@ class ChemiscopeScraper:
             html_template = file.read()
 
         # Replace html placeholders with actual values
-        return html_template.replace("{{div_id}}", div_id).replace(
-            "{{filename}}", filename
+        return (
+            html_template.replace("{{div_id}}", div_id)
+            .replace("{{filename}}", filename)
+            .replace("{{mode}}", mode)
         )
 
     def save_empty_png(self, path):
