@@ -115,7 +115,7 @@ function generateChemiscopeHTML(config, visualizerMode) {
                         <div id="${config.info}"></div>
                     </div>
                 </div>`;
-        case VISUALISER_MODE.STRUCTURE:
+        case VISUALISER_MODE.MAP:
             return `
                 <div style="display: flex; flex-wrap: wrap; margin: auto; max-width: 500px; height: 550px;">
                     <div style="flex: 1; padding-left: 10px; position: relative;">
@@ -124,7 +124,7 @@ function generateChemiscopeHTML(config, visualizerMode) {
                         <div id="${config.info}"></div>
                     </div>
                 </div>`;
-    }       
+    }
 }
 
 /**
