@@ -100,29 +100,29 @@ def copy_additional_files(app, exception):
     if exception:
         return
 
-    # TODO it might be not necessary to have the gallery_dirs configuration
     gallery_dirs = app.config.sphinx_gallery_conf.get("gallery_dirs")
     if gallery_dirs is None:
         print("'gallery_dirs' configuration is not defined.")
         return
 
+    src_gallery_dir = os.path.join(app.srcdir, gallery_dirs)
+    build_gallery_dir = os.path.join(app.outdir, gallery_dirs)
+
     # Copy files from source to build directory
     try:
-        copy_files(app.srcdir, app.outdir, gallery_dirs)
-        copy_static_files(app.outdir)
+        copy_files_from_folder(src_gallery_dir, build_gallery_dir, ".json.gz")
+        copy_static_files(build_gallery_dir)
     except Exception as e:
         print(f"Error copying files: {e}")
 
 
-def copy_files(src_dir, build_dir, gallery_dirs):
-    """Copy json files from source to build directory"""
-    source_gallery_dir = os.path.join(src_dir, gallery_dirs)
-    build_gallery_dir = os.path.join(build_dir, gallery_dirs)
-    for root, _, files in os.walk(source_gallery_dir):
+def copy_files_from_folder(src_dir, dest_dir, file_extension):
+    """Copy files from source to build directory"""
+    for root, _, files in os.walk(src_dir):
         for file in files:
-            if file.endswith(".json.gz"):
+            if file.endswith(file_extension):
                 src_file = os.path.join(root, file)
-                dst_file = os.path.join(build_gallery_dir, file)
+                dst_file = os.path.join(dest_dir, file)
                 copy_file(src_file, dst_file)
 
 
@@ -132,7 +132,7 @@ def copy_file(src_file, dst_file):
     shutil.copyfile(src_file, dst_file)
 
 
-def copy_static_files(build_dir):
+def copy_static_files(build_gallery_dir):
     current_file_dir = os.path.dirname(__file__)
     static_dir = os.path.join(current_file_dir, "static")
     files_to_copy = [
@@ -144,7 +144,7 @@ def copy_static_files(build_dir):
     # Copy each static file to the static directory in the build directory
     for file_name in files_to_copy:
         src_file = os.path.join(static_dir, file_name)
-        dst_file = os.path.join(build_dir, "static", file_name)
+        dst_file = os.path.join(build_gallery_dir, "static", file_name)
         try:
             copy_file(src_file, dst_file)
         except Exception as e:
