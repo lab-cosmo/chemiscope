@@ -42,7 +42,7 @@ class ChemiscopeScraper:
         iterator = block_vars.get("image_path_iterator")
         widget = variables.get(
             "___"
-        )  # TODO : fix to use multiple widgets on the same page
+        )
 
         if widget:
             # Save the dataset to json

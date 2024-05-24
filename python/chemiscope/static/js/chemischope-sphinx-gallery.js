@@ -1,7 +1,16 @@
 /**
+ * Enum of the modes
+ */
+const VISUALISER_MODE = {
+    DEFAULT: "default",
+    STRUCTURE: "structure",
+    MAP: "map"
+};
+
+/**
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
-async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode) {
+async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
     // Handle warnings
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
 
@@ -20,10 +29,13 @@ async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode) {
             structure: `${divId}-structure`,
         };
 
-        // Render Chemiscope Visualizer
+        // Prepare html for the visualizer
         const root = document.getElementById(divId);
         root.innerHTML = generateChemiscopeHTML(config);
-        await Chemiscope.DefaultVisualizer.load(config, dataset);
+
+        // Load widget
+        const visualiser = getVisualizer(visualizerMode);
+        await visualiser.load(config, dataset);
     }
 
     // Display errors
@@ -34,6 +46,20 @@ async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode) {
     // Hide loading
     finally {
         toggleLoadingVisible(divId, false);
+    }
+}
+
+/**
+ * Returns the appropriate Chemiscope visualizer based on the given mode
+ */
+function getVisualizer(mode) {
+    switch (mode) {
+        case VISUALISER_MODE.STRUCTURE:
+            return Chemiscope.StructureVisualizer;
+        case VISUALISER_MODE.MAP:
+            return Chemiscope.MapVisualizer;
+        default:
+            return Chemiscope.DefaultVisualizer;
     }
 }
 
