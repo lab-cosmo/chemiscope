@@ -7,3 +7,4 @@ sphinx-gallery
 numpy
 ipywidgets
 matplotlib
+ase
