@@ -23,10 +23,15 @@ release = chemiscope.__version__
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx_argparse_cli",
     "sphinx_gallery.gen_gallery",
     "chemiscope.sphinx_gallery",
 ]
+
+intersphinx_mapping = {
+    "sphinx_gallery": ("https://sphinx-gallery.github.io/stable/", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

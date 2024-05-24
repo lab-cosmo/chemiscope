@@ -27,3 +27,4 @@ extension, which can be used to explore a dataset directly inside a jupyter note
     python
     jupyter
     sharing
+    gallery
