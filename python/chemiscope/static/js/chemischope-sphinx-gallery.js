@@ -31,7 +31,7 @@ async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode = VIS
 
         // Prepare html for the visualizer
         const root = document.getElementById(divId);
-        root.innerHTML = generateChemiscopeHTML(config);
+        root.innerHTML = generateChemiscopeHTML(config, visualizerMode);
 
         // Load widget
         const visualiser = getVisualizer(visualizerMode);
@@ -92,18 +92,39 @@ function parseJsonWithNaN(text) {
 /**
  * Generates the HTML content for the Chemiscope visualizer
  */
-function generateChemiscopeHTML(config) {
-    return `
-        <div style="display: flex; flex-wrap: wrap;">
-            <div style="flex: 1; padding-right: 10px; position: relative;">
-                <div id="${config.meta}"></div>
-                <div id="${config.map}"></div>
-            </div>
-            <div style="flex: 1; padding-left: 10px; position: relative;">
-                <div id="${config.structure}" style="width: 100%; height: 100%;"></div>
-                <div id="${config.info}"></div>
-            </div>
-        </div>`;
+function generateChemiscopeHTML(config, visualizerMode) {
+    switch (visualizerMode) {
+        case VISUALISER_MODE.DEFAULT:
+            return `
+                <div style="display: flex; flex-wrap: wrap;">
+                    <div style="flex: 1; padding-right: 10px; position: relative;">
+                        <div id="${config.meta}"></div>
+                        <div id="${config.map}"></div>
+                    </div>
+                    <div style="flex: 1; padding-left: 10px; position: relative;">
+                        <div id="${config.structure}" style="width: 100%; height: 100%;"></div>
+                        <div id="${config.info}"></div>
+                    </div>
+                </div>`;
+        case VISUALISER_MODE.STRUCTURE:
+            return `
+                <div style="display: flex; flex-wrap: wrap; margin: auto; max-width: 500px; height: 550px;">
+                    <div style="flex: 1; padding-left: 10px; position: relative;">
+                        <div id="${config.meta}"></div>
+                        <div id="${config.structure}" style="width: 100%; height: 100%;"></div>
+                        <div id="${config.info}"></div>
+                    </div>
+                </div>`;
+        case VISUALISER_MODE.STRUCTURE:
+            return `
+                <div style="display: flex; flex-wrap: wrap; margin: auto; max-width: 500px; height: 550px;">
+                    <div style="flex: 1; padding-left: 10px; position: relative;">
+                        <div id="${config.meta}"></div>
+                        <div id="${config.map}" style="width: 100%; height: 100%;"></div>
+                        <div id="${config.info}"></div>
+                    </div>
+                </div>`;
+    }       
 }
 
 /**
