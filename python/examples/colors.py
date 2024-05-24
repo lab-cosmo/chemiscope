@@ -8,15 +8,24 @@ Note that the same parameters can be used with `chemiscope.show` to visualize an
 interactive widget in a Jupyter notebook.
 """
 
+# %%
+#
+
 import ase.io
 import numpy as np
 
 import chemiscope
 
-# loads a dataset of structures
+# %%
+#
+# loads a dataset of structures containing polarizability and dipole data
+
 frames = ase.io.read("data/alpha-mu.xyz", ":")
 
+# %%
+#
 # compute some scalar quantities to display as atom coloring
+
 polarizability = []
 alpha_eigenvalues = []
 anisotropy = []
@@ -42,10 +51,11 @@ for frame in frames:
 
         anisotropy.append(eigenvalues[2] - eigenvalues[0])
 
-
+# %%
+#
 # now we just write the chemiscope input file
-chemiscope.write_input(
-    "colors-example.json.gz",
+
+cs = chemiscope.show(
     frames=frames,
     # properties can be extracted from the ASE.Atoms frames
     properties={
@@ -71,3 +81,12 @@ chemiscope.write_input(
     # in the map panel, we must indicate that all atoms are environment centers
     environments=chemiscope.all_atomic_environments(frames),
 )
+cs
+
+
+# %%
+# 
+# also saves as a file
+
+cs.save("colors-example.json.gz")
+ 
