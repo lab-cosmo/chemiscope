@@ -46,7 +46,7 @@ sphinx_gallery_conf = {
     "examples_dirs": os.path.join(ROOT, "python", "examples"),
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
-    "within_subsection_order": "ExampleTitleSortKey",
+    "within_subsection_order": "FileNameSortKey",
 }
 
 # -- Options for HTML output -------------------------------------------------

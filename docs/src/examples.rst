@@ -10,6 +10,14 @@ consist in short Python scripts that demonstrate how to make a chemiscope
 viewer file that uses some particular features (e.g. atom coloring or shape
 visualization). 
 
+.. toctree::
+    
+    examples/base
+    examples/structure_map
+    examples/trajectory    
+    examples/colors
+    examples/shapes    
+
 .. raw:: html
 
     <h2>Basic usage</h2>
