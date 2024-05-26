@@ -31,12 +31,12 @@ In order to enable the display of chemiscope widgets in the documentation,
 assuming you already have a ``sphinx_gallery`` setup, you need to activate
 the custom scraper from the chemiscope module. 
 
-The `conf.py` file in the documentation should include the appropriate 
+The ``conf.py`` file in the documentation should include the appropriate 
 extension,
 
-```
-extensions = [ "chemiscope.sphinx_gallery", ]
-```
+.. code-block::
+
+    extensions = [ "chemiscope.sphinx_gallery", ]
 
 or add it to the existing list of extensions.
 
