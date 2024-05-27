@@ -17,7 +17,7 @@ warnings.filterwarnings(
 
 def setup(app):
     setup_image_scrapers(app)
-    # app.connect("builder-inited", copy_chemiscope_min_js)
+    app.connect("builder-inited", copy_chemiscope_min_js)
     app.connect("build-finished", copy_additional_files)
 
 
@@ -91,7 +91,6 @@ class ChemiscopeScraper:
             html_template.replace("{{div_id}}", div_id)
             .replace("{{filename}}", filename)
             .replace("{{mode}}", mode)
-            # .replace("{{chemiscope_src_file}}", chemiscope_src_file)
         )
 
     def save_empty_png(self, path):

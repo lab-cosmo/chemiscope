@@ -30,6 +30,7 @@ NPM_BUILD_INPUT = [
     # source files
     *glob.glob("src/**/*", recursive=True),
     *glob.glob("python/jupyter/src/**/*", recursive=True),
+    *glob.glob("python/chemiscope/**/*", recursive=True),
     # dependencies
     "package.json",
     "package-lock.json",
@@ -41,6 +42,8 @@ NPM_BUILD_INPUT = [
 NPM_BUILD_OUTPUT = [
     "python/jupyter/nbextension/chemiscope.min.js",
     "python/jupyter/labextension/package.json",
+    "python/jupyter/nbextension/chemiscope.min.js",
+    "python/chemiscope/chemiscope.min.js",
 ]
 
 
