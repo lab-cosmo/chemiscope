@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.11']
+        python-version: ['3.9', '3.12']
     steps:
       - uses: actions/checkout@v3
         # we need the full history to be able to get the chemiscope version with
@@ -48,33 +48,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install tox
+          pip install tox==4.14.0
       - name: Run Python tests
         run: tox
-
-  # Python linting
-  python-lint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: configure access to git repositories in package-lock.json
-        run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 black
-      - name: Lint with flake8
-        run: |
-          # ignore formatting, it will be checked by black
-          export FORMATTING_RULES="E101,E111,E114,E115,E116,E117,E12,E13,E2,E3,E401,E5,E70,W1,W2,W3,W5"
-          flake8 --ignore=$FORMATTING_RULES .
-      - name: Lint with black
-        run: |
-          black --check .

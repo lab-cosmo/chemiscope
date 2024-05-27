@@ -218,11 +218,11 @@ def show(
         from sklearn.decomposition import PCA
         import ase.io
 
-        pca = PCA(n_components = 3)
+        pca = PCA(n_components=3)
 
         frames = ase.io.read(...)
         properties = {
-            "PCA": pca.fit_transform(some_data)
+            "PCA": pca.fit_transform(some_data),
         }
 
         widget = chemiscope.show(frames, properties)
@@ -233,8 +233,8 @@ def show(
         # NB: due to how traitlet work, you should always set the value of
         # the `settings` property. Only the properties that are explicitly
         # indicated will be modified.
-        widget.settings = { "map": { "palette": "seismic" } }
-        widget.settings["map"]["palette"] = "viridis" # << does nothing!
+        widget.settings = {"map": {"palette": "seismic"}}
+        widget.settings["map"]["palette"] = "viridis"  # << does nothing!
 
         # Save the file for later use
         widget.save("dataset.json")
@@ -242,7 +242,10 @@ def show(
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
     if not _is_running_in_notebook():
-        warnings.warn("chemiscope.show only works inside a jupyter notebook")
+        warnings.warn(
+            "chemiscope.show only works inside a jupyter notebook",
+            stacklevel=2,
+        )
 
     has_metadata = meta is not None
     if not has_metadata:

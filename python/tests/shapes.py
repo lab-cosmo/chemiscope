@@ -1,9 +1,9 @@
 import unittest
 
 import ase
+import numpy as np
 
 import chemiscope
-import numpy as np
 
 CUBE_VERTICES = [
     [0, 0, 0],
