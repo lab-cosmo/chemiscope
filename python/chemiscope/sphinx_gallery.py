@@ -42,9 +42,7 @@ class ChemiscopeScraper:
         """Process code blocks to generate chemiscope widget"""
         variables = block_vars.get("example_globals", {})
         iterator = block_vars.get("image_path_iterator")
-        widget = variables.get(
-            "___"
-        )
+        widget = variables.get("___")
 
         if widget:
             # Save the dataset to json
@@ -61,7 +59,7 @@ class ChemiscopeScraper:
             else:
                 raise TypeError("Scraped widget is not a chemiscope widget")
 
-            # Work around to use the sphynx-gallery generated name for the non-image extension (.json.gz)
+            # Workaround to use sphinx-gallery generated name for non-image extension (.json.gz)
             self.save_empty_png(path_png)
 
             # Use the custom html content
@@ -83,7 +81,6 @@ class ChemiscopeScraper:
         )
         with open(template_path, "r") as file:
             html_template = file.read()
-            
 
         # Replace html placeholders with actual values
         return (
