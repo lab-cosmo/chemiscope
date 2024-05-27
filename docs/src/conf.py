@@ -1,9 +1,10 @@
-import sphinx_bootstrap_theme
 import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.join("..", "..")), "python"))
-import chemiscope  # noqa
+import sphinx_bootstrap_theme
+
+import chemiscope
+
+ROOT = os.path.abspath(os.path.join("..", ".."))
 
 # -- Project information -----------------------------------------------------
 

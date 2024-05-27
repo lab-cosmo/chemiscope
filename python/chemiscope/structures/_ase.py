@@ -1,6 +1,6 @@
 import warnings
-from inspect import signature
 from collections import Counter
+from inspect import signature
 
 import numpy as np
 
@@ -58,7 +58,8 @@ def _ase_list_atom_properties(frames):
     if len(extra) != 0:
         warnings.warn(
             "the following atomic properties properties are only defined "
-            f"for a subset of frames: {list(sorted(extra))}; they will be ignored"
+            f"for a subset of frames: {list(sorted(extra))}; they will be ignored",
+            stacklevel=2,
         )
 
     return all_names
@@ -89,7 +90,8 @@ def _ase_list_structure_properties(frames):
     if len(extra) != 0:
         warnings.warn(
             "the following structure properties properties are only defined "
-            f"for a subset of frames: {list(sorted(extra))}; they will be ignored"
+            f"for a subset of frames: {list(sorted(extra))}; they will be ignored",
+            stacklevel=2,
         )
 
     return all_names
@@ -163,7 +165,8 @@ def _ase_extract_properties(frames, only=None, environments=None):
         if name in properties:
             warnings.warn(
                 f"a property named '{name}' is defined for both atoms and structures, "
-                "the atom one will be ignored"
+                "the atom one will be ignored",
+                stacklevel=2,
             )
         else:
             properties[name] = values
@@ -277,7 +280,8 @@ def _remove_invalid_properties(properties, origin):
                 warnings.warn(
                     f"value '{value}' of type '{type(value)}' for the '{name}' "
                     f"property from {origin} is not convertible to float, array or "
-                    "string, this property will be ignored."
+                    "string, this property will be ignored.",
+                    stacklevel=2,
                 )
                 to_remove.append(name)
                 break
