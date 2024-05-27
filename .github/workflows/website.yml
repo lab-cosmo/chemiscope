@@ -28,12 +28,11 @@ jobs:
         run: npm ci
       - name: install python dependencies
         run: |
-          python3 -m pip install -r docs/requirements.txt
-          python3 -m pip install beautifulsoup4 requests
+          python3 -m pip install tox==4.14.0
       - run: npm run build
       - run: npm run download-examples
-      - run: cd docs && make html
-      - run: python3 utils/generate_standalone.py -o chemiscope_standalone.html
+      - run: tox -e docs
+      - run: tox -e generate-standalone
       - name: assemble full website
         run: |
           cp -r app/ gh-pages/
@@ -42,7 +41,7 @@ jobs:
           cp -r docs/build/html/ gh-pages/docs/
           rm -f gh-pages/examples/.gitignore
       - name: deploy website to gh-pages
-        # only deploy website from main 
+        # only deploy website from main branch
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
