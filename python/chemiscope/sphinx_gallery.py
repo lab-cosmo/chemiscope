@@ -84,7 +84,6 @@ class ChemiscopeScraper:
         with open(template_path, "r") as file:
             html_template = file.read()
             
-        chemiscope_src_file = get_chemiscope_src_file()
 
         # Replace html placeholders with actual values
         return (

@@ -14,7 +14,6 @@ rm -rf MANIFEST
 
 rm -rf python/jupyter/labextension
 rm -rf python/jupyter/nbextension
-rm -rf python/chemiscope/
 
 find . -name "*.egg-info" -exec rm -rf "{}" +
 find . -name "__pycache__" -exec rm -rf "{}" +
