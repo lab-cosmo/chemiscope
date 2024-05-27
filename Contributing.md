@@ -75,7 +75,10 @@ Run tests and lints (we use [eslint] and [prettier] to ensure a consistent
 coding style):
 
 ```bash
+# JavaScript tests & linting
 npm test
+# Python tests & linting
+tox
 ```
 
 We suggest that you configure your code editor to automatically re-format the
