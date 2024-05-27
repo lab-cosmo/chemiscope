@@ -26,7 +26,10 @@ def _chemiscope_input_parser():
         "--properties",
         type=str,
         default="",
-        help="comma-separated list of properties that should be extracted. defaults to all",
+        help=(
+            "comma-separated list of properties that should be extracted. "
+            "defaults to all"
+        ),
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -63,7 +66,9 @@ def _chemiscope_input_parser():
         "--settings",
         type=str,
         default="",
-        help="visualization settings, as a JSON string, following the chemiscope format",
+        help=(
+            "visualization settings, as a JSON string, following the chemiscope format"
+        ),
     )
     return parser
 

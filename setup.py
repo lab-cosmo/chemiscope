@@ -103,7 +103,8 @@ def run_npm_build():
             # skip building jupyterlab if it is not installed on the developer
             # machine
             warnings.warn(
-                "skipping the lab extension build since jupyterlab is not installed"
+                "skipping the lab extension build since jupyterlab is not installed",
+                stacklevel=1,
             )
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)

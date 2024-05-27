@@ -7,8 +7,8 @@ properties in the structure panel, using different types of
 predefined shapes (ellipsoids for tensors, arrows for vectors).
 The example also shows how to define custom shapes.
 
-Note that the same parameters can be used with `chemiscope.show`
-to visualize an interactive widget in a Jupyter notebook.
+Note that the same parameters can be used with `chemiscope.show` to visualize an
+interactive widget in a Jupyter notebook.
 """
 
 # %%

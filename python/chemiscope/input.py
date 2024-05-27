@@ -62,13 +62,17 @@ def create_input(
     .. code-block:: python
 
         meta = {
-            'name': '...',         # str, dataset name
-            'description': '...',  # str, dataset description
-            'authors': [           # list of str, dataset authors, OPTIONAL
-                '...',
+            # str, dataset name
+            "name": "...",
+            # str, dataset description
+            "description": "...",
+            # list of str, dataset authors, OPTIONAL
+            "authors": [
+                "...",
             ],
-            'references': [        # list of str, references for this dataset,
-                '...',             # OPTIONAL
+            # list of str, references for this dataset, OPTIONAL
+            "references": [
+                "...",
             ],
         }
 
@@ -89,13 +93,13 @@ def create_input(
     .. code-block:: python
 
         properties = {
-            'cheese': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
+            "cheese": {
+                "target": "atom",
+                "values": np.zeros((300, 4)),
                 # optional: property unit
-                'units': 'random / fs',
+                "units": "random / fs",
                 # optional: property description
-                'description': 'a random property for example',
+                "description": "a random property for example",
             }
         }
 
@@ -108,7 +112,7 @@ def create_input(
     .. code-block:: python
 
         properties = {
-            'cheese':  np.zeros((300, 4)),
+            "cheese": np.zeros((300, 4)),
         }
 
     In this case, the type of property (structure or atom) would be deduced by comparing
@@ -125,14 +129,14 @@ def create_input(
     .. code-block:: python
 
         properties = {
-            'cheese': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
+            "cheese": {
+                "target": "atom",
+                "values": np.zeros((300, 4)),
                 # optional: property unit
-                'units': 'random / fs',
+                "units": "random / fs",
                 # optional: property description
-                'description': 'a random property for example',
-                'parameters': ['origin'],
+                "description": "a random property for examples",
+                "parameters": ["origin"],
             }
         }
 
@@ -143,15 +147,15 @@ def create_input(
     .. code-block:: python
 
         parameters = {
-            'origin' : {
+            "origin": {
                 # an array of numbers containing the values of the parameter
                 # the size should correspond to the second dimension
                 # of the corresponding multidimensional property
-                'values': [0, 1, 2, 3],
+                "values": [0, 1, 2, 3],
                 # optional free-form description of the parameter as a string
-                'name': 'a short description of this parameter',
+                "name": "a short description of this parameter",
                 # optional units of the values in the values array
-                'units': 'eV',
+                "units": "eV",
             }
         }
 
@@ -166,8 +170,8 @@ def create_input(
 
         shapes = {
             "shape name": {
-                "kind" : "sphere",
-                "parameters" : shape_parameters
+                "kind": "sphere",
+                "parameters": shape_parameters,
             }
         }
 
@@ -176,9 +180,9 @@ def create_input(
     .. code-block:: python
 
         parameters = {
-            "global" : global_parameters,
-            "structure" : [ structure_1, structure_2, .... ],
-            "atom"" : [ atom_1, atom_2, .... ]
+            "global": global_parameters,
+            "structure": [structure_1, structure_2, ...],
+            "atom": [atom_1, atom_2, ...],
         }
 
     Each of these can contain some or all of the parameters associated with each shape,
@@ -202,12 +206,12 @@ def create_input(
         # general parameters
         {
             # centering (defaults to origin for structure, atom position for atom)
-            "position" : [float, float, float],
+            "position": [float, float, float],
             # scaling of the size of the shape
-            "scale" : float,
+            "scale": float,
             # optional, given as quaternion in (x, y, z, w) format
-            "orientation" [float, float, float, float],
-            "color" : string | hex code # e.g. 0xFF0000
+            "orientation": [float, float, float, float],
+            "color": string | hex_code,  # e.g. 0xFF0000
         }
 
         # "kind" : "sphere"
@@ -221,33 +225,35 @@ def create_input(
         }
 
         # "kind" : "cylinder"
-        {   # "orientation" is redundant and hence ignored
-            "vector" : [float, float, float],  # orientation and shape of the cylinder
+        {
+            # "orientation" is redundant and hence ignored
+            "vector": [float, float, float],  # orientation and shape of the cylinder
             # the tip of the cylinder is at the end of the segment.
-            "radius" : float,
+            "radius": float,
         }
 
         # "kind" : "arrow"
-        {   # "orientation" is redundant and hence ignored
-            "vector" : [float, float, float],  # orientation and shape of the arrow
-            "baseRadius" : float,
-            "headRadius" : float,
+        {
+            # "orientation" is redundant and hence ignored
+            "vector": [float, float, float],  # orientation and shape of the arrow
+            "baseRadius": float,
+            "headRadius": float,
             # the tip of the arrow is at the end of the segment.
             # It will extend past the base point if the arrow is not long enough
-            "headLength" : float,
+            "headLength": float,
         }
 
         # "kind" : "custom"
         {
-            "vertices": [ # list of vertices
+            "vertices": [  # list of vertices
                 [float, float, float],
-                ...
+                ...,
             ],
             # mesh triangulation (optional); computed via convex triangulation
             # where omitted
             "simplices": [
                 [int, int, int],  # indices refer to the list of vertices
-                ...
+                ...,
             ],
         }
 
@@ -452,22 +458,22 @@ def write_input(
 
         import chemiscope
 
-        frames = ase.io.read('trajectory.xyz', ':')
+        frames = ase.io.read("trajectory.xyz", ":")
 
         # example property 1: list containing the energy of each structure,
         # from calculations performed beforehand
-        energies = np.loadtxt('energies.txt')
+        energies = np.loadtxt("energies.txt")
 
         # example property 2: PCA projection computed using sklearn.
         # X contains a multi-dimensional descriptor of the structure
-        X = np.array( ... )
+        X = np.array(...)
         pca = sklearn.decomposition.PCA(n_components=3).fit_transform(X)
 
         # if the ASE frames also contain additional data, they can be easily
         # extracted as a dictionary using a simple utility function
         frame_properties = chemiscope.extract_properties(
             frames,
-            only=["temperature", "classification"]
+            only=["temperature", "classification"],
         )
 
         # alternatively, properties can also be defined manually
@@ -485,7 +491,7 @@ def write_input(
         }
 
         # additional multidimensional properties to be plotted
-        dos = np.loadtxt(...) # load the 2D data
+        dos = np.loadtxt(...)  # load the 2D data
         dos_energy_grid = np.loadtxt(...)
         multidimensional_properties = {
             "DOS": {
@@ -591,8 +597,8 @@ def quick_settings(
     size="",
     symbol="",
     trajectory=False,
-    map_settings={},
-    structure_settings={},
+    map_settings=None,
+    structure_settings=None,
 ):
     """A utility function to return a ``settings`` dictionary with the most basic
     options for a chemiscope viewer (e.g. what to show on the axes).
@@ -619,8 +625,14 @@ def quick_settings(
             structure viewer (following the chemiscope settings schema).
     """
 
-    return {
-        "map": {
+    if map_settings is None:
+        map_settings = {}
+
+    if structure_settings is None:
+        structure_settings = {}
+
+    map_settings.update(
+        {
             "x": {"property": x},
             "y": {"property": y},
             "z": {"property": z},
@@ -628,14 +640,18 @@ def quick_settings(
             "size": {"property": size},
             "symbol": symbol,
         }
-        | map_settings,
-        "structure": [
-            {
-                "keepOrientation": trajectory,
-                "playbackDelay": 10 if trajectory else 700,
-            }
-            | structure_settings
-        ],
+    )
+
+    structure_settings.update(
+        {
+            "keepOrientation": trajectory,
+            "playbackDelay": 10 if trajectory else 700,
+        }
+    )
+
+    return {
+        "map": map_settings,
+        "structure": [structure_settings],
     }
 
 
@@ -657,7 +673,7 @@ def _normalize_metadata(meta):
 
     for key in meta.keys():
         if key not in ["name", "description", "authors", "references"]:
-            warnings.warn(f"ignoring unexpected metadata: {key}")
+            warnings.warn(f"ignoring unexpected metadata: {key}", stacklevel=2)
 
     return cleaned
 
@@ -675,32 +691,32 @@ def _expand_properties(short_properties, n_structures, n_atoms):
     .. code-block:: python
 
         properties = {
-            'apple': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
-                'units': 'random / fs',
-            }
-            'orange' : np.zeros((100, 42)),
-            'banana' : np.zeros((300, 17)),
+            "apple": {
+                "target": "atom",
+                "values": np.zeros((300, 4)),
+                "units": "random / fs",
+            },
+            "orange": np.zeros((100, 42)),
+            "banana": np.zeros((300, 17)),
         }
 
     will be converted to
     .. code-block:: python
 
         properties = {
-            'apple': {
-                'target': 'atom',
-                'values': np.zeros((300, 4)),
-                'units': 'random / fs',
-            }
-            'orange': {
-                'target': 'structure'
-                'values': np.zeros((100, 42)),
-            }
-            'banana': {
-                'target': 'atom',
-                'values': np.zeros((300, 17)),
-           }
+            "apple": {
+                "target": "atom",
+                "values": np.zeros((300, 4)),
+                "units": "random / fs",
+            },
+            "orange": {
+                "target": "structure",
+                "values": np.zeros((100, 42)),
+            },
+            "banana": {
+                "target": "atom",
+                "values": np.zeros((300, 17)),
+            },
         }
 
     assuming that number of structures in the dataset is 100 and
@@ -720,7 +736,8 @@ def _expand_properties(short_properties, n_structures, n_atoms):
                 warnings.warn(
                     f"The target of the property '{key}' is ambiguous because "
                     "there is the same number of atoms and structures. "
-                    "We will assume target=structure"
+                    "We will assume target=structure",
+                    stacklevel=2,
                 )
 
             dict_property = {"values": value}
@@ -870,7 +887,7 @@ def _validate_property(name, property):
 
     for key in property.keys():
         if key not in ["target", "values", "description", "units", "parameters"]:
-            warnings.warn(f"ignoring unexpected property key: {key}")
+            warnings.warn(f"ignoring unexpected property key: {key}", stacklevel=2)
 
 
 def _typetransform(data, name):
@@ -888,7 +905,14 @@ def _typetransform(data, name):
         return list(map(lambda u: u.decode("utf8"), data))
     else:
         try:
-            return [float(value) for value in data]
+            values = []
+            for value in data:
+                if isinstance(value, np.ndarray) and value.shape == (1,):
+                    values.append(float(value[0]))
+                else:
+                    values.append(float(value))
+
+            return values
         except Exception:
             raise Exception(
                 f"unsupported type in property '{name}' values: "
@@ -960,7 +984,7 @@ def _validate_shapes(structures, shapes):
                 _check_valid_shape(shape)
                 atom_counter += 1
 
-    for key, shape in shapes.items():
+    for shape in shapes.values():
         if (
             shape["kind"] == "custom"
             and "vertices" in shape["parameters"]

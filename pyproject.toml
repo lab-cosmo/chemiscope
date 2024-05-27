@@ -60,15 +60,10 @@ namespaces = false
 
 ### ======================================================================== ###
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-
-[testenv]
-usedevelop = true
-deps =
-    ase
-
-commands =
-    python -m unittest discover -p "*.py" -s python/tests
-"""
+[tool.isort]
+skip = "__init__.py"
+profile = "black"
+line_length = 88
+indent = 4
+include_trailing_comma = true
+known_first_party = "chemiscope"

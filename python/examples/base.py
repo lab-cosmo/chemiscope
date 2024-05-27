@@ -12,6 +12,7 @@ Use `chemiscope.show` in a Jupyter notebook for interactive visualization
 #
 
 import ase.io
+
 import chemiscope
 
 # %%
