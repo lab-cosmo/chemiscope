@@ -78,7 +78,7 @@ cs = chemiscope.show(
         ],
     },
     # the properties we want to visualise are atomic properties - in order to view them
-    # in the map panel, we must indicate the list of environments (all atoms, in this case)
+    # in map panel we must indicate the list of environments (all atoms in this case)
     environments=chemiscope.all_atomic_environments(frames),
 )
 cs

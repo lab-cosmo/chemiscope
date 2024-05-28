@@ -16,10 +16,11 @@ widget in a Jupyter notebook.
 
 import ase.io
 import numpy as np
+
 import chemiscope
 
 # %%
-## Load structures
+# Load structures
 
 frames = ase.io.read("data/trajectory.xyz", ":")
 

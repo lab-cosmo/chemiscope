@@ -88,7 +88,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                     box-sizing: border-box;
                     text-align: center;"
                 >
-                    Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
+                    Interactive chemiscope widgets can only be visualized
+                    inside a jupyter notebook.
                 </div>
             """
         else:

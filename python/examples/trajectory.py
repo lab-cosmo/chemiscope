@@ -14,8 +14,8 @@ widget in a Jupyter notebook.
 
 import ase.io
 import numpy as np
-import chemiscope
 
+import chemiscope
 
 # %%
 #

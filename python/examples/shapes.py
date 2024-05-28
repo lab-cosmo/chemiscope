@@ -17,6 +17,7 @@ interactive widget in a Jupyter notebook.
 import ase.io
 import numpy as np
 from scipy.spatial.transform import Rotation
+
 import chemiscope
 
 # %%

@@ -1,12 +1,13 @@
 import os
 import shutil
-from PIL import Image
-import warnings
-import uuid
 import sysconfig
-from chemiscope.jupyter import ChemiscopeWidget, StructureWidget, MapWidget
+import uuid
+import warnings
 
+from PIL import Image
 from sphinx_gallery.scrapers import matplotlib_scraper
+
+from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
 
 warnings.filterwarnings(
     "ignore",
@@ -59,7 +60,7 @@ class ChemiscopeScraper:
             else:
                 raise TypeError("Scraped widget is not a chemiscope widget")
 
-            # Workaround to use sphinx-gallery generated name for non-image extension (.json.gz)
+            # Workaround to use sphinx-gallery generated name for non-image extension
             self.save_empty_png(path_png)
 
             # Use the custom html content
