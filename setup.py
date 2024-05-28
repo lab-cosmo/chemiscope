@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+import shutil
 import warnings
 
 from setuptools import setup
@@ -41,7 +42,7 @@ NPM_BUILD_INPUT = [
 NPM_BUILD_OUTPUT = [
     "python/jupyter/nbextension/chemiscope.min.js",
     "python/jupyter/labextension/package.json",
-    "python/chemiscope/chemiscope.min.js",
+    "python/chemiscope/sphinx/static/js/chemiscope.min.js",
 ]
 
 
@@ -57,7 +58,7 @@ def needs_npm_build():
                 os.path.getmtime(file), last_output_modification_time
             )
         else:
-            # if the file does not exists, we need to build
+            # if the file does not exist, we need to build
             return True
 
     last_input_modification_time = -1
@@ -66,7 +67,7 @@ def needs_npm_build():
             last_input_modification_time = max(
                 os.path.getmtime(file), last_input_modification_time
             )
-        # if the file does not exists, we might be building a sdist which already
+        # if the file does not exist, we might be building a sdist which already
         # contains the pre-built extensions
 
     return last_output_modification_time < last_input_modification_time
@@ -76,7 +77,7 @@ def run_npm_build():
     """Build the JavaScript code required by the jupyter widget using npm"""
     root = os.path.dirname(os.path.realpath(__file__))
 
-    # This file does not exists when building a wheel (for pip installation)
+    # This file does not exist when building a wheel (for pip installation)
     # from a sdist. This is fine since the sdist already contains the required
     # js files.
     if os.path.exists(os.path.join(root, "package.json")):
@@ -107,8 +108,15 @@ def run_npm_build():
                 stacklevel=1,
             )
 
+            # still build the main code for the sphinx extension
+            subprocess.run("npm run build", check=True, shell=True)
+
+        shutil.copyfile(
+            src="dist/chemiscope.min.js",
+            dst="python/chemiscope/sphinx/static/js/chemiscope.min.js",
+        )
+
         subprocess.run("npm run build:nbextension", check=True, shell=True)
-        subprocess.run("npm run build", check=True, shell=True)
 
 
 if __name__ == "__main__":
@@ -125,6 +133,7 @@ if __name__ == "__main__":
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
         },
+        package_data={"chemiscope": ["chemiscope/sphinx/static/*"]},
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (
@@ -154,10 +163,6 @@ if __name__ == "__main__":
             (
                 "share/jupyter/labextensions/chemiscope/static",
                 glob.glob("python/jupyter/labextension/static/*"),
-            ),
-            (
-                "share/chemiscope",
-                ["dist/chemiscope.min.js"],
             ),
         ],
     )

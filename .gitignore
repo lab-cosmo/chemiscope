@@ -1,7 +1,7 @@
 node_modules/
 dist/
 build/
-standalone.html
+chemiscope_standalone.html
 
 .tox/
 __pycache__/

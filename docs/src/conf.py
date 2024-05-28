@@ -25,7 +25,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_argparse_cli",
     "sphinx_gallery.gen_gallery",
-    "chemiscope.sphinx_gallery",
+    "chemiscope.sphinx",
 ]
 
 intersphinx_mapping = {
