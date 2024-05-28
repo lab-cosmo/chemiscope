@@ -2,9 +2,9 @@
 import glob
 import json
 import os
+import shutil
 import subprocess
 import sys
-import shutil
 import warnings
 
 from setuptools import setup
