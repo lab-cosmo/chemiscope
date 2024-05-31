@@ -10,12 +10,16 @@ class ChemiscopeScraper:
         return "ChemiscopeScraper"
 
     def __call__(self, _block, block_vars, gallery_conf):
+        # Get a target directory with the source files
         examples_data_dir = gallery_conf.get("examples_dirs")
         target_dir = os.path.join(examples_data_dir, "data")
         os.makedirs(target_dir, exist_ok=True)
+
+        # Create an iterator to generate the file name
         iterator = FilePathIterator(target_dir)
-        variables = block_vars.get("example_globals", {})
-        widget = variables.get("___")
+
+        # Retrieve the chemiscope widget from block variables
+        widget = block_vars.get("example_globals", {}).get("___")
 
         if widget:
             dataset_file_path = iterator.next()

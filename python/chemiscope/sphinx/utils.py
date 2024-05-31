@@ -4,6 +4,7 @@ import sysconfig
 
 
 def copy_additional_files(app, exception):
+    """Copy datasets files required for the loading chemiscope widget"""
     if exception:
         return
     gallery_dirs = app.config.sphinx_gallery_conf.get("gallery_dirs")
@@ -18,6 +19,7 @@ def copy_additional_files(app, exception):
 
 
 def copy_files_from_folder(src_dir, dest_dir, file_extension):
+    """Copy files with a specific extension from source to destination"""
     for root, _, files in os.walk(src_dir):
         for file in files:
             if file.endswith(file_extension):
@@ -27,12 +29,14 @@ def copy_files_from_folder(src_dir, dest_dir, file_extension):
 
 
 def copy_file(src_file, dst_file):
+    """Copy one file from source to destination"""
     dst_dir = os.path.dirname(dst_file)
     os.makedirs(dst_dir, exist_ok=True)
     shutil.copyfile(src_file, dst_file)
 
 
 def copy_static_files(build_gallery_dir):
+    """Copy static files required for the loading chemiscope widget"""
     current_file_dir = os.path.dirname(__file__)
     static_dir = os.path.join(current_file_dir, "static")
     files_to_copy = [
@@ -51,6 +55,7 @@ def copy_static_files(build_gallery_dir):
 
 
 def copy_chemiscope_min_js(_app):
+    """Copy the chemiscope.min.js  to the static directory"""
     src_file = get_chemiscope_src_file()
     current_file_dir = os.path.dirname(__file__)
     dst_file = os.path.join(current_file_dir, "static", "js", "chemiscope.min.js")
@@ -61,6 +66,7 @@ def copy_chemiscope_min_js(_app):
 
 
 def get_chemiscope_src_file():
+    """Find the path of get the path of the chemiscope.min.js"""
     prefix = get_install_prefix()
     chemiscope_dir = os.path.join(prefix, "share", "chemiscope")
     src_file = os.path.join(chemiscope_dir, "chemiscope.min.js")
@@ -71,4 +77,5 @@ def get_chemiscope_src_file():
 
 
 def get_install_prefix():
+    """Get the installation prefix directory"""
     return sysconfig.get_paths()["data"]
