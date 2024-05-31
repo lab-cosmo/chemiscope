@@ -96,32 +96,32 @@ function generateChemiscopeHTML(config, visualizerMode) {
     switch (visualizerMode) {
         case VISUALISER_MODE.DEFAULT:
             return `
-                <div style="display: flex; flex-wrap: wrap;">
-                    <div style="flex: 1; padding-right: 10px; position: relative;">
+                <div class="visualizer-container">
+                    <div class="visualizer-column-right">
                         <div id="${config.meta}"></div>
                         <div id="${config.map}"></div>
                     </div>
-                    <div style="flex: 1; padding-left: 10px; position: relative;">
-                        <div id="${config.structure}" style="width: 100%; height: 100%;"></div>
-                        <div id="${config.info}"></div>
+                    <div class="visualizer-column">
+                        <div id="${config.structure}" class="visualizer-item"></div>
+                        <div id="${config.info}" class="visualizer-info"></div>
                     </div>
                 </div>`;
         case VISUALISER_MODE.STRUCTURE:
             return `
-                <div style="display: flex; flex-wrap: wrap; margin: auto; max-width: 500px; height: 550px;">
-                    <div style="flex: 1; padding-left: 10px; position: relative;">
+                <div class="visualizer-container visualizer-structure-mode">
+                    <div class="visualizer-column">
                         <div id="${config.meta}"></div>
-                        <div id="${config.structure}" style="width: 100%; height: 100%;"></div>
-                        <div id="${config.info}"></div>
+                        <div id="${config.structure}" class="visualizer-item"></div>
+                        <div id="${config.info}" class="visualizer-info"></div>
                     </div>
                 </div>`;
         case VISUALISER_MODE.MAP:
             return `
-                <div style="display: flex; flex-wrap: wrap; margin: auto; max-width: 500px; height: 550px;">
-                    <div style="flex: 1; padding-left: 10px; position: relative;">
+                <div class="visualizer-container visualizer-map-mode">
+                    <div class="visualizer-column">
                         <div id="${config.meta}"></div>
-                        <div id="${config.map}" style="width: 100%; height: 100%;"></div>
-                        <div id="${config.info}"></div>
+                        <div id="${config.map}" class="visualizer-item"></div>
+                        <div id="${config.info}" class="visualizer-info"></div>
                     </div>
                 </div>`;
     }
