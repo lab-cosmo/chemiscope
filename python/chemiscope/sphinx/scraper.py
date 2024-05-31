@@ -1,5 +1,7 @@
 import os
+
 from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
+
 from .file_path_iterator import FilePathIterator
 
 

@@ -1,4 +1,5 @@
 import os
+
 from sphinx.errors import ExtensionError
 
 

@@ -1,6 +1,7 @@
-from docutils import nodes
 import os
 import uuid
+
+from docutils import nodes
 
 
 class chemiscope(nodes.Element):
