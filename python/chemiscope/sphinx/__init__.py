@@ -7,6 +7,7 @@ from .nodes import (
     depart_chemiscope_latex,
 )
 from .utils import copy_chemiscope_min_js, copy_additional_files
+from .scraper import ChemiscopeScraper  # noqa: F401
 
 
 def setup(app):
