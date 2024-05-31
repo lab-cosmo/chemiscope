@@ -3,6 +3,7 @@ import os
 import sphinx_bootstrap_theme
 
 import chemiscope
+from chemiscope.sphinx import ChemiscopeScraper
 
 ROOT = os.path.abspath(os.path.join("..", ".."))
 
@@ -46,6 +47,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
     "within_subsection_order": "FileNameSortKey",
+    "image_scrapers": ("matplotlib", ChemiscopeScraper()),
 }
 
 # -- Options for HTML output -------------------------------------------------
