@@ -40,10 +40,10 @@ def copy_static_files(build_gallery_dir):
     current_file_dir = os.path.dirname(__file__)
     static_dir = os.path.join(current_file_dir, "static")
     files_to_copy = [
-        "js/chemischope-sphinx-gallery.js",
+        "js/chemiscope-sphinx-gallery.js",
         "js/chemiscope.min.js",
         "loading-icon.svg",
-        "css/chemischope-sphinx-gallery.css",
+        "css/chemiscope-sphinx-gallery.css",
     ]
     for file_name in files_to_copy:
         src_file = os.path.join(static_dir, file_name)

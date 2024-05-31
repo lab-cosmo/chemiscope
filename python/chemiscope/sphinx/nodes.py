@@ -30,7 +30,7 @@ def generate_html_content(filename, mode="default"):
     # Read the template html file
     current_folder_path = os.path.dirname(__file__)
     template_path = os.path.join(
-        current_folder_path, "static", "html", "chemischope-sphinx-gallery.html"
+        current_folder_path, "static", "html", "chemiscope-sphinx-gallery.html"
     )
     with open(template_path, "r") as file:
         html_template = file.read()
