@@ -1,6 +1,6 @@
 import os
-from PIL import Image
 from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
+from .file_path_iterator import FilePathIterator
 
 
 class ChemiscopeScraper:
@@ -9,15 +9,17 @@ class ChemiscopeScraper:
     def __repr__(self):
         return "ChemiscopeScraper"
 
-    def __call__(self, block, block_vars, gallery_conf):
+    def __call__(self, _block, block_vars, gallery_conf):
+        examples_data_dir = gallery_conf.get("examples_dirs")
+        target_dir = os.path.join(examples_data_dir, "data")
+        os.makedirs(target_dir, exist_ok=True)
+        iterator = FilePathIterator(target_dir)
         variables = block_vars.get("example_globals", {})
-        iterator = block_vars.get("image_path_iterator")
         widget = variables.get("___")
 
         if widget:
-            path_png = iterator.next()
-            path_json = path_png.replace(".png", ".json.gz")
-            widget.save(path_json)
+            dataset_file_path = iterator.next()
+            widget.save(dataset_file_path)
 
             if type(widget) is ChemiscopeWidget:
                 mode = "default"
@@ -28,16 +30,9 @@ class ChemiscopeScraper:
             else:
                 raise TypeError("Scraped widget is not a chemiscope widget")
 
-            self.save_empty_png(path_png)
-
             return f""".. chemiscope::
-                :filename: {os.path.basename(path_json)}
+                :filename: {os.path.basename(dataset_file_path)}
                 :mode: {mode}
             """
         else:
             return ""
-
-    def save_empty_png(self, path):
-        img = Image.new("RGBA", (1, 1), color=(0, 0, 0, 0))
-        img.save(path)
-        return path

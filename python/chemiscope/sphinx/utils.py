@@ -7,10 +7,8 @@ def copy_additional_files(app, exception):
     if exception:
         return
     gallery_dirs = app.config.sphinx_gallery_conf.get("gallery_dirs")
-    if gallery_dirs is None:
-        print("'gallery_dirs' configuration is not defined.")
-        return
-    src_gallery_dir = os.path.join(app.srcdir, gallery_dirs)
+    examples_dirs = app.config.sphinx_gallery_conf.get("examples_dirs")
+    src_gallery_dir = os.path.join(examples_dirs, "data")
     build_gallery_dir = os.path.join(app.outdir, gallery_dirs)
     try:
         copy_files_from_folder(src_gallery_dir, build_gallery_dir, ".json.gz")
