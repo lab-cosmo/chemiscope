@@ -17,14 +17,16 @@ def depart_chemiscope_latex(self, node):
 
 
 def visit_chemiscope_html(self, node):
-    self.body.append(generate_html_content(node["filename"], node["mode"]))
+    self.body.append(
+        generate_html_content(node["filename"], node["gallery_dirs"], node["mode"])
+    )
 
 
 def depart_chemiscope_html(self, node):
     pass
 
 
-def generate_html_content(filename, mode="default"):
+def generate_html_content(filename, gallery_dirs, mode="default"):
     # Generate a unique id for the chemiscope div
     div_id = f"sphinx-gallery-{uuid.uuid4()}"
 
@@ -41,4 +43,5 @@ def generate_html_content(filename, mode="default"):
         html_template.replace("{{div_id}}", div_id)
         .replace("{{filename}}", filename)
         .replace("{{mode}}", mode)
+        .replace("{{gallery_dirs}}", gallery_dirs)
     )

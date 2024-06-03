@@ -22,7 +22,7 @@ class ChemiscopeScraper:
     def __repr__(self):
         return "ChemiscopeScraper"
 
-    def __call__(self, _block, block_vars, _gallery_conf):
+    def __call__(self, _block, block_vars, gallery_conf):
         # Retrieve the chemiscope widget from block variables
         widget = block_vars.get("example_globals", {}).get("___")
         mode = self.get_widget_mode(widget)
@@ -30,10 +30,12 @@ class ChemiscopeScraper:
         if mode is not None:
             dataset_file_path = self.iterator.next()
             widget.save(dataset_file_path)
+            gallery_dirs = gallery_conf.get("gallery_dirs")
 
             return f""".. chemiscope::
                 :filename: {os.path.basename(dataset_file_path)}
                 :mode: {mode}
+                :gallery_dirs: {gallery_dirs}
             """
         else:
             return ""
