@@ -109,6 +109,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "examples",                     # destination directory which will contain the generated docs, will be generated automatically
     "filename_pattern": ".*",                       # the pattern to find the files to be used for docs generation
     "within_subsection_order": "FileNameSortKey",   # order of the cells and output
+    "image_scrapers": ("matplotlib", ChemiscopeScraper(examples_dirs)),  # scraper to handle the chemiscope visualisation
 }
 ```
 ## License and contributions

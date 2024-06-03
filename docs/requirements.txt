@@ -7,4 +7,4 @@ sphinx-gallery
 numpy
 ipywidgets
 matplotlib
-ase
+ase==3.22.1

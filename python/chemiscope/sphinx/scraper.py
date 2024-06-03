@@ -8,33 +8,28 @@ from .file_path_iterator import FilePathIterator
 class ChemiscopeScraper:
     """Custom scraper for Chemiscope visualizations"""
 
-    def __repr__(self):
-        return "ChemiscopeScraper"
+    def __init__(self, examples_dir):
+        if not examples_dir:
+            raise ValueError("examples_dir must be provided.")
 
-    def __call__(self, _block, block_vars, gallery_conf):
         # Get a target directory with the source files
-        examples_data_dir = gallery_conf.get("examples_dirs")
-        target_dir = os.path.join(examples_data_dir, "data")
+        target_dir = os.path.join(examples_dir, "data")
         os.makedirs(target_dir, exist_ok=True)
 
         # Create an iterator to generate the file name
-        iterator = FilePathIterator(target_dir)
+        self.iterator = FilePathIterator(target_dir)
 
+    def __repr__(self):
+        return "ChemiscopeScraper"
+
+    def __call__(self, _block, block_vars, _gallery_conf):
         # Retrieve the chemiscope widget from block variables
         widget = block_vars.get("example_globals", {}).get("___")
+        mode = self.get_widget_mode(widget)
 
-        if widget:
-            dataset_file_path = iterator.next()
+        if mode is not None:
+            dataset_file_path = self.iterator.next()
             widget.save(dataset_file_path)
-
-            if type(widget) is ChemiscopeWidget:
-                mode = "default"
-            elif type(widget) is StructureWidget:
-                mode = "structure"
-            elif type(widget) is MapWidget:
-                mode = "map"
-            else:
-                raise TypeError("Scraped widget is not a chemiscope widget")
 
             return f""".. chemiscope::
                 :filename: {os.path.basename(dataset_file_path)}
@@ -42,3 +37,13 @@ class ChemiscopeScraper:
             """
         else:
             return ""
+
+    def get_widget_mode(self, widget):
+        if type(widget) is ChemiscopeWidget:
+            return "default"
+        elif type(widget) is StructureWidget:
+            return "structure"
+        elif type(widget) is MapWidget:
+            return "map"
+        else:
+            return None
