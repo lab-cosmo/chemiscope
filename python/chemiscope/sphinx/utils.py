@@ -9,10 +9,10 @@ def copy_additional_files(app, exception):
         return
     gallery_dirs = app.config.sphinx_gallery_conf.get("gallery_dirs")
     examples_dirs = app.config.sphinx_gallery_conf.get("examples_dirs")
-    src_gallery_dir = os.path.join(examples_dirs, "data")
-    build_gallery_dir = os.path.join(app.outdir, gallery_dirs)
+    src_dir = os.path.join(examples_dirs, "_chemiscope_sphinx_data")
+    dest_dir = os.path.join(app.outdir, gallery_dirs, "_chemiscope_sphinx_data")
     try:
-        copy_files_from_folder(src_gallery_dir, build_gallery_dir, ".json.gz")
+        copy_files_from_folder(src_dir, dest_dir, ".json.gz")
         copy_static_files(app.outdir)
     except Exception as e:
         print(f"Error copying files: {e}")
@@ -35,7 +35,7 @@ def copy_file(src_file, dst_file):
     shutil.copyfile(src_file, dst_file)
 
 
-def copy_static_files(build_gallery_dir):
+def copy_static_files(dest_dir):
     """Copy static files required for the loading chemiscope widget"""
     current_file_dir = os.path.dirname(__file__)
     static_dir = os.path.join(current_file_dir, "static")
@@ -47,7 +47,7 @@ def copy_static_files(build_gallery_dir):
     ]
     for file_name in files_to_copy:
         src_file = os.path.join(static_dir, file_name)
-        dst_file = os.path.join(build_gallery_dir, "static", file_name)
+        dst_file = os.path.join(dest_dir, "static", file_name)
         try:
             copy_file(src_file, dst_file)
         except Exception as e:
