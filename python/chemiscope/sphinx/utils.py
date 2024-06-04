@@ -7,10 +7,9 @@ def copy_additional_files(app, exception):
     """Copy datasets files required for the loading chemiscope widget"""
     if exception:
         return
-    gallery_dirs = app.config.sphinx_gallery_conf.get("gallery_dirs")
     examples_dirs = app.config.sphinx_gallery_conf.get("examples_dirs")
     src_dir = os.path.join(examples_dirs, "_chemiscope_sphinx_data")
-    dest_dir = os.path.join(app.outdir, gallery_dirs, "_chemiscope_sphinx_data")
+    dest_dir = os.path.join(app.outdir, "_chemiscope_sphinx_data")
     try:
         copy_files_from_folder(src_dir, dest_dir, ".json.gz")
         copy_static_files(app.outdir)

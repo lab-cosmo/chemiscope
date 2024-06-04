@@ -66,11 +66,14 @@ function getVisualizer(mode) {
 /**
  * Loads the dataset and handled gzipped JSON with NaN values
  */
-async function fetchDataset(path) {
+async function fetchDataset(filePath) {
+    // Get path to the file
+    const baseUrl = `${window.location.origin}/build/html/${filePath}`;
+
     // Load file
-    const response = await fetch(path);
+    const response = await fetch(baseUrl);
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${path}: ${response.statusText}`);
+        throw new Error(`Failed to fetch ${filePath}: ${response.statusText}`);
     }
 
     // Get as json
