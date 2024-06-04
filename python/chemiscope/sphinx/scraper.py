@@ -13,7 +13,8 @@ class ChemiscopeScraper:
             raise ValueError("examples_dir must be provided.")
 
         # Get a target directory with the source files
-        target_dir = os.path.join(examples_dir, "_chemiscope_sphinx_data")
+        self.data_dir = "_chemiscope_sphinx_data"
+        target_dir = os.path.join(examples_dir, self.data_dir)
         os.makedirs(target_dir, exist_ok=True)
 
         # Create an iterator to generate the file name
@@ -22,7 +23,7 @@ class ChemiscopeScraper:
     def __repr__(self):
         return "ChemiscopeScraper"
 
-    def __call__(self, _block, block_vars, gallery_conf):
+    def __call__(self, _block, block_vars, _gallery_conf):
         # Retrieve the chemiscope widget from block variables
         widget = block_vars.get("example_globals", {}).get("___")
         mode = self.get_widget_mode(widget)
@@ -32,7 +33,7 @@ class ChemiscopeScraper:
             widget.save(dataset_file_path)
 
             return f""".. chemiscope::
-                :filename: _chemiscope_sphinx_data/{os.path.basename(dataset_file_path)}
+                :filename: {self.data_dir}/{os.path.basename(dataset_file_path)}
                 :mode: {mode}
             """
         else:
