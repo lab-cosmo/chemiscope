@@ -30,12 +30,10 @@ class ChemiscopeScraper:
         if mode is not None:
             dataset_file_path = self.iterator.next()
             widget.save(dataset_file_path)
-            gallery_dirs = gallery_conf.get("gallery_dirs")
 
             return f""".. chemiscope::
                 :filename: {os.path.basename(dataset_file_path)}
                 :mode: {mode}
-                :gallery_dirs: {gallery_dirs}
             """
         else:
             return ""

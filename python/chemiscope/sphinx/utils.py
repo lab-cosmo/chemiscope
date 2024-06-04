@@ -13,7 +13,7 @@ def copy_additional_files(app, exception):
     build_gallery_dir = os.path.join(app.outdir, gallery_dirs)
     try:
         copy_files_from_folder(src_gallery_dir, build_gallery_dir, ".json.gz")
-        copy_static_files(build_gallery_dir)
+        copy_static_files(app.outdir)
     except Exception as e:
         print(f"Error copying files: {e}")
 
