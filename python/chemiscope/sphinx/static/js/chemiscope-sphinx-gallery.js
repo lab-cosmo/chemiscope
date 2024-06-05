@@ -68,7 +68,7 @@ function getVisualizer(mode) {
  */
 async function fetchDataset(filePath) {
     // Get path to the file
-    const baseUrl = `${window.location.origin}/build/html/${filePath}`;
+    const baseUrl = `${window.location.origin}/${filePath}`;
 
     // Load file
     const response = await fetch(baseUrl);
