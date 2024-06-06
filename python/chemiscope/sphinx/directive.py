@@ -1,7 +1,9 @@
+import os
+
 from docutils.parsers.rst import Directive
 
 from .nodes import chemiscope
-from .utils import copy_file_to_build_dir
+from .utils import copy_file
 
 
 class Chemiscope(Directive):
@@ -17,15 +19,25 @@ class Chemiscope(Directive):
     def run(self):
         # Create the chemiscope node
         node = chemiscope()
-        node["filename"] = self.options.get("filename")
+        filePath = self.options.get("filename")
+        node["filename"] = self.get_rel_dest_path(filePath)
         node["mode"] = self.options.get("mode")
         self.state.nested_parse(self.content, self.content_offset, node)
 
         # Copy the dataset file to the build directory
         try:
             app = self.state.document.settings.env.app
-            copy_file_to_build_dir(app, node["filename"])
+            dst_path = os.path.join(app.outdir, node["filename"])
+            copy_file(filePath, dst_path)
         except Exception as e:
             print(f"Error copying files: {e}")
 
         return [node]
+
+    def get_rel_dest_path(self, path):
+        """Get the last two folders and the filename from a given path"""
+        path = path.rstrip(os.sep)
+        path, data_dir = os.path.split(path)
+        path, examples_dir = os.path.split(path)
+        result = os.path.join(examples_dir, data_dir)
+        return result

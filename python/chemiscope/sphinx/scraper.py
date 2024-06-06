@@ -13,8 +13,8 @@ class ChemiscopeScraper:
             raise ValueError("examples_dir must be provided.")
 
         # Get a target directory with the source files
-        self.data_dir = "_chemiscope_sphinx_data"
-        target_dir = os.path.join(examples_dir, self.data_dir)
+        data_dir = "_chemiscope_sphinx_data"
+        target_dir = os.path.join(examples_dir, data_dir)
         os.makedirs(target_dir, exist_ok=True)
 
         # Create an iterator to generate the file name
@@ -33,7 +33,7 @@ class ChemiscopeScraper:
             widget.save(dataset_file_path)
 
             return f""".. chemiscope::
-                :filename: {self.data_dir}/{os.path.basename(dataset_file_path)}
+                :filename: {dataset_file_path}
                 :mode: {mode}
             """
         else:
