@@ -1,5 +1,5 @@
 import os
-import re
+import uuid
 
 from sphinx.errors import ExtensionError
 
@@ -19,26 +19,10 @@ class FilePathIterator:
         self.extension = extension
         self.counter = 0
         self._stop = 1000000
+        self.id = uuid.uuid4()
 
         # Ensure the base directory exists
         os.makedirs(base_dir, exist_ok=True)
-
-        # Continue the counter
-        self._set_counter_based_on_existing_files()
-
-    def _set_counter_based_on_existing_files(self):
-        """
-        Set the counter to one more than the highest existing file number.
-        If the directory is used by the multiple sphinx configurations, we don't want to
-        erase the files starting the generation of filename from the zero again
-        """
-        pattern = re.compile(
-            rf"{re.escape(self.prefix)}_(\d+){re.escape(self.extension)}"
-        )
-        existing_files = [f for f in os.listdir(self.base_dir) if pattern.match(f)]
-        if existing_files:
-            highest_number = max(int(pattern.match(f).group(1)) for f in existing_files)
-            self.counter = highest_number
 
     def __iter__(self):
         """Iterate over paths"""
@@ -50,7 +34,7 @@ class FilePathIterator:
     def __next__(self):
         """Generates the file name"""
         self.counter += 1
-        filename = f"{self.prefix}_{self.counter:03d}{self.extension}"
+        filename = f"{self.prefix}_{self.id}_{self.counter:03d}{self.extension}"
         return os.path.join(self.base_dir, filename)
 
     def next(self):
