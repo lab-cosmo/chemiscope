@@ -47,7 +47,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
     "within_subsection_order": "FileNameSortKey",
-    "image_scrapers": ("matplotlib", ChemiscopeScraper(examples_dirs)),
+    "image_scrapers": ("matplotlib", ChemiscopeScraper()),
 }
 
 # -- Options for HTML output -------------------------------------------------

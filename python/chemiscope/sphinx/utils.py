@@ -66,3 +66,16 @@ def get_chemiscope_src_file():
 def get_install_prefix():
     """Get the installation prefix directory"""
     return sysconfig.get_paths()["data"]
+
+
+def get_raw_filename(file_path):
+    """
+    Extract the filename from a file path without extension
+
+    Parameters:
+        file_path (str): The full path of the file
+
+    Returns:
+        str: The filename without extension
+    """
+    return os.path.splitext(os.path.basename(file_path))[0]

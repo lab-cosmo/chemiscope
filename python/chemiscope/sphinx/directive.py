@@ -7,37 +7,58 @@ from .utils import copy_file
 
 
 class Chemiscope(Directive):
-    """Directive to handle chemiscope visualizations in documentation"""
+    """Directive to handle chemiscope visualizations in documentation
+
+    e.g.::
+
+        .. chemiscope::
+            :filepath: [chemiscope_path]/docs/src/examples/datasets/fig_base_001.json.gz
+            :mode: default
+
+    The resulting html is the chemiscope widget wrapped in the
+    chemiscope-sphinx.html template.
+    """
 
     node_class = chemiscope
     has_content = True
     required_arguments = 0
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {"filename": str, "mode": str}
+    option_spec = {"filepath": str, "mode": str}
 
     def run(self):
-        # Create the chemiscope node
+        try:
+            # Path to the saved dataset in the .rst files folder
+            rst_file_path = self.options.get("filepath")
+
+            # Copy dataset to the docs/build/html/_datasets folder
+            filename = os.path.basename(rst_file_path)
+            build_file_path, rel_file_path = self.get_build_file_path(filename)
+            copy_file(rst_file_path, build_file_path)
+
+            # Create the chemiscope node
+            node = self.create_node(rel_file_path)
+            return [node]
+        except Exception as e:
+            print(f"Error during run: {e}")
+            return []
+
+    def get_build_file_path(self, filename):
+        """Construct the path in the build directory"""
+        # Get the destination folder
+        outdir = self.state.document.settings.env.app.outdir
+        target_dir = os.path.join(outdir, "_datasets")
+        os.makedirs(target_dir, exist_ok=True)
+
+        # Get destination paths
+        build_file_path = os.path.join(target_dir, filename)
+        rel_file_path = os.path.relpath(build_file_path, outdir)
+        return build_file_path, rel_file_path
+
+    def create_node(self, rel_file_path):
+        """Create the chemiscope node with required attributes"""
         node = chemiscope()
-        filePath = self.options.get("filename")
-        node["filename"] = self.get_rel_dest_path(filePath)
+        node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")
         self.state.nested_parse(self.content, self.content_offset, node)
-
-        # Copy the dataset file to the build directory
-        try:
-            app = self.state.document.settings.env.app
-            dst_path = os.path.join(app.outdir, node["filename"])
-            copy_file(filePath, dst_path)
-        except Exception as e:
-            print(f"Error copying files: {e}")
-
-        return [node]
-
-    def get_rel_dest_path(self, path):
-        """Get the last two folders and the filename from a given path"""
-        path = path.rstrip(os.sep)
-        path, data_dir = os.path.split(path)
-        path, examples_dir = os.path.split(path)
-        result = os.path.join(examples_dir, data_dir)
-        return result
+        return node
