@@ -1,0 +1,29 @@
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="/static/js/chemiscope.min.js"></script>
+<script src="/static/js/chemiscope-sphinx-gallery.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="/static/css/chemiscope-sphinx-gallery.css" type="text/css" />
+
+<!-- Warning Display -->
+<div id="{{div_id}}-warning-display" class="chemiscope-sphinx-gallery-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('{{div_id}}-warning-display')">&times;</button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="{{div_id}}-loading" class="chemiscope-sphinx-gallery-spinner">
+    <img src="/static/loading-icon.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="{{div_id}}" />
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinxGallery("{{div_id}}", "{{filepath}}", "{{mode}}");
+</script>

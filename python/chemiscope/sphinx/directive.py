@@ -1,17 +1,30 @@
+import os
+
 from docutils.parsers.rst import Directive
+
 from .nodes import chemiscope
+from .utils import copy_file
 
 
 class Chemiscope(Directive):
+    """Directive to handle chemiscope visualizations in documentation
+
+    e.g.::
+
+        .. chemiscope::
+            :filepath: [chemiscope_path]/docs/src/examples/datasets/fig_base_001.json.gz
+            :mode: default
+
+    The resulting html is the chemiscope widget wrapped in the
+    chemiscope-sphinx.html template.
+    """
+
     node_class = chemiscope
     has_content = True
     required_arguments = 0
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {
-        "filename": str,
-        "mode": str,
-    }
+    option_spec = {"filepath": str, "mode": str}
 
     def run(self):
         try:
@@ -61,7 +74,7 @@ class Chemiscope(Directive):
         - chemiscope: The created chemiscope node
         """
         node = chemiscope()
-        node["filename"] = self.options.get("filename")
+        node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")
         self.state.nested_parse(self.content, self.content_offset, node)
-        return [node]
+        return node

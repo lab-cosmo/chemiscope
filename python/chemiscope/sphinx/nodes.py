@@ -1,6 +1,7 @@
-from docutils import nodes
 import os
 import uuid
+
+from docutils import nodes
 
 
 class chemiscope(nodes.Element):
@@ -16,7 +17,7 @@ def depart_chemiscope_latex(self, node):
 
 
 def visit_chemiscope_html(self, node):
-    self.body.append(generate_html_content(node["filename"], node["mode"]))
+    self.body.append(generate_html_content(node["filepath"], node["mode"]))
 
 
 def depart_chemiscope_html(self, node):
@@ -40,7 +41,7 @@ def generate_html_content(filepath, mode="default"):
     # Read the template html file
     current_folder_path = os.path.dirname(__file__)
     template_path = os.path.join(
-        current_folder_path, "static", "html", "chemischope-sphinx-gallery.html"
+        current_folder_path, "static", "html", "chemiscope-sphinx-gallery.html"
     )
     with open(template_path, "r") as file:
         html_template = file.read()
@@ -48,6 +49,6 @@ def generate_html_content(filepath, mode="default"):
     # Replace html placeholders with actual values
     return (
         html_template.replace("{{div_id}}", div_id)
-        .replace("{{filename}}", filepath)
+        .replace("{{filepath}}", filepath)
         .replace("{{mode}}", mode)
     )
