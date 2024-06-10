@@ -6,12 +6,11 @@ from .nodes import (
     visit_chemiscope_latex,
     depart_chemiscope_latex,
 )
-from .utils import copy_chemiscope_min_js, copy_static_folder
+from .utils import copy_static_folder
 from .scraper import ChemiscopeScraper  # noqa: F401
 
 
 def setup(app):
-    app.connect("builder-inited", copy_chemiscope_min_js)
     app.connect("build-finished", copy_static_folder)
     app.add_directive("chemiscope", Chemiscope)
     app.add_node(

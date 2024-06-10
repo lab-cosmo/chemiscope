@@ -44,7 +44,15 @@ class Chemiscope(Directive):
             return []
 
     def get_build_file_path(self, filename):
-        """Construct the path in the build directory"""
+        """
+        Construct the path to the build directory
+
+        Parameters:
+        - filename (str): The name of the file
+
+        Returns:
+        - tuple: A tuple containing the build file path and the relative file path
+        """
         # Get the destination folder
         outdir = self.state.document.settings.env.app.outdir
         target_dir = os.path.join(outdir, "_datasets")
@@ -56,7 +64,15 @@ class Chemiscope(Directive):
         return build_file_path, rel_file_path
 
     def create_node(self, rel_file_path):
-        """Create the chemiscope node with required attributes"""
+        """
+        Create a chemiscope node with the specified file path and mode
+
+        Parameters:
+        - rel_file_path (str): The dataset path relative to the build directory
+
+        Returns:
+        - chemiscope: The created chemiscope node
+        """
         node = chemiscope()
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")

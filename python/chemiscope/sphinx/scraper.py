@@ -17,6 +17,20 @@ class ChemiscopeScraper:
         return "ChemiscopeScraper"
 
     def __call__(self, _block, block_vars, _gallery_conf):
+        """
+        Extracts Chemiscope widget data, saves it .json dataset in the .rst directory
+        and generates a .rst directive for embedding.
+
+        Triggered on the each output of the script.
+
+        Parameters:
+        - _block: Unused parameter, a .rst code block
+        - block_vars (dict): Variables from the executed code block
+        - _gallery_conf: Unused parameter, sphinx-gallery config
+
+        Returns:
+        - str: .rst directive for embedding the chemiscope visualization
+        """
         # Retrieve the chemiscope widget from block variables
         widget = block_vars.get("example_globals", {}).get("___")
         mode = self.get_widget_mode(widget)
@@ -36,7 +50,7 @@ class ChemiscopeScraper:
             # Return the .rst directive
             return self.generate_rst(dataset_file_path, mode)
         else:
-            # Return an empty string if the widget type is not recognized
+            # chemiscope.show is not called
             return ""
 
     def generate_rst(self, filepath, mode):
