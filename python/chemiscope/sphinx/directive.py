@@ -5,6 +5,7 @@ from docutils.parsers.rst import Directive
 from .nodes import chemiscope
 from .utils import copy_file
 
+from sphinx.util import logging
 
 class Chemiscope(Directive):
     """Custom RST directive to include a chemiscope visualizer in a
@@ -44,7 +45,15 @@ class Chemiscope(Directive):
             filename = os.path.basename(rst_file_path)
             build_file_path, rel_file_path = self.get_build_file_path(filename)
             copy_file(rst_file_path, build_file_path)
-
+            logger = logging.getLogger(__name__)
+        
+            env = self.state.document.settings
+            # Log the directory path
+            logger.info("Processing directory: %s  has_headers: %s ; %s", self.state.document["source"], str(hasattr(env, 'has_chsp_headers')), str(env))
+            if not hasattr(env, 'has_chsp_headers'):
+                setattr(env, 'has_chsp_headers', True)
+            
+            
             # Create the chemiscope node
             node = self.create_node(rel_file_path)
             return [node]

@@ -35,21 +35,21 @@ include the directive
 .. code-block:: rst
 
     .. chemiscope::
-        :filepath: datasets/fig_base_001.json.gz
+        :filepath: datasets/shocase.json.gz
         :mode: default 
 
 Once compiled, this will show as this widget
 
 .. chemiscope::
     :filepath: datasets/showcase.json.gz
-    :mode: default
+    :mode: default 
     
 The ``structure`` mode wil show the structures only
 
 .. chemiscope::
     :filepath: datasets/showcase.json.gz
     :mode: structure
-
+ 
 and the ``map`` mode only the property map
 
 .. chemiscope::
