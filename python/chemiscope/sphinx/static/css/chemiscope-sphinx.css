@@ -1,4 +1,4 @@
-.chemiscope-sphinx-gallery-warning {
+.chemiscope-sphinx-warning {
     display: none;
     flex-wrap: wrap;
     border: 1px solid #f0ad4e;
@@ -24,7 +24,7 @@
     }
 }
 
-.chemiscope-sphinx-gallery-spinner img {
+.chemiscope-sphinx-spinner img {
     width: 2em;
     height: 2em;
     animation: spin 2s linear infinite;
