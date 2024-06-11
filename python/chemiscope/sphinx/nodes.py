@@ -36,7 +36,7 @@ def generate_html_content(filepath, mode="default"):
     - str: The chemiscope widget wrapped in the html
     """
     # Generate a unique id for the chemiscope div
-    div_id = f"sphinx-gallery-{uuid.uuid4()}"
+    div_id = f"chsp-{uuid.uuid4()}"
 
     # Read the template html file
     current_folder_path = os.path.dirname(__file__)

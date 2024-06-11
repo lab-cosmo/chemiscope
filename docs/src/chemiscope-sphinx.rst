@@ -54,7 +54,7 @@ and the ``map`` mode only the property map
 
 .. chemiscope::
     :filepath: datasets/showcase.json.gz
-    :mode: map
+    :mode: map 
     
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

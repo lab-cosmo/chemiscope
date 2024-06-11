@@ -10,10 +10,10 @@ const VISUALISER_MODE = {
 /**
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
-async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
+async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
     // Handle warnings
     Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
-
+    console.log("LOADING ", divId, filePath, visualizerMode);
     // Display loading
     toggleLoadingVisible(divId, true);
 
@@ -31,6 +31,7 @@ async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode = VIS
 
         // Prepare html for the visualizer
         const root = document.getElementById(divId);
+        console.log("element if", visualizerMode, root);
         root.innerHTML = generateChemiscopeHTML(config, visualizerMode);
 
         // Load widget
@@ -40,6 +41,7 @@ async function loadChemiscopeSphinxGallery(divId, filePath, visualizerMode = VIS
 
     // Display errors
     catch (error) {
+        console.log("ERROR", divId, error);
         displayWarning(divId, error);
     }
 
