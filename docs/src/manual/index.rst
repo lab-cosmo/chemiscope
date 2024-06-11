@@ -9,6 +9,10 @@ It does not discuss in detail how to build a low-dimensional representation of
 a chemical dataset - chemiscope is solely a viewer, and there are many tools available
 to perform this kind of analyses. 
 
+.. chemiscope::
+    :filepath: ../datasets/fig_base_001.json.gz 
+    :mode: map 
+
 This section starts introducing the concept of structural and physical properties, 
 before describing how to use the different panels in the standard visualization. 
 It continues by presenting how you can generate a chemiscope input file to load on

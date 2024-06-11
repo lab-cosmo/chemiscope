@@ -12,8 +12,8 @@ Chemiscope Visualization
 The following directive embeds a chemiscope widget into this page. Make sure to specify the absolute path to your JSON dataset and choose the appropriate mode (`default`, `structure`, or `map`).
 
 .. chemiscope::
-    :filepath: /home/chorna/chemiscope-directive/docs/src/datasets/fig_base_001.json.gz 
-    :mode: default
+    :filepath: datasets/fig_base_001.json.gz 
+    :mode: structure 
 
 Building the Documentation
 ==========================

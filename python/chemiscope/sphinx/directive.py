@@ -5,14 +5,18 @@ from docutils.parsers.rst import Directive
 from .nodes import chemiscope
 from .utils import copy_file
 
-
 class Chemiscope(Directive):
-    """Directive to handle chemiscope visualizations in documentation
+    """Custom RST directive to include a chemiscope visualizer in a 
+    sphinx documentation file. It has two options: 
+    `filepath` - the path to a chemiscope JSON or gzipped JSON file, 
+    relative to the path of the RST file, and `mode`, which can be
+    `default`, `structure` or `map` depending on the desired type of 
+    visualization. 
 
     e.g.::
 
         .. chemiscope::
-            :filepath: [chemiscope_path]/docs/src/examples/datasets/fig_base_001.json.gz
+            :filepath: datasets/polarizability.json.gz
             :mode: default
 
     The resulting html is the chemiscope widget wrapped in the
@@ -27,9 +31,13 @@ class Chemiscope(Directive):
     option_spec = {"filepath": str, "mode": str}
 
     def run(self):
-        try:
+        try:            
+
+            # Get the source path from the document
+            source_path = os.path.dirname(self.state.document['source'])+"/"
+            
             # Path to the saved dataset in the .rst files folder
-            rst_file_path = self.options.get("filepath")
+            rst_file_path = source_path+self.options.get("filepath")
 
             # Copy dataset to the docs/build/html/_datasets folder
             filename = os.path.basename(rst_file_path)
@@ -61,6 +69,7 @@ class Chemiscope(Directive):
         # Get destination paths
         build_file_path = os.path.join(target_dir, filename)
         rel_file_path = os.path.relpath(build_file_path, outdir)
+        
         return build_file_path, rel_file_path
 
     def create_node(self, rel_file_path):
@@ -73,8 +82,10 @@ class Chemiscope(Directive):
         Returns:
         - chemiscope: The created chemiscope node
         """
+        
         node = chemiscope()
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")
         self.state.nested_parse(self.content, self.content_offset, node)
+        
         return node
