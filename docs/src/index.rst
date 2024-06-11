@@ -50,8 +50,13 @@ What's in this documentation?
     examples
     manual/index    
     embedding
+    chemiscope-directive-example
 
 
 .. _chemiscope: https://chemiscope.org
 .. _paper: https://doi.org/10.21105/joss.02117
 .. _Qm7b: https://doi.org/10.1088/1367-2630/15/9/095003
+
+.. chemiscope::
+    :filepath: /home/chorna/chemiscope-directive/docs/src/datasets/fig_base_001.json.gz 
+    :mode: default

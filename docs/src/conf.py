@@ -23,6 +23,7 @@ release = chemiscope.__version__
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx_argparse_cli",
+    "chemiscope.sphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
