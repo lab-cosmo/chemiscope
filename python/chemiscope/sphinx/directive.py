@@ -49,7 +49,7 @@ class ChemiscopeDirective(Directive):
 
             # Create the chemiscope node
             node = self.create_node(
-                rel_file_path, source not in ChemiscopeDirective.pages_with_headers
+                rel_file_path, include_headers=source not in ChemiscopeDirective.pages_with_headers
             )
             # indicates that the page has already been added headers
             if source not in ChemiscopeDirective.pages_with_headers:
