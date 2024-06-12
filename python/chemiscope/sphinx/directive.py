@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from docutils.parsers.rst import Directive
 
@@ -43,7 +44,8 @@ class ChemiscopeDirective(Directive):
             rst_file_path = source_path + dataset_rel_path
 
             # Copy dataset to the docs/build/html/_datasets folder
-            filename = os.path.basename(rst_file_path)
+            # Ensure unique file name to avoid clashes
+            filename = f"{uuid.uuid4()}-{os.path.basename(rst_file_path)}"
             build_file_path, rel_file_path = self.get_build_file_path(filename)
             copy_file(rst_file_path, build_file_path)
 
@@ -78,7 +80,15 @@ class ChemiscopeDirective(Directive):
 
         # Get destination paths
         build_file_path = os.path.join(target_dir, filename)
-        rel_file_path = os.path.relpath(build_file_path, outdir)
+
+        # Get path of output dataset relative to output HTML
+        env = self.state.document.settings.env  #
+        builder = env.app.builder
+        html_file_path = builder.get_outfilename(env.docname)
+        html_file_dir = os.path.dirname(html_file_path)
+
+        # Relative path *for the output files*
+        rel_file_path = os.path.relpath(build_file_path, html_file_dir)
 
         return build_file_path, rel_file_path
 
