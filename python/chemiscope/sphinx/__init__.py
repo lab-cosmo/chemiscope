@@ -8,7 +8,6 @@ from .nodes import (
     visit_chemiscope_latex,
     depart_chemiscope_latex,
 )
-from .scraper import ChemiscopeScraper  # noqa: F401
 
 
 def setup(app):
