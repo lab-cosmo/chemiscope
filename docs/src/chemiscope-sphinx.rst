@@ -37,8 +37,8 @@ simply use the directive
     .. chemiscope:: datasets/showcase.json.gz
 
 Once compiled, this will show as this widget
-
-.. chemiscope:: datasets/showcase.json.gz
+ 
+.. chemiscope:: datasets/showcase.json.gz    
     
 The ``structure`` mode will show the structures only
 
