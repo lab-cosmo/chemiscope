@@ -47,10 +47,23 @@ class ChemiscopeDirective(Directive):
             build_file_path, rel_file_path = self.get_build_file_path(filename)
             copy_file(rst_file_path, build_file_path)
 
+            # Get the path from the conf.py
+            config = self.state.document.settings.env.app.config
+
+            # html_baseurl is specified in the conf, let sphinx manage the path himself
+            if config.html_baseurl is not None:
+                html_baseurl = ""
+                rel_file_path = os.path.join(config.html_baseurl, rel_file_path)
+
+            # No parameter specified -> use root
+            else:
+                html_baseurl = "/"
+
             # Create the chemiscope node
             node = self.create_node(
                 rel_file_path,
                 include_headers=source not in ChemiscopeDirective.pages_with_headers,
+                html_baseurl=html_baseurl,
             )
 
             # indicates that the page has already been added headers
@@ -82,7 +95,7 @@ class ChemiscopeDirective(Directive):
 
         return build_file_path, rel_file_path
 
-    def create_node(self, rel_file_path, include_headers=True):
+    def create_node(self, rel_file_path, include_headers=True, html_baseurl=""):
         """
         Create a chemiscope node with the specified file path and mode
 
@@ -97,6 +110,7 @@ class ChemiscopeDirective(Directive):
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode", "default")
         node["include_headers"] = include_headers
+        node["html_baseurl"] = html_baseurl
 
         self.state.nested_parse(self.content, self.content_offset, node)
 

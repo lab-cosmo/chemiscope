@@ -21,7 +21,12 @@ def depart_chemiscope_latex(self, node):
 
 def visit_chemiscope_html(self, node):
     self.body.append(
-        generate_html_content(node["filepath"], node["mode"], node["include_headers"])
+        generate_html_content(
+            node["filepath"],
+            node["mode"],
+            node["include_headers"],
+            node["html_baseurl"],
+        )
     )
 
 
@@ -29,7 +34,9 @@ def depart_chemiscope_html(self, node):
     pass
 
 
-def generate_html_content(filepath, mode="default", include_headers=True):
+def generate_html_content(
+    filepath, mode="default", include_headers=True, html_baseurl=""
+):
     """
     Generate HTML content for displaying a chemiscope visualization.
 
@@ -65,4 +72,5 @@ def generate_html_content(filepath, mode="default", include_headers=True):
         html_template.replace("{{div_id}}", div_id)
         .replace("{{filepath}}", filepath)
         .replace("{{mode}}", mode)
+        .replace("{{html_baseurl}}", html_baseurl)
     )
