@@ -35,7 +35,7 @@ include the directive
 .. code-block:: rst
 
     .. chemiscope::
-        :filepath: datasets/shocase.json.gz
+        :filepath: datasets/showcase.json.gz
         :mode: default 
 
 Once compiled, this will show as this widget
