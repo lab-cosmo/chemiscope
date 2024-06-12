@@ -98,34 +98,40 @@ function generateChemiscopeHTML(config, visualizerMode) {
     switch (visualizerMode) {
         case VISUALISER_MODE.DEFAULT:
             return `
-                <div class="visualizer-container">
-                    <div class="visualizer-column-right">
-                        <div id="${config.meta}"></div>
-                        <div id="${config.map}"></div>
-                    </div>
-                    <div class="visualizer-column">
-                        <div id="${config.structure}" class="visualizer-item"></div>
-                        <div id="${config.info}" class="visualizer-info"></div>
+                <div class="chemiscope-sphinx">
+                    <div class="visualizer-container">
+                        <div class="visualizer-column-right">
+                            <div id="${config.meta}"></div>
+                            <div id="${config.map}"></div>
+                        </div>
+                        <div class="visualizer-column">
+                            <div id="${config.structure}" class="visualizer-item"></div>
+                            <div id="${config.info}" class="visualizer-info"></div>
+                        </div>
                     </div>
                 </div>`;
         case VISUALISER_MODE.STRUCTURE:
             return `
-                <div class="visualizer-container visualizer-structure-mode">
-                    <div class="visualizer-column">
-                        <div id="${config.meta}"></div>
-                        <div id="${config.structure}" class="visualizer-item"></div>
-                        <div id="${config.info}" class="visualizer-info"></div>
+                <div class="chemiscope-sphinx">
+                    <div class="visualizer-container visualizer-structure-mode">
+                        <div class="visualizer-column">
+                            <div id="${config.meta}"></div>
+                            <div id="${config.structure}" class="visualizer-item"></div>
+                            <div id="${config.info}" class="visualizer-info"></div>
+                        </div>
                     </div>
                 </div>`;
         case VISUALISER_MODE.MAP:
             return `
+                <div class="chemiscope-sphinx">
                 <div class="visualizer-container visualizer-map-mode">
                     <div class="visualizer-column">
                         <div id="${config.meta}"></div>
                         <div id="${config.map}" class="visualizer-item"></div>
                         <div id="${config.info}" class="visualizer-info"></div>
                     </div>
-                </div>`;
+                </div>
+            </div>`;
     }
 }
 
