@@ -37,6 +37,7 @@ If you incorporate chemiscope components into a software project, a link
 back to the `chemiscope`_ homepage is the preferred form of acknowledgement.
 
 
+
 What's in this documentation?
 -----------------------------
 .. toctree::
@@ -50,6 +51,7 @@ What's in this documentation?
     examples
     manual/index    
     embedding
+    chemiscope-sphinx
 
 
 .. _chemiscope: https://chemiscope.org

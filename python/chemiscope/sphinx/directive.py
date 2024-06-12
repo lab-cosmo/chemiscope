@@ -1,0 +1,103 @@
+import os
+
+from docutils.parsers.rst import Directive
+
+from .nodes import chemiscope
+from .utils import copy_file
+
+
+class ChemiscopeDirective(Directive):
+    """Custom RST directive to include a chemiscope visualizer in a
+    sphinx documentation file. It has two options:
+    `filepath` - the path to a chemiscope JSON or gzipped JSON file,
+    relative to the path of the RST file, and `mode`, which can be
+    `default`, `structure` or `map` depending on the desired type of
+    visualization.
+
+    e.g.::
+
+        .. chemiscope:: datasets/polarizability.json.gz
+            :mode: map
+
+    The resulting html is the chemiscope widget wrapped in the
+    chemiscope-sphinx.html template.
+    """
+
+    node_class = chemiscope
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {"mode": str}
+    pages_with_headers = []
+
+    def run(self):
+        try:
+
+            # Get the source path from the document
+            source = self.state.document["source"]
+            source_path = os.path.dirname(source) + "/"
+
+            # Path to the saved dataset in the .rst files folder
+            dataset_rel_path = self.arguments[0].strip()
+            rst_file_path = source_path + dataset_rel_path
+
+            # Copy dataset to the docs/build/html/_datasets folder
+            filename = os.path.basename(rst_file_path)
+            build_file_path, rel_file_path = self.get_build_file_path(filename)
+            copy_file(rst_file_path, build_file_path)
+
+            # Create the chemiscope node
+            node = self.create_node(
+                rel_file_path,
+                include_headers=source not in ChemiscopeDirective.pages_with_headers,
+            )
+
+            # indicates that the page has already been added headers
+            if source not in ChemiscopeDirective.pages_with_headers:
+                ChemiscopeDirective.pages_with_headers.append(source)
+            return [node]
+        except Exception as e:
+            print(f"Error during run: {e}")
+            return []
+
+    def get_build_file_path(self, filename):
+        """
+        Construct the path to the build directory
+
+        Parameters:
+        - filename (str): The name of the file
+
+        Returns:
+        - tuple: A tuple containing the build file path and the relative file path
+        """
+        # Get the destination folder
+        outdir = self.state.document.settings.env.app.outdir
+        target_dir = os.path.join(outdir, "_datasets")
+        os.makedirs(target_dir, exist_ok=True)
+
+        # Get destination paths
+        build_file_path = os.path.join(target_dir, filename)
+        rel_file_path = os.path.relpath(build_file_path, outdir)
+
+        return build_file_path, rel_file_path
+
+    def create_node(self, rel_file_path, include_headers=True):
+        """
+        Create a chemiscope node with the specified file path and mode
+
+        Parameters:
+        - rel_file_path (str): The dataset path relative to the build directory
+
+        Returns:
+        - chemiscope: The created chemiscope node
+        """
+
+        node = chemiscope()
+        node["filepath"] = rel_file_path
+        node["mode"] = self.options.get("mode", "default")
+        node["include_headers"] = include_headers
+
+        self.state.nested_parse(self.content, self.content_offset, node)
+
+        return node
