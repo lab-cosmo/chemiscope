@@ -22,7 +22,7 @@ Chemiscope directive
 ^^^^^^^^^^^^^^^^^^^^
 
 In order to include a chemiscope viewer into a RST documentation page one can use a 
-``chemiscope`` directive. When compiled with ``sphinx-builder``, the directive will
+``chemiscope`` directive. When compiled with ``sphinx-build``, the directive will
 be translated into an HTML embedding of and interactive widget, that loads a JSON 
 file and displays it. The directive specifies two options:  ``filepath`` - that 
 indicates the path relative to the RST file where the chemiscope JSON is to be found, 
