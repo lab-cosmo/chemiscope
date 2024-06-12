@@ -40,9 +40,10 @@ include the directive
 
 Once compiled, this will show as this widget
 
-.. chemiscope::
+.. chemiscope:: 
     :filepath: datasets/showcase.json.gz
     :mode: default 
+
     
 The ``structure`` mode wil show the structures only
 

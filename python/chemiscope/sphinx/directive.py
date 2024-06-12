@@ -5,9 +5,7 @@ from docutils.parsers.rst import Directive
 from .nodes import chemiscope
 from .utils import copy_file
 
-from sphinx.util import logging
-
-class Chemiscope(Directive):
+class ChemiscopeDirective(Directive):
     """Custom RST directive to include a chemiscope visualizer in a
     sphinx documentation file. It has two options:
     `filepath` - the path to a chemiscope JSON or gzipped JSON file,
@@ -31,12 +29,14 @@ class Chemiscope(Directive):
     optional_arguments = 0
     final_argument_whitespace = False
     option_spec = {"filepath": str, "mode": str}
+    pages_with_headers = []
 
     def run(self):
         try:
 
             # Get the source path from the document
-            source_path = os.path.dirname(self.state.document["source"]) + "/"
+            source = self.state.document["source"]
+            source_path = os.path.dirname(source) + "/"
 
             # Path to the saved dataset in the .rst files folder
             rst_file_path = source_path + self.options.get("filepath")
@@ -45,17 +45,12 @@ class Chemiscope(Directive):
             filename = os.path.basename(rst_file_path)
             build_file_path, rel_file_path = self.get_build_file_path(filename)
             copy_file(rst_file_path, build_file_path)
-            logger = logging.getLogger(__name__)
-        
-            env = self.state.document.settings
-            # Log the directory path
-            logger.info("Processing directory: %s  has_headers: %s ; %s", self.state.document["source"], str(hasattr(env, 'has_chsp_headers')), str(env))
-            if not hasattr(env, 'has_chsp_headers'):
-                setattr(env, 'has_chsp_headers', True)
-            
             
             # Create the chemiscope node
-            node = self.create_node(rel_file_path)
+            node = self.create_node(rel_file_path, source not in ChemiscopeDirective.pages_with_headers)
+            # indicates that the page has already been added headers
+            if source not in ChemiscopeDirective.pages_with_headers:
+                ChemiscopeDirective.pages_with_headers.append(source)                
             return [node]
         except Exception as e:
             print(f"Error during run: {e}")
@@ -82,7 +77,7 @@ class Chemiscope(Directive):
 
         return build_file_path, rel_file_path
 
-    def create_node(self, rel_file_path):
+    def create_node(self, rel_file_path, include_headers=True):
         """
         Create a chemiscope node with the specified file path and mode
 
@@ -96,6 +91,8 @@ class Chemiscope(Directive):
         node = chemiscope()
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")
+        node["include_headers"] = include_headers
+        
         self.state.nested_parse(self.content, self.content_offset, node)
 
         return node

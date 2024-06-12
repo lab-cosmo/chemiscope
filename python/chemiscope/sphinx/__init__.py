@@ -1,4 +1,4 @@
-from .directive import Chemiscope
+from .directive import ChemiscopeDirective
 from .nodes import (
     chemiscope,
     visit_chemiscope_html,
@@ -11,7 +11,7 @@ from .utils import copy_static_folder
 
 def setup(app):
     app.connect("build-finished", copy_static_folder)
-    app.add_directive("chemiscope", Chemiscope)
+    app.add_directive("chemiscope", ChemiscopeDirective)
     app.add_node(
         chemiscope,
         override=True,

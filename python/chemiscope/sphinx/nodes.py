@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 
 from docutils import nodes
@@ -17,14 +18,14 @@ def depart_chemiscope_latex(self, node):
 
 
 def visit_chemiscope_html(self, node):
-    self.body.append(generate_html_content(node["filepath"], node["mode"]))
+    self.body.append(generate_html_content(node["filepath"], node["mode"], node["include_headers"]))
 
 
 def depart_chemiscope_html(self, node):
     pass
 
 
-def generate_html_content(filepath, mode="default"):
+def generate_html_content(filepath, mode="default", include_headers=True):
     """
     Generate HTML content for displaying a chemiscope visualization.
 
@@ -46,6 +47,11 @@ def generate_html_content(filepath, mode="default"):
     with open(template_path, "r") as file:
         html_template = file.read()
 
+    # Choose whether to discard headers
+    if not include_headers:
+        html_template = re.sub(r'<!-- begin headers -->.*?<!-- end headers -->', '', 
+              html_template, flags=re.DOTALL)
+    
     # Replace html placeholders with actual values
     return (
         html_template.replace("{{div_id}}", div_id)

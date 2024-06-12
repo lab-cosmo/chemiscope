@@ -37,10 +37,7 @@ If you incorporate chemiscope components into a software project, a link
 back to the `chemiscope`_ homepage is the preferred form of acknowledgement.
 
 
-.. chemiscope::
-    :filepath: datasets/showcase.json.gz
-    :mode: structure
-    
+
 What's in this documentation?
 -----------------------------
 .. toctree::
