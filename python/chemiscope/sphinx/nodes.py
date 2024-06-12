@@ -73,7 +73,7 @@ def generate_html_content(
             flags=re.DOTALL,
         )
 
-    # Replace html placeholders with actual values
+    # Replace html placeholders  with actual values
     return (
         html_template.replace("{{div_id}}", div_id)
         .replace("{{filepath}}", filepath)
