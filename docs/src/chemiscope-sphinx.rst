@@ -34,27 +34,20 @@ include the directive
  
 .. code-block:: rst
 
-    .. chemiscope::
-        :filepath: datasets/showcase.json.gz
-        :mode: default 
+    .. chemiscope:: datasets/showcase.json.gz
 
 Once compiled, this will show as this widget
 
-.. chemiscope:: 
-    :filepath: datasets/showcase.json.gz
-    :mode: default 
-
+.. chemiscope:: datasets/showcase.json.gz
     
-The ``structure`` mode wil show the structures only
+The ``structure`` mode will show the structures only
 
-.. chemiscope::
-    :filepath: datasets/showcase.json.gz
+.. chemiscope:: datasets/showcase.json.gz
     :mode: structure
  
 and the ``map`` mode only the property map
 
-.. chemiscope::
-    :filepath: datasets/showcase.json.gz
+.. chemiscope:: datasets/showcase.json.gz
     :mode: map 
     
 Viewing a documentation locally

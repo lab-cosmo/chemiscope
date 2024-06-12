@@ -16,9 +16,8 @@ class ChemiscopeDirective(Directive):
 
     e.g.::
 
-        .. chemiscope::
-            :filepath: datasets/polarizability.json.gz
-            :mode: default
+        .. chemiscope:: datasets/polarizability.json.gz
+            :mode: map
 
     The resulting html is the chemiscope widget wrapped in the
     chemiscope-sphinx.html template.
@@ -29,7 +28,7 @@ class ChemiscopeDirective(Directive):
     required_arguments = 0
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {"filepath": str, "mode": str}
+    option_spec = {"mode": str}
     pages_with_headers = []
 
     def run(self):
@@ -40,7 +39,8 @@ class ChemiscopeDirective(Directive):
             source_path = os.path.dirname(source) + "/"
 
             # Path to the saved dataset in the .rst files folder
-            rst_file_path = source_path + self.options.get("filepath")
+            dataset_rel_path = self.content[0].strip()
+            rst_file_path = source_path + dataset_rel_path
 
             # Copy dataset to the docs/build/html/_datasets folder
             filename = os.path.basename(rst_file_path)
@@ -49,8 +49,10 @@ class ChemiscopeDirective(Directive):
 
             # Create the chemiscope node
             node = self.create_node(
-                rel_file_path, include_headers=source not in ChemiscopeDirective.pages_with_headers
+                rel_file_path,
+                include_headers=source not in ChemiscopeDirective.pages_with_headers,
             )
+
             # indicates that the page has already been added headers
             if source not in ChemiscopeDirective.pages_with_headers:
                 ChemiscopeDirective.pages_with_headers.append(source)
@@ -93,7 +95,7 @@ class ChemiscopeDirective(Directive):
 
         node = chemiscope()
         node["filepath"] = rel_file_path
-        node["mode"] = self.options.get("mode")
+        node["mode"] = self.options.get("mode", "default")
         node["include_headers"] = include_headers
 
         self.state.nested_parse(self.content, self.content_offset, node)
