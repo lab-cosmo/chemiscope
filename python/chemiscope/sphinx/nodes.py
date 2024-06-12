@@ -10,7 +10,9 @@ class chemiscope(nodes.Element):
 
 
 def visit_chemiscope_latex(self, node):
-    self.body.append("\\\\(Chemiscope visualisation is ignored)\\\\\n")
+    self.body.append(
+        "\\\\(The chemiscope visualisation cannot be rendered to LaTeX)\\\\\n"
+    )
 
 
 def depart_chemiscope_latex(self, node):

@@ -24,13 +24,13 @@ Chemiscope directive
 In order to include a chemiscope viewer into a RST documentation page one can use a 
 ``chemiscope`` directive. When compiled with ``sphinx-build``, the directive will
 be translated into an HTML embedding of and interactive widget, that loads a JSON 
-file and displays it. The directive specifies two options:  ``filepath`` - that 
-indicates the path relative to the RST file where the chemiscope JSON is to be found, 
-and  ``mode`` that specifies the type of visualization to be used
-(``default``, ``structure``, or ``map``).
+file and displays it. The directive requires a mandatory argument, that indicates 
+the path (relative to the RST file) where the chemiscope JSON is to be found, 
+and an optional ``mode`` parameter that specifies the type of visualization to be used
+(``default``, ``structure``, or ``map`` - ``default`` being unimaginatively the default).
 
 For instance, to show a viewer combining structure and property panels you can 
-include the directive
+simply use the directive
  
 .. code-block:: rst
 
@@ -53,9 +53,10 @@ and the ``map`` mode only the property map
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Because of CORS restrictions in most browsers, it is not possible to load the
-widget by loading the raw HTML pages. Instead, one needs to run a local 
-HTTP server, e.g. to use the port 8765,
+Because of the need to dynamically load the chemiscope module and the 
+desired file, it is not possible to load the widget by viewing the
+the raw HTML pages. Instead, one needs to run a local HTTP server. 
+For instance, using the port 8765,
 
 .. code-block:: bash
 
