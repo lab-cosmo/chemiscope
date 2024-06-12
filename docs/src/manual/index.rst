@@ -13,8 +13,10 @@ This section starts introducing the concept of structural and physical propertie
 before describing how to use the different panels in the standard visualization. 
 It continues by presenting how you can generate a chemiscope input file to load on
 https://chemiscope.org, as well as within a standalone HTML viewer which does
-not require internet connectivity. Finally, we present the chemiscope jupyter
-extension, which can be used to explore a dataset directly inside a jupyter notebook.
+not require internet connectivity. 
+See the :ref:`Python module documentation <python-module>`  
+for how to interact with chemiscope in a script, or to explore a dataset directly 
+inside a jupyter notebook.
 
 .. _chemiscope: https://chemiscope.org
 
@@ -24,6 +26,4 @@ extension, which can be used to explore a dataset directly inside a jupyter note
     properties
     panels
     input
-    python
-    jupyter
     sharing

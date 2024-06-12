@@ -37,19 +37,16 @@ If you incorporate chemiscope components into a software project, a link
 back to the `chemiscope`_ homepage is the preferred form of acknowledgement.
 
 
-
 What's in this documentation?
 -----------------------------
-.. toctree::
-    :hidden:
-    
-    Chemiscope visualizer <self>
-   
+
 .. toctree::
     :maxdepth: 2
-    
-    examples
-    manual/index    
+   
+    Chemiscope visualizer <self>
+    examples 
+    manual/index
+    python/index
     embedding
     chemiscope-sphinx
 
