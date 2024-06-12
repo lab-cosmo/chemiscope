@@ -1,9 +1,11 @@
 import os
 
 from docutils.parsers.rst import Directive
+from sphinx.util import logging
 
 from .nodes import chemiscope
 from .utils import copy_file
+
 
 class ChemiscopeDirective(Directive):
     """Custom RST directive to include a chemiscope visualizer in a
@@ -45,12 +47,14 @@ class ChemiscopeDirective(Directive):
             filename = os.path.basename(rst_file_path)
             build_file_path, rel_file_path = self.get_build_file_path(filename)
             copy_file(rst_file_path, build_file_path)
-            
+
             # Create the chemiscope node
-            node = self.create_node(rel_file_path, source not in ChemiscopeDirective.pages_with_headers)
+            node = self.create_node(
+                rel_file_path, source not in ChemiscopeDirective.pages_with_headers
+            )
             # indicates that the page has already been added headers
             if source not in ChemiscopeDirective.pages_with_headers:
-                ChemiscopeDirective.pages_with_headers.append(source)                
+                ChemiscopeDirective.pages_with_headers.append(source)
             return [node]
         except Exception as e:
             print(f"Error during run: {e}")
@@ -92,7 +96,7 @@ class ChemiscopeDirective(Directive):
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode")
         node["include_headers"] = include_headers
-        
+
         self.state.nested_parse(self.content, self.content_offset, node)
 
         return node
