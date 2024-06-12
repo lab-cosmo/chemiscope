@@ -1,1 +1,4 @@
 build/
+
+src/examples/
+src/sg_execution_times.rst
