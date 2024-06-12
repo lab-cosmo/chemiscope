@@ -76,7 +76,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
-        if not _is_running_in_notebook():
+        if _is_running_in_notebook() or _is_running_in_sphinx():
+            return self.__repr__()
+        else:
             return """
                 <div
                     style="width: 100%;
@@ -89,11 +91,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                     text-align: center;"
                 >
                     Interactive chemiscope widgets can only be visualized
-                    inside a jupyter notebook.
+                    inside a jupyter notebook or a sphinx-gallery example.
                 </div>
             """
-        else:
-            return self.__repr__()
 
 
 @ipywidgets.register
@@ -242,9 +242,9 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
-    if not _is_running_in_notebook():
+    if not (_is_running_in_notebook() or _is_running_in_sphinx()):
         warnings.warn(
-            "chemiscope.show only works inside a jupyter notebook",
+            "chemiscope.show only works in a jupyter notebook or a sphinx build",
             stacklevel=2,
         )
 
@@ -322,3 +322,17 @@ def _is_running_in_notebook():
             return False
     except NameError:
         return False
+
+
+def _is_running_in_sphinx():
+    """
+    Returns true if a file is being executed by a sphinx build.
+    """
+    try:
+        import sphinx
+
+        sphinx_build = hasattr(sphinx, "application")
+    except ImportError:
+        sphinx_build = False
+
+    return sphinx_build

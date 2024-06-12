@@ -1,7 +1,7 @@
 .. _reference:
 
-``chemiscope`` functions reference
-----------------------------------
+`chemiscope` functions reference
+--------------------------------
 
 .. autofunction:: chemiscope.write_input
 

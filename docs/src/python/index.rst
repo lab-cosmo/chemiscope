@@ -16,6 +16,7 @@ a JSON input.
     cli
     reference
     jupyter
+    sphinx
     gallery
 
    
