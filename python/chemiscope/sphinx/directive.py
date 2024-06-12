@@ -1,7 +1,6 @@
 import os
 
 from docutils.parsers.rst import Directive
-from sphinx.util import logging
 
 from .nodes import chemiscope
 from .utils import copy_file
