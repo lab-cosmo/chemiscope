@@ -25,7 +25,7 @@ class ChemiscopeDirective(Directive):
 
     node_class = chemiscope
     has_content = True
-    required_arguments = 0
+    required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = False
     option_spec = {"mode": str}
@@ -39,7 +39,7 @@ class ChemiscopeDirective(Directive):
             source_path = os.path.dirname(source) + "/"
 
             # Path to the saved dataset in the .rst files folder
-            dataset_rel_path = self.content[0].strip()
+            dataset_rel_path = self.arguments[0].strip()
             rst_file_path = source_path + dataset_rel_path
 
             # Copy dataset to the docs/build/html/_datasets folder
