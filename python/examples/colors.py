@@ -86,7 +86,7 @@ chemiscope.write_input(
 
 # %%
 #
-# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the creation
-# of a JSON file and directly create a viewer.
+# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the
+# creation of a JSON file and directly create a viewer.
 
 chemiscope.show_input("colors-example.json.gz")
