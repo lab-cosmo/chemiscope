@@ -89,29 +89,13 @@ npm run build
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)
 for a examples of how to create a webpage using chemiscope.
 
-## Building the sphynx-gallery with the chemiscope
+## sphinx and sphinx-gallery integration
 
-Add the following code to the `conf.py` file:
-```
-import chemiscope
+Chemiscope provides also extensions for `sphinx` and `sphinx-gallery` to 
+include chemiscope viewers within the documentation of a Python package. 
+See the [documentation](https://chemiscope.org/docs/python/sphinx.html)
+for a discussion of the setup and a few examples. 
 
-extensions = [
-    ...
-    "sphinx_gallery.gen_gallery",
-    "chemiscope.sphinx_gallery",
-]
-```
-
-`sphinx_gallery.gen_gallery` extension requires the `sphinx_gallery_conf` configuration. Here is the proposed example:
-```
-sphinx_gallery_conf = {
-    "examples_dirs": "examples",                    # source directory which contains the files intented to be used as docs
-    "gallery_dirs": "examples",                     # destination directory which will contain the generated docs, will be generated automatically
-    "filename_pattern": ".*",                       # the pattern to find the files to be used for docs generation
-    "within_subsection_order": "FileNameSortKey",   # order of the cells and output
-    "image_scrapers": ("matplotlib", ChemiscopeScraper(examples_dirs)),  # scraper to handle the chemiscope visualisation
-}
-```
 ## License and contributions
 
 If you are interested in contributing to chemiscope, please have a look at our
