@@ -76,9 +76,3 @@ cs = chemiscope.show(
         ]
     },
 )
-cs
-
-# %%
-#
-# Save as a file that can be viewed at chemiscope.org
-cs.save("trajectory-md.json.gz")
