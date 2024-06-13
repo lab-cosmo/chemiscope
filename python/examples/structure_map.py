@@ -73,9 +73,10 @@ environments = chemiscope.librascal_atomic_environments(frames, cutoff=4.0)
 
 # %%
 #
-# Create and display the chemiscope widget
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
 
-cs = chemiscope.show(
+chemiscope.write_input(
+    "trajectory-pca.json.gz",
     # dataset metadata can also be included, to provide a self-contained description
     # of the data, authors and references
     meta={
@@ -100,9 +101,10 @@ cs = chemiscope.show(
         "structure": [{"keepOrientation": True, "playbackDelay": 100}]
     },
 )
-cs
 
 # %%
 #
-# Save as a file that can be viewed at chemiscope.org
-cs.save("trajectory-pca.json.gz")
+# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the creation
+# of a JSON file and directly create a viewer.
+
+chemiscope.show_input("trajectory-pca.json.gz")

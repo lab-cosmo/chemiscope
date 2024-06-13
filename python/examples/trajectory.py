@@ -38,10 +38,10 @@ properties = {
 
 # %%
 #
-# Uses a chemiscope widget to visualize structures and properties.
-# Note how to display the forces as vectorial properties
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
 
-cs = chemiscope.show(
+chemiscope.write_input(
+    "trajectory-md.json.gz",
     # dataset metadata can also be included, to provide a self-contained description
     # of the data, authors and references
     meta={
@@ -76,3 +76,10 @@ cs = chemiscope.show(
         ]
     },
 )
+
+# %%
+#
+# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the creation
+# of a JSON file and directly create a viewer.
+
+chemiscope.show_input("trajectory-md.json.gz")

@@ -53,9 +53,10 @@ for frame in frames:
 
 # %%
 #
-# We can now display the data
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
 
-cs = chemiscope.show(
+chemiscope.write_input(
+    "colors-example.json.gz",
     frames=frames,
     # properties can also be extracted from the ASE.Atoms frames
     properties={
@@ -81,11 +82,11 @@ cs = chemiscope.show(
     # in map panel we must indicate the list of environments (all atoms in this case)
     environments=chemiscope.all_atomic_environments(frames),
 )
-cs
 
 
 # %%
 #
-# Save as a file that can be viewed at chemiscope.org
+# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the creation
+# of a JSON file and directly create a viewer.
 
-cs.save("colors-example.json.gz")
+chemiscope.show_input("colors-example.json.gz")

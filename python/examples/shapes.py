@@ -238,10 +238,10 @@ for d in dipoles_auto["parameters"][
 
 # %%
 #
-#
-# Uses a chemiscope widget to visualize structures including the custom shapes.
-# Even though we have property data, we show a `structure` view of the data
-cs = chemiscope.show(
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
+
+chemiscope.write_input(
+    "shapes-example.json.gz",
     frames=frames,
     properties=chemiscope.extract_properties(frames, only=["alpha"]),
     shapes={
@@ -289,11 +289,12 @@ cs = chemiscope.show(
         ],
     },
     environments=chemiscope.all_atomic_environments(frames),
-    mode="structure",
 )
-cs
+
 
 # %%
 #
-# Save as a file that can be viewed at chemiscope.org
-cs.save("shapes-example.json.gz")
+# The file can also be viewed in a notebook. Use `chemiscope.show` to bypass the creation
+# of a JSON file and directly create a viewer.
+
+chemiscope.show_input("shapes-example.json.gz", mode="structure")
