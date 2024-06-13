@@ -7,7 +7,8 @@ from .file_path_iterator import FilePathIterator
 from .utils import get_raw_filename
 
 warnings.filterwarnings(
-    "ignore", message="chemiscope.show only works inside a jupyter notebook"
+    "ignore",
+    message="chemiscope.show only works in a jupyter notebook or a sphinx build",
 )
 
 
