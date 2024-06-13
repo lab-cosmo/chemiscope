@@ -1,0 +1,83 @@
+import os
+import warnings
+
+from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
+
+from .file_path_iterator import FilePathIterator
+
+warnings.filterwarnings(
+    "ignore",
+    message="chemiscope.show only works in a jupyter notebook or a sphinx build",
+)
+
+
+class ChemiscopeScraper:
+    """Custom scraper for Chemiscope visualizations"""
+
+    def __init__(self):
+        # Create an iterator to generate the file name
+        self.iterator = FilePathIterator()
+
+    def __repr__(self):
+        return "ChemiscopeScraper"
+
+    def __call__(self, _block, block_vars, _gallery_conf):
+        """
+        Extracts Chemiscope widget data, saves it .json dataset in the .rst directory
+        and generates a .rst directive for embedding.
+
+        Triggered on the each output of the script.
+
+        Parameters:
+        - _block: Unused parameter, a .rst code block
+        - block_vars (dict): Variables from the executed code block
+        - _gallery_conf: Unused parameter, sphinx-gallery config
+
+        Returns:
+        - str: .rst directive for embedding the chemiscope visualization
+        """
+        # Retrieve the chemiscope widget from block variables
+        widget = block_vars.get("example_globals", {}).get("___")
+        mode = self.get_widget_mode(widget)
+
+        if mode is not None:
+            # Get the target directory to save the dataset next to the .rst files
+            src_file = block_vars.get("target_file")  # Python file
+            rst_dataset_dir = os.path.join(os.path.dirname(src_file), "_datasets")
+            os.makedirs(rst_dataset_dir, exist_ok=True)
+
+            # Save the related dataset to the directory next to the related .rst file
+            infix = os.path.splitext(os.path.basename(src_file))[0]
+            dataset_filename = self.get_dataset_filename(infix)
+            dataset_file_path = os.path.join(rst_dataset_dir, dataset_filename)
+            widget.save(dataset_file_path)
+
+            rel_file_path = os.path.join("_datasets", dataset_filename)
+
+            # Return the .rst directive
+            return self.generate_rst(rel_file_path, mode)
+        else:
+            # chemiscope.show is not called
+            return ""
+
+    def generate_rst(self, filepath, mode):
+        """Generate a .rst directive for embedding chemiscope widget"""
+        return f""".. chemiscope:: {filepath}
+            :mode: {mode}
+        """
+
+    def get_widget_mode(self, widget):
+        """Determine the mode of the chemiscope widget"""
+        if isinstance(widget, ChemiscopeWidget):
+            return "default"
+        elif isinstance(widget, StructureWidget):
+            return "structure"
+        elif isinstance(widget, MapWidget):
+            return "map"
+        else:
+            return None
+
+    def get_dataset_filename(self, infix):
+        """Generate a dataset filename using the file path infix"""
+        self.iterator.set_infix(infix)
+        return self.iterator.next()

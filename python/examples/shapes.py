@@ -1,14 +1,18 @@
 """
-Extended shape visualization in chemiscope
-==========================================
+Shape visualization
+===================
 
-This example demonstrates how to visualize structure and atomic properties in the
-structure panel, using different types of predefined shapes (ellipsoids for tensors,
-arrows for vectors). The example also shows how to define custom shapes.
+This example demonstrates how to visualize structure and atomic
+properties in the structure panel, using different types of
+predefined shapes (ellipsoids for tensors, arrows for vectors).
+The example also shows how to define custom shapes.
 
 Note that the same parameters can be used with `chemiscope.show` to visualize an
 interactive widget in a Jupyter notebook.
 """
+
+# %%
+#
 
 import ase.io
 import numpy as np
@@ -16,7 +20,10 @@ from scipy.spatial.transform import Rotation
 
 import chemiscope
 
-# loads a dataset of structures
+# %%
+#
+# Loads a dataset of structures
+
 frames = ase.io.read("data/alpha-mu.xyz", ":")
 
 quaternions = []
@@ -48,12 +55,20 @@ for a in frames:
         R[:, -1] = vec
         quaternions.append(Rotation.from_matrix(R).as_quat())
 
-# here we define shapes that will later be used to create the input;
+# %%
+#
+# Shapes generation
+# -----------------
+#
+# Here we define shapes that will later be used to create the input;
 # input generation can also be achieved as a single call, but in practice
 # it is wise to define separate entities for better readability
 
-# cubes with smooth shading, centered on atoms. these are created as
+# %%
+#
+# Cubes with smooth shading, centered on atoms. these are created as
 # "custom" shapes and then are just scaled to atom-dependent sizes
+
 atom_sizes = {"O": 0.4, "N": 0.5, "C": 0.45, "H": 0.2}
 smooth_cubes = dict(
     kind="custom",
@@ -94,8 +109,11 @@ smooth_cubes = dict(
     },
 )
 
-# structure-based shapes. also demonstrates how to achieve sharp-edge shading.
+# %%
+#
+# Structure-based shapes. also demonstrates how to achieve sharp-edge shading.
 # requires defining multiple times the same vertices
+
 sharp_cubes = dict(
     kind="custom",
     parameters={
@@ -156,7 +174,9 @@ sharp_cubes = dict(
     },
 )
 
-# loads vertices and simplices from an external file
+# %%
+#
+# Load vertices and simplices from an external file
 # and use it to draw a very irreverent molecule
 irreverent_dict = np.load("data/irreverence.npz")
 irreverent_shape = dict(
@@ -173,7 +193,10 @@ irreverent_shape = dict(
         ],
     },
 )
-# dipole moments visualized as arrows. this is just to demonstrate manual insertion,
+
+# %%
+#
+# Dipole moments visualized as arrows. this is just to demonstrate manual insertion,
 # see below to extract directly from the ASE info
 dipoles_manual = (
     dict(
@@ -199,6 +222,7 @@ dipoles_manual = (
     ),
 )
 
+
 dipoles_auto = chemiscope.ase_vectors_to_arrows(frames, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
 dipoles_auto["parameters"]["global"] = {
@@ -211,6 +235,10 @@ for d in dipoles_auto["parameters"][
     "structure"
 ]:  # center the dipoles close to the molecule
     d["position"] = [11, 11, 11]
+
+# %%
+#
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
 
 chemiscope.write_input(
     "shapes-example.json.gz",
@@ -262,3 +290,11 @@ chemiscope.write_input(
     },
     environments=chemiscope.all_atomic_environments(frames),
 )
+
+
+# %%
+#
+# The file can also be viewed in a notebook. Use `chemiscope.show` above to bypass the
+# creation of a JSON file and directly create a viewer.
+
+chemiscope.show_input("shapes-example.json.gz", mode="structure")

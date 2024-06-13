@@ -1,6 +1,6 @@
 """
-Structure-property maps in chemiscope
-=====================================
+Structure-property maps
+=======================
 
 This example demonstrates the visualization of structures (or environments) using
 data-driven descriptors of their geometry, to cluster together similar motifs. Here the
@@ -11,27 +11,39 @@ The same parameters can be used with `chemiscope.show` to visualize an interacti
 widget in a Jupyter notebook.
 """
 
+# %%
+#
+
 import ase.io
 import numpy as np
 
 import chemiscope
 
-# load structures
+# %%
+# Load structures
+
 frames = ase.io.read("data/trajectory.xyz", ":")
 
-# load the SOAP-PCA descriptors. chemiscope does not provide
-# analysis routines, but you can look up for instance
+# %%
+#
+# Load the SOAP-PCA descriptors. chemiscope does not provide
+# analysis routines (yet), but you can look up for instance
 # scikit-matter as a package to do dimensionality reduction
 # analyses.
+
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_struc = np.loadtxt("data/trajectory-pca_structure.dat")
 
-# when both environments and structure property are present
-# only environment properties are shown. still they can be stored,
+# %%
+#
+# When both environments and structure property are present
+# only environment properties are shown. Still they can be stored,
 # and future versions of chemiscope may allow switching between
 # the two modes.
+#
 # NB: if there are properties stored in the ASE frames, you can extract
 #     them with chemiscope.extract_properties(frames)
+
 properties = {
     # concise definition of a property, with just an array and the type
     # inferred by the size
@@ -46,7 +58,9 @@ properties = {
     },
 }
 
-# environment descriptors have only been computed for C and O atoms.
+# %%
+#
+# Environment descriptors have only been computed for C and O atoms.
 # we use a mask and then a utility function to generate the proper
 # list of environments
 for frame in frames:
@@ -56,9 +70,13 @@ for frame in frames:
 
 environments = chemiscope.librascal_atomic_environments(frames, cutoff=4.0)
 
-# write the chemiscope input file.
+
+# %%
+#
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
+
 chemiscope.write_input(
-    path="trajectory-pca.json.gz",
+    "trajectory-pca.json.gz",
     # dataset metadata can also be included, to provide a self-contained description
     # of the data, authors and references
     meta={
@@ -83,3 +101,10 @@ chemiscope.write_input(
         "structure": [{"keepOrientation": True, "playbackDelay": 100}]
     },
 )
+
+# %%
+#
+# The file can also be viewed in a notebook. Use `chemiscope.show` above to bypass the
+# creation of a JSON file and directly create a viewer.
+
+chemiscope.show_input("trajectory-pca.json.gz")

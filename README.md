@@ -89,6 +89,13 @@ npm run build
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)
 for a examples of how to create a webpage using chemiscope.
 
+## sphinx and sphinx-gallery integration
+
+Chemiscope provides also extensions for `sphinx` and `sphinx-gallery` to 
+include chemiscope viewers within the documentation of a Python package. 
+See the [documentation](https://chemiscope.org/docs/python/sphinx.html)
+for a discussion of the setup and a few examples. 
+
 ## License and contributions
 
 If you are interested in contributing to chemiscope, please have a look at our

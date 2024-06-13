@@ -1,7 +1,10 @@
 sphinx>=4
 sphinx-bootstrap-theme
 sphinx-argparse-cli
+sphinx-gallery
 
 # required to be able to import chemiscope in the doc
 numpy
 ipywidgets
+matplotlib
+ase==3.22.1

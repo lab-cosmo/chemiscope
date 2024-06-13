@@ -13,10 +13,4 @@ from .structures import (  # noqa: F401
 )
 from .version import __version__  # noqa: F401
 
-try:
-    # only import the chemiscope.show function if we have ipywidgets installed.
-    import ipywidgets  # noqa
-
-    from .jupyter import show, show_input  # noqa
-except ImportError:
-    pass
+from .jupyter import show, show_input  # noqa

@@ -9,12 +9,17 @@ The same parameters can be used with `chemiscope.show` to visualize an interacti
 widget in a Jupyter notebook.
 """
 
+# %%
+#
+
 import ase.io
 import numpy as np
 
 import chemiscope
 
-# load structures
+# %%
+#
+# Load structures and properties
 frames = ase.io.read("data/trajectory.xyz", ":")
 
 properties = {
@@ -30,9 +35,13 @@ properties = {
     },
 }
 
-# write the chemiscope input file.
+
+# %%
+#
+# Create a visualization and save it as a file that can be viewed at chemiscope.org
+
 chemiscope.write_input(
-    path="trajectory-md.json.gz",
+    "trajectory-md.json.gz",
     # dataset metadata can also be included, to provide a self-contained description
     # of the data, authors and references
     meta={
@@ -67,3 +76,10 @@ chemiscope.write_input(
         ]
     },
 )
+
+# %%
+#
+# The file can also be viewed in a notebook. Use `chemiscope.show` above to bypass the
+# creation of a JSON file and directly create a viewer.
+
+chemiscope.show_input("trajectory-md.json.gz")

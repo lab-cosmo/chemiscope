@@ -8,7 +8,8 @@ and molecules and help researchers to find structure-properties correlations
 inside such databases. The screenshot below shows an example of such database
 being visualized with chemiscope. The :ref:`first part of this documentation <user-manual>`
 describes the default interface of chemiscope and how to use it with your own database,
-both using the stand-alone viewer or the :ref:`jupyter widget <jupyter>`.
+both using the stand-alone viewer or through the :ref:`python module <python-module>`
+and/or the :ref:`jupyter widget <jupyter>`.
 
 .. figure:: img/screenshot.png
     :align: center
@@ -18,14 +19,17 @@ both using the stand-alone viewer or the :ref:`jupyter widget <jupyter>`.
 
 Chemiscope is built around re-usable components, that can be arranged in
 different manners to create visualization adapted to different kinds of data. The
-:ref:`second part of this documentation <dev-manual>` explains how to build the 
+:ref:`second part of this documentation <dev-manual>` explains how to build the
 code and use it in your own website to create new interfaces.
 
-Citing chemiscope
------------------
+
+Getting and citing chemiscope
+-----------------------------
 
 Chemiscope is distributed under an open-source license, and you are welcome to
 use it and incorporate it into your own research and software projects.
+You can get the source from the
+`github repository <https://github.com/lab-cosmo/chemiscope>`_.
 If you find it useful, we would appreciate a citation to the chemiscope
 `paper`_:
 
@@ -37,21 +41,17 @@ If you incorporate chemiscope components into a software project, a link
 back to the `chemiscope`_ homepage is the preferred form of acknowledgement.
 
 
-
 What's in this documentation?
 -----------------------------
-.. toctree::
-    :hidden:
-    
-    Chemiscope visualizer <self>
-   
+
 .. toctree::
     :maxdepth: 2
-    
-    examples
-    manual/index    
+
+    Chemiscope visualizer <self>
+    examples/index
+    manual/index
+    python/index
     embedding
-    chemiscope-sphinx
 
 
 .. _chemiscope: https://chemiscope.org

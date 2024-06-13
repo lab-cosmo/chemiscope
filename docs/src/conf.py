@@ -3,6 +3,7 @@ import os
 import sphinx_bootstrap_theme
 
 import chemiscope
+from chemiscope.sphinx import ChemiscopeScraper
 
 ROOT = os.path.abspath(os.path.join("..", ".."))
 
@@ -22,9 +23,15 @@ release = chemiscope.__version__
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx_argparse_cli",
+    "sphinx_gallery.gen_gallery",
     "chemiscope.sphinx",
 ]
+
+intersphinx_mapping = {
+    "sphinx_gallery": ("https://sphinx-gallery.github.io/stable/", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -34,6 +41,14 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+examples_dirs = os.path.join(ROOT, "python", "examples")
+sphinx_gallery_conf = {
+    "examples_dirs": examples_dirs,
+    "gallery_dirs": "examples",
+    "filename_pattern": ".*",
+    "within_subsection_order": "FileNameSortKey",
+    "image_scrapers": ("matplotlib", ChemiscopeScraper()),
+}
 
 # -- Options for HTML output -------------------------------------------------
 

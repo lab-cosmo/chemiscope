@@ -1,4 +1,4 @@
-.. _chemiscope-sphinx:
+.. _sphinx:
 
 Chemiscope in `sphinx`
 ======================
@@ -34,20 +34,20 @@ simply use the directive
  
 .. code-block:: rst
 
-    .. chemiscope:: datasets/showcase.json.gz
+    .. chemiscope:: ../datasets/showcase.json.gz
 
 Once compiled, this will show as this widget
  
-.. chemiscope:: datasets/showcase.json.gz
+.. chemiscope:: ../datasets/showcase.json.gz
     
 The ``structure`` mode will show the structures only
 
-.. chemiscope:: datasets/showcase.json.gz 
+.. chemiscope:: ../datasets/showcase.json.gz 
     :mode: structure
  
 and the ``map`` mode only the property map
 
-.. chemiscope:: datasets/showcase.json.gz
+.. chemiscope:: ../datasets/showcase.json.gz
     :mode: map 
     
 Viewing a documentation locally

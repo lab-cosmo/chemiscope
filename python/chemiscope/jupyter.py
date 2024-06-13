@@ -76,23 +76,10 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return f"<{class_name}({string_repr})>"
 
     def _repr_html_(self):
-        if not _is_running_in_notebook():
-            return """
-<div
-    style="width: 100%;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    padding: 15px;
-    font-size: 16px;
-    box-sizing: border-box;
-    text-align: center;"
->
-    Interactive chemiscope widgets can only be visualized inside a jupyter notebook.
-</div>
-            """
-        else:
+        if _is_running_in_notebook():
             return self.__repr__()
+        else:
+            return ""
 
 
 @ipywidgets.register
@@ -241,9 +228,9 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
-    if not _is_running_in_notebook():
+    if not (_is_running_in_notebook() or _is_running_in_sphinx_gallery()):
         warnings.warn(
-            "chemiscope.show only works inside a jupyter notebook",
+            "chemiscope.show only works in a jupyter notebook or a sphinx build",
             stacklevel=2,
         )
 
@@ -321,3 +308,21 @@ def _is_running_in_notebook():
             return False
     except NameError:
         return False
+
+
+def _is_running_in_sphinx_gallery():
+    """
+    Returns true if a file is being executed by sphinx-gallery.
+    """
+
+    # This is very hacky: we are relying on the fact that `sphinx_gallery.gen_gallery`
+    # should only be imported when actually generating the gallery, and is not imported
+    # otherwise.
+    try:
+        import sphinx_gallery
+
+        sphinx_build = hasattr(sphinx_gallery, "gen_gallery")
+    except ImportError:
+        sphinx_build = False
+
+    return sphinx_build
