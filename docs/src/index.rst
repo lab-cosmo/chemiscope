@@ -46,9 +46,9 @@ What's in this documentation?
 
 .. toctree::
     :maxdepth: 2
-   
+
     Chemiscope visualizer <self>
-    examples 
+    examples/index
     manual/index
     python/index
     embedding
