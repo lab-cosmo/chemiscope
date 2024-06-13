@@ -53,7 +53,7 @@ for frame in frames:
 
 # %%
 #
-# Now we just display the chemiscope (if running in a notebook)
+# We can now display the data
 
 cs = chemiscope.show(
     frames=frames,
