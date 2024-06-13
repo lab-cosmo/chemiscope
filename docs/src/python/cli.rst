@@ -1,3 +1,5 @@
+.. _chemiscope-input-cli:
+
 Command line interface
 -----------------------
 
