@@ -326,13 +326,27 @@ def _is_running_in_notebook():
 
 def _is_running_in_sphinx():
     """
-    Returns true if a file is being executed by a sphinx build.
+    Returns true if a file is being executed by a sphinx
+    or sphinx_gallery build.
     """
+
+    # NB: this is terribly hacky but unless sphinx gives us a
+    # way, this is kind of the best we can do. see
+    # https://github.com/sphinx-doc/sphinx/issues/9805
+
     try:
         import sphinx
 
         sphinx_build = hasattr(sphinx, "application")
     except ImportError:
         sphinx_build = False
+
+    if not sphinx_build:
+        try:
+            import sphinx_gallery
+
+            sphinx_build = hasattr(sphinx_gallery, "gen_gallery")
+        except ImportError:
+            sphinx_build = False
 
     return sphinx_build
