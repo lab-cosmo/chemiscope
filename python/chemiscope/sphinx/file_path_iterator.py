@@ -4,6 +4,15 @@ from sphinx.errors import ExtensionError
 
 
 class FilePathIterator:
+    """
+    Generates unique file names with a defined pattern.
+    The file names consist of a prefix, an infix (UUID by default), a counter,
+    and an extension.
+
+    Used in the ChemiscopeScraper to create file names for the saved datasets
+    next to the generated .rst files (docs/src/examples/_datasets/)
+    """
+
     def __init__(self, prefix="fig", extension=".json.gz"):
         """
         Initialize the iterator

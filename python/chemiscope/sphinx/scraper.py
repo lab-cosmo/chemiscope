@@ -4,7 +4,6 @@ import warnings
 from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
 
 from .file_path_iterator import FilePathIterator
-from .utils import get_raw_filename
 
 warnings.filterwarnings(
     "ignore",
@@ -48,7 +47,7 @@ class ChemiscopeScraper:
             os.makedirs(rst_dataset_dir, exist_ok=True)
 
             # Save the related dataset to the directory next to the related .rst file
-            infix = get_raw_filename(src_file)
+            infix = os.path.splitext(os.path.basename(src_file))[0]
             dataset_filename = self.get_dataset_filename(infix)
             dataset_file_path = os.path.join(rst_dataset_dir, dataset_filename)
             widget.save(dataset_file_path)
