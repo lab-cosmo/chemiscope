@@ -4,7 +4,7 @@ Use with `sphinx-gallery`
 =========================
 
 The chemiscope widgets double up in the documentation of python packages
-using :py:mod:`sphinx_gallery` - a spinx extension that executes python 
+using :py:mod:`sphinx_gallery` - a sphinx extension that executes python 
 scripts and formats their output as static pages inside the documentation. 
 You can look at :ref:`the examples <examples>` to see how the widgets get 
 displayed inside a documentation, and read the documentation of 
