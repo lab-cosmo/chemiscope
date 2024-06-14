@@ -19,5 +19,10 @@ def setup(app):
         html=(visit_chemiscope_html, depart_chemiscope_html),
         latex=(visit_chemiscope_latex, depart_chemiscope_latex),
     )
-    static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
-    app.config.html_static_path.append(static_path)
+
+    def add_static_path(app):
+        static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
+        # put our path first, so the user can override our files if they want to
+        app.config.html_static_path.insert(0, static_path)
+
+    app.connect("builder-inited", add_static_path)
