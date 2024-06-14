@@ -1,5 +1,5 @@
+import hashlib
 import os
-import uuid
 
 from docutils.parsers.rst import Directive
 
@@ -9,10 +9,9 @@ from .utils import copy_file
 
 class ChemiscopeDirective(Directive):
     """Custom RST directive to include a chemiscope visualizer in a
-    sphinx documentation file. It has two options:
-    `filepath` - the path to a chemiscope JSON or gzipped JSON file,
-    relative to the path of the RST file, and `mode`, which can be
-    `default`, `structure` or `map` depending on the desired type of
+    sphinx documentation file. It has two options: `filepath` - the path to a chemiscope
+    JSON or gzipped JSON file, relative to the path of the RST file, and `mode`, which
+    can be `default`, `structure` or `map` depending on the desired type of
     visualization.
 
     e.g.::
@@ -20,8 +19,8 @@ class ChemiscopeDirective(Directive):
         .. chemiscope:: datasets/polarizability.json.gz
             :mode: map
 
-    The resulting html is the chemiscope widget wrapped in the
-    chemiscope-sphinx.html template.
+    The resulting html is the chemiscope widget wrapped in the chemiscope-sphinx.html
+    template.
     """
 
     node_class = chemiscope
@@ -33,35 +32,34 @@ class ChemiscopeDirective(Directive):
     pages_with_headers = []
 
     def run(self):
-        try:
+        # Get the source path from the document
+        source = self.state.document["source"]
+        source_path = os.path.dirname(source) + "/"
 
-            # Get the source path from the document
-            source = self.state.document["source"]
-            source_path = os.path.dirname(source) + "/"
+        # Path to the saved dataset in the .rst files folder
+        dataset_rel_path = self.arguments[0].strip()
+        dataset_path = source_path + dataset_rel_path
 
-            # Path to the saved dataset in the .rst files folder
-            dataset_rel_path = self.arguments[0].strip()
-            rst_file_path = source_path + dataset_rel_path
+        # Ensure unique file name to avoid clashes if the same file name is used in
+        # different directives.
+        with open(dataset_path, "rb") as fd:
+            shasum = hashlib.sha256(fd.read()).hexdigest()
+        filename = f"{shasum}-{os.path.basename(dataset_path)}"
 
-            # Copy dataset to the docs/build/html/_datasets folder
-            # Ensure unique file name to avoid clashes
-            filename = f"{uuid.uuid4()}-{os.path.basename(rst_file_path)}"
-            build_file_path, rel_file_path = self.get_build_file_path(filename)
-            copy_file(rst_file_path, build_file_path)
+        # Copy dataset to the docs/build/html/_datasets folder
+        build_file_path, rel_file_path = self.get_build_file_path(filename)
+        copy_file(dataset_path, build_file_path)
 
-            # Create the chemiscope node
-            node = self.create_node(
-                rel_file_path,
-                include_headers=source not in ChemiscopeDirective.pages_with_headers,
-            )
+        # Create the chemiscope node
+        node = self.create_node(
+            rel_file_path,
+            include_headers=source not in ChemiscopeDirective.pages_with_headers,
+        )
 
-            # indicates that the page has already been added headers
-            if source not in ChemiscopeDirective.pages_with_headers:
-                ChemiscopeDirective.pages_with_headers.append(source)
-            return [node]
-        except Exception as e:
-            print(f"Error during run: {e}")
-            return []
+        # indicates that the page has already been added headers
+        if source not in ChemiscopeDirective.pages_with_headers:
+            ChemiscopeDirective.pages_with_headers.append(source)
+        return [node]
 
     def get_build_file_path(self, filename):
         """

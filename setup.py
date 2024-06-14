@@ -42,7 +42,7 @@ NPM_BUILD_INPUT = [
 NPM_BUILD_OUTPUT = [
     "python/jupyter/nbextension/chemiscope.min.js",
     "python/jupyter/labextension/package.json",
-    "python/chemiscope/sphinx/static/js/chemiscope.min.js",
+    "python/chemiscope/sphinx/static/chemiscope.min.js",
 ]
 
 
@@ -113,7 +113,7 @@ def run_npm_build():
 
         shutil.copyfile(
             src="dist/chemiscope.min.js",
-            dst="python/chemiscope/sphinx/static/js/chemiscope.min.js",
+            dst="python/chemiscope/sphinx/static/chemiscope.min.js",
         )
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
