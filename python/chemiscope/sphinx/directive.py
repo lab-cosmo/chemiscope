@@ -9,10 +9,9 @@ from .utils import copy_file
 
 class ChemiscopeDirective(Directive):
     """Custom RST directive to include a chemiscope visualizer in a
-    sphinx documentation file. It has two options:
-    `filepath` - the path to a chemiscope JSON or gzipped JSON file,
-    relative to the path of the RST file, and `mode`, which can be
-    `default`, `structure` or `map` depending on the desired type of
+    sphinx documentation file. It has two options: `filepath` - the path to a chemiscope
+    JSON or gzipped JSON file, relative to the path of the RST file, and `mode`, which
+    can be `default`, `structure` or `map` depending on the desired type of
     visualization.
 
     e.g.::
@@ -20,8 +19,8 @@ class ChemiscopeDirective(Directive):
         .. chemiscope:: datasets/polarizability.json.gz
             :mode: map
 
-    The resulting html is the chemiscope widget wrapped in the
-    chemiscope-sphinx.html template.
+    The resulting html is the chemiscope widget wrapped in the chemiscope-sphinx.html
+    template.
     """
 
     node_class = chemiscope
