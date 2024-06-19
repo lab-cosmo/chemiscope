@@ -1,31 +1,35 @@
+import numpy as np
+import tqdm
+from mace.calculators import mace_off
+from sklearn.manifold import TSNE
+
 from .jupyter import show
 
 
 def explore(frames, properties=None, reducer=None, mode="default"):
     """
     Questions:
-    - Which red. dimentionality algo to use par default?
-    - What is user wants to display custom properties? => we take it from the input
+    - Which dimensionality reduction algorithm to use by default?
 
     Use cases:
 
     1. Basic
-    chemiscope.explore(frames)
-    Result: default algo, display only reduced data
+       chemiscope.explore(frames)
+       Result: default dim. reduction algorithm used; displays only reduced data
 
-    2. With reducer
-    chemiscope.explore(frames, reducer=get_mace_pca)
-    Result: call 'get_mace_pca' and display the result
+    2. With custom reducer function
+       chemiscope.explore(frames, reducer=get_mace_pca)
+       Result: calls 'get_mace_pca' for reduction and displays the result
 
-    3. With properties
-    chemiscope.explore(frames, properties)
-    or chemiscope.explore(frames, properties, reducer=get_mace_pca)
-    Result: call default algo / reducer, display reduced data + user properties
+    3. With custom properties
+       chemiscope.explore(frames, properties) or
+       chemiscope.explore(frames, properties, get_mace_pca) etc
+       Result: uses default or custom reducer, displays reduced data + user properties
 
-    Flow general:
-    0. Choose appropriate hyperparameters for the computation of descriptors (?)
+    Flow:
+    0. Choose appropriate hypers for computing descriptors (default reducer?)
     1. Compute descriptors
-    2. Perform a dimensionality reduction on those features
+    2. Perform dimensionality reduction on these descriptors
     3. Create the widget
     """
     # Validate inputs
@@ -34,7 +38,7 @@ def explore(frames, properties=None, reducer=None, mode="default"):
     if properties is None:
         properties = {}
 
-    # No reducer -> apply the default dimentionality reduction
+    # No reducer -> apply the default dimensionality reduction
     if reducer is None:
         X_reduced = apply_mace_tsne(frames)
 
@@ -42,7 +46,7 @@ def explore(frames, properties=None, reducer=None, mode="default"):
     else:
         X_reduced = reducer(frames)
 
-    # Add properties with the dimensionality reduction
+    # Add dimensionality reduction results to properties
     properties["Component 1"] = X_reduced[:, 0].tolist()
     properties["Component 2"] = X_reduced[:, 1].tolist()
 
@@ -51,4 +55,33 @@ def explore(frames, properties=None, reducer=None, mode="default"):
 
 
 def apply_mace_tsne(frames):
-    pass
+    # Initialize MACE OFF calculator
+    descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
+    calculator_mace_off = mace_off(**descriptor_opt)
+
+    # Compute features
+    descriptors = compute_mace_features(frames, calculator_mace_off)
+
+    # Perform dimentionality reduction using TSNE
+    return apply_tsne(descriptors)
+
+
+def compute_mace_features(frames, calculator, invariants_only=True):
+    descriptors = []
+    for frame in tqdm(frames):
+        # Calculate average structure descriptor for the frame
+        structure_avg = np.mean(
+            (calculator.get_descriptors(frame, invariants_only=invariants_only)),
+            axis=0,
+        )
+        descriptors.append(structure_avg)
+    return np.array(descriptors)
+
+
+def apply_tsne(descriptors):
+    # Initialize reducer
+    perplexity = min(30, descriptors.shape[0] - 1)
+    reducer = TSNE(n_components=2, perplexity=perplexity)
+
+    # Perform dimensionality reduction using t-SNE
+    return reducer.fit_transform(descriptors)

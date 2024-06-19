@@ -1,6 +1,18 @@
 """
-chemiscope.explore example
+Chemiscope.explore example
 ==========================
+
+This example demonstrates how to use `chemiscope.explore` to visualize molecular
+frames using dimensionality reduction techniques like PCA.
+
+Before running this example, ensure you have installed the necessary packages:
+- ase (Atomic Simulation Environment)
+- numpy
+- sklearn (scikit-learn)
+- chemiscope
+
+Also, ensure you have prepared your dataset and optionally installed `mace_off`
+for more advanced molecular descriptors.
 
 """
 
@@ -13,17 +25,13 @@ from sklearn.decomposition import PCA
 
 import chemiscope
 
-# from mace.calculators import mace_off
-# from tqdm.auto import tqdm
-
-
 # %%
 # Load dataset
 frames = ase.io.read("data/trajectory.xyz", ":")
 
 
 # %%
-# Function to calculate the features. For example, here we use MACE OFF
+# Function to calculate features using MACE OFF
 def get_descriptors(frames):
     """
     For now I have an issue using mace_off in this project, should be related to its
@@ -41,14 +49,12 @@ def get_descriptors(frames):
     np.save("data/trajectory-mace_off_features.npy", np.array(descriptors))
     """
 
+    # Return pre-computed descriptors
     return np.load("data/trajectory-mace_off_features.npy")
 
 
 # %%
-# Function to provide to the .explore. It computes the dimentionality reduction
-# for the frames. Here we use PCA as the technic
-
-
+# Function to provide to `chemiscope.explore` for PCA
 def mace_off_pca(frames):
     descriptors = get_descriptors(frames)
 
@@ -62,6 +68,6 @@ def mace_off_pca(frames):
 
 
 # %%
-# Example usage of chemiscope.explore to visualize data using PCA
+# Example usage of `chemiscope.explore` to visualize data using PCA
 
 chemiscope.explore(frames, reducer=mace_off_pca, mode="default")
