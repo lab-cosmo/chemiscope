@@ -47,7 +47,7 @@ def mace_off_pca(frames):
     descriptors = get_mace_off_descriptors(frames)
 
     start_time = time.time()
-    reducer = PCA(n_components=2)
+    reducer = PCA(n_components=3)
     PCA_X_reduced = reducer.fit_transform(descriptors)
     execution_time = time.time() - start_time
 
@@ -72,13 +72,9 @@ def mace_off_tsne(frames):
 
 # %%
 # Get properties from the frames
+
 properties = chemiscope.extract_properties(frames)
 
-
-# %%
-# Example of `chemiscope.explore` with the default featurizer (SOAP + KPCA)
-
-chemiscope.explore(frames, properties=properties)
 
 # %%
 # Example of `chemiscope.explore` with MACE OFF + PCA

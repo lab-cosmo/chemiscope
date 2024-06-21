@@ -6,7 +6,6 @@ dependencies = [
     "numpy",
     "ipywidgets>=7,<9",
     "scikit-learn",
-    "dscribe",
 ]
 
 readme = "python/README.md"
