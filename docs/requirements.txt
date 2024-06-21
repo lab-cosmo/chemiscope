@@ -11,6 +11,8 @@ ase==3.22.1
 
 # Temporary add libs to showcase chemiscope.explore
 scikit-learn
+dscribe
+
 # tqdm
 # torch==2.0.1
 # mace-torch==0.3.4

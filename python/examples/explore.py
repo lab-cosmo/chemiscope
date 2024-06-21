@@ -1,19 +1,6 @@
 """
 Chemiscope.explore example
 ==========================
-
-This example demonstrates how to use `chemiscope.explore` to visualize molecular
-frames using dimensionality reduction techniques like PCA.
-
-Before running this example, ensure you have installed the necessary packages:
-- ase (Atomic Simulation Environment)
-- numpy
-- sklearn (scikit-learn)
-- chemiscope
-
-Also, ensure you have prepared your dataset and optionally installed `mace_off`
-for more advanced molecular descriptors.
-
 """
 
 # %%
@@ -22,6 +9,7 @@ import time
 import ase.io
 import numpy as np
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 import chemiscope
 
@@ -32,7 +20,7 @@ frames = ase.io.read("data/trajectory.xyz", ":")
 
 # %%
 # Function to calculate features using MACE OFF
-def get_descriptors(frames):
+def get_mace_off_descriptors(frames):
     """
     For now I have an issue using mace_off in this project, should be related to its
     installation that I don't do correctly. So, I run the code below in the notebook
@@ -56,7 +44,7 @@ def get_descriptors(frames):
 # %%
 # Function to provide to `chemiscope.explore` for PCA
 def mace_off_pca(frames):
-    descriptors = get_descriptors(frames)
+    descriptors = get_mace_off_descriptors(frames)
 
     start_time = time.time()
     reducer = PCA(n_components=2)
@@ -68,6 +56,35 @@ def mace_off_pca(frames):
 
 
 # %%
-# Example usage of `chemiscope.explore` to visualize data using PCA
+# Function to provide to `chemiscope.explore` for TSNE
+def mace_off_tsne(frames):
+    descriptors = get_mace_off_descriptors(frames)
 
-chemiscope.explore(frames, reducer=mace_off_pca, mode="default")
+    start_time = time.time()
+    perplexity = min(30, descriptors.shape[0] - 1)
+    reducer = TSNE(n_components=2, perplexity=perplexity)
+    X_reduced = reducer.fit_transform(descriptors)
+    execution_time = time.time() - start_time
+
+    print(f"TSNE execution time: {execution_time:.3f} seconds")
+    return X_reduced
+
+
+# %%
+# Get properties from the frames
+properties = chemiscope.extract_properties(frames)
+
+
+# %%
+# Example of `chemiscope.explore` with the default featurizer (SOAP + KPCA)
+
+chemiscope.explore(frames, properties=properties)
+
+# %%
+# Example of `chemiscope.explore` with MACE OFF + PCA
+chemiscope.explore(frames, featurize=mace_off_pca, properties=properties)
+
+# %%
+# Example of `chemiscope.explore` with MACE OFF + TSNE
+
+chemiscope.explore(frames, featurize=mace_off_tsne, properties=properties)

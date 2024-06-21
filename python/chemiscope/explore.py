@@ -1,12 +1,15 @@
 import numpy as np
-import tqdm
-from mace.calculators import mace_off
-from sklearn.manifold import TSNE
+from dscribe.descriptors import SOAP
+from sklearn.decomposition import KernelPCA
 
 from .jupyter import show
 
+# import tqdm
+# from mace.calculators import mace_off
+# from sklearn.manifold import TSNE
 
-def explore(frames, properties=None, reducer=None, mode="default"):
+
+def explore(frames, properties=None, featurize=None, mode="default"):
     """
     Questions:
     - Which dimensionality reduction algorithm to use by default?
@@ -17,8 +20,8 @@ def explore(frames, properties=None, reducer=None, mode="default"):
        chemiscope.explore(frames)
        Result: default dim. reduction algorithm used; displays only reduced data
 
-    2. With custom reducer function
-       chemiscope.explore(frames, reducer=get_mace_pca)
+    2. With custom featurize function
+       chemiscope.explore(frames, featurize=get_mace_pca)
        Result: calls 'get_mace_pca' for reduction and displays the result
 
     3. With custom properties
@@ -27,24 +30,24 @@ def explore(frames, properties=None, reducer=None, mode="default"):
        Result: uses default or custom reducer, displays reduced data + user properties
 
     Flow:
-    0. Choose appropriate hypers for computing descriptors (default reducer?)
+    0. Choose appropriate hypers for computing descriptors (default featurizer?)
     1. Compute descriptors
     2. Perform dimensionality reduction on these descriptors
     3. Create the widget
     """
     # Validate inputs
-    if reducer is not None and not callable(reducer):
-        raise TypeError("'reducer' must be a callable (function)")
+    if featurize is not None and not callable(featurize):
+        raise TypeError("'featurize' must be a callable (function)")
     if properties is None:
         properties = {}
 
-    # No reducer -> apply the default dimensionality reduction
-    if reducer is None:
-        X_reduced = apply_mace_tsne(frames)
+    # No featurizer -> apply the default dimensionality reduction
+    if featurize is None:
+        X_reduced = apply_soap_kpca(frames)
 
-    # Reducer provided -> call it
+    # Featurizer provided -> call it
     else:
-        X_reduced = reducer(frames)
+        X_reduced = featurize(frames)
 
     # Add dimensionality reduction results to properties
     properties["Component 1"] = X_reduced[:, 0].tolist()
@@ -53,6 +56,44 @@ def explore(frames, properties=None, reducer=None, mode="default"):
     # Return chemiscope widget
     return show(frames=frames, properties=properties, mode=mode)
 
+
+def apply_soap_kpca(frames):
+    # Calculate SOAP descriptors
+    descriptors = get_soap_descriptors(frames)
+
+    # Reshape SOAP descriptors for KPCA
+    n_samples, n_atoms, n_features = descriptors.shape
+    descriptors = descriptors.reshape(n_samples, n_atoms * n_features)
+
+    # Apply KPCA
+    return get_kpca(descriptors)
+
+
+def get_soap_descriptors(frames):
+    # Get species from frames
+    species = set()
+    for frame in frames:
+        species.update(frame.get_chemical_symbols())
+    species = list(species)
+
+    # Create soap calculator
+    soap = SOAP(species=species, r_cut=6.0, n_max=8, l_max=6)
+
+    # Compute the desciptors
+    descriptors = []
+    for frame in frames:
+        descriptors.append(soap.create(frame))
+    return np.array(descriptors)
+
+
+def get_kpca(descriptors):
+    GAMMA = 0.01
+    transformer = KernelPCA(n_components=2, kernel="rbf", gamma=GAMMA)
+    return transformer.fit_transform(descriptors)
+
+
+"""
+MACE-OFF + t-SNE
 
 def apply_mace_tsne(frames):
     # Initialize MACE OFF calculator
@@ -85,3 +126,5 @@ def apply_tsne(descriptors):
 
     # Perform dimensionality reduction using t-SNE
     return reducer.fit_transform(descriptors)
+
+"""
