@@ -18,6 +18,9 @@ class ChemiscopeScraper:
         # Create an iterator to generate the file name
         self.iterator = FilePathIterator()
 
+        # Process the widgets once by storing their `id()` here
+        self.seen = set()
+
     def __repr__(self):
         return "ChemiscopeScraper"
 
@@ -40,7 +43,9 @@ class ChemiscopeScraper:
         widget = block_vars.get("example_globals", {}).get("___")
         mode = self.get_widget_mode(widget)
 
-        if mode is not None:
+        if (id(widget)) not in self.seen and mode is not None:
+            self.seen.add(id(widget))
+
             # Get the target directory to save the dataset next to the .rst files
             src_file = block_vars.get("target_file")  # Python file
             rst_dataset_dir = os.path.join(os.path.dirname(src_file), "_datasets")
