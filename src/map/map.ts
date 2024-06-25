@@ -81,13 +81,13 @@ const DEFAULT_LAYOUT = {
     },
     showlegend: true,
     xaxis: {
-        range: undefined,
+        range: undefined as undefined | number[],
         title: '',
         type: 'linear',
         zeroline: false,
     },
     yaxis: {
-        range: undefined,
+        range: undefined as undefined | number[],
         title: '',
         type: 'linear',
         zeroline: false,
@@ -1017,6 +1017,11 @@ export class PropertiesMap {
         layout.coloraxis.colorbar.title.text = this._colorTitle();
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
+
+        // Set ranges for the axes
+        const setAxisRange = (min: number, max: number) => (min !== 0 && max !== 0 ? [min, max] : undefined);
+        layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
+        layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
