@@ -1019,7 +1019,9 @@ export class PropertiesMap {
         layout.coloraxis.showscale = this._options.hasColors();
 
         // Set ranges for the axes
-        const setAxisRange = (min: number, max: number) => (min !== 0 && max !== 0 ? [min, max] : undefined);
+        const setAxisRange = (min: number, max: number) => {
+            return min !== 0 && max !== 0 ? [min, max] : undefined;
+        };
         layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
         layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
 
