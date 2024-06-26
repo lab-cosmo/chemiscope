@@ -1,86 +1,180 @@
 """
 Chemiscope.explore example
 ==========================
+This example demonstrates the utilisation of different methods of
+dimensionality reduction and its visualisation using `chemiscope.explore`.
+
+First, import the necessary packages:
 """
 
 # %%
-import time
-
 import ase.io
 import numpy as np
-from sklearn.decomposition import PCA
+from dscribe.descriptors import SOAP
+from mace.calculators import mace_mp, mace_off
+from sklearn.decomposition import KernelPCA
 from sklearn.manifold import TSNE
+from tqdm.auto import tqdm
 
 import chemiscope
 
 # %%
-# Load dataset
-frames = ase.io.read("data/trajectory.xyz", ":")
-
+#
+# Example with MACE-OFF and t-SNE
+# +++++++++++++++++++++++++++++++++++++
+#
 
 # %%
-# Function to calculate features using MACE OFF
-def get_mace_off_descriptors(frames):
-    """
-    For now I have an issue using mace_off in this project, should be related to its
-    installation that I don't do correctly. So, I run the code below in the notebook
+#
+# Load the dataset of organic molecules.
 
+qm9_frames = ase.io.read("data/qm9_5_structures.xyz", ":")
+
+# %%
+#
+# `chemiscope.explore` expects a `featurize` function that retures reduced data
+# to be provided. Let's define a function that computes the descriptors using
+# MACE-OFF and then uses t-SNE for the dimensionality reduction.
+
+
+def mace_off_tsne(frames):
+    # At first, we initialize a mace_off calculator:
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_off(**descriptor_opt)
+
+    # After that, let's calculate the features
     descriptors = []
-    for frame in tqdm(frames):
+    for frame in tqdm(frames, disable=True):
         structure_avg = np.mean(
             (calculator.get_descriptors(frame, invariants_only=True)),
             axis=0,
         )
         descriptors.append(structure_avg)
-    np.save("data/trajectory-mace_off_features.npy", np.array(descriptors))
-    """
+    descriptors = np.array(descriptors)
 
-    # Return pre-computed descriptors
-    return np.load("data/trajectory-mace_off_features.npy")
-
-
-# %%
-# Function to provide to `chemiscope.explore` for PCA
-def mace_off_pca(frames):
-    descriptors = get_mace_off_descriptors(frames)
-
-    start_time = time.time()
-    reducer = PCA(n_components=3)
-    PCA_X_reduced = reducer.fit_transform(descriptors)
-    execution_time = time.time() - start_time
-
-    print(f"PCA execution time: {execution_time:.3f} seconds")
-    return PCA_X_reduced
-
-
-# %%
-# Function to provide to `chemiscope.explore` for TSNE
-def mace_off_tsne(frames):
-    descriptors = get_mace_off_descriptors(frames)
-
-    start_time = time.time()
+    # Finally, we apply t-SNE
     perplexity = min(30, descriptors.shape[0] - 1)
     reducer = TSNE(n_components=2, perplexity=perplexity)
-    X_reduced = reducer.fit_transform(descriptors)
-    execution_time = time.time() - start_time
-
-    print(f"TSNE execution time: {execution_time:.3f} seconds")
-    return X_reduced
+    return reducer.fit_transform(descriptors)
 
 
 # %%
-# Get properties from the frames
+#
+# Provide the created featurizer function to `chemiscope.explore`.
 
-properties = chemiscope.extract_properties(frames)
+cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne)
+
+# %%
+#
+# Here we display the visualisation of the pre-computed data for 6k structures
+# taken from the `QM9 <https://jla-gardner.github.io/load-atoms/index.html>`_ dataset
+# which dimensionality reduction was computed using the previously described algorithm.
+
+chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
+
+# %%
+#
+# Example with MACE-MP0 and t-SNE
+# ++++++++++++++++++++++++++++++++++++++
+
+# %%
+#
+# Load a reduced M3CD dataset.
+
+m3cd_frames = ase.io.read("data/m3cd_5_frames.xyz", ":")
 
 
 # %%
-# Example of `chemiscope.explore` with MACE OFF + PCA
-chemiscope.explore(frames, featurize=mace_off_pca, properties=properties)
+#
+# We are defining a function used in `chemiscope.explore` as a featurizer
+# that computes the descriptors using MACE-MP0 and then applies t-SNE.
+
+
+def mace_mp0_tsne(frames):
+    # Initialise a mace-mp0 calculator
+    descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
+    calculator = mace_mp(**descriptor_opt)
+
+    # Calculate the features
+    descriptors = []
+    for frame in tqdm(frames, disable=True):
+        structure_avg = np.mean(
+            (calculator.get_descriptors(frame, invariants_only=True)),
+            axis=0,
+        )
+        descriptors.append(structure_avg)
+    descriptors = np.array(descriptors)
+
+    # Apply t-SNE
+    perplexity = min(30, descriptors.shape[0] - 1)
+    reducer = TSNE(n_components=2, perplexity=perplexity)
+    return reducer.fit_transform(descriptors)
+
 
 # %%
-# Example of `chemiscope.explore` with MACE OFF + TSNE
+#
+# Provide the created function to `chemiscope.explore`.
 
-chemiscope.explore(frames, featurize=mace_off_tsne, properties=properties)
+cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
+
+
+# %%
+#
+# Loading reduced data for 1k structures pre-computed using
+# the described algorithm.
+
+chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
+
+# %%
+#
+# Example with SOAP and KPCA
+# ++++++++++++++++++++++++++++++++++++++
+
+# %%
+#
+# Load the dataset.
+
+frames = ase.io.read("data/c-gap-20u_5-frames.xyz", ":")
+
+
+# %%
+# Define the function that calculates SOAP descriptors and then runs KPCA.
+
+
+def soap_kpca(frames):
+    # Initialise soap calculator
+    soap = SOAP(
+        species=["C"],
+        r_cut=4.5,
+        n_max=8,
+        l_max=6,
+        sigma=0.2,
+        rbf="gto",
+        average="off",
+        periodic=True,
+        weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
+    )
+
+    # Compute SOAP desciptors
+    descriptors = []
+    for frame in frames:
+        descriptors.append(np.mean(soap.create(frame), axis=0))
+    descriptors = np.vstack(descriptors)
+
+    # Apply KPCA
+    transformer = KernelPCA(n_components=2, gamma=0.05)
+    return transformer.fit_transform(descriptors)
+
+
+# %%
+#
+# Provide the created function to `chemiscope.explore`.
+
+cs = chemiscope.explore(frames, featurize=soap_kpca)
+
+# %%
+#
+# Loading pre-computed dimensionality reduction done using the descibed featurizer
+# for the C-GAP-20U dataset.
+
+chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
