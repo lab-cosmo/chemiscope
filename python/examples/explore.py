@@ -28,7 +28,7 @@ import chemiscope
 #
 # Load the dataset of organic molecules.
 
-qm9_frames = ase.io.read("data/qm9_5_structures.xyz", ":")
+qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 
 # %%
 #
@@ -81,7 +81,7 @@ chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
 #
 # Load a reduced M3CD dataset.
 
-m3cd_frames = ase.io.read("data/m3cd_5_frames.xyz", ":")
+m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 
 
 # %%
@@ -134,7 +134,7 @@ chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
 #
 # Load the dataset.
 
-frames = ase.io.read("data/c-gap-20u_5-frames.xyz", ":")
+frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
 
 # %%

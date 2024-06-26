@@ -1,19 +1,15 @@
 from .jupyter import show
 
 
-def explore(frames, properties=None, featurize=None, mode="default"):
+def explore(frames, featurize, properties=None, mode="default"):
     """
-    TODO: add a short description
+    Visualize the dataset with dimensionality reduction.
 
-    Use cases:
+    :param list frames: list of atomic structures
 
-    1. Basic
-        chemiscope.explore(frames, featurize=get_mace_pca)
-        Result: calls 'get_mace_pca' for reduction and displays the result
+    :param dict properties: optional, dictionary of additional properties.
 
-    2. With custom properties
-        chemiscope.explore(frames, get_mace_pca, properties)
-        Result: uses reducer, displays reduced data + user properties
+    :param str mode: optional, widget mode, either ``default``, ``structure`` or ``map``
     """
     # Validate inputs
     if not callable(featurize):
