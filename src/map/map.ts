@@ -92,6 +92,12 @@ const DEFAULT_LAYOUT = {
         type: 'linear',
         zeroline: false,
     },
+    zaxis: {
+        range: undefined as undefined | number[],
+        title: '',
+        type: 'linear',
+        zeroline: false,
+    },
 };
 
 const DEFAULT_CONFIG = {
@@ -659,9 +665,20 @@ export class PropertiesMap {
         // ======= color axis settings
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
-            const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
+            const determineColorRange = (optionMin: number, optionMax: number) => {
+                // range is provided in settings by user
+                if (optionMin !== 0 && optionMax !== 0) {
+                    return { min: optionMin, max: optionMax };
+                }
 
+                // calculate default range
+                const values = this._colors(0)[0] as number[];
+                return arrayMaxMin(values);
+            };
+            const { min, max } = determineColorRange(
+                this._options.color.min.value,
+                this._options.color.max.value
+            );
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
@@ -1024,6 +1041,7 @@ export class PropertiesMap {
         };
         layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
         layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
+        layout.zaxis.range = setAxisRange(this._options.z.min.value, this._options.z.max.value);
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
