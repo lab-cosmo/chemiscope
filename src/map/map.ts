@@ -666,11 +666,15 @@ export class PropertiesMap {
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
             const determineColorRange = (optionMin: number, optionMax: number) => {
-                // range is provided in settings by user
-                if (optionMin !== 0 && optionMax !== 0) {
-                    return { min: optionMin, max: optionMax };
+                // By default, range values are set to zeros
+                if (optionMin !== 0 || optionMax !== 0) {
+                    if (optionMin <= optionMax) {
+                        return { min: optionMin, max: optionMax };
+                    }
+                    sendWarning(
+                        `The inserted min and max values in color are such that min > max! The default values will be used.`
+                    );
                 }
-
                 // calculate default range
                 const values = this._colors(0)[0] as number[];
                 return arrayMaxMin(values);
@@ -1037,7 +1041,17 @@ export class PropertiesMap {
 
         // Set ranges for the axes
         const setAxisRange = (min: number, max: number) => {
-            return min !== 0 && max !== 0 ? [min, max] : undefined;
+            // At least one range value is specified. By default, zeros are set
+            if (min !== 0 || max !== 0) {
+                if (min <= max) {
+                    return [min, max];
+                }
+                sendWarning(
+                    'The inserted min and max values in axis are such that min > max! The default values will be used.'
+                );
+            }
+            // The values will be set to range in the afterplot once the plot is created
+            return undefined;
         };
         layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
         layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
