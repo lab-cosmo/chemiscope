@@ -119,8 +119,8 @@ export class MapOptions extends OptionsGroup {
         this.color = {
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
-            min: new HTMLOption('number', 0),
-            max: new HTMLOption('number', 0),
+            min: new HTMLOption('number', NaN),
+            max: new HTMLOption('number', NaN),
         };
         this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');

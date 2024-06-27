@@ -666,18 +666,33 @@ export class PropertiesMap {
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
             const determineColorRange = (optionMin: number, optionMax: number) => {
-                // By default, range values are set to zeros
-                if (optionMin !== 0 || optionMax !== 0) {
+                const minProvided = !isNaN(optionMin);
+                const maxProvided = !isNaN(optionMax);
+
+                const getMinMaxFromValues = () => {
+                    const values = this._colors(0)[0] as number[];
+                    return arrayMaxMin(values);
+                };
+
+                if (minProvided && maxProvided) {
                     if (optionMin <= optionMax) {
                         return { min: optionMin, max: optionMax };
                     }
                     sendWarning(
                         `The inserted min and max values in color are such that min > max! The default values will be used.`
                     );
+                } else if (minProvided) {
+                    // Calculate max value from values
+                    const { max } = getMinMaxFromValues();
+                    return { min: optionMin, max: max };
+                } else if (maxProvided) {
+                    // Calculate min value from values
+                    const { min } = getMinMaxFromValues();
+                    return { min: min, max: optionMax };
                 }
-                // calculate default range
-                const values = this._colors(0)[0] as number[];
-                return arrayMaxMin(values);
+
+                // Calculate default range
+                return getMinMaxFromValues();
             };
             const { min, max } = determineColorRange(
                 this._options.color.min.value,
