@@ -1132,7 +1132,7 @@ export class PropertiesMap {
         this._plot.addEventListener('wheel', () => {});
     }
 
-    /** Validate provided min max values */
+    /** Validate min/max options provided by the user. We use `NaN` internally to mark missing values, which are then transformed into undefined by this function */
     private _getAxisRange = (
         min: number,
         max: number,
