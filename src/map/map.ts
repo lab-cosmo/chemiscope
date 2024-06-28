@@ -81,19 +81,19 @@ const DEFAULT_LAYOUT = {
     },
     showlegend: true,
     xaxis: {
-        range: undefined as undefined | number[],
+        range: undefined as (number | undefined)[] | undefined,
         title: '',
         type: 'linear',
         zeroline: false,
     },
     yaxis: {
-        range: undefined as undefined | number[],
+        range: undefined as (number | undefined)[] | undefined,
         title: '',
         type: 'linear',
         zeroline: false,
     },
     zaxis: {
-        range: undefined as undefined | number[],
+        range: undefined as (number | undefined)[] | undefined,
         title: '',
         type: 'linear',
         zeroline: false,
@@ -1055,8 +1055,11 @@ export class PropertiesMap {
 
         // Set ranges for the axes
         const setAxisRange = (min: number, max: number) => {
+            const minProvided = !isNaN(min);
+            const maxProvided = !isNaN(max);
+
             // At least one range value is specified. By default, zeros are set
-            if (min !== 0 || max !== 0) {
+            if (minProvided && maxProvided) {
                 if (min <= max) {
                     return [min, max];
                 }
@@ -1064,8 +1067,7 @@ export class PropertiesMap {
                     'The inserted min and max values in axis are such that min > max! The default values will be used.'
                 );
             }
-            // The values will be set to range in the afterplot once the plot is created
-            return undefined;
+            return [minProvided ? min : undefined, maxProvided ? max : undefined];
         };
         layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
         layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
@@ -1457,14 +1459,16 @@ export class PropertiesMap {
      */
     private _afterplot(): void {
         const bounds = this._getBounds();
+        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
+            axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
+            axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+        };
 
-        this._options.x.min.value = bounds.x[0];
-        this._options.x.max.value = bounds.x[1];
-        this._options.y.min.value = bounds.y[0];
-        this._options.y.max.value = bounds.y[1];
+        // Set calculated value to the range if axis bound value was not provided by user
+        updateAxisValues(this._options.x, bounds.x);
+        updateAxisValues(this._options.y, bounds.y);
         if (bounds.z !== undefined) {
-            this._options.z.min.value = bounds.z[0];
-            this._options.z.max.value = bounds.z[1];
+            updateAxisValues(this._options.z, bounds.z);
         }
 
         if (!this._is3D()) {

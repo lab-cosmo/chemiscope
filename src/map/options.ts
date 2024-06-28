@@ -39,8 +39,8 @@ export class AxisOptions extends OptionsGroup {
     constructor(validProperties: string[]) {
         assert(validProperties.length > 0);
         super();
-        this.max = new HTMLOption('number', 0);
-        this.min = new HTMLOption('number', 0);
+        this.max = new HTMLOption('number', NaN);
+        this.min = new HTMLOption('number', NaN);
         this.property = new HTMLOption('string', validProperties[0]);
         this.scale = new HTMLOption('string', 'linear');
 
