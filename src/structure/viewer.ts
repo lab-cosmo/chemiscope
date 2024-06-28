@@ -1610,6 +1610,8 @@ export class MoleculeViewer {
                 model: this._viewer.createModelFrom(selection),
                 center: center,
             };
+            // initialize with main style
+            this._highlighted.model.setStyle({}, this._mainStyle());
         }
     }
 
