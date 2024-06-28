@@ -666,7 +666,7 @@ export class PropertiesMap {
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
             const determineColorRange = (optionMin: number, optionMax: number) => {
-                const [min, max] = this.getAxisRange(optionMin, optionMax, 'map.color');
+                const [min, max] = this._getAxisRange(optionMin, optionMax, 'map.color');
                 const minProvided = min !== undefined;
                 const maxProvided = max !== undefined;
 
@@ -1048,17 +1048,17 @@ export class PropertiesMap {
         layout.coloraxis.showscale = this._options.hasColors();
 
         // Set ranges for the axes
-        layout.xaxis.range = this.getAxisRange(
+        layout.xaxis.range = this._getAxisRange(
             this._options.x.min.value,
             this._options.x.max.value,
             'map.x'
         );
-        layout.yaxis.range = this.getAxisRange(
+        layout.yaxis.range = this._getAxisRange(
             this._options.y.min.value,
             this._options.y.max.value,
             'map.y'
         );
-        layout.zaxis.range = this.getAxisRange(
+        layout.zaxis.range = this._getAxisRange(
             this._options.z.min.value,
             this._options.z.max.value,
             'map.z'
@@ -1133,7 +1133,7 @@ export class PropertiesMap {
     }
 
     /** Validate provided min max values */
-    private getAxisRange = (
+    private _getAxisRange = (
         min: number,
         max: number,
         axisName: string
