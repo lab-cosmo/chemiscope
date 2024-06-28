@@ -681,14 +681,13 @@ export class PropertiesMap {
                     sendWarning(
                         `The inserted min and max values in color are such that min > max! The default values will be used.`
                     );
-                } else if (minProvided) {
-                    // Calculate max value from values
-                    const { max } = getMinMaxFromValues();
-                    return { min: optionMin, max: max };
-                } else if (maxProvided) {
-                    // Calculate min value from values
-                    const { min } = getMinMaxFromValues();
-                    return { min: min, max: optionMax };
+                } else if (minProvided || maxProvided) {
+                    // Calculate min/max value from values
+                    const { min, max } = getMinMaxFromValues();
+                    return {
+                        min: minProvided ? optionMin : min,
+                        max: maxProvided ? optionMax : max,
+                    };
                 }
 
                 // Calculate default range
