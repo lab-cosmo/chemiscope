@@ -39,8 +39,8 @@ export class AxisOptions extends OptionsGroup {
     constructor(validProperties: string[]) {
         assert(validProperties.length > 0);
         super();
-        this.max = new HTMLOption('number', 0);
-        this.min = new HTMLOption('number', 0);
+        this.max = new HTMLOption('number', NaN);
+        this.min = new HTMLOption('number', NaN);
         this.property = new HTMLOption('string', validProperties[0]);
         this.scale = new HTMLOption('string', 'linear');
 
@@ -119,8 +119,8 @@ export class MapOptions extends OptionsGroup {
         this.color = {
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
-            min: new HTMLOption('number', 0),
-            max: new HTMLOption('number', 0),
+            min: new HTMLOption('number', NaN),
+            max: new HTMLOption('number', NaN),
         };
         this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
