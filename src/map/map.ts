@@ -666,22 +666,16 @@ export class PropertiesMap {
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
             const determineColorRange = (optionMin: number, optionMax: number) => {
-                const minProvided = !isNaN(optionMin);
-                const maxProvided = !isNaN(optionMax);
+                const [min, max] = this.getAxisRange(optionMin, optionMax, 'map.color');
+                const minProvided = min !== undefined;
+                const maxProvided = max !== undefined;
 
                 const getMinMaxFromValues = () => {
                     const values = this._colors(0)[0] as number[];
                     return arrayMaxMin(values);
                 };
 
-                if (minProvided && maxProvided) {
-                    if (optionMin <= optionMax) {
-                        return { min: optionMin, max: optionMax };
-                    }
-                    sendWarning(
-                        `The inserted min and max values in color are such that min > max! The default values will be used.`
-                    );
-                } else if (minProvided || maxProvided) {
+                if (minProvided || maxProvided) {
                     // Calculate min/max value from values
                     const { min, max } = getMinMaxFromValues();
                     return {
@@ -1054,24 +1048,21 @@ export class PropertiesMap {
         layout.coloraxis.showscale = this._options.hasColors();
 
         // Set ranges for the axes
-        const setAxisRange = (min: number, max: number) => {
-            const minProvided = !isNaN(min);
-            const maxProvided = !isNaN(max);
-
-            // At least one range value is specified. By default, zeros are set
-            if (minProvided && maxProvided) {
-                if (min <= max) {
-                    return [min, max];
-                }
-                sendWarning(
-                    'The inserted min and max values in axis are such that min > max! The default values will be used.'
-                );
-            }
-            return [minProvided ? min : undefined, maxProvided ? max : undefined];
-        };
-        layout.xaxis.range = setAxisRange(this._options.x.min.value, this._options.x.max.value);
-        layout.yaxis.range = setAxisRange(this._options.y.min.value, this._options.y.max.value);
-        layout.zaxis.range = setAxisRange(this._options.z.min.value, this._options.z.max.value);
+        layout.xaxis.range = this.getAxisRange(
+            this._options.x.min.value,
+            this._options.x.max.value,
+            'map.x'
+        );
+        layout.yaxis.range = this.getAxisRange(
+            this._options.y.min.value,
+            this._options.y.max.value,
+            'map.y'
+        );
+        layout.zaxis.range = this.getAxisRange(
+            this._options.z.min.value,
+            this._options.z.max.value,
+            'map.z'
+        );
 
         // Create an empty plot and fill it below
         Plotly.newPlot(
@@ -1140,6 +1131,27 @@ export class PropertiesMap {
         // Hack to fix a Plotly bug preventing zooming on Safari
         this._plot.addEventListener('wheel', () => {});
     }
+
+    /** Validate provided min max values */
+    private getAxisRange = (
+        min: number,
+        max: number,
+        axisName: string
+    ): [number | undefined, number | undefined] => {
+        const minProvided = !isNaN(min);
+        const maxProvided = !isNaN(max);
+
+        // At least one range value is specified. By default, zeros are set
+        if (minProvided && maxProvided) {
+            if (min <= max) {
+                return [min, max];
+            }
+            sendWarning(
+                `The inserted min and max values in ${axisName} are such that min > max! The default values will be used.`
+            );
+        }
+        return [minProvided ? min : undefined, maxProvided ? max : undefined];
+    };
 
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
