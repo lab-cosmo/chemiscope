@@ -8,13 +8,14 @@ First, import the necessary packages:
 """
 
 # %%
+import os
+
 import ase.io
 import numpy as np
 from dscribe.descriptors import SOAP
 from mace.calculators import mace_mp, mace_off
 from sklearn.decomposition import KernelPCA
 from sklearn.manifold import TSNE
-from tqdm.auto import tqdm
 
 import chemiscope
 
@@ -44,7 +45,7 @@ def mace_off_tsne(frames):
 
     # After that, let's calculate the features
     descriptors = []
-    for frame in tqdm(frames, disable=True):
+    for frame in frames:
         structure_avg = np.mean(
             (calculator.get_descriptors(frame, invariants_only=True)),
             axis=0,
@@ -54,7 +55,8 @@ def mace_off_tsne(frames):
 
     # Finally, we apply t-SNE
     perplexity = min(30, descriptors.shape[0] - 1)
-    reducer = TSNE(n_components=2, perplexity=perplexity)
+    n_jobs = min(len(frames), os.cpu_count())  # To parallelize
+    reducer = TSNE(n_components=2, perplexity=perplexity, n_jobs=n_jobs)
     return reducer.fit_transform(descriptors)
 
 
@@ -97,7 +99,7 @@ def mace_mp0_tsne(frames):
 
     # Calculate the features
     descriptors = []
-    for frame in tqdm(frames, disable=True):
+    for frame in frames:
         structure_avg = np.mean(
             (calculator.get_descriptors(frame, invariants_only=True)),
             axis=0,
@@ -107,7 +109,8 @@ def mace_mp0_tsne(frames):
 
     # Apply t-SNE
     perplexity = min(30, descriptors.shape[0] - 1)
-    reducer = TSNE(n_components=2, perplexity=perplexity)
+    n_jobs = min(len(frames), os.cpu_count())  # To parallelize
+    reducer = TSNE(n_components=2, perplexity=perplexity, n_jobs=n_jobs)
     return reducer.fit_transform(descriptors)
 
 
@@ -150,19 +153,17 @@ def soap_kpca(frames):
         l_max=6,
         sigma=0.2,
         rbf="gto",
-        average="off",
+        average="outer",
         periodic=True,
         weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
     )
 
     # Compute SOAP desciptors
-    descriptors = []
-    for frame in frames:
-        descriptors.append(np.mean(soap.create(frame), axis=0))
-    descriptors = np.vstack(descriptors)
+    n_jobs = min(len(frames), os.cpu_count())  # To parallelize
+    descriptors = soap.create(frames, n_jobs=n_jobs)
 
     # Apply KPCA
-    transformer = KernelPCA(n_components=2, gamma=0.05)
+    transformer = KernelPCA(n_components=2, gamma=0.05, n_jobs=n_jobs)
     return transformer.fit_transform(descriptors)
 
 

@@ -1,7 +1,8 @@
+from dscribe.descriptors import SOAP
+from sklearn.decomposition import PCA
+
 from .jupyter import show
 
-from sklearn.decomposition import PCA
-from dscribe.descriptors import SOAP
 
 def explore(frames, featurize, properties=None, mode="default"):
     """
