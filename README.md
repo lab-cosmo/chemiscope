@@ -87,7 +87,7 @@ npm run build
 ```
 
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)
-for a examples of how to create a webpage using chemiscope.
+for an example of how to create a webpage using chemiscope.
 
 ## sphinx and sphinx-gallery integration
 
