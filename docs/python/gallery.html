@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Use with sphinx-gallery &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Chemiscope as a library" href="../embedding.html" />
+    <link rel="prev" title="Chemiscope in sphinx" href="sphinx.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="sphinx.html" title="Previous Chapter: Chemiscope in sphinx"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Chemiscope in sphinx</span>
+    </a>
+  </li>
+  <li>
+    <a href="../embedding.html" title="Next Chapter: Chemiscope as a library"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Chemiscope as... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python module</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command line interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html"><cite>chemiscope</cite> functions reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sphinx.html">Chemiscope in <cite>sphinx</cite></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Use with <cite>sphinx-gallery</cite></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="use-with-sphinx-gallery">
+<span id="gallery"></span><h1>Use with <cite>sphinx-gallery</cite><a class="headerlink" href="#use-with-sphinx-gallery" title="Link to this heading">¶</a></h1>
+<p>The chemiscope widgets double up in the documentation of python packages
+using <a class="reference external" href="https://sphinx-gallery.github.io/stable/reference.html#module-sphinx_gallery" title="(in Sphinx-Gallery v0.15.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sphinx_gallery</span></code></a> - a sphinx extension that executes python
+scripts and formats their output as static pages inside the documentation.
+You can look at <a class="reference internal" href="../examples/index.html#examples"><span class="std std-ref">the examples</span></a> to see how the widgets get
+displayed inside a documentation, and read the documentation of
+<code class="docutils literal notranslate"><span class="pre">sphinx_gallery</span></code> if you never used it.</p>
+<p>Here we just provide a short explanation of how to modify an existing
+<code class="docutils literal notranslate"><span class="pre">sphinx-gallery</span></code> setup to include chemiscope widgets in the examples.</p>
+<section id="using-widgets-in-the-examples">
+<h2>Using widgets in the examples<a class="headerlink" href="#using-widgets-in-the-examples" title="Link to this heading">¶</a></h2>
+<p>Showing a widget in an example file is as simple as using
+<a class="reference internal" href="jupyter.html#chemiscope.show" title="chemiscope.show"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.show()</span></code></a> in the example file. The widgets will
+be shown in a similar style as that shown in the
+<a class="reference internal" href="jupyter.html#jupyter"><span class="std std-ref">jupyter interface</span></a>, including the possibility
+of showing only the structure or map viewers.
+In practice, this relies on the same custom RST directive used
+for the <a class="reference internal" href="sphinx.html#sphinx"><span class="std std-ref">sphinx extension</span></a>.</p>
+</section>
+<section id="setting-up-sphinx-gallery">
+<h2>Setting up <code class="docutils literal notranslate"><span class="pre">sphinx-gallery</span></code><a class="headerlink" href="#setting-up-sphinx-gallery" title="Link to this heading">¶</a></h2>
+<p>In order to enable the display of chemiscope widgets in the documentation,
+assuming you already have a <code class="docutils literal notranslate"><span class="pre">sphinx_gallery</span></code> setup, you need to activate
+the custom scraper from the chemiscope module.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> file in the documentation should include the appropriate
+extension (usually you’ll be adding this to a list of other extensions)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&quot;chemiscope.sphinx&quot;</span> <span class="p">]</span>
+</pre></div>
+</div>
+<p>Furthermore, you need to specify that <code class="docutils literal notranslate"><span class="pre">sphinx_gallery</span></code> should use the
+custom chemiscope scraper (again, you’ll typically add this to a tuple
+of other scrapers)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx_gallery_conf</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;image_scrapers&quot;</span><span class="p">:</span> <span class="p">(</span> <span class="n">ChemiscopeScraper</span><span class="p">(),</span> <span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.3.7.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

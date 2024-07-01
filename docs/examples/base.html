@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Simple chemiscope input &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Atom property coloring" href="colors.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="index.html" title="Previous Chapter: Examples"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Examples</span>
+    </a>
+  </li>
+  <li>
+    <a href="colors.html" title="Next Chapter: Atom property coloring"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Atom property... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trajectory.html">Trajectory plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-base-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="simple-chemiscope-input">
+<span id="sphx-glr-examples-base-py"></span><h1>Simple chemiscope input<a class="headerlink" href="#simple-chemiscope-input" title="Link to this heading">¶</a></h1>
+<p>This example demonstrates the basic usage of the chemiscope package, reading structures
+and properties from an ASE package and preparing a chemiscope file to visualize them.
+Use <cite>chemiscope.show</cite> in a Jupyter notebook for interactive visualization</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase.io</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+</pre></div>
+</div>
+<p>Load structures from an extended xyz file</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/showcase.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A chemiscope widget can be used to visualize structures and properties.
+This generates a Chemiscope object that is rendered to an interactive
+widget when executed in a Jupyter notebook.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show</span><span class="p">(</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="c1"># quickly extract properties from the ASE frames. nb: if you&#39;re doing this for</span>
+    <span class="c1"># sharing, don&#39;t forget to also include metadata such as units and description</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">extract_properties</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;dipole_ccsd&quot;</span><span class="p">,</span> <span class="s2">&quot;ccsd_pol&quot;</span><span class="p">]),</span>
+    <span class="c1"># it&#39;s always good to set some metadata to explain what the dataset - title is bare</span>
+    <span class="c1"># minimum</span>
+    <span class="n">meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dipole and polarizability&quot;</span><span class="p">),</span>
+    <span class="c1"># it is possible to set _all_ visualization parameters with a dictionary format.</span>
+    <span class="c1"># this is a shortcut for the most basic ones</span>
+    <span class="n">settings</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">quick_settings</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;ccsd_pol[1]&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;ccsd_pol[2]&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;dipole_ccsd[1]&quot;</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-608df0cf-ab4b-4985-8b82-9df12a099c67-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-608df0cf-ab4b-4985-8b82-9df12a099c67-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-608df0cf-ab4b-4985-8b82-9df12a099c67-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-608df0cf-ab4b-4985-8b82-9df12a099c67">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-608df0cf-ab4b-4985-8b82-9df12a099c67', '../_datasets/4113f4e2e8d6799841c98150a4714fd75172019a7a450efdd63ca04a4a8bd5df-fig_base_001.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p>For sharing with collaborators, or when one does not want to use an interactive
+notebook, one can also write a JSON (or compressed JSON) file that contains all
+information about structures and properties, and can be viewed at chemiscope.org
+Save as a file that can be viewed at chemiscope.org</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="s2">&quot;showcase.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">extract_properties</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;dipole_ccsd&quot;</span><span class="p">,</span> <span class="s2">&quot;ccsd_pol&quot;</span><span class="p">]),</span>
+    <span class="n">meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dipole and polarizability&quot;</span><span class="p">),</span>
+    <span class="n">settings</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">quick_settings</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;ccsd_pol[1]&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;ccsd_pol[2]&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;dipole_ccsd[1]&quot;</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In a notebook it is also possible to load a <cite>.json</cite> file and create an interactive
+widget from it.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show_input</span><span class="p">(</span><span class="s2">&quot;showcase.json.gz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+
+
+<!-- Warning Display -->
+<div id="chsp-b0d8ff50-0c30-4120-9748-aa8b53d9c3c4-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-b0d8ff50-0c30-4120-9748-aa8b53d9c3c4-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-b0d8ff50-0c30-4120-9748-aa8b53d9c3c4-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-b0d8ff50-0c30-4120-9748-aa8b53d9c3c4">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-b0d8ff50-0c30-4120-9748-aa8b53d9c3c4', '../_datasets/0e66cdb6ecb13d01ee5db6d67deaa2c13a77c62d839705a34fe8549103c7c034-fig_base_002.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.187 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-base-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/c85548d530ecea9c3283fa1bc2d1596e/base.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">base.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/c82d7075047338a6c4db8c3b90b81294/base.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">base.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.3.7.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
