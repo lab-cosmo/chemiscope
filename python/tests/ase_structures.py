@@ -118,8 +118,8 @@ class TestExtractProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.warning),
-            "the following structure properties properties are only defined "
-            "for a subset of frames: ['baz', 'foo']; they will be ignored",
+            "the following structure properties are only defined for a"
+            "subset of frames: ['baz', 'foo']; they will be ignored",
         )
 
         self.assertEqual(len(properties.keys()), 1)
