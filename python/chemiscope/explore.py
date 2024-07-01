@@ -1,19 +1,20 @@
 from .jupyter import show
 
+from sklearn.decomposition import PCA
+from dscribe.descriptors import SOAP
 
-def explore(frames, properties=None, featurize=None, mode="default"):
+
+def explore(frames, featurize, properties=None, mode="default"):
     """
-    TODO: add a short description
+    Visualize the dataset with dimensionality reduction.
 
-    Use cases:
+    :param list frames: list of atomic structures
 
-    1. Basic
-        chemiscope.explore(frames, featurize=get_mace_pca)
-        Result: calls 'get_mace_pca' for reduction and displays the result
+    :param dict properties: optional, dictionary of additional properties.
 
-    2. With custom properties
-        chemiscope.explore(frames, get_mace_pca, properties)
-        Result: uses reducer, displays reduced data + user properties
+    :param str mode: optional, widget mode, either ``default``, ``structure`` or ``map``
+
+    :return: chemiscope widget
     """
     # Validate inputs
     if not callable(featurize):
@@ -22,7 +23,12 @@ def explore(frames, properties=None, featurize=None, mode="default"):
         properties = {}
 
     # Apply dimensionality reduction from the provided featurizer
-    X_reduced = featurize(frames)
+    if featurize is None:
+        X_reduced = featurize(frames)
+
+    # Use default featurizer
+    else:
+        X_reduced = soap_pca(frames)
 
     # Add dimensionality reduction results to properties
     settings = {"map": {}}
@@ -34,3 +40,35 @@ def explore(frames, properties=None, featurize=None, mode="default"):
 
     # Return chemiscope widget
     return show(frames=frames, properties=properties, mode=mode, settings=settings)
+
+
+def soap_pca(frames):
+    # Get global species
+    species = set()
+    for frame in frames:
+        species.update(frame.get_chemical_symbols())
+    species = list(species)
+
+    # Check if periodic
+    is_periodic = all(all(frame.get_pbc()) for frame in frames)
+
+    # Initialize calculator
+    soap = SOAP(
+        species=species,
+        r_cut=4.5,
+        n_max=8,
+        l_max=6,
+        sigma=0.2,
+        rbf="gto",
+        average="outer",
+        periodic=is_periodic,
+        weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
+        compression={"mode": "mu1nu1"},
+    )
+
+    # Calculate descriptors
+    feats = soap.create(frames, n_jobs=-1, only_physical_cores=True)
+
+    # Compute pca
+    pca = PCA(n_components=2)
+    return pca.fit_transform(feats)
