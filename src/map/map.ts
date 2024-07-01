@@ -81,13 +81,19 @@ const DEFAULT_LAYOUT = {
     },
     showlegend: true,
     xaxis: {
-        range: undefined,
+        range: undefined as (number | undefined)[] | undefined,
         title: '',
         type: 'linear',
         zeroline: false,
     },
     yaxis: {
-        range: undefined,
+        range: undefined as (number | undefined)[] | undefined,
+        title: '',
+        type: 'linear',
+        zeroline: false,
+    },
+    zaxis: {
+        range: undefined as (number | undefined)[] | undefined,
         title: '',
         type: 'linear',
         zeroline: false,
@@ -659,9 +665,32 @@ export class PropertiesMap {
         // ======= color axis settings
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
-            const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
+            const determineColorRange = (optionMin: number, optionMax: number) => {
+                const [min, max] = this._getAxisRange(optionMin, optionMax, 'map.color');
+                const minProvided = min !== undefined;
+                const maxProvided = max !== undefined;
 
+                const getMinMaxFromValues = () => {
+                    const values = this._colors(0)[0] as number[];
+                    return arrayMaxMin(values);
+                };
+
+                if (minProvided || maxProvided) {
+                    // Calculate min/max value from values
+                    const { min, max } = getMinMaxFromValues();
+                    return {
+                        min: minProvided ? optionMin : min,
+                        max: maxProvided ? optionMax : max,
+                    };
+                }
+
+                // Calculate default range
+                return getMinMaxFromValues();
+            };
+            const { min, max } = determineColorRange(
+                this._options.color.min.value,
+                this._options.color.max.value
+            );
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
@@ -1018,6 +1047,23 @@ export class PropertiesMap {
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
 
+        // Set ranges for the axes
+        layout.xaxis.range = this._getAxisRange(
+            this._options.x.min.value,
+            this._options.x.max.value,
+            'map.x'
+        );
+        layout.yaxis.range = this._getAxisRange(
+            this._options.y.min.value,
+            this._options.y.max.value,
+            'map.y'
+        );
+        layout.zaxis.range = this._getAxisRange(
+            this._options.z.min.value,
+            this._options.z.max.value,
+            'map.z'
+        );
+
         // Create an empty plot and fill it below
         Plotly.newPlot(
             this._plot,
@@ -1085,6 +1131,27 @@ export class PropertiesMap {
         // Hack to fix a Plotly bug preventing zooming on Safari
         this._plot.addEventListener('wheel', () => {});
     }
+
+    /** Validate min/max options provided by the user. We use `NaN` internally to mark missing values, which are then transformed into undefined by this function */
+    private _getAxisRange = (
+        min: number,
+        max: number,
+        axisName: string
+    ): [number | undefined, number | undefined] => {
+        const minProvided = !isNaN(min);
+        const maxProvided = !isNaN(max);
+
+        // At least one range value is specified. By default, zeros are set
+        if (minProvided && maxProvided) {
+            if (min <= max) {
+                return [min, max];
+            }
+            sendWarning(
+                `The inserted min and max values in ${axisName} are such that min > max! The default values will be used.`
+            );
+        }
+        return [minProvided ? min : undefined, maxProvided ? max : undefined];
+    };
 
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
@@ -1404,14 +1471,16 @@ export class PropertiesMap {
      */
     private _afterplot(): void {
         const bounds = this._getBounds();
+        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
+            axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
+            axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+        };
 
-        this._options.x.min.value = bounds.x[0];
-        this._options.x.max.value = bounds.x[1];
-        this._options.y.min.value = bounds.y[0];
-        this._options.y.max.value = bounds.y[1];
+        // Set calculated value to the range if axis bound value was not provided by user
+        updateAxisValues(this._options.x, bounds.x);
+        updateAxisValues(this._options.y, bounds.y);
         if (bounds.z !== undefined) {
-            this._options.z.min.value = bounds.z[0];
-            this._options.z.max.value = bounds.z[1];
+            updateAxisValues(this._options.z, bounds.z);
         }
 
         if (!this._is3D()) {

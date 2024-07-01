@@ -57,8 +57,8 @@ def _ase_list_atom_properties(frames):
 
     if len(extra) != 0:
         warnings.warn(
-            "the following atomic properties properties are only defined "
-            f"for a subset of frames: {list(sorted(extra))}; they will be ignored",
+            "the following atomic properties are only defined for a subset "
+            f"of frames: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
 
@@ -89,8 +89,8 @@ def _ase_list_structure_properties(frames):
 
     if len(extra) != 0:
         warnings.warn(
-            "the following structure properties properties are only defined "
-            f"for a subset of frames: {list(sorted(extra))}; they will be ignored",
+            "the following structure properties are only defined for a subset "
+            f"of frames: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
 

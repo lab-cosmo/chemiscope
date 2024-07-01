@@ -3,12 +3,12 @@ from .jupyter import show
 from sklearn.decomposition import PCA
 from dscribe.descriptors import SOAP
 
-
 def explore(frames, featurize, properties=None, mode="default"):
     """
     Visualize the dataset with dimensionality reduction.
 
     :param list frames: list of atomic structures
+    Visualize the dataset with dimensionality reduction.
 
     :param dict properties: optional, dictionary of additional properties.
 
