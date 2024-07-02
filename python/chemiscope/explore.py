@@ -1,15 +1,18 @@
+import os
+
 from dscribe.descriptors import SOAP
 from sklearn.decomposition import PCA
 
 from .jupyter import show
 
 
-def explore(frames, featurize, properties=None, mode="default"):
+def explore(frames, featurize=None, properties=None, mode="default"):
     """
     Visualize the dataset with dimensionality reduction.
+    If no function is provided as the `featurize` argument the default one is used
+    that performs SOAP and PCA.
 
     :param list frames: list of atomic structures
-    Visualize the dataset with dimensionality reduction.
 
     :param dict properties: optional, dictionary of additional properties.
 
@@ -18,13 +21,13 @@ def explore(frames, featurize, properties=None, mode="default"):
     :return: chemiscope widget
     """
     # Validate inputs
-    if not callable(featurize):
+    if featurize is not None and not callable(featurize):
         raise TypeError("'featurize' must be a callable (function)")
     if properties is None:
         properties = {}
 
     # Apply dimensionality reduction from the provided featurizer
-    if featurize is None:
+    if featurize is not None:
         X_reduced = featurize(frames)
 
     # Use default featurizer
@@ -44,6 +47,17 @@ def explore(frames, featurize, properties=None, mode="default"):
 
 
 def soap_pca(frames):
+    """
+    Computes SOAP features for a given set of atomic structures and performs
+    dimensionality reduction using PCA.
+
+    Note:
+    - The SOAP descriptor parameters such as `r_cut`, `n_max`, `l_max`, `sigma`, `rbf`,
+    `average`, `periodic`, `weighting`, and `compression` are pre-defined within
+    function.
+    - The function utilizes all available CPU cores for parallel computation of SOAP
+    descriptors.
+    """
     # Get global species
     species = set()
     for frame in frames:
@@ -68,7 +82,8 @@ def soap_pca(frames):
     )
 
     # Calculate descriptors
-    feats = soap.create(frames, n_jobs=-1, only_physical_cores=True)
+    n_jobs = min(len(frames), os.cpu_count())
+    feats = soap.create(frames, n_jobs=n_jobs)
 
     # Compute pca
     pca = PCA(n_components=2)
