@@ -2,16 +2,24 @@
 Chemiscope.explore example
 ==========================
 This example illustrates usage of different methods of dimensionality reduction and its
-visualisation with `chemiscope.explore`. The objective of the function is to provide a
-way to quickly explore a dataset. Internally, it uses the following algorithm.
+visualisation with `chemiscope.explore`. The primary goal of this function is to enable
+quick and effective exploration of a dataset. It follows the following algorithm
+internally:
 
 .. image:: /img/chemiscope-explore-algorithm.png
    :align: center
 
-In this example, we will take a look on use cases starting from basic to the more
-customised versions.
+To use this function, some additional dependencies are required. You can install them
+with the following command:
 
-First, we import the necessary packages used across each example.
+.. code:: bash
+
+    pip install chemiscope[explore]
+
+In this example, we will explore several use cases, starting from basic applications to
+more customized scenarios.
+
+First, let's import the necessary packages that will be used throughout the examples.
 """
 
 # %%
@@ -122,7 +130,17 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 #
 # In this part, we are going to define another `featurize` function that runs
 # calculation of desciptors with MACE-OFF and uses t-SNE for the dimensionality
-# reduction. For this example, let's import the necessary libraries.
+# reduction.
+#
+# The dependencies for this example can be installed with the following command:
+#
+# .. code:: bash
+#
+#     pip install chemiscope[mace]
+
+# %%
+#
+# Let's import the necessary libraries.
 
 import numpy as np  # noqa
 from mace.calculators import mace_off  # noqa

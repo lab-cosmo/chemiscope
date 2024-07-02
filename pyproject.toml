@@ -5,8 +5,6 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy",
     "ipywidgets>=7,<9",
-    "dscribe",
-    "scikit-learn",
 ]
 
 readme = "python/README.md"
@@ -69,3 +67,16 @@ line_length = 88
 indent = 4
 include_trailing_comma = true
 known_first_party = "chemiscope"
+
+### ======================================================================== ###
+
+[project.optional-dependencies]
+explore = [
+    "dscribe",
+    "scikit-learn",
+]
+
+mace = [
+    "scikit-learn",
+    "mace-torch"
+]

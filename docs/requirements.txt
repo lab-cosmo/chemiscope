@@ -8,11 +8,3 @@ numpy
 ipywidgets
 matplotlib
 ase==3.22.1
-
-# required for the chemiscope.explore example
-scikit-learn
-rascaline @ git+https://github.com/Luthaf/rascaline@5c2a79838bda0a52d0fde2fbe65941f4792c4cae
-metatensor
-mace-torch
-tqdm
-dscribe
