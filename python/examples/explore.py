@@ -23,7 +23,10 @@ First, let's import the necessary packages that will be used throughout the exam
 """
 
 # %%
+import os
+
 import ase.io
+import numpy as np
 
 import chemiscope
 
@@ -70,8 +73,6 @@ chemiscope.explore(frames)
 # <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html/>`_.
 #
 # First, let's import the necessary packages.
-import os  # noqa
-
 from dscribe.descriptors import SOAP  # noqa
 from sklearn.decomposition import KernelPCA  # noqa
 
@@ -98,13 +99,13 @@ def soap_kpca(frames):
         weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
     )
 
-    # Get the number of jobs to calculate the features in parallel
+    # Determine number of jobs to calculate features in parallel
     n_jobs = min(len(frames), os.cpu_count())
 
     # Compute features
     descriptors = soap.create(frames, n_jobs=n_jobs)
 
-    # Apply KPCA. We also use the parallelisation to accelerate the time of computation
+    # Apply KPCA. Parallelisation is used to accelerate computation time
     transformer = KernelPCA(n_components=2, gamma=0.05, n_jobs=n_jobs)
     return transformer.fit_transform(descriptors)
 
@@ -117,9 +118,23 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 
 # %%
 #
-# Here we are loading pre-computed dimensionality reduction done using the descibed
-# `featurize` function for the C-GAP-20U dataset.
+# To showcase the results of the `soap_kpca` function, we have pre-computed it for
+# the 6k structures from the C-GAP-20U dataset. You can fetch and visualize this
+# pre-computed dimensionality reduction as follows:
 
+import requests  # noqa
+
+
+def fetch_dataset(filename, base_url="https://zenodo.org/records/12626972/files/"):
+    """Helper function to load the pre-computed examples"""
+    local_path = "data/" + filename
+    if not os.path.isfile(local_path):
+        response = requests.get(base_url + filename)
+        with open(local_path, "wb") as file:
+            file.write(response.content)
+
+
+fetch_dataset("soap_kpca_c-gap-20u.json.gz")
 chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 
 
@@ -142,7 +157,6 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 #
 # Let's import the necessary libraries.
 
-import numpy as np  # noqa
 from mace.calculators import mace_off  # noqa
 from sklearn.manifold import TSNE  # noqa
 
@@ -203,6 +217,7 @@ cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne, properties=properti
 # function for 6k structures taken from the `QM9
 # <https://jla-gardner.github.io/load-atoms/index.html>`_ dataset.
 
+fetch_dataset("mace-off-tsne-qm9.json.gz")
 chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
 
 # %%
@@ -268,4 +283,6 @@ cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
 # To show case the result, we are loading pre-computed data using the `mace_mp0_tsne`
 # function for 1k structures.
 
+
+fetch_dataset("mace-mp-tsne-m3cd.json.gz")
 chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
