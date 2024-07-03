@@ -9,16 +9,70 @@ from .jupyter import show
 def explore(frames, featurize=None, properties=None, mode="default"):
     """
     Visualize the dataset with dimensionality reduction.
-    If no function is provided as the `featurize` argument the default one is used
-    that performs SOAP and PCA.
+    If no function is provided as a `featurize` argument, a default SOAP and PCA based
+    featurizer is used. SOAP parameters (e.g., cutoff radius, number of radial and
+    angular functions, etc.) are predefined. The SOAP computation uses all available
+    CPU cores for parallelization. PCA reduces the dimensionality to two components
+    by default.
 
-    :param list frames: list of atomic structures
+    :param list frames: list of ASE Atoms objects
 
-    :param dict properties: optional, dictionary of additional properties.
+    :param callable featurize: optional. Function to compute features and perform
+        dimensionality reduction on the `frames`. The function should take `frames` as
+        input and return a 2D array of reduced features. If `None`, a default SOAP and
+        PCA based featurizer is used.
 
-    :param str mode: optional, widget mode, either ``default``, ``structure`` or ``map``
+    :param dict properties: optional. Additional properties to be included in the
+        visualization. This dictionary can contain any other relevant data associated
+        with the atomic structures. Properties can be extracted from frames with
+        :py:func:`extract_properties` or manually defined by the user.
 
-    :return: chemiscope widget
+    :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
+        of "default", "structure", or "map". The default mode is "default".
+
+    :return: a chemiscope widget for interactive visualization
+
+    Here is an example of usage with and without providing a function to do the
+    reprensentation and reduction. The frames are obtained by reading the structures
+    from a file that `ase <ase-io_>`_ can read, and performing PCA using `sklearn`_ on
+    a descriptor computed with SOAP with `dscribe`_ library.
+
+    .. code-block:: python
+
+        import chemiscope
+        from ase.io import read
+        from dscribe.descriptors import SOAP
+        from sklearn.decomposition import KernelPCA
+
+        # Read the structures from the dataset
+        frames = read("trajectory.xyz", ":")
+
+        # Basic usage with the default featurizer (SOAP + PCA)
+        chemiscope.explore(frames)
+
+        # Using a custom featurizer
+        chemiscope.explore(frames, featurize=soap_kpca)
+
+        def soap_kpca(frames):
+            # Compute descriptors
+            soap = SOAP(
+                species=["C"],
+                r_cut=4.5,
+                n_max=8,
+                l_max=6,
+                periodic=True,
+            )
+            descriptors = soap.create(frames)
+
+            # Apply KPCA
+            transformer = KernelPCA(n_components=2, gamma=0.05)
+
+            # Return a 2D array of reduced features
+            return transformer.fit_transform(descriptors)
+
+    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _sklearn: https://scikit-learn.org/
+    .. _dscribe: https://singroup.github.io/dscribe/latest/
     """
     # Validate inputs
     if featurize is not None and not callable(featurize):

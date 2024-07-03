@@ -76,6 +76,7 @@ chemiscope.explore(frames)
 from dscribe.descriptors import SOAP  # noqa
 from sklearn.decomposition import KernelPCA  # noqa
 
+
 # %%
 #
 # Define the function `soap_kpca` which takes one argument (`frames`). This argument
@@ -99,14 +100,13 @@ def soap_kpca(frames):
         weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
     )
 
-    # Determine number of jobs to calculate features in parallel
-    n_jobs = min(len(frames), os.cpu_count())
-
     # Compute features
-    descriptors = soap.create(frames, n_jobs=n_jobs)
+    descriptors = soap.create(frames)
 
-    # Apply KPCA. Parallelisation is used to accelerate computation time
-    transformer = KernelPCA(n_components=2, gamma=0.05, n_jobs=n_jobs)
+    # Apply KPCA
+    transformer = KernelPCA(n_components=2, gamma=0.05)
+
+    # Return a 2D array of reduced features
     return transformer.fit_transform(descriptors)
 
 
@@ -118,10 +118,16 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 
 # %%
 #
+# Note: It is possible to add parallelization when computing the SOAP descriptors and
+# performing dimentionality reduction with KernelPCA by providing the `n_jobs`
+# parameter. This allows the computation to utilize multiple CPU cores for faster
+# processing. An example of how to include `n_jobs` is shown below on this page.
+#
 # To showcase the results of the `soap_kpca` function, we have pre-computed it for
 # the 6k structures from the C-GAP-20U dataset. You can fetch and visualize this
 # pre-computed dimensionality reduction as follows:
 
+# sphinx_gallery_start_ignore
 import requests  # noqa
 
 
@@ -133,6 +139,8 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12626972/files/
         with open(local_path, "wb") as file:
             file.write(response.content)
 
+
+# sphinx_gallery_end_ignore
 
 fetch_dataset("soap_kpca_c-gap-20u.json.gz")
 chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")

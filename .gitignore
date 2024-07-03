@@ -8,4 +8,3 @@ __pycache__/
 *.pyc
 *.egg-info
 MANIFEST
-python/examples/explore.ipynb
