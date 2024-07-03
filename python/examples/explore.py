@@ -76,7 +76,6 @@ chemiscope.explore(frames)
 from dscribe.descriptors import SOAP  # noqa
 from sklearn.decomposition import KernelPCA  # noqa
 
-
 # %%
 #
 # Define the function `soap_kpca` which takes one argument (`frames`). This argument

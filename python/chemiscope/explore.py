@@ -53,6 +53,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         # Using a custom featurizer
         chemiscope.explore(frames, featurize=soap_kpca)
 
+
         def soap_kpca(frames):
             # Compute descriptors
             soap = SOAP(
