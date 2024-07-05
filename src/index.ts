@@ -6,6 +6,7 @@ import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
 import { LoadOptions, MoleculeViewer, StructureOptions, ViewersGrid } from './structure';
+import { DisplayToggle } from './toggle';
 
 import {
     Dataset,
@@ -178,6 +179,8 @@ class DefaultVisualizer {
     private _dataset: Dataset;
     // Keep the list of pinned environments around to be able to apply settings
     private _pinned: GUID[];
+    // Controls the display mode (atom or structure)
+    private _toggle: DisplayToggle;
 
     // the constructor is private because the main entry point is the static
     // `load` function
@@ -249,6 +252,12 @@ class DefaultVisualizer {
             this.structure.setActive(guid);
         };
 
+        // toggle setup
+        const newMode = mode === 'atom' ? 'structure' : 'atom';
+        const isToggleDisabled =
+            Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
+        this._toggle = new DisplayToggle(config.map, mode === 'atom', isToggleDisabled);
+
         // information table & slider setup
         this.info = new EnvironmentInfo(
             config.info,
@@ -304,6 +313,7 @@ class DefaultVisualizer {
         this.meta.remove();
         this.info.remove();
         this.structure.remove();
+        this._toggle.remove();
     }
 
     /**
