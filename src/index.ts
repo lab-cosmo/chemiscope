@@ -255,8 +255,16 @@ class DefaultVisualizer {
         // toggle setup
         const newMode = mode === 'atom' ? 'structure' : 'atom';
         const isToggleDisabled =
+            dataset.environments === undefined ||
             Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
         this._toggle = new DisplayToggle(config.map, mode === 'atom', isToggleDisabled);
+        this._toggle.onchange = (checked: any) => {
+            // Update indexer
+            this._indexer.togglePerAtom(checked);
+
+            // Proceed with EnvironmentInfo
+            this.info.togglePerAtom();
+        };
 
         // information table & slider setup
         this.info = new EnvironmentInfo(

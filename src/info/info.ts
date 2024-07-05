@@ -57,8 +57,10 @@ export class EnvironmentInfo {
     private _shadow: ShadowRoot;
     private _root: HTMLElement;
     private _atom?: Info;
-    private _structure: Info;
+    private _structure?: Info;
     private _indexer: EnvironmentIndexer;
+    private _properties: { [name: string]: Property };
+    private _parameters: { [name: string]: Parameter } | undefined;
 
     /**
      * Create a new {@link EnvironmentInfo} inside the DOM element with given `id`
@@ -95,20 +97,27 @@ export class EnvironmentInfo {
         // 700 ms between steps is a good default
         this.playbackDelay = 700;
 
-        let atomButton = '<div></div>';
-        if (this._indexer.mode === 'atom') {
-            atomButton = `
-            <div class='btn btn-sm chsp-info-atom-btn'
+        this._properties = properties;
+        this._parameters = parameters;
+        this.togglePerAtom();
+    }
+
+    /** Proceed with the panels related to the mode */
+    public togglePerAtom(): void {
+        // Construct atom related html if mode is atom
+        const atomButton =
+            this._indexer.mode === 'atom'
+                ? `<div class='btn btn-sm chsp-info-atom-btn'
                 data-bs-toggle='collapse'
                 data-bs-target='#atom'
                 aria-expanded='false'
                 aria-controls='atom'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                 atom <input class='chsp-info-number' type=number value=1 min=1></input>
-            </div>
-            `;
-        }
+            </div>`
+                : '<div></div>';
 
+        // Construct main HTML structure
         this._root.innerHTML = `
         <div class='accordion chsp-info-tables' id='info-tables'></div>
         <div class='chsp-info-btns'>
@@ -119,17 +128,18 @@ export class EnvironmentInfo {
                 aria-controls='structure'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                 structure <input class='chsp-info-number' type=number value=1 min=1></input>
-
             </div>
             ${atomButton}
         </div>`;
 
-        const structureProperties = filter(properties, (p) => p.target === 'structure');
-        this._structure = this._createStructure(structureProperties, parameters);
+        // Filter properties for structure
+        const structureProperties = filter(this._properties, (p) => p.target === 'structure');
+        this._structure = this._createStructure(structureProperties, this._parameters);
 
+        // Initialize central atom if in atom mode
         if (this._indexer.mode === 'atom') {
-            const atomProperties = filter(properties, (p) => p.target === 'atom');
-            this._atom = this._createAtom(atomProperties, parameters);
+            const atomProperties = filter(this._properties, (p) => p.target === 'atom');
+            this._atom = this._createAtom(atomProperties, this._parameters);
         }
 
         // Initialize the collapse components from their 'data-bs-*' attributes.
@@ -138,8 +148,8 @@ export class EnvironmentInfo {
 
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes): void {
+        assert(this._structure !== undefined);
         const previousStructure = this._indexes().structure;
-
         this._structure.number.value = `${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
@@ -220,6 +230,7 @@ export class EnvironmentInfo {
         };
 
         slider.onchange = () => {
+            assert(this._structure !== undefined);
             const structure = this._structure.slider.value();
 
             if (this._atom !== undefined) {
@@ -256,6 +267,7 @@ export class EnvironmentInfo {
         number.max = this._indexer.structuresCount().toString();
 
         number.onchange = () => {
+            assert(this._structure !== undefined);
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value
@@ -293,6 +305,7 @@ export class EnvironmentInfo {
         properties: { [name: string]: Property },
         parameters?: { [name: string]: Parameter }
     ) {
+        assert(this._structure !== undefined);
         const slider = new Slider(this._root, 'atom');
         slider.reset(this._indexer.activeAtoms(this._structure.slider.value()));
 
@@ -330,6 +343,7 @@ export class EnvironmentInfo {
 
         slider.onchange = () => {
             assert(this._atom !== undefined);
+            assert(this._structure !== undefined);
             const indexes = this._indexes();
 
             if (indexes === undefined) {
@@ -358,6 +372,7 @@ export class EnvironmentInfo {
 
         number.onchange = () => {
             assert(this._atom !== undefined);
+            assert(this._structure !== undefined);
             const activeAtoms = this._indexer.activeAtoms(this._structure.slider.value());
 
             const value = parseInt(number.value, 10) - 1;
@@ -383,6 +398,7 @@ export class EnvironmentInfo {
 
     /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
+        assert(this._structure !== undefined);
         const structure = this._structure.slider.value();
         let indexes;
         if (this._atom !== undefined) {
