@@ -7,7 +7,7 @@ export class DisplayToggle {
     /// Toggle input element
     private _toggle: HTMLInputElement;
     /// Callback fired when the user changes the toggle value
-    public onchange: () => void;
+    public onchange: (checked: boolean) => void;
 
     /**
      * Create a new {@link DisplayToggle} instance
@@ -35,7 +35,7 @@ export class DisplayToggle {
         this._shadow.appendChild(this._toggle.parentElement as Node);
 
         // Set up events
-        this._toggle.onchange = () => this.onchange?.();
+        this._toggle.onchange = () => this.onchange?.(this._toggle.checked);
         this.onchange = () => {};
     }
 

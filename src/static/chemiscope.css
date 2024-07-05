@@ -548,3 +548,7 @@
 .chsp-atom-extra-options {
     grid-column: 1 / span 2;
 }
+
+.chsp-mode-toggle {
+    padding-left: 2.8em;
+}

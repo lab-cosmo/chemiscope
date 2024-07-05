@@ -118,6 +118,14 @@ export class EnvironmentIndexer {
     }
 
     /**
+     * Change the mode ('atom' <-> 'structure')
+     * @param  checked flag to determine the display mode
+     */
+    public togglePerAtom(checked: boolean) {
+        this.mode = checked ? 'atom' : 'structure';
+    }
+
+    /**
      * Get a full set of indexes from the global environment index
      * @param  environment global index of an environment
      * @return             full {@link Indexes}, containing the corresponding
