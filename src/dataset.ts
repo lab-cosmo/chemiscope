@@ -51,8 +51,20 @@ export interface Dataset {
     parameters?: { [name: string]: Parameter };
 }
 
+export interface NestedSettings
+    extends Record<
+        string,
+        string | number | boolean | undefined | NestedSettings | NestedSettings[]
+    > {
+    max?: number;
+    min?: number;
+    property?: string;
+    scale?: string;
+    factor?: number;
+}
+
 /**
- * Type definition for settings that can be saved with a dataset. THey should be
+ * Type definition for settings that can be saved with a dataset. They should be
  * a simple object with string keys, scalar values, array values or nested
  * Settings objects.
  */
@@ -60,7 +72,17 @@ export interface Dataset {
 export interface Settings
     extends Record<
         string,
-        string | string[] | number | number[] | boolean | boolean[] | Settings | Settings[]
+        | undefined
+        | string
+        | string[]
+        | number
+        | number[]
+        | boolean
+        | boolean[]
+        | Settings
+        | Settings[]
+        | NestedSettings
+        | NestedSettings[]
     > {}
 
 /** Various metadata associated with a dataset */

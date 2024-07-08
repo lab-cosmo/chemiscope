@@ -264,6 +264,9 @@ class DefaultVisualizer {
 
             // Proceed with EnvironmentInfo
             this.info.togglePerAtom();
+
+            // Proceed with PropertiesMap
+            this.map.togglePerAtom();
         };
 
         // information table & slider setup

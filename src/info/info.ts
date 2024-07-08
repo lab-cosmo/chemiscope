@@ -116,7 +116,6 @@ export class EnvironmentInfo {
                 atom <input class='chsp-info-number' type=number value=1 min=1></input>
             </div>`
                 : '<div></div>';
-
         // Construct main HTML structure
         this._root.innerHTML = `
         <div class='accordion chsp-info-tables' id='info-tables'></div>
@@ -140,6 +139,11 @@ export class EnvironmentInfo {
         if (this._indexer.mode === 'atom') {
             const atomProperties = filter(this._properties, (p) => p.target === 'atom');
             this._atom = this._createAtom(atomProperties, this._parameters);
+        }
+
+        // Reset atom if in structure mode
+        else {
+            this._atom = undefined;
         }
 
         // Initialize the collapse components from their 'data-bs-*' attributes.

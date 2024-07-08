@@ -64,18 +64,18 @@ export class AxisOptions extends OptionsGroup {
 }
 
 export class MapOptions extends OptionsGroup {
-    public x: AxisOptions;
-    public y: AxisOptions;
-    public z: AxisOptions;
-    public palette: HTMLOption<'string'>;
-    public symbol: HTMLOption<'string'>;
-    public color: {
+    public x!: AxisOptions;
+    public y!: AxisOptions;
+    public z!: AxisOptions;
+    public palette!: HTMLOption<'string'>;
+    public symbol!: HTMLOption<'string'>;
+    public color!: {
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
         min: HTMLOption<'number'>;
         max: HTMLOption<'number'>;
     };
-    public size: {
+    public size!: {
         factor: HTMLOption<'number'>;
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
@@ -83,11 +83,13 @@ export class MapOptions extends OptionsGroup {
     };
 
     /// The HTML button to open the settings modal
-    private _openModal: HTMLElement;
+    private _openModal!: HTMLElement;
     /// The Modal instance
-    private _modal: Modal;
+    private _modal!: Modal;
     // Callback to get the initial positioning of the settings modal.
     private _positionSettingsModal: PositioningCallback;
+    /// HTML element holding the full plot
+    private _root: Node;
 
     constructor(
         root: Node,
@@ -96,68 +98,52 @@ export class MapOptions extends OptionsGroup {
         settings: Settings = {}
     ) {
         super();
+        this._root = root;
+        this._positionSettingsModal = positionSettings;
+
         const propertiesName = Object.keys(properties);
         assert(propertiesName.length >= 2);
 
-        this.x = new AxisOptions(propertiesName);
-        this.y = new AxisOptions(propertiesName);
-        // For z and color '' is a valid value
-        this.z = new AxisOptions(propertiesName.concat(['']));
+        // Initialize the html options
+        this._initAxes(propertiesName);
+        this._initSymbol(properties);
+        this._initPalette();
+        this._initColor(propertiesName);
+        this._initSize(propertiesName);
 
-        this.symbol = new HTMLOption('string', '');
-        const validSymbols = [''];
-        for (const key in properties) {
-            if (properties[key].string !== undefined) {
-                validSymbols.push(key);
-            }
-        }
-        this.symbol.validate = optionValidator(validSymbols, 'symbol');
+        // Create a modal
+        this._setupModal();
 
-        this.palette = new HTMLOption('string', 'inferno');
-        this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
-
-        this.color = {
-            mode: new HTMLOption('string', 'linear'),
-            property: new HTMLOption('string', ''),
-            min: new HTMLOption('number', NaN),
-            max: new HTMLOption('number', NaN),
-        };
-        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
-        this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
-
-        this.size = {
-            factor: new HTMLOption('number', 50),
-            mode: new HTMLOption('string', 'linear'),
-            property: new HTMLOption('string', ''),
-            reverse: new HTMLOption('boolean', false),
-        };
-
-        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
-        this.size.factor.validate = (value) => {
-            if (value < 1 || value > 100) {
-                throw Error(`size factor must be between 0 and 100, got ${value}`);
-            }
-        };
-        this.size.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
-
-        this.x.property.value = propertiesName[0];
-        this.y.property.value = propertiesName[1];
-        this.z.property.value = '';
-
-        if (propertiesName.length > 2) {
-            this.color.property.value = propertiesName[2];
-        } else {
-            this.color.property.value = '';
-        }
-
-        this._positionSettingsModal = positionSettings;
-
-        const { openModal, modal } = this._createSettingsHTML();
-        this._modal = modal;
-        this._openModal = openModal;
-        root.appendChild(this._openModal);
-
+        // Setup callbacks
         this._bind(properties);
+        this.applySettings(settings);
+    }
+
+    /**
+     * Updates the map options with new properties and settings.
+     * Removes the old modal, reinitializes properties, and applies new settings
+     *
+     * @param {NumericProperties} properties new numeric properties
+     * @param {Settings} settings new settings
+     */
+    public updateMapOptions(properties: NumericProperties, settings: Settings) {
+        // Remove the old modal from the DOM
+        this.remove();
+
+        // Re-create properties
+        const propertiesName = Object.keys(properties);
+        this._initAxes(propertiesName);
+        this._initSymbol(properties);
+        this._initColor(propertiesName);
+        this._initSize(propertiesName);
+
+        // Append new modal
+        this._setupModal();
+
+        // Attach callbacks
+        this._bind(properties);
+
+        // Apply new settings to the modal options
         this.applySettings(settings);
     }
 
@@ -354,6 +340,14 @@ export class MapOptions extends OptionsGroup {
         }
     }
 
+    /** Creates and attaches the modal html element */
+    private _setupModal() {
+        const { openModal, modal } = this._createSettingsHTML();
+        this._modal = modal;
+        this._openModal = openModal;
+        this._root.appendChild(this._openModal);
+    }
+
     /**
      * Create the settings modal by adding HTML to the page
      * @param  guid unique identifier of this map, used as prefix for all
@@ -509,6 +503,76 @@ export class MapOptions extends OptionsGroup {
         this.size.factor.bind(this.getModalElement('map-size-factor'), 'value');
         this.size.mode.bind(this.getModalElement('map-size-transform'), 'value');
         this.size.reverse.bind(this.getModalElement('map-size-reverse'), 'checked');
+    }
+
+    /**
+     * Initializes the axis options (x, y, z)
+     *
+     * @param {string[]} propertiesName  array of property names for axis options
+     */
+    private _initAxes(propertiesName: string[]) {
+        this.x = new AxisOptions(propertiesName);
+        this.y = new AxisOptions(propertiesName);
+        this.z = new AxisOptions(propertiesName.concat(['']));
+    }
+
+    /**
+     * Initializes the symbol option
+     *
+     * @param {NumericProperties} properties numeric properties object
+     */
+    private _initSymbol(properties: NumericProperties) {
+        this.symbol = new HTMLOption('string', '');
+        const validSymbols = [''];
+        for (const key in properties) {
+            if (properties[key].string !== undefined) {
+                validSymbols.push(key);
+            }
+        }
+        this.symbol.validate = optionValidator(validSymbols, 'symbol');
+    }
+
+    /** Initializes the palette option with default values and validation */
+    private _initPalette() {
+        this.palette = new HTMLOption('string', 'inferno');
+        this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
+    }
+
+    /**
+     * Initializes the color options (mode, property, min, max)
+     *
+     * @param {string[]} propertiesName array of property names for color options
+     */
+    private _initColor(propertiesName: string[]) {
+        this.color = {
+            mode: new HTMLOption('string', 'linear'),
+            property: new HTMLOption('string', ''),
+            min: new HTMLOption('number', NaN),
+            max: new HTMLOption('number', NaN),
+        };
+        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
+        this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
+    }
+
+    /**
+     * Initializes the size options (factor, mode, property, reverse)
+     *
+     * @param {string[]} propertiesName array of property names for size options
+     */
+    private _initSize(propertiesName: string[]) {
+        this.size = {
+            factor: new HTMLOption('number', 50),
+            mode: new HTMLOption('string', 'linear'),
+            property: new HTMLOption('string', ''),
+            reverse: new HTMLOption('boolean', false),
+        };
+        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
+        this.size.factor.validate = (value) => {
+            if (value < 1 || value > 100) {
+                throw Error(`size factor must be between 0 and 100, got ${value}`);
+            }
+        };
+        this.size.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */
