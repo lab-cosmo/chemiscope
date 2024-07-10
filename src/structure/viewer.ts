@@ -367,11 +367,13 @@ export class MoleculeViewer {
      * @param structure structure to load
      * @param properties properties to used to load the structure
      * @param options options for the new structure
+     * @param callback fired when viewer finished rendering
      */
     public load(
         structure: Structure,
         properties?: Record<string, (number | undefined)[]> | undefined,
-        options: Partial<LoadOptions> = {}
+        options: Partial<LoadOptions> = {},
+        callback?: () => void
     ): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
@@ -526,7 +528,11 @@ export class MoleculeViewer {
         this._options.axes.changed('JS');
         this._options.atomLabels.changed('JS');
 
-        this._viewer.render();
+        this._viewer.render(() => {
+            if (callback) {
+                callback();
+            }
+        });
     }
 
     /** Setup interaction (click & hover) for environments highlighting */

@@ -253,23 +253,46 @@ class DefaultVisualizer {
         };
 
         // toggle setup
+
+        // Disable / enable toggle
         const newMode = mode === 'atom' ? 'structure' : 'atom';
-        const isToggleDisabled =
-            dataset.environments === undefined ||
-            Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
+        const noModeProps = Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
+        const isToggleDisabled = dataset.environments === undefined || noModeProps;
+
+        // Initiate toggle
         this._toggle = new DisplayToggle(config.map, mode === 'atom', isToggleDisabled);
-        this._toggle.onchange = (checked: any) => {
-            // Update indexer
-            this._indexer.togglePerAtom(checked);
 
-            // Proceed with EnvironmentInfo
-            this.info.togglePerAtom();
+        // Add callback
+        this._toggle.onchange = (checked: boolean) => {
+            // Show loader
+            this._toggle.loader(true);
 
-            // Proceed with ViewersGrid
-            this.structure.togglePerAtom();
+            // Use setTimeout to ensure the loader is shown before starting async operations
+            setTimeout(async () => {
+                // Update indexer
+                this._indexer.togglePerAtom(checked);
 
-            // Proceed with PropertiesMap
-            this.map.togglePerAtom();
+                // Proceed with EnvironmentInfo
+                this.info.togglePerAtom();
+
+                try {
+                    // Proceed with PropertiesMap
+                    await this.map.togglePerAtom();
+
+                    // Proceed with ViewersGrid
+                    await this.structure.togglePerAtom();
+                }
+
+                // Process errors
+                catch (error) {
+                    throw Error(error as string);
+                }
+
+                // Hide loader
+                finally {
+                    this._toggle.loader(false);
+                }
+            }, 0);
         };
 
         // information table & slider setup

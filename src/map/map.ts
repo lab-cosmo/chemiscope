@@ -329,7 +329,7 @@ export class PropertiesMap {
     /**
      * Callback fired when the mode is change (environment or atom)
      */
-    public togglePerAtom(): void {
+    public async togglePerAtom(): Promise<void> {
         // Update the map options based on the chosen mode
         this._setupMapOptions();
 
@@ -337,7 +337,7 @@ export class PropertiesMap {
         this._connectSettings();
 
         // Re-render the plot with the new data and layout
-        this._react(this._getTraces(), this._getLayout());
+        await this._react(this._getTraces(), this._getLayout());
     }
 
     /**
@@ -741,12 +741,17 @@ export class PropertiesMap {
      * @param traces array of data traces to update
      * @param layout layout properties to update
      */
-    private _react(traces: Plotly.Data[], layout: Partial<Layout>) {
-        // Update the plot with new data and layout
-        Plotly.react(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config).catch((e) => {
-            setTimeout(() => {
-                throw e;
-            });
+    private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            Plotly.react(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
+                .then(() => {
+                    resolve();
+                })
+                .catch((error) => {
+                    setTimeout(() => {
+                        reject(error);
+                    });
+                });
         });
     }
 

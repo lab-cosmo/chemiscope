@@ -50,8 +50,12 @@ export class DisplayToggle {
         const toggleElement = document.createElement('div');
         toggleElement.innerHTML = `
             <div class="chsp-mode-toggle form-check form-switch">
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="chsp-loading-spinner" style="display: none;"></div>
+
+                <!-- Toggle button -->
                 <input class="form-check-input" id="atom-display-toggle" type="checkbox" 
-                       ${disabled ? 'disabled' : ''} ${toggled ? 'checked' : ''} />
+                    ${disabled ? 'disabled' : ''} ${toggled ? 'checked' : ''} />
                 <label class="form-check-label" for="atom-display-toggle" title="atom display">
                     atom display
                 </label>
@@ -65,5 +69,29 @@ export class DisplayToggle {
      */
     remove(): void {
         this._shadow.host.remove();
+    }
+
+    /**
+     * Toggle loading spinner
+     * @param visible flag to toggle
+     */
+    loader(visible: boolean): void {
+        const parentElement = this._toggle.parentElement as HTMLDivElement;
+        const inputElement = parentElement?.querySelector('input') as HTMLInputElement;
+        const loadingSpinner = parentElement?.querySelector('#loading-spinner') as HTMLDivElement;
+
+        // Toggle show/hide elements
+        loadingSpinner.style.display = visible ? 'inline-block' : 'none';
+        inputElement.style.display = visible ? 'none' : 'inline-block';
+
+        // Remove styling classes to propertly display loading
+        if (visible) {
+            parentElement.classList.remove('chsp-mode-toggle', 'form-switch', 'form-check');
+        }
+
+        // Append styles if loading is hidden
+        else if (!parentElement.classList.contains('chsp-mode-toggle')) {
+            parentElement.classList.add('chsp-mode-toggle', 'form-switch', 'form-check');
+        }
     }
 }

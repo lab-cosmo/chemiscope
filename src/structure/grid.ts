@@ -479,7 +479,7 @@ export class ViewersGrid {
     }
 
     /** Update the viewers having the display mode changed */
-    public togglePerAtom(): void {
+    public async togglePerAtom(): Promise<void> {
         const isAtomMode = this._isPerAtom();
 
         // Set/reset the environements of grid and viewers based on the mode
@@ -490,9 +490,12 @@ export class ViewersGrid {
         this.applySettings(settings);
 
         // Refresh each cell with the new mode
-        for (const [guid, data] of this._cellsData.entries()) {
-            this._refreshCell(guid, data, isAtomMode);
-        }
+        const refreshPromises = Array.from(this._cellsData.entries()).map(([guid, data]) =>
+            this._refreshCell(guid, data, isAtomMode)
+        );
+
+        // Wait for all refreshes to complete
+        await Promise.all(refreshPromises);
     }
 
     /**
@@ -517,7 +520,11 @@ export class ViewersGrid {
      * @param data indexes associated with the viewer grid
      * @param isAtomMode indicates whether the current dispay mode is 'atom'
      */
-    private _refreshCell(guid: GUID, data: ViewerGridData, isAtomMode: boolean): void {
+    private async _refreshCell(
+        guid: GUID,
+        data: ViewerGridData,
+        isAtomMode: boolean
+    ): Promise<void> {
         // Set/remove atom from indexes based on mode
         data.current.atom = isAtomMode
             ? this._indexer.from_environment(data.current.environment).atom
@@ -525,7 +532,7 @@ export class ViewersGrid {
         this._cellsData.set(guid, data);
 
         // Load the viewer with the current indexes
-        this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+        await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
 
         // Reset the viewer view if in structure mode
         if (!isAtomMode) {
@@ -572,7 +579,7 @@ export class ViewersGrid {
      * @return the GUID of the new viewer, or `undefined` if we already
      *         reached the viewer limit.
      */
-    private _duplicate(initial: GUID): ViewerGridData | undefined {
+    private async _duplicate(initial: GUID): Promise<ViewerGridData | undefined> {
         const data = this._cellsData.get(initial);
         assert(data !== undefined);
 
@@ -583,7 +590,7 @@ export class ViewersGrid {
         const newData = this._cellsData.get(newGUID);
         assert(newData !== undefined);
 
-        this._showInViewer(newGUID, data.current);
+        await this._showInViewer(newGUID, data.current);
         newData.viewer.applySettings(data.viewer.saveSettings());
         this.setActive(newGUID);
         return newData;
@@ -654,7 +661,7 @@ export class ViewersGrid {
      * @param guid id of the cell to show
      * @param indexes environment showed in the new viewer
      */
-    private _showInViewer(guid: GUID, indexes: Indexes): void {
+    private async _showInViewer(guid: GUID, indexes: Indexes): Promise<void> {
         // Get current data from the cell
         const data = this._cellsData.get(guid);
         assert(data !== undefined);
@@ -662,7 +669,7 @@ export class ViewersGrid {
         const viewer = data.viewer;
         // If the structure has changed, load the new structure and atom into the viewer
         if (data.current.structure !== indexes.structure) {
-            this._loadViewer(viewer, indexes.structure, indexes.atom);
+            await this._loadViewer(viewer, indexes.structure, indexes.atom);
             data.current = indexes;
         }
 
@@ -680,28 +687,38 @@ export class ViewersGrid {
      * @param structureIndex index of the structure to be loaded
      * @param atomIndex optional index of the atom to highlight
      */
-    private _loadViewer(viewer: MoleculeViewer, structureIndex: number, atomIndex?: number): void {
-        // Initialize load options with trajectory enabled
-        const options: Partial<LoadOptions> = {
-            trajectory: true,
-        };
+    private _loadViewer(
+        viewer: MoleculeViewer,
+        structureIndex: number,
+        atomIndex?: number
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            // Initialize load options with trajectory enabled
+            const options: Partial<LoadOptions> = {
+                trajectory: true,
+            };
 
-        // If environments are defined, add them to the options
-        if (this._environments !== undefined) {
-            options.environments = this._environments[structureIndex];
+            // If environments are defined, add them to the options
+            if (this._environments !== undefined) {
+                options.environments = this._environments[structureIndex];
 
-            // If the mode is per atom, add the atom index to the highlight
-            if (this._isPerAtom()) {
-                options.highlight = atomIndex;
+                // If the mode is per atom, add the atom index to the highlight
+                if (this._isPerAtom()) {
+                    options.highlight = atomIndex;
+                }
             }
-        }
 
-        // Load the structure into the viewer
-        viewer.load(
-            this._structure(structureIndex),
-            this._propertiesForStructure(structureIndex),
-            options
-        );
+            // Load the structure into the viewer
+            viewer.load(
+                this._structure(structureIndex),
+                this._propertiesForStructure(structureIndex),
+                options,
+                () => {
+                    // Resolve the Promise when the viewer has finished loading
+                    resolve();
+                }
+            );
+        });
     }
 
     /**
@@ -788,8 +805,8 @@ export class ViewersGrid {
                 </button>`;
             const duplicate = template.content.firstChild as HTMLElement;
 
-            duplicate.onclick = () => {
-                const data = this._duplicate(cellGUID);
+            duplicate.onclick = async () => {
+                const data = await this._duplicate(cellGUID);
                 if (data === undefined) {
                     return;
                 }
