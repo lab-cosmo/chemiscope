@@ -192,6 +192,7 @@ export class MoleculeViewer {
      *
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
+     * @param propertiesName list of properties keys to be used as options
      */
     constructor(element: string | HTMLElement, propertiesName: string[]) {
         const containerElement = getElement(element);
@@ -354,9 +355,17 @@ export class MoleculeViewer {
     }
 
     /**
+     * @param value list of atom-centered environments for the current structure
+     */
+    public set environments(value: (Environment | undefined)[] | undefined) {
+        this._environments = value;
+    }
+
+    /**
      * Load the given `structure` in this viewer.
      *
      * @param structure structure to load
+     * @param properties properties to used to load the structure
      * @param options options for the new structure
      */
     public load(
@@ -506,7 +515,7 @@ export class MoleculeViewer {
         this._updateStyle();
 
         if (!keepOrientation) {
-            this._resetView();
+            this.resetView();
         }
 
         if (this._options.environments.center.value) {
@@ -567,7 +576,7 @@ export class MoleculeViewer {
 
         if (this._highlighted !== undefined && centerView) {
             if (!this._options.keepOrientation.value) {
-                this._resetView();
+                this.resetView();
             }
 
             this._centerView();
@@ -798,7 +807,7 @@ export class MoleculeViewer {
         });
         this._options.environments.center.onchange.push((center) => {
             if (!this._options.keepOrientation.value) {
-                this._resetView();
+                this.resetView();
             }
 
             if (center) {
@@ -1017,7 +1026,7 @@ export class MoleculeViewer {
 
         // Reset zoom level and centering when double clicked
         this._root.ondblclick = () => {
-            this._resetView();
+            this.resetView();
 
             if (this._options.environments.center.value) {
                 this._centerView();
@@ -1619,7 +1628,7 @@ export class MoleculeViewer {
      * Reset the view by re-centering it and zooming to fit the model as much as
      * possible inside the views.
      */
-    private _resetView(): void {
+    public resetView(): void {
         this._viewer.zoomTo();
         this._viewer.zoom(2.0);
         this._viewer.setSlab(-1000, 1000);

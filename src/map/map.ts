@@ -655,7 +655,7 @@ export class PropertiesMap {
         const applyMapOptions = (properties: NumericProperties, settings: Settings | undefined) => {
             // Check if mode's properties actually exist
             if (properties && Object.keys(properties).length > 1) {
-                // Initialize settings if undefined (not switched to another mode yet)
+                // Initialize settings if undefined (not switched to another mode before)
                 if (settings === undefined) {
                     settings = getMapOptions(properties);
                 }

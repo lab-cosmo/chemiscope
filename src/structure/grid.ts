@@ -41,7 +41,7 @@ interface NumberedEnvironment extends Environment {
  * returns a list of list of environments, such as `list[0]` contains all
  * environments in structure 0; `list[33]` all environments in structure 33, etc.
  *
- * @param  n_structures Expected number of structures
+ * @param  structures Expected number of structures
  * @param  environments Full list of environments
  *
  * @return              The list of environments grouped by structure
@@ -134,6 +134,9 @@ export class ViewersGrid {
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
     private _environments?: NumberedEnvironment[][];
+    /// Optional list of environments for each structure to save it once we change the mode
+    private _calculatedEnvironments?: NumberedEnvironment[][];
+
     /// Maximum number of allowed structure viewers
     private _maxViewers: number;
     /// The indexer translating between environments indexes and structure/atom
@@ -145,6 +148,11 @@ export class ViewersGrid {
     private _cellsData: Map<GUID, ViewerGridData>;
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
+
+    /// Settings related to the stucture mode
+    private _structureSettings?: Settings[];
+    /// Settings related to the atom mode
+    private _atomSettings?: Settings[];
 
     /// Store the `onSettingChange` callbacks to be able to add them to new
     /// viewers in the grid
@@ -159,6 +167,7 @@ export class ViewersGrid {
      * @param indexer      {@link EnvironmentIndexer} used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
+     * @param properties   list of properties
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
      * @param maxViewers   maximum number of allowed structure viewers
@@ -175,22 +184,27 @@ export class ViewersGrid {
         if (properties === undefined) {
             this._properties = {};
         } else {
+            // Calculate properties
             const numberProperties = filter(properties, (p) =>
                 Object.values(p.values).every((v) => typeof v === 'number')
             );
             const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
-
-            const props: Record<string, number[]> = Object.fromEntries(
+            this._properties = Object.fromEntries(
                 Object.entries(atomProperties).map(([key, value]) => [
                     key,
                     value.values as number[],
                 ])
             );
-            this._properties = props;
         }
+
         this._resolvedStructures = new Array<Structure>(structures.length);
-        this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
+
+        // Group environments by structure and save the result for future use
+        this._calculatedEnvironments = groupByStructure(this._structures, environments);
+
+        // Set the environments to synchronize with the modal and grid
+        this._environments = this._calculatedEnvironments;
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
@@ -218,15 +232,15 @@ export class ViewersGrid {
         }
         this._maxViewers = maxViewers;
 
+        // Attach a shadow DOM to the host element for isolation
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
-
         hostElement.style.setProperty('height', '100%');
         containerElement.appendChild(hostElement);
-
         this._shadow = hostElement.attachShadow({ mode: 'open' });
         this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
 
+        // Create a root element inside the shadow DOM to append grid to it
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
@@ -351,6 +365,8 @@ export class ViewersGrid {
 
     /**
      * Function to set the active viewer for communicating with the map
+     *
+     * @param guid GUID of the viewer to be active
      */
     public setActive(guid: GUID): void {
         const changeClasses = (guid: string, toggle: boolean) => {
@@ -462,6 +478,92 @@ export class ViewersGrid {
         this._onSettingChangeCallbacks.push(callback);
     }
 
+    /** Update the viewers having the display mode changed */
+    public togglePerAtom(): void {
+        const isAtomMode = this._isPerAtom();
+
+        // Set/reset the environements of grid and viewers based on the mode
+        this._updateEnvironments(isAtomMode);
+
+        // Update structure settings
+        const settings = this._getModeSettings(isAtomMode);
+        this.applySettings(settings);
+
+        // Refresh each cell with the new mode
+        for (const [guid, data] of this._cellsData.entries()) {
+            this._refreshCell(guid, data, isAtomMode);
+        }
+    }
+
+    /**
+     * Updates the environments based on the mode
+     * @param isAtomMode indicates whether the current dispay mode is 'atom'
+     */
+    private _updateEnvironments(isAtomMode: boolean): void {
+        // Proceed with mode changes by setting/resetting the environments
+        this._environments = isAtomMode ? this._calculatedEnvironments : undefined;
+        if (isAtomMode) {
+            assert(this._environments !== undefined);
+            for (const data of this._cellsData.values()) {
+                data.viewer.environments = this._environments[data.current.structure];
+            }
+        }
+    }
+
+    /**
+     * Refreshes the cell and updates its data based on the mode
+     *
+     * @param guid id of the cell to refresh
+     * @param data indexes associated with the viewer grid
+     * @param isAtomMode indicates whether the current dispay mode is 'atom'
+     */
+    private _refreshCell(guid: GUID, data: ViewerGridData, isAtomMode: boolean): void {
+        // Set/remove atom from indexes based on mode
+        data.current.atom = isAtomMode
+            ? this._indexer.from_environment(data.current.environment).atom
+            : undefined;
+        this._cellsData.set(guid, data);
+
+        // Load the viewer with the current indexes
+        this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+
+        // Reset the viewer view if in structure mode
+        if (!isAtomMode) {
+            data.viewer.resetView();
+        }
+    }
+
+    /**
+     * Retrieve the settings related to the mode
+     * @param isAtomMode indicates whether the current dispay mode is 'atom'
+     */
+    private _getModeSettings(isAtomMode: boolean): Settings[] {
+        // Helper function to set/reset properties with related to mode
+        const validateSettingsByMode = (settings: Settings[], isAtomMode: boolean): Settings[] => {
+            return settings.map((settingsInstance: Settings) => {
+                const environments = settingsInstance.environments as Settings;
+                environments.activated = isAtomMode;
+                environments.center = isAtomMode;
+                return settingsInstance;
+            });
+        };
+
+        // Apply structure or atom options based on mode
+        if (!isAtomMode) {
+            // Initialize structure settings if not done yet
+            if (this._structureSettings === undefined) {
+                this._structureSettings = validateSettingsByMode(this.saveSettings(), false);
+            }
+            return this._structureSettings;
+        }
+
+        // Initialize atom settings if not done yet
+        if (this._atomSettings === undefined) {
+            this._atomSettings = validateSettingsByMode(this.saveSettings(), true);
+        }
+        return this._atomSettings;
+    }
+
     /**
      * Add a new structure viewer to the grid as a copy of the viewer with the
      * `initial` GUID. The new structure viewer is set as the active one.
@@ -541,41 +643,65 @@ export class ViewersGrid {
         }
     }
 
+    /** Get indicator if the display mode is par atoms */
+    private _isPerAtom(): boolean {
+        return this._indexer.mode === 'atom';
+    }
+
+    /**
+     * Displays the specified structure and atom in the viewer
+     *
+     * @param guid id of the cell to show
+     * @param indexes environment showed in the new viewer
+     */
     private _showInViewer(guid: GUID, indexes: Indexes): void {
+        // Get current data from the cell
         const data = this._cellsData.get(guid);
         assert(data !== undefined);
 
         const viewer = data.viewer;
+        // If the structure has changed, load the new structure and atom into the viewer
         if (data.current.structure !== indexes.structure) {
-            const options: Partial<LoadOptions> = {
-                trajectory: true,
-            };
-            assert(indexes.structure < this._structures.length);
-
-            if (this._environments !== undefined) {
-                options.environments = this._environments[indexes.structure];
-                if (this._indexer.mode === 'atom') {
-                    options.highlight = indexes.atom;
-                }
-            }
-
-            viewer.load(
-                this._structure(indexes.structure),
-                this._propertiesForStructure(indexes.structure),
-                options
-            );
+            this._loadViewer(viewer, indexes.structure, indexes.atom);
             data.current = indexes;
         }
 
-        if (this._indexer.mode === 'atom') {
-            if (data.current.atom !== indexes.atom) {
-                viewer.highlight(indexes.atom);
+        // Toggle the highlight for the atom in the viewer
+        viewer.highlight(this._isPerAtom() ? indexes.atom : undefined);
+
+        // Update the current indexes in the data
+        data.current = indexes;
+    }
+
+    /**
+     * Loads a structure and optional atom into the viewer
+     *
+     * @param viewer viewer instance where the structure will be loaded
+     * @param structureIndex index of the structure to be loaded
+     * @param atomIndex optional index of the atom to highlight
+     */
+    private _loadViewer(viewer: MoleculeViewer, structureIndex: number, atomIndex?: number): void {
+        // Initialize load options with trajectory enabled
+        const options: Partial<LoadOptions> = {
+            trajectory: true,
+        };
+
+        // If environments are defined, add them to the options
+        if (this._environments !== undefined) {
+            options.environments = this._environments[structureIndex];
+
+            // If the mode is per atom, add the atom index to the highlight
+            if (this._isPerAtom()) {
+                options.highlight = atomIndex;
             }
-        } else {
-            viewer.highlight(undefined);
         }
 
-        data.current = indexes;
+        // Load the structure into the viewer
+        viewer.load(
+            this._structure(structureIndex),
+            this._propertiesForStructure(structureIndex),
+            options
+        );
     }
 
     /**
@@ -769,7 +895,7 @@ export class ViewersGrid {
                 );
 
                 viewer.onselect = (atom: number) => {
-                    if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
+                    if (!this._isPerAtom() || this._active !== cellGUID) {
                         return;
                     }
 

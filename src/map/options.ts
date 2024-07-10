@@ -121,7 +121,8 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Updates the map options with new properties and settings.
-     * Removes the old modal, reinitializes properties, and applies new settings
+     * Removes the old modal, reinitializes properties, and applies new settings.
+     * Instead of updating, the modal is re-created for efficient change
      *
      * @param {NumericProperties} properties new numeric properties
      * @param {Settings} settings new settings
