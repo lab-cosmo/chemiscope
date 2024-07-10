@@ -12,12 +12,12 @@ import fixPlot from './plotly/fix-plot';
 
 import { Property, Settings } from '../dataset';
 
-import { EnvironmentIndexer, Indexes, DisplayMode } from '../indexer';
+import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
-import { MapData, NumericProperty, NumericProperties } from './data';
+import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
 import * as styles from '../styles';
@@ -589,7 +589,7 @@ export class PropertiesMap {
         // Helper function to create the mode-related settings with default values
         const getMapOptions = (properties: NumericProperties): Settings => {
             // Create a copy of settings
-            const settings = JSON.parse(JSON.stringify(this._configSettings));
+            const settings = JSON.parse(JSON.stringify(this._configSettings)) as Settings;
 
             // Get the default properties
             const propertyNames = Object.keys(properties);
@@ -644,7 +644,10 @@ export class PropertiesMap {
 
             // Separate check for 'z' since it has an additional condition
             const zConfigSettings = (this._configSettings.z as Settings).property as string;
-            if (settings.z.property !== '' && properties[zConfigSettings] === undefined) {
+            if (
+                (settings.z as Settings).property !== '' &&
+                properties[zConfigSettings] === undefined
+            ) {
                 settings.z = { property: propertyNames[2] ?? '', min: undefined, max: undefined };
             }
 

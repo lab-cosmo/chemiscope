@@ -256,7 +256,8 @@ class DefaultVisualizer {
 
         // Disable / enable toggle
         const newMode = mode === 'atom' ? 'structure' : 'atom';
-        const noModeProps = Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
+        const noModeProps =
+            Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
         const isToggleDisabled = dataset.environments === undefined || noModeProps;
 
         // Initiate toggle
@@ -268,6 +269,7 @@ class DefaultVisualizer {
             this._toggle.loader(true);
 
             // Use setTimeout to ensure the loader is shown before starting async operations
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             setTimeout(async () => {
                 // Update indexer
                 this._indexer.togglePerAtom(checked);
@@ -281,15 +283,11 @@ class DefaultVisualizer {
 
                     // Proceed with ViewersGrid
                     await this.structure.togglePerAtom();
-                }
-
-                // Process errors
-                catch (error) {
+                } catch (error) {
+                    // Process errors
                     throw Error(error as string);
-                }
-
-                // Hide loader
-                finally {
+                } finally {
+                    // Hide loader
                     this._toggle.loader(false);
                 }
             }, 0);

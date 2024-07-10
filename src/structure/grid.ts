@@ -285,7 +285,9 @@ export class ViewersGrid {
      * @param  indexes         structure / atom pair to display
      */
     public show(indexes: Indexes): void {
-        this._showInViewer(this.active, indexes);
+        this._showInViewer(this.active, indexes).catch((e) => {
+            throw e;
+        });
     }
 
     /**
