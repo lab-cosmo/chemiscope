@@ -75,8 +75,3 @@ explore = [
     "dscribe",
     "scikit-learn",
 ]
-
-mace = [
-    "scikit-learn",
-    "mace-torch"
-]

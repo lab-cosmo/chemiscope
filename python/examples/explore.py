@@ -159,7 +159,7 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 #
 # .. code:: bash
 #
-#     pip install chemiscope[mace]
+#     pip install mace-torch scikit-learn
 
 # %%
 #
