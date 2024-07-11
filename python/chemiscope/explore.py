@@ -56,7 +56,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
         def soap_kpca(frames):
             # Compute descriptors
-            soap = SOAP(
+            soap = dscribe.descriptors.SOAP(
                 species=["C"],
                 r_cut=4.5,
                 n_max=8,
