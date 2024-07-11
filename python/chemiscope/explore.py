@@ -34,7 +34,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     Here is an example of usage with and without providing a function to do the
     reprensentation and reduction. The frames are obtained by reading the structures
-    from a file that `ase <ase-io_>`_ can read, and performing PCA using `sklearn`_ on
+    from a file that `ase <ase-io_>`_ can read, and performing Kernel PCA using `sklearn`_ on
     a descriptor computed with SOAP with `dscribe`_ library.
 
     .. code-block:: python
