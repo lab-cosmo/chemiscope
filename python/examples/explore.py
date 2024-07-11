@@ -207,7 +207,7 @@ def mace_off_tsne(frames):
 # %%
 #
 # We can also provide the additional properties inside `chemiscope.explore`.
-# For example, let's extract diapole moment from the frames using the related helper
+# For example, let's extract dipole moment from the frames using the related helper
 # function.
 
 properties = chemiscope.extract_properties(qm9_frames, only=["mu"])
