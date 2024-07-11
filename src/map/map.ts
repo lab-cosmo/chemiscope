@@ -216,6 +216,8 @@ export class PropertiesMap {
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
+    // widget display mode
+    private _mode: DisplayMode;
     /// Settings of the map
     private _options: MapOptions;
     /// Button used to reset the range of color axis
@@ -237,14 +239,17 @@ export class PropertiesMap {
      *                   the map should live and settings
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
+     * @param mode       widget display mode, either stucture or atom
      * @param properties properties to be displayed
      */
     constructor(
         config: { element: string | HTMLElement; settings: Settings },
         indexer: EnvironmentIndexer,
+        mode: DisplayMode,
         properties: { [name: string]: Property }
     ) {
         this._indexer = indexer;
+        this._mode = mode;
         this.onselect = () => {};
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
@@ -283,7 +288,7 @@ export class PropertiesMap {
         this._data = new MapData(properties);
 
         // Initialize options used in the modal
-        const currentProperties = this._getPropertiesByMode(this._indexer.mode);
+        const currentProperties = this._getCurrentProperties();
         this._options = new MapOptions(
             this._root,
             currentProperties,
@@ -319,7 +324,7 @@ export class PropertiesMap {
 
         // Store configuration settings based on the current indexer mode
         this._configSettings = config.settings;
-        if (this._indexer.mode === 'atom') {
+        if (this._mode === 'atom') {
             this._atomSettings = this._configSettings;
         } else {
             this._structureSettings = this._configSettings;
@@ -327,9 +332,15 @@ export class PropertiesMap {
     }
 
     /**
-     * Callback fired when the mode is change (environment or atom)
+     * Change widget display mode and adapt the element to the new mode
+     * @param mode display mode
      */
-    public async togglePerAtom(): Promise<void> {
+    public async switchMode(mode: DisplayMode): Promise<void> {
+        // Update widget mode
+        this._mode = mode;
+
+        // this._handleMarkers();
+
         // Update the map options based on the chosen mode
         this._setupMapOptions();
 
@@ -338,7 +349,19 @@ export class PropertiesMap {
 
         // Re-render the plot with the new data and layout
         await this._react(this._getTraces(), this._getLayout());
+
+        // this._updateMarkers();
     }
+
+    // private _handleMarkers() {
+    //     for (const [key, marker] of this._selected.entries()) {
+    //         marker.current =
+    //             this._mode === 'structure'
+    //                 ? this._indexer.from_environment(marker.current).structure
+    //                 : this._indexer.from_environment(marker.current).environment;
+    //         this._selected.set(key, marker);
+    //     }
+    // }
 
     /**
      * Remove all HTML added by this {@link PropertiesMap} in the current document
@@ -368,14 +391,18 @@ export class PropertiesMap {
 
         // data.select needs `indexes.environment`, so make sure it is defined
         if (indexes.environment === undefined) {
-            const full_indexes = this._indexer.from_structure_atom(indexes.structure, indexes.atom);
-            if (full_indexes === undefined) {
-                const atom_str = indexes.atom === undefined ? '' : ` / atom ${indexes.atom}`;
+            const fullIndexes = this._indexer.from_structure_atom(
+                this._mode,
+                indexes.structure,
+                indexes.atom
+            );
+            if (fullIndexes === undefined) {
+                const atomStr = indexes.atom === undefined ? '' : ` / atom ${indexes.atom}`;
                 throw Error(
-                    `can not find the environnement for structure ${indexes.structure}` + atom_str
+                    `can not find the environnement for structure ${indexes.structure}` + atomStr
                 );
             }
-            indexes = full_indexes;
+            indexes = fullIndexes;
         }
 
         const data = this._selected.get(this._active);
@@ -413,6 +440,7 @@ export class PropertiesMap {
      * Add a new marker to the map. The new marker is set as the active one
      *
      * @param guid GUID of the new marker
+     * @param color GUID of the marker indicating the new viewer
      * @param indexes indexes of the environment that the new marker should show
      */
     public addMarker(guid: GUID, color: string, indexes: Indexes): void {
@@ -422,7 +450,7 @@ export class PropertiesMap {
         this._root.appendChild(data.marker);
         data.marker.onclick = () => {
             this.setActive(guid);
-            this.activeChanged(guid, this._indexer.from_environment(data.current));
+            this.activeChanged(guid, this._indexer.from_environment(data.current, this._mode));
         };
         this._selected.set(guid, data);
         this._updateMarkers([data]);
@@ -668,25 +696,21 @@ export class PropertiesMap {
         };
 
         // Apply structure or atom options based on mode
-        if (this._indexer.mode !== 'atom') {
+        if (this._mode !== 'atom') {
             applyMapOptions(this._data['structure'], this._structureSettings);
         } else {
             applyMapOptions(this._data['atom'], this._atomSettings);
         }
     }
 
-    /**
-     * Returns the properties related to the mode (structure or atom)
-     *
-     * @param mode display mode used to filter out the data
-     */
-    private _getPropertiesByMode(mode: DisplayMode) {
-        const properties = this._data[mode];
+    /** Returns the properties related to the mode (structure or atom) */
+    private _getCurrentProperties() {
+        const properties = this._data[this._mode];
         const propertiesNames = Object.keys(properties);
         if (propertiesNames.length < 2) {
             // better error message in case the user forgot to give the
             // environments in the data
-            if (this._indexer.mode === 'structure' && !this._indexer.hasEnvironments()) {
+            if (this._mode === 'structure' && !this._indexer.hasEnvironments()) {
                 if (Object.keys(this._data['atom']).length >= 2) {
                     throw Error(
                         'could not find enough structure properties to display, \
@@ -1243,14 +1267,17 @@ export class PropertiesMap {
                         environment = data.current;
                         if (this._active !== guid) {
                             this.setActive(guid);
-                            this.activeChanged(guid, this._indexer.from_environment(data.current));
+                            this.activeChanged(
+                                guid,
+                                this._indexer.from_environment(data.current, this._mode)
+                            );
                         }
                         break;
                     }
                 }
             }
 
-            const indexes = this._indexer.from_environment(environment);
+            const indexes = this._indexer.from_environment(environment, this._mode);
 
             this.select(indexes);
             this.onselect(indexes);
@@ -1311,7 +1338,10 @@ export class PropertiesMap {
         return layout as Partial<Layout>;
     }
 
-    /** Validate min/max options provided by the user. We use `NaN` internally to mark missing values, which are then transformed into undefined by this function */
+    /**
+     * Validate min/max options provided by the user. We use `NaN` internally to mark missing values,
+     * which are then transformed into undefined by this function
+     */
     private _getAxisRange = (
         min: number,
         max: number,
@@ -1334,7 +1364,7 @@ export class PropertiesMap {
 
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
-        const result = this._data[this._indexer.mode][name];
+        const result = this._data[this._mode][name];
         if (result === undefined) {
             throw Error(`unknown property '${name}' requested in map`);
         }

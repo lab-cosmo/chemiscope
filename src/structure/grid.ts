@@ -15,7 +15,7 @@ import {
     checkStructure,
 } from '../dataset';
 
-import { EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
@@ -130,6 +130,8 @@ export class ViewersGrid {
     private _structures: Structure[] | UserStructure[];
     /// List of per-atom properties in the dataset
     private _properties: Record<string, number[]>;
+    /// Widget display mode (structure or atom)
+    private _mode: DisplayMode;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
@@ -167,6 +169,7 @@ export class ViewersGrid {
      * @param indexer      {@link EnvironmentIndexer} used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
+     * @param mode         widget display mode (structure or atom)
      * @param properties   list of properties
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
@@ -176,10 +179,12 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
+        mode: DisplayMode,
         properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
+        this._mode = mode;
         this._structures = structures;
         if (properties === undefined) {
             this._properties = {};
@@ -480,8 +485,14 @@ export class ViewersGrid {
         this._onSettingChangeCallbacks.push(callback);
     }
 
-    /** Update the viewers having the display mode changed */
-    public async togglePerAtom(): Promise<void> {
+    /**
+     * Change widget display mode and adapt the element to the new mode
+     * @param mode display mode
+     */
+    public async switchMode(mode: DisplayMode): Promise<void> {
+        // Update widget display mode
+        this._mode = mode;
+
         const isAtomMode = this._isPerAtom();
 
         // Set/reset the environements of grid and viewers based on the mode
@@ -529,7 +540,7 @@ export class ViewersGrid {
     ): Promise<void> {
         // Set/remove atom from indexes based on mode
         data.current.atom = isAtomMode
-            ? this._indexer.from_environment(data.current.environment).atom
+            ? this._indexer.from_environment(data.current.environment, this._mode).atom
             : undefined;
         this._cellsData.set(guid, data);
 
@@ -654,7 +665,7 @@ export class ViewersGrid {
 
     /** Get indicator if the display mode is par atoms */
     private _isPerAtom(): boolean {
-        return this._indexer.mode === 'atom';
+        return this._mode === 'atom';
     }
 
     /**
@@ -926,6 +937,7 @@ export class ViewersGrid {
                     const natoms = viewer.natoms();
                     assert(natoms !== undefined);
                     const indexes = this._indexer.from_structure_atom(
+                        this._mode,
                         data.current.structure,
                         atom % natoms
                     );

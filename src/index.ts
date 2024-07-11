@@ -175,6 +175,8 @@ class DefaultVisualizer {
     public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
+    // Display mode of the widgets
+    private _mode: DisplayMode;
     // Stores raw input input so we can give it back later
     private _dataset: Dataset;
     // Keep the list of pinned environments around to be able to apply settings
@@ -191,8 +193,8 @@ class DefaultVisualizer {
         this._dataset = dataset;
         this._pinned = [];
 
-        const mode = dataset.environments === undefined ? 'structure' : 'atom';
-        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+        this._mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
@@ -201,6 +203,7 @@ class DefaultVisualizer {
             config.structure,
             this._indexer,
             dataset.structures,
+            this._mode,
             dataset.properties,
             dataset.environments,
             config.maxStructureViewers
@@ -239,6 +242,7 @@ class DefaultVisualizer {
         this.map = new PropertiesMap(
             { element: config.map, settings: getMapSettings(dataset.settings) },
             this._indexer,
+            this._mode,
             dataset.properties
         );
 
@@ -255,34 +259,34 @@ class DefaultVisualizer {
         // toggle setup
 
         // Disable / enable toggle
-        const newMode = mode === 'atom' ? 'structure' : 'atom';
+        const newMode = this._mode === 'atom' ? 'structure' : 'atom';
         const noModeProps =
             Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
         const isToggleDisabled = dataset.environments === undefined || noModeProps;
 
         // Initiate toggle
-        this._toggle = new DisplayToggle(config.map, mode === 'atom', isToggleDisabled);
+        this._toggle = new DisplayToggle(config.map, this._mode === 'atom', isToggleDisabled);
 
         // Add callback
         this._toggle.onchange = (checked: boolean) => {
             // Show loader
             this._toggle.loader(true);
 
+            // Determine new display mode
+            this._mode = checked ? 'atom' : 'structure';
+
             // Use setTimeout to ensure the loader is shown before starting async operations
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             setTimeout(async () => {
-                // Update indexer
-                this._indexer.togglePerAtom(checked);
-
                 // Proceed with EnvironmentInfo
-                this.info.togglePerAtom();
+                this.info.switchMode(this._mode);
 
                 try {
                     // Proceed with PropertiesMap
-                    await this.map.togglePerAtom();
+                    await this.map.switchMode(this._mode);
 
                     // Proceed with ViewersGrid
-                    await this.structure.togglePerAtom();
+                    await this.structure.switchMode(this._mode);
                 } catch (error) {
                     // Process errors
                     throw Error(error as string);
@@ -298,6 +302,7 @@ class DefaultVisualizer {
             config.info,
             dataset.properties,
             this._indexer,
+            this._mode,
             dataset.parameters
         );
         this.info.onchange = (indexes) => {
@@ -314,7 +319,7 @@ class DefaultVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0);
+            initial = this._indexer.from_environment(0, this._mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -324,7 +329,7 @@ class DefaultVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
+            initial = this._indexer.from_environment(dataset.settings.pinned[0], this._mode);
         }
 
         const firstGUID = this.structure.active;
@@ -394,7 +399,7 @@ class DefaultVisualizer {
                 throw Error('settings.pinned must be an array of numbers');
             }
 
-            const indexes = this._indexer.from_environment(settings.pinned[0]);
+            const indexes = this._indexer.from_environment(settings.pinned[0], this._mode);
             this.map.select(indexes);
             this.info.show(indexes);
             this.structure.show(indexes);
@@ -409,7 +414,7 @@ class DefaultVisualizer {
                 if (guid === undefined) {
                     throw Error("too many environments in 'pinned' setting");
                 }
-                const indexes = this._indexer.from_environment(environment);
+                const indexes = this._indexer.from_environment(environment, this._mode);
 
                 this.map.addMarker(guid, color, indexes);
                 this.map.setActive(guid);
@@ -521,6 +526,7 @@ class StructureVisualizer {
     public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
+    private _mode: DisplayMode;
 
     // the constructor is private because the main entry point is the static
     // `load` function
@@ -528,8 +534,8 @@ class StructureVisualizer {
         validateConfig(config as unknown as JsObject, ['meta', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
-        const mode = dataset.environments === undefined ? 'structure' : 'atom';
-        this._indexer = new EnvironmentIndexer(mode, dataset.structures, dataset.environments);
+        this._mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
@@ -538,6 +544,7 @@ class StructureVisualizer {
             config.structure,
             this._indexer,
             dataset.structures,
+            this._mode,
             dataset.properties,
             dataset.environments,
             1 // only allow one structure
@@ -560,7 +567,7 @@ class StructureVisualizer {
         };
 
         // information table & slider setup
-        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer, this._mode);
         this.info.onchange = (indexes) => {
             this.structure.show(indexes);
         };
@@ -573,7 +580,7 @@ class StructureVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0);
+            initial = this._indexer.from_environment(0, this._mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -583,7 +590,7 @@ class StructureVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
+            initial = this._indexer.from_environment(dataset.settings.pinned[0], this._mode);
         }
 
         this.structure.show(initial);
@@ -702,7 +709,6 @@ class MapVisualizer {
         }
 
         this._indexer = new EnvironmentIndexer(
-            'structure',
             // pseudo-structures to get the EnvironmentIndexer working even
             // though we don't have any structure data
             new Array(n_structure).fill({ size: 1, data: 0 }) as UserStructure[]
@@ -710,10 +716,14 @@ class MapVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
+        // Use structure as a display mode
+        const mode = 'structure';
+
         // map setup
         this.map = new PropertiesMap(
             { element: config.map, settings: getMapSettings(dataset.settings) },
             this._indexer,
+            mode,
             dataset.properties
         );
 
@@ -726,7 +736,7 @@ class MapVisualizer {
         };
 
         // information table & slider setup
-        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer);
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer, mode);
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
         };
@@ -736,7 +746,7 @@ class MapVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0);
+            initial = this._indexer.from_environment(0, mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -746,7 +756,7 @@ class MapVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0]);
+            initial = this._indexer.from_environment(dataset.settings.pinned[0], mode);
         }
 
         this.map.addMarker('map-0' as GUID, 'red', initial);

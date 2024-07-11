@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
-import { EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
 import { binarySearch, getElement, sendWarning } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
@@ -60,7 +60,8 @@ export class EnvironmentInfo {
     private _structure?: Info;
     private _indexer: EnvironmentIndexer;
     private _properties: { [name: string]: Property };
-    private _parameters: { [name: string]: Parameter } | undefined;
+    private _parameters?: { [name: string]: Parameter };
+    private _mode: DisplayMode;
 
     /**
      * Create a new {@link EnvironmentInfo} inside the DOM element with given `id`
@@ -69,12 +70,14 @@ export class EnvironmentInfo {
      * @param properties properties to be displayed
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
+     * @param mode       Display Mode, either atom or structure
      * @param viewer     {@link ViewersGrid} from which we get the playback delay
      */
     constructor(
         element: string | HTMLElement,
         properties: { [name: string]: Property },
         indexer: EnvironmentIndexer,
+        mode: DisplayMode,
         parameters?: { [name: string]: Parameter }
     ) {
         const containerElement = getElement(element);
@@ -99,55 +102,20 @@ export class EnvironmentInfo {
 
         this._properties = properties;
         this._parameters = parameters;
-        this.togglePerAtom();
+        this._mode = mode;
+        this.renderModePart();
     }
 
-    /** Proceed with the panels related to the mode */
-    public togglePerAtom(): void {
-        // Construct atom related html if mode is atom
-        const atomButton =
-            this._indexer.mode === 'atom'
-                ? `<div class='btn btn-sm chsp-info-atom-btn'
-                data-bs-toggle='collapse'
-                data-bs-target='#atom'
-                aria-expanded='false'
-                aria-controls='atom'>
-                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
-                atom <input class='chsp-info-number' type=number value=1 min=1></input>
-            </div>`
-                : '<div></div>';
-        // Construct main HTML structure
-        this._root.innerHTML = `
-        <div class='accordion chsp-info-tables' id='info-tables'></div>
-        <div class='chsp-info-btns'>
-            <div class='btn btn-sm chsp-info-structure-btn'
-                data-bs-toggle='collapse'
-                data-bs-target='#structure'
-                aria-expanded='false'
-                aria-controls='structure'>
-                <div class="chsp-info-btns-svg">${INFO_SVG}</div>
-                structure <input class='chsp-info-number' type=number value=1 min=1></input>
-            </div>
-            ${atomButton}
-        </div>`;
+    /**
+     * Change widget display mode and adapt the element to the new mode
+     * @param mode display mode
+     */
+    public switchMode(mode: DisplayMode) {
+        // Update widget mode
+        this._mode = mode;
 
-        // Filter properties for structure
-        const structureProperties = filter(this._properties, (p) => p.target === 'structure');
-        this._structure = this._createStructure(structureProperties, this._parameters);
-
-        // Initialize central atom if in atom mode
-        if (this._indexer.mode === 'atom') {
-            const atomProperties = filter(this._properties, (p) => p.target === 'atom');
-            this._atom = this._createAtom(atomProperties, this._parameters);
-        }
-
-        // Reset atom if in structure mode
-        else {
-            this._atom = undefined;
-        }
-
-        // Initialize the collapse components from their 'data-bs-*' attributes.
-        Collapse.initialize(this._root);
+        // Update element related to the display mode
+        this.renderModePart();
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
@@ -186,6 +154,54 @@ export class EnvironmentInfo {
         this._shadow.host.remove();
     }
 
+    /** Changes the elements based on the widget mode */
+    private renderModePart(): void {
+        // Construct atom related html if mode is atom
+        const atomButton = this._isParAtoms()
+            ? `<div class='btn btn-sm chsp-info-atom-btn'
+                    data-bs-toggle='collapse'
+                    data-bs-target='#atom'
+                    aria-expanded='false'
+                    aria-controls='atom'>
+                    <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                    atom <input class='chsp-info-number' type=number value=1 min=1></input>
+                </div>`
+            : '<div></div>';
+
+        // Construct main HTML structure
+        this._root.innerHTML = `
+            <div class='accordion chsp-info-tables' id='info-tables'></div>
+            <div class='chsp-info-btns'>
+                <div class='btn btn-sm chsp-info-structure-btn'
+                    data-bs-toggle='collapse'
+                    data-bs-target='#structure'
+                    aria-expanded='false'
+                    aria-controls='structure'>
+                    <div class="chsp-info-btns-svg">${INFO_SVG}</div>
+                    structure <input class='chsp-info-number' type=number value=1 min=1></input>
+                </div>
+                ${atomButton}
+            </div>`;
+
+        // Filter properties for structure
+        const structureProperties = filter(this._properties, (p) => p.target === 'structure');
+        this._structure = this._createStructure(structureProperties, this._parameters);
+
+        // Initialize central atom if in atom mode
+        if (this._isParAtoms()) {
+            const atomProperties = filter(this._properties, (p) => p.target === 'atom');
+            this._atom = this._createAtom(atomProperties, this._parameters);
+        }
+
+        // Reset atom if in structure mode
+        else {
+            this._atom = undefined;
+        }
+
+        // Initialize the collapse components from their 'data-bs-*' attributes.
+        Collapse.initialize(this._root);
+    }
+
     /** Create the structure slider and table */
     private _createStructure(
         properties: { [name: string]: Property },
@@ -212,7 +228,11 @@ export class EnvironmentInfo {
                         // try to find the first atom in the structure with
                         // associated data
                         for (let atom = 0; atom < this._indexer.atomsCount(structure); atom++) {
-                            indexes = this._indexer.from_structure_atom(structure, atom);
+                            indexes = this._indexer.from_structure_atom(
+                                this._mode,
+                                structure,
+                                atom
+                            );
                             if (indexes !== undefined) {
                                 break;
                             }
@@ -327,7 +347,7 @@ export class EnvironmentInfo {
                     let iterations = 0;
                     while (indexes === undefined) {
                         atom = (atom + 1) % atomsCount;
-                        indexes = this._indexer.from_structure_atom(structure, atom);
+                        indexes = this._indexer.from_structure_atom(this._mode, structure, atom);
 
                         // prevent infinite loop if the current structure has no
                         // environments
@@ -407,12 +427,17 @@ export class EnvironmentInfo {
         let indexes;
         if (this._atom !== undefined) {
             const atom = this._atom.slider.value();
-            indexes = this._indexer.from_structure_atom(structure, atom);
+            indexes = this._indexer.from_structure_atom(this._mode, structure, atom);
         } else {
-            assert(this._indexer.mode === 'structure');
-            indexes = this._indexer.from_structure_atom(structure);
+            assert(!this._isParAtoms());
+            indexes = this._indexer.from_structure_atom(this._mode, structure);
         }
         assert(indexes !== undefined);
         return indexes;
+    }
+
+    /** Flag to determine if the current display mode is par atoms */
+    private _isParAtoms(): boolean {
+        return this._mode === 'atom';
     }
 }
