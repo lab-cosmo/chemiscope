@@ -336,10 +336,11 @@ export class PropertiesMap {
      * @param mode display mode
      */
     public async switchMode(mode: DisplayMode): Promise<void> {
-        // Update widget mode
+        // Set new widget mode
         this._mode = mode;
 
-        // this._handleMarkers();
+        // Process markers to correctly set then to the updated map
+        this._handleMarkers();
 
         // Update the map options based on the chosen mode
         this._setupMapOptions();
@@ -349,19 +350,27 @@ export class PropertiesMap {
 
         // Re-render the plot with the new data and layout
         await this._react(this._getTraces(), this._getLayout());
-
-        // this._updateMarkers();
     }
 
-    // private _handleMarkers() {
-    //     for (const [key, marker] of this._selected.entries()) {
-    //         marker.current =
-    //             this._mode === 'structure'
-    //                 ? this._indexer.from_environment(marker.current).structure
-    //                 : this._indexer.from_environment(marker.current).environment;
-    //         this._selected.set(key, marker);
-    //     }
-    // }
+    /**
+     * Processes the markers by updating their current value to structure or environment index on the current mode
+     * In 'structure' mode, it set structure index, and in 'atom' mode its environment index
+     */
+    private _handleMarkers() {
+        for (const [key, marker] of this._selected.entries()) {
+            if (this._mode === 'structure') {
+                marker.current = this._indexer.from_environment(marker.current, 'atom').structure;
+            } else {
+                const environment = this._indexer.fromStructure(
+                    marker.current,
+                    'atom'
+                )?.environment;
+                assert(environment !== undefined);
+                marker.current = environment;
+            }
+            this._selected.set(key, marker);
+        }
+    }
 
     /**
      * Remove all HTML added by this {@link PropertiesMap} in the current document

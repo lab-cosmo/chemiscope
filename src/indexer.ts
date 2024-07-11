@@ -170,6 +170,22 @@ export class EnvironmentIndexer {
         return undefined;
     }
 
+    /**
+     * Finds the first atom in the given structure that has associated data
+     *
+     * @param structure index of the structure to search the corresponding Indexes
+     * @param mode display mode (atom or structure)
+     */
+    public fromStructure(structure: number, mode: DisplayMode): Indexes | undefined {
+        for (let atom = 0; atom < this.atomsCount(structure); atom++) {
+            const indexes = this.from_structure_atom(mode, structure, atom);
+            if (indexes !== undefined) {
+                return indexes;
+            }
+        }
+        return undefined;
+    }
+
     /** Does this Indexer knows about atom-centered environments? */
     public hasEnvironments(): boolean {
         return this._environments !== undefined;

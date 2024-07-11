@@ -225,18 +225,8 @@ export class EnvironmentInfo {
                     let indexes = undefined;
                     while (indexes === undefined) {
                         structure = (structure + 1) % structuresCount;
-                        // try to find the first atom in the structure with
-                        // associated data
-                        for (let atom = 0; atom < this._indexer.atomsCount(structure); atom++) {
-                            indexes = this._indexer.from_structure_atom(
-                                this._mode,
-                                structure,
-                                atom
-                            );
-                            if (indexes !== undefined) {
-                                break;
-                            }
-                        }
+                        indexes = this._indexer.fromStructure(structure, this._mode);
+
                         // prevent infinite loop
                         if (iterations === structuresCount) {
                             return;
