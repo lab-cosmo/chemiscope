@@ -45,7 +45,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         import sklearn.decomposition
 
         # Read the structures from the dataset
-        frames = read("trajectory.xyz", ":")
+        frames = ase.io.read("trajectory.xyz", ":")
 
         # Basic usage with the default featurizer (SOAP + PCA)
         chemiscope.explore(frames)
