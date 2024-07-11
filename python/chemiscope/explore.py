@@ -66,7 +66,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
             descriptors = soap.create(frames)
 
             # Apply KPCA
-            transformer = KernelPCA(n_components=2, gamma=0.05)
+            transformer = sklearn.decomposition.KernelPCA(n_components=2, gamma=0.05)
 
             # Return a 2D array of reduced features
             return transformer.fit_transform(descriptors)
