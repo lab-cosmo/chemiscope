@@ -40,9 +40,9 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     .. code-block:: python
 
         import chemiscope
-        from ase.io import read
-        from dscribe.descriptors import SOAP
-        from sklearn.decomposition import KernelPCA
+        import ase.io
+        import dscribe.descriptors
+        import sklearn.decomposition
 
         # Read the structures from the dataset
         frames = read("trajectory.xyz", ":")
