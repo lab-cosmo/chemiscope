@@ -3,11 +3,7 @@ Chemiscope.explore example
 ==========================
 This example illustrates usage of different methods of dimensionality reduction and its
 visualisation with `chemiscope.explore`. The primary goal of this function is to enable
-quick and effective exploration of a dataset. It follows the following algorithm
-internally:
-
-.. image:: /img/chemiscope-explore-algorithm.png
-   :align: center
+quick and effective exploration of a dataset.
 
 To use this function, some additional dependencies are required. You can install them
 with the following command:
