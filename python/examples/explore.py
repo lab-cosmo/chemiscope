@@ -33,8 +33,8 @@ import chemiscope
 #
 # This example shows the basic usage of the `chemiscope.explore`. At first, read or
 # load the structures from the dataset. Here we use an `ASE package
-# <https://wiki.fysik.dtu.dk/ase/>`_ to read the structures from the file and have the
-# frames as the `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html/>`_ objects.
+# <https://wiki.fysik.dtu.dk/ase>`_ to read the structures from the file and have the
+# frames as the `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects.
 
 frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
@@ -50,10 +50,10 @@ chemiscope.explore(frames)
 #
 # In this basic case, no featurizer function is provided, so `chemiscope.explore` uses a
 # default method that applies `SOAP (Smooth Overlap of Atomic Positions)
-# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html/>`_ to
+# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ to
 # compute atomic structure descriptors and then performs `PCA (Principal Component
 # Analysis)
-# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html/>`_
+# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html>`_
 # for dimensionality reduction. The resulting components are then added to the
 # properties to be used in visualization.
 
@@ -65,8 +65,10 @@ chemiscope.explore(frames)
 #
 # This part illustrates how to create a custom function for dimensionality reduction
 # as an argument (`featurize`) to `chemiscope.explore`. Inside this function, we perform
-# descriptor calculation using SOAP and then reduce the dimensionality with `Kernel PCA
-# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html/>`_.
+# descriptor calculation using `SOAP
+# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ and
+# then reduce the dimensionality with `Kernel PCA
+# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html>`_.
 #
 # First, let's import the necessary packages.
 from dscribe.descriptors import SOAP  # noqa
@@ -119,8 +121,9 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 # processing. An example of how to include `n_jobs` is shown below on this page.
 #
 # To showcase the results of the `soap_kpca` function, we have pre-computed it for
-# the 6k structures from the C-GAP-20U dataset. You can fetch and visualize this
-# pre-computed dimensionality reduction as follows:
+# the 6k structures from the `C-GAP-20U
+# <https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html>`_ dataset. You can
+# fetch and visualize this pre-computed dimensionality reduction as follows:
 
 # sphinx_gallery_start_ignore
 import requests  # noqa
@@ -147,8 +150,10 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 # +++++++++++++++++++++++++++++++++++++
 #
 # In this part, we are going to define another `featurize` function that runs
-# calculation of desciptors with MACE-OFF and uses t-SNE for the dimensionality
-# reduction.
+# calculation of desciptors with `MACE-OFF <https://github.com/ACEsuit/mace>`_ and uses
+# `t-SNE
+# <https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html>`_ for
+# the dimensionality reduction.
 #
 # The dependencies for this example can be installed with the following command:
 #

@@ -34,8 +34,8 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     Here is an example of usage with and without providing a function to do the
     reprensentation and reduction. The frames are obtained by reading the structures
-    from a file that `ase <ase-io_>`_ can read, and performing Kernel PCA using `sklearn`_ on
-    a descriptor computed with SOAP with `dscribe`_ library.
+    from a file that `ase <ase-io_>`_ can read, and performing Kernel PCA using
+    `sklearn`_ on a descriptor computed with SOAP with `dscribe`_ library.
 
     .. code-block:: python
 
@@ -50,10 +50,8 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         # Basic usage with the default featurizer (SOAP + PCA)
         chemiscope.explore(frames)
 
-        # Using a custom featurizer
-        chemiscope.explore(frames, featurize=soap_kpca)
 
-
+        # Define a function for dimensionality reduction
         def soap_kpca(frames):
             # Compute descriptors
             soap = dscribe.descriptors.SOAP(
@@ -70,6 +68,11 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
             # Return a 2D array of reduced features
             return transformer.fit_transform(descriptors)
+
+
+        # Provide it as a custom featurizer
+        chemiscope.explore(frames, featurize=soap_kpca)
+
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
@@ -90,15 +93,10 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         X_reduced = soap_pca(frames)
 
     # Add dimensionality reduction results to properties
-    settings = {"map": {}}
-    axis = ["x", "y", "z"]
-    for i in range(X_reduced.shape[1]):
-        properties[f"Component {i + 1}"] = X_reduced[:, i].tolist()
-        if i < len(axis):
-            settings["map"][axis[i]] = {"property": f"Component {i + 1}"}
+    properties["features"] = X_reduced
 
     # Return chemiscope widget
-    return show(frames=frames, properties=properties, mode=mode, settings=settings)
+    return show(frames=frames, properties=properties, mode=mode)
 
 
 def soap_pca(frames):
