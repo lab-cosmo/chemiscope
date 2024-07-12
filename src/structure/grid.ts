@@ -492,7 +492,6 @@ export class ViewersGrid {
     public async switchMode(mode: DisplayMode): Promise<void> {
         // Update widget display mode
         this._mode = mode;
-
         const isAtomMode = this._isPerAtom();
 
         // Set/reset the environements of grid and viewers based on the mode
@@ -568,17 +567,21 @@ export class ViewersGrid {
             });
         };
 
+        // Check if the cells data length was changed to adapt the number of settings accordingly
+        const needsStructureUpdate = this._structureSettings?.length !== this._cellsData.size;
+        const needsAtomUpdate = this._atomSettings?.length !== this._cellsData.size;
+
         // Apply structure or atom options based on mode
         if (!isAtomMode) {
-            // Initialize structure settings if not done yet
-            if (this._structureSettings === undefined) {
+            // Initialize structure settings if not done yet or if the cells number were changed
+            if (this._structureSettings === undefined || needsStructureUpdate) {
                 this._structureSettings = validateSettingsByMode(this.saveSettings(), false);
             }
             return this._structureSettings;
         }
 
-        // Initialize atom settings if not done yet
-        if (this._atomSettings === undefined) {
+        // Initialize atom settings if not done yet or if the cells number were changed
+        if (this._atomSettings === undefined || needsAtomUpdate) {
             this._atomSettings = validateSettingsByMode(this.saveSettings(), true);
         }
         return this._atomSettings;
