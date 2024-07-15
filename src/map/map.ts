@@ -636,10 +636,13 @@ export class PropertiesMap {
             // Helper function to setup axis configuration
             const setupAxis = (axis: 'x' | 'y', index: number) => {
                 const currentConfigProperty = (this._configSettings[axis] as Settings)
-                    .property as string;
+                    ?.property as string;
 
                 // If current property does not exist in the mode-related configuration, set default
-                if (properties[currentConfigProperty] === undefined) {
+                if (
+                    currentConfigProperty === undefined ||
+                    properties[currentConfigProperty] === undefined
+                ) {
                     settings[axis] = {
                         // Use the first properties as default
                         property: propertyNames[index],
@@ -667,7 +670,7 @@ export class PropertiesMap {
                 }
 
                 // Value should be set directly to property settings
-                else {
+                else if (configSettings !== undefined) {
                     if (properties[settingsKey] === undefined) {
                         settings[settingsKey] = value;
                     }
@@ -682,12 +685,15 @@ export class PropertiesMap {
             setupProperty('size');
 
             // Separate check for 'z' since it has an additional condition
-            const zConfigSettings = (this._configSettings.z as Settings).property as string;
-            if (
-                (settings.z as Settings).property !== '' &&
-                properties[zConfigSettings] === undefined
-            ) {
-                settings.z = { property: propertyNames[2] ?? '', min: undefined, max: undefined };
+            const zSettings = settings.z as Settings;
+            const zConfigProperty = zSettings?.property as string;
+            const zPropertyExists = properties[zConfigProperty] !== undefined;
+            if (zConfigProperty && !zPropertyExists) {
+                settings.z = {
+                    property: zSettings ? propertyNames[2] ?? '' : '',
+                    min: undefined,
+                    max: undefined,
+                };
             }
 
             return settings;

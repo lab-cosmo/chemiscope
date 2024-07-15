@@ -100,23 +100,7 @@ export class MapOptions extends OptionsGroup {
         super();
         this._root = root;
         this._positionSettingsModal = positionSettings;
-
-        const propertiesName = Object.keys(properties);
-        assert(propertiesName.length >= 2);
-
-        // Initialize the html options
-        this._initAxes(propertiesName);
-        this._initSymbol(properties);
-        this._initPalette();
-        this._initColor(propertiesName);
-        this._initSize(propertiesName);
-
-        // Create a modal
-        this._setupModal();
-
-        // Setup callbacks
-        this._bind(properties);
-        this.applySettings(settings);
+        this._setupMapProperties(properties, settings);
     }
 
     /**
@@ -131,21 +115,8 @@ export class MapOptions extends OptionsGroup {
         // Remove the old modal from the DOM
         this.remove();
 
-        // Re-create properties
-        const propertiesName = Object.keys(properties);
-        this._initAxes(propertiesName);
-        this._initSymbol(properties);
-        this._initColor(propertiesName);
-        this._initSize(propertiesName);
-
-        // Append new modal
-        this._setupModal();
-
-        // Attach callbacks
-        this._bind(properties);
-
-        // Apply new settings to the modal options
-        this.applySettings(settings);
+        // Proceed with updating each property to the new mode
+        this._setupMapProperties(properties, settings);
     }
 
     /** Get in a element in the modal from its id */
@@ -339,6 +310,38 @@ export class MapOptions extends OptionsGroup {
         } else {
             return property.values;
         }
+    }
+
+    /** Initilise all properties and setup the modal */
+    private _setupMapProperties(properties: NumericProperties, settings: Settings) {
+        const propertiesName = Object.keys(properties);
+        assert(propertiesName.length >= 2);
+
+        // Initialize the html options
+        this._initAxes(propertiesName);
+        this._initSymbol(properties);
+        this._initPalette();
+        this._initColor(propertiesName);
+        this._initSize(propertiesName);
+
+        // Set default values
+        this.x.property.value = propertiesName[0];
+        this.y.property.value = propertiesName[1];
+        this.z.property.value = '';
+        if (propertiesName.length > 2) {
+            this.color.property.value = propertiesName[2];
+        } else {
+            this.color.property.value = '';
+        }
+
+        // Append new modal
+        this._setupModal();
+
+        // Attach callbacks
+        this._bind(properties);
+
+        // Apply new settings to the modal options
+        this.applySettings(settings);
     }
 
     /** Creates and attaches the modal html element */

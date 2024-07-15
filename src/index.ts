@@ -289,8 +289,7 @@ class DefaultVisualizer {
                             // Proceed with ViewersGrid
                             await this.structure.switchMode(this._mode);
                         } catch (error) {
-                            // Process errors
-                            throw Error(error as string);
+                            sendWarning(error as string);
                         } finally {
                             // Hide loader
                             this._toggle?.loader(false);
