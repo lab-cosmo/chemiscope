@@ -350,6 +350,9 @@ export class PropertiesMap {
 
         // Re-render the plot with the new data and layout
         await this._react(this._getTraces(), this._getLayout());
+
+        // Run relayout to correctly update the html (for sphinx-gallery)
+        this._relayout(this._getLayout());
     }
 
     /**
