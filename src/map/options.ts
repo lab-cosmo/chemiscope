@@ -351,9 +351,7 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Create the settings modal by adding HTML to the page
-     * @param  guid unique identifier of this map, used as prefix for all
-     *              elements ID
-     * @return      the modal HTML element, not yet inserted in the document
+     * @return the modal HTML element, not yet inserted in the document
      */
     private _createSettingsHTML(): { openModal: HTMLElement; modal: Modal } {
         const template = document.createElement('template');
@@ -508,7 +506,6 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Initializes the axis options (x, y, z)
-     *
      * @param {string[]} propertiesName  array of property names for axis options
      */
     private _initAxes(propertiesName: string[]) {
@@ -519,7 +516,6 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Initializes the symbol option
-     *
      * @param {NumericProperties} properties numeric properties object
      */
     private _initSymbol(properties: NumericProperties) {
@@ -541,7 +537,6 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Initializes the color options (mode, property, min, max)
-     *
      * @param {string[]} propertiesName array of property names for color options
      */
     private _initColor(propertiesName: string[]) {
@@ -557,7 +552,6 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Initializes the size options (factor, mode, property, reverse)
-     *
      * @param {string[]} propertiesName array of property names for size options
      */
     private _initSize(propertiesName: string[]) {

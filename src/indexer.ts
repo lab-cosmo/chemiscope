@@ -67,18 +67,24 @@ export class EnvironmentIndexer {
             () => []
         ) as number[][];
 
+        // Initialize active atoms and structures from the environments
         if (this._environments !== undefined) {
             for (const environment of this._environments) {
                 this._activeAtoms[environment.structure].push(environment.center);
             }
 
+            // If there are active atoms in the structure, add it to active structures
             for (let structure = 0; structure < this._structures.length; structure++) {
                 if (this._activeAtoms[structure].length !== 0) {
                     this._activeStructures.push(structure);
                 }
             }
-        } else {
+        }
+
+        // Initialize active atoms and structures from the structures themselves
+        else {
             for (let structure = 0; structure < this._structures.length; structure++) {
+                // Add structure to active structures if it has atoms
                 const atomsCount = this.atomsCount(structure);
                 if (atomsCount > 0) {
                     this._activeStructures.push(structure);
@@ -108,7 +114,7 @@ export class EnvironmentIndexer {
      * @return             full {@link Indexes}, containing the corresponding
      *                     structure / atom indexes
      */
-    public from_environment(environment: number, mode: DisplayMode): Indexes {
+    public fromEnvironment(environment: number, mode: DisplayMode): Indexes {
         // Structure
         if (mode === 'structure') {
             return {
@@ -138,12 +144,12 @@ export class EnvironmentIndexer {
      *         or ``undefined`` if there is no environment corresponding to the
      *         given atom in the given structure
      */
-    public from_structure_atom(
+    public fromStructureAtom(
         mode: DisplayMode,
         structure: number,
         atom?: number
     ): Indexes | undefined {
-        // Structure
+        // Structure mode
         if (mode === 'structure') {
             assert(atom === undefined || atom === 0);
             return {
@@ -152,21 +158,22 @@ export class EnvironmentIndexer {
             };
         }
 
-        // Atom
+        // Atom mode
         assert(this._environments !== undefined);
         assert(atom !== undefined);
 
-        for (let environment = 0; environment < this._environments.length; environment++) {
-            const e = this._environments[environment];
-            if (e.structure === structure && e.center === atom) {
+        for (let envIndex = 0; envIndex < this._environments.length; envIndex++) {
+            const env = this._environments[envIndex];
+            if (env.structure === structure && env.center === atom) {
                 return {
                     atom: atom,
-                    environment: environment,
+                    environment: envIndex,
                     structure: structure,
                 };
             }
         }
 
+        // No corresponding environment found
         return undefined;
     }
 
@@ -177,12 +184,16 @@ export class EnvironmentIndexer {
      * @param mode display mode (atom or structure)
      */
     public fromStructure(structure: number, mode: DisplayMode): Indexes | undefined {
+        // Iterate over all atoms in the given structure
         for (let atom = 0; atom < this.atomsCount(structure); atom++) {
-            const indexes = this.from_structure_atom(mode, structure, atom);
+            // Get indexes for the current structure/atom combination
+            const indexes = this.fromStructureAtom(mode, structure, atom);
             if (indexes !== undefined) {
                 return indexes;
             }
         }
+
+        // No valid indexes are found
         return undefined;
     }
 

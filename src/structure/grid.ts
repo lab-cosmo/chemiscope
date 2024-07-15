@@ -372,7 +372,6 @@ export class ViewersGrid {
 
     /**
      * Function to set the active viewer for communicating with the map
-     *
      * @param guid GUID of the viewer to be active
      */
     public setActive(guid: GUID): void {
@@ -539,7 +538,7 @@ export class ViewersGrid {
     ): Promise<void> {
         // Set/remove atom from indexes based on mode
         data.current.atom = isAtomMode
-            ? this._indexer.from_environment(data.current.environment, this._mode).atom
+            ? this._indexer.fromEnvironment(data.current.environment, this._mode).atom
             : undefined;
         this._cellsData.set(guid, data);
 
@@ -939,7 +938,7 @@ export class ViewersGrid {
                     assert(data !== undefined);
                     const natoms = viewer.natoms();
                     assert(natoms !== undefined);
-                    const indexes = this._indexer.from_structure_atom(
+                    const indexes = this._indexer.fromStructureAtom(
                         this._mode,
                         data.current.structure,
                         atom % natoms

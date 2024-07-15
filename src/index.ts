@@ -273,15 +273,16 @@ class DefaultVisualizer {
                     // Show loader
                     this._toggle?.loader(true);
 
-                    // Determine new display mode
+                    // Update the current mode
                     this._mode = mode;
 
                     // Use setTimeout to ensure the loader is shown before starting async operations
                     // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     setTimeout(async () => {
-                        // Proceed with EnvironmentInfo
-                        this.info.switchMode(this._mode);
                         try {
+                            // Proceed with EnvironmentInfo
+                            this.info.switchMode(this._mode);
+
                             // Proceed with PropertiesMap
                             await this.map.switchMode(this._mode);
 
@@ -321,7 +322,7 @@ class DefaultVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0, this._mode);
+            initial = this._indexer.fromEnvironment(0, this._mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -331,7 +332,7 @@ class DefaultVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0], this._mode);
+            initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], this._mode);
         }
 
         const firstGUID = this.structure.active;
@@ -401,7 +402,7 @@ class DefaultVisualizer {
                 throw Error('settings.pinned must be an array of numbers');
             }
 
-            const indexes = this._indexer.from_environment(settings.pinned[0], this._mode);
+            const indexes = this._indexer.fromEnvironment(settings.pinned[0], this._mode);
             this.map.select(indexes);
             this.info.show(indexes);
             this.structure.show(indexes);
@@ -416,7 +417,7 @@ class DefaultVisualizer {
                 if (guid === undefined) {
                     throw Error("too many environments in 'pinned' setting");
                 }
-                const indexes = this._indexer.from_environment(environment, this._mode);
+                const indexes = this._indexer.fromEnvironment(environment, this._mode);
 
                 this.map.addMarker(guid, color, indexes);
                 this.map.setActive(guid);
@@ -582,7 +583,7 @@ class StructureVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0, this._mode);
+            initial = this._indexer.fromEnvironment(0, this._mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -592,7 +593,7 @@ class StructureVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0], this._mode);
+            initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], this._mode);
         }
 
         this.structure.show(initial);
@@ -748,7 +749,7 @@ class MapVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.from_environment(0, mode);
+            initial = this._indexer.fromEnvironment(0, mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -758,7 +759,7 @@ class MapVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.from_environment(dataset.settings.pinned[0], mode);
+            initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], mode);
         }
 
         this.map.addMarker('map-0' as GUID, 'red', initial);

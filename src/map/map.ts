@@ -359,7 +359,7 @@ export class PropertiesMap {
     private _handleMarkers() {
         for (const [key, marker] of this._selected.entries()) {
             if (this._mode === 'structure') {
-                marker.current = this._indexer.from_environment(marker.current, 'atom').structure;
+                marker.current = this._indexer.fromEnvironment(marker.current, 'atom').structure;
             } else {
                 const environment = this._indexer.fromStructure(
                     marker.current,
@@ -400,7 +400,7 @@ export class PropertiesMap {
 
         // data.select needs `indexes.environment`, so make sure it is defined
         if (indexes.environment === undefined) {
-            const fullIndexes = this._indexer.from_structure_atom(
+            const fullIndexes = this._indexer.fromStructureAtom(
                 this._mode,
                 indexes.structure,
                 indexes.atom
@@ -459,7 +459,7 @@ export class PropertiesMap {
         this._root.appendChild(data.marker);
         data.marker.onclick = () => {
             this.setActive(guid);
-            this.activeChanged(guid, this._indexer.from_environment(data.current, this._mode));
+            this.activeChanged(guid, this._indexer.fromEnvironment(data.current, this._mode));
         };
         this._selected.set(guid, data);
         this._updateMarkers([data]);
@@ -579,11 +579,13 @@ export class PropertiesMap {
 
         const traces = [main as Data, selected as Data];
 
+        // Calculate legend names and show legend flags based on data properties
         const legendNames = this._legendNames().slice(2);
         const showlegend = this._showlegend().slice(2);
         assert(legendNames.length === showlegend.length);
         const currentLength = legendNames.length;
 
+        // Adjust arrays based on maxSymbols configuration
         if (this._data.maxSymbols > 0) {
             // resize & fill arrays
             legendNames.length = this._data.maxSymbols;
@@ -1278,7 +1280,7 @@ export class PropertiesMap {
                             this.setActive(guid);
                             this.activeChanged(
                                 guid,
-                                this._indexer.from_environment(data.current, this._mode)
+                                this._indexer.fromEnvironment(data.current, this._mode)
                             );
                         }
                         break;
@@ -1286,7 +1288,7 @@ export class PropertiesMap {
                 }
             }
 
-            const indexes = this._indexer.from_environment(environment, this._mode);
+            const indexes = this._indexer.fromEnvironment(environment, this._mode);
 
             this.select(indexes);
             this.onselect(indexes);

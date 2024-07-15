@@ -57,7 +57,7 @@ export class EnvironmentInfo {
     private _shadow: ShadowRoot;
     private _root: HTMLElement;
     private _atom?: Info;
-    private _structure?: Info;
+    private _structure!: Info;
     private _indexer: EnvironmentIndexer;
     private _properties: { [name: string]: Property };
     private _parameters?: { [name: string]: Parameter };
@@ -71,7 +71,7 @@ export class EnvironmentInfo {
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param mode       Display Mode, either atom or structure
-     * @param viewer     {@link ViewersGrid} from which we get the playback delay
+     * @param parameters used to describe multidimensional properties
      */
     constructor(
         element: string | HTMLElement,
@@ -80,12 +80,13 @@ export class EnvironmentInfo {
         mode: DisplayMode,
         parameters?: { [name: string]: Parameter }
     ) {
+        // Create a host element to attach the shadow DOM
         const containerElement = getElement(element);
-
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
-
         this._shadow = hostElement.attachShadow({ mode: 'open' });
+
+        // Add styles to shadow
         this._shadow.adoptedStyleSheets = [
             styles.bootstrap,
             styles.chemiscope,
@@ -103,7 +104,9 @@ export class EnvironmentInfo {
         this._properties = properties;
         this._parameters = parameters;
         this._mode = mode;
-        this.renderModePart();
+
+        // Render the mode-specific part of the component
+        this._renderModePart();
     }
 
     /**
@@ -115,12 +118,11 @@ export class EnvironmentInfo {
         this._mode = mode;
 
         // Update element related to the display mode
-        this.renderModePart();
+        this._renderModePart();
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes): void {
-        assert(this._structure !== undefined);
         const previousStructure = this._indexes().structure;
         this._structure.number.value = `${indexes.structure + 1}`;
         this._structure.slider.update(indexes.structure);
@@ -155,7 +157,7 @@ export class EnvironmentInfo {
     }
 
     /** Changes the elements based on the widget mode */
-    private renderModePart(): void {
+    private _renderModePart(): void {
         // Construct atom related html if mode is atom
         const atomButton = this._isParAtoms()
             ? `<div class='btn btn-sm chsp-info-atom-btn'
@@ -244,7 +246,6 @@ export class EnvironmentInfo {
         };
 
         slider.onchange = () => {
-            assert(this._structure !== undefined);
             const structure = this._structure.slider.value();
 
             if (this._atom !== undefined) {
@@ -281,7 +282,6 @@ export class EnvironmentInfo {
         number.max = this._indexer.structuresCount().toString();
 
         number.onchange = () => {
-            assert(this._structure !== undefined);
             const value = parseInt(number.value, 10) - 1;
             if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                 // reset to the current slider value if we got an invalid value
@@ -319,7 +319,6 @@ export class EnvironmentInfo {
         properties: { [name: string]: Property },
         parameters?: { [name: string]: Parameter }
     ) {
-        assert(this._structure !== undefined);
         const slider = new Slider(this._root, 'atom');
         slider.reset(this._indexer.activeAtoms(this._structure.slider.value()));
 
@@ -337,7 +336,7 @@ export class EnvironmentInfo {
                     let iterations = 0;
                     while (indexes === undefined) {
                         atom = (atom + 1) % atomsCount;
-                        indexes = this._indexer.from_structure_atom(this._mode, structure, atom);
+                        indexes = this._indexer.fromStructureAtom(this._mode, structure, atom);
 
                         // prevent infinite loop if the current structure has no
                         // environments
@@ -357,7 +356,6 @@ export class EnvironmentInfo {
 
         slider.onchange = () => {
             assert(this._atom !== undefined);
-            assert(this._structure !== undefined);
             const indexes = this._indexes();
 
             if (indexes === undefined) {
@@ -386,7 +384,6 @@ export class EnvironmentInfo {
 
         number.onchange = () => {
             assert(this._atom !== undefined);
-            assert(this._structure !== undefined);
             const activeAtoms = this._indexer.activeAtoms(this._structure.slider.value());
 
             const value = parseInt(number.value, 10) - 1;
@@ -412,15 +409,14 @@ export class EnvironmentInfo {
 
     /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
-        assert(this._structure !== undefined);
         const structure = this._structure.slider.value();
         let indexes;
         if (this._atom !== undefined) {
             const atom = this._atom.slider.value();
-            indexes = this._indexer.from_structure_atom(this._mode, structure, atom);
+            indexes = this._indexer.fromStructureAtom(this._mode, structure, atom);
         } else {
             assert(!this._isParAtoms());
-            indexes = this._indexer.from_structure_atom(this._mode, structure);
+            indexes = this._indexer.fromStructureAtom(this._mode, structure);
         }
         assert(indexes !== undefined);
         return indexes;

@@ -101,10 +101,10 @@ export class DisplayToggle {
      */
     loader(visible: boolean): void {
         // Show/hide spinnder
-        const loadingSpinner = this._toggleContainer.querySelector(
+        const spinnerElement = this._toggleContainer.querySelector(
             '#chsp-mode-spinner'
         ) as HTMLDivElement;
-        loadingSpinner.style.display = visible ? 'inline-block' : 'none';
+        spinnerElement.style.display = visible ? 'inline-block' : 'none';
 
         // Toggle button visibility or disable state
         const buttons = this._toggleContainer.querySelectorAll('.btn-outline-secondary');
