@@ -182,7 +182,7 @@ class DefaultVisualizer {
     // Keep the list of pinned environments around to be able to apply settings
     private _pinned: GUID[];
     // Controls the display mode (atom or structure)
-    private _toggle: DisplayToggle;
+    private _toggle: DisplayToggle | undefined;
 
     // the constructor is private because the main entry point is the static
     // `load` function
@@ -258,44 +258,46 @@ class DefaultVisualizer {
 
         // toggle setup
 
-        // Disable / enable toggle
+        // Check if toggle should be visible
         const newMode = this._mode === 'atom' ? 'structure' : 'atom';
         const noModeProps =
-            Object.values(this._dataset.properties).filter((p) => p.target === newMode).length < 2;
-        const isToggleDisabled = dataset.environments === undefined || noModeProps;
+            Object.values(dataset.properties).filter((p) => p.target === newMode).length < 2;
+        if (!(dataset.environments === undefined || noModeProps)) {
+            // Initiate toggle
+            this._toggle = new DisplayToggle(config.map, this._mode === 'atom');
 
-        // Initiate toggle
-        this._toggle = new DisplayToggle(config.map, this._mode === 'atom', isToggleDisabled);
+            // Add callback
+            this._toggle.onchange = (mode: DisplayMode) => {
+                // Check if mode actually new
+                if (this._mode !== mode) {
+                    // Show loader
+                    this._toggle?.loader(true);
 
-        // Add callback
-        this._toggle.onchange = (checked: boolean) => {
-            // Show loader
-            this._toggle.loader(true);
+                    // Determine new display mode
+                    this._mode = mode;
 
-            // Determine new display mode
-            this._mode = checked ? 'atom' : 'structure';
+                    // Use setTimeout to ensure the loader is shown before starting async operations
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    setTimeout(async () => {
+                        // Proceed with EnvironmentInfo
+                        this.info.switchMode(this._mode);
+                        try {
+                            // Proceed with PropertiesMap
+                            await this.map.switchMode(this._mode);
 
-            // Use setTimeout to ensure the loader is shown before starting async operations
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            setTimeout(async () => {
-                // Proceed with EnvironmentInfo
-                this.info.switchMode(this._mode);
-
-                try {
-                    // Proceed with PropertiesMap
-                    await this.map.switchMode(this._mode);
-
-                    // Proceed with ViewersGrid
-                    await this.structure.switchMode(this._mode);
-                } catch (error) {
-                    // Process errors
-                    throw Error(error as string);
-                } finally {
-                    // Hide loader
-                    this._toggle.loader(false);
+                            // Proceed with ViewersGrid
+                            await this.structure.switchMode(this._mode);
+                        } catch (error) {
+                            // Process errors
+                            throw Error(error as string);
+                        } finally {
+                            // Hide loader
+                            this._toggle?.loader(false);
+                        }
+                    }, 0);
                 }
-            }, 0);
-        };
+            };
+        }
 
         // information table & slider setup
         this.info = new EnvironmentInfo(
@@ -353,7 +355,7 @@ class DefaultVisualizer {
         this.meta.remove();
         this.info.remove();
         this.structure.remove();
-        this._toggle.remove();
+        this._toggle?.remove();
     }
 
     /**
