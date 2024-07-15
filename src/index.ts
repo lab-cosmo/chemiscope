@@ -6,7 +6,7 @@ import { EnvironmentInfo } from './info';
 import { PropertiesMap } from './map';
 import { MetadataPanel } from './metadata';
 import { LoadOptions, MoleculeViewer, StructureOptions, ViewersGrid } from './structure';
-import { DisplayToggle } from './toggle';
+import { DisplayToggle } from './display-toggle';
 
 import {
     Dataset,
