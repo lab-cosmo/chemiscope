@@ -2,8 +2,8 @@
 Chemiscope.explore example
 ==========================
 This example illustrates usage of different methods of dimensionality reduction and its
-visualisation with :py:func:`chemiscope.explore`. The primary goal of this function is to enable
-quick and effective exploration of a dataset.
+visualisation with :py:func:`chemiscope.explore`. The primary goal of this function is
+to enable quick and effective exploration of a dataset.
 
 To use this function, some additional dependencies are required. You can install them
 with the following command:
@@ -31,8 +31,8 @@ import chemiscope
 # Basic usage
 # +++++++++++
 #
-# This example shows the basic usage of the `chemiscope.explore`. At first, read or
-# load the structures from the dataset. Here we use an `ASE package
+# This example shows the basic usage of the :py:func:`chemiscope.explore`. At first,
+# read or load the structures from the dataset. Here we use an `ASE package
 # <https://wiki.fysik.dtu.dk/ase>`_ to read the structures from the file and have the
 # frames as the `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects.
 
@@ -41,15 +41,16 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
 # %%
 #
-# Provide the frames to the `chemiscope.explore`. It will generate a Chemiscope
+# Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
 # interactive widget with the reduced dimentionality of data.
 
 chemiscope.explore(frames)
 
 # %%
 #
-# In this basic case, no featurizer function is provided, so `chemiscope.explore` uses a
-# default method that applies `SOAP (Smooth Overlap of Atomic Positions)
+# In this basic case, no featurizer function is provided, so
+# :py:func:`chemiscope.explore` uses a default method that applies
+# `SOAP (Smooth Overlap of Atomic Positions)
 # <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ to
 # compute atomic structure descriptors and then performs `PCA (Principal Component
 # Analysis)
@@ -64,8 +65,8 @@ chemiscope.explore(frames)
 # ++++++++++++++++++++++++++
 #
 # This part illustrates how to create a custom function for dimensionality reduction
-# as an argument (`featurize`) to `chemiscope.explore`. Inside this function, we perform
-# descriptor calculation using `SOAP
+# as an argument (`featurize`) to :py:func:`chemiscope.explore`. Inside this function,
+# we perform descriptor calculation using `SOAP
 # <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ and
 # then reduce the dimensionality with `Kernel PCA
 # <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html>`_.
@@ -77,8 +78,8 @@ from sklearn.decomposition import KernelPCA  # noqa
 # %%
 #
 # Define the function `soap_kpca` which takes one argument (`frames`). This argument
-# contains the structures provided to `chemiscope.explore` and is internally passed
-# to the `featurize` function.
+# contains the structures provided to :py:func:`chemiscope.explore` and is internally
+# passed to the `featurize` function.
 
 
 def soap_kpca(frames):
@@ -109,7 +110,7 @@ def soap_kpca(frames):
 
 # %%
 #
-# Provide the created function to `chemiscope.explore`.
+# Provide the created function to :py:func:`chemiscope.explore`.
 
 cs = chemiscope.explore(frames, featurize=soap_kpca)
 
@@ -207,7 +208,7 @@ def mace_off_tsne(frames):
 
 # %%
 #
-# We can also provide the additional properties inside `chemiscope.explore`.
+# We can also provide the additional properties inside :py:func:`chemiscope.explore`.
 # For example, let's extract dipole moment from the frames using the related helper
 # function.
 
@@ -215,7 +216,7 @@ properties = chemiscope.extract_properties(qm9_frames, only=["mu"])
 
 # %%
 #
-# Provide the created featurizer and the properties to `chemiscope.explore`.
+# Provide the created featurizer and the properties to :py:func:`chemiscope.explore`.
 
 cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne, properties=properties)
 
@@ -251,7 +252,7 @@ m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 
 # %%
 #
-# We are defining a function used in `chemiscope.explore` as a featurizer
+# We are defining a function used in :py:func:`chemiscope.explore` as a featurizer
 # that computes the descriptors using MACE-MP0 and then applies t-SNE.
 # Basically, we repeat the steps done in the previous example but using
 # different mace calculator.
@@ -282,7 +283,7 @@ def mace_mp0_tsne(frames):
 
 # %%
 #
-# Provide the created function to `chemiscope.explore`.
+# Provide the created function to :py:func:`chemiscope.explore`.
 
 cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
 
