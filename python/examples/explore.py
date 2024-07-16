@@ -1,9 +1,22 @@
 """
 Chemiscope.explore example
 ==========================
-This example illustrates usage of different methods of dimensionality reduction and its
-visualisation with :py:func:`chemiscope.explore`. The primary goal of this function is
-to enable quick and effective exploration of a dataset.
+The :py:func:`chemiscope.explore` function provides a streamlined way to visualize
+datasets by automatically applying dimensionality reduction and generating visual
+representations. This function simplifies the process of dataset exploration by
+offering a quick overview through computed properties and dimensionality reduction,
+allowing to rapidly gain insights into the composition and structure of data without
+need to manually implement and fine-tune the dimensionality reduction process.
+
+This is particularly useful when the specific choice of hyperparameters does not
+significantly impact the resulting 2D map. By passing a list of `ase.Atoms
+<https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects (or similar structures from
+other libraries) to :py:func:`chemiscope.explore`, it is possible to generate a
+chemiscope widget, providing an immediate and intuitive visualization of the dataset.
+
+Additionally, :py:func:`chemiscope.explore` allows to provide a custom function for
+representation and dimensionality reduction, offering flexibility for more advanced
+usage.
 
 To use this function, some additional dependencies are required. You can install them
 with the following command:
