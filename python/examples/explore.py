@@ -65,7 +65,7 @@ chemiscope.explore(frames)
 # ++++++++++++++++++++++++++
 #
 # This part illustrates how to create a custom function for dimensionality reduction
-# as an argument (`featurize`) to :py:func:`chemiscope.explore`. Inside this function,
+# as an argument (``featurize``) to :py:func:`chemiscope.explore`. Inside this function,
 # we perform descriptor calculation using `SOAP
 # <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ and
 # then reduce the dimensionality with `Kernel PCA
@@ -77,14 +77,14 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 # %%
 #
-# Define the function `soap_kpca` which takes one argument (`frames`). This argument
+# Define the function ``soap_kpca`` which takes one argument (``frames``). This argument
 # contains the structures provided to :py:func:`chemiscope.explore` and is internally
-# passed to the `featurize` function.
+# passed to the ``featurize`` function.
 
 
 def soap_kpca(frames):
     # Initialise soap calculator. The detailed explanation of the provided
-    # hyperparameters can be checked in the documentation of the library (`dscribe`).
+    # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
         # the dataset used in the example contains only carbon
         species=["C"],
@@ -117,11 +117,11 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 # %%
 #
 # Note: It is possible to add parallelization when computing the SOAP descriptors and
-# performing dimentionality reduction with KernelPCA by providing the `n_jobs`
+# performing dimentionality reduction with KernelPCA by providing the ``n_jobs``
 # parameter. This allows the computation to utilize multiple CPU cores for faster
-# processing. An example of how to include `n_jobs` is shown below on this page.
+# processing. An example of how to include ``n_jobs`` is shown below on this page.
 #
-# To showcase the results of the `soap_kpca` function, we have pre-computed it for
+# To showcase the results of the ``soap_kpca`` function, we have pre-computed it for
 # the 6k structures from the `C-GAP-20U
 # <https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html>`_ dataset. You can
 # fetch and visualize this pre-computed dimensionality reduction as follows:
@@ -150,7 +150,7 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 # Example with MACE-OFF and t-SNE
 # +++++++++++++++++++++++++++++++++++++
 #
-# In this part, we are going to define another `featurize` function that runs
+# In this part, we are going to define another ``featurize`` function that runs
 # calculation of desciptors with `MACE-OFF <https://github.com/ACEsuit/mace>`_ and uses
 # `t-SNE
 # <https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html>`_ for
@@ -177,7 +177,7 @@ qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 
 # %%
 #
-# Now, we are defining a `featurize` function. As on the previous example, it should
+# Now, we are defining a ``featurize`` function. As on the previous example, it should
 # return the reduced data.
 
 
@@ -234,7 +234,7 @@ chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
 # Example with MACE-MP0 and t-SNE
 # ++++++++++++++++++++++++++++++++++++++
 #
-# We will define another `featurize` function that uses MACE-MP0
+# We will define another ``featurize`` function that uses MACE-MP0
 # to calculate the descriptors and t-SNE for the dimensionality
 # reduction.
 #
@@ -289,7 +289,7 @@ cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
 
 # %%
 #
-# To show case the result, we are loading pre-computed data using the `mace_mp0_tsne`
+# To show case the result, we are loading pre-computed data using the ``mace_mp0_tsne``
 # function for 1k structures.
 
 
