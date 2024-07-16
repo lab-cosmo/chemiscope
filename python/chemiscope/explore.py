@@ -88,12 +88,12 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         # 2) Example with a custom featurizer function
         chemiscope.explore(frames, featurize=soap_kpca)
 
-    For more examples, see the related [documentation]
-    (https://chemiscope.org/docs/examples/explore.html).
+    For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
+    .. _chemiscope-explore: https://chemiscope.org/docs/examples/explore.html
     """
 
     # Validate inputs

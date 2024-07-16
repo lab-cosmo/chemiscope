@@ -143,7 +143,7 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 import requests  # noqa
 
 
-def fetch_dataset(filename, base_url="https://zenodo.org/records/12626972/files/"):
+def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/"):
     """Helper function to load the pre-computed examples"""
     local_path = "data/" + filename
     if not os.path.isfile(local_path):
@@ -238,6 +238,10 @@ cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne, properties=properti
 # Here we display the visualisation of the pre-computed data using the described
 # function for 6k structures taken from the `QM9
 # <https://jla-gardner.github.io/load-atoms/index.html>`_ dataset.
+# The map is zoomed in to highlight a cluster of zwitterions grouped together
+# by application of the previously defined function with `MACE-OFF
+# <https://github.com/ACEsuit/mace>`_ and `t-SNE
+# <https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html>`_.
 
 fetch_dataset("mace-off-tsne-qm9.json.gz")
 chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
