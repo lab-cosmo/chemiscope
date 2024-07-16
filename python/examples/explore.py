@@ -1,6 +1,6 @@
 """
-Chemiscope.explore example
-==========================
+Chemiscope.explore examples
+===========================
 The :py:func:`chemiscope.explore` function provides a streamlined way to visualize
 datasets by automatically applying dimensionality reduction and generating visual
 representations. This function simplifies the process of dataset exploration by
@@ -41,8 +41,11 @@ import chemiscope
 
 # %%
 #
-# Basic usage
-# +++++++++++
+# General use cases
+# ^^^^^^^^^^^^^^^^^
+#
+# Basic example
+# +++++++++++++
 #
 # This example shows the basic usage of the :py:func:`chemiscope.explore`. At first,
 # read or load the structures from the dataset. Here we use an `ASE package
@@ -74,8 +77,8 @@ chemiscope.explore(frames)
 
 # %%
 #
-# Example with SOAP and KPCA
-# ++++++++++++++++++++++++++
+# Example with custom featurizer and custom properties
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
 # This part illustrates how to create a custom function for dimensionality reduction
 # as an argument (``featurize``) to :py:func:`chemiscope.explore`. Inside this function,
@@ -129,6 +132,14 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 
 # %%
 #
+# We can also provide the additional properties inside, for example, let's extract
+# energy from the frames using :py:func:`chemiscope.extract_properties`.
+
+properties = chemiscope.extract_properties(frames, only=["energy"])
+cs = chemiscope.explore(frames, featurize=soap_kpca, properties=properties)
+
+# %%
+#
 # Note: It is possible to add parallelization when computing the SOAP descriptors and
 # performing dimentionality reduction with KernelPCA by providing the ``n_jobs``
 # parameter. This allows the computation to utilize multiple CPU cores for faster
@@ -136,8 +147,7 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 #
 # To showcase the results of the ``soap_kpca`` function, we have pre-computed it for
 # the 6k structures from the `C-GAP-20U
-# <https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html>`_ dataset. You can
-# fetch and visualize this pre-computed dimensionality reduction as follows:
+# <https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html>`_ dataset:
 
 # sphinx_gallery_start_ignore
 import requests  # noqa
@@ -159,6 +169,9 @@ chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
 
 
 # %%
+#
+# Specific applications
+# ^^^^^^^^^^^^^^^^^^^^^
 #
 # Example with MACE-OFF and t-SNE
 # +++++++++++++++++++++++++++++++++++++
@@ -221,9 +234,7 @@ def mace_off_tsne(frames):
 
 # %%
 #
-# We can also provide the additional properties inside :py:func:`chemiscope.explore`.
-# For example, let's extract dipole moment from the frames using the related helper
-# function.
+# We can also extract the additional properties, for example, dipole moment.
 
 properties = chemiscope.extract_properties(qm9_frames, only=["mu"])
 
