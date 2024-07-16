@@ -89,6 +89,18 @@ npm run build
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)
 for an example of how to create a webpage using chemiscope.
 
+## `chemiscope.explore` option
+
+Chemiscope provides a method to explore datasets by applying dimensionality reduction
+and visualization. For examples and detailed usage, refer to the related
+[documentation](https://chemiscope.org/docs/examples/explore.html).
+
+To use the explore functionality, install the required dependencies with:
+
+```bash
+pip install chemiscope[explore]
+```
+
 ## sphinx and sphinx-gallery integration
 
 Chemiscope provides also extensions for `sphinx` and `sphinx-gallery` to 

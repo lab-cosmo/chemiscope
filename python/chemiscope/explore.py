@@ -1,7 +1,14 @@
 import os
 
-from dscribe.descriptors import SOAP
-from sklearn.decomposition import PCA
+# Check if dependencies were installed
+try:
+    from dscribe.descriptors import SOAP
+    from sklearn.decomposition import PCA
+except ImportError as e:
+    raise ImportError(
+        f"Required package not found: {str(e)}. Please install dependency "
+        + "using 'pip install chemiscope[explore]'."
+    )
 
 from .jupyter import show
 
@@ -9,7 +16,7 @@ from .jupyter import show
 def explore(frames, featurize=None, properties=None, mode="default"):
     """
     Visualize the dataset with dimensionality reduction.
-    If no function is provided as a `featurize` argument, a default SOAP and PCA based
+    If no function is provided as a ``featurize`` argument, a default SOAP and PCA based
     featurizer is used. SOAP parameters (e.g., cutoff radius, number of radial and
     angular functions, etc.) are predefined. The SOAP computation uses all available
     CPU cores for parallelization. PCA reduces the dimensionality to two components
@@ -18,9 +25,9 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     :param list frames: list of ASE Atoms objects
 
     :param callable featurize: optional. Function to compute features and perform
-        dimensionality reduction on the `frames`. The function should take `frames` as
-        input and return a 2D array of reduced features. If `None`, a default SOAP and
-        PCA based featurizer is used.
+        dimensionality reduction on the ``frames``. The function should take ``frames``
+        as input and return a 2D array of reduced features. If ``None``, a default SOAP
+        and PCA based featurizer is used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -31,6 +38,14 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         of "default", "structure", or "map". The default mode is "default".
 
     :return: a chemiscope widget for interactive visualization
+
+    To use this function, additional dependencies are required, specifically, `dscribe`_
+    and `sklearn`_ libraries used for the default dimentinality reduction. They can be
+    installed with the following command:
+
+    .. code:: bash
+
+        pip install chemiscope[explore]
 
     Here is an example of usage with and without providing a function to do the
     reprensentation and reduction. The frames are obtained by reading the structures
@@ -47,7 +62,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         # Read the structures from the dataset
         frames = ase.io.read("trajectory.xyz", ":")
 
-        # Basic usage with the default featurizer (SOAP + PCA)
+        # 1) Basic usage with the default featurizer (SOAP + PCA)
         chemiscope.explore(frames)
 
 
@@ -70,14 +85,17 @@ def explore(frames, featurize=None, properties=None, mode="default"):
             return transformer.fit_transform(descriptors)
 
 
-        # Provide it as a custom featurizer
+        # 2) Example with a custom featurizer function
         chemiscope.explore(frames, featurize=soap_kpca)
 
+    For more examples, see the related [documentation]
+    (https://chemiscope.org/docs/examples/explore.html).
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     """
+
     # Validate inputs
     if featurize is not None and not callable(featurize):
         raise TypeError("'featurize' must be a callable (function)")
@@ -105,9 +123,9 @@ def soap_pca(frames):
     dimensionality reduction using PCA.
 
     Note:
-    - The SOAP descriptor parameters such as `r_cut`, `n_max`, `l_max`, `sigma`, `rbf`,
-    `average`, `periodic`, `weighting`, and `compression` are pre-defined within
-    function.
+    - The SOAP descriptor parameters such as ``r_cut``, ``n_max``, ``l_max``, ``sigma``,
+    ``rbf``, ``average``, ``periodic``, ``weighting``, and ``compression`` are
+    pre-defined within function.
     - The function utilizes all available CPU cores for parallel computation of SOAP
     descriptors.
     """
