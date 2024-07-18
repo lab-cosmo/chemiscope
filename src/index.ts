@@ -718,7 +718,7 @@ class MapVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
-        // Use structure as a display mode
+        // We always use structure as a display mode
         const mode = 'structure';
 
         // map setup
