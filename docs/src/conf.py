@@ -5,6 +5,11 @@ import sphinx_bootstrap_theme
 import chemiscope
 from chemiscope.sphinx import ChemiscopeScraper
 
+import warnings
+
+# Filter out warning to hide it in the documentation. It comes from the import of MACE
+warnings.filterwarnings("ignore", message="Can't initialize NVML")
+
 ROOT = os.path.abspath(os.path.join("..", ".."))
 
 # -- Project information -----------------------------------------------------

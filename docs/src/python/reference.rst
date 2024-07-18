@@ -24,3 +24,5 @@
 .. autofunction:: chemiscope.ase_vectors_to_arrows
 
 .. autofunction:: chemiscope.ase_tensors_to_ellipsoids
+
+.. autofunction:: chemiscope.explore
