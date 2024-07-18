@@ -60,30 +60,39 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     .. code-block:: python
 
-        import chemiscope import ase.io import dscribe.descriptors import
-        sklearn.decomposition
+        import chemiscope
+        import ase.io
+        import dscribe.descriptors
+        import sklearn.decomposition
 
-        # Read the structures from the dataset frames = ase.io.read("trajectory.xyz",
-        ":")
+        # Read the structures from the dataset
+        frames = ase.io.read("trajectory.xyz", ":")
 
         # 1) Basic usage with the default featurizer (SOAP + PCA)
         chemiscope.explore(frames)
 
 
-        # Define a function for dimensionality reduction def soap_kpca(frames):
-            # Compute descriptors soap = dscribe.descriptors.SOAP(
-                species=["C"], r_cut=4.5, n_max=8, l_max=6, periodic=True,
-            ) descriptors = soap.create(frames)
+        # Define a function for dimensionality reduction
+        def soap_kpca(frames):
+            # Compute descriptors
+            soap = dscribe.descriptors.SOAP(
+                species=["C"],
+                r_cut=4.5,
+                n_max=8,
+                l_max=6,
+                periodic=True,
+            )
+            descriptors = soap.create(frames)
 
-            # Apply KPCA transformer = sklearn.decomposition.KernelPCA(n_components=2,
-            gamma=0.05)
+            # Apply KPCA
+            kpca = sklearn.decomposition.KernelPCA(n_components=2, gamma=0.05)
 
-            # Return a 2D array of reduced features return
-            transformer.fit_transform(descriptors)
+            # Return a 2D array of reduced features
+            return kpca.fit_transform(descriptors)
 
 
-        # 2) Example with a custom featurizer function chemiscope.explore(frames,
-        featurize=soap_kpca)
+        # 2) Example with a custom featurizer function
+        chemiscope.explore(frames, featurize=soap_kpca)
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
