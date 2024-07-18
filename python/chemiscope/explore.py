@@ -15,14 +15,20 @@ from .jupyter import show
 
 def explore(frames, featurize=None, properties=None, mode="default"):
     """
-    Visualize the dataset with dimensionality reduction.
+    Automatically explore a dataset containing all structures in ``frames``.
+
+    This function computes some low-dimensionality representation of the frames, and
+    uses chemiscope to visualize both the resulting embedding and the structures
+    simultaneously. ``featurize`` can be used to specify a custom representation and/or
+    dimensionality reduction method.
+
     If no function is provided as a ``featurize`` argument, a default SOAP and PCA based
     featurizer is used. SOAP parameters (e.g., cutoff radius, number of radial and
-    angular functions, etc.) are predefined. The SOAP computation uses all available
-    CPU cores for parallelization. PCA reduces the dimensionality to two components
-    by default.
+    angular functions, etc.) are predefined. The SOAP computation uses all available CPU
+    cores for parallelization. PCA reduces the dimensionality to two components by
+    default.
 
-    :param list frames: list of ASE Atoms objects
+    :param list frames: list of frames
 
     :param callable featurize: optional. Function to compute features and perform
         dimensionality reduction on the ``frames``. The function should take ``frames``
@@ -40,53 +46,44 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     :return: a chemiscope widget for interactive visualization
 
     To use this function, additional dependencies are required, specifically, `dscribe`_
-    and `sklearn`_ libraries used for the default dimentinality reduction. They can be
+    and `sklearn`_ libraries used for the default dimensionality reduction. They can be
     installed with the following command:
 
     .. code:: bash
 
         pip install chemiscope[explore]
 
-    Here is an example of usage with and without providing a function to do the
-    reprensentation and reduction. The frames are obtained by reading the structures
-    from a file that `ase <ase-io_>`_ can read, and performing Kernel PCA using
-    `sklearn`_ on a descriptor computed with SOAP with `dscribe`_ library.
+    Here is an example using this function with and without a featurizer function. The
+    frames are obtained by reading the structures from a file that `ase <ase-io_>`_ can
+    read, and performing Kernel PCA using `sklearn`_ on a descriptor computed with SOAP
+    with `dscribe`_ library.
 
     .. code-block:: python
 
-        import chemiscope
-        import ase.io
-        import dscribe.descriptors
-        import sklearn.decomposition
+        import chemiscope import ase.io import dscribe.descriptors import
+        sklearn.decomposition
 
-        # Read the structures from the dataset
-        frames = ase.io.read("trajectory.xyz", ":")
+        # Read the structures from the dataset frames = ase.io.read("trajectory.xyz",
+        ":")
 
         # 1) Basic usage with the default featurizer (SOAP + PCA)
         chemiscope.explore(frames)
 
 
-        # Define a function for dimensionality reduction
-        def soap_kpca(frames):
-            # Compute descriptors
-            soap = dscribe.descriptors.SOAP(
-                species=["C"],
-                r_cut=4.5,
-                n_max=8,
-                l_max=6,
-                periodic=True,
-            )
-            descriptors = soap.create(frames)
+        # Define a function for dimensionality reduction def soap_kpca(frames):
+            # Compute descriptors soap = dscribe.descriptors.SOAP(
+                species=["C"], r_cut=4.5, n_max=8, l_max=6, periodic=True,
+            ) descriptors = soap.create(frames)
 
-            # Apply KPCA
-            transformer = sklearn.decomposition.KernelPCA(n_components=2, gamma=0.05)
+            # Apply KPCA transformer = sklearn.decomposition.KernelPCA(n_components=2,
+            gamma=0.05)
 
-            # Return a 2D array of reduced features
-            return transformer.fit_transform(descriptors)
+            # Return a 2D array of reduced features return
+            transformer.fit_transform(descriptors)
 
 
-        # 2) Example with a custom featurizer function
-        chemiscope.explore(frames, featurize=soap_kpca)
+        # 2) Example with a custom featurizer function chemiscope.explore(frames,
+        featurize=soap_kpca)
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
@@ -123,11 +120,8 @@ def soap_pca(frames):
     dimensionality reduction using PCA.
 
     Note:
-    - The SOAP descriptor parameters such as ``r_cut``, ``n_max``, ``l_max``, ``sigma``,
-    ``rbf``, ``average``, ``periodic``, ``weighting``, and ``compression`` are
-    pre-defined within function.
-    - The function utilizes all available CPU cores for parallel computation of SOAP
-    descriptors.
+    - The SOAP descriptor parameters are pre-defined.
+    - We use all available CPU cores for parallel computation of SOAP descriptors.
     """
     # Get global species
     species = set()
