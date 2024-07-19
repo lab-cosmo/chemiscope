@@ -104,19 +104,18 @@ export class MapOptions extends OptionsGroup {
     }
 
     /**
-     * Updates the map options with new properties and settings.
-     * Removes the old modal, reinitializes properties, and applies new settings.
+     * Updates the map options with new properties.
+     * Removes the old modal, reinitializes properties and settings.
      * Instead of updating, the modal is re-created for efficient change
      *
      * @param {NumericProperties} properties new numeric properties
-     * @param {Settings} settings new settings
      */
-    public updateMapOptions(properties: NumericProperties, settings: Settings) {
+    public updateMapOptions(properties: NumericProperties) {
         // Remove the old modal from the DOM
         this.remove();
 
         // Proceed with updating each property to the new mode
-        this._setupMapProperties(properties, settings);
+        this._setupMapProperties(properties, {});
     }
 
     /** Get in a element in the modal from its id */

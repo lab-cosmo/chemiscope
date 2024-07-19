@@ -628,98 +628,20 @@ export class PropertiesMap {
      * Update options with the structure or atom default or config settings
      */
     private _setupMapOptions() {
-        // Helper function to create the mode-related settings with default values
-        const getMapOptions = (properties: NumericProperties): Settings => {
-            // Create a copy of settings
-            const settings = JSON.parse(JSON.stringify(this._configSettings)) as Settings;
-
-            // Get the default properties
-            const propertyNames = Object.keys(properties);
-
-            // Helper function to setup axis configuration
-            const setupAxis = (axis: 'x' | 'y', index: number) => {
-                const currentConfigProperty = (this._configSettings[axis] as Settings)
-                    ?.property as string;
-
-                // If current property does not exist in the mode-related configuration, set default
-                if (
-                    currentConfigProperty === undefined ||
-                    properties[currentConfigProperty] === undefined
-                ) {
-                    settings[axis] = {
-                        // Use the first properties as default
-                        property: propertyNames[index],
-
-                        // To be calculated once plot is created
-                        min: undefined,
-                        max: undefined,
-                    };
-                }
-            };
-
-            // Helper function to setup properties configuration
-            const setupProperty = (settingsKey: string, value: string = '') => {
-                // Get property related settings
-                const configSettings = settings[settingsKey];
-
-                // Value should be set in the nested 'property' field
-                if (typeof configSettings === 'object' && 'property' in configSettings) {
-                    const currentConfigProperty = configSettings.property as string;
-
-                    // If current property does not exist in the mode-related configuration, set default
-                    if (properties[currentConfigProperty] === undefined) {
-                        (settings[settingsKey] as Settings).property = value;
-                    }
-                }
-
-                // Value should be set directly to property settings
-                else if (configSettings !== undefined) {
-                    if (properties[settingsKey] === undefined) {
-                        settings[settingsKey] = value;
-                    }
-                }
-            };
-
-            // Set the default values to switch between the modes
-            setupAxis('x', 0);
-            setupAxis('y', 1);
-            setupProperty('color', propertyNames[2] ?? 'fixed');
-            setupProperty('symbol');
-            setupProperty('size');
-
-            // Separate check for 'z' since it has an additional condition
-            const zSettings = settings.z as Settings;
-            const zConfigProperty = zSettings?.property as string;
-            const zPropertyExists = properties[zConfigProperty] !== undefined;
-            if (zConfigProperty && !zPropertyExists) {
-                settings.z = {
-                    property: zSettings ? propertyNames[2] ?? '' : '',
-                    min: undefined,
-                    max: undefined,
-                };
-            }
-
-            return settings;
-        };
-
         // Helper function to update `_option` values with related mode configuration
-        const applyMapOptions = (properties: NumericProperties, settings: Settings | undefined) => {
+        const applyMapOptions = (properties: NumericProperties) => {
             // Check if mode's properties actually exist
             if (properties && Object.keys(properties).length > 1) {
-                // Initialize settings if undefined (not switched to another mode before)
-                if (settings === undefined) {
-                    settings = getMapOptions(properties);
-                }
                 // Update the map options with new values
-                this._options.updateMapOptions(properties, settings);
+                this._options.updateMapOptions(properties);
             }
         };
 
         // Apply structure or atom options based on mode
         if (this._mode !== 'atom') {
-            applyMapOptions(this._data['structure'], this._structureSettings);
+            applyMapOptions(this._data['structure']);
         } else {
-            applyMapOptions(this._data['atom'], this._atomSettings);
+            applyMapOptions(this._data['atom']);
         }
     }
 
