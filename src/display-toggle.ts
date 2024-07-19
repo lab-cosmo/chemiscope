@@ -44,6 +44,9 @@ export class DisplayToggle {
         const toggleContainer = document.createElement('div');
         toggleContainer.innerHTML = `
             <div class="chsp-mode-toggle">
+                <!-- Label -->
+                <span>Visualisation mode:</span>
+
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Mode toggle">
                     <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
