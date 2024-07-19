@@ -2,7 +2,15 @@ import { getElement } from './utils';
 import * as styles from './styles';
 import { DisplayMode } from './indexer';
 
-export class DisplayToggle {
+/**
+ * The {@link DisplayModeToggle} class represents a UI component for switching between two
+ * display modes, structures and atoms, by clicking on the respective buttons.
+ *
+ * It automatically adjusts the height of the map element to ensure there is space for the toggle.
+ * The component uses Shadow DOM to encapsulate styles.
+ * A callback function (`onchange`) is triggered whenever the toggle value (atom / structure) is changed
+ */
+export class DisplayModeToggle {
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// Toggle buttons container element
@@ -11,7 +19,7 @@ export class DisplayToggle {
     public onchange: (mode: DisplayMode) => void;
 
     /**
-     * Create a new {@link DisplayToggle} instance
+     * Create a new {@link DisplayModeToggle} instance
      *
      * @param element HTML element or HTML id of the DOM element where the toggle will be attached
      * @param isPerAtom flag indicating if the atom mode should be checked
@@ -29,6 +37,12 @@ export class DisplayToggle {
         // Create a toggle element
         this._toggleContainer = this._createToggleElement(isPerAtom);
         this._shadow.appendChild(this._toggleContainer);
+
+        // Decrease size of map to get space for display mode toggle
+        containerElement.style.setProperty(
+            'height',
+            `calc(100% - ${this._toggleContainer.offsetHeight}px)`
+        );
 
         // Set up events
         this.onchange = () => {};
@@ -92,7 +106,7 @@ export class DisplayToggle {
     }
 
     /**
-     * Remove HTML added by DisplayToggle in the current document
+     * Remove HTML added by DisplayModeToggle in the current document
      */
     remove(): void {
         this._shadow.host.remove();
