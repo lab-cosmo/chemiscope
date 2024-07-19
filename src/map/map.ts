@@ -224,26 +224,22 @@ export class PropertiesMap {
     private _colorReset: HTMLButtonElement;
     /// Plotly fix instance
     private _plotFix!: ReturnType<typeof fixPlot>;
-    /// Settings of config
-    private _configSettings: Settings;
-    /// Settings related to the stucture properties
-    private _structureSettings?: Settings | undefined;
-    /// Settings related to the atom properties
-    private _atomSettings?: Settings | undefined;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
      *
-     * @param config     HTML element or string 'id' of the element where
-     *                   the map should live and settings
+     * @param element    HTML element or string 'id' of the element where
+     *                   the map should live
+     * @param settings   settings for all panels
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
      * @param mode       widget display mode, either stucture or atom
      * @param properties properties to be displayed
      */
     constructor(
-        config: { element: string | HTMLElement; settings: Settings },
+        element: string | HTMLElement,
+        settings: Settings,
         indexer: EnvironmentIndexer,
         mode: DisplayMode,
         properties: { [name: string]: Property }
@@ -255,7 +251,7 @@ export class PropertiesMap {
         this._selected = new Map<GUID, MarkerData>();
 
         // DOM structure outside the map:
-        // - containerElement/config.element (#chemiscope-map)
+        // - containerElement/element (#chemiscope-map)
         //   - hostElement (layer needed for removal)
         //     - this._shadow (shadow root)
         //       - this._root
@@ -264,7 +260,7 @@ export class PropertiesMap {
         //         - marker
 
         // Attach a shadow DOM to the host element for isolation
-        const containerElement = getElement(config.element);
+        const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         hostElement.style.setProperty('height', '100%');
         containerElement.appendChild(hostElement);
@@ -293,7 +289,7 @@ export class PropertiesMap {
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            config.settings
+            settings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
@@ -321,14 +317,6 @@ export class PropertiesMap {
             plotlyStyles.globalStyleSheet,
             plotlyStyles.getPlotStyleSheet(this._plot),
         ];
-
-        // Store configuration settings based on the current indexer mode
-        this._configSettings = config.settings;
-        if (this._mode === 'atom') {
-            this._atomSettings = this._configSettings;
-        } else {
-            this._structureSettings = this._configSettings;
-        }
     }
 
     /**

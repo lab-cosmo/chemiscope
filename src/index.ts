@@ -240,7 +240,8 @@ class DefaultVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            { element: config.map, settings: getMapSettings(dataset.settings) },
+            config.map,
+            getMapSettings(dataset.settings),
             this._indexer,
             this._mode,
             dataset.properties
@@ -723,7 +724,8 @@ class MapVisualizer {
 
         // map setup
         this.map = new PropertiesMap(
-            { element: config.map, settings: getMapSettings(dataset.settings) },
+            config.map,
+            getMapSettings(dataset.settings),
             this._indexer,
             mode,
             dataset.properties
