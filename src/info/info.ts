@@ -159,8 +159,9 @@ export class EnvironmentInfo {
     /** Changes the elements based on the widget mode */
     private _renderModePart(): void {
         // Construct atom related html if mode is atom
-        const atomButton = this._isParAtoms()
-            ? `<div class='btn btn-sm chsp-info-atom-btn'
+        const atomButton =
+            this._mode === 'atom'
+                ? `<div class='btn btn-sm chsp-info-atom-btn'
                     data-bs-toggle='collapse'
                     data-bs-target='#atom'
                     aria-expanded='false'
@@ -168,7 +169,7 @@ export class EnvironmentInfo {
                     <div class="chsp-info-btns-svg">${INFO_SVG}</div>
                     atom <input class='chsp-info-number' type=number value=1 min=1></input>
                 </div>`
-            : '<div></div>';
+                : '<div></div>';
 
         // Construct main HTML structure
         this._root.innerHTML = `
@@ -190,7 +191,7 @@ export class EnvironmentInfo {
         this._structure = this._createStructure(structureProperties, this._parameters);
 
         // Initialize central atom if in atom mode
-        if (this._isParAtoms()) {
+        if (this._mode === 'atom') {
             const atomProperties = filter(this._properties, (p) => p.target === 'atom');
             this._atom = this._createAtom(atomProperties, this._parameters);
         }
@@ -415,15 +416,10 @@ export class EnvironmentInfo {
             const atom = this._atom.slider.value();
             indexes = this._indexer.fromStructureAtom(this._mode, structure, atom);
         } else {
-            assert(!this._isParAtoms());
+            assert(this._mode !== 'atom');
             indexes = this._indexer.fromStructureAtom(this._mode, structure);
         }
         assert(indexes !== undefined);
         return indexes;
-    }
-
-    /** Flag to determine if the current display mode is par atoms */
-    private _isParAtoms(): boolean {
-        return this._mode === 'atom';
     }
 }
