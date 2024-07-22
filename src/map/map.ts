@@ -620,8 +620,16 @@ export class PropertiesMap {
         const applyMapOptions = (properties: NumericProperties) => {
             // Check if mode's properties actually exist
             if (properties && Object.keys(properties).length > 1) {
-                // Update the map options with new values
-                this._options.updateMapOptions(properties);
+                // Delete previous mode modal from DOM
+                this._options.remove();
+
+                // Re-create modal
+                this._options = new MapOptions(
+                    this._root,
+                    this._getCurrentProperties(),
+                    (rect) => this.positionSettingsModal(rect),
+                    {}
+                );
             }
         };
 

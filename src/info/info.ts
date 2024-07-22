@@ -475,10 +475,7 @@ export class EnvironmentInfo {
     ): HTMLInputElement {
         const number = this._root.querySelector(selector) as HTMLInputElement;
         number.max = max;
-        number.onchange = () => {
-            const value = parseInt(number.value, 10) - 1;
-            handler(value);
-        };
+        number.onchange = () => handler(parseInt(number.value, 10) - 1);
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
         return number;
