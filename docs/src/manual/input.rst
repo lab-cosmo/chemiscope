@@ -218,6 +218,10 @@ contains the following fields and values:
         //
         // Each value inside the settings group is optional
         "settings": {
+            // Visualisation display mode, either per atoms or per structure.
+            // It is supported in default and structure visualisers; atom visualiser uses "atom" display mode par default.
+            // To use "atom" mode make sure the environments are provided.
+            "mode": "atom" | "structure",
             // settings related to the map
             "map": {
                 // x axis settings
@@ -282,7 +286,7 @@ contains the following fields and values:
                     "bonds": true,
                     // show the atoms
                     "atoms": true,
-                    //use space filling representation
+                    // use space filling representation
                     "spaceFilling": false,
                     // show atoms labels
                     "atomLabels": false,

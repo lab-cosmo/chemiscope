@@ -5,6 +5,7 @@
 
 import { Arrow, CustomShape, Cylinder, Ellipsoid, Sphere } from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
+import { DisplayMode } from './indexer';
 
 /** A dataset containing all the data to be displayed. */
 export interface Dataset {
@@ -287,6 +288,31 @@ export function validateDataset(o: JsObject): void {
         envCount,
         o.parameters as Record<string, JsObject> | undefined
     );
+}
+
+/**
+ * Determines the display mode for the given dataset.
+ * @param dataset the dataset for which the display mode is determined
+ */
+export function getMode(dataset: Dataset): DisplayMode {
+    const mode = dataset.settings?.mode as DisplayMode | undefined;
+    const getModeProps = (mode: DisplayMode) =>
+        Object.values(dataset.properties).filter((p) => p.target === mode);
+
+    // Mode is specified in settings
+    if (mode !== undefined) {
+        if (mode === 'atom' && dataset.environments === undefined) {
+            throw new Error('To use "atom" mode, "settings.properties" should be provided');
+        }
+        if (getModeProps(mode).length < 2) {
+            throw new Error(
+                `The provided mode (${mode}) cannot be used. Make sure there are at least two corresponding properties ('settings.properties').`
+            );
+        }
+        return mode;
+    }
+    const atomProperties = getModeProps('atom');
+    return dataset.environments !== undefined && atomProperties.length > 1 ? 'atom' : 'structure';
 }
 
 function checkMetadata(o: JsObject) {

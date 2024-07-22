@@ -76,11 +76,11 @@ export class DisplayModeToggle {
 
         // Handle structure button
         const structureBtn = toggleContainer.querySelector('#structure-btn') as HTMLButtonElement;
-        structureBtn.onclick = () => this._handleToggle('structure');
+        structureBtn.onclick = () => this._select('structure');
 
         // Handle atom button
         const atomBtn = toggleContainer.querySelector('#atom-btn') as HTMLButtonElement;
-        atomBtn.onclick = () => this._handleToggle('atom');
+        atomBtn.onclick = () => this._select('atom');
         return toggleContainer.firstElementChild as HTMLElement;
     }
 
@@ -88,7 +88,7 @@ export class DisplayModeToggle {
      * Handle toggle button click
      * @param mode flag indicating if the toggle should be checked
      */
-    private _handleToggle(mode: DisplayMode): void {
+    private _select(mode: DisplayMode): void {
         const isPerAtom = mode === 'atom';
 
         // Activate/desactivate structure button
@@ -106,17 +106,10 @@ export class DisplayModeToggle {
     }
 
     /**
-     * Remove HTML added by DisplayModeToggle in the current document
-     */
-    remove(): void {
-        this._shadow.host.remove();
-    }
-
-    /**
      * Toggle loading spinner
      * @param visible flag to toggle
      */
-    loader(visible: boolean): void {
+    public loader(visible: boolean): void {
         // Show/hide spinnder
         const spinnerElement = this._toggleContainer.querySelector(
             '#chsp-mode-spinner'
@@ -132,5 +125,12 @@ export class DisplayModeToggle {
                 button.removeAttribute('disabled');
             }
         });
+    }
+
+    /**
+     * Remove HTML added by DisplayModeToggle in the current document
+     */
+    public remove(): void {
+        this._shadow.host.remove();
     }
 }

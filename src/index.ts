@@ -19,7 +19,7 @@ import {
     Target,
     UserStructure,
 } from './dataset';
-import { JsObject, validateDataset } from './dataset';
+import { JsObject, getMode, validateDataset } from './dataset';
 import {
     GUID,
     PositioningCallback,
@@ -141,6 +141,10 @@ function validateSettings(settings: JsObject) {
                     throw Error('"settings.pinned" must be an array of number');
                 }
             }
+        } else if (key === 'mode') {
+            if (!['atom', 'structure'].includes(settings.mode as string)) {
+                throw Error('"settings.mode" should be either "atom" or "structure"');
+            }
         } else {
             throw Error(`invalid key "${key}" in settings`);
         }
@@ -175,8 +179,8 @@ class DefaultVisualizer {
     public structure: ViewersGrid;
 
     private _indexer: EnvironmentIndexer;
-    // Display mode of the widgets
-    private _mode: DisplayMode;
+    // Display mode of the widgets, structure par default
+    private _mode: DisplayMode = 'structure';
     // Stores raw input input so we can give it back later
     private _dataset: Dataset;
     // Keep the list of pinned environments around to be able to apply settings
@@ -193,7 +197,7 @@ class DefaultVisualizer {
         this._dataset = dataset;
         this._pinned = [];
 
-        this._mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._mode = getMode(dataset);
         this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
@@ -261,41 +265,11 @@ class DefaultVisualizer {
 
         // Check if toggle should be visible
         const newMode = this._mode === 'atom' ? 'structure' : 'atom';
-        const noModeProps =
-            Object.values(dataset.properties).filter((p) => p.target === newMode).length < 2;
-        if (!(dataset.environments === undefined || noModeProps)) {
+        const modeProps = Object.values(dataset.properties).filter((p) => p.target === newMode);
+        if (dataset.environments !== undefined && modeProps.length > 1) {
             // Initiate toggle
             this._toggle = new DisplayModeToggle(config.map, this._mode === 'atom');
-
-            // Add callback
-            this._toggle.onchange = (mode: DisplayMode) => {
-                // Check if mode actually new
-                if (this._mode !== mode) {
-                    // Show loader
-                    this._toggle?.loader(true);
-
-                    // Update the current mode
-                    this._mode = mode;
-
-                    // Use setTimeout to ensure the loader is shown before starting async operations
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    setTimeout(async () => {
-                        try {
-                            // Proceed with EnvironmentInfo
-                            this.info.switchMode(this._mode);
-
-                            // Proceed with PropertiesMap
-                            await this.map.switchMode(this._mode);
-
-                            // Proceed with ViewersGrid
-                            await this.structure.switchMode(this._mode);
-                        } finally {
-                            // Hide loader
-                            this._toggle?.loader(false);
-                        }
-                    }, 0);
-                }
-            };
+            this._toggle.onchange = (mode: DisplayMode) => this._switchMode(mode);
         }
 
         // information table & slider setup
@@ -347,6 +321,41 @@ class DefaultVisualizer {
     }
 
     /**
+     * Update all elements to the related display mode
+     * @param mode visualisation display mode (atom or structure)
+     */
+    private _switchMode(mode: DisplayMode) {
+        // Check if mode actually new
+        if (this._mode !== mode) {
+            assert(this._toggle !== undefined);
+
+            // Show loader
+            this._toggle.loader(true);
+
+            // Update the current mode
+            this._mode = mode;
+
+            // Use setTimeout to ensure the loader is shown before starting async operations
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            setTimeout(async () => {
+                try {
+                    // Proceed with EnvironmentInfo
+                    this.info.switchMode(this._mode);
+
+                    // Proceed with PropertiesMap
+                    await this.map.switchMode(this._mode);
+
+                    // Proceed with ViewersGrid
+                    await this.structure.switchMode(this._mode);
+                } finally {
+                    // Hide loader
+                    this._toggle?.loader(false);
+                }
+            }, 0);
+        }
+    }
+
+    /**
      * Removes all the chemiscope widgets from the DOM
      */
     public remove(): void {
@@ -364,6 +373,7 @@ class DefaultVisualizer {
      */
     public saveSettings(): Settings {
         return {
+            mode: this._mode,
             map: this.map.saveSettings(),
             pinned: this.structure.pinned().map((value) => value.environment),
             structure: this.structure.saveSettings(),
@@ -535,7 +545,7 @@ class StructureVisualizer {
         validateConfig(config as unknown as JsObject, ['meta', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
-        this._mode = dataset.environments === undefined ? 'structure' : 'atom';
+        this._mode = getMode(dataset);
         this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
@@ -628,6 +638,7 @@ class StructureVisualizer {
      */
     public saveSettings(): Settings {
         return {
+            mode: this._mode,
             pinned: this.structure.pinned().map((value) => value.environment),
             structure: this.structure.saveSettings(),
         };
@@ -689,6 +700,9 @@ class MapVisualizer {
 
     private _indexer: EnvironmentIndexer;
 
+    // Display mode of the map widget, structure par default
+    private _mode: DisplayMode = 'structure';
+
     // the constructor is private because the main entry point is the static
     // `load` function
     private constructor(config: MapConfig, dataset: Dataset) {
@@ -717,15 +731,12 @@ class MapVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
-        // We always use structure as a display mode
-        const mode = 'structure';
-
         // map setup
         this.map = new PropertiesMap(
             config.map,
             getMapSettings(dataset.settings),
             this._indexer,
-            mode,
+            this._mode,
             dataset.properties
         );
 
@@ -738,7 +749,7 @@ class MapVisualizer {
         };
 
         // information table & slider setup
-        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer, mode);
+        this.info = new EnvironmentInfo(config.info, dataset.properties, this._indexer, this._mode);
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
         };
@@ -748,7 +759,7 @@ class MapVisualizer {
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
         if (dataset.environments !== undefined) {
-            initial = this._indexer.fromEnvironment(0, mode);
+            initial = this._indexer.fromEnvironment(0, this._mode);
         }
 
         if (dataset.settings && dataset.settings.pinned) {
@@ -758,7 +769,7 @@ class MapVisualizer {
             ) {
                 throw Error('settings.pinned must be an array of numbers');
             }
-            initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], mode);
+            initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], this._mode);
         }
 
         this.map.addMarker('map-0' as GUID, 'red', initial);
@@ -779,6 +790,7 @@ class MapVisualizer {
      */
     public saveSettings(): Settings {
         return {
+            mode: this._mode,
             map: this.map.saveSettings(),
         };
     }
