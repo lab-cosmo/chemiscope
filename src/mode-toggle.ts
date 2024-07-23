@@ -57,10 +57,7 @@ export class DisplayModeToggle {
     private _createToggleElement(isPerAtom: boolean): HTMLElement {
         const toggleContainer = document.createElement('div');
         toggleContainer.innerHTML = `
-            <div class="chsp-mode-toggle">
-                <!-- Label -->
-                <span>Visualization mode:</span>
-
+            <div class="chsp-mode-toggle" title="Toggles between structure and environment-based data">
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Mode toggle">
                     <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
@@ -132,5 +129,6 @@ export class DisplayModeToggle {
      */
     public remove(): void {
         this._shadow.host.remove();
+        console.log("removed itoggle div");
     }
 }
