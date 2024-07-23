@@ -329,6 +329,12 @@ export class PropertiesMap {
 
         // Process markers to correctly set then to the updated map
         this._handleMarkers();
+        if (this._active !== undefined) {
+            const activeMarker = this._selected.get(this._active);
+            if (activeMarker !== undefined) {
+                this.onselect(this._indexer.fromEnvironment(activeMarker.current, this._mode));
+            }
+        }
 
         // Update the map options based on the chosen mode
         this._setupMapOptions();

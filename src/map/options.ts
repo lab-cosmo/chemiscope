@@ -83,7 +83,7 @@ export class MapOptions extends OptionsGroup {
     };
 
     /// The HTML button to open the settings modal
-    private _openModal!: HTMLElement;
+    private _openModal: HTMLElement;
     /// The Modal instance
     private _modal: Modal;
     // Callback to get the initial positioning of the settings modal.

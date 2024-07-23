@@ -353,8 +353,11 @@ export class MoleculeViewer {
         this._connectOptions();
 
         // Adapt settings to the display mode
-        this._options.environments.center.value = envView;
-        this._options.environments.activated.value = envView;
+        if (envView) {
+            this._options.environments.activated.enable();
+        } else {
+            this._options.environments.activated.disable();
+        }
     }
 
     /**
