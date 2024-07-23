@@ -22,9 +22,9 @@ export class DisplayModeToggle {
      * Create a new {@link DisplayModeToggle} instance
      *
      * @param element HTML element or HTML id of the DOM element where the toggle will be attached
-     * @param isPerAtom flag indicating if the atom mode should be checked
+     * @param mode display mode, either per environements or structures
      */
-    constructor(element: string | HTMLElement, isPerAtom: boolean = true) {
+    constructor(element: string | HTMLElement, mode: DisplayMode) {
         // Create a container element
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
@@ -35,7 +35,7 @@ export class DisplayModeToggle {
         this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
 
         // Create a toggle element
-        this._toggleContainer = this._createToggleElement(isPerAtom);
+        this._toggleContainer = this._createToggleElement(mode === 'atom');
         this._shadow.appendChild(this._toggleContainer);
 
         // Decrease size of map to get space for display mode toggle

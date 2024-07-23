@@ -338,9 +338,6 @@ export class PropertiesMap {
 
         // Re-render the plot with the new data and layout
         await this._react(this._getTraces(), this._getLayout());
-
-        // Run relayout to correctly update the html (for sphinx-gallery)
-        this._relayout(this._getLayout());
     }
 
     /**
@@ -617,7 +614,7 @@ export class PropertiesMap {
      */
     private _setupMapOptions() {
         // Helper function to update `_option` values with related mode configuration
-        const applyMapOptions = (properties: NumericProperties) => {
+        const refreshMapOptions = (properties: NumericProperties) => {
             // Check if mode's properties actually exist
             if (properties && Object.keys(properties).length > 1) {
                 // Delete previous mode modal from DOM
@@ -635,9 +632,9 @@ export class PropertiesMap {
 
         // Apply structure or atom options based on mode
         if (this._mode !== 'atom') {
-            applyMapOptions(this._data['structure']);
+            refreshMapOptions(this._data['structure']);
         } else {
-            applyMapOptions(this._data['atom']);
+            refreshMapOptions(this._data['atom']);
         }
     }
 
@@ -708,7 +705,7 @@ export class PropertiesMap {
      */
     private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            Plotly.react(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
+            Plotly.react(this._plot, traces, layout)
                 .then(() => {
                     resolve();
                 })

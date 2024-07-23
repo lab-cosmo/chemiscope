@@ -268,7 +268,7 @@ class DefaultVisualizer {
         const modeProps = Object.values(dataset.properties).filter((p) => p.target === newMode);
         if (dataset.environments !== undefined && modeProps.length > 1) {
             // Initiate toggle
-            this._toggle = new DisplayModeToggle(config.map, this._mode === 'atom');
+            this._toggle = new DisplayModeToggle(config.map, this._mode);
             this._toggle.onchange = (mode: DisplayMode) => this._switchMode(mode);
         }
 
