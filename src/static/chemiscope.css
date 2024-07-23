@@ -551,8 +551,9 @@
 
 .chsp-mode-toggle {
     padding-left: 5px;
+    padding-right: 5px;
     display: flex;
-    align-items: center;
+    justify-content: flex-end;
     gap: 5px;
 }
 

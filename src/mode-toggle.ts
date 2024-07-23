@@ -4,11 +4,11 @@ import { DisplayMode } from './indexer';
 
 /**
  * The {@link DisplayModeToggle} class represents a UI component for switching between two
- * display modes, structures and atoms, by clicking on the respective buttons.
+ * display modes, structures and environments, by clicking on the respective buttons.
  *
  * It automatically adjusts the height of the map element to ensure there is space for the toggle.
  * The component uses Shadow DOM to encapsulate styles.
- * A callback function (`onchange`) is triggered whenever the toggle value (atom / structure) is changed
+ * A callback function (`onchange`) is triggered whenever the toggle value (structures/environments) is changed
  */
 export class DisplayModeToggle {
     /// Shadow root for isolation
@@ -59,7 +59,7 @@ export class DisplayModeToggle {
         toggleContainer.innerHTML = `
             <div class="chsp-mode-toggle">
                 <!-- Label -->
-                <span>Visualisation mode:</span>
+                <span>Visualization mode:</span>
 
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Mode toggle">
