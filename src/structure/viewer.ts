@@ -322,6 +322,47 @@ export class MoleculeViewer {
     }
 
     /**
+     * Recreates structure options
+     * @param envView display mode, true if per environments
+     * @param propertiesName property names used as the options in the modal
+     */
+    public refreshOptions(envView: boolean, propertiesName?: string[]): void {
+        // Save the current adopted styles
+        const adoptedStyleSheets = this._options.modal.shadow.adoptedStyleSheets;
+
+        // Remove the current modal
+        this._options.remove();
+
+        // Recreate the StructureOptions
+        this._options = new StructureOptions(
+            this._root,
+            (rect) => this.positionSettingsModal(rect),
+            propertiesName
+        );
+
+        // Restore the previously saved styles
+        this._options.modal.shadow.adoptedStyleSheets = adoptedStyleSheets;
+
+        // Cache the button elements
+        this._colorReset = this._options.getModalElement<HTMLButtonElement>('atom-color-reset');
+        this._colorMoreOptions =
+            this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
+        this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
+
+        // Connect event handlers for the new options
+        this._connectOptions();
+
+        // Adapt settings to the display mode
+        if (envView) {
+            this._options.environments.activated.enable();
+            this._options.environments.center.enable();
+        } else {
+            this._options.environments.activated.disable();
+            this._options.environments.center.disable();
+        }
+    }
+
+    /**
      * Remove all HTML added by this {@link MoleculeViewer} in the current document
      */
     public remove(): void {
@@ -517,7 +558,7 @@ export class MoleculeViewer {
         this._updateStyle();
 
         if (!keepOrientation) {
-            this.resetView();
+            this._resetView();
         }
 
         if (this._options.environments.center.value) {
@@ -582,7 +623,7 @@ export class MoleculeViewer {
 
         if (this._highlighted !== undefined && centerView) {
             if (!this._options.keepOrientation.value) {
-                this.resetView();
+                this._resetView();
             }
 
             this._centerView();
@@ -813,7 +854,7 @@ export class MoleculeViewer {
         });
         this._options.environments.center.onchange.push((center) => {
             if (!this._options.keepOrientation.value) {
-                this.resetView();
+                this._resetView();
             }
 
             if (center) {
@@ -1032,7 +1073,7 @@ export class MoleculeViewer {
 
         // Reset zoom level and centering when double clicked
         this._root.ondblclick = () => {
-            this.resetView();
+            this._resetView();
 
             if (this._options.environments.center.value) {
                 this._centerView();
@@ -1634,7 +1675,7 @@ export class MoleculeViewer {
      * Reset the view by re-centering it and zooming to fit the model as much as
      * possible inside the views.
      */
-    public resetView(): void {
+    private _resetView(): void {
         this._viewer.zoomTo();
         this._viewer.zoom(2.0);
         this._viewer.setSlab(-1000, 1000);

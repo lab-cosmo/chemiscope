@@ -150,12 +150,6 @@ export class ViewersGrid {
     private _cellsData: Map<GUID, ViewerGridData>;
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
-
-    /// Settings related to the stucture mode
-    private _structureSettings?: Settings[];
-    /// Settings related to the atom mode
-    private _atomSettings?: Settings[];
-
     /// Store the `onSettingChange` callbacks to be able to add them to new
     /// viewers in the grid
     private _onSettingChangeCallbacks: Array<(keys: string[], value: unknown) => void>;
@@ -491,18 +485,13 @@ export class ViewersGrid {
     public async switchMode(mode: DisplayMode): Promise<void> {
         // Update widget display mode
         this._mode = mode;
-        const isAtomMode = this._isPerAtom();
 
         // Set/reset the environements of grid and viewers based on the mode
-        this._updateEnvironments(isAtomMode);
-
-        // Update structure settings
-        const settings = this._getModeSettings(isAtomMode);
-        this.applySettings(settings);
+        this._updateEnvironments(this._mode === 'atom');
 
         // Refresh each cell with the new mode
         const refreshPromises = Array.from(this._cellsData.entries()).map(([guid, data]) =>
-            this._refreshCell(guid, data, isAtomMode)
+            this._refreshCell(guid, data, this._mode === 'atom')
         );
 
         // Wait for all refreshes to complete
@@ -511,12 +500,12 @@ export class ViewersGrid {
 
     /**
      * Updates the environments based on the mode
-     * @param isAtomMode indicates whether the current dispay mode is 'atom'
+     * @param envView indicates whether the current dispay mode per environments
      */
-    private _updateEnvironments(isAtomMode: boolean): void {
+    private _updateEnvironments(envView: boolean): void {
         // Proceed with mode changes by setting/resetting the environments
-        this._environments = isAtomMode ? this._calculatedEnvironments : undefined;
-        if (isAtomMode) {
+        this._environments = envView ? this._calculatedEnvironments : undefined;
+        if (envView) {
             assert(this._environments !== undefined);
             for (const data of this._cellsData.values()) {
                 data.viewer.environments = this._environments[data.current.structure];
@@ -529,61 +518,21 @@ export class ViewersGrid {
      *
      * @param guid id of the cell to refresh
      * @param data indexes associated with the viewer grid
-     * @param isAtomMode indicates whether the current dispay mode is 'atom'
+     * @param envView indicates whether the current dispay mode is per environments
      */
-    private async _refreshCell(
-        guid: GUID,
-        data: ViewerGridData,
-        isAtomMode: boolean
-    ): Promise<void> {
+    private async _refreshCell(guid: GUID, data: ViewerGridData, envView: boolean): Promise<void> {
         // Set/remove atom from indexes based on mode
-        data.current.atom = isAtomMode
+        data.current.atom = envView
             ? this._indexer.fromEnvironment(data.current.environment, this._mode).atom
             : undefined;
         this._cellsData.set(guid, data);
 
+        // Recreate stucture settings modal
+        const propertyNames = this._properties ? Object.keys(this._properties) : [];
+        data.viewer.refreshOptions(envView, propertyNames);
+
         // Load the viewer with the current indexes
         await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
-
-        // Reset the viewer view if in structure mode
-        if (!isAtomMode) {
-            data.viewer.resetView();
-        }
-    }
-
-    /**
-     * Retrieve the settings related to the mode
-     * @param isAtomMode indicates whether the current dispay mode is 'atom'
-     */
-    private _getModeSettings(isAtomMode: boolean): Settings[] {
-        // Helper function to set/reset properties with related to mode
-        const validateSettingsByMode = (settings: Settings[], isAtomMode: boolean): Settings[] => {
-            return settings.map((settingsInstance: Settings) => {
-                const environments = settingsInstance.environments as Settings;
-                environments.activated = isAtomMode;
-                environments.center = isAtomMode;
-                return settingsInstance;
-            });
-        };
-
-        // Check if the cells data length was changed to adapt the number of settings accordingly
-        const needsStructureUpdate = this._structureSettings?.length !== this._cellsData.size;
-        const needsAtomUpdate = this._atomSettings?.length !== this._cellsData.size;
-
-        // Apply structure or atom options based on mode
-        if (!isAtomMode) {
-            // Initialize structure settings if not done yet or if the cells number were changed
-            if (this._structureSettings === undefined || needsStructureUpdate) {
-                this._structureSettings = validateSettingsByMode(this.saveSettings(), false);
-            }
-            return this._structureSettings;
-        }
-
-        // Initialize atom settings if not done yet or if the cells number were changed
-        if (this._atomSettings === undefined || needsAtomUpdate) {
-            this._atomSettings = validateSettingsByMode(this.saveSettings(), true);
-        }
-        return this._atomSettings;
     }
 
     /**
@@ -665,11 +614,6 @@ export class ViewersGrid {
         }
     }
 
-    /** Get indicator if the display mode is par atoms */
-    private _isPerAtom(): boolean {
-        return this._mode === 'atom';
-    }
-
     /**
      * Displays the specified structure and atom in the viewer
      *
@@ -689,7 +633,7 @@ export class ViewersGrid {
         }
 
         // Toggle the highlight for the atom in the viewer
-        viewer.highlight(this._isPerAtom() ? indexes.atom : undefined);
+        viewer.highlight(this._mode === 'atom' ? indexes.atom : undefined);
 
         // Update the current indexes in the data
         data.current = indexes;
@@ -718,7 +662,7 @@ export class ViewersGrid {
                 options.environments = this._environments[structureIndex];
 
                 // If the mode is per atom, add the atom index to the highlight
-                if (this._isPerAtom()) {
+                if (this._mode === 'atom') {
                     options.highlight = atomIndex;
                 }
             }
@@ -927,7 +871,7 @@ export class ViewersGrid {
                 );
 
                 viewer.onselect = (atom: number) => {
-                    if (!this._isPerAtom() || this._active !== cellGUID) {
+                    if (this._mode !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
 
