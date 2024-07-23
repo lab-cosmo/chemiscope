@@ -375,7 +375,9 @@ class DefaultVisualizer {
         return {
             mode: this._mode,
             map: this.map.saveSettings(),
-            pinned: this.structure.pinned().map((value) => value.environment),
+            pinned: this.structure
+                .pinned()
+                .map((value) => (this._mode === 'atom' ? value.environment : value.structure)),
             structure: this.structure.saveSettings(),
         };
     }
