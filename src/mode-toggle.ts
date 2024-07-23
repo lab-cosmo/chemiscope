@@ -64,7 +64,7 @@ export class DisplayModeToggle {
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Mode toggle">
                     <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
-                    <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">Atoms</button>
+                    <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">Environments</button>
                 </div>
 
                 <!-- Spinner -->
