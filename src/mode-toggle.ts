@@ -15,6 +15,8 @@ export class DisplayModeToggle {
     private _shadow: ShadowRoot;
     /// Toggle buttons container element
     private _toggleContainer: HTMLElement;
+    /// Reference to the container element
+    private _containerElement: HTMLElement;
     /// Callback fired when the user changes the toggle value
     public onchange: (mode: DisplayMode) => void;
 
@@ -26,9 +28,9 @@ export class DisplayModeToggle {
      */
     constructor(element: string | HTMLElement, mode: DisplayMode) {
         // Create a container element
-        const containerElement = getElement(element);
+        this._containerElement = getElement(element);
         const hostElement = document.createElement('div');
-        containerElement.appendChild(hostElement);
+        this._containerElement.appendChild(hostElement);
 
         // Attach to shadow
         this._shadow = hostElement.attachShadow({ mode: 'open' });
@@ -39,7 +41,7 @@ export class DisplayModeToggle {
         this._shadow.appendChild(this._toggleContainer);
 
         // Decrease size of map to get space for display mode toggle
-        containerElement.style.setProperty(
+        this._containerElement.style.setProperty(
             'height',
             `calc(100% - ${this._toggleContainer.offsetHeight}px)`
         );
@@ -58,15 +60,15 @@ export class DisplayModeToggle {
         const toggleContainer = document.createElement('div');
         toggleContainer.innerHTML = `
             <div class="chsp-mode-toggle" title="Toggles between structure and environment-based data">
+                <!-- Spinner -->
+                <div id="chsp-mode-spinner" class="chsp-mode-spinner spinner-border text-secondary" role="status" style="display: none;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Mode toggle">
                     <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
                     <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">Environments</button>
-                </div>
-
-                <!-- Spinner -->
-                <div id="chsp-mode-spinner" class="chsp-mode-spinner spinner-border text-secondary" role="status" style="display: none;">
-                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         `;
@@ -129,6 +131,8 @@ export class DisplayModeToggle {
      */
     public remove(): void {
         this._shadow.host.remove();
-        console.log("removed itoggle div");
+
+        // Reset containerElement height back to 100%
+        this._containerElement.style.setProperty('height', '100%');
     }
 }
