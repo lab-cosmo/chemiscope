@@ -349,6 +349,10 @@ export class MoleculeViewer {
             this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
+        // Disable as by default, color property is element
+        this._colorReset.disabled = true;
+        this._colorMoreOptions.disabled = true;
+
         // Connect event handlers for the new options
         this._connectOptions();
 

@@ -218,9 +218,9 @@ contains the following fields and values:
         //
         // Each value inside the settings group is optional
         "settings": {
-            // Visualisation display mode, either per atoms or per structure.
-            // It is supported in default and structure visualisers; atom visualiser uses "atom" display mode par default.
-            // To use "atom" mode make sure the environments are provided.
+            // Visualization display mode, either per local environments or per structure.
+            // Supported in default and structure visualizers; atom visualizer uses the "atom" mode by default.
+            // To use "atom" mode, ensure that the environments are provided.
             "mode": "atom" | "structure",
             // settings related to the map
             "map": {
