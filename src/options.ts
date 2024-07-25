@@ -331,15 +331,18 @@ export abstract class OptionsGroup {
             assert(keys.length >= 1);
             const value = option.value;
 
-            let root = settings as any;
-            for (const key of keys.slice(0, keys.length - 1)) {
-                if (!(key in root)) {
-                    root[key] = {};
+            // Save property value if valid
+            if (value !== undefined || value !== null || !Number.isNaN(value)) {
+                let root = settings as any;
+                for (const key of keys.slice(0, keys.length - 1)) {
+                    if (!(key in root)) {
+                        root[key] = {};
+                    }
+                    root = root[key];
                 }
-                root = root[key];
+                const lastKey = keys[keys.length - 1];
+                root[lastKey] = value;
             }
-            const lastKey = keys[keys.length - 1];
-            root[lastKey] = value;
         });
         /* eslint-enable */
         return settings;
@@ -371,7 +374,15 @@ export abstract class OptionsGroup {
             const lastKey = keys[keys.length - 1];
 
             if (lastKey in root) {
-                option.value = root[lastKey];
+                const value = root[lastKey];
+
+                // send warning if the value is invalid and omit applying it
+                if (value === undefined || value === null || Number.isNaN(value)) {
+                    sendWarning(`ignored setting '${lastKey}' with invalid value '${value}'`);
+                    return;
+                }
+
+                option.value = value;
 
                 // remove used keys from the settings to be able to warn on
                 // unused keys
