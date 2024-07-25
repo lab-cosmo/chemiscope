@@ -269,6 +269,9 @@ export class MoleculeViewer {
         this._colorMoreOptions =
             this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
 
+        // Disable as by default color property is element, so no color bar available
+        this._colorMoreOptions.disabled = true;
+
         this._connectOptions();
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
