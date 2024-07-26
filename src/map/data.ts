@@ -4,7 +4,7 @@
  */
 
 import { Property } from '../dataset';
-import { sendWarning } from '../utils';
+import { logger } from '../utils';
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
@@ -146,7 +146,7 @@ export class MapData {
             try {
                 property = propertyToNumeric(name, properties[name]);
             } catch (e) {
-                sendWarning(`warning: ${(e as Error).message}`);
+                logger.warn(`warning: ${(e as Error).message}`);
                 continue;
             }
             if (property !== undefined) {

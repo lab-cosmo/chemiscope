@@ -5,7 +5,7 @@
 
 import assert from 'assert';
 
-import { getByID, sendWarning } from './utils';
+import { getByID, logger } from './utils';
 import { Settings } from './dataset';
 
 /**
@@ -385,7 +385,7 @@ export abstract class OptionsGroup {
             /* eslint-enable */
         });
         if (Object.keys(copy).length !== 0) {
-            sendWarning(`ignored unknown settings '${JSON.stringify(copy)}'`);
+            logger.warn(`ignored unknown settings '${JSON.stringify(copy)}'`);
         }
     }
 

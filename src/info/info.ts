@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
 import { EnvironmentIndexer, Indexes } from '../indexer';
-import { binarySearch, getElement, sendWarning } from '../utils';
+import { binarySearch, getElement, logger } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
 
@@ -225,7 +225,7 @@ export class EnvironmentInfo {
             if (this._atom !== undefined) {
                 const activeAtoms = this._indexer.activeAtoms(structure);
                 if (activeAtoms.length === 0) {
-                    sendWarning(
+                    logger.warn(
                         `can not change to structure ${
                             structure + 1
                         } which does not contain any active atom`
@@ -335,7 +335,7 @@ export class EnvironmentInfo {
             if (indexes === undefined) {
                 const structure = this._structure.slider.value();
                 const atom = this._atom.slider.value();
-                sendWarning(
+                logger.warn(
                     `environment for atom ${atom} in structure ${structure} is not part of this dataset`
                 );
                 return;

@@ -8,7 +8,7 @@ import assert from 'assert';
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './assignBonds';
 
-import { arrayMaxMin, getElement, sendWarning, unreachable } from '../utils';
+import { arrayMaxMin, getElement, logger, unreachable } from '../utils';
 import { PositioningCallback } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
@@ -851,7 +851,7 @@ export class MoleculeViewer {
                 const values = this._colorValues(property, 'linear');
 
                 if (values.some((v) => v === null)) {
-                    sendWarning(
+                    logger.warn(
                         'The selected structure has undefined properties for some atoms, these atoms will be colored in light gray.'
                     );
                 }
@@ -887,7 +887,7 @@ export class MoleculeViewer {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
             if (min > max) {
-                sendWarning(
+                logger.warn(
                     `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
                 );
                 if (minOrMax === 'min') {

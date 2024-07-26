@@ -11,7 +11,7 @@ import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback } from '../utils';
-import { arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
+import { arrayMaxMin, getByID, logger, makeDraggable } from '../utils';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 
@@ -343,7 +343,7 @@ export class MapOptions extends OptionsGroup {
             // If we need more symbols than available, we'll send a warning
             // and repeat existing ones
             if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
-                sendWarning(
+                logger.warn(
                     `${symbolsCount} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`
                 );
             }

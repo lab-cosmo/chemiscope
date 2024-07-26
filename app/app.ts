@@ -3,7 +3,7 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { getByID, addWarningHandler } from '../src/utils';
+import { getByID, logger } from '../src/utils';
 import { Dataset, Structure } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
 
@@ -35,7 +35,7 @@ export class ChemiscopeApp {
         versionDisplay.innerText = `version ${version()}`;
 
         // handle warnings
-        addWarningHandler((message) => displayWarning(message));
+        logger.addHandler('warn', (message) => displayWarning(message));
 
         // when the window is resized, change the size available to the info
         // widget

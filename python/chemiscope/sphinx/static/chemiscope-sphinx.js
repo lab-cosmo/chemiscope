@@ -12,7 +12,8 @@ const VISUALISER_MODE = {
  */
 async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
     // Handle warnings
-    Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
+    Chemiscope.logger.addHandler('warning', (message) => displayWarning(divId, message));
+
     // Display loading
     toggleLoadingVisible(divId, true);
 

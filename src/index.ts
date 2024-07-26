@@ -19,14 +19,7 @@ import {
     UserStructure,
 } from './dataset';
 import { JsObject, validateDataset } from './dataset';
-import {
-    GUID,
-    PositioningCallback,
-    WarningHandler,
-    addWarningHandler,
-    getNextColor,
-    sendWarning,
-} from './utils';
+import { GUID, PositioningCallback, WarningHandler, getNextColor, logger } from './utils';
 import {
     ArrowParameters,
     CustomShapeParameters,
@@ -649,7 +642,7 @@ class MapVisualizer {
         for (const key in dataset.properties) {
             const property = dataset.properties[key];
             if (property.target === 'atom') {
-                sendWarning('unsupported per-atom property in a map-only viewer');
+                logger.warn('unsupported per-atom property in a map-only viewer');
             } else {
                 assert(property.target === 'structure');
                 n_structure = property.values.length;
@@ -782,8 +775,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): Settings {
 }
 
 export {
-    // free functions
-    addWarningHandler,
+    // free function
     version,
     // dataset definitions
     Dataset,

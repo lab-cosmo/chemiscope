@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin, logger } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperty } from './data';
@@ -500,7 +500,7 @@ export class PropertiesMap {
                 arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
                 axis.min.value <= 0
             ) {
-                sendWarning(
+                logger.warn(
                     'This property contains negative values. Note that taking the log will discard them.'
                 );
             }
@@ -552,7 +552,7 @@ export class PropertiesMap {
                 const min = axis.min.value;
                 const max = axis.max.value;
                 if (min > max) {
-                    sendWarning(
+                    logger.warn(
                         `The inserted min and max values in ${name} are such that min > max! The last inserted value was reset.`
                     );
                     if (minOrMax === 'min') {
@@ -753,7 +753,7 @@ export class PropertiesMap {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
             if (min > max) {
-                sendWarning(
+                logger.warn(
                     `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
                 );
                 if (minOrMax === 'min') {
@@ -790,7 +790,7 @@ export class PropertiesMap {
             const someValuesNaN = values.some((value) => isNaN(value));
 
             if (allValuesNaN) {
-                sendWarning(
+                logger.warn(
                     `The selected property contains only values ${invalidValues}. ` +
                         'To display this property, select an appropriate color scale. ' +
                         `The ${changed} will be set to its last value.`
@@ -804,7 +804,7 @@ export class PropertiesMap {
 
                 return false;
             } else if (someValuesNaN) {
-                sendWarning(
+                logger.warn(
                     `The selected property contains some values ${invalidValues}. ` +
                         'These values will be colored in grey.'
                 );
@@ -1146,7 +1146,7 @@ export class PropertiesMap {
             if (min <= max) {
                 return [min, max];
             }
-            sendWarning(
+            logger.warn(
                 `The inserted min and max values in ${axisName} are such that min > max! The default values will be used.`
             );
         }

@@ -1,7 +1,7 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
 import Plausible from 'plausible-tracker';
 
-import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
+import { logger, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -92,7 +92,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
@@ -177,7 +177,7 @@ export class StructureView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
@@ -258,7 +258,7 @@ export class MapView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
             display.getElementsByTagName('p')[0].innerText = message;
