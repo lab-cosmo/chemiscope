@@ -66,7 +66,7 @@ class Logger {
      * @param level - the log level to add the handler for
      * @param callback - the handler function to call when a log of the specified level occurs
      */
-    addHandler(level: Level, callback: (message: string) => void) {
+    addHandler(level: Level, callback: (message: string | Error) => void) {
         if (!this._handlers.has(level)) {
             this._handlers.set(level, new Set());
         }

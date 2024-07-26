@@ -777,6 +777,7 @@ function getMapSettings(settings: Partial<Settings> | undefined): Settings {
 export {
     // free function
     version,
+    logger,
     // dataset definitions
     Dataset,
     Metadata,

@@ -11,14 +11,17 @@ const VISUALISER_MODE = {
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
 async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
-    // Handle warnings
+    // Handle warnings and errors
     Chemiscope.logger.addHandler('warning', (message) => displayWarning(divId, message));
+    Chemiscope.logger.addHandler('error', (error) => displayError(divId, error));
 
     // Display loading
     toggleLoadingVisible(divId, true);
 
     // Load the visualizer
     try {
+        throw Error("HERERER");
+
         const dataset = await fetchDataset(filePath);
 
         // Setup visualizer config
@@ -40,7 +43,7 @@ async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER
 
     // Display errors
     catch (error) {
-        displayWarning(divId, error);
+        Chemiscope.logger.error(error);
     }
 
     // Hide loading
@@ -170,4 +173,21 @@ function displayWarning(divId, message) {
     setTimeout(() => {
         display.style.display = 'none';
     }, 4000);
+}
+
+function displayError(divId, error) {
+    const errorElement = document.getElementById(`${divId}-error-display`);
+    const messageElement = errorElement.querySelector('.error-message');
+    const backtraceElement = errorElement.querySelector('.error-backtrace');
+
+    // Set the error message
+    messageElement.textContent = error.toString();
+
+    // Extract and set the backtrace (stack trace) if available
+    if (error.stack) {
+        backtraceElement.textContent = error.stack;
+    }
+
+    // Show the error element
+    errorElement.style.display = 'flex';
 }

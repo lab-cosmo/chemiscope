@@ -35,7 +35,7 @@ export class ChemiscopeApp {
         versionDisplay.innerText = `version ${version()}`;
 
         // handle warnings
-        logger.addHandler('warn', (message) => displayWarning(message));
+        logger.addHandler('warn', (message) => displayWarning(message as string));
 
         // when the window is resized, change the size available to the info
         // widget
