@@ -1,4 +1,5 @@
 import os
+
 from .jupyter import show
 
 
@@ -103,7 +104,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     # Use default featurizer
     else:
-        X_reduced = soap_pca(frames)
+        X_reduced = soap_pca_featurize(frames)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced

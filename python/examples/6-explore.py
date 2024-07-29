@@ -103,12 +103,12 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 # %%
 #
-# Define the function ``soap_kpca`` which takes one argument (``frames``). This argument
+# Define the function ``soap_kpca_featurize`` which takes one argument (``frames``). This argument
 # contains the structures provided to :py:func:`chemiscope.explore` and is internally
 # passed to the ``featurize`` function.
 
 
-def soap_kpca(frames):
+def soap_kpca_featurize(frames):
     # Initialise soap calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
@@ -138,7 +138,7 @@ def soap_kpca(frames):
 #
 # Provide the created function to :py:func:`chemiscope.explore`.
 
-cs = chemiscope.explore(frames, featurize=soap_kpca)
+cs = chemiscope.explore(frames, featurize=soap_kpca_featurize)
 
 # %%
 #
@@ -146,7 +146,7 @@ cs = chemiscope.explore(frames, featurize=soap_kpca)
 # energy from the frames using :py:func:`chemiscope.extract_properties`.
 
 properties = chemiscope.extract_properties(frames, only=["energy"])
-cs = chemiscope.explore(frames, featurize=soap_kpca, properties=properties)
+cs = chemiscope.explore(frames, featurize=soap_kpca_featurize, properties=properties)
 
 # %%
 #
