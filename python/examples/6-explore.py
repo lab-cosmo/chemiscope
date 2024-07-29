@@ -103,8 +103,9 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 # %%
 #
-# Define the function ``soap_kpca_featurize`` which takes one argument (``frames``). This argument
-# contains the structures provided to :py:func:`chemiscope.explore` and is internally
+# Define the function ``soap_kpca_featurize`` which takes one argument
+# (``frames``). This argument contains the structures provided to
+# :py:func:`chemiscope.explore` and is internally
 # passed to the ``featurize`` function.
 
 
