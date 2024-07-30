@@ -324,26 +324,31 @@ export class PropertiesMap {
      * @param target display target
      */
     public async getTarget(target: DisplayTarget): Promise<void> {
-        // Set new widget target
-        this._target = target;
+        // Check if the target value actually changed
+        if (target !== this._target) {
+            // Set new widget target
+            this._target = target;
 
-        // Process markers to correctly set then to the updated map
-        this._handleMarkers();
-        if (this._active !== undefined) {
-            const activeMarker = this._selected.get(this._active);
-            if (activeMarker !== undefined) {
-                this.onselect(this._indexer.fromEnvironment(activeMarker.current, this._target));
+            // Process markers to correctly set then to the updated map
+            this._handleMarkers();
+            if (this._active !== undefined) {
+                const activeMarker = this._selected.get(this._active);
+                if (activeMarker !== undefined) {
+                    this.onselect(
+                        this._indexer.fromEnvironment(activeMarker.current, this._target)
+                    );
+                }
             }
+
+            // Update the map options based on the chosen target
+            this._setupMapOptions();
+
+            // Append the callbacks to the new options
+            this._connectSettings();
+
+            // Re-render the plot with the new data and layout
+            await this._react(this._getTraces(), this._getLayout());
         }
-
-        // Update the map options based on the chosen target
-        this._setupMapOptions();
-
-        // Append the callbacks to the new options
-        this._connectSettings();
-
-        // Re-render the plot with the new data and layout
-        await this._react(this._getTraces(), this._getLayout());
     }
 
     /**

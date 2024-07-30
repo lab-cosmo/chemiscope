@@ -318,15 +318,22 @@ class DefaultVisualizer {
             delete dataset.settings.map;
             this.applySettings(dataset.settings);
         }
+
+        // Make sure that the provided settings correspond to the settings' target
+        if (this._toggle !== undefined && dataset.settings?.target) {
+            this._switchTarget(this._target, true);
+        }
     }
 
     /**
      * Update all elements to the related display target
      * @param target visualisation display target (atom or structure)
+     * @param rerender flag to reprocess all settings with the same target. Used for the first render
+     *                 to handle all setting properties related to the choosen target
      */
-    private _switchTarget(target: DisplayTarget) {
-        // Check if target actually new
-        if (this._target !== target) {
+    private _switchTarget(target: DisplayTarget, rerender: boolean = false) {
+        // Check if target actually new or it is necessary to re-render with the same target
+        if (rerender || this._target !== target) {
             assert(this._toggle !== undefined);
 
             // Show loader
