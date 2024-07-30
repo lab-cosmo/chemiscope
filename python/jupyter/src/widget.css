@@ -88,3 +88,29 @@ html {
 .chemiscope-meta-and-map .chemiscope-info *::part(chsp-slider) {
     display: none;
 }
+
+.chemiscope-sphinx-warning {
+    display: none;
+    flex-wrap: wrap;
+    border: 1px solid #f0ad4e;
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+
+    button {
+        position: relative;
+        float: right;
+        font-size: 3em;
+        line-height: 1;
+        color: inherit;
+        text-shadow: none;
+        background-color: transparent;
+        border: 0;
+    }
+
+    p {
+        flex: 1;
+    }
+}
