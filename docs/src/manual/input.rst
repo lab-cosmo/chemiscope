@@ -218,10 +218,10 @@ contains the following fields and values:
         //
         // Each value inside the settings group is optional
         "settings": {
-            // Visualization display mode, either per local environments or per structure.
-            // Supported in default and structure visualizers; atom visualizer uses the "atom" mode by default.
-            // To use "atom" mode, ensure that the environments are provided.
-            "mode": "atom" | "structure",
+            // Visualization display target, either per local environments or per structure.
+            // Supported in default and structure visualizers; atom visualizer uses the "atom" target by default.
+            // To use "atom" target, ensure that the environments are provided.
+            "target": "atom" | "structure",
             // settings related to the map
             "map": {
                 // x axis settings

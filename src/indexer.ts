@@ -8,9 +8,9 @@ import { Environment, Structure, UserStructure } from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
- * display one kind at the time, indicated by the {@link DisplayMode}.
+ * display one kind at the time, indicated by the {@link DisplayTarget}.
  */
-export type DisplayMode = 'structure' | 'atom';
+export type DisplayTarget = 'structure' | 'atom';
 
 /**
  * Indexes related to a single entry in a property.
@@ -110,13 +110,13 @@ export class EnvironmentIndexer {
     /**
      * Get a full set of indexes from the global environment index
      * @param environment global index of an environment
-     * @param mode display mode, either structure or atom
+     * @param target display target, either structure or atom
      * @return             full {@link Indexes}, containing the corresponding
      *                     structure / atom indexes
      */
-    public fromEnvironment(environment: number, mode: DisplayMode): Indexes {
+    public fromEnvironment(environment: number, target: DisplayTarget): Indexes {
         // Structure
-        if (mode === 'structure') {
+        if (target === 'structure') {
             return {
                 environment: environment,
                 structure: environment,
@@ -137,7 +137,7 @@ export class EnvironmentIndexer {
 
     /**
      * Get a full set of indexes from the structure/atom indexes
-     * @param  mode      display mode, either atom or structure
+     * @param  target    display target, either atom or structure
      * @param  structure index of the structure in the full structure list
      * @param  atom      index of the atom in the structure
      * @return an {@link Indexes} instance, containing the global environment index;
@@ -145,12 +145,12 @@ export class EnvironmentIndexer {
      *         given atom in the given structure
      */
     public fromStructureAtom(
-        mode: DisplayMode,
+        target: DisplayTarget,
         structure: number,
         atom?: number
     ): Indexes | undefined {
-        // Structure mode
-        if (mode === 'structure') {
+        // Structure target
+        if (target === 'structure') {
             assert(atom === undefined || atom === 0);
             return {
                 environment: structure,
@@ -158,7 +158,7 @@ export class EnvironmentIndexer {
             };
         }
 
-        // Atom mode
+        // Atom target
         assert(this._environments !== undefined);
         assert(atom !== undefined);
 
@@ -181,13 +181,13 @@ export class EnvironmentIndexer {
      * Finds the first atom in the given structure that has associated data
      *
      * @param structure index of the structure to search the corresponding Indexes
-     * @param mode display mode (atom or structure)
+     * @param target display target (atom or structure)
      */
-    public fromStructure(structure: number, mode: DisplayMode): Indexes | undefined {
+    public fromStructure(structure: number, target: DisplayTarget): Indexes | undefined {
         // Iterate over all atoms in the given structure
         for (let atom = 0; atom < this.atomsCount(structure); atom++) {
             // Get indexes for the current structure/atom combination
-            const indexes = this.fromStructureAtom(mode, structure, atom);
+            const indexes = this.fromStructureAtom(target, structure, atom);
             if (indexes !== undefined) {
                 return indexes;
             }

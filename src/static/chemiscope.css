@@ -549,7 +549,7 @@
     grid-column: 1 / span 2;
 }
 
-.chsp-mode-toggle {
+.chsp-target-toggle {
     padding-left: 5px;
     padding-right: 5px;
     display: flex;
@@ -557,7 +557,7 @@
     gap: 5px;
 }
 
-.chsp-mode-spinner {
+.chsp-target-spinner {
     width: 25px;
     height: 25px;
     margin-left: 5px;

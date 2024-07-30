@@ -323,7 +323,7 @@ export class MoleculeViewer {
 
     /**
      * Recreates structure options
-     * @param envView display mode, true if per environments
+     * @param envView display target, true if per environments
      * @param propertiesName property names used as the options in the modal
      */
     public refreshOptions(envView: boolean, propertiesName?: string[]): void {
@@ -356,7 +356,7 @@ export class MoleculeViewer {
         // Connect event handlers for the new options
         this._connectOptions();
 
-        // Adapt settings to the display mode
+        // Adapt settings to the display target
         if (envView) {
             this._options.environments.activated.enable();
         } else {

@@ -15,7 +15,7 @@ import {
     checkStructure,
 } from '../dataset';
 
-import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
@@ -130,13 +130,13 @@ export class ViewersGrid {
     private _structures: Structure[] | UserStructure[];
     /// List of per-atom properties in the dataset
     private _properties: Record<string, number[]>;
-    /// Widget display mode (structure or atom)
-    private _mode: DisplayMode;
+    /// Widget display target (structure or atom)
+    private _target: DisplayTarget;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
     private _environments?: NumberedEnvironment[][];
-    /// Optional list of environments for each structure to save it once we change the mode
+    /// Optional list of environments for each structure to save it once we change the target
     private _calculatedEnvironments?: NumberedEnvironment[][];
 
     /// Maximum number of allowed structure viewers
@@ -163,7 +163,7 @@ export class ViewersGrid {
      * @param indexer      {@link EnvironmentIndexer} used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
-     * @param mode         widget display mode (structure or atom)
+     * @param target       widget display modtargete (structure or atom)
      * @param properties   list of properties
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
@@ -173,12 +173,12 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
-        mode: DisplayMode,
+        target: DisplayTarget,
         properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
-        this._mode = mode;
+        this._target = target;
         this._structures = structures;
         if (properties === undefined) {
             this._properties = {};
@@ -278,7 +278,7 @@ export class ViewersGrid {
      *
      * This will switch to the structure at index `indexes.structure`, and if
      * environments where passed to the constructor and the current display
-     * mode is `'atom'`, highlight the atom-centered environment corresponding
+     * target is `'atom'`, highlight the atom-centered environment corresponding
      * to `indexes.atom`.
      *
      * @param  indexes         structure / atom pair to display
@@ -479,19 +479,19 @@ export class ViewersGrid {
     }
 
     /**
-     * Change widget display mode and adapt the element to the new mode
-     * @param mode display mode
+     * Change widget display target and adapt the element to the new target
+     * @param target display target
      */
-    public async switchMode(mode: DisplayMode): Promise<void> {
-        // Update widget display mode
-        this._mode = mode;
+    public async getTarget(target: DisplayTarget): Promise<void> {
+        // Update widget display target
+        this._target = target;
 
-        // Set/reset the environements of grid and viewers based on the mode
-        this._updateEnvironments(this._mode === 'atom');
+        // Set/reset the environements of grid and viewers based on the target
+        this._updateEnvironments(this._target === 'atom');
 
-        // Refresh each cell with the new mode
+        // Refresh each cell with the new target
         const refreshPromises = Array.from(this._cellsData.entries()).map(([guid, data]) =>
-            this._refreshCell(guid, data, this._mode === 'atom')
+            this._refreshCell(guid, data, this._target === 'atom')
         );
 
         // Wait for all refreshes to complete
@@ -499,11 +499,11 @@ export class ViewersGrid {
     }
 
     /**
-     * Updates the environments based on the mode
-     * @param envView indicates whether the current dispay mode per environments
+     * Updates the environments based on the target
+     * @param envView indicates whether the current dispay target per environments
      */
     private _updateEnvironments(envView: boolean): void {
-        // Proceed with mode changes by setting/resetting the environments
+        // Proceed with target changes by setting/resetting the environments
         this._environments = envView ? this._calculatedEnvironments : undefined;
         if (envView) {
             assert(this._environments !== undefined);
@@ -514,16 +514,16 @@ export class ViewersGrid {
     }
 
     /**
-     * Refreshes the cell and updates its data based on the mode
+     * Refreshes the cell and updates its data based on the target
      *
      * @param guid id of the cell to refresh
      * @param data indexes associated with the viewer grid
-     * @param envView indicates whether the current dispay mode is per environments
+     * @param envView indicates whether the current dispay target is per environments
      */
     private async _refreshCell(guid: GUID, data: ViewerGridData, envView: boolean): Promise<void> {
-        // Set/remove atom from indexes based on mode
+        // Set/remove atom from indexes based on target
         data.current.atom = envView
-            ? this._indexer.fromEnvironment(data.current.environment, this._mode).atom
+            ? this._indexer.fromEnvironment(data.current.environment, this._target).atom
             : undefined;
         this._cellsData.set(guid, data);
 
@@ -633,7 +633,7 @@ export class ViewersGrid {
         }
 
         // Toggle the highlight for the atom in the viewer
-        viewer.highlight(this._mode === 'atom' ? indexes.atom : undefined);
+        viewer.highlight(this._target === 'atom' ? indexes.atom : undefined);
 
         // Update the current indexes in the data
         data.current = indexes;
@@ -661,8 +661,8 @@ export class ViewersGrid {
             if (this._environments !== undefined) {
                 options.environments = this._environments[structureIndex];
 
-                // If the mode is per atom, add the atom index to the highlight
-                if (this._mode === 'atom') {
+                // If the target is per atom, add the atom index to the highlight
+                if (this._target === 'atom') {
                     options.highlight = atomIndex;
                 }
             }
@@ -871,7 +871,7 @@ export class ViewersGrid {
                 );
 
                 viewer.onselect = (atom: number) => {
-                    if (this._mode !== 'atom' || this._active !== cellGUID) {
+                    if (this._target !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
 
@@ -883,7 +883,7 @@ export class ViewersGrid {
                     const natoms = viewer.natoms();
                     assert(natoms !== undefined);
                     const indexes = this._indexer.fromStructureAtom(
-                        this._mode,
+                        this._target,
                         data.current.structure,
                         atom % natoms
                     );

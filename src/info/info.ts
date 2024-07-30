@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
-import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { binarySearch, getElement, sendWarning } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
@@ -61,7 +61,7 @@ export class EnvironmentInfo {
     private _indexer: EnvironmentIndexer;
     private _properties: { [name: string]: Property };
     private _parameters?: { [name: string]: Parameter };
-    private _mode: DisplayMode;
+    private _target: DisplayTarget;
 
     /**
      * Create a new {@link EnvironmentInfo} inside the DOM element with given `id`
@@ -70,14 +70,14 @@ export class EnvironmentInfo {
      * @param properties properties to be displayed
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
-     * @param mode       Display Mode, either atom or structure
+     * @param target     Display target, either atom or structure
      * @param parameters used to describe multidimensional properties
      */
     constructor(
         element: string | HTMLElement,
         properties: { [name: string]: Property },
         indexer: EnvironmentIndexer,
-        mode: DisplayMode,
+        target: DisplayTarget,
         parameters?: { [name: string]: Parameter }
     ) {
         // Create a host element to attach the shadow DOM
@@ -97,9 +97,9 @@ export class EnvironmentInfo {
         this._shadow.appendChild(this._root);
 
         this._indexer = indexer;
-        this._mode = mode;
+        this._target = target;
 
-        // Save properties and parameters to re/create structure and atom elements once mode changed
+        // Save properties and parameters to re/create structure and atom elements once target changed
         this._properties = properties;
         this._parameters = parameters;
 
@@ -117,19 +117,19 @@ export class EnvironmentInfo {
         };
 
         // Create structure and atom html elements
-        this._renderModePart();
+        this._renderTargetPart();
     }
 
     /**
-     * Change widget display mode and adapt the element to the new mode
-     * @param mode display mode
+     * Change widget display target and adapt the element to the new target
+     * @param target display target
      */
-    public switchMode(mode: DisplayMode) {
-        // Update widget mode
-        this._mode = mode;
+    public getTarget(target: DisplayTarget) {
+        // Update widget target
+        this._target = target;
 
-        // Update element related to the display mode
-        this._renderModePart();
+        // Update element related to the display target
+        this._renderTargetPart();
     }
 
     /** Show properties for the given `indexes`, and update the sliders values */
@@ -167,8 +167,8 @@ export class EnvironmentInfo {
         this._shadow.host.remove();
     }
 
-    /** Changes the elements based on the widget mode */
-    private _renderModePart(): void {
+    /** Changes the elements based on the target */
+    private _renderTargetPart(): void {
         // Construct structure / atom buttons
         this._root.innerHTML = this._getMainHTMLStructure();
 
@@ -176,13 +176,13 @@ export class EnvironmentInfo {
         const structureProperties = filter(this._properties, (p) => p.target === 'structure');
         this._structure = this._createStructure(structureProperties, this._parameters);
 
-        // Initialize central atom if in atom mode
-        if (this._mode === 'atom') {
+        // Initialize central atom if in atom target
+        if (this._target === 'atom') {
             const atomProperties = filter(this._properties, (p) => p.target === 'atom');
             this._atom = this._createAtom(atomProperties, this._parameters);
         }
 
-        // Reset atom if in structure mode
+        // Reset atom if in structure target
         else {
             this._atom = undefined;
         }
@@ -194,7 +194,7 @@ export class EnvironmentInfo {
     /** Create base html for the structure / atom pannels */
     private _getMainHTMLStructure(): string {
         const atomButton =
-            this._mode === 'atom'
+            this._target === 'atom'
                 ? `
             <div class='btn btn-sm chsp-info-atom-btn' data-bs-toggle='collapse' data-bs-target='#atom' aria-expanded='false' aria-controls='atom'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
@@ -233,13 +233,13 @@ export class EnvironmentInfo {
                         this._indexer.structuresCount(),
 
                         // Function to get the indexer for a given structure
-                        (index) => this._indexer.fromStructure(index, this._mode)
+                        (index) => this._indexer.fromStructure(index, this._target)
                     );
 
                     // Valid structure was found
                     if (structure !== undefined) {
                         // Update the display with the details of the found structure
-                        this.show(this._indexer.fromStructure(structure, this._mode)!);
+                        this.show(this._indexer.fromStructure(structure, this._target)!);
                         this.onchange(this._indexes());
 
                         // Recursively call startPlayback to continue playback
@@ -364,14 +364,14 @@ export class EnvironmentInfo {
 
                         // Function to get the indexer for a given atom
                         (index) =>
-                            this._indexer.fromStructureAtom(this._mode, current.structure, index)
+                            this._indexer.fromStructureAtom(this._target, current.structure, index)
                     );
 
                     // Valid atom was found
                     if (atom !== undefined) {
                         // Update the display with the details of the found atom
                         this.show(
-                            this._indexer.fromStructureAtom(this._mode, current.structure, atom)!
+                            this._indexer.fromStructureAtom(this._target, current.structure, atom)!
                         );
                         this.onchange(this._indexes());
 
@@ -487,10 +487,10 @@ export class EnvironmentInfo {
         let indexes;
         if (this._atom !== undefined) {
             const atom = this._atom.slider.value();
-            indexes = this._indexer.fromStructureAtom(this._mode, structure, atom);
+            indexes = this._indexer.fromStructureAtom(this._target, structure, atom);
         } else {
-            assert(this._mode !== 'atom');
-            indexes = this._indexer.fromStructureAtom(this._mode, structure);
+            assert(this._target !== 'atom');
+            indexes = this._indexer.fromStructureAtom(this._target, structure);
         }
         assert(indexes !== undefined);
         return indexes;

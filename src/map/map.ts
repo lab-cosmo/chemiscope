@@ -12,7 +12,7 @@ import fixPlot from './plotly/fix-plot';
 
 import { Property, Settings } from '../dataset';
 
-import { DisplayMode, EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
@@ -216,8 +216,8 @@ export class PropertiesMap {
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
-    // widget display mode
-    private _mode: DisplayMode;
+    // widget display target
+    private _target: DisplayTarget;
     /// Settings of the map
     private _options: MapOptions;
     /// Button used to reset the range of color axis
@@ -234,18 +234,18 @@ export class PropertiesMap {
      * @param settings   settings for all panels
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
-     * @param mode       widget display mode, either stucture or atom
+     * @param target       widget display target, either stucture or atom
      * @param properties properties to be displayed
      */
     constructor(
         element: string | HTMLElement,
         settings: Settings,
         indexer: EnvironmentIndexer,
-        mode: DisplayMode,
+        target: DisplayTarget,
         properties: { [name: string]: Property }
     ) {
         this._indexer = indexer;
-        this._mode = mode;
+        this._target = target;
         this.onselect = () => {};
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
@@ -320,23 +320,23 @@ export class PropertiesMap {
     }
 
     /**
-     * Change widget display mode and adapt the element to the new mode
-     * @param mode display mode
+     * Change display target and adapt the element to the new target
+     * @param target display target
      */
-    public async switchMode(mode: DisplayMode): Promise<void> {
-        // Set new widget mode
-        this._mode = mode;
+    public async getTarget(target: DisplayTarget): Promise<void> {
+        // Set new widget target
+        this._target = target;
 
         // Process markers to correctly set then to the updated map
         this._handleMarkers();
         if (this._active !== undefined) {
             const activeMarker = this._selected.get(this._active);
             if (activeMarker !== undefined) {
-                this.onselect(this._indexer.fromEnvironment(activeMarker.current, this._mode));
+                this.onselect(this._indexer.fromEnvironment(activeMarker.current, this._target));
             }
         }
 
-        // Update the map options based on the chosen mode
+        // Update the map options based on the chosen target
         this._setupMapOptions();
 
         // Append the callbacks to the new options
@@ -347,12 +347,12 @@ export class PropertiesMap {
     }
 
     /**
-     * Processes the markers by updating their current value to structure or environment index on the current mode
-     * In 'structure' mode, it set structure index, and in 'atom' mode its environment index
+     * Processes the markers by updating their current value to structure or environment index on the current target
+     * In 'structure' target, it set structure index, and in 'atom' target its environment index
      */
     private _handleMarkers() {
         for (const [key, marker] of this._selected.entries()) {
-            if (this._mode === 'structure') {
+            if (this._target === 'structure') {
                 marker.current = this._indexer.fromEnvironment(marker.current, 'atom').structure;
             } else {
                 const environment = this._indexer.fromStructure(
@@ -395,7 +395,7 @@ export class PropertiesMap {
         // data.select needs `indexes.environment`, so make sure it is defined
         if (indexes.environment === undefined) {
             const fullIndexes = this._indexer.fromStructureAtom(
-                this._mode,
+                this._target,
                 indexes.structure,
                 indexes.atom
             );
@@ -453,7 +453,7 @@ export class PropertiesMap {
         this._root.appendChild(data.marker);
         data.marker.onclick = () => {
             this.setActive(guid);
-            this.activeChanged(guid, this._indexer.fromEnvironment(data.current, this._mode));
+            this.activeChanged(guid, this._indexer.fromEnvironment(data.current, this._target));
         };
         this._selected.set(guid, data);
         this._updateMarkers([data]);
@@ -619,11 +619,11 @@ export class PropertiesMap {
      * Update options with the structure or atom default or config settings
      */
     private _setupMapOptions() {
-        // Helper function to update `_option` values with related mode configuration
+        // Helper function to update `_option` values with related target configuration
         const refreshMapOptions = (properties: NumericProperties) => {
-            // Check if mode's properties actually exist
+            // Check if target's properties actually exist
             if (properties && Object.keys(properties).length > 1) {
-                // Delete previous mode modal from DOM
+                // Delete previous target modal from DOM
                 this._options.remove();
 
                 // Re-create modal
@@ -636,22 +636,22 @@ export class PropertiesMap {
             }
         };
 
-        // Apply structure or atom options based on mode
-        if (this._mode !== 'atom') {
+        // Apply structure or atom options based on target
+        if (this._target !== 'atom') {
             refreshMapOptions(this._data['structure']);
         } else {
             refreshMapOptions(this._data['atom']);
         }
     }
 
-    /** Returns the properties related to the mode (structure or atom) */
+    /** Returns the properties related to the target (structure or environment) */
     private _getCurrentProperties() {
-        const properties = this._data[this._mode];
+        const properties = this._data[this._target];
         const propertiesNames = Object.keys(properties);
         if (propertiesNames.length < 2) {
             // better error message in case the user forgot to give the
             // environments in the data
-            if (this._mode === 'structure' && !this._indexer.hasEnvironments()) {
+            if (this._target === 'structure' && !this._indexer.hasEnvironments()) {
                 if (Object.keys(this._data['atom']).length >= 2) {
                     throw Error(
                         'could not find enough structure properties to display, \
@@ -1210,7 +1210,7 @@ export class PropertiesMap {
                             this.setActive(guid);
                             this.activeChanged(
                                 guid,
-                                this._indexer.fromEnvironment(data.current, this._mode)
+                                this._indexer.fromEnvironment(data.current, this._target)
                             );
                         }
                         break;
@@ -1218,7 +1218,7 @@ export class PropertiesMap {
                 }
             }
 
-            const indexes = this._indexer.fromEnvironment(environment, this._mode);
+            const indexes = this._indexer.fromEnvironment(environment, this._target);
 
             this.select(indexes);
             this.onselect(indexes);
@@ -1305,7 +1305,7 @@ export class PropertiesMap {
 
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
-        const result = this._data[this._mode][name];
+        const result = this._data[this._target][name];
         if (result === undefined) {
             throw Error(`unknown property '${name}' requested in map`);
         }

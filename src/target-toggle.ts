@@ -1,16 +1,16 @@
 import { getElement } from './utils';
 import * as styles from './styles';
-import { DisplayMode } from './indexer';
+import { DisplayTarget } from './indexer';
 
 /**
- * The {@link DisplayModeToggle} class represents a UI component for switching between two
- * display modes, structures and environments, by clicking on the respective buttons.
+ * The {@link DisplayTargetToggle} class represents a UI component for switching between two
+ * display targets, structures and environments, by clicking on the respective buttons.
  *
  * It automatically adjusts the height of the map element to ensure there is space for the toggle.
  * The component uses Shadow DOM to encapsulate styles.
  * A callback function (`onchange`) is triggered whenever the toggle value (structures/environments) is changed
  */
-export class DisplayModeToggle {
+export class DisplayTargetToggle {
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// Toggle buttons container element
@@ -18,15 +18,15 @@ export class DisplayModeToggle {
     /// Reference to the container element
     private _containerElement: HTMLElement;
     /// Callback fired when the user changes the toggle value
-    public onchange: (mode: DisplayMode) => void;
+    public onchange: (target: DisplayTarget) => void;
 
     /**
-     * Create a new {@link DisplayModeToggle} instance
+     * Create a new {@link DisplayTargetToggle} instance
      *
      * @param element HTML element or HTML id of the DOM element where the toggle will be attached
-     * @param mode display mode, either per environements or structures
+     * @param target display target, either per environements or structures
      */
-    constructor(element: string | HTMLElement, mode: DisplayMode) {
+    constructor(element: string | HTMLElement, target: DisplayTarget) {
         // Create a container element
         this._containerElement = getElement(element);
         const hostElement = document.createElement('div');
@@ -37,10 +37,10 @@ export class DisplayModeToggle {
         this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
 
         // Create a toggle element
-        this._toggleContainer = this._createToggleElement(mode === 'atom');
+        this._toggleContainer = this._createToggleElement(target === 'atom');
         this._shadow.appendChild(this._toggleContainer);
 
-        // Decrease size of map to get space for display mode toggle
+        // Decrease size of map to get space for display target toggle
         this._containerElement.style.setProperty(
             'height',
             `calc(100% - ${this._toggleContainer.offsetHeight}px)`
@@ -53,20 +53,20 @@ export class DisplayModeToggle {
     /**
      * Create the HTML structure for the toggle element
      *
-     * @param isPerAtom flag indicating if the atom mode should be checked
+     * @param isPerAtom flag indicating if the atom target should be checked
      * @returns the container element of the toggle buttons
      */
     private _createToggleElement(isPerAtom: boolean): HTMLElement {
         const toggleContainer = document.createElement('div');
         toggleContainer.innerHTML = `
-            <div class="chsp-mode-toggle" title="Toggles between structure and environment-based data">
+            <div class="chsp-target-toggle" title="Toggles between structure and environment-based data">
                 <!-- Spinner -->
-                <div id="chsp-mode-spinner" class="chsp-mode-spinner spinner-border text-secondary" role="status" style="display: none;">
+                <div id="chsp-target-spinner" class="chsp-target-spinner spinner-border text-secondary" role="status" style="display: none;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
 
                 <!-- Buttons -->
-                <div class="btn-group-sm" role="group" aria-label="Mode toggle">
+                <div class="btn-group-sm" role="group" aria-label="Target toggle">
                     <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
                     <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">Environments</button>
                 </div>
@@ -85,10 +85,10 @@ export class DisplayModeToggle {
 
     /**
      * Handle toggle button click
-     * @param mode flag indicating if the toggle should be checked
+     * @param target flag indicating if the toggle should be checked
      */
-    private _select(mode: DisplayMode): void {
-        const isPerAtom = mode === 'atom';
+    private _select(target: DisplayTarget): void {
+        const isPerAtom = target === 'atom';
 
         // Activate/desactivate structure button
         const structureBtn = this._toggleContainer.querySelector(
@@ -101,7 +101,7 @@ export class DisplayModeToggle {
         atomBtn.classList.toggle('active', isPerAtom);
 
         // Callback
-        this.onchange(mode);
+        this.onchange(target);
     }
 
     /**
@@ -111,7 +111,7 @@ export class DisplayModeToggle {
     public loader(visible: boolean): void {
         // Show/hide spinnder
         const spinnerElement = this._toggleContainer.querySelector(
-            '#chsp-mode-spinner'
+            '#chsp-target-spinner'
         ) as HTMLDivElement;
         spinnerElement.style.display = visible ? 'inline-block' : 'none';
 
@@ -127,7 +127,7 @@ export class DisplayModeToggle {
     }
 
     /**
-     * Remove HTML added by DisplayModeToggle in the current document
+     * Remove HTML added by DisplayTargetToggle in the current document
      */
     public remove(): void {
         this._shadow.host.remove();
