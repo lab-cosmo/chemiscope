@@ -269,6 +269,9 @@ export class MoleculeViewer {
         this._colorMoreOptions =
             this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
 
+        // Disable as by default color property is element, so no color bar available
+        this._colorMoreOptions.disabled = true;
+
         this._connectOptions();
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
@@ -870,6 +873,13 @@ export class MoleculeViewer {
                 this._options.color.transform.disable();
                 this._options.color.min.disable();
                 this._options.color.max.disable();
+
+                // Collapse a color panel if it was opened
+                const colorExpandPanel =
+                    this._options.getModalElement<HTMLButtonElement>('atom-color-extra');
+                if (colorExpandPanel.classList.contains('show')) {
+                    this._colorMoreOptions.click();
+                }
 
                 this._colorReset.disabled = true;
                 this._colorMoreOptions.disabled = true;
