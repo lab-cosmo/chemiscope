@@ -874,6 +874,13 @@ export class MoleculeViewer {
                 this._options.color.min.disable();
                 this._options.color.max.disable();
 
+                // Collapse a color panel if it was opened
+                const colorExpandPanel =
+                    this._options.getModalElement<HTMLButtonElement>('atom-color-extra');
+                if (colorExpandPanel.classList.contains('show')) {
+                    this._colorMoreOptions.click();
+                }
+
                 this._colorReset.disabled = true;
                 this._colorMoreOptions.disabled = true;
                 this._options.color.palette.disable();
