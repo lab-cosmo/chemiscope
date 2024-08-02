@@ -18,7 +18,7 @@ import {
 import { EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
-import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
+import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, logger } from '../utils';
 
 import { LoadOptions, MoleculeViewer } from './viewer';
 
@@ -643,7 +643,7 @@ export class ViewersGrid {
             const remove = template.content.firstChild as HTMLElement;
             remove.onclick = () => {
                 if (this._cellsData.size === 1) {
-                    sendWarning('can not remove the last viewer from the grid');
+                    logger.warn('can not remove the last viewer from the grid');
                     return;
                 }
 
@@ -716,17 +716,17 @@ export class ViewersGrid {
     private _setupGrid(nViewers: number): GUID[] {
         const newGUID = [] as GUID[];
         if (nViewers < 1) {
-            sendWarning('Cannot delete last molecular viewer.');
+            logger.warn('Cannot delete last molecular viewer.');
             return newGUID;
         } else if (nViewers > this._maxViewers) {
-            sendWarning(`Viewer grid cannot contain more than ${this._maxViewers} viewers.`);
+            logger.warn(`Viewer grid cannot contain more than ${this._maxViewers} viewers.`);
             return newGUID;
         }
 
         // Determine best arrangement for the number of viewers requested
         const arrangement = this.bestGridArrangement(nViewers);
         if (this._cellsData.size > nViewers) {
-            sendWarning(`Eliminating last ${this._cellsData.size - nViewers} viewers.`);
+            logger.warn(`Eliminating last ${this._cellsData.size - nViewers} viewers.`);
             let i = 0;
             for (const guid of this._cellsData.keys()) {
                 if (i >= nViewers) {
