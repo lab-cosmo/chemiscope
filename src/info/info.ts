@@ -124,7 +124,7 @@ export class EnvironmentInfo {
      * Change widget display target and adapt the element to the new target
      * @param target display target
      */
-    public getTarget(target: DisplayTarget) {
+    public switchTarget(target: DisplayTarget) {
         // Update widget target
         this._target = target;
 

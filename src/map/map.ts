@@ -323,7 +323,7 @@ export class PropertiesMap {
      * Change display target and adapt the element to the new target
      * @param target display target
      */
-    public async getTarget(target: DisplayTarget): Promise<void> {
+    public async switchTarget(target: DisplayTarget): Promise<void> {
         // Check if the target value actually changed
         if (target !== this._target) {
             // Set new widget target

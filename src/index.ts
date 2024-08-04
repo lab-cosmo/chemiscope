@@ -347,13 +347,13 @@ class DefaultVisualizer {
             setTimeout(async () => {
                 try {
                     // Proceed with EnvironmentInfo
-                    this.info.getTarget(this._target);
+                    this.info.switchTarget(this._target);
 
                     // Proceed with PropertiesMap
-                    await this.map.getTarget(this._target);
+                    await this.map.switchTarget(this._target);
 
                     // Proceed with ViewersGrid
-                    await this.structure.getTarget(this._target);
+                    await this.structure.switchTarget(this._target);
                 } finally {
                     // Hide loader
                     this._toggle?.loader(false);

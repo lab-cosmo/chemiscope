@@ -482,7 +482,7 @@ export class ViewersGrid {
      * Change widget display target and adapt the element to the new target
      * @param target display target
      */
-    public async getTarget(target: DisplayTarget): Promise<void> {
+    public async switchTarget(target: DisplayTarget): Promise<void> {
         // Update widget display target
         this._target = target;
 
