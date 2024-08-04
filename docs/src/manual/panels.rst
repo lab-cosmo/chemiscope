@@ -58,9 +58,9 @@ target, all the settings will be reset to their default values, as the chemiscop
 input format does not allow (yet) storing different visualization settings for the
 two modes.
 
-.. figure:: ../img/mode.png
+.. figure:: ../img/target-toggle.png
 
-    Visualisation display toggle
+    Visualisation target toggle
 
 .. _3Dmol.js: https://3dmol.csb.pitt.edu/
 
