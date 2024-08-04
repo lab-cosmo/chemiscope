@@ -4,11 +4,11 @@ import { DisplayTarget } from './indexer';
 
 /**
  * The {@link DisplayTargetToggle} class represents a UI component for switching between two
- * display targets, structures and environments, by clicking on the respective buttons.
+ * display targets, structures and atom-centered environments, by clicking on the respective buttons.
  *
  * It automatically adjusts the height of the map element to ensure there is space for the toggle.
  * The component uses Shadow DOM to encapsulate styles.
- * A callback function (`onchange`) is triggered whenever the toggle value (structures/environments) is changed
+ * A callback function (`onchange`) is triggered whenever the toggle value (structure/atom) is changed
  */
 export class DisplayTargetToggle {
     /// Shadow root for isolation
@@ -59,7 +59,7 @@ export class DisplayTargetToggle {
     private _createToggleElement(isPerAtom: boolean): HTMLElement {
         const toggleContainer = document.createElement('div');
         toggleContainer.innerHTML = `
-            <div class="chsp-target-toggle" title="Toggles between structure and environment-based data">
+            <div class="chsp-target-toggle" title="Toggles between structure and atom-centered data">
                 <!-- Spinner -->
                 <div id="chsp-target-spinner" class="chsp-target-spinner spinner-border text-secondary" role="status" style="display: none;">
                     <span class="visually-hidden">Loading...</span>
@@ -67,8 +67,8 @@ export class DisplayTargetToggle {
 
                 <!-- Buttons -->
                 <div class="btn-group-sm" role="group" aria-label="Target toggle">
-                    <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">Structures</button>
-                    <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">Environments</button>
+                    <button type="button" class="btn btn-outline-secondary ${!isPerAtom ? 'active' : ''}" id="structure-btn">structure</button>
+                    <button type="button" class="btn btn-outline-secondary ${isPerAtom ? 'active' : ''}" id="atom-btn">atom</button>
                 </div>
             </div>
         `;

@@ -51,12 +51,17 @@ currently selected environment.
 
 The visualization display toggle becomes available when the dataset includes at
 least two properties for each target type—atoms and structures—and has specified
-environments. This toggle allows to switch between display modes, either by local
+environments. This toggle allows switching between display modes, either by local
 environments or by entire structures, across all panels (the map, the structure viewer,
-and the environment information display).
+and the environment information display). Note that when toggling the visualization
+target, all the settings will be reset to their default values, as the chemiscope
+input format does not allow (yet) storing different visualization settings for the
+two modes.
 
 .. figure:: ../img/mode.png
 
     Visualisation display toggle
 
 .. _3Dmol.js: https://3dmol.csb.pitt.edu/
+
+

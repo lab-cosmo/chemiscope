@@ -15,8 +15,8 @@ tl;dr if you would like to generate a simple chemiscope for your dataset, we
 have a `Google Colab notebook <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_
 that can help!
 
-Tools able to create chemiscope input
--------------------------------------
+Tools that can create chemiscope inputs
+---------------------------------------
 
 Note that chemiscope does not compute structural representations or
 dimensionality reduction, and the command line interface works iff
@@ -218,9 +218,9 @@ contains the following fields and values:
         //
         // Each value inside the settings group is optional
         "settings": {
-            // Visualization display target, either per local environments or per structure.
-            // Supported in default and structure visualizers; atom visualizer uses the "atom" target by default.
-            // To use "atom" target, ensure that the environments are provided.
+            // Visualization display target, either per atom-centered environments or per structure.
+            // Supported in default and structure visualizers; the atom visualizer uses the "atom" 
+            // target by default. To use "atom" target, make sure to provide a list of environments.
             "target": "atom" | "structure",
             // settings related to the map
             "map": {
