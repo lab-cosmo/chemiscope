@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Exploring dataset with chemiscope &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced dataset exploration" href="7-explore-advanced.html" />
+    <link rel="prev" title="Shape visualization" href="5-shapes.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="5-shapes.html" title="Previous Chapter: Shape visualization"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Shape visualization</span>
+    </a>
+  </li>
+  <li>
+    <a href="7-explore-advanced.html" title="Next Chapter: Advanced dataset exploration"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Advanced data... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-6-explore-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="exploring-dataset-with-chemiscope">
+<span id="explore-example"></span><span id="sphx-glr-examples-6-explore-py"></span><h1>Exploring dataset with chemiscope<a class="headerlink" href="#exploring-dataset-with-chemiscope" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a> function provides a streamlined way to visualize
+datasets by automatically computing representation and using dimensionality reduction.
+This function simplifies the process of dataset exploration by offering a quick overview
+through computed properties and dimensionality reduction, allowing to rapidly gain
+insights into the composition and structure of data without need to manually implement
+and fine-tune the representation process.</p>
+<p>This is particularly useful when the specific choice of hyperparameters does not
+significantly impact the resulting 2D map. By passing a list of <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/atoms.html">ase.Atoms</a> objects (or similar structures from
+other libraries) to <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a>, it is possible to generate a
+chemiscope widget, providing an immediate and intuitive visualization of the dataset.</p>
+<p>Additionally, <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a> allows to provide a custom function for
+representation and dimensionality reduction, offering flexibility for more advanced
+usage.</p>
+<p>To use this function, some additional dependencies are required. You can install them
+with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>chemiscope<span class="o">[</span>explore<span class="o">]</span>
+</pre></div>
+</div>
+<p>In this example, we will explore several use cases, starting from basic applications to
+more customized scenarios.</p>
+<p>First, let’s import the necessary packages that will be used throughout the examples.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+
+
+<span class="k">def</span> <span class="nf">fetch_dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;https://zenodo.org/records/12748925/files/&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to load the pre-computed examples&quot;&quot;&quot;</span>
+    <span class="n">local_path</span> <span class="o">=</span> <span class="s2">&quot;data/&quot;</span> <span class="o">+</span> <span class="n">filename</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local_path</span><span class="p">):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_url</span> <span class="o">+</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="basic-example">
+<h2>Basic example<a class="headerlink" href="#basic-example" title="Link to this heading">¶</a></h2>
+<p>This example shows the basic usage of the <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a>. At first,
+read or load the structures from the dataset. Here we use an <a class="reference external" href="https://wiki.fysik.dtu.dk/ase">ASE package</a> to read the structures from the file and have the
+frames as the <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/atoms.html">ase.Atoms</a> objects.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/explore_c-gap-20u.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Provide the frames to the <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a>. It will generate a Chemiscope
+interactive widget with the reduced dimensionality of data.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-e1eb0697-b1cb-4fc0-b186-674280b0e265-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-e1eb0697-b1cb-4fc0-b186-674280b0e265-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-e1eb0697-b1cb-4fc0-b186-674280b0e265-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-e1eb0697-b1cb-4fc0-b186-674280b0e265">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-e1eb0697-b1cb-4fc0-b186-674280b0e265', '../_datasets/2addd17171046609f2dc81177936d3096965ab5d6be1d1498973ed07db0e4233-fig_6-explore_007.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p>In this basic case, no featurizer function is provided, so
+<a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a> uses a default method that applies
+<a class="reference external" href="https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html">SOAP (Smooth Overlap of Atomic Positions)</a> to
+compute atomic structure descriptors and then performs <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">PCA (Principal Component
+Analysis)</a>
+for dimensionality reduction. The resulting components are then added to the
+properties to be used in visualization.</p>
+</section>
+<section id="example-with-custom-featurizer-and-custom-properties">
+<h2>Example with custom featurizer and custom properties<a class="headerlink" href="#example-with-custom-featurizer-and-custom-properties" title="Link to this heading">¶</a></h2>
+<p>This part illustrates how to create a custom function for dimensionality reduction
+as an argument (<code class="docutils literal notranslate"><span class="pre">featurize</span></code>) to <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a>. Inside this function,
+we perform descriptor calculation using <a class="reference external" href="https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html">SOAP</a> and
+then reduce the dimensionality with <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html">Kernel PCA</a>.</p>
+<p>First, let’s import the necessary packages.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dscribe.descriptors</span> <span class="kn">import</span> <span class="n">SOAP</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">KernelPCA</span>  <span class="c1"># noqa</span>
+</pre></div>
+</div>
+<p>Define the function <code class="docutils literal notranslate"><span class="pre">soap_kpca_featurize</span></code> which takes one argument
+(<code class="docutils literal notranslate"><span class="pre">frames</span></code>). This argument contains the structures provided to
+<a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a> and is internally
+passed to the <code class="docutils literal notranslate"><span class="pre">featurize</span></code> function.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">soap_kpca_featurize</span><span class="p">(</span><span class="n">frames</span><span class="p">):</span>
+    <span class="c1"># Initialise soap calculator. The detailed explanation of the provided</span>
+    <span class="c1"># hyperparameters can be checked in the documentation of the library (``dscribe``).</span>
+    <span class="n">soap</span> <span class="o">=</span> <span class="n">SOAP</span><span class="p">(</span>
+        <span class="c1"># the dataset used in the example contains only carbon</span>
+        <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">],</span>
+        <span class="n">r_cut</span><span class="o">=</span><span class="mf">4.5</span><span class="p">,</span>
+        <span class="n">n_max</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">l_max</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">rbf</span><span class="o">=</span><span class="s2">&quot;gto&quot;</span><span class="p">,</span>
+        <span class="n">average</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">,</span>
+        <span class="n">periodic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">weighting</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;function&quot;</span><span class="p">:</span> <span class="s2">&quot;pow&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;r0&quot;</span><span class="p">:</span> <span class="mf">3.5</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute features</span>
+    <span class="n">descriptors</span> <span class="o">=</span> <span class="n">soap</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span>
+
+    <span class="c1"># Apply KPCA</span>
+    <span class="n">transformer</span> <span class="o">=</span> <span class="n">KernelPCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+    <span class="c1"># Return a 2D array of reduced features</span>
+    <span class="k">return</span> <span class="n">transformer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Provide the created function to <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cs</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">featurize</span><span class="o">=</span><span class="n">soap_kpca_featurize</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can also provide the additional properties inside, for example, let’s extract
+energy from the frames using <a class="reference internal" href="../python/reference.html#chemiscope.extract_properties" title="chemiscope.extract_properties"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.extract_properties()</span></code></a>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">extract_properties</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;energy&quot;</span><span class="p">])</span>
+<span class="n">cs</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">featurize</span><span class="o">=</span><span class="n">soap_kpca_featurize</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note: It is possible to add parallelization when computing the SOAP descriptors and
+performing dimensionality reduction with KernelPCA by providing the <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code>
+parameter. This allows the computation to utilize multiple CPU cores for faster
+processing. An example of how to include <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code> is shown below on this page.</p>
+<p>To showcase the results of the <code class="docutils literal notranslate"><span class="pre">soap_kpca</span></code> function, we have pre-computed it for
+the 6k structures from the <a class="reference external" href="https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html">C-GAP-20U</a> dataset:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">fetch_dataset</span><span class="p">(</span><span class="s2">&quot;soap_kpca_c-gap-20u.json.gz&quot;</span><span class="p">)</span>
+<span class="n">chemiscope</span><span class="o">.</span><span class="n">show_input</span><span class="p">(</span><span class="s2">&quot;data/soap_kpca_c-gap-20u.json.gz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+
+
+<!-- Warning Display -->
+<div id="chsp-7855565a-734e-4a9c-8697-cfee9dc33c63-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-7855565a-734e-4a9c-8697-cfee9dc33c63-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-7855565a-734e-4a9c-8697-cfee9dc33c63-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-7855565a-734e-4a9c-8697-cfee9dc33c63">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-7855565a-734e-4a9c-8697-cfee9dc33c63', '../_datasets/a62ef15337eb233054e4c31bdb964aeafb1362cbbbe22b6c89db7b5e1ae98eaf-fig_6-explore_008.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.505 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-6-explore-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/dfc154bea0f4cc5252869df3c3192477/6-explore.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">6-explore.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/ea6d438f77eb9f18b9a2892f5776aa6b/6-explore.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">6-explore.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/d6b5b055e0234d4a9ba30bf2d04f04fe/6-explore.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">6-explore.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

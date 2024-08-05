@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Structure-property maps &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Trajectory plotting" href="3-trajectory.html" />
+    <link rel="prev" title="Simple chemiscope input" href="1-base.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="1-base.html" title="Previous Chapter: Simple chemiscope input"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Simple chemis...</span>
+    </a>
+  </li>
+  <li>
+    <a href="3-trajectory.html" title="Next Chapter: Trajectory plotting"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Trajectory plotting &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-2-structure-map-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="structure-property-maps">
+<span id="sphx-glr-examples-2-structure-map-py"></span><h1>Structure-property maps<a class="headerlink" href="#structure-property-maps" title="Link to this heading">¶</a></h1>
+<p>This example demonstrates the visualization of structures (or environments) using
+data-driven descriptors of their geometry, to cluster together similar motifs. Here the
+geometric descriptors have been computed by PCA starting from SOAP representations, but
+are provided as text files to avoid external dependencies for the example.</p>
+<p>The same parameters can be used with <cite>chemiscope.show</cite> to visualize an interactive
+widget in a Jupyter notebook.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+</pre></div>
+</div>
+<p>Load structures</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/trajectory.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Load the SOAP-PCA descriptors. chemiscope does not provide
+analysis routines (yet), but you can look up for instance
+scikit-matter as a package to do dimensionality reduction
+analyses.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">pca_atom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;data/trajectory-pca_atom.dat&quot;</span><span class="p">)</span>
+<span class="n">pca_struc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;data/trajectory-pca_structure.dat&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When both environments and structure property are present
+only environment properties are shown. Still they can be stored,
+and future versions of chemiscope may allow switching between
+the two modes.</p>
+<dl class="simple">
+<dt>NB: if there are properties stored in the ASE frames, you can extract</dt><dd><p>them with chemiscope.extract_properties(frames)</p>
+</dd>
+</dl>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># concise definition of a property, with just an array and the type</span>
+    <span class="c1"># inferred by the size</span>
+    <span class="s2">&quot;structure PCA&quot;</span><span class="p">:</span> <span class="n">pca_struc</span><span class="p">,</span>
+    <span class="s2">&quot;atom PCA&quot;</span><span class="p">:</span> <span class="n">pca_atom</span><span class="p">,</span>
+    <span class="c1"># an example of the verbose definition</span>
+    <span class="s2">&quot;energy&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;energy&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">],</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;eV&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;potential energy, computed with DFTB+&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Environment descriptors have only been computed for C and O atoms.
+we use a mask and then a utility function to generate the proper
+list of environments</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+    <span class="n">frame_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">))</span>
+    <span class="n">frame_mask</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">frame</span><span class="o">.</span><span class="n">numbers</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">numbers</span> <span class="o">==</span> <span class="mi">8</span><span class="p">))[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;center_atoms_mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame_mask</span>
+
+<span class="n">environments</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">librascal_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Create a visualization and save it as a file that can be viewed at chemiscope.org</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="s2">&quot;trajectory-pca.json.gz&quot;</span><span class="p">,</span>
+    <span class="c1"># dataset metadata can also be included, to provide a self-contained description</span>
+    <span class="c1"># of the data, authors and references</span>
+    <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Allyl alcohol PCA map&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">&quot;This dataset contains a PCA map of the C and O environments &quot;</span>
+            <span class="s2">&quot;from a few frames out of a MD simulation of allyl alcohol, C3H5OH.&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;authors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;The chemiscope developers&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;references&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;G. Fraux, R. Cersonsky, and M. Ceriotti, &quot;</span>
+                <span class="s1">&#39;&quot;Chemiscope: interactive structure-property explorer for materials &#39;</span>
+                <span class="s1">&#39;and molecules,&quot; JOSS 5(51), 2117 (2020).&#39;</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">environments</span><span class="p">,</span>
+    <span class="n">settings</span><span class="o">=</span><span class="p">{</span>  <span class="c1"># these are reasonable settings for trajectory visualization</span>
+        <span class="s2">&quot;structure&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;keepOrientation&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;playbackDelay&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}]</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The file can also be viewed in a notebook. Use <cite>chemiscope.show</cite> above to bypass the
+creation of a JSON file and directly create a viewer.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show_input</span><span class="p">(</span><span class="s2">&quot;trajectory-pca.json.gz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-794ccfd8-706a-4677-8a53-2b4b5d06df23-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-794ccfd8-706a-4677-8a53-2b4b5d06df23-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-794ccfd8-706a-4677-8a53-2b4b5d06df23-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-794ccfd8-706a-4677-8a53-2b4b5d06df23">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-794ccfd8-706a-4677-8a53-2b4b5d06df23', '../_datasets/5612df2463e0d0287cf052e5a8f38fa424746367414fab2268ac6e899969d529-fig_2-structure_map_003.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.021 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-2-structure-map-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/b293a1fece9591c26a8431a47e8e3e6a/2-structure_map.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">2-structure_map.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/b25c0605c1fec31948799a89d455044d/2-structure_map.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">2-structure_map.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/3aedfbfe59bcbcafb26aa4c69983be7d/2-structure_map.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">2-structure_map.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

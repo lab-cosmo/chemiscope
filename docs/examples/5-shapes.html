@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Shape visualization &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Exploring dataset with chemiscope" href="6-explore.html" />
+    <link rel="prev" title="Atom property coloring" href="4-colors.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="4-colors.html" title="Previous Chapter: Atom property coloring"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Atom property...</span>
+    </a>
+  </li>
+  <li>
+    <a href="6-explore.html" title="Next Chapter: Exploring dataset with chemiscope"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Exploring dat... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-5-shapes-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="shape-visualization">
+<span id="sphx-glr-examples-5-shapes-py"></span><h1>Shape visualization<a class="headerlink" href="#shape-visualization" title="Link to this heading">¶</a></h1>
+<p>This example demonstrates how to visualize structure and atomic
+properties in the structure panel, using different types of
+predefined shapes (ellipsoids for tensors, arrows for vectors).
+The example also shows how to define custom shapes.</p>
+<p>Note that the same parameters can be used with <cite>chemiscope.show</cite> to visualize an
+interactive widget in a Jupyter notebook.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.transform</span> <span class="kn">import</span> <span class="n">Rotation</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+</pre></div>
+</div>
+<p>Loads a dataset of structures</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/alpha-mu.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+
+<span class="n">quaternions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># converts the arrays from the format they are stored in to an array</span>
+<span class="c1"># format that can be processed by the ASE utilities</span>
+<span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">positions</span> <span class="o">+=</span> <span class="n">a</span><span class="o">.</span><span class="n">cell</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;alpha&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="n">axx</span><span class="p">,</span> <span class="n">ayy</span><span class="p">,</span> <span class="n">azz</span><span class="p">,</span> <span class="n">axy</span><span class="p">,</span> <span class="n">axz</span><span class="p">,</span> <span class="n">ayz</span><span class="p">]</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">axx</span><span class="p">,</span> <span class="n">ayy</span><span class="p">,</span> <span class="n">azz</span><span class="p">,</span> <span class="n">axy</span><span class="p">,</span> <span class="n">axz</span><span class="p">,</span> <span class="n">ayz</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axx&quot;</span><span class="p">],</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;ayy&quot;</span><span class="p">],</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;azz&quot;</span><span class="p">],</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axy&quot;</span><span class="p">],</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axz&quot;</span><span class="p">],</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;ayz&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># interatomic separations (used to orient &quot;stuff&quot; later on)</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_all_distances</span><span class="p">(</span><span class="n">mic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">dists</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dists</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)):</span>
+        <span class="n">nneigh</span> <span class="o">=</span> <span class="n">dists</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_distance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">nneigh</span><span class="p">,</span> <span class="n">vector</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">R</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vec</span>
+        <span class="n">quaternions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Rotation</span><span class="o">.</span><span class="n">from_matrix</span><span class="p">(</span><span class="n">R</span><span class="p">)</span><span class="o">.</span><span class="n">as_quat</span><span class="p">())</span>
+</pre></div>
+</div>
+<section id="shapes-generation">
+<h2>Shapes generation<a class="headerlink" href="#shapes-generation" title="Link to this heading">¶</a></h2>
+<p>Here we define shapes that will later be used to create the input;
+input generation can also be achieved as a single call, but in practice
+it is wise to define separate entities for better readability</p>
+<p>Cubes with smooth shading, centered on atoms. these are created as
+“custom” shapes and then are just scaled to atom-dependent sizes</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">atom_sizes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;O&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mf">0.45</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">}</span>
+<span class="n">smooth_cubes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># this list defines the vertices</span>
+            <span class="s2">&quot;vertices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="c1"># and these are the indices of the vertices that form the triangular mesh</span>
+            <span class="s2">&quot;simplices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+        <span class="c1"># the cube is used at each atomic position, only difference being the scaling</span>
+        <span class="s2">&quot;atom&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="n">atom_sizes</span><span class="p">[</span><span class="n">label</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">symbols</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">symbols</span><span class="p">))</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Structure-based shapes. also demonstrates how to achieve sharp-edge shading.
+requires defining multiple times the same vertices</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">sharp_cubes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># in order to get &quot;sharp&quot; edges, you need to define separate vertices for</span>
+            <span class="c1"># each facet</span>
+            <span class="s2">&quot;vertices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="c1"># simplices defining the mesh - two triangles per facet</span>
+            <span class="s2">&quot;simplices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">],</span>
+                <span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+        <span class="c1"># structure positioning is relative to the origin of the axes</span>
+        <span class="s2">&quot;structure&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="mh">0xFF0000</span><span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="mh">0x00FF00</span><span class="p">,</span>
+                <span class="s2">&quot;orientation&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)],</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Load vertices and simplices from an external file
+and use it to draw a very irreverent molecule</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">irreverent_dict</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;data/irreverence.npz&quot;</span><span class="p">)</span>
+<span class="n">irreverent_shape</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;vertices&quot;</span><span class="p">:</span> <span class="n">irreverent_dict</span><span class="p">[</span><span class="s2">&quot;vertices&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;simplices&quot;</span><span class="p">:</span> <span class="n">irreverent_dict</span><span class="p">[</span><span class="s2">&quot;simplices&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;atom&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;orientation&quot;</span><span class="p">:</span> <span class="n">quaternions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Dipole moments visualized as arrows. this is just to demonstrate manual insertion,
+see below to extract directly from the ASE info</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">dipoles_manual</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;arrow&quot;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;baseRadius&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="s2">&quot;headRadius&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+                <span class="s2">&quot;headLength&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+                <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="mh">0xFF00B0</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;structure&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                    <span class="s2">&quot;vector&quot;</span><span class="p">:</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;dipole_ccsd&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                    <span class="s2">&quot;vector&quot;</span><span class="p">:</span> <span class="n">frames</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;dipole_ccsd&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="n">dipoles_auto</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">ase_vectors_to_arrows</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="s2">&quot;dipole_ccsd&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="c1"># one can always update the defaults created by these automatic functions</span>
+<span class="n">dipoles_auto</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">][</span><span class="s2">&quot;global&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;baseRadius&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+    <span class="s2">&quot;headRadius&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+    <span class="s2">&quot;headLength&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="mh">0xFF00B0</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dipoles_auto</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">][</span>
+    <span class="s2">&quot;structure&quot;</span>
+<span class="p">]:</span>  <span class="c1"># center the dipoles close to the molecule</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;position&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Create a visualization and save it as a file that can be viewed at chemiscope.org</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="s2">&quot;shapes-example.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">extract_properties</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;alpha&quot;</span><span class="p">]),</span>
+    <span class="n">shapes</span><span class="o">=</span><span class="p">{</span>
+        <span class="c1"># cubes with smooth shading, centered on atoms</span>
+        <span class="s2">&quot;smooth_cubes&quot;</span><span class="p">:</span> <span class="n">smooth_cubes</span><span class="p">,</span>
+        <span class="c1"># demonstrates showing a &quot;global&quot; shape for each structure</span>
+        <span class="s2">&quot;cube&quot;</span><span class="p">:</span> <span class="n">sharp_cubes</span><span class="p">,</span>
+        <span class="c1"># (molecular) electric dipole</span>
+        <span class="s2">&quot;dipole&quot;</span><span class="p">:</span> <span class="n">dipoles_auto</span><span class="p">,</span>
+        <span class="c1"># atomic decomposition of the polarizability as ellipsoids. use utility to</span>
+        <span class="c1"># extract from the ASE frames</span>
+        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">ase_tensors_to_ellipsoids</span><span class="p">(</span>
+            <span class="n">frames</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="n">force_positive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.2</span>
+        <span class="p">),</span>
+        <span class="c1"># shapes with a bit of flair</span>
+        <span class="s2">&quot;irreverence&quot;</span><span class="p">:</span> <span class="n">irreverent_shape</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="c1"># the write_input function also allows defining the default visualization settings</span>
+    <span class="n">settings</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;map&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha[1]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha[2]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha[3]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;palette&quot;</span><span class="p">:</span> <span class="s2">&quot;seismic&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;structure&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;spaceFilling&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;atomLabels&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;atoms&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="c1"># multiple shapes can be visualized at the same time!</span>
+                <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha,dipole&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;axes&quot;</span><span class="p">:</span> <span class="s2">&quot;off&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;keepOrientation&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;playbackDelay&quot;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span>
+                <span class="s2">&quot;environments&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;activated&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">&quot;bgColor&quot;</span><span class="p">:</span> <span class="s2">&quot;CPK&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;bgStyle&quot;</span><span class="p">:</span> <span class="s2">&quot;licorice&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;center&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="s2">&quot;cutoff&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">all_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The file can also be viewed in a notebook. Use <cite>chemiscope.show</cite> above to bypass the
+creation of a JSON file and directly create a viewer.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show_input</span><span class="p">(</span><span class="s2">&quot;shapes-example.json.gz&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;structure&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-e8cccf98-41a4-4ad8-8445-8bd47519f48b-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-e8cccf98-41a4-4ad8-8445-8bd47519f48b-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-e8cccf98-41a4-4ad8-8445-8bd47519f48b-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-e8cccf98-41a4-4ad8-8445-8bd47519f48b">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-e8cccf98-41a4-4ad8-8445-8bd47519f48b', '../_datasets/9c87b68ceb60e562589be18aac084099c2a399695449e5e26ea438275a9c033a-fig_5-shapes_006.json.gz', 'structure');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.097 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-5-shapes-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/09315b588a3980e5acdaea91d5a8d48f/5-shapes.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">5-shapes.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/cabbaa49808f095fba403265492cad54/5-shapes.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">5-shapes.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/e48f9a8f63c3eaa60b7bdd591017b3d3/5-shapes.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">5-shapes.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

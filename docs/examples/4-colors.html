@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Atom property coloring &#8212; chemiscope 0.7.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=5a057da9"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Shape visualization" href="5-shapes.html" />
+    <link rel="prev" title="Trajectory plotting" href="3-trajectory.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="3-trajectory.html" title="Previous Chapter: Trajectory plotting"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Trajectory plotting</span>
+    </a>
+  </li>
+  <li>
+    <a href="5-shapes.html" title="Next Chapter: Shape visualization"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Shape visualization &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-4-colors-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="atom-property-coloring">
+<span id="sphx-glr-examples-4-colors-py"></span><h1>Atom property coloring<a class="headerlink" href="#atom-property-coloring" title="Link to this heading">¶</a></h1>
+<p>This example demonstrates how to color atoms based on scalar properties.</p>
+<p>Note that the same parameters can be used with <cite>chemiscope.show</cite> to visualize an
+interactive widget in a Jupyter notebook.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+</pre></div>
+</div>
+<p>Load a dataset of structures containing polarizability and dipole data</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/alpha-mu.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Compute some scalar quantities to display as atom coloring</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">polarizability</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">alpha_eigenvalues</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">anisotropy</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+    <span class="c1"># center molecule in the box</span>
+    <span class="n">frame</span><span class="o">.</span><span class="n">positions</span> <span class="o">+=</span> <span class="n">frame</span><span class="o">.</span><span class="n">cell</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="k">for</span> <span class="n">axx</span><span class="p">,</span> <span class="n">ayy</span><span class="p">,</span> <span class="n">azz</span><span class="p">,</span> <span class="n">axy</span><span class="p">,</span> <span class="n">axz</span><span class="p">,</span> <span class="n">ayz</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axx&quot;</span><span class="p">],</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;ayy&quot;</span><span class="p">],</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;azz&quot;</span><span class="p">],</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axy&quot;</span><span class="p">],</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;axz&quot;</span><span class="p">],</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">&quot;ayz&quot;</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="n">polarizability</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">axx</span> <span class="o">+</span> <span class="n">ayy</span> <span class="o">+</span> <span class="n">azz</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="c1"># one possible measure of anisotropy...</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span>
+            <span class="p">[[</span><span class="n">axx</span><span class="p">,</span> <span class="n">axy</span><span class="p">,</span> <span class="n">axz</span><span class="p">],</span> <span class="p">[</span><span class="n">axy</span><span class="p">,</span> <span class="n">ayy</span><span class="p">,</span> <span class="n">ayz</span><span class="p">],</span> <span class="p">[</span><span class="n">axz</span><span class="p">,</span> <span class="n">ayz</span><span class="p">,</span> <span class="n">azz</span><span class="p">]]</span>
+        <span class="p">)</span>
+        <span class="n">alpha_eigenvalues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">)</span>
+
+        <span class="n">anisotropy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Create a visualization and save it as a file that can be viewed at chemiscope.org</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="s2">&quot;colors-example.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="c1"># properties can also be extracted from the ASE.Atoms frames</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;polarizability&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">polarizability</span><span class="p">),</span>
+        <span class="s2">&quot;anisotropy&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">anisotropy</span><span class="p">),</span>
+        <span class="s2">&quot;alpha_eigenvalues&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">alpha_eigenvalues</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="c1"># it is also possible to define the default visualization settings</span>
+    <span class="n">settings</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;map&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha_eigenvalues[1]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha_eigenvalues[2]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha_eigenvalues[3]&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;anisotropy&quot;</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;structure&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="s2">&quot;anisotropy&quot;</span><span class="p">},</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="c1"># the properties we want to visualise are atomic properties - in order to view them</span>
+    <span class="c1"># in map panel we must indicate the list of environments (all atoms in this case)</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">all_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The file can also be viewed in a notebook. Use <cite>chemiscope.show</cite> above to bypass the
+creation of a JSON file and directly create a viewer.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show_input</span><span class="p">(</span><span class="s2">&quot;colors-example.json.gz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-03d2f72a-b74e-435e-9d76-943eb27adb3b-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-03d2f72a-b74e-435e-9d76-943eb27adb3b-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-03d2f72a-b74e-435e-9d76-943eb27adb3b-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-03d2f72a-b74e-435e-9d76-943eb27adb3b">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-03d2f72a-b74e-435e-9d76-943eb27adb3b', '../_datasets/e70f9c810698678e1b4dfaf1afdb7201c40828d742c03c556392767860f4d305-fig_4-colors_005.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.008 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-4-colors-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/6d034d5f3233213ef78ac81dfceae0a2/4-colors.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">4-colors.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/1eaf186246867c3f747fdd55d34968b4/4-colors.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">4-colors.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/dbdaf28245fb67f36c68d602a82a8fb5/4-colors.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">4-colors.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
