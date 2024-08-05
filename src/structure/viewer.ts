@@ -192,6 +192,7 @@ export class MoleculeViewer {
      *
      * @param element HTML element or HTML id of the DOM element
      *                where the viewer will be created
+     * @param propertiesName list of properties keys to be used as options
      */
     constructor(element: string | HTMLElement, propertiesName: string[]) {
         const containerElement = getElement(element);
@@ -324,6 +325,49 @@ export class MoleculeViewer {
     }
 
     /**
+     * Recreates structure options
+     * @param envView display target, true if per environments
+     * @param propertiesName property names used as the options in the modal
+     */
+    public refreshOptions(envView: boolean, propertiesName?: string[]): void {
+        // Save the current adopted styles
+        const adoptedStyleSheets = this._options.modal.shadow.adoptedStyleSheets;
+
+        // Remove the current modal
+        this._options.remove();
+
+        // Recreate the StructureOptions
+        this._options = new StructureOptions(
+            this._root,
+            (rect) => this.positionSettingsModal(rect),
+            propertiesName
+        );
+
+        // Restore the previously saved styles
+        this._options.modal.shadow.adoptedStyleSheets = adoptedStyleSheets;
+
+        // Cache the button elements
+        this._colorReset = this._options.getModalElement<HTMLButtonElement>('atom-color-reset');
+        this._colorMoreOptions =
+            this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
+        this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
+
+        // Disable as by default, color property is element
+        this._colorReset.disabled = true;
+        this._colorMoreOptions.disabled = true;
+
+        // Connect event handlers for the new options
+        this._connectOptions();
+
+        // Adapt settings to the display target
+        if (envView) {
+            this._options.environments.activated.enable();
+        } else {
+            this._options.environments.activated.disable();
+        }
+    }
+
+    /**
      * Remove all HTML added by this {@link MoleculeViewer} in the current document
      */
     public remove(): void {
@@ -357,15 +401,25 @@ export class MoleculeViewer {
     }
 
     /**
+     * @param value list of atom-centered environments for the current structure
+     */
+    public set environments(value: (Environment | undefined)[] | undefined) {
+        this._environments = value;
+    }
+
+    /**
      * Load the given `structure` in this viewer.
      *
      * @param structure structure to load
+     * @param properties properties to used to load the structure
      * @param options options for the new structure
+     * @param onLoadingDone fired when viewer finished rendering
      */
     public load(
         structure: Structure,
         properties?: Record<string, (number | undefined)[]> | undefined,
-        options: Partial<LoadOptions> = {}
+        options: Partial<LoadOptions> = {},
+        onLoadingDone?: () => void
     ): void {
         // if the canvas size changed since last structure, make sure we update
         // everything
@@ -520,7 +574,11 @@ export class MoleculeViewer {
         this._options.axes.changed('JS');
         this._options.atomLabels.changed('JS');
 
-        this._viewer.render();
+        this._viewer.render(() => {
+            if (onLoadingDone) {
+                onLoadingDone();
+            }
+        });
     }
 
     /** Setup interaction (click & hover) for environments highlighting */

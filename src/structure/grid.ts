@@ -15,7 +15,7 @@ import {
     checkStructure,
 } from '../dataset';
 
-import { EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
 import { GUID, PositioningCallback, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
@@ -41,7 +41,7 @@ interface NumberedEnvironment extends Environment {
  * returns a list of list of environments, such as `list[0]` contains all
  * environments in structure 0; `list[33]` all environments in structure 33, etc.
  *
- * @param  n_structures Expected number of structures
+ * @param  structures Expected number of structures
  * @param  environments Full list of environments
  *
  * @return              The list of environments grouped by structure
@@ -130,10 +130,15 @@ export class ViewersGrid {
     private _structures: Structure[] | UserStructure[];
     /// List of per-atom properties in the dataset
     private _properties: Record<string, number[]>;
+    /// Widget display target (structure or atom)
+    private _target: DisplayTarget;
     /// Cached string representation of structures
     private _resolvedStructures: Structure[];
     /// Optional list of environments for each structure
     private _environments?: NumberedEnvironment[][];
+    /// Optional list of environments for each structure to save it once we change the target
+    private _calculatedEnvironments?: NumberedEnvironment[][];
+
     /// Maximum number of allowed structure viewers
     private _maxViewers: number;
     /// The indexer translating between environments indexes and structure/atom
@@ -145,7 +150,6 @@ export class ViewersGrid {
     private _cellsData: Map<GUID, ViewerGridData>;
     /// Callback used to override all grid viewers' positionSettingsModal
     private _positionSettingsModal?: PositioningCallback;
-
     /// Store the `onSettingChange` callbacks to be able to add them to new
     /// viewers in the grid
     private _onSettingChangeCallbacks: Array<(keys: string[], value: unknown) => void>;
@@ -159,6 +163,8 @@ export class ViewersGrid {
      * @param indexer      {@link EnvironmentIndexer} used to translate indexes from
      *                     environments index to structure/atom indexes
      * @param structures   list of structure to display
+     * @param target       widget display modtargete (structure or atom)
+     * @param properties   list of properties
      * @param environments list of atom-centered environments in the structures,
      *                     used to highlight the selected environment
      * @param maxViewers   maximum number of allowed structure viewers
@@ -167,30 +173,37 @@ export class ViewersGrid {
         element: string | HTMLElement,
         indexer: EnvironmentIndexer,
         structures: Structure[] | UserStructure[],
+        target: DisplayTarget,
         properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9
     ) {
+        this._target = target;
         this._structures = structures;
         if (properties === undefined) {
             this._properties = {};
         } else {
+            // Calculate properties
             const numberProperties = filter(properties, (p) =>
                 Object.values(p.values).every((v) => typeof v === 'number')
             );
             const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
-
-            const props: Record<string, number[]> = Object.fromEntries(
+            this._properties = Object.fromEntries(
                 Object.entries(atomProperties).map(([key, value]) => [
                     key,
                     value.values as number[],
                 ])
             );
-            this._properties = props;
         }
+
         this._resolvedStructures = new Array<Structure>(structures.length);
-        this._environments = groupByStructure(this._structures, environments);
         this._indexer = indexer;
+
+        // Group environments by structure and save the result for future use
+        this._calculatedEnvironments = groupByStructure(this._structures, environments);
+
+        // Set the environments to synchronize with the modal and grid
+        this._environments = this._calculatedEnvironments;
 
         this.loadStructure = (_, s) => {
             // check that the data does conform to the Structure interface
@@ -218,15 +231,15 @@ export class ViewersGrid {
         }
         this._maxViewers = maxViewers;
 
+        // Attach a shadow DOM to the host element for isolation
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
-
         hostElement.style.setProperty('height', '100%');
         containerElement.appendChild(hostElement);
-
         this._shadow = hostElement.attachShadow({ mode: 'open' });
         this._shadow.adoptedStyleSheets = [styles.bootstrap, styles.chemiscope];
 
+        // Create a root element inside the shadow DOM to append grid to it
         this._root = document.createElement('div');
         this._root.id = 'grid-root';
         this._root.className = 'chsp-structure-viewer-grid';
@@ -265,13 +278,15 @@ export class ViewersGrid {
      *
      * This will switch to the structure at index `indexes.structure`, and if
      * environments where passed to the constructor and the current display
-     * mode is `'atom'`, highlight the atom-centered environment corresponding
+     * target is `'atom'`, highlight the atom-centered environment corresponding
      * to `indexes.atom`.
      *
      * @param  indexes         structure / atom pair to display
      */
     public show(indexes: Indexes): void {
-        this._showInViewer(this.active, indexes);
+        this._showInViewer(this.active, indexes).catch((e) => {
+            throw e;
+        });
     }
 
     /**
@@ -351,6 +366,7 @@ export class ViewersGrid {
 
     /**
      * Function to set the active viewer for communicating with the map
+     * @param guid GUID of the viewer to be active
      */
     public setActive(guid: GUID): void {
         const changeClasses = (guid: string, toggle: boolean) => {
@@ -463,6 +479,63 @@ export class ViewersGrid {
     }
 
     /**
+     * Change widget display target and adapt the element to the new target
+     * @param target display target
+     */
+    public async switchTarget(target: DisplayTarget): Promise<void> {
+        // Update widget display target
+        this._target = target;
+
+        // Set/reset the environements of grid and viewers based on the target
+        this._updateEnvironments(this._target === 'atom');
+
+        // Refresh each cell with the new target
+        const refreshPromises = Array.from(this._cellsData.entries()).map(([guid, data]) =>
+            this._refreshCell(guid, data, this._target === 'atom')
+        );
+
+        // Wait for all refreshes to complete
+        await Promise.all(refreshPromises);
+    }
+
+    /**
+     * Updates the environments based on the target
+     * @param envView indicates whether the current dispay target per environments
+     */
+    private _updateEnvironments(envView: boolean): void {
+        // Proceed with target changes by setting/resetting the environments
+        this._environments = envView ? this._calculatedEnvironments : undefined;
+        if (envView) {
+            assert(this._environments !== undefined);
+            for (const data of this._cellsData.values()) {
+                data.viewer.environments = this._environments[data.current.structure];
+            }
+        }
+    }
+
+    /**
+     * Refreshes the cell and updates its data based on the target
+     *
+     * @param guid id of the cell to refresh
+     * @param data indexes associated with the viewer grid
+     * @param envView indicates whether the current dispay target is per environments
+     */
+    private async _refreshCell(guid: GUID, data: ViewerGridData, envView: boolean): Promise<void> {
+        // Set/remove atom from indexes based on target
+        data.current.atom = envView
+            ? this._indexer.fromEnvironment(data.current.environment, this._target).atom
+            : undefined;
+        this._cellsData.set(guid, data);
+
+        // Recreate stucture settings modal
+        const propertyNames = this._properties ? Object.keys(this._properties) : [];
+        data.viewer.refreshOptions(envView, propertyNames);
+
+        // Load the viewer with the current indexes
+        await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+    }
+
+    /**
      * Add a new structure viewer to the grid as a copy of the viewer with the
      * `initial` GUID. The new structure viewer is set as the active one.
      *
@@ -470,7 +543,7 @@ export class ViewersGrid {
      * @return the GUID of the new viewer, or `undefined` if we already
      *         reached the viewer limit.
      */
-    private _duplicate(initial: GUID): ViewerGridData | undefined {
+    private async _duplicate(initial: GUID): Promise<ViewerGridData | undefined> {
         const data = this._cellsData.get(initial);
         assert(data !== undefined);
 
@@ -481,7 +554,7 @@ export class ViewersGrid {
         const newData = this._cellsData.get(newGUID);
         assert(newData !== undefined);
 
-        this._showInViewer(newGUID, data.current);
+        await this._showInViewer(newGUID, data.current);
         newData.viewer.applySettings(data.viewer.saveSettings());
         this.setActive(newGUID);
         return newData;
@@ -541,41 +614,70 @@ export class ViewersGrid {
         }
     }
 
-    private _showInViewer(guid: GUID, indexes: Indexes): void {
+    /**
+     * Displays the specified structure and atom in the viewer
+     *
+     * @param guid id of the cell to show
+     * @param indexes environment showed in the new viewer
+     */
+    private async _showInViewer(guid: GUID, indexes: Indexes): Promise<void> {
+        // Get current data from the cell
         const data = this._cellsData.get(guid);
         assert(data !== undefined);
 
         const viewer = data.viewer;
+        // If the structure has changed, load the new structure and atom into the viewer
         if (data.current.structure !== indexes.structure) {
-            const options: Partial<LoadOptions> = {
-                trajectory: true,
-            };
-            assert(indexes.structure < this._structures.length);
-
-            if (this._environments !== undefined) {
-                options.environments = this._environments[indexes.structure];
-                if (this._indexer.mode === 'atom') {
-                    options.highlight = indexes.atom;
-                }
-            }
-
-            viewer.load(
-                this._structure(indexes.structure),
-                this._propertiesForStructure(indexes.structure),
-                options
-            );
+            await this._loadViewer(viewer, indexes.structure, indexes.atom);
             data.current = indexes;
         }
 
-        if (this._indexer.mode === 'atom') {
-            if (data.current.atom !== indexes.atom) {
-                viewer.highlight(indexes.atom);
-            }
-        } else {
-            viewer.highlight(undefined);
-        }
+        // Toggle the highlight for the atom in the viewer
+        viewer.highlight(this._target === 'atom' ? indexes.atom : undefined);
 
+        // Update the current indexes in the data
         data.current = indexes;
+    }
+
+    /**
+     * Loads a structure and optional atom into the viewer
+     *
+     * @param viewer viewer instance where the structure will be loaded
+     * @param structureIndex index of the structure to be loaded
+     * @param atomIndex optional index of the atom to highlight
+     */
+    private _loadViewer(
+        viewer: MoleculeViewer,
+        structureIndex: number,
+        atomIndex?: number
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            // Initialize load options with trajectory enabled
+            const options: Partial<LoadOptions> = {
+                trajectory: true,
+            };
+
+            // If environments are defined, add them to the options
+            if (this._environments !== undefined) {
+                options.environments = this._environments[structureIndex];
+
+                // If the target is per atom, add the atom index to the highlight
+                if (this._target === 'atom') {
+                    options.highlight = atomIndex;
+                }
+            }
+
+            // Load the structure into the viewer
+            viewer.load(
+                this._structure(structureIndex),
+                this._propertiesForStructure(structureIndex),
+                options,
+                () => {
+                    // Resolve the Promise when the viewer has finished loading
+                    resolve();
+                }
+            );
+        });
     }
 
     /**
@@ -662,8 +764,8 @@ export class ViewersGrid {
                 </button>`;
             const duplicate = template.content.firstChild as HTMLElement;
 
-            duplicate.onclick = () => {
-                const data = this._duplicate(cellGUID);
+            duplicate.onclick = async () => {
+                const data = await this._duplicate(cellGUID);
                 if (data === undefined) {
                     return;
                 }
@@ -769,7 +871,7 @@ export class ViewersGrid {
                 );
 
                 viewer.onselect = (atom: number) => {
-                    if (this._indexer.mode !== 'atom' || this._active !== cellGUID) {
+                    if (this._target !== 'atom' || this._active !== cellGUID) {
                         return;
                     }
 
@@ -780,7 +882,8 @@ export class ViewersGrid {
                     assert(data !== undefined);
                     const natoms = viewer.natoms();
                     assert(natoms !== undefined);
-                    const indexes = this._indexer.from_structure_atom(
+                    const indexes = this._indexer.fromStructureAtom(
+                        this._target,
                         data.current.structure,
                         atom % natoms
                     );

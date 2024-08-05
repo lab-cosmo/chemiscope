@@ -89,7 +89,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
-    .. _chemiscope-explore: https://chemiscope.org/docs/examples/explore.html
+    .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
 
     # Validate inputs

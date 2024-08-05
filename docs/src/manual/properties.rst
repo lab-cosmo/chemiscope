@@ -11,7 +11,8 @@ properties.
 Chemiscope can work with two kinds of entities: full structures, or
 atom-centred environments. A structure consists in a set of atoms, possibly
 representing the periodic repeat unit of an infinite structure. An
-environment consists in a set of atoms that surround a central atom.
+environment consists in a set of neighbors that surround a central atom,
+within a set cutoff radius.
 In both cases, these entities are fully defined by the position and nature
 of the atoms present in the structure, or in the neighborhood of the
 environment center.
@@ -19,9 +20,9 @@ environment center.
 For each structure or environment, one may have computed *properties*,
 e.g. the cohesive energy of a molecule, or the NMR chemical shielding of
 a nucleus, or *structural representations*, i.e. functions of the
-spatial arrangement of the atoms that incorporate some fundamental
-symmetries to achieve a description of the structure that is as complete
-as possible, yet concise. Examples of such representations are for instance
+spatial arrangement of the atoms that achieve a description of the structure 
+that is as complete as possible, yet concise. 
+Examples of such representations are for instance
 `atom density representationis <soap>`_ or `Behler-Parrinello
 symmetry functions <Behler-Parrinello>`_. These representations are usually
 high-dimensional vectors, hard to visualize and interpret. For this reason, one
