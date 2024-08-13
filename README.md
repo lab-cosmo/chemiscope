@@ -103,6 +103,12 @@ dependencies with:
 pip install chemiscope[explore]
 ```
 
+To use `chemiscope.metatensor_featurizer` for providing your trained model
+to get the features for `chemiscope.explore`, install the dependencies with:
+```bash
+pip install chemiscope[metatensor]
+```
+
 ## sphinx and sphinx-gallery integration
 
 Chemiscope provides also extensions for `sphinx` and `sphinx-gallery` to
