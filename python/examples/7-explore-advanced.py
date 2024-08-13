@@ -186,6 +186,7 @@ cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
 fetch_dataset("mace-mp-tsne-m3cd.json.gz")
 chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
 
+
 # %%
 #
 # Example with SOAP, t-SNE and environments

@@ -11,7 +11,7 @@ from .structures import (  # noqa: F401
     extract_properties,
     librascal_atomic_environments,
 )
-from .explore import explore  # noqa: F401
+from .explore import explore, metatensor_featurizer  # noqa: F401
 from .version import __version__  # noqa: F401
 
 from .jupyter import show, show_input  # noqa

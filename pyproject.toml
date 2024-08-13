@@ -75,3 +75,8 @@ explore = [
     "dscribe",
     "scikit-learn",
 ]
+
+metatensor = [
+    "metatensor",
+    "metatensor[torch]"
+]

@@ -26,3 +26,5 @@
 .. autofunction:: chemiscope.ase_tensors_to_ellipsoids
 
 .. autofunction:: chemiscope.explore
+
+.. autofunction:: chemiscope.metatensor_featurizer
