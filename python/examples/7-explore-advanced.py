@@ -62,7 +62,7 @@ qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 # return the reduced data.
 
 
-def mace_off_tsne(frames):
+def mace_off_tsne(frames, _environments):
     # At first, we initialize a mace_off calculator:
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_off(**descriptor_opt)
@@ -141,7 +141,7 @@ m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 # different mace calculator.
 
 
-def mace_mp0_tsne(frames):
+def mace_mp0_tsne(frames, _environments):
     # Initialise a mace-mp0 calculator
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_mp(**descriptor_opt)

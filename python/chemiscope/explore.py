@@ -3,7 +3,7 @@ import os
 from .jupyter import show
 
 
-def explore(frames, featurize=None, properties=None, mode="default"):
+def explore(frames, featurize=None, properties=None, environments=None, mode="default"):
     """
     Automatically explore a dataset containing all structures in ``frames``.
 
@@ -29,6 +29,12 @@ def explore(frames, featurize=None, properties=None, mode="default"):
         visualization. This dictionary can contain any other relevant data associated
         with the atomic structures. Properties can be extracted from frames with
         :py:func:`extract_properties` or manually defined by the user.
+
+    :param environments: optional. List of environments (described as
+        ``(structure id, center id, cutoff)``) to include when extracting the
+        atomic properties. Can be extracted from frames with
+        :py:func:`all_atomic_environments` (or :py:func:`librascal_atomic_environments`)
+        or manually defined.
 
     :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
         of "default", "structure", or "map". The default mode is "default".
@@ -100,11 +106,14 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     # Apply dimensionality reduction from the provided featurizer
     if featurize is not None:
-        X_reduced = featurize(frames)
+        X_reduced = featurize(frames, environments)
 
     # Use default featurizer
     else:
-        X_reduced = soap_pca_featurize(frames)
+        centers = None
+        if environments is not None:
+            centers, frames = _pick_env_frames(environments, frames)
+        X_reduced = soap_pca_featurize(frames, centers)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced
@@ -113,7 +122,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     return show(frames=frames, properties=properties, mode=mode)
 
 
-def soap_pca_featurize(frames):
+def soap_pca_featurize(frames, centers=None):
     """
     Computes SOAP features for a given set of atomic structures and performs
     dimensionality reduction using PCA. Custom featurize functions should
@@ -158,8 +167,19 @@ def soap_pca_featurize(frames):
 
     # Calculate descriptors
     n_jobs = min(len(frames), os.cpu_count())
-    feats = soap.create(frames, n_jobs=n_jobs)
+    feats = soap.create(frames, centers=centers, n_jobs=n_jobs)
 
     # Compute pca
     pca = PCA(n_components=2)
     return pca.fit_transform(feats)
+
+
+def _pick_env_frames(envs, frames):
+    grouped_envs = {}
+    picked_frames = []
+    for [env_index, atom_index, _cutoff] in envs:
+        if env_index not in grouped_envs:
+            grouped_envs[env_index] = []
+        grouped_envs[env_index].append(atom_index)
+        picked_frames.append(frames[env_index])
+    return list(grouped_envs.values()), picked_frames

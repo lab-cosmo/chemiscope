@@ -69,8 +69,10 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 #
 # Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
 # interactive widget with the reduced dimensionality of data.
-
-chemiscope.explore(frames)
+envs = [(0, 0, 3.5),
+ (1, 1, 3.5),
+ (2, 2, 3.5)]
+chemiscope.explore(frames, environments=envs)
 
 # %%
 #
@@ -109,7 +111,7 @@ from sklearn.decomposition import KernelPCA  # noqa
 # passed to the ``featurize`` function.
 
 
-def soap_kpca_featurize(frames):
+def soap_kpca_featurize(frames, _environments):
     # Initialise soap calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
