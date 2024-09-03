@@ -62,7 +62,9 @@ qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 # return the reduced data.
 
 
-def mace_off_tsne(frames, _environments):
+def mace_off_tsne(frames, environments):
+    if environments is not None:
+        raise ValueError("'environments' are not supported")
     # At first, we initialize a mace_off calculator:
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_off(**descriptor_opt)
