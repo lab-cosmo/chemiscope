@@ -69,7 +69,9 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
 
 
         # Define a function for dimensionality reduction
-        def soap_kpca_featurize(frames, _environments):
+        def soap_kpca_featurize(frames, environments):
+            if environments is not None:
+                raise ValueError("'environments' are not supported")
             # Compute descriptors
             soap = dscribe.descriptors.SOAP(
                 species=["C"],
