@@ -110,8 +110,28 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
 
     # Use default featurizer
     else:
-        if environments is not None:
-            frames = [frames[env_index] for env_index, _, _ in environments]
+        if environments is not None and len(environments) != len(frames):
+            # Pick frames corresponding to the environments
+            unique_struct_indices = list({env[0] for env in environments})
+            frames = [frames[index] for index in unique_struct_indices]
+
+            # Pick properties corresponding to the environments
+            for prop_name, prop_val in properties.items():
+                if isinstance(prop_val, list):
+                    if len(prop_val) != len(environments):
+                        properties[prop_name] = [
+                            prop_val[struct_index]
+                            for struct_index in unique_struct_indices
+                        ]
+                else:
+                    values = prop_val["values"]
+                    if len(values) != len(environments):
+                        properties[prop_name]["values"] = [
+                            values[struct_index]
+                            for struct_index in unique_struct_indices
+                        ]
+
+        # Run default featurizer
         X_reduced = soap_pca_featurize(frames, environments)
 
     # Add dimensionality reduction results to properties
@@ -146,6 +166,7 @@ def soap_pca_featurize(frames, environments=None):
     # Get the atom indexes from the environments and pick related frames
     if environments is not None:
         centers = _extract_environment_indices(environments)
+        frames = [frames[index] for index in list({env[0] for env in environments})]
 
     # Get global species
     species = set()

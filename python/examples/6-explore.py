@@ -89,12 +89,16 @@ chemiscope.explore(frames)
 # Besides this, it is possible to run the dimentionality reduction algorithm and display
 # specific atom-centered environments. They can be manually defined by specifying a list
 # of tuples in the format ``[index of structure, index of atom, cutoff]``, as shown in
-# this example.
+# this example. Alternatively, the environments can be extracted from the frames using
+# the function :py:func:`all_atomic_environments`.
 #
-# Alternatively, the environments can be extracted from the frames using the function
-# :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`.
+# In the following example, we also demonstrate a way to provide properties for
+# visualization. The frames and properties related to the indexes in the
+# ``environments`` will be extracted.
 
-chemiscope.explore(frames, environments=[(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)])
+properties = chemiscope.extract_properties(frames, only=["energy"])
+environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
+chemiscope.explore(frames, environments=environments, properties=properties)
 
 # %%
 #
