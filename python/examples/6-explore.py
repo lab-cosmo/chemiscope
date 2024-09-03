@@ -69,10 +69,7 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 #
 # Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
 # interactive widget with the reduced dimensionality of data.
-envs = [(0, 0, 3.5),
- (1, 1, 3.5),
- (2, 2, 3.5)]
-chemiscope.explore(frames, environments=envs)
+chemiscope.explore(frames)
 
 # %%
 #
@@ -86,6 +83,18 @@ chemiscope.explore(frames, environments=envs)
 # for dimensionality reduction. The resulting components are then added to the
 # properties to be used in visualization.
 
+
+# %%
+#
+# Besides this, it is possible to run the dimentionality reduction algorithm and display
+# specific atom-centered environments. They can be manually defined by specifying a list
+# of tuples in the format ``[index of structure, index of atom, cutoff]``, as shown in
+# this example.
+#
+# Alternatively, the environments can be extracted from the frames using the function
+# :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`.
+
+chemiscope.explore(frames, environments=[(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)])
 
 # %%
 #
@@ -105,10 +114,11 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 # %%
 #
-# Define the function ``soap_kpca_featurize`` which takes one argument
-# (``frames``). This argument contains the structures provided to
-# :py:func:`chemiscope.explore` and is internally
-# passed to the ``featurize`` function.
+# Define the function ``soap_kpca_featurize`` which takes two arguments
+# (``frames``, which contains the structures provided to
+# :py:func:`chemiscope.explore` and internally passed to the ``featurize`` function;
+# ``environments``,  optional aurgument with the atom-centered environments,
+# if they were provided to the :py:func:`chemiscope.explore`.
 
 
 def soap_kpca_featurize(frames, _environments):

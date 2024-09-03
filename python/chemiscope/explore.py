@@ -69,7 +69,7 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
 
 
         # Define a function for dimensionality reduction
-        def soap_kpca_featurize(frames):
+        def soap_kpca_featurize(frames, _environments):
             # Compute descriptors
             soap = dscribe.descriptors.SOAP(
                 species=["C"],
@@ -175,6 +175,12 @@ def soap_pca_featurize(frames, centers=None):
 
 
 def _pick_env_frames(envs, frames):
+    """
+    Get environment indices par structures and pick corresponding frames
+
+    :param: list envs: each element is a list of [env_index, atom_index, cutoff]
+    :param: list frames: list of frames
+    """
     grouped_envs = {}
     picked_frames = []
     for [env_index, atom_index, _cutoff] in envs:
