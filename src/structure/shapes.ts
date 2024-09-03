@@ -808,47 +808,50 @@ export class CustomShape extends Shape {
     }
 }
 
-export function add_shapes(
-    shape_list: $3Dmol.CustomShapeSpec,
+const MAX_VERTICES_IN_SINGLE_SHAPE = 32768;
+
+export function mergeShapes(
+    mergedShapes: $3Dmol.CustomShapeSpec,
     shape: $3Dmol.CustomShapeSpec,
-    viewer: $3Dmol.GLViewer,
-    max_vertices: number = 0
+    viewer: $3Dmol.GLViewer
 ): void {
     // Dumps shapes if the number of vertices exceeds a set threshold
-    if (shape_list.vertexArr && shape.vertexArr && max_vertices > 0) {
-        if (shape_list.vertexArr.length + shape.vertexArr.length >= max_vertices) {
+    if (mergedShapes.vertexArr && shape.vertexArr) {
+        if (
+            mergedShapes.vertexArr.length + shape.vertexArr.length >=
+            MAX_VERTICES_IN_SINGLE_SHAPE
+        ) {
             // adds to the viewer and resets the list
-            viewer.addCustom(shape_list);
-            shape_list.vertexArr.length = 0;
-            if (Array.isArray(shape_list.normalArr)) {
-                shape_list.normalArr.length = 0;
+            viewer.addCustom(mergedShapes);
+            mergedShapes.vertexArr.length = 0;
+            if (Array.isArray(mergedShapes.normalArr)) {
+                mergedShapes.normalArr.length = 0;
             }
-            if (Array.isArray(shape_list.faceArr)) {
-                shape_list.faceArr.length = 0;
+            if (Array.isArray(mergedShapes.faceArr)) {
+                mergedShapes.faceArr.length = 0;
             }
-            if (Array.isArray(shape_list.color)) {
-                shape_list.color.length = 0;
+            if (Array.isArray(mergedShapes.color)) {
+                mergedShapes.color.length = 0;
             }
         }
     }
     // Consolidates a list of shapes to add them all at once
-    if (shape_list.faceArr && shape.faceArr && shape_list.vertexArr) {
-        const shift = shape_list.vertexArr.length ?? 0;
+    if (mergedShapes.faceArr && shape.faceArr && mergedShapes.vertexArr) {
+        const shift = mergedShapes.vertexArr.length ?? 0;
         const shiftedFaceArr = shape.faceArr.map((value) => value + shift);
-        shape_list.faceArr.push(...shiftedFaceArr);
+        mergedShapes.faceArr.push(...shiftedFaceArr);
     }
-    if (shape_list.vertexArr && shape.vertexArr) {
-        shape_list.vertexArr?.push(...shape.vertexArr);
+    if (mergedShapes.vertexArr && shape.vertexArr) {
+        mergedShapes.vertexArr?.push(...shape.vertexArr);
     }
-    if (shape_list.normalArr && shape.normalArr) {
-        shape_list.normalArr?.push(...shape.normalArr);
+    if (mergedShapes.normalArr && shape.normalArr) {
+        mergedShapes.normalArr?.push(...shape.normalArr);
     }
-    if (shape.vertexArr && Array.isArray(shape_list.color)) {
-        const newcolor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
-        const newcolors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(
-            newcolor
+    if (shape.vertexArr && Array.isArray(mergedShapes.color)) {
+        const newColor = shape.color && !Array.isArray(shape.color) ? shape.color : 0xffffff;
+        const newColors: $3Dmol.ColorSpec[] = Array(shape.vertexArr.length ?? 0).fill(
+            newColor
         ) as $3Dmol.ColorSpec[];
-        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        shape_list.color.push(...newcolors);
+        mergedShapes.color.push(...newColors);
     }
 }
