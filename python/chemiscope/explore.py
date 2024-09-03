@@ -33,7 +33,7 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
     :param environments: optional. List of environments (described as
         ``(structure id, center id, cutoff)``) to include when extracting the
         atomic properties. Can be extracted from frames with
-        :py:func:`all_atomic_environments` (or :py:func:`librascal_atomic_environments`)
+        :py:func:`all_atomic_environments`.
         or manually defined.
 
     :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
