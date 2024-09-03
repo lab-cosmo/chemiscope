@@ -143,7 +143,9 @@ m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 # different mace calculator.
 
 
-def mace_mp0_tsne(frames, _environments):
+def mace_mp0_tsne(frames, environments):
+    if environments is not None:
+        raise ValueError("'environments' are not supported")
     # Initialise a mace-mp0 calculator
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_mp(**descriptor_opt)
