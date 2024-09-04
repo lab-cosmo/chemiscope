@@ -111,6 +111,10 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
 
     # Pick frames and properties related to the environments if provided
     if environments is not None:
+        # Sort environments by structure id and atom id
+        environments = sorted(environments, key=lambda x: (x[0], x[1]))
+
+        # Check structure indexes
         unique_structures = list({env[0] for env in environments})
         if any(index >= len(frames) for index in unique_structures):
             raise IndexError(
@@ -118,9 +122,6 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
             )
 
         if len(unique_structures) != len(frames):
-            # Sort environments by structure id and atom id
-            environments = sorted(environments, key=lambda x: (x[0], x[1]))
-
             # Pick frames corresponding to the environments
             frames = [frames[index] for index in unique_structures]
 
