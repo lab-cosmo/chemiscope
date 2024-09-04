@@ -18,6 +18,9 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
     cores for parallelization. PCA reduces the dimensionality to two components by
     default.
 
+    If `environments` is provided, frames and properties are filtered to include only
+    those related to the environments.
+
     :param list frames: list of frames
 
     :param callable featurize: optional. Function to compute features and perform

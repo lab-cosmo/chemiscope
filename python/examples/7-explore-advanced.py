@@ -188,16 +188,16 @@ chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
 
 # %%
 #
-# Example usage of environments with SOAP and t-SNE
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Example Usage of SOAP and t-SNE with environments
+# +++++++++++++++++++++++++++++++++++++++++++++++++
 #
-# In this example, we demonstrate how to use the SOAP to compute atomic
-# descriptors and then visualize them using t-SNE.
+# This example demonstrates how to compute descriptors using the SOAP and t-SNE with
+# ``environments`` parameter specifying which atoms in the frames are used for
+# calculating the descriptors.
 #
-# Provide a created function and environments to :py:func:`chemiscope.explore`.
-# Use the defined ``soap_tnse_with_environments``` function to compute t-SNE embeddings
-# and explore them with a widget.
-#
+# We are defining a custom featurizer that takes frames and environments. Note, that the
+# frames corresponding to the ``environments`` will already be picked internally once
+# :py:func:`chemiscope.explore` is executed.
 
 
 def soap_tnse_with_environments(frames, environments):
@@ -241,7 +241,13 @@ def soap_tnse_with_environments(frames, environments):
     return reducer.fit_transform(feats)
 
 
-cs = chemiscope.explore(
+# %%
+#
+# Provide a created function and environments to :py:func:`chemiscope.explore`. The
+# environments are manually defined following the format ``[index of structure, index
+# of atom, cutoff]``.
+
+chemiscope.explore(
     frames=m3cd_frames,
     featurize=soap_tnse_with_environments,
     environments=[(1, 2, 3.5), (2, 0, 3.5)],
