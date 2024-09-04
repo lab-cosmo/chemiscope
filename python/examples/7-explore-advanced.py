@@ -47,6 +47,7 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/
 #
 # Let's import the necessary libraries.
 
+from dscribe.descriptors import SOAP  # noqa
 from mace.calculators import mace_off  # noqa
 from sklearn.manifold import TSNE  # noqa
 
@@ -65,6 +66,7 @@ qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 def mace_off_tsne(frames, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported")
+
     # At first, we initialize a mace_off calculator:
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_off(**descriptor_opt)
@@ -146,6 +148,7 @@ m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 def mace_mp0_tsne(frames, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported")
+
     # Initialise a mace-mp0 calculator
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_mp(**descriptor_opt)
@@ -182,3 +185,64 @@ cs = chemiscope.explore(m3cd_frames, featurize=mace_mp0_tsne)
 
 fetch_dataset("mace-mp-tsne-m3cd.json.gz")
 chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
+
+# %%
+#
+# Example usage of environments with SOAP and t-SNE
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++
+#
+# In this example, we demonstrate how to use the SOAP to compute atomic
+# descriptors and then visualize them using t-SNE.
+#
+# Provide a created function and environments to :py:func:`chemiscope.explore`.
+# Use the defined ``soap_tnse_with_environments``` function to compute t-SNE embeddings
+# and explore them with a widget.
+#
+
+
+def soap_tnse_with_environments(frames, environments):
+    if environments is None:
+        raise ValueError("'environments' supposed to be provided")
+
+    # Get center indices from environments
+    grouped_envs = {}
+    for [env_index, atom_index, _cutoff] in environments:
+        if env_index not in grouped_envs:
+            grouped_envs[env_index] = []
+        grouped_envs[env_index].append(atom_index)
+    centers = list(grouped_envs.values())
+
+    # Get global species
+    species = set()
+    for frame in frames:
+        species.update(frame.get_chemical_symbols())
+    species = list(species)
+
+    # Initialize calculator
+    soap = SOAP(
+        species=species,
+        r_cut=4.5,
+        n_max=8,
+        l_max=6,
+        sigma=0.2,
+        rbf="gto",
+        average="outer",
+        periodic=True,
+        weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
+        compression={"mode": "mu1nu1"},
+    )
+
+    # Calculate descriptors
+    feats = soap.create(frames, centers=centers)
+
+    # Compute tsne
+    perplexity = min(30, feats.shape[0] - 1)
+    reducer = TSNE(n_components=2, perplexity=perplexity)
+    return reducer.fit_transform(feats)
+
+
+cs = chemiscope.explore(
+    frames=m3cd_frames,
+    featurize=soap_tnse_with_environments,
+    environments=[(1, 2, 3.5), (2, 0, 3.5)],
+)
