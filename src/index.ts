@@ -19,7 +19,7 @@ import {
     Target,
     UserStructure,
 } from './dataset';
-import { JsObject, validateDataset } from './dataset';
+import { JsObject, getTarget, validateDataset } from './dataset';
 import { GUID, PositioningCallback, WarningHandler, getNextColor, logger } from './utils';
 import {
     ArrowParameters,

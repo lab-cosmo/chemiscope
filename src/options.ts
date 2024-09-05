@@ -378,7 +378,7 @@ export abstract class OptionsGroup {
 
                 // send warning if the value is invalid and omit applying it
                 if (value === undefined || value === null || Number.isNaN(value)) {
-                    sendWarning(`ignored setting '${lastKey}' with invalid value '${value}'`);
+                    logger.warn(`ignored setting '${lastKey}' with invalid value '${value}'`);
                     return;
                 }
 

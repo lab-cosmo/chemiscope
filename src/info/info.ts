@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
-import { binarySearch, getElement, logger, sendWarning } from '../utils';
+import { binarySearch, getElement, logger } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
 
@@ -61,8 +61,7 @@ export class EnvironmentInfo {
     private _indexer: EnvironmentIndexer;
     private _properties: { [name: string]: Property };
     private _parameters?: { [name: string]: Parameter };
-    private _target: 
-  ;
+    private _target: DisplayTarget;
 
     /**
      * Create a new {@link EnvironmentInfo} inside the DOM element with given `id`
