@@ -1,15 +1,5 @@
 import os
 
-# Check if dependencies were installed
-try:
-    from dscribe.descriptors import SOAP
-    from sklearn.decomposition import PCA
-except ImportError as e:
-    raise ImportError(
-        f"Required package not found: {str(e)}. Please install dependency "
-        + "using 'pip install chemiscope[explore]'."
-    )
-
 from .jupyter import show
 
 
@@ -73,7 +63,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
 
         # Define a function for dimensionality reduction
-        def soap_kpca(frames):
+        def soap_kpca_featurize(frames):
             # Compute descriptors
             soap = dscribe.descriptors.SOAP(
                 species=["C"],
@@ -92,14 +82,14 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
 
         # 2) Example with a custom featurizer function
-        chemiscope.explore(frames, featurize=soap_kpca)
+        chemiscope.explore(frames, featurize=soap_kpca_featurize)
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
-    .. _chemiscope-explore: https://chemiscope.org/docs/examples/explore.html
+    .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
 
     # Validate inputs
@@ -114,7 +104,7 @@ def explore(frames, featurize=None, properties=None, mode="default"):
 
     # Use default featurizer
     else:
-        X_reduced = soap_pca(frames)
+        X_reduced = soap_pca_featurize(frames)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced
@@ -123,15 +113,26 @@ def explore(frames, featurize=None, properties=None, mode="default"):
     return show(frames=frames, properties=properties, mode=mode)
 
 
-def soap_pca(frames):
+def soap_pca_featurize(frames):
     """
     Computes SOAP features for a given set of atomic structures and performs
-    dimensionality reduction using PCA.
+    dimensionality reduction using PCA. Custom featurize functions should
+    have the same signature.
 
     Note:
     - The SOAP descriptor parameters are pre-defined.
     - We use all available CPU cores for parallel computation of SOAP descriptors.
     """
+
+    # Check if dependencies were installed
+    try:
+        from dscribe.descriptors import SOAP
+        from sklearn.decomposition import PCA
+    except ImportError as e:
+        raise ImportError(
+            f"Required package not found: {str(e)}. Please install dependency "
+            + "using 'pip install chemiscope[explore]'."
+        )
     # Get global species
     species = set()
     for frame in frames:

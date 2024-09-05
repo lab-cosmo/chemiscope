@@ -8,9 +8,9 @@ import { Environment, Structure, UserStructure } from './dataset';
 
 /**
  * If a dataset contains both atomic and structure properties, we can only
- * display one kind at the time, indicated by the {@link DisplayMode}.
+ * display one kind at the time, indicated by the {@link DisplayTarget}.
  */
-export type DisplayMode = 'structure' | 'atom';
+export type DisplayTarget = 'structure' | 'atom';
 
 /**
  * Indexes related to a single entry in a property.
@@ -44,12 +44,6 @@ export interface Indexes {
  * the structure viewer and the general information panel.
  */
 export class EnvironmentIndexer {
-    /**
-     * Current {@link DisplayMode}. This is useful for datasets that
-     * contain both atom-level and structure-level properties.
-     */
-    public mode: DisplayMode;
-
     private _structures: Structure[] | UserStructure[];
     private _environments?: Environment[];
     /// List of active structures (structures with at least one active atom)
@@ -61,16 +55,10 @@ export class EnvironmentIndexer {
      * Create a new {@link EnvironmentIndexer} for the given set of structures and
      * environments.
      *
-     * @param mode         should we display atomic or structure properties
      * @param structures   structures used in the current dataset
      * @param environments environments used in the current dataset
      */
-    constructor(
-        mode: DisplayMode,
-        structures: Structure[] | UserStructure[],
-        environments?: Environment[]
-    ) {
-        this.mode = mode;
+    constructor(structures: Structure[] | UserStructure[], environments?: Environment[]) {
         this._structures = structures;
         this._environments = environments;
 
@@ -79,18 +67,24 @@ export class EnvironmentIndexer {
             () => []
         ) as number[][];
 
+        // Initialize active atoms and structures from the environments
         if (this._environments !== undefined) {
             for (const environment of this._environments) {
                 this._activeAtoms[environment.structure].push(environment.center);
             }
 
+            // If there are active atoms in the structure, add it to active structures
             for (let structure = 0; structure < this._structures.length; structure++) {
                 if (this._activeAtoms[structure].length !== 0) {
                     this._activeStructures.push(structure);
                 }
             }
-        } else {
+        }
+
+        // Initialize active atoms and structures from the structures themselves
+        else {
             for (let structure = 0; structure < this._structures.length; structure++) {
+                // Add structure to active structures if it has atoms
                 const atomsCount = this.atomsCount(structure);
                 if (atomsCount > 0) {
                     this._activeStructures.push(structure);
@@ -111,71 +105,96 @@ export class EnvironmentIndexer {
         for (let structure = 0; structure < this._structures.length; structure++) {
             this._activeAtoms[structure].sort((a, b) => a - b);
         }
-
-        if (this.mode === 'atom') {
-            assert(this._environments !== undefined);
-        }
     }
 
     /**
      * Get a full set of indexes from the global environment index
-     * @param  environment global index of an environment
+     * @param environment global index of an environment
+     * @param target display target, either structure or atom
      * @return             full {@link Indexes}, containing the corresponding
      *                     structure / atom indexes
      */
-    public from_environment(environment: number): Indexes {
-        if (this.mode === 'structure') {
+    public fromEnvironment(environment: number, target: DisplayTarget): Indexes {
+        // Structure
+        if (target === 'structure') {
             return {
                 environment: environment,
                 structure: environment,
             };
-        } else {
-            assert(this.mode === 'atom');
-            assert(this._environments !== undefined);
-            assert(environment < this._environments.length);
-
-            const env = this._environments[environment];
-            return {
-                atom: env.center,
-                environment: environment,
-                structure: env.structure,
-            };
         }
+
+        // Atom
+        assert(this._environments !== undefined);
+        assert(environment < this._environments.length);
+
+        const env = this._environments[environment];
+        return {
+            atom: env.center,
+            environment: environment,
+            structure: env.structure,
+        };
     }
 
     /**
      * Get a full set of indexes from the structure/atom indexes
+     * @param  target    display target, either atom or structure
      * @param  structure index of the structure in the full structure list
      * @param  atom      index of the atom in the structure
      * @return an {@link Indexes} instance, containing the global environment index;
      *         or ``undefined`` if there is no environment corresponding to the
      *         given atom in the given structure
      */
-    public from_structure_atom(structure: number, atom?: number): Indexes | undefined {
-        if (this.mode === 'structure') {
+    public fromStructureAtom(
+        target: DisplayTarget,
+        structure: number,
+        atom?: number
+    ): Indexes | undefined {
+        // Structure target
+        if (target === 'structure') {
             assert(atom === undefined || atom === 0);
             return {
                 environment: structure,
                 structure: structure,
             };
-        } else {
-            assert(this.mode === 'atom');
-            assert(this._environments !== undefined);
-            assert(atom !== undefined);
-
-            for (let environment = 0; environment < this._environments.length; environment++) {
-                const e = this._environments[environment];
-                if (e.structure === structure && e.center === atom) {
-                    return {
-                        atom: atom,
-                        environment: environment,
-                        structure: structure,
-                    };
-                }
-            }
-
-            return undefined;
         }
+
+        // Atom target
+        assert(this._environments !== undefined);
+        assert(atom !== undefined);
+
+        for (let envIndex = 0; envIndex < this._environments.length; envIndex++) {
+            const env = this._environments[envIndex];
+            if (env.structure === structure && env.center === atom) {
+                return {
+                    atom: atom,
+                    environment: envIndex,
+                    structure: structure,
+                };
+            }
+        }
+
+        // No corresponding environment found
+        return undefined;
+    }
+
+    /**
+     * Finds the first atom in the given structure that has associated data
+     *
+     * @param structure index of the structure to search the corresponding Indexes
+     * @param target display target (atom or structure)
+     */
+    public fromStructure(structure: number, target: DisplayTarget): Indexes | undefined {
+        // Iterate over all atoms in the given structure
+        for (let atom = 0; atom < this.atomsCount(structure); atom++) {
+            // Get indexes for the current structure/atom combination
+            const indexes = this.fromStructureAtom(target, structure, atom);
+            if (indexes !== undefined) {
+                return indexes;
+            }
+        }
+
+        // No valid indexes are found
+        return undefined;
     }
 
     /** Does this Indexer knows about atom-centered environments? */

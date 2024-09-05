@@ -12,12 +12,12 @@ import fixPlot from './plotly/fix-plot';
 
 import { Property, Settings } from '../dataset';
 
-import { EnvironmentIndexer, Indexes } from '../indexer';
+import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, arrayMaxMin, logger } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
-import { MapData, NumericProperty } from './data';
+import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
 import * as styles from '../styles';
@@ -216,6 +216,8 @@ export class PropertiesMap {
 
     /// environment indexer
     private _indexer: EnvironmentIndexer;
+    // widget display target
+    private _target: DisplayTarget;
     /// Settings of the map
     private _options: MapOptions;
     /// Button used to reset the range of color axis
@@ -227,24 +229,29 @@ export class PropertiesMap {
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
      *
-     * @param element   HTML element or string 'id' of the element where
+     * @param element    HTML element or string 'id' of the element where
      *                   the map should live
+     * @param settings   settings for all panels
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
      *                   environments index to structure/atom indexes
+     * @param target       widget display target, either stucture or atom
      * @param properties properties to be displayed
      */
     constructor(
-        config: { element: string | HTMLElement; settings: Settings },
+        element: string | HTMLElement,
+        settings: Settings,
         indexer: EnvironmentIndexer,
+        target: DisplayTarget,
         properties: { [name: string]: Property }
     ) {
         this._indexer = indexer;
+        this._target = target;
         this.onselect = () => {};
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
 
         // DOM structure outside the map:
-        // - containerElement/config.element (#chemiscope-map)
+        // - containerElement/element (#chemiscope-map)
         //   - hostElement (layer needed for removal)
         //     - this._shadow (shadow root)
         //       - this._root
@@ -252,65 +259,44 @@ export class PropertiesMap {
         //         - viewer button
         //         - marker
 
-        const containerElement = getElement(config.element);
-
+        // Attach a shadow DOM to the host element for isolation
+        const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         hostElement.style.setProperty('height', '100%');
         containerElement.appendChild(hostElement);
-
         this._shadow = hostElement.attachShadow({ mode: 'open' });
 
+        // Create a root element inside the shadow DOM to append plot to it
         this._root = document.createElement('div');
         this._root.style.setProperty('height', '100%');
         this._shadow.appendChild(this._root);
-
         if (this._root.style.position === '') {
             this._root.style.position = 'relative';
         }
 
+        // Create a div for the plot
         this._plot = document.createElement('div') as unknown as PlotlyScatterElement;
         this._plot.style.width = '100%';
         this._plot.style.height = '100%';
         this._root.appendChild(this._plot);
 
+        // Initialize data with the given properties
         this._data = new MapData(properties);
 
-        const currentProperties = this._data[this._indexer.mode];
-        const currentPropertiesNames = Object.keys(currentProperties);
-        if (currentPropertiesNames.length < 2) {
-            // better error message in case the user forgot to give the
-            // environments in the data
-            if (this._indexer.mode === 'structure' && !this._indexer.hasEnvironments()) {
-                if (Object.keys(this._data['atom']).length >= 2) {
-                    throw Error(
-                        'could not find enough structure properties to display, \
-                        but there are atom properties. Please provide the \
-                        environment list to display them'
-                    );
-                }
-            }
-
-            let message = 'we need at least two properties to plot in the map';
-            if (currentPropertiesNames.length === 0) {
-                message += ', we have none';
-            } else {
-                message += `, we have only one: '${currentPropertiesNames[0]}'`;
-            }
-
-            throw Error(message);
-        }
-
+        // Initialize options used in the modal
+        const currentProperties = this._getCurrentProperties();
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            config.settings
+            settings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
+        // Connect the settings to event listeners or handlers
         this._connectSettings();
 
-        // By default, position the modal for settings on top of the plot,
+        // Define the default position for the settings modal on top of the plot,
         // centered horizontally
         this.positionSettingsModal = (rect: DOMRect) => {
             const rootRect = this._root.getBoundingClientRect();
@@ -320,16 +306,69 @@ export class PropertiesMap {
             };
         };
 
+        // Create the Plotly plot within the plot element
         this._createPlot();
 
-        // This is done last as the plot needs to be created to obtain its
-        // style sheets.
+        // Adopt styles with the plot stylesheets as last one because the plot
+        // needs to be created to obtain it
         this._shadow.adoptedStyleSheets = [
             styles.bootstrap,
             styles.chemiscope,
             plotlyStyles.globalStyleSheet,
             plotlyStyles.getPlotStyleSheet(this._plot),
         ];
+    }
+
+    /**
+     * Change display target and adapt the element to the new target
+     * @param target display target
+     */
+    public async switchTarget(target: DisplayTarget): Promise<void> {
+        // Check if the target value actually changed
+        if (target !== this._target) {
+            // Set new widget target
+            this._target = target;
+
+            // Process markers to correctly set then to the updated map
+            this._handleMarkers();
+            if (this._active !== undefined) {
+                const activeMarker = this._selected.get(this._active);
+                if (activeMarker !== undefined) {
+                    this.onselect(
+                        this._indexer.fromEnvironment(activeMarker.current, this._target)
+                    );
+                }
+            }
+
+            // Update the map options based on the chosen target
+            this._setupMapOptions();
+
+            // Append the callbacks to the new options
+            this._connectSettings();
+
+            // Re-render the plot with the new data and layout
+            await this._react(this._getTraces(), this._getLayout());
+        }
+    }
+
+    /**
+     * Processes the markers by updating their current value to structure or environment index on the current target
+     * In 'structure' target, it set structure index, and in 'atom' target its environment index
+     */
+    private _handleMarkers() {
+        for (const [key, marker] of this._selected.entries()) {
+            if (this._target === 'structure') {
+                marker.current = this._indexer.fromEnvironment(marker.current, 'atom').structure;
+            } else {
+                const environment = this._indexer.fromStructure(
+                    marker.current,
+                    'atom'
+                )?.environment;
+                assert(environment !== undefined);
+                marker.current = environment;
+            }
+            this._selected.set(key, marker);
+        }
     }
 
     /**
@@ -360,14 +399,18 @@ export class PropertiesMap {
 
         // data.select needs `indexes.environment`, so make sure it is defined
         if (indexes.environment === undefined) {
-            const full_indexes = this._indexer.from_structure_atom(indexes.structure, indexes.atom);
-            if (full_indexes === undefined) {
-                const atom_str = indexes.atom === undefined ? '' : ` / atom ${indexes.atom}`;
+            const fullIndexes = this._indexer.fromStructureAtom(
+                this._target,
+                indexes.structure,
+                indexes.atom
+            );
+            if (fullIndexes === undefined) {
+                const atomStr = indexes.atom === undefined ? '' : ` / atom ${indexes.atom}`;
                 throw Error(
-                    `can not find the environnement for structure ${indexes.structure}` + atom_str
+                    `can not find the environnement for structure ${indexes.structure}` + atomStr
                 );
             }
-            indexes = full_indexes;
+            indexes = fullIndexes;
         }
 
         const data = this._selected.get(this._active);
@@ -405,6 +448,7 @@ export class PropertiesMap {
      * Add a new marker to the map. The new marker is set as the active one
      *
      * @param guid GUID of the new marker
+     * @param color GUID of the marker indicating the new viewer
      * @param indexes indexes of the environment that the new marker should show
      */
     public addMarker(guid: GUID, color: string, indexes: Indexes): void {
@@ -414,7 +458,7 @@ export class PropertiesMap {
         this._root.appendChild(data.marker);
         data.marker.onclick = () => {
             this.setActive(guid);
-            this.activeChanged(guid, this._indexer.from_environment(data.current));
+            this.activeChanged(guid, this._indexer.fromEnvironment(data.current, this._target));
         };
         this._selected.set(guid, data);
         this._updateMarkers([data]);
@@ -472,7 +516,175 @@ export class PropertiesMap {
         this._options.onSettingChange(callback);
     }
 
-    /** Forward to Plotly.restyle */
+    /**
+     * Build the traces from the options data
+     */
+    private _getTraces(): Plotly.Data[] {
+        const type = this._is3D() ? 'scatter3d' : 'scattergl';
+        // The main trace, containing default data
+        const main = {
+            name: '',
+            type: type,
+
+            x: this._coordinates(this._options.x, 0)[0],
+            y: this._coordinates(this._options.y, 0)[0],
+            z: this._coordinates(this._options.z, 0)[0],
+
+            hovertemplate: this._options.hovertemplate(),
+            marker: {
+                color: this._colors(0)[0],
+                coloraxis: 'coloraxis',
+                line: {
+                    color: this._lineColors(0)[0],
+                    width: 1,
+                },
+                // prevent plolty from messing with opacity when doing bubble
+                // style charts (different sizes for each point)
+                opacity: 1,
+                size: this._sizes(0)[0],
+                sizemode: 'area',
+                symbol: this._symbols(0)[0],
+            },
+            mode: 'markers',
+            showlegend: false,
+        };
+
+        // Create a second trace to store the last clicked point, in order to
+        // display it on top of the main plot with different styling. This is
+        // only used in 3D mode, since it is way slower than moving
+        // this._selectedMarker around.
+        const selected = {
+            name: 'selected',
+            type: type,
+
+            x: [],
+            y: [],
+            z: [],
+
+            hoverinfo: 'none',
+            marker: {
+                color: [],
+                line: {
+                    color: [],
+                    width: 2,
+                },
+                opacity: 1,
+                size: [],
+                sizemode: 'area',
+            },
+            mode: 'markers',
+            showlegend: false,
+        };
+
+        const traces = [main as Data, selected as Data];
+
+        // Calculate legend names and show legend flags based on data properties
+        const legendNames = this._legendNames().slice(2);
+        const showlegend = this._showlegend().slice(2);
+        assert(legendNames.length === showlegend.length);
+        const currentLength = legendNames.length;
+
+        // Adjust arrays based on maxSymbols configuration
+        if (this._data.maxSymbols > 0) {
+            // resize & fill arrays
+            legendNames.length = this._data.maxSymbols;
+            legendNames.fill('', currentLength);
+            showlegend.length = this._data.maxSymbols;
+            showlegend.fill(false, currentLength);
+        }
+
+        // add empty traces to be able to display the symbols legend
+        // one trace for each possible symbol
+        for (let s = 0; s < this._data.maxSymbols; s++) {
+            const data = {
+                name: legendNames[s],
+                type: type,
+
+                // We need to add a dummy point to force plotly to display the
+                // associated legend; but we don't want to see the point in the
+                // map. Setting the coordinates to NaN achieve this.
+                x: [NaN],
+                y: [NaN],
+                z: [NaN],
+
+                marker: {
+                    color: 'black',
+                    size: 10,
+                    symbol: this._is3D() ? get3DSymbol(s) : s,
+                },
+                mode: 'markers',
+                showlegend: showlegend[s],
+            };
+            traces.push(data as Data);
+        }
+        return traces;
+    }
+
+    /**
+     * Update options with the structure or atom default or config settings
+     */
+    private _setupMapOptions() {
+        // Helper function to update `_option` values with related target configuration
+        const refreshMapOptions = (properties: NumericProperties) => {
+            // Check if target's properties actually exist
+            if (properties && Object.keys(properties).length > 1) {
+                // Delete previous target modal from DOM
+                this._options.remove();
+
+                // Re-create modal
+                this._options = new MapOptions(
+                    this._root,
+                    this._getCurrentProperties(),
+                    (rect) => this.positionSettingsModal(rect),
+                    {}
+                );
+            }
+        };
+
+        // Apply structure or atom options based on target
+        if (this._target !== 'atom') {
+            refreshMapOptions(this._data['structure']);
+        } else {
+            refreshMapOptions(this._data['atom']);
+        }
+    }
+
+    /** Returns the properties related to the target (structure or environment) */
+    private _getCurrentProperties() {
+        const properties = this._data[this._target];
+        const propertiesNames = Object.keys(properties);
+        if (propertiesNames.length < 2) {
+            // better error message in case the user forgot to give the
+            // environments in the data
+            if (this._target === 'structure' && !this._indexer.hasEnvironments()) {
+                if (Object.keys(this._data['atom']).length >= 2) {
+                    throw Error(
+                        'could not find enough structure properties to display, \
+                        but there are atom properties. Please provide the \
+                        environment list to display them'
+                    );
+                }
+            }
+
+            let message = 'we need at least two properties to plot in the map';
+            if (propertiesNames.length === 0) {
+                message += ', we have none';
+            } else {
+                message += `, we have only one: '${propertiesNames[0]}'`;
+            }
+
+            throw Error(message);
+        }
+        return properties;
+    }
+
+    /**
+     * Forward to Plotly.restyle.
+     * Updates specific properties of traces without re-rendering the entire plot
+     *
+     * @param data properties to update
+     * @param traces optional, indices of traces or a single trace index to update
+     */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e) =>
             setTimeout(() => {
@@ -481,13 +693,39 @@ export class PropertiesMap {
         );
     }
 
-    /** Forward to Plotly.relayout */
+    /**
+     * Forward to Plotly.relayout
+     * Updates the layout properties of the plot
+     *
+     * @param layout layout properties to update
+     */
     private _relayout(layout: Partial<Layout>) {
         Plotly.relayout(this._plot, layout).catch((e) =>
             setTimeout(() => {
                 throw e;
             })
         );
+    }
+
+    /**
+     * Forward to Plotly.react
+     * Updates the Plotly plot with new data and layout with re-rendering
+     *
+     * @param traces array of data traces to update
+     * @param layout layout properties to update
+     */
+    private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            Plotly.react(this._plot, traces, layout)
+                .then(() => {
+                    resolve();
+                })
+                .catch((error) => {
+                    setTimeout(() => {
+                        reject(error);
+                    });
+                });
+        });
     }
 
     /** Add all the required callback to the settings */
@@ -934,143 +1172,14 @@ export class PropertiesMap {
     private _createPlot() {
         this._plot.innerHTML = '';
 
-        const type = this._is3D() ? 'scatter3d' : 'scattergl';
-        // The main trace, containing default data
-        const main = {
-            name: '',
-            type: type,
+        // Get plot data
+        const traces = this._getTraces();
 
-            x: this._coordinates(this._options.x, 0)[0],
-            y: this._coordinates(this._options.y, 0)[0],
-            z: this._coordinates(this._options.z, 0)[0],
-
-            hovertemplate: this._options.hovertemplate(),
-            marker: {
-                color: this._colors(0)[0],
-                coloraxis: 'coloraxis',
-                line: {
-                    color: this._lineColors(0)[0],
-                    width: 1,
-                },
-                // prevent plolty from messing with opacity when doing bubble
-                // style charts (different sizes for each point)
-                opacity: 1,
-                size: this._sizes(0)[0],
-                sizemode: 'area',
-                symbol: this._symbols(0)[0],
-            },
-            mode: 'markers',
-            showlegend: false,
-        };
-
-        // Create a second trace to store the last clicked point, in order to
-        // display it on top of the main plot with different styling. This is
-        // only used in 3D mode, since it is way slower than moving
-        // this._selectedMarker around.
-        const selected = {
-            name: 'selected',
-            type: type,
-
-            x: [],
-            y: [],
-            z: [],
-
-            hoverinfo: 'none',
-            marker: {
-                color: [],
-                line: {
-                    color: [],
-                    width: 2,
-                },
-                opacity: 1,
-                size: [],
-                sizemode: 'area',
-            },
-            mode: 'markers',
-            showlegend: false,
-        };
-
-        const traces = [main as Data, selected as Data];
-
-        const legendNames = this._legendNames().slice(2);
-        const showlegend = this._showlegend().slice(2);
-        assert(legendNames.length === showlegend.length);
-        const currentLength = legendNames.length;
-
-        if (this._data.maxSymbols > 0) {
-            // resize & fill arrays
-            legendNames.length = this._data.maxSymbols;
-            legendNames.fill('', currentLength);
-            showlegend.length = this._data.maxSymbols;
-            showlegend.fill(false, currentLength);
-        }
-
-        // add empty traces to be able to display the symbols legend
-        // one trace for each possible symbol
-        for (let s = 0; s < this._data.maxSymbols; s++) {
-            const data = {
-                name: legendNames[s],
-                type: type,
-
-                // We need to add a dummy point to force plotly to display the
-                // associated legend; but we don't want to see the point in the
-                // map. Setting the coordinates to NaN achieve this.
-                x: [NaN],
-                y: [NaN],
-                z: [NaN],
-
-                marker: {
-                    color: 'black',
-                    size: 10,
-                    symbol: this._is3D() ? get3DSymbol(s) : s,
-                },
-                mode: 'markers',
-                showlegend: showlegend[s],
-            };
-            traces.push(data as Data);
-        }
-
-        // make a copy of the default layout
-        const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
-        // and set values specific to the displayed dataset
-        layout.xaxis.title = this._title(this._options.x.property.value);
-        layout.yaxis.title = this._title(this._options.y.property.value);
-        layout.xaxis.type = this._options.x.scale.value;
-        layout.yaxis.type = this._options.y.scale.value;
-        layout.scene.xaxis.title = this._title(this._options.x.property.value);
-        layout.scene.yaxis.title = this._title(this._options.y.property.value);
-        layout.scene.zaxis.title = this._title(this._options.z.property.value);
-        layout.coloraxis.colorscale = this._options.colorScale();
-        layout.coloraxis.cmin = this._options.color.min.value;
-        layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._colorTitle();
-        layout.coloraxis.colorbar.len = this._colorbarLen();
-        layout.coloraxis.showscale = this._options.hasColors();
-
-        // Set ranges for the axes
-        layout.xaxis.range = this._getAxisRange(
-            this._options.x.min.value,
-            this._options.x.max.value,
-            'map.x'
-        );
-        layout.yaxis.range = this._getAxisRange(
-            this._options.y.min.value,
-            this._options.y.max.value,
-            'map.y'
-        );
-        layout.zaxis.range = this._getAxisRange(
-            this._options.z.min.value,
-            this._options.z.max.value,
-            'map.z'
-        );
+        // Build layout from the options of the settings
+        const layout = this._getLayout();
 
         // Create an empty plot and fill it below
-        Plotly.newPlot(
-            this._plot,
-            traces,
-            layout as Partial<Layout>,
-            DEFAULT_CONFIG as unknown as Config
-        )
+        Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
@@ -1104,14 +1213,17 @@ export class PropertiesMap {
                         environment = data.current;
                         if (this._active !== guid) {
                             this.setActive(guid);
-                            this.activeChanged(guid, this._indexer.from_environment(data.current));
+                            this.activeChanged(
+                                guid,
+                                this._indexer.fromEnvironment(data.current, this._target)
+                            );
                         }
                         break;
                     }
                 }
             }
 
-            const indexes = this._indexer.from_environment(environment);
+            const indexes = this._indexer.fromEnvironment(environment, this._target);
 
             this.select(indexes);
             this.onselect(indexes);
@@ -1132,7 +1244,50 @@ export class PropertiesMap {
         this._plot.addEventListener('wheel', () => {});
     }
 
-    /** Validate min/max options provided by the user. We use `NaN` internally to mark missing values, which are then transformed into undefined by this function */
+    /**
+     * Builds the layout to be provided to Plotly from the options
+     */
+    private _getLayout(): Partial<Layout> {
+        // make a copy of the default layout
+        const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
+        // and set values specific to the displayed dataset
+        layout.xaxis.title = this._title(this._options.x.property.value);
+        layout.yaxis.title = this._title(this._options.y.property.value);
+        layout.xaxis.type = this._options.x.scale.value;
+        layout.yaxis.type = this._options.y.scale.value;
+        layout.scene.xaxis.title = this._title(this._options.x.property.value);
+        layout.scene.yaxis.title = this._title(this._options.y.property.value);
+        layout.scene.zaxis.title = this._title(this._options.z.property.value);
+        layout.coloraxis.colorscale = this._options.colorScale();
+        layout.coloraxis.cmin = this._options.color.min.value;
+        layout.coloraxis.cmax = this._options.color.max.value;
+        layout.coloraxis.colorbar.title.text = this._colorTitle();
+        layout.coloraxis.colorbar.len = this._colorbarLen();
+        layout.coloraxis.showscale = this._options.hasColors();
+
+        // Set ranges for the axes
+        layout.xaxis.range = this._getAxisRange(
+            this._options.x.min.value,
+            this._options.x.max.value,
+            'map.x'
+        );
+        layout.yaxis.range = this._getAxisRange(
+            this._options.y.min.value,
+            this._options.y.max.value,
+            'map.y'
+        );
+        layout.zaxis.range = this._getAxisRange(
+            this._options.z.min.value,
+            this._options.z.max.value,
+            'map.z'
+        );
+        return layout as Partial<Layout>;
+    }
+
+    /**
+     * Validate min/max options provided by the user. We use `NaN` internally to mark missing values,
+     * which are then transformed into undefined by this function
+     */
     private _getAxisRange = (
         min: number,
         max: number,
@@ -1155,7 +1310,7 @@ export class PropertiesMap {
 
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
-        const result = this._data[this._indexer.mode][name];
+        const result = this._data[this._target][name];
         if (result === undefined) {
             throw Error(`unknown property '${name}' requested in map`);
         }

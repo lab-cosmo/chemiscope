@@ -1,10 +1,12 @@
+/* eslint-disable */
+
 /**
  * Enum of the modes
  */
 const VISUALISER_MODE = {
-    DEFAULT: "default",
-    STRUCTURE: "structure",
-    MAP: "map"
+    DEFAULT: 'default',
+    STRUCTURE: 'structure',
+    MAP: 'map',
 };
 
 /**
@@ -78,11 +80,18 @@ async function fetchDataset(filePath) {
     if (!response.ok) {
         throw new Error(`Failed to fetch ${filePath}: ${response.statusText}`);
     }
-
-    // Get as json
     const buffer = await response.arrayBuffer();
-    const decompressedData = pako.inflate(new Uint8Array(buffer), { to: 'string' });
-    return parseJsonWithNaN(decompressedData);
+    const magic = new Uint8Array(buffer.slice(0, 2));
+
+    let text;
+    // '1f 8b' is the magic constant starting gzip files
+    if (magic[0] == 0x1f && magic[1] == 0x8b) {
+        text = pako.inflate(new Uint8Array(buffer), { to: 'string' });
+    } else {
+        const decoder = new TextDecoder('utf-8');
+        text = decoder.decode(buffer);
+    }
+    return parseJsonWithNaN(text);
 }
 
 /**
@@ -145,7 +154,7 @@ function generateChemiscopeHTML(config, visualizerMode) {
 function toggleLoadingVisible(divId, visible = true) {
     const loader = document.getElementById(`${divId}-loading`);
     if (loader) {
-        loader.style.display = visible ? "block" : "none";
+        loader.style.display = visible ? 'block' : 'none';
     }
 }
 
@@ -155,7 +164,7 @@ function toggleLoadingVisible(divId, visible = true) {
 function hideElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
-        element.style.display = "none";
+        element.style.display = 'none';
     } else {
         console.error(`Element ${elementId} is not found`);
     }

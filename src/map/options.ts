@@ -96,14 +96,16 @@ export class MapOptions extends OptionsGroup {
         settings: Settings = {}
     ) {
         super();
+
+        // Setup axes
         const propertiesName = Object.keys(properties);
         assert(propertiesName.length >= 2);
-
         this.x = new AxisOptions(propertiesName);
         this.y = new AxisOptions(propertiesName);
         // For z and color '' is a valid value
         this.z = new AxisOptions(propertiesName.concat(['']));
 
+        // Initialise symbol
         this.symbol = new HTMLOption('string', '');
         const validSymbols = [''];
         for (const key in properties) {
@@ -113,9 +115,11 @@ export class MapOptions extends OptionsGroup {
         }
         this.symbol.validate = optionValidator(validSymbols, 'symbol');
 
+        // Initialise palette
         this.palette = new HTMLOption('string', 'inferno');
         this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
+        // Initialise color
         this.color = {
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
@@ -125,13 +129,13 @@ export class MapOptions extends OptionsGroup {
         this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
 
+        // Initialise size
         this.size = {
             factor: new HTMLOption('number', 50),
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
             reverse: new HTMLOption('boolean', false),
         };
-
         this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
@@ -140,24 +144,27 @@ export class MapOptions extends OptionsGroup {
         };
         this.size.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
 
+        // Setup default values
         this.x.property.value = propertiesName[0];
         this.y.property.value = propertiesName[1];
         this.z.property.value = '';
-
         if (propertiesName.length > 2) {
             this.color.property.value = propertiesName[2];
         } else {
             this.color.property.value = '';
         }
 
+        // Setup modal
         this._positionSettingsModal = positionSettings;
-
         const { openModal, modal } = this._createSettingsHTML();
         this._modal = modal;
         this._openModal = openModal;
         root.appendChild(this._openModal);
 
+        // Attach callbacks
         this._bind(properties);
+
+        // Apply new settings to the modal options
         this.applySettings(settings);
     }
 
@@ -356,9 +363,7 @@ export class MapOptions extends OptionsGroup {
 
     /**
      * Create the settings modal by adding HTML to the page
-     * @param  guid unique identifier of this map, used as prefix for all
-     *              elements ID
-     * @return      the modal HTML element, not yet inserted in the document
+     * @return the modal HTML element, not yet inserted in the document
      */
     private _createSettingsHTML(): { openModal: HTMLElement; modal: Modal } {
         const template = document.createElement('template');

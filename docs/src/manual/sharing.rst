@@ -33,8 +33,8 @@ In general, you can set the ``load`` GET parameter on ``https://chemiscope.org``
 to any url-encoded URL, and chemiscope will try to load the dataset from this
 URL.
 
-Saving visualization state
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Saving the visualization state
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can save the current visualization settings from the website using the
 *Load/Save* menu. This will allow you to download a JSON file, which you can use

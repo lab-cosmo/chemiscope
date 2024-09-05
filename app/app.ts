@@ -125,7 +125,7 @@ export class ChemiscopeApp {
             }
         }
 
-        const dataset = readJSON(this.dataset, buffer);
+        const dataset = readJSON(buffer);
         await this.load(config as Configuration, dataset);
     }
 
@@ -204,7 +204,7 @@ export class ChemiscopeApp {
             const file = loadDataset.files![0];
             this.dataset = file.name;
             readFile(file, (result) => {
-                const dataset = readJSON(file.name, result);
+                const dataset = readJSON(result);
                 this.load({}, dataset);
                 // clear the selected file name to make sure 'onchange' is
                 // called again if the user loads a file a the same path
@@ -242,7 +242,7 @@ export class ChemiscopeApp {
                     return;
                 }
 
-                this.visualizer.applySettings(readJSON(file.name, result));
+                this.visualizer.applySettings(readJSON(result));
                 // clear the selected file name to make sure 'onchange' is
                 // called again if the user loads a file a the same path
                 // multiple time
@@ -307,9 +307,12 @@ function stopLoading() {
 }
 
 /** Read JSON or gzipped JSON and return the parsed object */
-function readJSON(path: string, buffer: ArrayBuffer): any {
+function readJSON(buffer: ArrayBuffer): any {
+    const magic = new Uint8Array(buffer.slice(0, 2));
+
     let text;
-    if (path.endsWith('.gz')) {
+    // '1f 8b' is the magic constant starting gzip files
+    if (magic[0] == 0x1f && magic[1] == 0x8b) {
         text = inflate(new Uint8Array(buffer), { to: 'string' });
     } else {
         const decoder = new TextDecoder('utf-8');
