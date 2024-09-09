@@ -204,7 +204,7 @@ def soap_pca_featurize(frames, environments=None):
 
 def _extract_environment_indices(envs):
     """
-    Extract environment indices per structure
+    Convert from chemiscope's environements to DScribe's centers selection 
 
     :param: list envs: each element is a list of [env_index, atom_index, cutoff]
     """
