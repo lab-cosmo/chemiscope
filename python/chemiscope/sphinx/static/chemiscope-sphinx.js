@@ -22,8 +22,6 @@ async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER
 
     // Load the visualizer
     try {
-        throw Error("HERERER");
-
         const dataset = await fetchDataset(filePath);
 
         // Setup visualizer config
