@@ -118,7 +118,7 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
         unique_structures = list({env[0] for env in environments})
         if any(index >= len(frames) for index in unique_structures):
             raise IndexError(
-                "Some or more indices are greater than the length of the frames"
+                "Some structure indices in 'environments' are larger than the number of frames"
             )
 
         if len(unique_structures) != len(frames):
