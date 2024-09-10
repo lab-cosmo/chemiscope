@@ -188,29 +188,34 @@ chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
 
 # %%
 #
-# Example Usage of SOAP and t-SNE with environments
+# Example with SOAP, t-SNE and environments
 # +++++++++++++++++++++++++++++++++++++++++++++++++
 #
 # This example demonstrates how to compute descriptors using the SOAP and t-SNE with
 # ``environments`` parameter specifying which atoms in the frames are used for
 # calculating the descriptors.
 #
-# We are defining a custom featurizer that takes frames and environments. Note, that the
-# frames corresponding to the ``environments`` will already be picked internally once
-# :py:func:`chemiscope.explore` is executed.
+# We are defining a custom featurizer that takes frames and environments.
 
 
 def soap_tnse_with_environments(frames, environments):
     if environments is None:
         raise ValueError("'environments' supposed to be provided")
 
-    # Get center indices from environments
     grouped_envs = {}
+    unique_structures = set()
+
+    # Get atom-centered indices from environments
     for [env_index, atom_index, _cutoff] in environments:
         if env_index not in grouped_envs:
             grouped_envs[env_index] = []
         grouped_envs[env_index].append(atom_index)
+        unique_structures.add(env_index)
     centers = list(grouped_envs.values())
+
+    # Pick the frames corresponding to the structure indices
+    if len(unique_structures) != len(frames):
+        frames = [frames[index] for index in sorted(unique_structures)]
 
     # Get global species
     species = set()

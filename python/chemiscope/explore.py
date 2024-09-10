@@ -109,27 +109,6 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
     if properties is None:
         properties = {}
 
-    # Pick frames and properties related to the environments if provided
-    if environments is not None:
-        # Sort environments by structure id and atom id
-        environments = sorted(environments, key=lambda x: (x[0], x[1]))
-
-        # Check structure indexes
-        unique_structures = list({env[0] for env in environments})
-        if any(index >= len(frames) for index in unique_structures):
-            raise IndexError(
-                "Some structure indices in 'environments' are larger than the number of frames"
-            )
-
-        if len(unique_structures) != len(frames):
-            # Pick frames corresponding to the environments
-            frames = [frames[index] for index in unique_structures]
-
-            # Pick properties corresponding to the environments
-            properties = _extract_properties_by_environments(
-                properties, unique_structures
-            )
-
     # Apply dimensionality reduction from the provided featurizer
     if featurize is not None:
         X_reduced = featurize(frames, environments)
@@ -141,7 +120,9 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
     properties["features"] = X_reduced
 
     # Return chemiscope widget
-    return show(frames=frames, properties=properties, mode=mode)
+    return show(
+        frames=frames, properties=properties, mode=mode, environments=environments
+    )
 
 
 def soap_pca_featurize(frames, environments=None):
@@ -169,6 +150,23 @@ def soap_pca_featurize(frames, environments=None):
     # Get the atom indexes from the environments and pick related frames
     if environments is not None:
         centers = _extract_environment_indices(environments)
+
+    # Pick frames and properties related to the environments if provided
+    if environments is not None:
+        # Sort environments by structure id and atom id
+        environments = sorted(environments, key=lambda x: (x[0], x[1]))
+
+        # Check structure indexes
+        unique_structures = list({env[0] for env in environments})
+        if any(index >= len(frames) for index in unique_structures):
+            raise IndexError(
+                "Some structure indices in 'environments' are larger than the number of"
+                "frames"
+            )
+
+        if len(unique_structures) != len(frames):
+            # Pick frames corresponding to the environments
+            frames = [frames[index] for index in unique_structures]
 
     # Get global species
     species = set()
@@ -204,7 +202,7 @@ def soap_pca_featurize(frames, environments=None):
 
 def _extract_environment_indices(envs):
     """
-    Convert from chemiscope's environements to DScribe's centers selection 
+    Convert from chemiscope's environements to DScribe's centers selection
 
     :param: list envs: each element is a list of [env_index, atom_index, cutoff]
     """
@@ -214,31 +212,3 @@ def _extract_environment_indices(envs):
             grouped_envs[env_index] = []
         grouped_envs[env_index].append(atom_index)
     return list(grouped_envs.values())
-
-
-def _extract_properties_by_environments(properties, structures):
-    """
-    Filter properties based on the structure indexes
-
-    :param: dict properties: properties where each property can be either a list or a
-        dictionary with list of values
-
-    :param: list structures: structure indexes taken from the environments
-    """
-
-    for prop_name, prop_val in properties.items():
-        if isinstance(prop_val, list):
-            # Pick property values corresponding to the structure indexes
-            if len(prop_val) != len(structures):
-                properties[prop_name] = [
-                    prop_val[struct_index] for struct_index in structures
-                ]
-        else:
-            # Nested list with property values
-            values = prop_val.get("values", [])
-            if len(values) != len(structures):
-                properties[prop_name]["values"] = [
-                    values[struct_index] for struct_index in structures
-                ]
-
-    return properties
