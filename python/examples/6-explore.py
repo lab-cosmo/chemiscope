@@ -69,7 +69,6 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 #
 # Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
 # interactive widget with the reduced dimensionality of data.
-
 chemiscope.explore(frames)
 
 # %%
@@ -84,6 +83,21 @@ chemiscope.explore(frames)
 # for dimensionality reduction. The resulting components are then added to the
 # properties to be used in visualization.
 
+
+# %%
+#
+# Besides this, it is possible to run the dimentionality reduction algorithm and display
+# specific atom-centered environments. They can be manually defined by specifying a list
+# of tuples in the format ``(structure_index, atom_index, cutoff)``, as shown in
+# this example. Alternatively, the environments can be extracted from the frames using
+# the function :py:func:`all_atomic_environments`.
+#
+# We also demonstrate a way to provide properties for visualization. The frames and
+# properties related to the indexes in the ``environments`` will be extracted.
+
+properties = chemiscope.extract_properties(frames, only=["energy"])
+environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
+chemiscope.explore(frames, environments=environments, properties=properties)
 
 # %%
 #
@@ -103,13 +117,16 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 # %%
 #
-# Define the function ``soap_kpca_featurize`` which takes one argument
-# (``frames``). This argument contains the structures provided to
-# :py:func:`chemiscope.explore` and is internally
-# passed to the ``featurize`` function.
+# Define the function ``soap_kpca_featurize`` which takes two arguments
+# (``frames``, which contains the structures provided to
+# :py:func:`chemiscope.explore` and internally passed to the ``featurize`` function;
+# ``environments``,  optional aurgument with the atom-centered environments,
+# if they were provided to the :py:func:`chemiscope.explore`.
 
 
-def soap_kpca_featurize(frames):
+def soap_kpca_featurize(frames, environments):
+    if environments is not None:
+        raise ValueError("'environments' are not supported by this featurizer")
     # Initialise soap calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
