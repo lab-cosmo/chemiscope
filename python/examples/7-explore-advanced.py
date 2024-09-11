@@ -147,7 +147,7 @@ m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
 
 def mace_mp0_tsne(frames, environments):
     if environments is not None:
-        raise ValueError("'environments' are not supported")
+        raise ValueError("'environments' are not supported by this featurizer")
 
     # Initialise a mace-mp0 calculator
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
