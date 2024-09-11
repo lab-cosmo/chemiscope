@@ -200,7 +200,7 @@ chemiscope.show_input("data/mace-mp-tsne-m3cd.json.gz")
 
 def soap_tnse_with_environments(frames, environments):
     if environments is None:
-        raise ValueError("'environments' supposed to be provided")
+        raise ValueError("'environments' must be provided")
 
     grouped_envs = {}
     unique_structures = set()
