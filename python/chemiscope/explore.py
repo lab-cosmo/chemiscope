@@ -162,7 +162,7 @@ def soap_pca_featurize(frames, environments=None):
             )
 
         if len(unique_structures) != len(frames):
-            # Pick frames corresponding to the environments
+            # only include frames that are present in the user-provided environments
             frames = [frames[index] for index in unique_structures]
 
     # Get global species
