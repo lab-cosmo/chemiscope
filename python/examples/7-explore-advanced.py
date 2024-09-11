@@ -65,7 +65,7 @@ qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
 
 def mace_off_tsne(frames, environments):
     if environments is not None:
-        raise ValueError("'environments' are not supported")
+        raise ValueError("'environments' are not supported by this featurizer")
 
     # At first, we initialize a mace_off calculator:
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
