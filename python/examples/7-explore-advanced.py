@@ -213,7 +213,7 @@ def soap_tnse_with_environments(frames, environments):
         unique_structures.add(env_index)
     centers = list(grouped_envs.values())
 
-    # Pick the frames corresponding to the structure indices
+    # only include frames that are present in the environments
     if len(unique_structures) != len(frames):
         frames = [frames[index] for index in sorted(unique_structures)]
 
