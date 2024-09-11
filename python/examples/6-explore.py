@@ -126,7 +126,7 @@ from sklearn.decomposition import KernelPCA  # noqa
 
 def soap_kpca_featurize(frames, environments):
     if environments is not None:
-        raise ValueError("'environments' are not supported")
+        raise ValueError("'environments' are not supported by this featurizer")
     # Initialise soap calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
