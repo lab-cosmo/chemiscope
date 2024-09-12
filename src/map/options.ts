@@ -99,7 +99,11 @@ export class MapOptions extends OptionsGroup {
 
         // Setup axes
         const propertiesName = Object.keys(properties);
-        assert(propertiesName.length >= 2);
+        if (propertiesName.length < 2) {
+            throw new Error(
+                'Cannot show a map because the dataset contains fewer than two properties.'
+            );
+        }
         this.x = new AxisOptions(propertiesName);
         this.y = new AxisOptions(propertiesName);
         // For z and color '' is a valid value
