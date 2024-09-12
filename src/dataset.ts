@@ -302,7 +302,7 @@ export function getTarget(dataset: Dataset): DisplayTarget {
     // Target is specified in settings
     if (target !== undefined) {
         if (target === 'atom' && dataset.environments === undefined) {
-            throw new Error('To use "atom" target, "settings.properties" should be provided');
+            throw new Error('To use "atom" target, a list of environments should be provided');
         }
         if (getTargetProps(target).length < 2) {
             throw new Error(
