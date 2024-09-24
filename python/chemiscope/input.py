@@ -11,7 +11,6 @@ import warnings
 import numpy as np
 
 from .structures import (
-    _guess_adapter,
     _list_atom_properties,
     _list_structure_properties,
     frames_to_json,
@@ -284,8 +283,7 @@ def create_input(
         data["structures"] = frames_to_json(frames)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
-        _, adapter = _guess_adapter(frames)
-        from_stk = True if adapter == "stk" else False
+
     else:
         n_atoms = 0
 
