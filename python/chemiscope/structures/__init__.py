@@ -14,7 +14,7 @@ from ._shapes import (  # noqa: F401
     center_shape,
     ellipsoid_from_tensor,
 )
-from ._bonding import convert_bonds_as_shapes  # noqa: F401
+
 from ._ase import (  # noqa: F401
     ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
@@ -22,7 +22,7 @@ from ._ase import (  # noqa: F401
 )
 
 __all__ = [
-    "convert_bonds_as_shapes",
+    "convert_stk_bonds_as_shapes",
 ]
 
 

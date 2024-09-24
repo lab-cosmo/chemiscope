@@ -1,40 +1,47 @@
-"""Module for handling bonding in chemiscope."""
 
 try:
-    import ase
+    import stk
 
-    HAVE_ASE = True
+    HAVE_STK = True
 except ImportError:
-    HAVE_ASE = False
+    HAVE_STK = False
 
 
-def convert_bonds_as_shapes(
-    frames: list[ase.Atoms],
-    bonds_per_frames: dict[int, list[tuple[int, int]]],
+def convert_stk_bonds_as_shapes(
+    frames: list[stk.Molecule],
+    bond_color: str,
+    bond_radius: float,
 ) -> dict[str, dict]:
     """Convert connections between atom ids in each structure to shapes.
 
     Parameters:
 
         frames:
-            List of ase.Atoms object, which each are an molecule in chemiscope.
+            List of stk.Molecule objects, which each are structures in
+            chemiscope.
 
-        bonds_per_frames:
-            The bonds you want to add between atoms with the given ids. The key
-            to the dictionary should align with the id of the molecule in
-            frames.
+        bond_colour:
+            How to colour the bonds added.
+
+        bond_radius:
+            Radius of bonds to add.
+
 
     """
+
     shape_dict: dict[str, dict] = {}
     max_length = 0
-    for fid, molecule in enumerate(frames):
-        bonds_to_add = bonds_per_frames[fid]
+    for molecule in frames:
+        bonds_to_add = tuple(
+            (bond.get_atom1().get_id(), bond.get_atom2().get_id())
+            for bond in molecule.get_bonds()
+        )
 
         for bid, bond_info in enumerate(bonds_to_add):
             bname = f"bond_{bid}"
 
             # Compute the bond vector.
-            position_matrix = molecule.get_positions()
+            position_matrix = molecule.get_position_matrix()
             bond_geometry = {
                 "vector": (
                     position_matrix[bond_info[1]] - position_matrix[bond_info[0]]
@@ -48,7 +55,7 @@ def convert_bonds_as_shapes(
                     shape_dict[bname] = {
                         "kind": "cylinder",
                         "parameters": {
-                            "global": {"radius": 0.12, "color": "#fc5500"},
+                            "global": {"radius": bond_radius, "color": bond_color},
                             "structure": [],
                         },
                     }
@@ -58,7 +65,7 @@ def convert_bonds_as_shapes(
                     shape_dict[bname] = {
                         "kind": "cylinder",
                         "parameters": {
-                            "global": {"radius": 0.12, "color": "#fc5500"},
+                            "global": {"radius": bond_radius, "color": bond_color},
                             # Add zero placements for previously non-existant
                             # bond shapes up to the length of bond_0 -1,
                             # because that should already be at the current
@@ -81,7 +88,7 @@ def convert_bonds_as_shapes(
             missing = max_length - len(shape_dict[bname]["parameters"]["structure"])
             if missing == 0:
                 continue
-            for i in range(missing):
+            for _ in range(missing):
                 fake_bond = {"vector": [0, 0, 0], "position": [0, 0, 0]}
                 shape_dict[bname]["parameters"]["structure"].append(fake_bond)
 
