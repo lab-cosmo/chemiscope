@@ -2,6 +2,7 @@
 """
 Generate JSON input files for the default chemiscope visualizer.
 """
+
 import gzip
 import json
 import os
@@ -10,6 +11,7 @@ import warnings
 import numpy as np
 
 from .structures import (
+    _guess_adapter,
     _list_atom_properties,
     _list_structure_properties,
     frames_to_json,
@@ -282,6 +284,8 @@ def create_input(
         data["structures"] = frames_to_json(frames)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
+        _, adapter = _guess_adapter(frames)
+        from_stk = True if adapter == "stk" else False
     else:
         n_atoms = 0
 
@@ -376,8 +380,10 @@ def create_input(
     # Check to tell the user they might have forgotten some properties coming
     # from the frames (that chemiscope used to automatically extract). This code
     # should be removed in version 0.6 of chemiscope.
-    if frames is not None:
+    # stk cannot have atom properties or structure properties, so skipping.
+    if frames is not None and not from_stk:
         found_one_from_frame = False
+
         atom_properties = _list_atom_properties(frames)
         for name in atom_properties:
             if name in data["properties"]:
