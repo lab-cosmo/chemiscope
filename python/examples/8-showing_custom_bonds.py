@@ -5,9 +5,13 @@ Showing custom bonds using stk
 This example demonstrates how to add shapes into the chemiscope output such
 that custom bonds that would not normally be assigned by ASE can be rendered.
 
-This is done by using stk to generate and analyse molecules, which comes with
-topology/bonding information by default (using the cheminformatic software
-rdkit).
+This is done by using `stk <https://stk.readthedocs.io/en/stable/>`_ to
+generate and analyse molecules, which comes with topology/bonding information
+by default (using the cheminformatic software rdkit).
+
+We use `stko <https://stko-docs.readthedocs.io/en/latest/>`_ to calculate
+some rudimentary properties of `stk` molecules. `stko` can be installed with
+``pip install stko``.
 
 """
 
