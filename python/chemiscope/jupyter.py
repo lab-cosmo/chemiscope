@@ -155,7 +155,7 @@ def show_input(path, mode="default"):
     try:
         meta = dict_input["meta"]
 
-        if meta is {"name": " "}:
+        if meta == {"name": " "}:
             has_metadata = False
         else:
             has_metadata = True
