@@ -26,6 +26,8 @@ from ._stk import (
     convert_stk_bonds_as_shapes,
     _stk_all_atomic_environments,
     _stk_composition_properties,
+    _stk_list_atom_properties,
+    _stk_list_structure_properties,
 )
 
 __all__ = [
@@ -83,9 +85,9 @@ def _list_atom_properties(frames):
     if adapter == "ASE":
         return _ase_list_atom_properties(frames)
     elif adapter == "stk":
-        # Do not check, because stk does not contain its own properties
-        # and a dictionary must be added.
-        pass
+        # stk does not contain properties inside the structure objects.
+        return _stk_list_atom_properties(frames)
+
     else:
         raise Exception("reached unreachable code")
 
@@ -101,9 +103,8 @@ def _list_structure_properties(frames):
     if adapter == "ASE":
         return _ase_list_structure_properties(frames)
     elif adapter == "stk":
-        # Do not check, because stk does not contain its own properties
-        # and a dictionary must be added.
-        pass
+        # stk does not contain properties inside the structure objects.
+        return _stk_list_structure_properties(frames)
     else:
         raise Exception("reached unreachable code")
 

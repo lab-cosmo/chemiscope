@@ -380,8 +380,7 @@ def create_input(
     # Check to tell the user they might have forgotten some properties coming
     # from the frames (that chemiscope used to automatically extract). This code
     # should be removed in version 0.6 of chemiscope.
-    # stk cannot have atom properties or structure properties, so skipping.
-    if frames is not None and not from_stk:
+    if frames is not None:
         found_one_from_frame = False
 
         atom_properties = _list_atom_properties(frames)

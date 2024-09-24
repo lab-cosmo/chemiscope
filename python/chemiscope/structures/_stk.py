@@ -41,8 +41,11 @@ def _stk_to_json(molecule: stk.Molecule) -> dict[str : int | list]:
     return data
 
 
-def _stk_all_atomic_environments(frames, cutoff):
-    "Extract all atomic environments out of a set of ASE Atoms objects"
+def _stk_all_atomic_environments(
+    frames: list[stk.Molecule],
+    cutoff: float,
+) -> list[tuple[int, int, float]]:
+    "Extract all atomic environments out of a set of stk Molecule objects"
     environments = []
     for structure_i, frame in enumerate(frames):
         for atom in frame.get_atoms():
@@ -196,3 +199,13 @@ def convert_stk_bonds_as_shapes(
                 shape_dict[bname]["parameters"]["structure"].append(fake_bond)
 
     return shape_dict
+
+
+def _stk_list_atom_properties(frames: list[stk.Molecule]) -> list:
+    # stk cannot have atom properties or structure properties, so skipping.
+    return []
+
+
+def _stk_list_structure_properties(frames: list[stk.Molecule]) -> list:
+    # stk cannot have atom properties or structure properties, so skipping.
+    return []
