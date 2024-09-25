@@ -21,7 +21,6 @@ from rdkit.Chem import AllChem as rdkit
 
 import chemiscope
 
-
 # %%
 #
 # Generate a list of stk BuildingBlocks (representation of a molecule) with
