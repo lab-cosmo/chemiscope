@@ -8,6 +8,8 @@ numpy
 ipywidgets
 matplotlib
 ase==3.22.1
+rdkit==2024.3.4
+stk
 
 # required for the examples of chemiscope.explore
 mace-torch
