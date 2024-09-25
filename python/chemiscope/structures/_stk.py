@@ -23,7 +23,7 @@ def _stk_valid_structures(
         return frames, False
 
 
-def _stk_to_json(molecule: stk.Molecule) -> dict[str : int | list]:
+def _stk_to_json(molecule: stk.Molecule) -> dict[str : typing.Union[int, list]]:
     """Implementation of frame_to_json for stk.Molcule.
 
     The current implementation assumes no periodic information, which is safe
