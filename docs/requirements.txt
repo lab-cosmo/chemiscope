@@ -10,6 +10,7 @@ matplotlib
 ase==3.22.1
 rdkit==2024.3.4
 stk
+stko
 
 # required for the examples of chemiscope.explore
 mace-torch

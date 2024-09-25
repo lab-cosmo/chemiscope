@@ -15,16 +15,12 @@ some rudimentary properties of `stk` molecules. `stko` can be installed with
 
 """
 
-import pathlib
-
 import stk
 import stko
 from rdkit.Chem import AllChem as rdkit
 
 import chemiscope
 
-working_path = pathlib.Path(__file__).resolve().parent
-data_path = working_path / "data"
 
 # %%
 #
@@ -131,7 +127,7 @@ structures = [
 
 # Write to file for sanity checks.
 for i, struct in enumerate(structures):
-    struct.write(data_path / f"stk_{i}.mol")
+    struct.write(f"data/stk_{i}.mol")
 
 # %%
 #
@@ -215,6 +211,3 @@ chemiscope.write_input(
     ),
     shapes=shape_dict,
 )
-
-
-raise SystemExit
