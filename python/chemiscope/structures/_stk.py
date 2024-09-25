@@ -10,7 +10,7 @@ except ImportError:
 
 
 def _stk_valid_structures(
-    frames: typing.Union(stk.Molecule, list[stk.Molecule]),
+    frames: typing.Union[stk.Molecule, list[stk.Molecule]],
 ) -> tuple[list[stk.Molecule], bool]:
     if HAVE_STK and isinstance(frames, stk.Molecule):
         # deal with the user passing a single frame
