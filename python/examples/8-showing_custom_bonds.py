@@ -134,10 +134,12 @@ for i, struct in enumerate(structures):
 # https://stko-docs.readthedocs.io/en/latest/
 
 energy = stko.UFFEnergy()
-analyser = stko.molecule_analysis.GeometryAnalyser()
+shape_calc = stko.ShapeCalculator()
 properties = {
-    "e": [energy.get_energy(molecule) for molecule in structures],
-    "rg": [analyser.get_radius_gyration(molecule) for molecule in structures],
+    "uffenergy": [energy.get_energy(molecule) for molecule in structures],
+    "aspheriticty": [
+        shape_calc.get_results(molecule).get_asphericity() for molecule in structures
+    ],
 }
 
 
@@ -175,7 +177,7 @@ chemiscope.write_input(
     frames=structures,
     properties=properties,
     meta=dict(name="Missing bonds by automation."),
-    settings=chemiscope.quick_settings(x="rg", y="e", color=""),
+    settings=chemiscope.quick_settings(x="aspheriticty", y="uffenergy", color=""),
 )
 
 
@@ -198,8 +200,8 @@ chemiscope.write_input(
     properties=properties,
     meta=dict(name="Added all stk bonds."),
     settings=chemiscope.quick_settings(
-        x="rg",
-        y="e",
+        x="aspheriticty",
+        y="uffenergy",
         color="",
         structure_settings={
             "shape": shape_string,
