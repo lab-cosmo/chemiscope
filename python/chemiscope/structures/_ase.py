@@ -1,5 +1,4 @@
 import warnings
-from collections import Counter
 from inspect import signature
 
 import numpy as np
@@ -204,57 +203,6 @@ def _ase_librascal_atomic_environments(frames, cutoff):
             environments.append((structure_i, atom_i, cutoff))
 
     return environments
-
-
-def _ase_composition_properties(frames, environments=None):
-    all_elements = set()
-    for frame in frames:
-        all_elements.update(frame.symbols)
-    all_elements = set(all_elements)
-
-    composition = []
-    elements_count = {element: [] for element in all_elements}
-    for frame in frames:
-        composition.append(str(frame.symbols))
-
-        dict_composition = dict(Counter(frame.symbols))
-        for element in all_elements:
-            if element in dict_composition:
-                elements_count[element].append(dict_composition[element])
-            else:
-                elements_count[element].append(0)
-
-    properties = {
-        f"n_{element}": {"values": values, "target": "structure"}
-        for element, values in elements_count.items()
-    }
-
-    properties["composition"] = {"values": composition, "target": "structure"}
-
-    if environments is not None:
-        atoms_mask = [[False] * len(f) for f in frames]
-        for structure, center, _ in environments:
-            atoms_mask[structure][center] = True
-    else:
-        atoms_mask = None
-
-    symbols = []
-    numbers = []
-    for i, frame in enumerate(frames):
-        if atoms_mask is None:
-            frame_symbols = list(frame.symbols)
-            frame_numbers = list(frame.numbers)
-        else:
-            frame_symbols = frame.symbols[atoms_mask[i]]
-            frame_numbers = frame.numbers[atoms_mask[i]]
-
-        symbols.extend(frame_symbols)
-        numbers.extend(frame_numbers)
-
-    properties["symbol"] = {"values": symbols, "target": "atom"}
-    properties["number"] = {"values": numbers, "target": "atom"}
-
-    return properties
 
 
 def _ase_to_json(frame):

@@ -145,29 +145,6 @@ class TestExtractProperties(unittest.TestCase):
         self.assertEqual(len(properties.keys()), 0)
 
 
-class TestCompositionProperties(unittest.TestCase):
-    """Composition properties"""
-
-    def test_composition(self):
-        properties = chemiscope.composition_properties([BASE_FRAME, BASE_FRAME])
-        self.assertEqual(len(properties.keys()), 5)
-
-        self.assertEqual(properties["composition"]["target"], "structure")
-        self.assertEqual(properties["composition"]["values"], ["CO2", "CO2"])
-
-        self.assertEqual(properties["n_C"]["target"], "structure")
-        self.assertEqual(properties["n_C"]["values"], [1, 1])
-
-        self.assertEqual(properties["n_O"]["target"], "structure")
-        self.assertEqual(properties["n_O"]["values"], [2, 2])
-
-        self.assertEqual(properties["symbol"]["target"], "atom")
-        self.assertEqual(properties["symbol"]["values"], ["C", "O", "O", "C", "O", "O"])
-
-        self.assertEqual(properties["number"]["target"], "atom")
-        self.assertEqual(properties["number"]["values"], [6, 8, 8, 6, 8, 8])
-
-
 class TestEnvironments(unittest.TestCase):
     """Generate the list of environments"""
 

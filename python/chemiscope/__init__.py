@@ -6,7 +6,6 @@ from .structures import (  # noqa: F401
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
     center_shape,
-    composition_properties,
     ellipsoid_from_tensor,
     extract_properties,
     librascal_atomic_environments,
