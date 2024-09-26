@@ -82,8 +82,7 @@ def create_input(
 
     Properties can be added with the ``properties`` parameter. This parameter should be
     a dictionary containing one entry for each property. Properties can be extracted
-    from structures with :py:func:`extract_properties` or
-    :py:func:`composition_properties`, or manually defined by the user.
+    from structures with :py:func:`extract_properties`, or manually defined by the user.
 
     Each entry in the ``properties`` dictionary contains a ``target`` attribute
     (``'atom'`` or ``'structure'``) and a set of values. ``values`` can be a Python list

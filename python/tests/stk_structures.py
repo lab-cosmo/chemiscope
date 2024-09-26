@@ -107,37 +107,5 @@ class TestExtractProperties(unittest.TestCase):
             chemiscope.extract_properties(BASE_FRAME)
 
 
-class TestCompositionProperties(unittest.TestCase):
-    """Composition properties"""
-
-    def test_composition(self):
-        properties = chemiscope.composition_properties([BASE_FRAME, BASE_FRAME])
-
-        self.assertEqual(len(properties.keys()), 6)
-
-        self.assertEqual(properties["composition"]["target"], "structure")
-        self.assertEqual(properties["composition"]["values"], ["C2H3N1", "C2H3N1"])
-
-        self.assertEqual(properties["n_C"]["target"], "structure")
-        self.assertEqual(properties["n_C"]["values"], [2, 2])
-
-        self.assertEqual(properties["n_N"]["target"], "structure")
-        self.assertEqual(properties["n_N"]["values"], [1, 1])
-
-        self.assertEqual(properties["n_H"]["target"], "structure")
-        self.assertEqual(properties["n_H"]["values"], [3, 3])
-
-        self.assertEqual(properties["symbol"]["target"], "atom")
-        self.assertEqual(
-            properties["symbol"]["values"],
-            ["N", "C", "C", "H", "H", "H", "N", "C", "C", "H", "H", "H"],
-        )
-
-        self.assertEqual(properties["number"]["target"], "atom")
-        self.assertEqual(
-            properties["number"]["values"], [7, 6, 6, 1, 1, 1, 7, 6, 6, 1, 1, 1]
-        )
-
-
 if __name__ == "__main__":
     unittest.main()

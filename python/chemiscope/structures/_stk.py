@@ -1,5 +1,4 @@
 import typing
-from collections import Counter
 
 try:
     import stk
@@ -53,65 +52,6 @@ def _stk_all_atomic_environments(
             environments.append((structure_i, atom.get_id(), cutoff))
 
     return environments
-
-
-def _stk_composition_properties(frames, environments=None):
-    all_elements = set()
-    for frame in frames:
-        all_elements.update([atom.__class__.__name__ for atom in frame.get_atoms()])
-    all_elements = set(all_elements)
-
-    composition = []
-    elements_count = {element: [] for element in all_elements}
-    for frame in frames:
-        counter = Counter([atom.__class__.__name__ for atom in frame.get_atoms()])
-
-        composition.append("".join(f"{i}{counter[i]}" for i in sorted(counter)))
-
-        dict_composition = dict(counter)
-
-        for element in all_elements:
-            if element in dict_composition:
-                elements_count[element].append(dict_composition[element])
-            else:
-                elements_count[element].append(0)
-
-    properties = {
-        f"n_{element}": {"values": values, "target": "structure"}
-        for element, values in elements_count.items()
-    }
-
-    properties["composition"] = {"values": composition, "target": "structure"}
-
-    if environments is not None:
-        atoms_mask = [[False] * len(f) for f in frames]
-        for structure, center, _ in environments:
-            atoms_mask[structure][center] = True
-    else:
-        atoms_mask = None
-
-    symbols = []
-    numbers = []
-    for i, frame in enumerate(frames):
-        if atoms_mask is None:
-            frame_symbols = [atom.__class__.__name__ for atom in frame.get_atoms()]
-            frame_numbers = [atom.get_atomic_number() for atom in frame.get_atoms()]
-
-        else:
-            frame_symbols = [atom.__class__.__name__ for atom in frame.get_atoms()][
-                atoms_mask[i]
-            ]
-            frame_numbers = [atom.get_atomic_number() for atom in frame.get_atoms()][
-                atoms_mask[i]
-            ]
-
-        symbols.extend(frame_symbols)
-        numbers.extend(frame_numbers)
-
-    properties["symbol"] = {"values": symbols, "target": "atom"}
-    properties["number"] = {"values": numbers, "target": "atom"}
-
-    return properties
 
 
 def convert_stk_bonds_as_shapes(

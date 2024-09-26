@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ._ase import (
     _ase_all_atomic_environments,
-    _ase_composition_properties,
     _ase_extract_properties,
     _ase_librascal_atomic_environments,
     _ase_list_atom_properties,
@@ -25,7 +24,6 @@ from ._stk import (  # noqa: F401
     _stk_to_json,
     convert_stk_bonds_as_shapes,
     _stk_all_atomic_environments,
-    _stk_composition_properties,
     _stk_list_atom_properties,
     _stk_list_structure_properties,
 )
@@ -121,33 +119,6 @@ def extract_properties(frames, only=None, environments=None):
         raise RuntimeError(
             "stk molecules do not contain properties, you must manually provide them"
         )
-
-    else:
-        raise Exception("reached unreachable code")
-
-
-def composition_properties(frames, environments=None):
-    """
-    Generate properties containing the chemical composition of the given
-    ``frames``.
-
-    This create two atomic properties: ``symbol`` (string) and ``number`` (int);
-    and multiple structure properties: ``composition`` and ``n_{element}`` for
-    each elements in the dataset. The properties are then returned in chemiscope
-    format.
-
-    :param frames: iterable over structures (typically a list of frames)
-    :param environments: optional, list of environments (described as
-        ``(structure id, center id, cutoff)``) to include when generating the
-        atomic properties.
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_composition_properties(frames, environments)
-
-    elif adapter == "stk":
-        return _stk_composition_properties(frames, environments)
 
     else:
         raise Exception("reached unreachable code")
