@@ -28,3 +28,5 @@
 .. autofunction:: chemiscope.explore
 
 .. autofunction:: chemiscope.metatensor_featurizer
+
+.. autofunction:: chemiscope.convert_stk_bonds_as_shapes
