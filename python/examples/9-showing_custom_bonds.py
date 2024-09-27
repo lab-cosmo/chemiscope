@@ -158,19 +158,14 @@ shape_string = ",".join(shape_dict.keys())
 
 # %%
 #
-# A chemiscope widget can be used to visualize structures and properties.
-# This generates a Chemiscope object that is rendered to an interactive
-# widget when executed in a Jupyter notebook.
+# A chemiscope widget showing the result without the added bonding.
 
 chemiscope.show(frames=structures, properties=properties)
 
 
 # %%
 #
-# For sharing with collaborators, or when one does not want to use an interactive
-# notebook, one can also write a JSON (or compressed JSON) file that contains all
-# information about structures and properties, and can be viewed at chemiscope.org
-# Save as a file that can be viewed at chemiscope.org
+# Writing to a json.gz file, again without added bonding.
 
 chemiscope.write_input(
     path="noshape_example.json.gz",
@@ -193,7 +188,8 @@ chemiscope.show(
 
 # %%
 #
-# Write to json file with added shapes and note are present.
+# Write to json file with added shapes.
+
 chemiscope.write_input(
     path="shape_example.json.gz",
     frames=structures,
