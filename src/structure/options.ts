@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
+import { PositioningCallback, getByID, logger, makeDraggable } from '../utils';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';
@@ -188,7 +188,7 @@ export class StructureOptions extends OptionsGroup {
         // now the only possible way of doing it
         if ('packedCell' in settings) {
             if (settings.packedCell !== false) {
-                sendWarning(
+                logger.warn(
                     'packedCell option has been removed, but it is set to true in the settings'
                 );
             }

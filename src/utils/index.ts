@@ -7,6 +7,7 @@ import assert from 'assert';
 
 export { makeDraggable } from './draggable';
 export { addWarningHandler, sendWarning, WarningHandler } from './warnings';
+export { logger } from './logging';
 
 /** Callback type to position an HTML element.
  *

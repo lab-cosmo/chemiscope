@@ -1,9 +1,6 @@
-.chemiscope-sphinx-warning {
+.chemiscope-sphinx-log {
     display: none;
     flex-wrap: wrap;
-    border: 1px solid #f0ad4e;
-    background-color: #fcf8e3;
-    color: #8a6d3b;
     padding: 15px;
     border-radius: 4px;
     margin-bottom: 20px;
@@ -21,6 +18,28 @@
 
     p {
         flex: 1;
+    }
+}
+
+.chemiscope-sphinx-log.warning {
+    border: 1px solid #f0ad4e;
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+.chemiscope-sphinx-log.error {
+    border: 1px solid #d9534f;
+    background-color: #f2dede;
+    color: #a94442;
+
+    .error-backtrace {
+        background-color: #f5d6d6;
+        border: 1px solid #d9534f;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        overflow-x: auto;
     }
 }
 

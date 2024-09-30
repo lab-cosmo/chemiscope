@@ -1,7 +1,7 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
 import Plausible from 'plausible-tracker';
 
-import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
+import { logger, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -92,15 +92,20 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+            display.getElementsByTagName('p')[0].innerText = message as string;
+        });
+        logger.addHandler('error', (e) => {
+            const display = getByID(`${this.guid}-error-display`, element);
+            display.style.display = 'block';
+            display.getElementsByTagName('p')[0].innerText = e.toString();
         });
 
         element.innerHTML = `
         <div>
-            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+            <div class="alert alert-warning chemiscope-sphinx-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -145,12 +150,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 this._updatePythonSettings();
             })
             .catch((e: Error) => {
-                // eslint-disable-next-line no-console
-                console.error(e);
-
-                const display = getByID(`${this.guid}-error-display`, element);
-                display.style.display = 'block';
-                display.getElementsByTagName('p')[0].innerText = e.toString();
+                logger.error(e);
             });
 
         if (!this.model.get('has_metadata')) {
@@ -177,10 +177,10 @@ export class StructureView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+            display.getElementsByTagName('p')[0].innerText = message as string;
         });
 
         element.innerHTML = `
@@ -258,10 +258,10 @@ export class MapView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
+        logger.addHandler('warn', (message) => {
             const display = getByID(`${this.guid}-warning-display`, element);
             display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+            display.getElementsByTagName('p')[0].innerText = message as string;
         });
 
         element.innerHTML = `
