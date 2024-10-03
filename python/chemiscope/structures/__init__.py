@@ -20,7 +20,7 @@ from ._ase import (  # noqa: F401
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
 )
-from ._stk import (
+from ._stk import (  # noqa: F401
     _stk_valid_structures,
     _stk_to_json,
     convert_stk_bonds_as_shapes,
@@ -29,10 +29,6 @@ from ._stk import (
     _stk_list_atom_properties,
     _stk_list_structure_properties,
 )
-
-__all__ = [
-    "convert_stk_bonds_as_shapes",
-]
 
 
 def _guess_adapter(frames):
