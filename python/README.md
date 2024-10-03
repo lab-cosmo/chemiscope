@@ -24,6 +24,8 @@ import chemiscope
 import ase.io
 
 # read frames using ase
+# frames can also be stk objets, e.g.
+# frames = [stk.BuildingBlock(smiles="NCCN")]
 frames = ase.io.read("structures.xyz", ":")
 
 # add additional properties to display
@@ -44,6 +46,8 @@ import chemiscope
 import ase.io
 
 # read frames using ase
+# frames can also be stk objets, e.g.
+# frames = [stk.BuildingBlock(smiles="NCCN")]
 frames = ase.io.read("structures.xyz", ":")
 
 # add additional properties to display
@@ -52,36 +56,4 @@ properties = {
 }
 
 chemiscope.show(frames=frames, properties=properties)
-```
-
-To create a new chemiscope input file using `stk`_:
-
-.. _`stk`: https://github.com/lukasturcani/stk
-
-`stk` is an optional dependancy:
-
-```bash
-pip install stk
-```
-
-```python
-import chemiscope
-import stk
-
-# read frames using ase
-frames = [stk.BuildingBlock(smiles="NCCN")]
-
-# add additional properties to display
-properties = {
-    "<property name>": {
-        target: "atom",
-        values: [3, 4, 2, 8, 9, 10],
-    }
-}
-
-chemiscope.write_input(
-    "my-input.json.gz",
-    frames=frames,
-    properties=properties,
-)
 ```
