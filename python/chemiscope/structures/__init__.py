@@ -37,13 +37,10 @@ def _guess_adapter(frames):
     frames as a list and a string describing which adapter should be used.
     """
 
-    try:
-        ase_frames, use_ase = _ase_valid_structures(frames)
-        if use_ase:
-            return ase_frames, "ASE"
-    except TypeError:
-        # Error associated with it being an stk list.
-        pass
+    ase_frames, use_ase = _ase_valid_structures(frames)
+    if use_ase:
+        return ase_frames, "ASE"
+
     stk_frames, use_stk = _stk_valid_structures(frames)
     if use_stk:
         return stk_frames, "stk"
@@ -81,7 +78,6 @@ def _list_atom_properties(frames):
     if adapter == "ASE":
         return _ase_list_atom_properties(frames)
     elif adapter == "stk":
-        # stk does not contain properties inside the structure objects.
         return _stk_list_atom_properties(frames)
 
     else:
@@ -99,7 +95,6 @@ def _list_structure_properties(frames):
     if adapter == "ASE":
         return _ase_list_structure_properties(frames)
     elif adapter == "stk":
-        # stk does not contain properties inside the structure objects.
         return _stk_list_structure_properties(frames)
     else:
         raise Exception("reached unreachable code")
@@ -123,11 +118,9 @@ def extract_properties(frames, only=None, environments=None):
         return _ase_extract_properties(frames, only, environments)
 
     elif adapter == "stk":
-        msg = (
-            "stk molecules do not contain properties, you must write your "
-            "own dictionary as in example 8."
+        raise RuntimeError(
+            "stk molecules do not contain properties, you must manually provide them"
         )
-        raise RuntimeError(msg)
 
     else:
         raise Exception("reached unreachable code")
