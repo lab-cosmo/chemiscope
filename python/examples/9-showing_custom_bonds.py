@@ -3,7 +3,7 @@ Showing custom bonds using stk
 ==============================
 
 This example demonstrates how to add shapes into the chemiscope output such
-that custom bonds that would not normally be assigned by ASE can be rendered.
+that custom bonds that would not automatically be assigned can be rendered.
 
 This is done by using `stk <https://stk.readthedocs.io/en/stable/>`_ to
 generate and analyse molecules, which comes with topology/bonding information
