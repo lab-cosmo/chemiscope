@@ -124,9 +124,6 @@ structures = [
     stk.BuildingBlock.init_from_rdkit_mol(rdkitmol),
 ]
 
-# Write to file for sanity checks.
-for i, struct in enumerate(structures):
-    struct.write(f"data/stk_{i}.mol")
 
 # %%
 #
