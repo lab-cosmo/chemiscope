@@ -10,6 +10,7 @@ from .structures import (  # noqa: F401
     ellipsoid_from_tensor,
     extract_properties,
     librascal_atomic_environments,
+    convert_stk_bonds_as_shapes,
 )
 from .explore import explore, metatensor_featurizer  # noqa: F401
 from .version import __version__  # noqa: F401

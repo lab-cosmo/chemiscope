@@ -15,7 +15,11 @@ except ImportError:
 
 
 def _ase_valid_structures(frames):
-    frames_list = list(frames)
+    try:
+        frames_list = list(frames)
+    except TypeError:
+        return [], False
+
     if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
         for frame in frames_list:
             assert isinstance(frame, ase.Atoms)

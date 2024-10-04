@@ -20,6 +20,15 @@ from ._ase import (  # noqa: F401
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
 )
+from ._stk import (  # noqa: F401
+    _stk_valid_structures,
+    _stk_to_json,
+    convert_stk_bonds_as_shapes,
+    _stk_all_atomic_environments,
+    _stk_composition_properties,
+    _stk_list_atom_properties,
+    _stk_list_structure_properties,
+)
 
 
 def _guess_adapter(frames):
@@ -31,6 +40,10 @@ def _guess_adapter(frames):
     ase_frames, use_ase = _ase_valid_structures(frames)
     if use_ase:
         return ase_frames, "ASE"
+
+    stk_frames, use_stk = _stk_valid_structures(frames)
+    if use_stk:
+        return stk_frames, "stk"
 
     raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
 
@@ -48,6 +61,8 @@ def frames_to_json(frames):
 
     if adapter == "ASE":
         return [_ase_to_json(frame) for frame in frames]
+    elif adapter == "stk":
+        return [_stk_to_json(frame) for frame in frames]
     else:
         raise Exception("reached unreachable code")
 
@@ -62,6 +77,9 @@ def _list_atom_properties(frames):
 
     if adapter == "ASE":
         return _ase_list_atom_properties(frames)
+    elif adapter == "stk":
+        return _stk_list_atom_properties(frames)
+
     else:
         raise Exception("reached unreachable code")
 
@@ -76,6 +94,8 @@ def _list_structure_properties(frames):
 
     if adapter == "ASE":
         return _ase_list_structure_properties(frames)
+    elif adapter == "stk":
+        return _stk_list_structure_properties(frames)
     else:
         raise Exception("reached unreachable code")
 
@@ -96,6 +116,12 @@ def extract_properties(frames, only=None, environments=None):
 
     if adapter == "ASE":
         return _ase_extract_properties(frames, only, environments)
+
+    elif adapter == "stk":
+        raise RuntimeError(
+            "stk molecules do not contain properties, you must manually provide them"
+        )
+
     else:
         raise Exception("reached unreachable code")
 
@@ -119,6 +145,10 @@ def composition_properties(frames, environments=None):
 
     if adapter == "ASE":
         return _ase_composition_properties(frames, environments)
+
+    elif adapter == "stk":
+        return _stk_composition_properties(frames, environments)
+
     else:
         raise Exception("reached unreachable code")
 
@@ -137,6 +167,8 @@ def all_atomic_environments(frames, cutoff=3.5):
 
     if adapter == "ASE":
         return _ase_all_atomic_environments(frames, cutoff)
+    elif adapter == "stk":
+        return _stk_all_atomic_environments(frames, cutoff)
     else:
         raise Exception("reached unreachable code")
 

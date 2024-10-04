@@ -24,6 +24,8 @@ import chemiscope
 import ase.io
 
 # read frames using ase
+# frames can also be stk objets, e.g.
+# frames = [stk.BuildingBlock(smiles="NCCN")]
 frames = ase.io.read("structures.xyz", ":")
 
 # add additional properties to display
@@ -44,6 +46,8 @@ import chemiscope
 import ase.io
 
 # read frames using ase
+# frames can also be stk objets, e.g.
+# frames = [stk.BuildingBlock(smiles="NCCN")]
 frames = ase.io.read("structures.xyz", ":")
 
 # add additional properties to display

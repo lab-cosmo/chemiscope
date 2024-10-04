@@ -2,6 +2,7 @@
 """
 Generate JSON input files for the default chemiscope visualizer.
 """
+
 import gzip
 import json
 import os
@@ -282,6 +283,7 @@ def create_input(
         data["structures"] = frames_to_json(frames)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
+
     else:
         n_atoms = 0
 
@@ -378,6 +380,7 @@ def create_input(
     # should be removed in version 0.6 of chemiscope.
     if frames is not None:
         found_one_from_frame = False
+
         atom_properties = _list_atom_properties(frames)
         for name in atom_properties:
             if name in data["properties"]:
