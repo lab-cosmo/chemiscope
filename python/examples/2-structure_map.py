@@ -38,7 +38,7 @@ pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
 # When both environments and structure property are present, a toggle allows you to
 # switch between both modes.
 #
-# .. info::
+# .. note::
 #
 #     if there are properties stored in the ASE frames, you can extract them with
 #     chemiscope.extract_properties(frames)
