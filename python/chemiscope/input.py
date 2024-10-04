@@ -40,11 +40,11 @@ def create_input(
     :param list environments: optional list of ``(structure id, atom id, cutoff)``
         specifying which atoms have properties attached and how far out atom-centered
         environments should be drawn by default. Functions like
-        :py:func:`all_atomic_environments` or :py:func:`librascal_atomic_environments`
-        can be used to generate the list of environments in simple cases.
+        :py:func:`all_atomic_environments` can be used to generate the list of
+        environments in simple cases.
 
-    :param dict shapes: optional dictionary of shapes to have available for display,
-        see below.
+    :param dict shapes: optional dictionary of shapes to have available for display, see
+        below.
 
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
@@ -188,9 +188,9 @@ def create_input(
     Each of these can contain some or all of the parameters associated with each shape,
     and the parameters for each shape are obtained by combining the parameters from the
     most general to the most specific, i.e., if there is a duplicate key in the
-    `global` and `atom` fields, the value within the `atom` field will supersede the
-    `global` field for that atom. The parameters for atom `k` that is part of structure
-    `j` are obtained as
+    ``global`` and ``atom`` fields, the value within the ``atom`` field will supersede
+    the ``global`` field for that atom. The parameters for atom ``k`` that is part of
+    structure ``j`` are obtained as
 
     .. code-block:: python
 

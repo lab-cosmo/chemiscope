@@ -13,8 +13,6 @@
 
 .. autofunction:: chemiscope.all_atomic_environments
 
-.. autofunction:: chemiscope.librascal_atomic_environments
-
 .. autofunction:: chemiscope.ellipsoid_from_tensor
 
 .. autofunction:: chemiscope.arrow_from_vector

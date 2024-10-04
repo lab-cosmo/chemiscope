@@ -26,28 +26,27 @@ frames = ase.io.read("data/trajectory.xyz", ":")
 
 # %%
 #
-# Load the SOAP-PCA descriptors. chemiscope does not provide
-# analysis routines (yet), but you can look up for instance
-# scikit-matter as a package to do dimensionality reduction
+# Load the SOAP-PCA descriptors. chemiscope does not provide analysis routines, but you
+# can look up for instance scikit-matter as a package to do dimensionality reduction
 # analyses.
 
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
-pca_struc = np.loadtxt("data/trajectory-pca_structure.dat")
+pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
 
 # %%
 #
-# When both environments and structure property are present
-# only environment properties are shown. Still they can be stored,
-# and future versions of chemiscope may allow switching between
-# the two modes.
+# When both environments and structure property are present, a toggle allows you to
+# switch between both modes.
 #
-# NB: if there are properties stored in the ASE frames, you can extract
-#     them with chemiscope.extract_properties(frames)
+# .. info::
+#
+#     if there are properties stored in the ASE frames, you can extract them with
+#     chemiscope.extract_properties(frames)
 
 properties = {
     # concise definition of a property, with just an array and the type
     # inferred by the size
-    "structure PCA": pca_struc,
+    "structure PCA": pca_structure,
     "atom PCA": pca_atom,
     # an example of the verbose definition
     "energy": {
@@ -61,14 +60,12 @@ properties = {
 # %%
 #
 # Environment descriptors have only been computed for C and O atoms.
-# we use a mask and then a utility function to generate the proper
-# list of environments
-for frame in frames:
-    frame_mask = np.zeros(len(frame))
-    frame_mask[np.where((frame.numbers == 6) | (frame.numbers == 8))[0]] = 1
-    frame.arrays["center_atoms_mask"] = frame_mask
-
-environments = chemiscope.librascal_atomic_environments(frames, cutoff=4.0)
+environments = []
+cutoff = 4.0
+for frame_i, frame in enumerate(frames):
+    for atom_i, atom in enumerate(frame.numbers):
+        if atom == 6 or atom == 8:
+            environments.append((frame_i, atom_i, cutoff))
 
 
 # %%

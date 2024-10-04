@@ -145,29 +145,5 @@ class TestExtractProperties(unittest.TestCase):
         self.assertEqual(len(properties.keys()), 0)
 
 
-class TestEnvironments(unittest.TestCase):
-    """Generate the list of environments"""
-
-    def test_librascal_environments(self):
-        frames = [ase.Atoms("CO2"), ase.Atoms("NH3")]
-        for frame in frames:
-            frame.arrays["atomic number"] = frame.numbers
-
-        # center_atoms_mask is used by librascal to specify which atoms to consider
-        frames[1].arrays["center_atoms_mask"] = [True, False, False, False]
-
-        environments = chemiscope.librascal_atomic_environments(frames)
-        self.assertEqual(len(environments), 4)
-
-        properties = chemiscope.extract_properties(frames, environments=environments)
-        atomic_number = properties["atomic number"]
-        self.assertEqual(atomic_number["target"], "atom")
-        self.assertEqual(len(atomic_number["values"]), 4)
-        self.assertEqual(atomic_number["values"][0], 6)  # C in CO2
-        self.assertEqual(atomic_number["values"][1], 8)  # O1 in CO2
-        self.assertEqual(atomic_number["values"][2], 8)  # O2 in CO2
-        self.assertEqual(atomic_number["values"][3], 7)  # N in NH3
-
-
 if __name__ == "__main__":
     unittest.main()
