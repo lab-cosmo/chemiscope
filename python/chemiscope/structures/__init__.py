@@ -2,7 +2,6 @@
 from ._ase import (
     _ase_all_atomic_environments,
     _ase_extract_properties,
-    _ase_librascal_atomic_environments,
     _ase_list_atom_properties,
     _ase_list_structure_properties,
     _ase_to_json,
@@ -142,25 +141,3 @@ def all_atomic_environments(frames, cutoff=3.5):
         return _stk_all_atomic_environments(frames, cutoff)
     else:
         raise Exception("reached unreachable code")
-
-
-def librascal_atomic_environments(frames, cutoff=3.5):
-    """
-    Generate the list of environments for the given ``frames``, matching the
-    behavior used by librascal when computing descriptors for only a subset of
-    the atomic centers. The optional spherical ``cutoff`` radius is used to
-    display the environments in chemiscope.
-
-    Only ``ase.Atoms`` are supported for the ``frames`` since that's what
-    librascal uses.
-
-    :param frames: iterable over ``ase.Atoms``
-    :param float cutoff: spherical cutoff radius used when displaying the
-                         environments
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter != "ASE":
-        raise Exception("librascal_atomic_environments only supports ASE frames")
-
-    return _ase_librascal_atomic_environments(frames, cutoff)

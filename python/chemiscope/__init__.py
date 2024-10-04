@@ -8,7 +8,6 @@ from .structures import (  # noqa: F401
     center_shape,
     ellipsoid_from_tensor,
     extract_properties,
-    librascal_atomic_environments,
     convert_stk_bonds_as_shapes,
 )
 from .explore import explore, metatensor_featurizer  # noqa: F401

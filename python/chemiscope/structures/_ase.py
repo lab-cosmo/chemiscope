@@ -186,25 +186,6 @@ def _ase_all_atomic_environments(frames, cutoff):
     return environments
 
 
-def _ase_librascal_atomic_environments(frames, cutoff):
-    """
-    Extract atomic environments out of a set of ASE Atoms objects,
-    using the same convention as librascal
-    """
-    environments = []
-    for structure_i, frame in enumerate(frames):
-        if "center_atoms_mask" in frame.arrays:
-            atoms_iter = np.where(frame.arrays["center_atoms_mask"])[0]
-        else:
-            # use all atoms
-            atoms_iter = range(len(frame))
-
-        for atom_i in atoms_iter:
-            environments.append((structure_i, atom_i, cutoff))
-
-    return environments
-
-
 def _ase_to_json(frame):
     """Implementation of frame_to_json for ase.Atoms"""
     data = {}
