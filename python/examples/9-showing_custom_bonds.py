@@ -181,6 +181,17 @@ chemiscope.show(
     frames=structures,
     properties=properties,
     shapes=shape_dict,
+    settings=chemiscope.quick_settings(
+        x="aspheriticty",
+        y="uffenergy",
+        color="",
+        structure_settings={
+            "shape": shape_string,
+            "atoms": True,
+            "bonds": False,
+            "spaceFilling": False,
+        },
+    ),
 )
 
 # %%
