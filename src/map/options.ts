@@ -79,7 +79,6 @@ export class MapOptions extends OptionsGroup {
         factor: HTMLOption<'number'>;
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
-        reverse: HTMLOption<'boolean'>;
     };
 
     /// The HTML button to open the settings modal
@@ -138,7 +137,6 @@ export class MapOptions extends OptionsGroup {
             factor: new HTMLOption('number', 50),
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
-            reverse: new HTMLOption('boolean', false),
         };
         this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
         this.size.factor.validate = (value) => {
@@ -146,7 +144,10 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
             }
         };
-        this.size.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
+        this.size.mode.validate = optionValidator(
+            ['linear', 'log', 'sqrt', 'inverse', 'flip-linear', 'proportional'],
+            'mode'
+        );
 
         // Setup default values
         this.x.property.value = propertiesName[0];
@@ -304,42 +305,54 @@ export class MapOptions extends OptionsGroup {
         const userFactor = logSlider(this.size.factor.value);
 
         let scaleMode = this.size.mode.value;
-        const reversed = this.size.reverse.value;
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
-
+        const nonzeromin = min > 0 ? min : 1e-6 * (max - min); // non-zero minimum value for scales needing it
         const values = rawSizes.map((v: number) => {
             // normalize between 0 and 1, then scale by the user provided value
             let scaled = 0.55; // default
             if (max === min) {
                 scaleMode = 'fixed';
             } else {
-                scaled = (v + bottomLimit - min) / (max - min);
-                if (reversed) {
-                    scaled = 1.0 + bottomLimit - scaled;
-                }
+                scaled = (v - min) / (max - min);
             }
             switch (scaleMode) {
+                case 'proportional':
+                    // absolude proportionality - zero to max
+                    // nb this will break for negative values!
+                    scaled = v / max;
+                    break;
                 case 'inverse':
-                    scaled = 1.0 / scaled;
+                    // inverse mapping
+                    // nb this will break for negative values!
+                    scaled = nonzeromin / v;
                     break;
                 case 'log':
-                    scaled = Math.log(scaled);
+                    // log scale magnitude
+                    // nb this will break for negative values!
+                    scaled = Math.log(v / nonzeromin) / Math.log(max / nonzeromin);
                     break;
                 case 'sqrt':
-                    scaled = Math.sqrt(scaled);
+                    // sqrt mapping
+                    // nb this will break for negative values!
+                    scaled = Math.sqrt(v / max);
                     break;
                 case 'linear':
                     scaled = 1.0 * scaled;
                     break;
+                case 'flip-linear':
+                    scaled = 1.0 - scaled;
+                    break;
                 default:
                     // corresponds to 'constant'
-                    scaled = 0.55;
+                    scaled = 0.55 - bottomLimit;
                     break;
             }
-            // since we are using scalemode: 'area', square the scaled value
-            return defaultSize * scaled * scaled * userFactor * userFactor;
+            scaled = scaled + bottomLimit; // minimum size is enforced
+            // nb: we use scalemode=area so the property value is linked to the
+            // _area_ of the points (which is the perceptually correct thing to do)
+            return defaultSize * scaled * userFactor;
         });
         return values;
     }
@@ -517,7 +530,6 @@ export class MapOptions extends OptionsGroup {
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind(this.getModalElement('map-size-factor'), 'value');
         this.size.mode.bind(this.getModalElement('map-size-transform'), 'value');
-        this.size.reverse.bind(this.getModalElement('map-size-reverse'), 'checked');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */
