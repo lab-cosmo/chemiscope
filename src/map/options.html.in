@@ -151,7 +151,7 @@
                </div>
 
                <div class="input-group input-group-sm">
-                  <label class="input-group-text" for="map-size-property">size:</label>
+                  <label class="input-group-text" for="map-size-property" title="Property mapping to marker area">size:</label>
                   <select id="map-size-property" class="form-select">
                      <option value="">fixed</option>
                   </select>
@@ -169,16 +169,14 @@
                <div class="collapse chsp-map-extra-options" id="map-size-extra" style="grid-template-columns: 1fr 1fr">
                   <div class="input-group input-group-sm">
                      <label class="input-group-text" for="map-size-transform">transform:</label>
-                     <select id="map-size-transform" class="form-select" disabled>
-                        <option value="linear">linear</option>
-                        <option value="log">log</option>
-                        <option value="sqrt">sqrt</option>
-                        <option value="inverse">inverse</option>
+                     <select id="map-size-transform" class="form-select">
+                        <option value="linear" title="Linear mapping over the full range of values (large value -> large size)">linear</option>
+                        <option value="flip-linear" title="Linear reverse mapping over the full range of values (large value -> small size)">flipped linear</option>
+                        <option value="proportional" title="Proportional to actual value, breaks for negative values">proportional</option>
+                        <option value="log" title="Log-scale of actual value, breaks for negative values">log</option>
+                        <option value="sqrt" title="Square-root of actual value, breaks for negative values">sqrt</option>
+                        <option value="inverse" title="Inverse of actual value, breaks for negative values">inverse</option>
                      </select>
-                  </div>
-                  <div class="form-check form-switch">
-                     <input class="form-check-input" id="map-size-reverse" type="checkbox" disabled />
-                     <label class="form-check-label" for="map-size-reverse" title="reverse sizes"> reverse sizes </label>
                   </div>
                   <div class="input-group input-group-sm" style="grid-column: auto / span 2">
                      <label class="input-group-text" for="map-size-factor" style="min-width: 6em"> factor: </label>

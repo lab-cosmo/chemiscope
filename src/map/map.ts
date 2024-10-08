@@ -1136,21 +1136,17 @@ export class PropertiesMap {
 
         // ======= markers size
         // setup initial state of the marker size settings
-        if (this._options.size.mode.value === '') {
-            this._options.size.property.disable();
-            this._options.size.reverse.disable();
+        if (this._options.size.property.value === '') {
+            this._options.size.mode.disable();
         } else {
-            this._options.size.property.enable();
-            this._options.size.reverse.enable();
+            this._options.size.mode.enable();
         }
 
         this._options.size.property.onchange.push(() => {
             if (this._options.size.property.value !== '') {
                 this._options.size.mode.enable();
-                this._options.size.reverse.enable();
             } else {
                 this._options.size.mode.disable();
-                this._options.size.reverse.disable();
             }
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         });
@@ -1160,10 +1156,6 @@ export class PropertiesMap {
         });
 
         this._options.size.mode.onchange.push(() => {
-            this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
-        });
-
-        this._options.size.reverse.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         });
     }
