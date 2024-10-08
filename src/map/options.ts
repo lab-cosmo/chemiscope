@@ -308,10 +308,11 @@ export class MapOptions extends OptionsGroup {
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
+        const defaultScaled = 0.55;
         const nonzeromin = min > 0 ? min : 1e-6 * (max - min); // non-zero minimum value for scales needing it
         const values = rawSizes.map((v: number) => {
             // normalize between 0 and 1, then scale by the user provided value
-            let scaled = 0.55; // default
+            let scaled = defaultScaled; // default
             if (max === min) {
                 scaleMode = 'fixed';
             } else {
@@ -321,7 +322,7 @@ export class MapOptions extends OptionsGroup {
                 case 'proportional':
                     // absolude proportionality - zero to max
                     // nb this will break for negative values!
-                    scaled = v / max;
+                    scaled = v / Math.abs(max);
                     break;
                 case 'inverse':
                     // inverse mapping
@@ -336,7 +337,7 @@ export class MapOptions extends OptionsGroup {
                 case 'sqrt':
                     // sqrt mapping
                     // nb this will break for negative values!
-                    scaled = Math.sqrt(v / max);
+                    scaled = Math.sqrt(v / Math.abs(max));
                     break;
                 case 'linear':
                     scaled = 1.0 * scaled;
@@ -354,7 +355,20 @@ export class MapOptions extends OptionsGroup {
             // _area_ of the points (which is the perceptually correct thing to do)
             return defaultSize * scaled * userFactor;
         });
-        return values;
+
+        const someValuesNaN = values.some((value) => isNaN(value) || value < 0);
+
+        if (someValuesNaN) {
+            sendWarning(
+                `After applying the selected scaling mode ${scaleMode}, some point sizes` +
+                    `evaluated to invalid values. These points will be displayed at the minimum size.`
+            );
+            return values.map((v: number) => {
+                return isNaN(v) ? bottomLimit * defaultSize * userFactor : v;
+            });
+        } else {
+            return values;
+        }
     }
 
     /** Given the property, return the symbols */

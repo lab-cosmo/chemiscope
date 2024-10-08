@@ -1294,7 +1294,8 @@ export class PropertiesMap {
                 return [min, max];
             }
             sendWarning(
-                `The inserted min and max values in ${axisName} are such that min > max! The default values will be used.`
+                `The inserted min and max values in ${axisName} are such that min > max!` +
+                    `The default values will be used.`
             );
         }
         return [minProvided ? min : undefined, maxProvided ? max : undefined];
