@@ -587,8 +587,7 @@ export class MoleculeViewer {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const active = this._environments.filter((e) => e !== undefined).map((e) => e!.center);
+        const active = this._environments.filter((e) => e !== undefined).map((e) => e.center);
 
         // resets clickable and hoverable state interactions
         for (const atom of this._viewer.selectedAtoms({})) {
