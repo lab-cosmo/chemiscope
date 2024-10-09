@@ -80,6 +80,8 @@ export class MapOptions extends OptionsGroup {
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
     };
+    public markerOutline: HTMLOption<'boolean'>;
+    public joinPoints: HTMLOption<'boolean'>;
 
     /// The HTML button to open the settings modal
     private _openModal: HTMLElement;
@@ -148,6 +150,10 @@ export class MapOptions extends OptionsGroup {
             ['linear', 'log', 'sqrt', 'inverse', 'flip-linear', 'proportional'],
             'mode'
         );
+
+        // outline and line
+        this.markerOutline = new HTMLOption('boolean', true);
+        this.joinPoints = new HTMLOption('boolean', false);
 
         // Setup default values
         this.x.property.value = propertiesName[0];
@@ -308,7 +314,7 @@ export class MapOptions extends OptionsGroup {
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
-        const defaultScaled = 0.55;
+        const defaultScaled = 0.3;
         const nonzeromin = min > 0 ? min : 1e-6 * (max - min); // non-zero minimum value for scales needing it
         const values = rawSizes.map((v: number) => {
             // normalize between 0 and 1, then scale by the user provided value
@@ -347,7 +353,7 @@ export class MapOptions extends OptionsGroup {
                     break;
                 default:
                     // corresponds to 'constant'
-                    scaled = 0.55 - bottomLimit;
+                    scaled = defaultScaled - bottomLimit;
                     break;
             }
             scaled = scaled + bottomLimit; // minimum size is enforced
@@ -544,6 +550,9 @@ export class MapOptions extends OptionsGroup {
         this.size.property.bind(selectSizeProperty, 'value');
         this.size.factor.bind(this.getModalElement('map-size-factor'), 'value');
         this.size.mode.bind(this.getModalElement('map-size-transform'), 'value');
+        // ====== marker outline and line trace
+        this.markerOutline.bind(this.getModalElement('map-marker-outline'), 'checked');
+        this.joinPoints.bind(this.getModalElement('map-join-points'), 'checked');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */

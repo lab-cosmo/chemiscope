@@ -617,24 +617,22 @@ def quick_settings(
 
     :param str symbol: The (categorical) property to use to determine point markers.
 
-    :param bool trajectory: A boolean flag that sets some default options suitable
-        to view trajectory data.
+    :param bool trajectory: A boolean flag that sets some default options suitable to
+        view trajectory data: fixing the viewpoint for the structure, reducing the delay
+        when cycling between structures and adding a line joining the points in the map.
 
-    :param dict map_settings: Additional settings for the map (following the
-            chemiscope settings schema).
+    :param dict map_settings: Additional settings for the map (following the chemiscope
+            settings schema).
 
-    :param dict structure_settings: Additional settings for the
-            structure viewer (following the chemiscope settings schema).
+    :param dict structure_settings: Additional settings for the structure viewer
+            (following the chemiscope settings schema).
     """
 
-    if map_settings is None:
-        map_settings = {}
-
-    if structure_settings is None:
-        structure_settings = {}
-
-    map_settings.update(
-        {
+    if (x + y + z + color + size + symbol) == "":
+        # if at least one of the properties is requested
+        computed_map_settings = {}
+    else:
+        computed_map_settings = {
             "x": {"property": x},
             "y": {"property": y},
             "z": {"property": z},
@@ -642,18 +640,27 @@ def quick_settings(
             "size": {"property": size},
             "symbol": symbol,
         }
-    )
 
-    structure_settings.update(
+    computed_map_settings.update(
         {
-            "keepOrientation": trajectory,
-            "playbackDelay": 10 if trajectory else 700,
+            "joinPoints": trajectory,
         }
     )
 
+    computed_structure_settings = {
+        "keepOrientation": trajectory,
+        "playbackDelay": 10 if trajectory else 700,
+    }
+
+    if map_settings is not None:
+        computed_map_settings.update(map_settings)
+
+    if structure_settings is not None:
+        computed_structure_settings.update(structure_settings)
+
     return {
-        "map": map_settings,
-        "structure": [structure_settings],
+        "map": computed_map_settings,
+        "structure": [computed_structure_settings],
     }
 
 

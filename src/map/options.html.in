@@ -100,6 +100,18 @@
 
             <div style="margin-bottom: 1.5em"></div>
             <h5 class="chsp-settings-section-title">Style</h5>
+
+            <div class="input-group chsp-map-extra-options" style="margin-bottom: 0.6em">
+               <div class="form-check form-switch">
+                  <input class="form-check-input" id="map-marker-outline" type="checkbox" />
+                  <label class="form-check-label" for="map-marker-outline" title="show point outlines">show outlines</label>
+               </div>
+               <div class="form-check form-switch">
+                  <input class="form-check-input" id="map-join-points" type="checkbox" />
+                  <label class="form-check-label" for="map-join-points" title="draw a line through the points, sequentially">link points</label>
+               </div>
+            </div>
+
             <div class="chsp-map-options">
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="map-color-property">color:</label>
@@ -171,7 +183,9 @@
                      <label class="input-group-text" for="map-size-transform">transform:</label>
                      <select id="map-size-transform" class="form-select">
                         <option value="linear" title="Linear mapping over the full range of values (large value -> large size)">linear</option>
-                        <option value="flip-linear" title="Linear reverse mapping over the full range of values (large value -> small size)">flipped linear</option>
+                        <option value="flip-linear" title="Linear reverse mapping over the full range of values (large value -> small size)">
+                           flipped linear
+                        </option>
                         <option value="proportional" title="Proportional to actual value, breaks for negative values">proportional</option>
                         <option value="log" title="Log-scale of actual value, breaks for negative values">log</option>
                         <option value="sqrt" title="Square-root of actual value, breaks for negative values">sqrt</option>
