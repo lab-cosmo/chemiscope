@@ -314,7 +314,7 @@ export class MapOptions extends OptionsGroup {
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
-        const defaultScaled = 0.55;
+        const defaultScaled = 0.30;
         const nonzeromin = min > 0 ? min : 1e-6 * (max - min); // non-zero minimum value for scales needing it
         const values = rawSizes.map((v: number) => {
             // normalize between 0 and 1, then scale by the user provided value
@@ -353,7 +353,7 @@ export class MapOptions extends OptionsGroup {
                     break;
                 default:
                     // corresponds to 'constant'
-                    scaled = 0.55 - bottomLimit;
+                    scaled = defaultScaled - bottomLimit;
                     break;
             }
             scaled = scaled + bottomLimit; // minimum size is enforced
