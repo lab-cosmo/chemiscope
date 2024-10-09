@@ -81,7 +81,7 @@ export class MapOptions extends OptionsGroup {
         property: HTMLOption<'string'>;
     };
     public markerOutline: HTMLOption<'boolean'>;
-    public traceLine: HTMLOption<'boolean'>;
+    public joinPoints: HTMLOption<'boolean'>;
 
     /// The HTML button to open the settings modal
     private _openModal: HTMLElement;
@@ -153,7 +153,7 @@ export class MapOptions extends OptionsGroup {
 
         // outline and line
         this.markerOutline = new HTMLOption('boolean', true);
-        this.traceLine = new HTMLOption('boolean', false);
+        this.joinPoints = new HTMLOption('boolean', false);
 
         // Setup default values
         this.x.property.value = propertiesName[0];
@@ -552,7 +552,7 @@ export class MapOptions extends OptionsGroup {
         this.size.mode.bind(this.getModalElement('map-size-transform'), 'value');
         // ====== marker outline and line trace
         this.markerOutline.bind(this.getModalElement('map-marker-outline'), 'checked');
-        this.traceLine.bind(this.getModalElement('map-trace-line'), 'checked');
+        this.joinPoints.bind(this.getModalElement('map-join-points'), 'checked');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */

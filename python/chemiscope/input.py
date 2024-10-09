@@ -617,16 +617,15 @@ def quick_settings(
 
     :param str symbol: The (categorical) property to use to determine point markers.
 
-    :param bool trajectory: A boolean flag that sets some default options suitable
-        to view trajectory data: fixing the viewpoint for the structure,
-        reducing the lag when cycling between structures and adding a line
-        trace joining the points.
+    :param bool trajectory: A boolean flag that sets some default options suitable to
+        view trajectory data: fixing the viewpoint for the structure, reducing the delay
+        when cycling between structures and adding a line joining the points in the map.
 
-    :param dict map_settings: Additional settings for the map (following the
-            chemiscope settings schema).
+    :param dict map_settings: Additional settings for the map (following the chemiscope
+            settings schema).
 
-    :param dict structure_settings: Additional settings for the
-            structure viewer (following the chemiscope settings schema).
+    :param dict structure_settings: Additional settings for the structure viewer
+            (following the chemiscope settings schema).
     """
 
     if (x + y + z + color + size + symbol) == "":

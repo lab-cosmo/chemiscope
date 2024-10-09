@@ -546,12 +546,12 @@ export class PropertiesMap {
                 symbol: this._symbols(0)[0],
             },
             line: {
-                // line stype (if required)
+                // lines type (if required)
                 color: 'black',
                 width: 0.5,
                 dash: 'solid',
             },
-            mode: this._options.traceLine.value ? 'lines+markers' : 'markers',
+            mode: this._options.joinPoints.value ? 'lines+markers' : 'markers',
             showlegend: false,
         };
 
@@ -1170,8 +1170,8 @@ export class PropertiesMap {
             this._restyle({ 'marker.line.width': width } as Data, [0]);
         });
 
-        this._options.traceLine.onchange.push(() => {
-            const mode = this._options.traceLine.value ? 'lines+markers' : 'markers';
+        this._options.joinPoints.onchange.push(() => {
+            const mode = this._options.joinPoints.value ? 'lines+markers' : 'markers';
             this._restyle({ mode: mode } as Data, [0]);
         });
     }
@@ -1408,18 +1408,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Get the **line** color values to use with the given plotly `trace`, or
-     * all of them if `trace === undefined`
-     */
-    private _lineColors(trace?: number): string[] {
-        if (this._is3D()) {
-            return this._selectTrace<string>('black', 'black', trace);
-        } else {
-            return this._selectTrace<string>('rgba(1, 1, 1, 0.3)', 'black', trace);
-        }
-    }
-
-    /**
      * Get the values to use as marker size with the given plotly `trace`, or
      * all of them if `trace === undefined`.
      */
@@ -1565,10 +1553,6 @@ export class PropertiesMap {
         // Change the data that vary between 2D and 3D mode
         this._restyle(
             {
-                // transparency messes with depth sorting in 3D mode, even with
-                // line width set to 0 ¯\_(ツ)_/¯
-                // https://github.com/plotly/plotly.js/issues/4111
-                'marker.line.color': this._lineColors(),
                 'marker.line.width': [1, 2],
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
@@ -1610,9 +1594,6 @@ export class PropertiesMap {
 
         this._restyle(
             {
-                // transparency messes with depth sorting in 3D mode
-                // https://github.com/plotly/plotly.js/issues/4111
-                'marker.line.color': this._lineColors(),
                 'marker.line.width': [1, 0],
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
