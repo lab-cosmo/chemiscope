@@ -56,8 +56,8 @@ export default class Collapse {
             this._element.classList.replace('collapse', 'collapsing');
             this._element.classList.remove('show');
 
-            // eslint-disable-next-line no-unused-expressions
-            this._element.offsetHeight;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const _ = this._element.offsetHeight;
             this._element.style.removeProperty(this._property);
 
             this._visible = false;

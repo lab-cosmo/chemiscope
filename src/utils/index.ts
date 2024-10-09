@@ -52,12 +52,16 @@ export function generateGUID(): GUID {
 }
 
 /**
- * Get an HTML element by id, looking inside the `root` (by default the whole `document`).
+ * Get an HTML element by id, looking inside the `root` (by default the whole
+ * `document`).
  *
- * The generic parameter `HTMLType` can be used to cast the element to a given type (e.g. `getById<HTMLInputElement>("foo")`) . The element type is not checked by this function.
+ * The generic parameter `HTMLType` can be used to cast the element to a given
+ * type (e.g. `getById<HTMLInputElement>("foo")`) . The element type is not
+ * checked by this function.
  *
  * @throws if there is not element with the given id.
  */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 export function getByID<HTMLType = HTMLElement>(
     id: string,
     root: Document | HTMLElement | ShadowRoot = document

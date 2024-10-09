@@ -79,7 +79,7 @@ export interface DefaultConfig {
  * Check if `o` contains all valid config the expected fields to be a {@link DefaultConfig}.
  */
 function validateConfig(o: JsObject, requiredIds: string[]) {
-    if (typeof o !== 'object') {
+    if (typeof o !== 'object' || o === null) {
         throw Error('the configuration must be a JavaScript object');
     }
 

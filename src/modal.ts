@@ -101,8 +101,8 @@ export default class Modal {
         this._element.style.setProperty('display', 'block');
 
         // Trick to allow transitioning immediately after setting display to block
-        // eslint-disable-next-line no-unused-expressions
-        this._element.offsetHeight;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _ = this._element.offsetHeight;
 
         this._backdrop.classList.add('show');
         this._element.classList.add('show');

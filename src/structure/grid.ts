@@ -251,6 +251,7 @@ export class ViewersGrid {
         this.setActive(this._active);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
     private _getById<T = HTMLElement>(id: string): T {
         return getByID(id, this._shadow);
     }
@@ -284,7 +285,7 @@ export class ViewersGrid {
      * @param  indexes         structure / atom pair to display
      */
     public show(indexes: Indexes): void {
-        this._showInViewer(this.active, indexes).catch((e) => {
+        this._showInViewer(this.active, indexes).catch((e: unknown) => {
             throw e;
         });
     }
@@ -865,10 +866,7 @@ export class ViewersGrid {
             // add a new cells if necessary
             if (!this._cellsData.has(cellGUID)) {
                 const propertiesName = this._properties ? Object.keys(this._properties) : [];
-                const viewer = new MoleculeViewer(
-                    this._getById<HTMLElement>(`gi-${cellGUID}`),
-                    propertiesName
-                );
+                const viewer = new MoleculeViewer(this._getById(`gi-${cellGUID}`), propertiesName);
 
                 viewer.onselect = (atom: number) => {
                     if (this._target !== 'atom' || this._active !== cellGUID) {
