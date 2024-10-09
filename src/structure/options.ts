@@ -162,6 +162,7 @@ export class StructureOptions extends OptionsGroup {
     }
 
     /** Get in a element in the modal from its id */
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
     public getModalElement<T extends HTMLElement = HTMLElement>(id: string): T {
         return getByID(id, this._modal.shadow);
     }

@@ -3,6 +3,8 @@
  * @module main
  */
 
+import assert from 'assert';
+
 import { Arrow, CustomShape, Cylinder, Ellipsoid, Sphere } from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
 import { DisplayTarget } from './indexer';
@@ -57,7 +59,7 @@ export interface Dataset {
  * a simple object with string keys, scalar values, array values or nested
  * Settings objects.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Settings
     extends Record<
         string,
@@ -214,14 +216,14 @@ export interface Parameter {
 }
 
 /** Arbitrary javascript object, to be validated */
-export type JsObject = Record<string, unknown>;
+export type JsObject = Record<string, unknown> | null;
 
 /** @hidden
  * Check that the given object, potentially comming from javascript, has all
  * required properties to be a dataset.
  */
 export function validateDataset(o: JsObject): void {
-    if (typeof o !== 'object') {
+    if (typeof o !== 'object' || o === null) {
         throw Error('the dataset must be a JavaScript object');
     }
 
@@ -312,6 +314,7 @@ export function getTarget(dataset: Dataset): DisplayTarget {
 }
 
 function checkMetadata(o: JsObject) {
+    assert(o !== null);
     if (!('name' in o)) {
         throw Error('missing "meta.name" key in the dataset');
     } else if (typeof o.name !== 'string') {
@@ -351,6 +354,7 @@ function checkStructures(o: JsObject[]): [number, number] {
     let atomsCount = 0;
     for (let i = 0; i < o.length; i++) {
         const structure = o[i];
+        assert(structure !== null);
         if (
             !(
                 'size' in structure &&
@@ -376,7 +380,7 @@ function checkStructures(o: JsObject[]): [number, number] {
 }
 
 function checkShapes(
-    shapes: Record<string, JsObject>,
+    shapes: Record<string, JsObject> | null,
     structureCount: number,
     envCount: number
 ): string {
@@ -539,10 +543,11 @@ function checkProperties(
     properties: Record<string, JsObject>,
     structureCount: number,
     envCount: number,
-    parameters?: Record<string, JsObject> | undefined
+    parameters?: Record<string, JsObject>
 ) {
     for (const key in properties) {
         const property = properties[key];
+        assert(property !== null);
 
         if (!('target' in property && typeof property.target === 'string')) {
             Error(`'properties['${key}'].target' should be a string`);
@@ -616,7 +621,8 @@ function checkProperties(
             // check if the length of the first array matches the length of the parameters
             const initialValues = property.values[0] as number[];
             for (const value of propertyParameters) {
-                const parameterValues = parameters[value].values as number[];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const parameterValues = parameters[value]!.values as number[];
                 if (initialValues.length !== parameterValues.length) {
                     throw Error(
                         `'properties['${key}'].values' and 'parameters['${value}'].values' should have the same length`
@@ -646,6 +652,7 @@ function checkProperties(
 function checkEnvironments(o: JsObject[], structures: (Structure | UserStructure)[]) {
     for (let i = 0; i < o.length; i++) {
         const env = o[i];
+        assert(env !== null);
 
         if (!('structure' in env && typeof env.structure === 'number')) {
             throw Error(`missing 'structure' for environment ${i}`);

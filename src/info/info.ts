@@ -18,8 +18,8 @@ import { Table } from './table';
 import INFO_SVG from '../static/info.svg';
 import * as styles from '../styles';
 
-export function filter<T extends Record<string, Property>>(
-    obj: T,
+export function filter(
+    obj: Record<string, Property>,
     predicate: (o: Property) => boolean
 ): Record<string, Property> {
     const result: Record<string, Property> = {};
@@ -239,6 +239,7 @@ export class EnvironmentInfo {
                     // Valid structure was found
                     if (structure !== undefined) {
                         // Update the display with the details of the found structure
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this.show(this._indexer.fromStructure(structure, this._target)!);
                         this.onchange(this._indexes());
 
@@ -371,6 +372,7 @@ export class EnvironmentInfo {
                     if (atom !== undefined) {
                         // Update the display with the details of the found atom
                         this.show(
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             this._indexer.fromStructureAtom(this._target, current.structure, atom)!
                         );
                         this.onchange(this._indexes());

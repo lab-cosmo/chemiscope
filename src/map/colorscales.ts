@@ -819,7 +819,6 @@ interface ColorMaps {
     [key: string]: [number, string][];
 }
 
-/* eslint-disable sort-keys */
 /** @hidden */
 export const COLOR_MAPS: ColorMaps = {
     inferno: rgb_to_plotly(INFERNO),

@@ -136,7 +136,7 @@ const DEFAULT_CONFIG = {
                         format: 'png',
                         width: Math.max(gd._fullLayout.width, 600),
                         height: Math.max(gd._fullLayout.width, 600),
-                    }).catch((e) =>
+                    }).catch((e: unknown) =>
                         setTimeout(() => {
                             throw e;
                         })
@@ -158,7 +158,7 @@ const DEFAULT_CONFIG = {
                         format: 'svg',
                         width: Math.max(gd._fullLayout.width, 600),
                         height: Math.max(gd._fullLayout.height, 600),
-                    }).catch((e) =>
+                    }).catch((e: unknown) =>
                         setTimeout(() => {
                             throw e;
                         })
@@ -692,7 +692,7 @@ export class PropertiesMap {
      * @param traces optional, indices of traces or a single trace index to update
      */
     private _restyle(data: Partial<Data>, traces?: number | number[]) {
-        Plotly.restyle(this._plot, data, traces).catch((e) =>
+        Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
             })
@@ -706,7 +706,7 @@ export class PropertiesMap {
      * @param layout layout properties to update
      */
     private _relayout(layout: Partial<Layout>) {
-        Plotly.relayout(this._plot, layout).catch((e) =>
+        Plotly.relayout(this._plot, layout).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
             })
@@ -726,7 +726,8 @@ export class PropertiesMap {
                 .then(() => {
                     resolve();
                 })
-                .catch((error) => {
+                // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+                .catch((error: Error) => {
                     setTimeout(() => {
                         reject(error);
                     });
@@ -1196,7 +1197,7 @@ export class PropertiesMap {
                     window.dispatchEvent(new Event('resize'));
                 });
             })
-            .catch((e) =>
+            .catch((e: unknown) =>
                 setTimeout(() => {
                     throw e;
                 })

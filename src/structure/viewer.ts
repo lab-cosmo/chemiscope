@@ -417,7 +417,7 @@ export class MoleculeViewer {
      */
     public load(
         structure: Structure,
-        properties?: Record<string, (number | undefined)[]> | undefined,
+        properties?: Record<string, (number | undefined)[]>,
         options: Partial<LoadOptions> = {},
         onLoadingDone?: () => void
     ): void {
