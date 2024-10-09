@@ -1,29 +1,33 @@
-import typing
+from typing import Dict, List, Tuple, Union
 
 try:
-    import stk
+    from stk import Molecule
 
     HAVE_STK = True
 except ImportError:
+
+    class Molecule:
+        pass
+
     HAVE_STK = False
 
 
 def _stk_valid_structures(
-    frames: typing.Union[stk.Molecule, list[stk.Molecule]],
-) -> tuple[list[stk.Molecule], bool]:
-    if HAVE_STK and isinstance(frames, stk.Molecule):
+    frames: Union[Molecule, List[Molecule]]
+) -> Tuple[List[Molecule], bool]:
+    if HAVE_STK and isinstance(frames, Molecule):
         # deal with the user passing a single frame
         return [frames], True
-    elif HAVE_STK and isinstance(frames[0], stk.Molecule):
+    elif HAVE_STK and isinstance(frames[0], Molecule):
         for frame in frames:
-            assert isinstance(frame, stk.Molecule)
+            assert isinstance(frame, Molecule)
         return frames, True
     else:
         return frames, False
 
 
-def _stk_to_json(molecule: stk.Molecule) -> dict[str : typing.Union[int, list]]:
-    """Implementation of frame_to_json for stk.Molcule.
+def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
+    """Implementation of frame_to_json for stk's ``Molecule``.
 
     The current implementation assumes no periodic information, which is safe
     for the majority of stk molecules. If necessary, we can add cell information
@@ -42,9 +46,9 @@ def _stk_to_json(molecule: stk.Molecule) -> dict[str : typing.Union[int, list]]:
 
 
 def _stk_all_atomic_environments(
-    frames: list[stk.Molecule],
+    frames: List[Molecule],
     cutoff: float,
-) -> list[tuple[int, int, float]]:
+) -> List[Tuple[int, int, float]]:
     "Extract all atomic environments out of a set of stk Molecule objects"
     environments = []
     for structure_i, frame in enumerate(frames):
@@ -55,20 +59,20 @@ def _stk_all_atomic_environments(
 
 
 def convert_stk_bonds_as_shapes(
-    frames: list[stk.Molecule],
+    frames: List[Molecule],
     bond_color: str,
     bond_radius: float,
-) -> dict[str, dict]:
+) -> Dict[str, Dict]:
     """Convert connections between atom ids in each structure to shapes.
 
     Parameters:
 
         frames:
-            List of stk.Molecule objects, which each are structures in
+            List of Molecule objects, which each are structures in
             chemiscope.
 
-        bond_colour:
-            How to colour the bonds added.
+        bond_color:
+            How to color the bonds added.
 
         bond_radius:
             Radius of bonds to add.
@@ -76,7 +80,7 @@ def convert_stk_bonds_as_shapes(
 
     """
 
-    shape_dict: dict[str, dict] = {}
+    shape_dict: Dict[str, dict] = {}
     max_length = 0
     for molecule in frames:
         bonds_to_add = tuple(
@@ -142,11 +146,11 @@ def convert_stk_bonds_as_shapes(
     return shape_dict
 
 
-def _stk_list_atom_properties(frames: list[stk.Molecule]) -> list:
+def _stk_list_atom_properties(frames: List[Molecule]) -> list:
     # stk cannot have atom properties or structure properties, so skipping.
     return []
 
 
-def _stk_list_structure_properties(frames: list[stk.Molecule]) -> list:
+def _stk_list_structure_properties(frames: List[Molecule]) -> list:
     # stk cannot have atom properties or structure properties, so skipping.
     return []
