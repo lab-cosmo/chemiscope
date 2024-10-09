@@ -554,7 +554,6 @@ export class PropertiesMap {
             mode: this._options.traceLine.value ? 'lines+markers' : 'markers',
             showlegend: false,
         };
-        console.log(main);
 
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling. This is
