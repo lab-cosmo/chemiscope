@@ -643,7 +643,7 @@ def quick_settings(
 
     computed_map_settings.update(
         {
-            "traceLine": trajectory,
+            "joinPoints": trajectory,
         }
     )
 
@@ -659,8 +659,8 @@ def quick_settings(
         computed_structure_settings.update(structure_settings)
 
     return {
-        "map": map_settings,
-        "structure": [structure_settings],
+        "map": computed_map_settings,
+        "structure": [computed_structure_settings],
     }
 
 

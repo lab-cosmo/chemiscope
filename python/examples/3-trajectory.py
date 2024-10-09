@@ -72,6 +72,7 @@ chemiscope.write_input(
                 "keepOrientation": True,
                 "playbackDelay": 100,
                 "shape": "forces",  # visualize force vectors
+                "joinPoints": True,
             }
         ]
     },
