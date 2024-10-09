@@ -587,7 +587,9 @@ export class MoleculeViewer {
             return;
         }
 
-        const active = this._environments.filter((e): e is Environment => e !== undefined).map((e) => e.center);
+        const active = this._environments
+            .filter((e): e is Environment => e !== undefined)
+            .map((e) => e.center);
 
         // resets clickable and hoverable state interactions
         for (const atom of this._viewer.selectedAtoms({})) {
