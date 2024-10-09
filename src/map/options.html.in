@@ -190,6 +190,17 @@
                      <option value="">fixed</option>
                   </select>
                </div>
+
+               <div class="input-group chsp-map-extra-options">
+                  <div class="form-check form-switch">
+                     <input class="form-check-input" id="map-marker-outline" type="checkbox" />
+                     <label class="form-check-label" for="map-marker-outline" title="show point outlines">marker outlines</label>
+                  </div>
+                  <div class="form-check form-switch">
+                     <input class="form-check-input" id="map-trace-line" type="checkbox" />
+                     <label class="form-check-label" for="map-trace-line" title="draw a line through the points, sequentially">trajectory line</label>
+                  </div>
+               </div>
             </div>
          </div>
       </div>

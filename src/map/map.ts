@@ -535,8 +535,8 @@ export class PropertiesMap {
                 color: this._colors(0)[0],
                 coloraxis: 'coloraxis',
                 line: {
-                    color: this._lineColors(0)[0],
-                    width: 1,
+                    color: 'black',
+                    width: this._options.markerOutline.value ? 0.5 : 0,
                 },
                 // prevent plolty from messing with opacity when doing bubble
                 // style charts (different sizes for each point)
@@ -545,9 +545,16 @@ export class PropertiesMap {
                 sizemode: 'area',
                 symbol: this._symbols(0)[0],
             },
-            mode: 'markers',
+            line: {
+                // line stype (if required)
+                color: 'black',
+                width: 0.5,
+                dash: 'solid',
+            },
+            mode: this._options.traceLine.value ? 'lines+markers' : 'markers',
             showlegend: false,
         };
+        console.log(main);
 
         // Create a second trace to store the last clicked point, in order to
         // display it on top of the main plot with different styling. This is
@@ -1157,6 +1164,16 @@ export class PropertiesMap {
 
         this._options.size.mode.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
+        });
+
+        this._options.markerOutline.onchange.push(() => {
+            const width = this._options.markerOutline.value ? 0.5 : 0;
+            this._restyle({ 'marker.line.width': width } as Data, [0]);
+        });
+
+        this._options.traceLine.onchange.push(() => {
+            const mode = this._options.traceLine.value ? 'lines+markers' : 'markers';
+            this._restyle({ mode: mode } as Data, [0]);
         });
     }
 

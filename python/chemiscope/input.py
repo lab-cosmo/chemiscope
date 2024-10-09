@@ -627,14 +627,11 @@ def quick_settings(
             structure viewer (following the chemiscope settings schema).
     """
 
-    if map_settings is None:
-        map_settings = {}
-
-    if structure_settings is None:
-        structure_settings = {}
-
-    map_settings.update(
-        {
+    if (x + y + z + color + size + symbol) == "":
+        # if at least one of the properties is requested
+        computed_map_settings = {}
+    else:
+        computed_map_settings = {
             "x": {"property": x},
             "y": {"property": y},
             "z": {"property": z},
@@ -642,14 +639,23 @@ def quick_settings(
             "size": {"property": size},
             "symbol": symbol,
         }
-    )
 
-    structure_settings.update(
+    computed_map_settings.update(
         {
-            "keepOrientation": trajectory,
-            "playbackDelay": 10 if trajectory else 700,
+            "traceLine": trajectory,
         }
     )
+
+    computed_structure_settings = {
+        "keepOrientation": trajectory,
+        "playbackDelay": 10 if trajectory else 700,
+    }
+
+    if map_settings is not None:
+        computed_map_settings.update(map_settings)
+
+    if structure_settings is not None:
+        computed_structure_settings.update(structure_settings)
 
     return {
         "map": map_settings,
