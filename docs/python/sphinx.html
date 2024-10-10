@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Chemiscope in sphinx &#8212; chemiscope 0.8.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=ec16d22d"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use with sphinx-gallery" href="gallery.html" />
+    <link rel="prev" title="Jupyter notebooks" href="jupyter.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="jupyter.html" title="Previous Chapter: Jupyter notebooks"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Jupyter notebooks</span>
+    </a>
+  </li>
+  <li>
+    <a href="gallery.html" title="Next Chapter: Use with sphinx-gallery"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Use with sphi... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python module</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command line interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html"><cite>chemiscope</cite> functions reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jupyter.html">Jupyter notebooks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Chemiscope in <cite>sphinx</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="gallery.html">Use with <cite>sphinx-gallery</cite></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="chemiscope-in-sphinx">
+<span id="sphinx"></span><h1>Chemiscope in <cite>sphinx</cite><a class="headerlink" href="#chemiscope-in-sphinx" title="Link to this heading">¶</a></h1>
+<p>The chemiscope python module also provides a <cite>sphinx</cite> extension that can process
+a custom RST directive into an interacting viewer, that can be embedded in the
+generated HTML documentation.</p>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">¶</a></h2>
+<p>Assuming a project is already configured to use <cite>sphinx</cite> to build its documentation,
+in order to be able to use the chemiscope directive one has to first
+add the <cite>chemiscope.sphinx</cite> extension to the <cite>docs/conf.py</cite> file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;chemiscope.sphinx&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="chemiscope-directive">
+<h2>Chemiscope directive<a class="headerlink" href="#chemiscope-directive" title="Link to this heading">¶</a></h2>
+<p>In order to include a chemiscope viewer into a RST documentation page one can use a
+<code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> directive. When compiled with <code class="docutils literal notranslate"><span class="pre">sphinx-build</span></code>, the directive will
+be translated into an HTML embedding of and interactive widget, that loads a JSON
+file and displays it. The directive requires a mandatory argument, that indicates
+the path (relative to the RST file) where the chemiscope JSON is to be found,
+and an optional <code class="docutils literal notranslate"><span class="pre">mode</span></code> parameter that specifies the type of visualization to be used
+(<code class="docutils literal notranslate"><span class="pre">default</span></code>, <code class="docutils literal notranslate"><span class="pre">structure</span></code>, or <code class="docutils literal notranslate"><span class="pre">map</span></code> - <code class="docutils literal notranslate"><span class="pre">default</span></code> being unimaginatively the default).</p>
+<p>For instance, to show a viewer combining structure and property panels you can
+simply use the directive</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">chemiscope</span><span class="p">::</span> ../datasets/showcase.json.gz
+</pre></div>
+</div>
+<p>Once compiled, this will show as this widget</p>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-55aa0100-e2d2-4c96-b1b3-75b4fba0b5c0-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-55aa0100-e2d2-4c96-b1b3-75b4fba0b5c0-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-55aa0100-e2d2-4c96-b1b3-75b4fba0b5c0-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-55aa0100-e2d2-4c96-b1b3-75b4fba0b5c0">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-55aa0100-e2d2-4c96-b1b3-75b4fba0b5c0', '../_datasets/01ce415f8a58dbcb610466ec4558b023786fc0c4f10064cc7c632e265f14c428-showcase.json.gz', 'default');
+</script>
+<p>The <code class="docutils literal notranslate"><span class="pre">structure</span></code> mode will show the structures only</p>
+
+
+<!-- Warning Display -->
+<div id="chsp-ac8423b2-c4a1-4f64-b56c-5fad06438108-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-ac8423b2-c4a1-4f64-b56c-5fad06438108-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-ac8423b2-c4a1-4f64-b56c-5fad06438108-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-ac8423b2-c4a1-4f64-b56c-5fad06438108">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-ac8423b2-c4a1-4f64-b56c-5fad06438108', '../_datasets/01ce415f8a58dbcb610466ec4558b023786fc0c4f10064cc7c632e265f14c428-showcase.json.gz', 'structure');
+</script>
+<p>and the <code class="docutils literal notranslate"><span class="pre">map</span></code> mode only the property map</p>
+
+
+<!-- Warning Display -->
+<div id="chsp-32cc8189-5b13-49f1-92b6-b02a53e7e4e8-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-32cc8189-5b13-49f1-92b6-b02a53e7e4e8-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-32cc8189-5b13-49f1-92b6-b02a53e7e4e8-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-32cc8189-5b13-49f1-92b6-b02a53e7e4e8">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-32cc8189-5b13-49f1-92b6-b02a53e7e4e8', '../_datasets/01ce415f8a58dbcb610466ec4558b023786fc0c4f10064cc7c632e265f14c428-showcase.json.gz', 'map');
+</script>
+</section>
+<section id="viewing-a-documentation-locally">
+<h2>Viewing a documentation locally<a class="headerlink" href="#viewing-a-documentation-locally" title="Link to this heading">¶</a></h2>
+<p>Because of the need to dynamically load the chemiscope module and the
+desired file, it is not possible to load the widget by viewing the
+the raw HTML pages. Instead, one needs to run a local HTTP server.
+For instance, using the port 8765,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs/build/html
+python3<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">8765</span>
+</pre></div>
+</div>
+<p>You can then view the documentation in a browser by loading the URL
+<code class="docutils literal notranslate"><span class="pre">localhost:8765</span></code>.</p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

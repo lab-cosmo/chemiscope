@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Using metatensor models for dataset exploration &#8212; chemiscope 0.8.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=ec16d22d"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Showing custom bonds using stk" href="9-showing_custom_bonds.html" />
+    <link rel="prev" title="Advanced dataset exploration" href="7-explore-advanced.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="7-explore-advanced.html" title="Previous Chapter: Advanced dataset exploration"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Advanced data...</span>
+    </a>
+  </li>
+  <li>
+    <a href="9-showing_custom_bonds.html" title="Next Chapter: Showing custom bonds using stk"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Showing custo... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Using metatensor models for dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="9-showing_custom_bonds.html">Showing custom bonds using stk</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-8-explore-with-metatensor-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="using-metatensor-models-for-dataset-exploration">
+<span id="chemiscope-explore-metatensor"></span><span id="sphx-glr-examples-8-explore-with-metatensor-py"></span><h1>Using <a class="reference external" href="https://docs.metatensor.org/latest/index.html">metatensor</a> models for dataset exploration<a class="headerlink" href="#using-metatensor-models-for-dataset-exploration" title="Link to this heading">¶</a></h1>
+<p>In this example, we demonstrate how to create and use a <a class="reference external" href="https://docs.metatensor.org/latest/index.html">metatensor</a> model with
+<a class="reference internal" href="../python/reference.html#chemiscope.metatensor_featurizer" title="chemiscope.metatensor_featurizer"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.metatensor_featurizer()</span></code></a> to extract features from the model, which
+are then displayed using a chemiscope widget. To use this function, some additional
+dependencies are required. You can install them with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>chemiscope<span class="o">[</span>metatensor<span class="o">]</span>
+</pre></div>
+</div>
+<p>Firstly, we import necessary packages and read structures from the dataset.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">metatensor.torch</span> <span class="kn">import</span> <span class="n">Labels</span><span class="p">,</span> <span class="n">TensorBlock</span><span class="p">,</span> <span class="n">TensorMap</span>
+<span class="kn">from</span> <span class="nn">metatensor.torch.atomistic</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MetatensorAtomisticModel</span><span class="p">,</span>
+    <span class="n">ModelCapabilities</span><span class="p">,</span>
+    <span class="n">ModelMetadata</span><span class="p">,</span>
+    <span class="n">ModelOutput</span><span class="p">,</span>
+    <span class="n">NeighborListOptions</span><span class="p">,</span>
+    <span class="n">System</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+
+<span class="n">frames</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;data/explore_c-gap-20u.xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="using-pre-trained-models">
+<h2>Using pre-trained models<a class="headerlink" href="#using-pre-trained-models" title="Link to this heading">¶</a></h2>
+<p>Most commonly, you will have an already existing model in metatensor format that
+you’ll want to use for dataset exploration. In this case, you’ll have to create a
+<code class="docutils literal notranslate"><span class="pre">featurizer</span></code> function using <a class="reference internal" href="../python/reference.html#chemiscope.metatensor_featurizer" title="chemiscope.metatensor_featurizer"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.metatensor_featurizer()</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">metatensor_featurizer</span></code> takes an existing model as input. It can be either a
+<code class="docutils literal notranslate"><span class="pre">MetatensorAtomisticModel</span></code> instance or a path to a pre-trained model file (here
+<code class="docutils literal notranslate"><span class="pre">&quot;model.pt&quot;</span></code>)</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">featurizer</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">metatensor_featurizer</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;model.pt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From here, you can use <a class="reference internal" href="../python/reference.html#chemiscope.explore" title="chemiscope.explore"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.explore()</span></code></a> to visualize the features
+computed from the structures. For this, we are passing the frames, the <code class="docutils literal notranslate"><span class="pre">featurizer</span></code>
+function, and — as the model computes per-atom properties — environments.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">featurize</span><span class="o">=</span><span class="n">featurizer</span><span class="p">,</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">all_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-1085a0dc-7846-4e81-b9d9-1d679f325fb2-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-1085a0dc-7846-4e81-b9d9-1d679f325fb2-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-1085a0dc-7846-4e81-b9d9-1d679f325fb2-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-1085a0dc-7846-4e81-b9d9-1d679f325fb2">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-1085a0dc-7846-4e81-b9d9-1d679f325fb2', '../_datasets/437131d089816512b4631ef3593f3506ede76f81f5258be0571d4c7b2bc2aa02-fig_8-explore-with-metatensor_013.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /></section>
+<section id="defining-a-custom-model">
+<h2>Defining a custom model<a class="headerlink" href="#defining-a-custom-model" title="Link to this heading">¶</a></h2>
+<p>Let’s now move on and see how one can define a fully custom model to use through the
+metatensor interface.</p>
+<p>Here we will use an atom-centered representation, where each atomic environment is
+represented with the moments of the positions of the neighbors up to a maximal order.</p>
+<p>The model computes moments up to a specified maximum order <span class="math notranslate nohighlight">\(k_{\text{max}}\)</span>,
+computing a representation <span class="math notranslate nohighlight">\(F_i^k\)</span></p>
+<div class="math notranslate nohighlight">
+\[F_i^k = \sum_{j} \frac{r_{ij}}{r_c}^k\]</div>
+<p>where <span class="math notranslate nohighlight">\(r_{ij}\)</span> is the distance between atom <span class="math notranslate nohighlight">\(i\)</span> and its neighbor
+<span class="math notranslate nohighlight">\(j\)</span>, <span class="math notranslate nohighlight">\(k\)</span> is the moment order and <span class="math notranslate nohighlight">\(r_c\)</span> is the cutoff radius.</p>
+<p>And then, the model will take a PCA of the above features to extract the three most
+relevant dimensions.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FeatureModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_k</span> <span class="o">=</span> <span class="n">max_k</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors_options</span> <span class="o">=</span> <span class="n">NeighborListOptions</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">full_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">requested_neighbor_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NeighborListOptions</span><span class="p">]:</span>
+        <span class="c1"># our model requires a neighbor list, that will be computed and provided to it</span>
+        <span class="c1"># automatically.</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_neighbors_options</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">systems</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">System</span><span class="p">],</span>
+        <span class="n">outputs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelOutput</span><span class="p">],</span>
+        <span class="n">selected_atoms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Labels</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorMap</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;this model can only compute &#39;features&#39;, but outputs contains other &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;keys: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">per_atom</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;per structure features are not implemented&quot;</span><span class="p">)</span>
+
+        <span class="n">all_features</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_samples</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">system_i</span><span class="p">,</span> <span class="n">system</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">systems</span><span class="p">):</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">positions</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">positions</span><span class="o">.</span><span class="n">device</span>
+            <span class="n">n_atoms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+
+            <span class="c1"># Initialize a tensor to store features for each atom</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_atoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="c1"># get the neighbor list for this system</span>
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">get_neighbor_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_neighbors_options</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">neighbors</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">column</span><span class="p">(</span><span class="s2">&quot;first_atom&quot;</span><span class="p">)</span>
+
+            <span class="n">r_ij</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">vector_norm</span><span class="p">(</span><span class="n">neighbors</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">r_ij</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_k</span><span class="p">):</span>
+                <span class="n">features</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">r_ij</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+            <span class="n">all_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+
+            <span class="c1"># Create labels for each atom in the system</span>
+            <span class="n">system_atom_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="p">[[</span><span class="n">system_i</span><span class="p">,</span> <span class="n">atom_i</span><span class="p">]</span> <span class="k">for</span> <span class="n">atom_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">)]</span>
+            <span class="p">)</span>
+            <span class="n">all_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">system_atom_labels</span><span class="p">)</span>
+
+        <span class="c1"># Concatenate features and labels across all systems</span>
+        <span class="n">features_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_features</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">samples_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_samples</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Take the PCA of the features</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">features_tensor</span> <span class="o">-</span> <span class="n">features_tensor</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">features_pca</span> <span class="o">=</span> <span class="n">features_tensor</span> <span class="o">@</span> <span class="n">V</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># Add metadata to the output</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">TensorBlock</span><span class="p">(</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">features_pca</span><span class="p">,</span>
+            <span class="n">samples</span><span class="o">=</span><span class="n">Labels</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;atom&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">samples_tensor</span><span class="p">),</span>
+            <span class="n">components</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">properties</span><span class="o">=</span><span class="n">Labels</span><span class="p">(</span>
+                <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;feature&quot;</span><span class="p">],</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">]]),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="n">TensorMap</span><span class="p">(</span>
+                <span class="n">keys</span><span class="o">=</span><span class="n">Labels</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">]])),</span> <span class="n">blocks</span><span class="o">=</span><span class="p">[</span><span class="n">block</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+</pre></div>
+</div>
+<p>With the class defined, we can now create an instance of the model, giving <code class="docutils literal notranslate"><span class="pre">cutoff</span></code>
+and <code class="docutils literal notranslate"><span class="pre">max_k</span></code> as a maximal moment to compute. We don’t need to train this model since
+there are no trainable parameters inside.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">FeatureModel</span><span class="p">(</span><span class="n">cutoff</span><span class="o">=</span><span class="mf">4.5</span><span class="p">,</span> <span class="n">max_k</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we set up the model metadata and capabilities:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">metadata</span> <span class="o">=</span> <span class="n">ModelMetadata</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Example moment model&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">&quot;A model that computes atom-centered features based on the distances of &quot;</span>
+        <span class="s2">&quot;neighboring atoms&quot;</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">capabilities</span> <span class="o">=</span> <span class="n">ModelCapabilities</span><span class="p">(</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="n">ModelOutput</span><span class="p">(</span><span class="n">per_atom</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="n">atomic_types</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span>
+    <span class="n">interaction_range</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">supported_devices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">],</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">MetatensorAtomisticModel</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">(),</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">capabilities</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For a more detailed example of exporting a model, please check the related
+documentation <a class="reference external" href="https://docs.metatensor.org/latest/examples/atomistic/1-export-atomistic-model.html">page</a>
+in <a class="reference external" href="https://docs.metatensor.org/latest/index.html">metatensor</a>.</p>
+<p>Once the model is fully defined, we can use it with
+<a class="reference internal" href="../python/reference.html#chemiscope.metatensor_featurizer" title="chemiscope.metatensor_featurizer"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.metatensor_featurizer()</span></code></a>:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">featurizer</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">metatensor_featurizer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">check_consistency</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">chemiscope</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
+    <span class="n">featurize</span><span class="o">=</span><span class="n">featurizer</span><span class="p">,</span>
+    <span class="n">environments</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">all_atomic_environments</span><span class="p">(</span><span class="n">frames</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+
+
+<!-- Warning Display -->
+<div id="chsp-b7d3b532-dbe2-45a2-a8ed-d6e9612c9b0f-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-b7d3b532-dbe2-45a2-a8ed-d6e9612c9b0f-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-b7d3b532-dbe2-45a2-a8ed-d6e9612c9b0f-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-b7d3b532-dbe2-45a2-a8ed-d6e9612c9b0f">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-b7d3b532-dbe2-45a2-a8ed-d6e9612c9b0f', '../_datasets/ef6edc65aa9444b05ea5923b637add71784c957115ce0a68bdf03f56d53bbbac-fig_8-explore-with-metatensor_014.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.094 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-8-explore-with-metatensor-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/6821e08004795fffaf8c1ca59c99e02a/8-explore-with-metatensor.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">8-explore-with-metatensor.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/d9fb6fb4bf2ab40518564f4739fb4513/8-explore-with-metatensor.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">8-explore-with-metatensor.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/45a7431d74d49d662b0d7ce95a009f43/8-explore-with-metatensor.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">8-explore-with-metatensor.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.0.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
