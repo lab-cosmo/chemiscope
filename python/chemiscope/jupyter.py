@@ -176,28 +176,26 @@ def show(
     mode="default",
 ):
     """
-    Show the dataset defined by the given ``frames`` and ``properties``
-    (optionally ``meta``, ``environments`` and ``shapes`` as well) using an embedded
-    chemiscope visualizer inside a Jupyter notebook. These parameters have the same
-    meaning as in the :py:func:`chemiscope.create_input` function.
+    Show the dataset defined by the given ``frames`` and ``properties`` (optionally
+    ``meta``, ``environments`` and ``shapes`` as well) using an embedded chemiscope
+    visualizer inside a Jupyter notebook. These parameters have the same meaning as in
+    the :py:func:`chemiscope.create_input` function.
 
-    The ``mode`` keyword also allows overriding the default two-panels
-    visualization to show only a structure panel (``mode = "structure"``) or the
-    map panel (``mode = "map"``). These modes also make it possible to view a
-    dataset for which properties (or frames) are not available.
+    The ``mode`` keyword also allows overriding the default two-panels visualization to
+    show only a structure panel (``mode = "structure"``) or the map panel (``mode =
+    "map"``). These modes also make it possible to view a dataset for which properties
+    (or frames) are not available.
 
-    When inside a jupyter notebook, the returned object will create a new
-    chemiscope visualizer displaying the dataset. The object exposes a
-    `settings` traitlet, that allows to modify the visualization options
-    (possibly even linking the parameters to another widget). Printing the value
-    of the `settings` property is also a good way to see a full list of the
-    available options.
+    When inside a jupyter notebook, the returned object will create a new chemiscope
+    visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
+    allows to modify the visualization options (possibly even linking the parameters to
+    another widget). Printing the value of the ``settings`` property is also a good way
+    to see a full list of the available options.
 
-    The returned object also have a ``save`` function that can be used to save
-    the dataset to a ``.json`` or ``.json.gz`` file to load it in the main website
-    later. The visualization options will be those used in the active widget, so
-    this is also a good way to tweak the appearence of the visualization before
-    saving it.
+    The returned object also have a ``save`` function that can be used to save the
+    dataset to a ``.json`` or ``.json.gz`` file to load it in the main website later.
+    The visualization options will be those used in the active widget, so this is also a
+    good way to tweak the appearance of the visualization before saving it.
 
     .. code-block:: python
 
