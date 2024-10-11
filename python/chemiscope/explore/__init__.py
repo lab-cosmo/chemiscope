@@ -5,7 +5,14 @@ from ._metatensor import metatensor_featurizer
 __all__ = ["explore", "metatensor_featurizer"]
 
 
-def explore(frames, featurize=None, properties=None, environments=None, mode="default"):
+def explore(
+    frames,
+    featurize=None,
+    properties=None,
+    environments=None,
+    settings=None,
+    mode="default",
+):
     """
     Automatically explore a dataset containing all structures in ``frames``.
 
@@ -32,11 +39,14 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
         with the atomic structures. Properties can be extracted from frames with
         :py:func:`extract_properties` or manually defined by the user.
 
-    :param environments: optional. List of environments (described as
-        ``(structure id, center id, cutoff)``) to include when extracting the
-        atomic properties. Can be extracted from frames with
-        :py:func:`all_atomic_environments`.
-        or manually defined.
+    :param environments: optional. List of environments (described as ``(structure id,
+        center id, cutoff)``) to include when extracting the atomic properties. Can be
+        extracted from frames with :py:func:`all_atomic_environments`. or manually
+        defined.
+
+    :param dict settings: optional dictionary of settings to use when displaying the
+        data. Possible entries for the ``settings`` dictionary are documented in the
+        chemiscope input file reference.
 
     :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
         of "default", "structure", or "map". The default mode is "default".
@@ -121,6 +131,8 @@ def explore(frames, featurize=None, properties=None, environments=None, mode="de
     return show(
         frames=frames,
         properties=properties,
+        shapes=None,
         environments=environments,
+        settings=settings,
         mode=mode,
     )
