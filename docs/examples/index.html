@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Examples &#8212; chemiscope 0.8.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=dbee5847"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Simple chemiscope input" href="1-base.html" />
+    <link rel="prev" title="Chemiscope: interactive structure/property explorer for materials and molecules" href="../index.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="../index.html" title="Previous Chapter: Chemiscope: interactive structure/property explorer for materials and molecules"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Chemiscope: i...</span>
+    </a>
+  </li>
+  <li>
+    <a href="1-base.html" title="Next Chapter: Simple chemiscope input"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Simple chemis... &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="8-explore-with-metatensor.html">Using metatensor models for dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="9-showing_custom_bonds.html">Showing custom bonds using stk</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <section id="examples">
+<span id="id1"></span><h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
+<p>This page lists a few examples of visualizations based on chemiscope.
+Rather than providing a demonstration of a scientifc application, as for the
+examples on <a class="reference external" href="http://chemiscope.org">the main page</a>, these examples
+consist in short Python scripts that demonstrate how to make a chemiscope
+viewer file that uses some particular features (e.g. atom coloring or shape
+visualization).</p>
+<div class="sphx-glr-thumbnails"><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the basic usage of the chemiscope package, reading structures and properties from an ASE package and preparing a chemiscope file to visualize them. Use chemiscope.show in a Jupyter notebook for interactive visualization"><img alt="" src="../_images/sphx_glr_1-base_thumb.png" />
+<p><a class="reference internal" href="1-base.html#sphx-glr-examples-1-base-py"><span class="std std-ref">Simple chemiscope input</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Simple chemiscope input</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the visualization of structures (or environments) using data-driven descriptors of their geometry, to cluster together similar motifs. Here the geometric descriptors have been computed by PCA starting from SOAP representations, but are provided as text files to avoid external dependencies for the example."><img alt="" src="../_images/sphx_glr_2-structure_map_thumb.png" />
+<p><a class="reference internal" href="2-structure_map.html#sphx-glr-examples-2-structure-map-py"><span class="std std-ref">Structure-property maps</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Structure-property maps</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the visualization of trajectory data. It also includes visualization of atomic forces."><img alt="" src="../_images/sphx_glr_3-trajectory_thumb.png" />
+<p><a class="reference internal" href="3-trajectory.html#sphx-glr-examples-3-trajectory-py"><span class="std std-ref">Trajectory plotting</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Trajectory plotting</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates how to color atoms based on scalar properties."><img alt="" src="../_images/sphx_glr_4-colors_thumb.png" />
+<p><a class="reference internal" href="4-colors.html#sphx-glr-examples-4-colors-py"><span class="std std-ref">Atom property coloring</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Atom property coloring</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates how to visualize structure and atomic properties in the structure panel, using different types of predefined shapes (ellipsoids for tensors, arrows for vectors). The example also shows how to define custom shapes."><img alt="" src="../_images/sphx_glr_5-shapes_thumb.png" />
+<p><a class="reference internal" href="5-shapes.html#sphx-glr-examples-5-shapes-py"><span class="std std-ref">Shape visualization</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Shape visualization</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="The :pychemiscope.explore function provides a streamlined way to visualize datasets by automatically computing representation and using dimensionality reduction. This function simplifies the process of dataset exploration by offering a quick overview through computed properties and dimensionality reduction, allowing to rapidly gain insights into the composition and structure of data without need to manually implement and fine-tune the representation process."><img alt="" src="../_images/sphx_glr_6-explore_thumb.png" />
+<p><a class="reference internal" href="6-explore.html#sphx-glr-examples-6-explore-py"><span class="std std-ref">Exploring dataset with chemiscope</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Exploring dataset with chemiscope</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="The previous example &lt;explore-example&gt; introduced :pychemiscope.explore and how to use it for automatic exploration of dataset. In this example, we&#x27;ll show some more representations and give additional featurizers you can use in your own code."><img alt="" src="../_images/sphx_glr_7-explore-advanced_thumb.png" />
+<p><a class="reference internal" href="7-explore-advanced.html#sphx-glr-examples-7-explore-advanced-py"><span class="std std-ref">Advanced dataset exploration</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Advanced dataset exploration</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="In this example, we demonstrate how to create and use a `metatensor`_ model with :pychemiscope.metatensor_featurizer to extract features from the model, which are then displayed using a chemiscope widget. To use this function, some additional dependencies are required. You can install them with the following command:"><img alt="" src="../_images/sphx_glr_8-explore-with-metatensor_thumb.png" />
+<p><a class="reference internal" href="8-explore-with-metatensor.html#sphx-glr-examples-8-explore-with-metatensor-py"><span class="std std-ref">Using metatensor models for dataset exploration</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Using `metatensor`_ models for dataset exploration</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates how to add shapes into the chemiscope output such that custom bonds that would not automatically be assigned can be rendered."><img alt="" src="../_images/sphx_glr_9-showing_custom_bonds_thumb.png" />
+<p><a class="reference internal" href="9-showing_custom_bonds.html#sphx-glr-examples-9-showing-custom-bonds-py"><span class="std std-ref">Showing custom bonds using stk</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Showing custom bonds using stk</div>
+</div></div><div class="toctree-wrapper compound">
+</div>
+<div class="sphx-glr-footer sphx-glr-footer-gallery docutils container">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/bc82bea3a5dd7bdba60b65220891d9e5/examples_python.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">examples_python.zip</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/fb625db3c50d423b1b7881136ffdeec8/examples_jupyter.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Jupyter</span> <span class="pre">notebooks:</span> <span class="pre">examples_jupyter.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.1.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
