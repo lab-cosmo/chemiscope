@@ -23,14 +23,7 @@ import HTML_OPTIONS from './options.html.in';
 // in 3D mode, only strings are supported for 'marker.symbol', and only very few
 // of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
 // issue tracking more symbols in 3D mode.
-const POSSIBLE_SYMBOLS_IN_3D = [
-    'circle',
-    'square',
-    'diamond',
-    'cross',
-    'circle-open',
-    'square-open',
-];
+const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross'];
 
 export function get3DSymbol(i: number): string {
     return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
