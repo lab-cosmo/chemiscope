@@ -10,8 +10,19 @@
 
 'use strict';
 
+const markers3d = require('./markers3d.js');
+
+// Require the module
+const scatter3d = require('plotly.js/lib/scatter3d');
+// monkey patch scatter3d to include more (and better!) symbols for 3d plots
+// see https://github.com/plotly/plotly.js/issues/4205 in case this ever gets
+// patched upstream and becomes unnecessary
+for (const [k, v] of Object.entries(markers3d.default)) {
+    scatter3d.markerSymbols[k] = v;
+}
+
 const Plotly = require('plotly.js/lib/core');
 
-Plotly.register([require('plotly.js/lib/scattergl'), require('plotly.js/lib/scatter3d')]);
+Plotly.register([require('plotly.js/lib/scattergl'), scatter3d]);
 
 module.exports = Plotly;

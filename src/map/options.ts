@@ -20,11 +20,11 @@ import { COLOR_MAPS } from './colorscales';
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
 
-// in 3D mode, only strings are supported for 'marker.symbol', and only very few
-// of them. See https://github.com/plotly/plotly.js/issues/4205 as the plotly
-// issue tracking more symbols in 3D mode.
-const POSSIBLE_SYMBOLS_IN_3D = ['circle', 'square', 'diamond', 'cross', 'x'];
-
+// in 3D mode, only strings are supported for 'marker.symbol'.
+/* eslint-disable */
+const markers3d = require('./plotly/markers3d');
+const POSSIBLE_SYMBOLS_IN_3D: string[] = Object.keys(markers3d.default);
+/* eslint-enable */
 export function get3DSymbol(i: number): string {
     return POSSIBLE_SYMBOLS_IN_3D[i % POSSIBLE_SYMBOLS_IN_3D.length];
 }
