@@ -1552,9 +1552,10 @@ export class PropertiesMap {
         this._updateMarkers();
 
         // Change the data that vary between 2D and 3D mode
+        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
         this._restyle(
             {
-                'marker.line.width': [1, 2],
+                'marker.line.width': marker_line,
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
                 'marker.sizemode': 'area',
@@ -1593,10 +1594,11 @@ export class PropertiesMap {
             data.toggleVisible(true);
         }
 
+        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
         this._restyle(
             {
-                'marker.line.width': [1, 0],
-                // size change from 2D to 3D
+                'marker.line.width': marker_line,
+                // size change from 3D to 2D
                 'marker.size': this._sizes(),
             } as Data,
             [0, 1]
