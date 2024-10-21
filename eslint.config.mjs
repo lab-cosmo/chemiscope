@@ -42,6 +42,7 @@ export default tseslint.config({
                 allowDefaultProject: [
                     'eslint.config.mjs',
                     'src/map/plotly/plotly-scatter.js',
+                    'src/map/plotly/markers3d.js',
                     'python/webpack.config.labextension.js',
                     'python/webpack.config.nbextension.js',
                 ],
