@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Showing custom bonds using stk &#8212; chemiscope 0.8.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/bootstrap-sphinx.css?v=284a2d1d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=05a7503b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <script src="../_static/documentation_options.js?v=dbee5847"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/chemiscope-icon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="User manual" href="../manual/index.html" />
+    <link rel="prev" title="Using metatensor models for dataset exploration" href="8-explore-with-metatensor.html" /> 
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+
+<!-- analytics -->
+<script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+
+  </head><body>
+
+<div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="https://chemiscope.org"> chemiscope</a>
+            <span class="navbar-text navbar-version pull-left"><b></b></span>
+        </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+            <ul class="nav navbar-nav">
+                
+                <li><a href="../index.html">Documentation</a></li>        
+  <li>
+    <a href="8-explore-with-metatensor.html" title="Previous Chapter: Using metatensor models for dataset exploration"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Using metaten...</span>
+    </a>
+  </li>
+  <li>
+    <a href="../manual/index.html" title="Next Chapter: User manual"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">User manual &raquo;</span>
+    </a>
+  </li>
+                    
+            </ul>
+
+             
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form> 
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope visualizer</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-explore-advanced.html">Advanced dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="8-explore-with-metatensor.html">Using metatensor models for dataset exploration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Showing custom bonds using stk</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="body col-md-9 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-9-showing-custom-bonds-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="showing-custom-bonds-using-stk">
+<span id="sphx-glr-examples-9-showing-custom-bonds-py"></span><h1>Showing custom bonds using stk<a class="headerlink" href="#showing-custom-bonds-using-stk" title="Link to this heading">¶</a></h1>
+<p>This example demonstrates how to add shapes into the chemiscope output such
+that custom bonds that would not automatically be assigned can be rendered.</p>
+<p>This is done by using <a class="reference external" href="https://stk.readthedocs.io/en/stable/">stk</a> to
+generate and analyse molecules, which comes with topology/bonding information
+by default (using the cheminformatic software rdkit).</p>
+<p>We use <a class="reference external" href="https://stko-docs.readthedocs.io/en/latest/">stko</a> to calculate
+some rudimentary properties of <cite>stk</cite> molecules. <cite>stko</cite> can be installed with
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">stko</span></code>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">stk</span>
+<span class="kn">import</span> <span class="nn">stko</span>
+<span class="kn">from</span> <span class="nn">rdkit.Chem</span> <span class="kn">import</span> <span class="n">AllChem</span> <span class="k">as</span> <span class="n">rdkit</span>
+
+<span class="kn">import</span> <span class="nn">chemiscope</span>
+</pre></div>
+</div>
+<p>Generate a list of stk BuildingBlocks (representation of a molecule) with
+properties. This also includes working with rdkit, which comes installed
+with stk.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">rdkitmol</span> <span class="o">=</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="s2">&quot;Cc1ccccc1&quot;</span><span class="p">)</span>
+<span class="n">rdkitmol</span> <span class="o">=</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">rdkitmol</span><span class="p">)</span>
+<span class="n">rdkit</span><span class="o">.</span><span class="n">Kekulize</span><span class="p">(</span><span class="n">rdkitmol</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">ETKDGv3</span><span class="p">()</span>
+<span class="n">params</span><span class="o">.</span><span class="n">randomSeed</span> <span class="o">=</span> <span class="mh">0xF00D</span>
+<span class="n">rdkit</span><span class="o">.</span><span class="n">EmbedMolecule</span><span class="p">(</span><span class="n">rdkitmol</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+<span class="n">structures</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># A building block.</span>
+    <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span><span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;NCCN&quot;</span><span class="p">),</span>
+    <span class="c1"># A mostly optimised cage molecule.</span>
+    <span class="n">stk</span><span class="o">.</span><span class="n">ConstructedMolecule</span><span class="p">(</span>
+        <span class="n">topology_graph</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">cage</span><span class="o">.</span><span class="n">FourPlusSix</span><span class="p">(</span>
+            <span class="n">building_blocks</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                    <span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;NCCN&quot;</span><span class="p">,</span>
+                    <span class="n">functional_groups</span><span class="o">=</span><span class="p">[</span><span class="n">stk</span><span class="o">.</span><span class="n">PrimaryAminoFactory</span><span class="p">()],</span>
+                <span class="p">),</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                    <span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;O=CC(C=O)C=O&quot;</span><span class="p">,</span>
+                    <span class="n">functional_groups</span><span class="o">=</span><span class="p">[</span><span class="n">stk</span><span class="o">.</span><span class="n">AldehydeFactory</span><span class="p">()],</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">MCHammer</span><span class="p">(),</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="c1"># A metal-organic cage.</span>
+    <span class="n">stk</span><span class="o">.</span><span class="n">ConstructedMolecule</span><span class="p">(</span>
+        <span class="n">stk</span><span class="o">.</span><span class="n">cage</span><span class="o">.</span><span class="n">M2L4Lantern</span><span class="p">(</span>
+            <span class="n">building_blocks</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                    <span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;[Pd+2]&quot;</span><span class="p">,</span>
+                    <span class="n">functional_groups</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">stk</span><span class="o">.</span><span class="n">SingleAtom</span><span class="p">(</span><span class="n">stk</span><span class="o">.</span><span class="n">Pd</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="n">position_matrix</span><span class="o">=</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span>
+                <span class="p">),</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                    <span class="n">smiles</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;C1=NC=CC(C2=CC=CC(C3=C&quot;</span> <span class="s2">&quot;C=NC=C3)=C2)=C1&quot;</span><span class="p">),</span>
+                    <span class="n">functional_groups</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">stk</span><span class="o">.</span><span class="n">SmartsFunctionalGroupFactory</span><span class="p">(</span>
+                            <span class="n">smarts</span><span class="o">=</span><span class="s2">&quot;[#6]~[#7X2]~[#6]&quot;</span><span class="p">,</span>
+                            <span class="n">bonders</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+                            <span class="n">deleters</span><span class="o">=</span><span class="p">(),</span>
+                        <span class="p">),</span>
+                    <span class="p">],</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="c1"># Ensure that bonds between the</span>
+            <span class="c1"># GenericFunctionalGroups of the ligand and the</span>
+            <span class="c1"># SingleAtom functional groups of the metal are</span>
+            <span class="c1"># dative.</span>
+            <span class="n">reaction_factory</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">DativeReactionFactory</span><span class="p">(</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">GenericReactionFactory</span><span class="p">(</span>
+                    <span class="n">bond_orders</span><span class="o">=</span><span class="p">{</span>
+                        <span class="nb">frozenset</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="n">stk</span><span class="o">.</span><span class="n">GenericFunctionalGroup</span><span class="p">,</span>
+                                <span class="n">stk</span><span class="o">.</span><span class="n">SingleAtom</span><span class="p">,</span>
+                            <span class="p">}</span>
+                        <span class="p">):</span> <span class="mi">9</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="c1"># A host guest molecule.</span>
+    <span class="n">stk</span><span class="o">.</span><span class="n">ConstructedMolecule</span><span class="p">(</span>
+        <span class="n">topology_graph</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">host_guest</span><span class="o">.</span><span class="n">Complex</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="o">.</span><span class="n">init_from_molecule</span><span class="p">(</span>
+                <span class="n">stk</span><span class="o">.</span><span class="n">ConstructedMolecule</span><span class="p">(</span>
+                    <span class="n">topology_graph</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">cage</span><span class="o">.</span><span class="n">FourPlusSix</span><span class="p">(</span>
+                        <span class="n">building_blocks</span><span class="o">=</span><span class="p">(</span>
+                            <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                                <span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;NC1CCCCC1N&quot;</span><span class="p">,</span>
+                                <span class="n">functional_groups</span><span class="o">=</span><span class="p">[</span>
+                                    <span class="n">stk</span><span class="o">.</span><span class="n">PrimaryAminoFactory</span><span class="p">(),</span>
+                                <span class="p">],</span>
+                            <span class="p">),</span>
+                            <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span>
+                                <span class="n">smiles</span><span class="o">=</span><span class="s2">&quot;O=Cc1cc(C=O)cc(C=O)c1&quot;</span><span class="p">,</span>
+                                <span class="n">functional_groups</span><span class="o">=</span><span class="p">[</span><span class="n">stk</span><span class="o">.</span><span class="n">AldehydeFactory</span><span class="p">()],</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                        <span class="n">optimizer</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">MCHammer</span><span class="p">(),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">guests</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">host_guest</span><span class="o">.</span><span class="n">Guest</span><span class="p">(</span>
+                <span class="n">building_block</span><span class="o">=</span><span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="p">(</span><span class="s2">&quot;[Br][Br]&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="c1"># From rdkit.</span>
+    <span class="n">stk</span><span class="o">.</span><span class="n">BuildingBlock</span><span class="o">.</span><span class="n">init_from_rdkit_mol</span><span class="p">(</span><span class="n">rdkitmol</span><span class="p">),</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Write their properties using any method, here we show using stko:
+<a class="reference external" href="https://stko-docs.readthedocs.io/en/latest/">https://stko-docs.readthedocs.io/en/latest/</a></p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">energy</span> <span class="o">=</span> <span class="n">stko</span><span class="o">.</span><span class="n">UFFEnergy</span><span class="p">()</span>
+<span class="n">shape_calc</span> <span class="o">=</span> <span class="n">stko</span><span class="o">.</span><span class="n">ShapeCalculator</span><span class="p">()</span>
+<span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;uffenergy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">energy</span><span class="o">.</span><span class="n">get_energy</span><span class="p">(</span><span class="n">molecule</span><span class="p">)</span> <span class="k">for</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="n">structures</span><span class="p">],</span>
+    <span class="s2">&quot;aspheriticty&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">shape_calc</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">molecule</span><span class="p">)</span><span class="o">.</span><span class="n">get_asphericity</span><span class="p">()</span> <span class="k">for</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="n">structures</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Get the stk bonding information and convert them into shapes.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shape_dict</span> <span class="o">=</span> <span class="n">chemiscope</span><span class="o">.</span><span class="n">convert_stk_bonds_as_shapes</span><span class="p">(</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">structures</span><span class="p">,</span>
+    <span class="n">bond_color</span><span class="o">=</span><span class="s2">&quot;#fc5500&quot;</span><span class="p">,</span>
+    <span class="n">bond_radius</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Write the shape string for settings to turn them on automatically.</span>
+<span class="n">shape_string</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shape_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>A chemiscope widget showing the result without the added bonding.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">frames</span><span class="o">=</span><span class="n">structures</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+</pre></div>
+</div>
+<!-- begin headers -->
+<!-- Load all dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+
+<!-- JS scripts -->
+<script src="../_static/chemiscope.min.js"></script>
+<script src="../_static/chemiscope-sphinx.js"></script>
+
+<!-- CSS styles -->
+<link rel="stylesheet" href="../_static/chemiscope-sphinx.css" type="text/css" />
+<!-- end headers -->
+
+<!-- Warning Display -->
+<div id="chsp-e0569c89-7410-4b31-856e-96d489d2784f-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-e0569c89-7410-4b31-856e-96d489d2784f-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-e0569c89-7410-4b31-856e-96d489d2784f-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-e0569c89-7410-4b31-856e-96d489d2784f">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-e0569c89-7410-4b31-856e-96d489d2784f', '../_datasets/5dbb7be71295569f9f05731e33fcbbc2c52d39925c26ceeb2cb83276f3dc11cf-fig_9-showing_custom_bonds_015.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p>Writing to a json.gz file, again without added bonding.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;noshape_example.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">structures</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Missing bonds by automation.&quot;</span><span class="p">),</span>
+    <span class="n">settings</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">quick_settings</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;aspheriticty&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;uffenergy&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Now with added bonding information.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">show</span><span class="p">(</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">structures</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">shapes</span><span class="o">=</span><span class="n">shape_dict</span><span class="p">,</span>
+    <span class="n">settings</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">quick_settings</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;aspheriticty&quot;</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="s2">&quot;uffenergy&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">structure_settings</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="n">shape_string</span><span class="p">,</span>
+            <span class="s2">&quot;atoms&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;bonds&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;spaceFilling&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+
+
+<!-- Warning Display -->
+<div id="chsp-a0576486-4896-49c1-9ff7-b122ff0520f2-warning-display" class="chemiscope-sphinx-warning">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('chsp-a0576486-4896-49c1-9ff7-b122ff0520f2-warning-display')">
+        &times;
+    </button>
+</div>
+<div style="padding: 0.5rem 1.25rem" />
+
+<!-- Loading Spinner -->
+<div id="chsp-a0576486-4896-49c1-9ff7-b122ff0520f2-loading" class="chemiscope-sphinx-spinner">
+    <img src="../_static/chemiscope-loading.svg" alt="Loading icon" />
+</div>
+
+<!-- Chemiscope Visualization -->
+<div id="chsp-a0576486-4896-49c1-9ff7-b122ff0520f2">
+    <!-- This will be replaced by the chemiscope HTML -->
+</div>
+
+<!-- Load Visualization Script -->
+<script>
+    loadChemiscopeSphinx('chsp-a0576486-4896-49c1-9ff7-b122ff0520f2', '../_datasets/8f237ff2c0d96a7e0dd2daf1b5cae19fa915362c77fffd224aad6190e3aa2658-fig_9-showing_custom_bonds_016.json.gz', 'default');
+</script>
+<div class="output_subarea output_html rendered_html output_result">
+
+</div>
+<br />
+<br /><p>Write to json file with added shapes.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">chemiscope</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;shape_example.json.gz&quot;</span><span class="p">,</span>
+    <span class="n">frames</span><span class="o">=</span><span class="n">structures</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
+    <span class="n">meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Added all stk bonds.&quot;</span><span class="p">),</span>
+    <span class="n">settings</span><span class="o">=</span><span class="n">chemiscope</span><span class="o">.</span><span class="n">quick_settings</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;aspheriticty&quot;</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="s2">&quot;uffenergy&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">structure_settings</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="n">shape_string</span><span class="p">,</span>
+            <span class="s2">&quot;atoms&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;bonds&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;spaceFilling&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+    <span class="n">shapes</span><span class="o">=</span><span class="n">shape_dict</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.000 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-9-showing-custom-bonds-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/dd54c3e83f5056da3e2fb84ddb255350/9-showing_custom_bonds.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">9-showing_custom_bonds.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/21344eebd086d3d9013884dad1707963/9-showing_custom_bonds.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">9-showing_custom_bonds.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/eaa31b75c324484e5f8c4271139e2b29/9-showing_custom_bonds.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">9-showing_custom_bonds.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2021, Guillaume Fraux.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.1.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
