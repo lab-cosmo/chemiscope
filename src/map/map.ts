@@ -1239,13 +1239,6 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => this._afterplot());
-        
-        this._plot.on('plotly_legendclick', (eventData: any) => {
-                //var traceIndex = eventData.curveNumber;  // Get trace index
-                console.log('traceIndex ', eventData);
-        });
-
-        
         this._updateMarkers();
 
         // set step of min/max select arrows based on the plot range
