@@ -14,3 +14,7 @@ pre {
 .admonition.note a:hover {
     color: #18bc9c;
 }
+
+.sidebar-logo {
+    clip-path: inset(0% round 10px);
+}

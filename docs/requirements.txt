@@ -1,7 +1,8 @@
 sphinx>=4
-sphinx-bootstrap-theme
+sphinx_rtd_theme   # sphinx theme
 sphinx-argparse-cli
 sphinx-gallery
+furo
 
 # required to be able to import chemiscope in the doc
 numpy

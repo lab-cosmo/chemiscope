@@ -1,7 +1,5 @@
 import os
 
-import sphinx_bootstrap_theme
-
 import chemiscope
 from chemiscope.sphinx import ChemiscopeScraper
 
@@ -57,25 +55,20 @@ sphinx_gallery_conf = {
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "bootstrap"
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = "furo"
 
 html_theme_options = {
-    "navbar_links": [
-        ("Documentation", "index.html", True),
-    ],
-    "navbar_pagenav": False,
-    "bootswatch_theme": "flatly",
-    "source_link_position": None,
+    "light_css_variables": {
+        "color-background-secondary": "#eaf2ff",
+    },
+    "dark_css_variables": {
+        "color-background-secondary": "#303d4f",
+    },
 }
 
-html_sidebars = {"**": ["sidebar-toc.html", "searchbox.html"]}
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = [os.path.join("..", "_static")]
 html_favicon = "../_static/chemiscope-icon.png"
+html_logo = "../_static/chemiscope-icon-no-name.svg"
 
 templates_path = [os.path.join("..", "_templates")]
 
