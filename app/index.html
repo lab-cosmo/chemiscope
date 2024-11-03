@@ -6,10 +6,23 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta
             name="description"
-            content="Interactive data visualization for materials and molecular databases. Correlate atomic structures and their properties, either online or with a portable app."
+            content="Interactive data visualization for materials and molecular databases. Correlate atomic structures and their properties, either online, in a jupyter notebook, or with a portable app."
         />
 
         <title>Chemiscope</title>
+
+        <script type="text/javascript">
+            // defines available examples (filename:label)
+            var examples = {
+                'Arginine-Dipeptide': 'Arginine Dipeptide',
+                'AlphaMu': 'Dielectric Response',
+                'CSD-1000R': 'Chemical Shieldings',
+                'ROY-GCH': 'Generalized Convex Hull',
+                'Qm7b': 'Qm7b',
+                'Azaphenacenes': 'Azaphenacenes',
+                'Zeolites': 'Zeolites'
+            };        
+        </script>
 
         <!-- analytics -->
         <script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
@@ -70,24 +83,8 @@
                                 >
                                     <i class="fa fa-images"></i> Examples
                                 </a>
-                                <div class="dropdown-menu" aria-labelledby="examples">
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Arginine-Dipeptide');">
-                                        Arginine-Dipeptide
-                                    </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('AlphaMu');">
-                                        Dielectric Response
-                                    </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('CSD-1000R');">
-                                        Chemical Shieldings
-                                    </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('ROY-GCH');">
-                                        Generalized Convex Hull
-                                    </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Qm7b');"> Qm7b </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Azaphenacenes');">
-                                        Azaphenacenes
-                                    </span>
-                                    <span class="dropdown-item clickable" onclick="CHEMISCOPE_APP.loadExample('Zeolites');"> Zeolites </span>
+                                <div class="dropdown-menu" aria-labelledby="examples" id="examples-dropdown">
+                                    <!-- Menu items will be populated here based on the example dictionary defined above -->
                                 </div>
                             </li>
 
@@ -315,7 +312,31 @@
             </div>
         </div>
     </body>
+    <script type="text/javascript">
+        // Populate the example menu
+        var dropdownMenu = document.getElementById('examples-dropdown');
 
+        // Loop through the examples object and create menu items
+        Object.keys(examples).forEach(function(file) {
+            var label = examples[file];
+
+            // Create a new span element for each menu item
+            var span = document.createElement('span');
+            span.className = 'dropdown-item clickable';
+
+            // Set the onclick handler
+            span.onclick = function() {
+                CHEMISCOPE_APP.loadExample(file);
+            };
+
+            // Set the display text
+            span.textContent = label;
+
+            // Append the span to the dropdown menu
+            dropdownMenu.appendChild(span);
+        });
+
+    </script>
     <script type="text/javascript">
         /**
          * Create an URL that can be used to load data from the `external` URL
@@ -377,8 +398,12 @@
 
                     await app.fetchAndLoad(externalDataUrl(external), config);
                 } else {
-                    // default to Arginine-Dipeptide
-                    await app.loadExample('Arginine-Dipeptide');
+                    // loads a random example
+                    var exampleKeys = Object.keys(examples);
+                    var randomIndex = Math.floor(Math.random() * exampleKeys.length);
+                    var randomExampleKey = exampleKeys[randomIndex];
+
+                    await app.loadExample(randomExampleKey);
                 }
             } else {
                 const data = standalone.innerText;
