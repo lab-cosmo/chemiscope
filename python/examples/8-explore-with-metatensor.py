@@ -96,7 +96,9 @@ class FeatureModel(torch.nn.Module):
         self.cutoff = cutoff
         self.max_k = max_k
 
-        self._neighbors_options = NeighborListOptions(cutoff=cutoff, full_list=True)
+        self._neighbors_options = NeighborListOptions(
+            cutoff=cutoff, full_list=True, strict=True
+        )
 
     def requested_neighbor_lists(self) -> List[NeighborListOptions]:
         # our model requires a neighbor list, that will be computed and provided to it
@@ -198,12 +200,13 @@ capabilities = ModelCapabilities(
         "features": ModelOutput(per_atom=True),
     },
     atomic_types=[6],
+    length_unit="angstrom",
     interaction_range=0.0,
     supported_devices=["cpu"],
     dtype="float64",
 )
 
-model = MetatensorAtomisticModel(model.eval(), metadata, capabilities)
+mta_model = MetatensorAtomisticModel(model.eval(), metadata, capabilities)
 
 # %%
 #
@@ -215,9 +218,17 @@ model = MetatensorAtomisticModel(model.eval(), metadata, capabilities)
 # Once the model is fully defined, we can use it with
 # :py:func:`chemiscope.metatensor_featurizer`:
 
-featurizer = chemiscope.metatensor_featurizer(model, check_consistency=True)
+featurizer = chemiscope.metatensor_featurizer(mta_model, check_consistency=True)
 chemiscope.explore(
     frames=frames,
     featurize=featurizer,
     environments=chemiscope.all_atomic_environments(frames),
 )
+
+# %%
+# The metatensor model can also be easily exported,
+# to be shared with collaborators for use in their
+# visualization workflows
+
+mta_model.save("model-exported.pt")
+# %%
