@@ -99,17 +99,16 @@ export class MapOptions extends OptionsGroup {
         super();
 
         // Setup axes
-        const propertiesName = Object.keys(properties);
-        if (propertiesName.length < 2) {
+        const propertiesNames = Object.keys(properties);
+        if (propertiesNames.length < 2) {
             throw new Error(
                 'Cannot show a map because the dataset contains fewer than two properties.'
             );
         }
-        this.x = new AxisOptions(propertiesName);
-        this.y = new AxisOptions(propertiesName);
+        this.x = new AxisOptions(propertiesNames);
+        this.y = new AxisOptions(propertiesNames);
         // For z and color '' is a valid value
-        this.z = new AxisOptions(propertiesName.concat(['']));
-
+        this.z = new AxisOptions(propertiesNames.concat(['']));
         // Initialise symbol
         this.symbol = new HTMLOption('string', '');
         const validSymbols = [''];
@@ -131,7 +130,7 @@ export class MapOptions extends OptionsGroup {
             min: new HTMLOption('number', NaN),
             max: new HTMLOption('number', NaN),
         };
-        this.color.property.validate = optionValidator(propertiesName.concat(['']), 'color');
+        this.color.property.validate = optionValidator(propertiesNames.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
 
         // Initialise size
@@ -140,7 +139,7 @@ export class MapOptions extends OptionsGroup {
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
         };
-        this.size.property.validate = optionValidator(propertiesName.concat(['']), 'size');
+        this.size.property.validate = optionValidator(propertiesNames.concat(['']), 'size');
         this.size.factor.validate = (value) => {
             if (value < 1 || value > 100) {
                 throw Error(`size factor must be between 0 and 100, got ${value}`);
@@ -156,11 +155,11 @@ export class MapOptions extends OptionsGroup {
         this.joinPoints = new HTMLOption('boolean', false);
 
         // Setup default values
-        this.x.property.value = propertiesName[0];
-        this.y.property.value = propertiesName[1];
+        this.x.property.value = propertiesNames[0];
+        this.y.property.value = propertiesNames[1];
         this.z.property.value = '';
-        if (propertiesName.length > 2) {
-            this.color.property.value = propertiesName[2];
+        if (propertiesNames.length > 2) {
+            this.color.property.value = propertiesNames[2];
         } else {
             this.color.property.value = '';
         }

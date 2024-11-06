@@ -277,7 +277,6 @@ def show(
         # and error is only visible in the console
         if len(dict_input["properties"]) < 2:
             raise ValueError("Need at least two properties to visualize a map widget")
-
     return widget_class(dict_input, has_metadata=has_metadata)
 
 

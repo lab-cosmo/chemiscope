@@ -355,7 +355,6 @@ export abstract class OptionsGroup {
     public applySettings(settings: Settings): void {
         // make a copy of the settings since we will be changing it below
         const copy = JSON.parse(JSON.stringify(settings)) as Settings;
-
         this.foreachOption((keys, option) => {
             /* eslint-disable */
             assert(keys.length >= 1);
@@ -372,10 +371,14 @@ export abstract class OptionsGroup {
             const lastKey = keys[keys.length - 1];
 
             if (lastKey in root) {
-                const value = root[lastKey];
+                var value = root[lastKey];
 
+                // convert null values for numeric options to NaN (useful for axis range)
+                if (typeof option.value === 'number' && value === null) {
+                    value = NaN;
+                }
                 // send warning if the value is invalid and omit applying it
-                if (value === undefined || value === null || Number.isNaN(value)) {
+                if (value === undefined || value === null) {
                     sendWarning(`ignored setting '${lastKey}' with invalid value '${value}'`);
                     return;
                 }

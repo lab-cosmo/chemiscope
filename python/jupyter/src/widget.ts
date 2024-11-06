@@ -39,7 +39,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 }
 
                 const settings = this.model.get('settings') as Partial<Settings>;
-
+                
                 // ignore pinned setting in jupyter, otherwise the pinned is changed
                 // by JS and then overwritten the first time by Python
                 delete settings.pinned;
@@ -51,7 +51,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     protected _updatePythonSettings(): void {
-        if (this.visualizer !== undefined) {
+        if (this.visualizer !== undefined) {            
             const settings = this.visualizer.saveSettings();
             // ignore pinned setting in jupyter, otherwise the pinned is changed
             // by JS and then overwritten the first time by Python
