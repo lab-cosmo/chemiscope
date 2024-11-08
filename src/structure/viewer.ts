@@ -809,20 +809,7 @@ export class MoleculeViewer {
             }
 
             // resets shapes before checking if there are shapes to add
-            this._viewer.removeAllShapes();
-
-            // removeAllShapes also removes the unit cell, so let's add it back
-            if (this._options.unitCell.value) {
-                this._viewer.addUnitCell(this._current.model, {
-                    box: { color: 'black' },
-                    astyle: { hidden: true },
-                    bstyle: { hidden: true },
-                    cstyle: { hidden: true },
-                });
-            }
-
-            // removeAllShapes also removes the axes, so let's add them back
-            this._addAxes(this._options.axes.value);
+            this._resetShapes();
 
             this._updateStyle();
             this._viewer.render();
@@ -1191,6 +1178,28 @@ export class MoleculeViewer {
         this._viewer.render();
     }
 
+    private _resetShapes(): void {
+        // removes shapes and adds the cell and axes if required
+        if (this._current === undefined) {
+            return;
+        }
+
+        this._viewer.removeAllShapes();
+
+        // removeAllShapes also removes the unit cell, so let's add it back
+        if (this._options.unitCell.value) {
+            this._viewer.addUnitCell(this._current.model, {
+                box: { color: 'black' },
+                astyle: { hidden: true },
+                bstyle: { hidden: true },
+                cstyle: { hidden: true },
+            });
+        }
+
+        // removeAllShapes also removes the axes, so let's add them back
+        this._addAxes(this._options.axes.value);
+    }
+
     private _addShapes(): void {
         if (this._current === undefined) {
             return;
@@ -1198,6 +1207,8 @@ export class MoleculeViewer {
         if (this._options.shape.value === '') {
             return;
         }
+
+        this._resetShapes();
 
         assert(this._current.atomLabels.length === 0);
 
