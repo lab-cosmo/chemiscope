@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /**
  * @packageDocumentation
  * @module utils
@@ -152,7 +154,7 @@ export class HTMLOption<T extends OptionsType> {
                     option.selected = values.includes(option.value);
                 }
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (bound.element as any)[bound.attribute] = this._value;
             }
         }
@@ -196,18 +198,17 @@ export class HTMLOption<T extends OptionsType> {
             };
             // also initializes the state of the option list
             const values = (this._value as string).split(',');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             for (const option of (element as any).options) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 option.selected = values.includes(option.value as string);
             }
         } else {
             listener = (event: Event) => {
                 assert(event.target !== null);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
                 this._update((event.target as any)[attribute].toString(), 'DOM');
             };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (element as any)[attribute] = this._value;
         }
         element.addEventListener('change', listener);
@@ -323,26 +324,24 @@ export abstract class OptionsGroup {
      *         values of all settings.
      */
     public saveSettings(): Settings {
-        const settings = {};
-        /* eslint-disable */
+        const settings: Settings = {};
         this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
             const value = option.value;
 
             // Save property value if valid
             if (value !== undefined || value !== null || !Number.isNaN(value)) {
-                let root = settings as any;
+                let root = settings;
                 for (const key of keys.slice(0, keys.length - 1)) {
                     if (!(key in root)) {
                         root[key] = {};
                     }
-                    root = root[key];
+                    root = root[key] as unknown as Settings;
                 }
                 const lastKey = keys[keys.length - 1];
                 root[lastKey] = value;
             }
         });
-        /* eslint-enable */
         return settings;
     }
 
@@ -356,9 +355,8 @@ export abstract class OptionsGroup {
         // make a copy of the settings since we will be changing it below
         const copy = JSON.parse(JSON.stringify(settings)) as Settings;
         this.foreachOption((keys, option) => {
-            /* eslint-disable */
             assert(keys.length >= 1);
-            let root = copy as any;
+            let root = copy;
             let parent;
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
@@ -366,12 +364,12 @@ export abstract class OptionsGroup {
                     return;
                 }
                 parent = root;
-                root = root[key];
+                root = root[key] as unknown as Settings;
             }
             const lastKey = keys[keys.length - 1];
 
             if (lastKey in root) {
-                var value = root[lastKey];
+                let value = root[lastKey];
 
                 // convert null values for numeric options to NaN (useful for axis range)
                 if (typeof option.value === 'number' && value === null) {
@@ -387,14 +385,15 @@ export abstract class OptionsGroup {
 
                 // remove used keys from the settings to be able to warn on
                 // unused keys
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete root[lastKey];
                 if (parent !== undefined && Object.keys(root).length === 0) {
                     // if we removed all keys from a sub-object, remove the sub-object
                     assert(keys.length >= 2);
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete parent[keys[keys.length - 2]];
                 }
             }
-            /* eslint-enable */
         });
         if (Object.keys(copy).length !== 0) {
             sendWarning(`ignored unknown settings '${JSON.stringify(copy)}'`);
