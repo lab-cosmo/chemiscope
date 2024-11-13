@@ -39,7 +39,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 }
 
                 const settings = this.model.get('settings') as Partial<Settings>;
-                
+
                 // ignore pinned setting in jupyter, otherwise the pinned is changed
                 // by JS and then overwritten the first time by Python
                 delete settings.pinned;
@@ -51,7 +51,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     protected _updatePythonSettings(): void {
-        if (this.visualizer !== undefined) {            
+        if (this.visualizer !== undefined) {
             const settings = this.visualizer.saveSettings();
             // ignore pinned setting in jupyter, otherwise the pinned is changed
             // by JS and then overwritten the first time by Python
@@ -144,6 +144,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
                 // eslint-disable-next-line no-console
                 console.error(e);
@@ -225,6 +226,7 @@ export class StructureView extends ChemiscopeBaseView {
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
                 // eslint-disable-next-line no-console
                 console.error(e);
@@ -306,6 +308,7 @@ export class MapView extends ChemiscopeBaseView {
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
                 // eslint-disable-next-line no-console
                 console.error(e);
