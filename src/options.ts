@@ -81,9 +81,7 @@ export function optionValidator(valid: string[], name = ''): (value: string) => 
         if (valid.includes(value)) {
             return;
         }
-        throw Error(
-            `invalid property '${value}' for ${name}, are you sure the settings correspond to the current dataset?`
-        );
+        throw Error(`invalid value '${value}' for ${name}, expected one of [${valid.join(', ')}]`);
     };
 }
 
