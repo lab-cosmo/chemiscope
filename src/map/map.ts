@@ -131,12 +131,19 @@ const DEFAULT_CONFIG = {
                     path: extractSvgPath(PNG_SVG),
                 },
                 click: function (gd: PlotlyScatterElement) {
+                    const width = Math.max(gd._fullLayout.width, 600);
+                    const ratio = gd._fullLayout.height / gd._fullLayout.width;
+                    const height = width * ratio;
+
                     Plotly.downloadImage(gd, {
                         filename: 'chemiscope-map',
                         format: 'png',
-                        width: Math.max(gd._fullLayout.width, 600),
-                        height: Math.max(gd._fullLayout.width, 600),
-                    }).catch((e: unknown) =>
+                        width: width,
+                        height: height,
+                        // scale is not part of `DownloadImgopts`, but accepted
+                        // by the function anyway
+                        scale: 3,
+                    } as unknown as Plotly.DownloadImgopts).catch((e: unknown) =>
                         setTimeout(() => {
                             throw e;
                         })
