@@ -1,4 +1,4 @@
-# Contributing to chemfiles
+# Contributing to chemiscope
 
 :tada: First off, thanks for taking the time to contribute to chemiscope! :tada:
 
@@ -56,7 +56,7 @@ server for your fork by running:
 ```bash
 git clone https://github.com/<YOUR USERNAME>/chemiscope
 cd chemiscope
-npm install
+npm ci
 npm start
 ```
 
@@ -87,7 +87,10 @@ the "Editor Support" section of the [prettier] website. If you want to manually
 format your files, you can use
 
 ```bash
+# format JavaScript/TypeScript
 npx prettier --write <path/to/the/files>
+# format Python
+tox -e format
 ```
 
 Finally, you can push your code to Github, and create a [Pull Request][pr] to
