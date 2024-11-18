@@ -10,7 +10,6 @@ BASE_FRAME.add_TopologyAttr("name", ["C", "O", "O"])
 BASE_FRAME.atoms.positions = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 5]])
 
 
-
 class TestStructures(unittest.TestCase):
     """Conversion of structure data to chemiscope JSON"""
 

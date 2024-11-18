@@ -18,7 +18,7 @@ from ._ase import (  # noqa: F401
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
 )
-from ._mda import (
+from ._mda import (  # noqa: F401
     _mda_to_json,
     _mda_valid_structures,
     _mda_list_atom_properties,
@@ -47,7 +47,7 @@ def _guess_adapter(frames):
     stk_frames, use_stk = _stk_valid_structures(frames)
     if use_stk:
         return stk_frames, "stk"
-    
+
     mda_frames, use_mda = _mda_valid_structures(frames)
     if use_mda:
         return mda_frames, "mda"
@@ -133,10 +133,11 @@ def extract_properties(frames, only=None, environments=None):
         raise RuntimeError(
             "stk molecules do not contain properties, you must manually provide them"
         )
-    
+
     elif adapter == "mda":
         raise RuntimeError(
-            "MDAnalysis molecules do not contain properties, you must manually provide them"
+            "MDAnalysis molecules do not contain properties, you"
+            "must manually provide them"
         )
 
     else:

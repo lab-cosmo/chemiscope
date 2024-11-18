@@ -8,7 +8,7 @@ except ImportError:
     HAVE_MDA = False
 
 
-def _mda_valid_structures(frames: mda.Universe):
+def _mda_valid_structures(frames):
     if HAVE_MDA and isinstance(frames, mda.Universe):
         return frames, True
     else:
@@ -25,7 +25,8 @@ def _mda_to_json(ag):
     if ag.dimensions is not None:
         data["cell"] = list(
             np.concatenate(
-                mda.lib.mdamath.triclinic_vectors(ag.dimensions), dtype=np.float64
+                mda.lib.mdamath.triclinic_vectors(ag.dimensions),
+                dtype=np.float64,
                 # should be np.float64 otherwise not serializable
             )
         )
