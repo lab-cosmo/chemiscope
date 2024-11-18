@@ -6,6 +6,7 @@
 import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
+// import { computeSecondaryStructure } from "3dmol/src/parsers/utils/computeSecondaryStructure";
 import { assignBonds } from './assignBonds';
 
 import { arrayMaxMin, getElement, unreachable } from '../utils';
@@ -24,6 +25,15 @@ function defaultOpacity(): number {
     // This is a value that seems to work well across the board, but it might
     // need to become platform-dependent in case of changes in the browsers.
     return 0.85;
+}
+
+interface Atom {
+    serial: number;
+    elem: string;
+    x: number;
+    y: number;
+    z: number;
+    [key: string]: string | number | boolean;
 }
 
 /**
@@ -49,13 +59,36 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        atoms.push({
+        let atom: Atom = {
             serial: i,
-            elem: structure.names[i],
+            elem: structure.elements ? structure.elements[i] : structure.names[i],
+            atom: structure.names[i],
             x: x,
             y: y,
             z: z,
-        });
+            // ss: "s",
+        };
+        if (structure.residues !== undefined) {
+            atom = { ...atom, resn: structure.residues[i] };
+        }
+        if (structure.chains !== undefined) {
+            atom = { ...atom, chain: structure.chains[i] };
+        }
+        if (structure.secondaryStructure !== undefined) {
+            if (structure.secondaryStructure[i] !== "-") {
+                atom = { ...atom, ss: structure.secondaryStructure[i] };
+            }
+        }
+        if (structure.resids !== undefined) {
+            atom = { ...atom, resi: structure.resids[i] };
+        }
+        if (structure.ssbegin !== undefined && structure.ssbegin[i]) {
+            atom = { ...atom, ssbegin: structure.ssbegin[i] };
+        }
+        if (structure.ssend !== undefined && structure.ssend[i]) {
+            atom = { ...atom, ssend: structure.ssend[i] };
+        }
+        atoms.push(atom);
     }
 
     model.addAtoms(atoms);
@@ -778,6 +811,7 @@ export class MoleculeViewer {
             this._viewer.render();
         };
 
+        this._options.cartoon.onchange.push(restyleAndRender);
         this._options.spaceFilling.onchange.push(restyleAndRender);
         this._options.bonds.onchange.push(restyleAndRender);
         this._options.atoms.onchange.push(restyleAndRender);
@@ -1173,6 +1207,10 @@ export class MoleculeViewer {
         // main style
         if (!this._environmentsEnabled()) {
             this._current.model.setStyle({}, this._mainStyle());
+            console.log("=== model ===", this._current.model);
+            const CA_atoms = this._current.model.selectedAtoms({atom:"CA"});
+            console.log("=== CA atoms (count) ===", CA_atoms.length);
+            console.log("=== sample CA ===", CA_atoms.slice(0, 3));
             return;
         }
 
@@ -1457,6 +1495,14 @@ export class MoleculeViewer {
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
         }
+        if (this._options.cartoon.value) {
+            console.log("=== QX cartoon3 build test ===");
+            style.cartoon = {
+                color: 'spectrum',
+                arrows: true,
+                opacity: 1.0,
+            } as unknown as $3Dmol.CartoonStyleSpec;
+        }
 
         return style;
     }
@@ -1570,6 +1616,12 @@ export class MoleculeViewer {
                     opacity: defaultOpacity(),
                 };
             }
+        } else if (bgStyle === 'cartoon') {
+                style.cartoon = {
+                opacity: defaultOpacity(),
+                thickness: 0.3,
+                arrows: true,
+            };
         } else {
             unreachable();
         }
@@ -1584,6 +1636,9 @@ export class MoleculeViewer {
 
             if (style.sphere !== undefined) {
                 style.sphere.color = 0x808080;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon.color = 0x808080;
             }
         } else if (bgColor === 'property') {
             if (style.stick !== undefined) {
@@ -1603,6 +1658,14 @@ export class MoleculeViewer {
                     opacity: defaultOpacity(),
                     colorfunc: this._colorFunction(),
                 } as unknown as $3Dmol.SphereStyleSpec;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon = {
+                    opacity: defaultOpacity(),
+                    thickness: 0.3,
+                    arrows: true,
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.CartoonStyleSpec;
             }
         } else {
             unreachable();

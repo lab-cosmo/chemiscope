@@ -21,6 +21,10 @@
                   <label class="form-check-label" for="space-filling" title="show atoms as spheres">space filling</label>
                </div>
                <div class="form-check form-switch">
+                  <input class="form-check-input" id="cartoon" type="checkbox" />
+                  <label class="form-check-label" for="cartoon" title="render molecules as cartoons">cartoon</label>
+               </div>
+               <div class="form-check form-switch">
                   <input class="form-check-input" id="atom-labels" type="checkbox" />
                   <label class="form-check-label" for="atom-labels" title="show element symbols">atom labels</label>
                </div>
@@ -178,6 +182,7 @@
                         <select id="env-bg-style" class="form-select">
                            <option value="licorice">licorice</option>
                            <option value="ball-stick">ball and stick</option>
+                           <option value="cartoon">cartoon</option>
                            <option value="hide">hide</option>
                         </select>
                      </div>

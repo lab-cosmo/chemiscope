@@ -35,6 +35,8 @@ export class StructureOptions extends OptionsGroup {
     public supercell: [HTMLOption<'int'>, HTMLOption<'int'>, HTMLOption<'int'>];
     // should we spin the representation
     public rotation: HTMLOption<'boolean'>;
+    // should we show the cartoon representation
+    public cartoon: HTMLOption<'boolean'>;
     // which axis system to use (none, xyz, abc)
     public axes: HTMLOption<'string'>;
     // keep the orientation constant when loading a new structure
@@ -84,6 +86,7 @@ export class StructureOptions extends OptionsGroup {
         this.shape = new HTMLOption('string', '');
         this.unitCell = new HTMLOption('boolean', false);
         this.rotation = new HTMLOption('boolean', false);
+        this.cartoon = new HTMLOption('boolean', true);
 
         this.supercell = [
             new HTMLOption('int', 1),
@@ -141,7 +144,7 @@ export class StructureOptions extends OptionsGroup {
             'background atoms coloring'
         );
         this.environments.bgStyle.validate = optionValidator(
-            ['ball-stick', 'licorice', 'hide'],
+            ['ball-stick', 'licorice', 'cartoon', 'hide'],
             'background atoms style'
         );
         this.environments.cutoff.validate = (value) => {
@@ -276,6 +279,8 @@ export class StructureOptions extends OptionsGroup {
 
         this.rotation.bind(this.getModalElement('rotation'), 'checked');
         this.unitCell.bind(this.getModalElement('unit-cell'), 'checked');
+
+        this.cartoon.bind(this.getModalElement('cartoon'), 'checked');
 
         this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');

@@ -322,7 +322,7 @@ contains the following fields and values:
                         // the cutoff value for spherical environments
                         "cutoff": 3.5
                         // which style for atoms not in the environment
-                        "bgStyle": "licorice" | "ball-stick" | "hide",
+                        "bgStyle": "licorice" | "ball-stick" | "cartoon" | "hide",
                         // which colors for atoms not in the environment
                         // it is possible to color those atoms by the property
                         // currently selected

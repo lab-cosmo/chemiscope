@@ -5,10 +5,18 @@ import numpy as np
 
 try:
     import MDAnalysis as mda
+    from MDAnalysis.analysis.dssp import DSSP, translate
 
     HAVE_MDA = True
 except ImportError:
     HAVE_MDA = False
+
+
+ss_mapping = {
+    "H": "h",
+    "E": "s",
+    "-": "c",
+}
 
 
 def _mda_valid_structures(frames):
@@ -21,11 +29,12 @@ def _mda_valid_structures(frames):
 def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
-    data["names"] = [
+    data["elements"] = [
         atom.element if hasattr(atom, "element") else atom.type
         for atom in ag
         # `element` is better, but not always available, e.g. xyz file
     ]
+    data["names"] = [atom.name for atom in ag]
     data["x"] = [float(value) for value in ag.positions[:, 0]]
     data["y"] = [float(value) for value in ag.positions[:, 1]]
     data["z"] = [float(value) for value in ag.positions[:, 2]]
@@ -37,8 +46,37 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
+    if ag.chainIDs is not None:
+        data["chains"] = [atom.chainID for atom in ag]
+    if ag.dimensions is not None:
+        data["cell"] = list(
+            np.concatenate(
+                mda.lib.mdamath.triclinic_vectors(ag.dimensions),
+                dtype=np.float64,
+                # should be np.float64 otherwise not serializable
+            )
+        )
+    if ag.resnames is not None:
+        data["residues"] = [atom.resname for atom in ag]
+        data["resids"] = [int(atom.resid) for atom in ag]
 
     return data
+
+
+
+
+def _mda_get_secondary_structure(data_collection, ag):
+    long_run = DSSP(ag).run()
+    ss_results = translate(long_run.results.dssp_ndarray)
+    for iframe, ss in enumerate(ss_results):
+        ssbegin = [False] + [ss[i - 1] != ss[i] for i in range(1, len(ss))]
+        ssend = [ss[i] != ss[i + 1] for i in range(0, len(ss) - 1)] +  [False]
+        resindexs = [int(atom.residue.resindex) for atom in ag]
+        data_collection[iframe]["secondaryStructure"] = [ss_mapping[ss[resindex]] for resindex in resindexs]
+        data_collection[iframe]["ssbegin"] = [ssbegin[resindex] for resindex in resindexs]
+        data_collection[iframe]["ssend"] = [ssend[resindex] for resindex in resindexs]
+
+    return data_collection
 
 
 def _mda_get_atom_properties(ag) -> dict:

@@ -136,6 +136,20 @@ export interface Structure {
          */
         [name: string]: ShapeParameters;
     };
+    /** Element names of all atoms in the structure, if available */
+    elements?: string[];
+    /** Residue names of all atoms in the structure, if available */
+    residues?: string[];
+    /** Residue IDs of all atoms in the structure, if available */
+    resids?: number[];
+    /** Chain names of all atoms in the structure, if available */
+    chains?: string[];
+    /** Secondary structure of all atoms in the structure, if available */
+    secondaryStructure?: string[];
+    /** If a secondary structure starts here */
+    ssbegin?: boolean[];
+    /** If a secondary structure ends here */
+    ssend?: boolean[];
 }
 
 /**
