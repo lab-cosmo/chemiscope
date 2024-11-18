@@ -19,7 +19,7 @@ def _stk_valid_structures(
     if HAVE_STK and isinstance(frames, Molecule):
         # deal with the user passing a single frame
         return [frames], True
-    elif HAVE_STK and isinstance(frames[0], Molecule):
+    elif HAVE_STK and isinstance(frames, list) and isinstance(frames[0], Molecule):
         for frame in frames:
             assert isinstance(frame, Molecule)
         return frames, True
