@@ -267,12 +267,6 @@ def show(
     elif mode == "structure":
         if properties is None:
             properties = {}
-        if "index" not in properties:
-            # also adds an index property to have something to show in the info panel
-            properties["index"] = {
-                "target": "structure",
-                "values": list(range(len(frames))),
-            }
 
         widget_class = StructureWidget
 
@@ -296,6 +290,12 @@ def show(
         shapes=shapes,
         settings=settings,
     )
+
+    if mode == "structure" and "index" not in dict_input["properties"]:
+        dict_input["properties"]["index"] = {
+            "target": "structure",
+            "values": list(range(len(dict_input["structures"]))),
+        }
 
     if mode != "structure":
         # if there is a map, we need two properties, otherwise there will be no map
