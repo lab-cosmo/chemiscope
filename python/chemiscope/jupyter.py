@@ -249,6 +249,7 @@ def show(
                 "values": (
                     list(range(len(frames)))
                     if hasattr(frames, "__len__")
+                    # MDAnalysis `frames` will not be a list, and does not have a `__len__`
                     else list(range(len(frames.trajectory)))
                 ),
             }
