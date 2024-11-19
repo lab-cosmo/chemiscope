@@ -246,7 +246,13 @@ def show(
             # also adds an index property to have something to show in the info panel
             properties["index"] = {
                 "target": "structure",
-                "values": list(range(len(frames))),
+                "values": (
+                    list(range(len(frames)))
+                    if hasattr(frames, "__len__")
+                    # MDAnalysis `frames` will not be a list, and does not have
+                    # a `__len__`
+                    else list(range(len(frames.trajectory)))
+                ),
             }
 
         widget_class = StructureWidget
