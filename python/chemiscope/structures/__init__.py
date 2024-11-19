@@ -71,7 +71,9 @@ def frames_to_json(frames):
     elif adapter == "stk":
         return [_stk_to_json(frame) for frame in frames]
     elif adapter == "mda":
-        return [_mda_to_json(frames.atoms) for frame in frames.trajectory]
+        # Be careful of the lazy loading of `frames.atoms`, which is updated during the
+        # iteration of the trajectory
+        return [_mda_to_json(frames.atoms) for _ in frames.trajectory]
     else:
         raise Exception("reached unreachable code")
 

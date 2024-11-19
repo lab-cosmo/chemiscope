@@ -18,7 +18,7 @@ def _mda_valid_structures(frames):
 def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
-    data["names"] = [atom.name for atom in ag]
+    data["names"] = [atom.type for atom in ag]
     data["x"] = [float(value) for value in ag.positions[:, 0]]
     data["y"] = [float(value) for value in ag.positions[:, 1]]
     data["z"] = [float(value) for value in ag.positions[:, 2]]

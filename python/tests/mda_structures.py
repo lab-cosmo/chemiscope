@@ -6,7 +6,7 @@ import numpy as np
 import chemiscope
 
 BASE_FRAME = mda.Universe.empty(n_atoms=3, trajectory=True)
-BASE_FRAME.add_TopologyAttr("name", ["C", "O", "O"])
+BASE_FRAME.add_TopologyAttr("type", ["C", "O", "O"])
 BASE_FRAME.atoms.positions = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 5]])
 
 
