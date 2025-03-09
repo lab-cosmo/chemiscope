@@ -6,7 +6,8 @@ interactive structure/property explorer for materials and molecules. The goal of
 chemiscope is to provide interactive exploration of large databases of materials
 and molecules and help researchers to find structure-properties correlations
 inside such databases. The screenshot below shows an example of such database
-being visualized with chemiscope. The :ref:`first part of this documentation <user-manual>`
+being visualized with chemiscope. 
+The :ref:`first part of this documentation <user-manual>`
 describes the default interface of chemiscope and how to use it with your own database,
 both using the stand-alone viewer or through the :ref:`python module <python-module>`
 and/or the :ref:`jupyter widget <jupyter>`.
