@@ -31,7 +31,7 @@ jobs:
       - name: build wheel
         run: python -m build .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: |
