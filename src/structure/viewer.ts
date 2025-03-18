@@ -529,7 +529,7 @@ export class MoleculeViewer {
             this._styles.noEnvs.replaceSync('');
             assert(this._environments.length === structure.size);
             this._setEnvironmentInteractions();
-            const newCenter = options.highlight === undefined ? 0 : options.highlight;
+            const newCenter = options.highlight || this._environments[0]?.center;
             this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
@@ -1662,13 +1662,13 @@ export class MoleculeViewer {
             this._highlighted = undefined;
         } else {
             if (this._environments === undefined) {
-                throw Error('can not highlight an atom without having a list of environments');
+                throw Error('cannot highlight an atom without having a list of environments');
             }
 
             const environment = this._environments[center];
             if (environment === undefined) {
                 throw Error(
-                    `can not highlight atom ${center}: it is not part of the list of environments`
+                    `cannot highlight atom ${center}: it is not part of the list of environments`
                 );
             }
 
