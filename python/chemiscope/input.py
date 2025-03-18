@@ -10,11 +10,7 @@ import warnings
 
 import numpy as np
 
-from .structures import (
-    _list_atom_properties,
-    _list_structure_properties,
-    frames_to_json,
-)
+from .structures import frames_to_json
 
 
 def create_input(
@@ -374,33 +370,6 @@ def create_input(
                 param["units"] = parameters[key]["units"]
             data["parameters"][key] = param
 
-    # Check to tell the user they might have forgotten some properties coming
-    # from the frames (that chemiscope used to automatically extract). This code
-    # should be removed in version 0.6 of chemiscope.
-    if frames is not None:
-        found_one_from_frame = False
-
-        atom_properties = _list_atom_properties(frames)
-        for name in atom_properties:
-            if name in data["properties"]:
-                found_one_from_frame = True
-
-        structure_properties = _list_structure_properties(frames)
-        for name in structure_properties:
-            if name in data["properties"]:
-                found_one_from_frame = True
-
-        if not found_one_from_frame:
-            properties_list = ""
-
-            if len(structure_properties) != 0:
-                properties_list += "[" + ", ".join(structure_properties) + "]"
-
-            if len(atom_properties) != 0:
-                if len(properties_list) != 0:
-                    properties_list += " and "
-                properties_list += "[" + ", ".join(atom_properties) + "]"
-
     return data
 
 
@@ -649,7 +618,7 @@ def quick_settings(
 
     computed_structure_settings = {
         "keepOrientation": trajectory,
-        "playbackDelay": 10 if trajectory else 700,
+        "playbackDelay": 50 if trajectory else 500,
     }
 
     if map_settings is not None:
