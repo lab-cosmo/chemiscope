@@ -53,7 +53,7 @@ const config: ConfigFn = (env, argv) => {
             library: 'Chemiscope',
             // Use UMD modules for the main entry points
             libraryTarget: 'umd',
-            path: path.resolve(__dirname, 'dist'),
+            path: path.resolve(path.dirname(''), 'dist'),
         },
     };
 };
