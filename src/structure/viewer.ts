@@ -515,7 +515,7 @@ export class MoleculeViewer {
 
         if (this._options.unitCell.value) {
             this._viewer.addUnitCell(this._current.model, {
-                box: { color: 'black' },
+                box: { color: 'black', linewidth: 4 },
                 astyle: { hidden: true },
                 bstyle: { hidden: true },
                 cstyle: { hidden: true },
@@ -792,7 +792,7 @@ export class MoleculeViewer {
 
             if (add) {
                 this._viewer.addUnitCell(this._current.model, {
-                    box: { color: 'black' },
+                    box: { color: 'black', linewidth: 4 },
                     astyle: { hidden: true },
                     bstyle: { hidden: true },
                     cstyle: { hidden: true },
