@@ -51,7 +51,7 @@ properties = {
     # an example of the verbose definition
     "energy": {
         "target": "structure",
-        "values": [frame.info["energy"] for frame in frames],
+        "values": [frame.info["dftb_energy_eV"] for frame in frames],
         "units": "eV",
         "description": "potential energy, computed with DFTB+",
     },

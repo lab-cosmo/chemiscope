@@ -30,33 +30,41 @@ def _ase_valid_structures(frames):
         return frames, False
 
 
-def _ase_list_atom_properties(frames):
+def _ase_get_atom_properties(frames):
     IGNORED_ASE_ARRAYS = ["positions", "numbers", "center_atoms_mask"]
     # extract the set of common properties between all frames
-    all_names = set()
+    all_properties = {}
     extra = set()
 
-    for name in frames[0].arrays.keys():
+    arrays = frames[0].arrays.copy()
+    # workaround for ase >= 3.23
+    if frames[0].calc is not None and "forces" in frames[0].calc.results:
+        arrays["forces"] = frames[0].calc.results["forces"]
+
+    for name in arrays.keys():
         if name in IGNORED_ASE_ARRAYS:
             continue
-        all_names.add(name)
+        all_properties[name] = [arrays[name]]
 
     for frame in frames[1:]:
-        for name in frame.arrays.keys():
+        arrays = frame.arrays.copy()
+        # workaround for ase >= 3.23
+        if frame.calc is not None and "forces" in frame.calc.results:
+            arrays["forces"] = frame.calc.results["forces"]
+
+        for name in arrays.keys():
             if name in IGNORED_ASE_ARRAYS:
                 continue
 
-            if name not in all_names:
+            if name in all_properties:
+                all_properties[name].append(arrays[name])
+            else:
                 extra.add(name)
 
-        remove = []
-        for name in all_names:
-            if name not in frame.arrays.keys():
-                remove.append(name)
-
-        for name in remove:
-            all_names.remove(name)
-            extra.add(name)
+        for name in list(all_properties.keys()):
+            if name not in arrays.keys():
+                all_properties.pop(name, None)
+                extra.add(name)
 
     if len(extra) != 0:
         warnings.warn(
@@ -65,30 +73,38 @@ def _ase_list_atom_properties(frames):
             stacklevel=2,
         )
 
-    return all_names
+    return all_properties
 
 
-def _ase_list_structure_properties(frames):
+def _ase_get_structure_properties(frames):
     # extract the set of common properties between all frames
-    all_names = set()
+    all_properties = {}
     extra = set()
 
-    for name in frames[0].info.keys():
-        all_names.add(name)
+    info = frames[0].info.copy()
+    # workaround for ase >= 3.23
+    if frames[0].calc is not None and "energy" in frames[0].calc.results:
+        info["energy"] = frames[0].calc.results["energy"]
+
+    for name in info.keys():
+        all_properties[name] = [info[name]]
 
     for frame in frames[1:]:
-        for name in frame.info.keys():
-            if name not in all_names:
+        info = frame.info.copy()
+        # workaround for ase >= 3.23
+        if frame.calc is not None and "energy" in frame.calc.results:
+            info["energy"] = frame.calc.results["energy"]
+
+        for name in info.keys():
+            if name in all_properties:
+                all_properties[name].append(info[name])
+            else:
                 extra.add(name)
 
-        remove = []
-        for name in all_names:
-            if name not in frame.info.keys():
-                remove.append(name)
-
-        for name in remove:
-            all_names.remove(name)
-            extra.add(name)
+        for name in list(all_properties.keys()):
+            if name not in info.keys():
+                all_properties.pop(name, None)
+                extra.add(name)
 
     if len(extra) != 0:
         warnings.warn(
@@ -97,28 +113,24 @@ def _ase_list_structure_properties(frames):
             stacklevel=2,
         )
 
-    return all_names
+    return all_properties
 
 
-def _ase_atom_properties(frames, only, atoms_mask=None):
-    all_names = _ase_list_atom_properties(frames)
-    if only is not None:
-        all_names = [name for name in all_names if name in only]
+def _ase_atom_properties(frames, only=None, atoms_mask=None):
+    all_properties = _ase_get_atom_properties(frames)
+    if only is None:
+        selected = all_properties
+    else:
+        selected = {}
+        for name in only:
+            if name in all_properties.keys():
+                selected[name] = all_properties[name]
 
     # create property in the format expected by create_input
     properties = {
-        name: {"target": "atom", "values": value}
-        for name, value in frames[0].arrays.items()
-        if name in all_names
+        name: {"target": "atom", "values": np.concatenate(value)}
+        for name, value in selected.items()
     }
-
-    for frame in frames[1:]:
-        for name, value in frame.arrays.items():
-            if name not in all_names:
-                continue
-            properties[name]["values"] = np.concatenate(
-                [properties[name]["values"], value]
-            )
 
     _remove_invalid_properties(properties, "ASE")
 
@@ -131,17 +143,20 @@ def _ase_atom_properties(frames, only, atoms_mask=None):
 
 
 def _ase_structure_properties(frames, only=None):
-    all_names = _ase_list_structure_properties(frames)
-    if only is not None:
-        all_names = [name for name in all_names if name in only]
+    all_properties = _ase_get_structure_properties(frames)
+    if only is None:
+        selected = all_properties
+    else:
+        selected = {}
+        for name in only:
+            if name in all_properties.keys():
+                selected[name] = all_properties[name]
 
     # create property in the format expected by create_input
-    properties = {name: {"target": "structure", "values": []} for name in all_names}
-
-    for frame in frames:
-        for name, value in frame.info.items():
-            if name in all_names:
-                properties[name]["values"].append(value)
+    properties = {
+        name: {"target": "structure", "values": value}
+        for name, value in selected.items()
+    }
 
     _remove_invalid_properties(properties, "ASE")
 
@@ -254,10 +269,18 @@ def _extract_key_from_ase(frame, key, target=None):
     and also returns the actual target it picked the key from.
     """
 
+    arrays = frame.arrays.copy()
+    info = frame.info.copy()
+    # ase >= 3.23 workaround
+    if frame.calc is not None and "forces" in frame.calc.results:
+        arrays["forces"] = frame.calc.results["forces"]
+    if frame.calc is not None and "energy" in frame.calc.results:
+        info["energy"] = frame.calc.results["energy"]
+
     if target is None:
-        if key in frame.arrays:  # defaults to atom target
+        if key in arrays:  # defaults to atom target
             target = "atom"
-        elif key in frame.info:
+        elif key in info:
             target = "structure"
         else:
             raise IndexError(
@@ -266,12 +289,12 @@ def _extract_key_from_ase(frame, key, target=None):
 
     if target == "atom":
         try:
-            values = frame.arrays[key]
+            values = arrays[key]
         except IndexError:
             raise IndexError(f"Key {key} not found in `Atoms.arrays`")
     if target == "structure":
         try:
-            values = frame.info[key]
+            values = info[key]
         except IndexError:
             raise IndexError(f"Key {key} not found in `Atoms.info`")
 

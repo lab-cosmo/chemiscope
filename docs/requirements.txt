@@ -8,7 +8,7 @@ furo
 numpy
 ipywidgets
 matplotlib
-ase==3.22.1
+ase
 # These three pins are to avoid rdkit version 2024.3.5. Once a later version
 # is available, the latest version (assuming Python >= 3.11) of all three
 # should be ok.

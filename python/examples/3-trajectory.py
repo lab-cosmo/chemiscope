@@ -29,7 +29,7 @@ properties = {
     # an example of the verbose definition
     "energy": {
         "target": "structure",
-        "values": [frame.info["energy"] for frame in frames],
+        "values": [frame.info["dftb_energy_eV"] for frame in frames],
         "units": "eV",
         "description": "potential energy, computed with DFTB+",
     },
@@ -63,7 +63,7 @@ chemiscope.write_input(
     # visualize forces as vectors
     shapes={
         "forces": chemiscope.ase_vectors_to_arrows(
-            frames, "forces", scale=1, radius=0.15
+            frames, "dftb_forces_eV_per_Ang", scale=1, radius=0.15
         )
     },
     settings={  # these are reasonable settings for trajectory visualization
