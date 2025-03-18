@@ -2,8 +2,8 @@
 from ._ase import (
     _ase_all_atomic_environments,
     _ase_extract_properties,
-    _ase_list_atom_properties,
-    _ase_list_structure_properties,
+    _ase_get_atom_properties,
+    _ase_get_structure_properties,
     _ase_to_json,
     _ase_valid_structures,
 )
@@ -23,8 +23,8 @@ from ._stk import (  # noqa: F401
     _stk_to_json,
     convert_stk_bonds_as_shapes,
     _stk_all_atomic_environments,
-    _stk_list_atom_properties,
-    _stk_list_structure_properties,
+    _stk_get_atom_properties,
+    _stk_get_structure_properties,
 )
 
 
@@ -64,35 +64,35 @@ def frames_to_json(frames):
         raise Exception("reached unreachable code")
 
 
-def _list_atom_properties(frames):
+def _get_atom_properties(frames):
     """
-    List existing "atom" properties from the given ``frames``. This is used
+    Get existing "atom" properties from the given ``frames``. This is used
     to check if the user might be missing some properties because chemiscope is
     no longer automatically extracting properties
     """
     frames, adapter = _guess_adapter(frames)
 
     if adapter == "ASE":
-        return _ase_list_atom_properties(frames)
+        return _ase_get_atom_properties(frames)
     elif adapter == "stk":
-        return _stk_list_atom_properties(frames)
+        return _stk_get_atom_properties(frames)
 
     else:
         raise Exception("reached unreachable code")
 
 
-def _list_structure_properties(frames):
+def _get_structure_properties(frames):
     """
-    List existing "structure" properties from the given ``frames``. This is used
+    Get existing "structure" properties from the given ``frames``. This is used
     to check if the user might be missing some properties because chemiscope is
     no longer automatically extracting properties
     """
     frames, adapter = _guess_adapter(frames)
 
     if adapter == "ASE":
-        return _ase_list_structure_properties(frames)
+        return _ase_get_structure_properties(frames)
     elif adapter == "stk":
-        return _stk_list_structure_properties(frames)
+        return _stk_get_structure_properties(frames)
     else:
         raise Exception("reached unreachable code")
 

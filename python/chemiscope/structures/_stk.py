@@ -13,7 +13,7 @@ except ImportError:
 
 
 def _stk_valid_structures(
-    frames: Union[Molecule, List[Molecule]]
+    frames: Union[Molecule, List[Molecule]],
 ) -> Tuple[List[Molecule], bool]:
     if HAVE_STK and isinstance(frames, Molecule):
         # deal with the user passing a single frame
@@ -146,11 +146,11 @@ def convert_stk_bonds_as_shapes(
     return shape_dict
 
 
-def _stk_list_atom_properties(frames: List[Molecule]) -> list:
+def _stk_get_atom_properties(frames: List[Molecule]) -> list:
     # stk cannot have atom properties or structure properties, so skipping.
     return []
 
 
-def _stk_list_structure_properties(frames: List[Molecule]) -> list:
+def _stk_get_structure_properties(frames: List[Molecule]) -> list:
     # stk cannot have atom properties or structure properties, so skipping.
     return []

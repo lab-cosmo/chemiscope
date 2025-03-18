@@ -51,9 +51,9 @@ for a in frames:
     for i in range(len(a)):
         nneigh = dists[i].argmin()
         vec = a.get_distance(i, nneigh, vector=True, mic=True)
-        R = np.zeros((3, 3))
-        R[:, -1] = vec
-        quaternions.append(Rotation.from_matrix(R).as_quat())
+        vec /= np.linalg.norm(vec)
+        quat = Rotation.align_vectors([np.array([0, 0, 1])], [vec])[0].as_quat()
+        quaternions.append(quat)
 
 # %%
 #

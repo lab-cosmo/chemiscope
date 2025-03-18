@@ -60,7 +60,7 @@ class TestExtractProperties(unittest.TestCase):
 
         self.assertEqual(len(properties.keys()), 1)
         self.assertEqual(properties["bar"]["target"], "atom")
-        self.assertEqual(properties["bar"]["values"], [4, 5, 6])
+        self.assertEqual(properties["bar"]["values"].tolist(), [4, 5, 6])
         self.assertEqual(properties["bar"].get("units"), None)
         self.assertEqual(properties["bar"].get("description"), None)
 
