@@ -43,7 +43,7 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-html_extra_path = ["robots.txt"]
+html_extra_path = []
 
 examples_dirs = os.path.join(ROOT, "python", "examples")
 sphinx_gallery_conf = {
