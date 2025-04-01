@@ -44,8 +44,8 @@ export interface Dataset {
     /**
      * List of atom-centered environments in the dataset.
      *
-     * Currently, the code assumes that every atom is associated with an
-     * environment. This may change in the future.
+     * The dataset might specify a subset of the atoms that should
+     * be considered as environments for visualization and data purposes.
      */
     environments?: Environment[];
     /** Settings for visualization of this dataset */
