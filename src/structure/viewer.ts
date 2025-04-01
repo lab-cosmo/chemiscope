@@ -28,7 +28,7 @@ const IS_SAFARI =
 function defaultOpacity(): number {
     // Safari seems to have an issue rendering transparent things with the same
     // settings as FF/Chrome
-    return IS_SAFARI ? 0.87 : 0.7;
+    return IS_SAFARI ? 0.87 : 0.85;
 }
 
 /**
@@ -916,7 +916,8 @@ export class MoleculeViewer {
 
                 if (values.some((v) => v === null)) {
                     sendWarning(
-                        'The selected structure has undefined properties for some atoms, these atoms will be colored in light gray.'
+                        'The selected structure has undefined properties for some atoms,' +
+                            ' these atoms will be colored in light gray.'
                     );
                 }
 
@@ -1504,6 +1505,7 @@ export class MoleculeViewer {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
 
         const bgStyle = this._options.environments.bgStyle.value;
+        console.log(bgStyle);
         if (bgStyle === 'hide') {
             // nothing to do
         } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
