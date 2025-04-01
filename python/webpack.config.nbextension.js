@@ -1,19 +1,18 @@
 import path from 'path';
-import webpack from 'webpack';
 
-import { WEBPACK_CONFIG } from '../webpack.config';
+import { WEBPACK_CONFIG } from '../webpack.config.js';
 
-const config: webpack.Configuration = {
+const config = {
     ...WEBPACK_CONFIG,
     target: 'web',
     entry: {
-        chemiscope: path.join(__dirname, 'jupyter', 'src', 'nbextension.ts'),
+        chemiscope: './python/jupyter/src/nbextension.ts',
     },
     output: {
         filename: '[name].min.js',
         // Use AMD modules for the jupyter extension
         libraryTarget: 'amd',
-        path: path.join(__dirname, 'jupyter', 'nbextension'),
+        path: path.resolve('./python/jupyter/nbextension'),
         publicPath: '',
     },
     externals: ['@jupyter-widgets/base'],

@@ -5,7 +5,7 @@ import { execSync } from 'child_process';
 
 const GIT_VERSION = execSync('git describe --tags --dirty').toString().trim();
 
-export const WEBPACK_CONFIG: webpack.Configuration = {
+export const WEBPACK_CONFIG = {
     plugins: [
         new webpack.DefinePlugin({
             CHEMISCOPE_GIT_VERSION: `"${GIT_VERSION}"`,
@@ -16,7 +16,7 @@ export const WEBPACK_CONFIG: webpack.Configuration = {
     ],
     resolve: {
         extensions: ['.js', '.ts'],
-        modules: [path.resolve('./node_modules')],
+        modules: ['./node_modules'],
     },
     module: {
         rules: [
@@ -31,10 +31,7 @@ export const WEBPACK_CONFIG: webpack.Configuration = {
     },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ConfigFn = (env: unknown, argv: any) => webpack.Configuration;
-
-const config: ConfigFn = (env, argv) => {
+const config = (env, argv) => {
     if (!('mode' in argv)) {
         throw Error('please specify the build mode');
     }
@@ -53,7 +50,14 @@ const config: ConfigFn = (env, argv) => {
             library: 'Chemiscope',
             // Use UMD modules for the main entry points
             libraryTarget: 'umd',
-            path: path.resolve(path.dirname(''), 'dist'),
+            path: path.resolve('./dist'),
+        },
+        // we know we have a very large `chemiscope.min.js`, we don't need
+        // webpack to tell us everytime.
+        performance: {
+            hints: false,
+            maxEntrypointSize: 512000,
+            maxAssetSize: 512000,
         },
     };
 };

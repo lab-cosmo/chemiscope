@@ -11,10 +11,10 @@
     "skipLibCheck": true /* Skip type checking of declaration files */
   },
   "typedocOptions": {
-    "entryPoints": ["src/index.ts"], 
+    "entryPoints": ["src/index.ts"],
     "out": "docs/build/html/api/",
     "excludePrivate": true,
     "hideGenerator": true,
     "readme": "none"
-  }
+  },
 }
