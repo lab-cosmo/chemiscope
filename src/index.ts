@@ -26,7 +26,6 @@ import {
     WarningHandler,
     addWarningHandler,
     getNextColor,
-    sendWarning,
 } from './utils';
 import {
     ArrowParameters,
@@ -37,7 +36,6 @@ import {
 } from './structure/shapes';
 
 import './static/chemiscope.css';
-import { data } from 'jquery';
 
 /**
  * Welcome to Chemiscope's API documentation
@@ -730,7 +728,7 @@ class MapVisualizer {
         // knows how to associate structure id & point id on the map. The
         // structure id is used by the info panel
         let n_structures;
-        if (this._target == 'atom') {
+        if (this._target === 'atom') {
             // atom-property viewer
             assert(dataset.environments !== undefined);
             n_structures = 0;
@@ -741,7 +739,7 @@ class MapVisualizer {
                 }
             }
             // also guess number of atoms from the environments
-            let dummy_structures = Array(n_structures).fill({
+            const dummy_structures = Array(n_structures).fill({
                 size: 1,
                 data: 0,
             }) as UserStructure[];
