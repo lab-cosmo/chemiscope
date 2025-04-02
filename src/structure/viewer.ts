@@ -1505,7 +1505,6 @@ export class MoleculeViewer {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
 
         const bgStyle = this._options.environments.bgStyle.value;
-        console.log(bgStyle);
         if (bgStyle === 'hide') {
             // nothing to do
         } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
