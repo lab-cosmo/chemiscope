@@ -568,6 +568,7 @@ def quick_settings(
     size="",
     symbol="",
     trajectory=False,
+    periodic=False,
     map_settings=None,
     structure_settings=None,
 ):
@@ -589,6 +590,10 @@ def quick_settings(
     :param bool trajectory: A boolean flag that sets some default options suitable to
         view trajectory data: fixing the viewpoint for the structure, reducing the delay
         when cycling between structures and adding a line joining the points in the map.
+
+    :param bool periodic: A boolean flag that sets some default options suitable to
+        view periodic structures: showing the unit cell, and replicating the structure
+         to show atoms at the boundaries of the unit cell.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
             settings schema).
@@ -619,6 +624,8 @@ def quick_settings(
     computed_structure_settings = {
         "keepOrientation": trajectory,
         "playbackDelay": 50 if trajectory else 500,
+        "unitCell": periodic,
+        "supercell": [3, 3, 3] if periodic else [1, 1, 1],
     }
 
     if map_settings is not None:
