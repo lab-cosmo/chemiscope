@@ -600,10 +600,10 @@ def quick_settings(
         the properties shown should be those of environments or of structures.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
-            settings schema).
+        settings schema).
 
     :param dict structure_settings: Additional settings for the structure viewer
-            (following the chemiscope settings schema).
+        (following the chemiscope settings schema).
     """
 
     if target not in ["atom", "structure"]:
