@@ -669,12 +669,12 @@ export class PropertiesMap {
         if (propertiesNames.length < 2) {
             // better error message in case the user forgot to give the
             // environments in the data
-            if (this._target === 'structure' && !this._indexer.hasEnvironments()) {
+            if (this._target === 'structure') {
                 if (Object.keys(this._data['atom']).length >= 2) {
                     throw Error(
                         'could not find enough structure properties to display, \
-                        but there are atom properties. Please provide the \
-                        environment list to display them'
+                        but there are atom properties. You could choose "atom" as \
+                        target to display them.'
                     );
                 }
             }
