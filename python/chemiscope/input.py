@@ -608,7 +608,8 @@ def quick_settings(
 
     if target not in ["atom", "structure"]:
         raise ValueError(
-            f"Invalid value {target} for `target`, should be either `atom` or `structure`."
+            f"Invalid value {target} for `target`, "
+            "should be either `atom` or `structure`."
         )
 
     if (x + y + z + color + size + symbol) == "":
