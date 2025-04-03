@@ -18,17 +18,12 @@ import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
 
-const IS_SAFARI =
-    navigator.vendor !== undefined &&
-    navigator.vendor.indexOf('Apple') > -1 &&
-    navigator.userAgent.indexOf('CriOS') === -1 &&
-    navigator.userAgent.indexOf('FxiOS') === -1;
-
 /** We need to use the same opacity everywhere since 3Dmol uses 1 opacity per model */
 function defaultOpacity(): number {
-    // Safari seems to have an issue rendering transparent things with the same
-    // settings as FF/Chrome
-    return IS_SAFARI ? 0.87 : 0.85;
+    // The actual visual appearance seems to depend on browser and platform.
+    // This is a value that seems to work well across the board, but it might
+    // need to become platform-dependent in case of changes in the browsers.
+    return 0.85;
 }
 
 /**
