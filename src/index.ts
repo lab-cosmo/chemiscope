@@ -26,7 +26,6 @@ import {
     WarningHandler,
     addWarningHandler,
     getNextColor,
-    sendWarning,
 } from './utils';
 import {
     ArrowParameters,
@@ -723,25 +722,48 @@ class MapVisualizer {
         validateConfig(config as unknown as JsObject, ['meta', 'map', 'info']);
         validateDataset(dataset as unknown as JsObject);
 
-        // We need to create pseudo structures with 0 atoms so that the indexer
+        this._target = getTarget(dataset);
+
+        // We need to create pseudo structures with so that the indexer
         // knows how to associate structure id & point id on the map. The
         // structure id is used by the info panel
-        let n_structure;
-        for (const key in dataset.properties) {
-            const property = dataset.properties[key];
-            if (property.target === 'atom') {
-                sendWarning('unsupported per-atom property in a map-only viewer');
-            } else {
-                assert(property.target === 'structure');
-                n_structure = property.values.length;
+        let n_structures;
+        if (this._target === 'atom') {
+            // atom-property viewer
+            assert(dataset.environments !== undefined);
+            n_structures = 0;
+            // guess number of structures from the environments
+            for (const env of dataset.environments) {
+                if (n_structures <= env.structure) {
+                    n_structures = env.structure + 1;
+                }
             }
-        }
+            // also guess number of atoms from the environments
+            const dummy_structures = Array(n_structures).fill({
+                size: 1,
+                data: 0,
+            }) as UserStructure[];
+            for (const env of dataset.environments) {
+                if (dummy_structures[env.structure].size <= env.center) {
+                    dummy_structures[env.structure].size = env.center + 1;
+                }
+            }
+            this._indexer = new EnvironmentIndexer(dummy_structures, dataset.environments);
+        } else {
+            // structure property viewer
+            for (const key in dataset.properties) {
+                const property = dataset.properties[key];
+                if (property.target === this._target) {
+                    n_structures = property.values.length;
+                }
+            }
 
-        this._indexer = new EnvironmentIndexer(
-            // pseudo-structures to get the EnvironmentIndexer working even
-            // though we don't have any structure data
-            new Array(n_structure).fill({ size: 1, data: 0 }) as UserStructure[]
-        );
+            this._indexer = new EnvironmentIndexer(
+                // pseudo-structures to get the EnvironmentIndexer working even
+                // though we don't have any structure data
+                new Array(n_structures).fill({ size: 1, data: 0 }) as UserStructure[]
+            );
+        }
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 

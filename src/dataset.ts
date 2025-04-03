@@ -44,8 +44,8 @@ export interface Dataset {
     /**
      * List of atom-centered environments in the dataset.
      *
-     * Currently, the code assumes that every atom is associated with an
-     * environment. This may change in the future.
+     * The dataset might specify a subset of the atoms that should
+     * be considered as environments for visualization and data purposes.
      */
     environments?: Environment[];
     /** Settings for visualization of this dataset */
@@ -414,7 +414,8 @@ function checkShapes(
             }
 
             if (s_parameters.length !== structureCount) {
-                return `'structure' parameters in shape ${key} contain ${s_parameters.length} entries, but there are ${structureCount} structures.`;
+                return `'structure' parameters in shape ${key} contain ${s_parameters.length} \
+                         entries, but there are ${structureCount} structures.`;
             }
         }
 
@@ -425,7 +426,8 @@ function checkShapes(
             }
 
             if (a_parameters.length !== envCount) {
-                return `'atom' parameters in shape ${key} contain ${a_parameters.length} entries, but there are ${envCount} environments.`;
+                return `'atom' parameters in shape ${key} contain ${a_parameters.length} entries, \
+                         but there are ${envCount} environments.`;
             }
         }
     }

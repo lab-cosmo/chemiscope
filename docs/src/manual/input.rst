@@ -292,8 +292,6 @@ contains the following fields and values:
                     "atomLabels": false,
                     // show unit cell information and lines
                     "unitCell": false,
-                    // displayed unit cell as a packed cell
-                    "packedCell": false,
                     // number of repetitions in the `a/b/c` direction for the supercell
                     "supercell": [2, 2, 3],
                     // make the molecule spin
