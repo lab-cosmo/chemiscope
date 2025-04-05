@@ -18,6 +18,7 @@ const PlausibleTracker = Plausible({
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
+    public warningTimeout: number = 10000; // long timeout in notebooks
 
     public remove(): unknown {
         if (this.visualizer !== undefined) {
@@ -92,11 +93,9 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
-        });
+        addWarningHandler((message) =>
+            displayWarning(message, element, this.guid, this.warningTimeout)
+        );
 
         element.innerHTML = `
         <div>
@@ -178,11 +177,9 @@ export class StructureView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
-        });
+        addWarningHandler((message) =>
+            displayWarning(message, element, this.guid, this.warningTimeout)
+        );
 
         element.innerHTML = `
         <div>
@@ -260,11 +257,9 @@ export class MapView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
-        });
+        addWarningHandler((message) =>
+            displayWarning(message, element, this.guid, this.warningTimeout)
+        );
 
         element.innerHTML = `
         <div>
@@ -321,5 +316,23 @@ export class MapView extends ChemiscopeBaseView {
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
         }
+    }
+}
+
+function displayWarning(
+    message: string,
+    element: HTMLElement,
+    guid: string,
+    timeout: number = 4000
+) {
+    if (timeout > 0) {
+        const display = getByID(`${guid}-warning-display`, element);
+        display.style.display = 'block';
+        display.getElementsByTagName('p')[0].innerText = message;
+
+        // automatically remove the warning after a set timeout
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
     }
 }

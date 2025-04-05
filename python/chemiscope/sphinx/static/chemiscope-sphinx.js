@@ -12,9 +12,14 @@ const VISUALISER_MODE = {
 /**
  * Asynchronously loads the Chemiscope visualization for the dataset
  */
-async function loadChemiscopeSphinx(divId, filePath, visualizerMode = VISUALISER_MODE.DEFAULT) {
+async function loadChemiscopeSphinx(
+    divId,
+    filePath,
+    visualizerMode = VISUALISER_MODE.DEFAULT,
+    timeout = 4000
+) {
     // Handle warnings
-    Chemiscope.addWarningHandler((message) => displayWarning(divId, message));
+    Chemiscope.addWarningHandler((message) => displayWarning(divId, message, timeout));
     // Display loading
     toggleLoadingVisible(divId, true);
 
@@ -166,7 +171,10 @@ function hideElement(elementId) {
 /**
  * Displays a warning message in the specified div
  */
-function displayWarning(divId, message) {
+function displayWarning(divId, message, timeout) {
+    if (timeout <= 0) {
+        return;
+    }
     const display = document.getElementById(`${divId}-warning-display`);
     display.getElementsByTagName('p')[0].innerText = message;
     display.style.display = 'flex';
@@ -174,5 +182,5 @@ function displayWarning(divId, message) {
     // Automatically remove the warning after 4 seconds
     setTimeout(() => {
         display.style.display = 'none';
-    }, 4000);
+    }, timeout);
 }

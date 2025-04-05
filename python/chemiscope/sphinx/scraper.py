@@ -69,6 +69,7 @@ class ChemiscopeScraper:
         """Generate a .rst directive for embedding chemiscope widget"""
         return f""".. chemiscope:: {filepath}
             :mode: {mode}
+            :warning_timeout: {0.0} 
         """
 
     def get_widget_mode(self, widget):

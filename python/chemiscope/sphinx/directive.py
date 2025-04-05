@@ -12,12 +12,14 @@ class ChemiscopeDirective(Directive):
     sphinx documentation file. It has two options: `filepath` - the path to a chemiscope
     JSON or gzipped JSON file, relative to the path of the RST file, and `mode`, which
     can be `default`, `structure` or `map` depending on the desired type of
-    visualization.
+    visualization. `warning_timeout` specifies the time in milliseconds to display
+    a warning (set it to zero to disable warnings).
 
     e.g.::
 
         .. chemiscope:: datasets/polarizability.json.gz
             :mode: map
+            :warning_timeout: 1000
 
     The resulting html is the chemiscope widget wrapped in the chemiscope-sphinx.html
     template.
@@ -28,7 +30,7 @@ class ChemiscopeDirective(Directive):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = False
-    option_spec = {"mode": str}
+    option_spec = {"mode": str, "warning_timeout": float}
     pages_with_headers = []
 
     def run(self):
@@ -104,6 +106,7 @@ class ChemiscopeDirective(Directive):
         node = chemiscope()
         node["filepath"] = rel_file_path
         node["mode"] = self.options.get("mode", "default")
+        node["warning_timeout"] = self.options.get("warning_timeout", 4000)
         node["include_headers"] = include_headers
 
         self.state.nested_parse(self.content, self.content_offset, node)
