@@ -18,7 +18,15 @@ const PlausibleTracker = Plausible({
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
-    public warningTimeout: number = 10000; // long timeout in notebooks
+    public warningTimeout: number = 10000; // default (long) timeout
+
+    public initialize(parameters: any): void {
+        super.initialize(parameters);
+
+        this._updateWarningTimeout();
+        this.model.on('change:warning_timeout', () => this._updateWarningTimeout());
+        console.log("[Chemiscope] model attributes:", this.model.attributes);
+    }
 
     public remove(): unknown {
         if (this.visualizer !== undefined) {
@@ -72,6 +80,14 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.model.save_changes();
         }
     }
+
+    private _updateWarningTimeout(): void {
+        const timeout = this.model.get('warning_timeout');
+        if (typeof timeout === 'number') {
+            this.warningTimeout = timeout;
+        }
+        console.log("timeout set to ", timeout);
+    }
 }
 
 /**
@@ -92,14 +108,14 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
-
-        addWarningHandler((message) =>
-            displayWarning(message, element, this.guid, this.warningTimeout)
-        );
+        const self = this; 
+        addWarningHandler((message) => {
+            displayWarning(message, element, this.guid, self.warningTimeout);
+        });
 
         element.innerHTML = `
         <div>
-            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+            <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -177,9 +193,9 @@ export class StructureView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) =>
-            displayWarning(message, element, this.guid, this.warningTimeout)
-        );
+        addWarningHandler((message) => {
+            displayWarning(message, element, this.guid, this.warningTimeout);
+        });
 
         element.innerHTML = `
         <div>
@@ -257,9 +273,9 @@ export class MapView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) =>
-            displayWarning(message, element, this.guid, this.warningTimeout)
-        );
+        addWarningHandler((message) => {
+            displayWarning(message, element, this.guid, this.warningTimeout);
+        });
 
         element.innerHTML = `
         <div>
@@ -325,10 +341,11 @@ function displayWarning(
     guid: string,
     timeout: number = 4000
 ) {
+    console.log(message, timeout);
     if (timeout > 0) {
         const display = getByID(`${guid}-warning-display`, element);
         display.style.display = 'block';
-        display.getElementsByTagName('p')[0].innerText = message;
+        display.getElementsByTagName('p')[0].innerText = message + ` TIMEOUT: ${timeout}`;
 
         // automatically remove the warning after a set timeout
         setTimeout(() => {
