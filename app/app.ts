@@ -3,7 +3,7 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { getByID, addWarningHandler } from '../src/utils';
+import { getByID, addWarningHandler, Warnings } from '../src/utils';
 import { Dataset, Structure } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
 
@@ -25,6 +25,8 @@ export class ChemiscopeApp {
     /// CSS style sheet to hide the setting in loading panel about on-demand
     /// loading
     private hideOnDemandStructures: HTMLStyleElement;
+    private warnings: Warnings;
+    public warningTimeout: number = 4000;
 
     /**
      * Create a new instance of the chemiscope application.
@@ -35,7 +37,9 @@ export class ChemiscopeApp {
         versionDisplay.innerText = `version ${version()}`;
 
         // handle warnings
-        addWarningHandler((message) => displayWarning(message));
+        this.warnings = new Warnings();
+        this.warnings.add((message) => displayWarning(message, this.warningTimeout));
+        addWarningHandler((message) => displayWarning(message, this.warningTimeout));
 
         // when the window is resized, change the size available to the info
         // widget
@@ -153,7 +157,8 @@ export class ChemiscopeApp {
             this.visualizer.remove();
         }
 
-        this.visualizer = await DefaultVisualizer.load(config, dataset);
+        console.log("loading visualizer with warnings", this.warnings);
+        this.visualizer = await DefaultVisualizer.load(config, dataset, this.warnings);
 
         this.visualizer.structure.positionSettingsModal = (rect) => {
             const structureRect = getByID('chemiscope-structure').getBoundingClientRect();
@@ -279,15 +284,18 @@ export class ChemiscopeApp {
     }
 }
 
-function displayWarning(message: string) {
-    const display = getByID('warning-display');
-    display.getElementsByTagName('p')[0].innerText = message;
-    display.style.display = 'block';
+function displayWarning(message: string, timeout: number = 4000) {
+    console.log('displaying warining', message, 'timeout', timeout);
+    if (timeout > 0) {        
+        const display = getByID('warning-display');
+        display.getElementsByTagName('p')[0].innerText = message;
+        display.style.display = 'block';
 
-    // automatically remove the warning after 4s
-    setTimeout(() => {
-        display.style.display = 'none';
-    }, 4000);
+        // automatically remove the warning after 4s
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
+    }
 }
 
 function startLoading() {

@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
+import { GUID, PositioningCallback, arrayMaxMin, sendWarning, Warnings } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -185,7 +185,7 @@ const DEFAULT_CONFIG = {
  * size. Additionally, string properties can be used as symbols for the scatter
  * plot markers.
  */
-export class PropertiesMap {
+export class PropertiesMap {    
     /** Callback fired when the plot is clicked and the position of the active marker changes */
     public onselect: (indexes: Indexes) => void;
     /**
@@ -206,6 +206,8 @@ export class PropertiesMap {
      * opened.
      */
     public positionSettingsModal: PositioningCallback;
+
+    public warnings : Warnings;
 
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
@@ -256,6 +258,7 @@ export class PropertiesMap {
         this.onselect = () => {};
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
+        this.warnings = new Warnings;
 
         // DOM structure outside the map:
         // - containerElement/element (#chemiscope-map)

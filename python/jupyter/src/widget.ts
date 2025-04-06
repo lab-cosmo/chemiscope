@@ -1,7 +1,7 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
 import Plausible from 'plausible-tracker';
 
-import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
+import { addWarningHandler, generateGUID, getByID, removeWarningHandlers } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -29,6 +29,8 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     public remove(): unknown {
+
+        removeWarningHandlers(this);
         if (this.visualizer !== undefined) {
             this.visualizer.remove();
         }
@@ -81,7 +83,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         }
     }
 
-    private _updateWarningTimeout(): void {
+    protected _updateWarningTimeout(): void {
         const timeout = this.model.get('warning_timeout');
         if (typeof timeout === 'number') {
             this.warningTimeout = timeout;
@@ -108,10 +110,11 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
-        const self = this; 
+
+        this._updateWarningTimeout();
         addWarningHandler((message) => {
-            displayWarning(message, element, this.guid, self.warningTimeout);
-        });
+            displayWarning(message, element, this.guid, this.warningTimeout);
+        }, this);
 
         element.innerHTML = `
         <div>
@@ -193,9 +196,10 @@ export class StructureView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
+        this._updateWarningTimeout();
         addWarningHandler((message) => {
             displayWarning(message, element, this.guid, this.warningTimeout);
-        });
+        }, this);
 
         element.innerHTML = `
         <div>
@@ -273,9 +277,10 @@ export class MapView extends ChemiscopeBaseView {
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
+        this._updateWarningTimeout();
         addWarningHandler((message) => {
             displayWarning(message, element, this.guid, this.warningTimeout);
-        });
+        }, this);
 
         element.innerHTML = `
         <div>

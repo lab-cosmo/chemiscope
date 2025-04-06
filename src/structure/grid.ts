@@ -17,7 +17,7 @@ import {
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
-import { GUID, PositioningCallback, getElement } from '../utils';
+import { GUID, PositioningCallback, getElement, Warnings } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor, sendWarning } from '../utils';
 
 import { LoadOptions, MoleculeViewer } from './viewer';
@@ -122,6 +122,8 @@ export class ViewersGrid {
      */
     public loadStructure: (index: number, structure: unknown) => Structure;
 
+    public warnings: Warnings;
+
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// Root element containing the full viewer grid
@@ -176,7 +178,8 @@ export class ViewersGrid {
         target: DisplayTarget,
         properties?: { [name: string]: Property },
         environments?: Environment[],
-        maxViewers: number = 9
+        maxViewers: number = 9,
+        warnings?: Warnings,
     ) {
         this._target = target;
         this._structures = structures;
@@ -216,6 +219,9 @@ export class ViewersGrid {
                 return s as Structure;
             }
         };
+        
+        this.warnings = warnings?warnings:new Warnings;
+        console.log("added grid ", this.warnings);
 
         // Initializes with 1 viewer upon opening.
         this._cellsData = new Map<GUID, ViewerGridData>();
@@ -866,7 +872,8 @@ export class ViewersGrid {
             // add a new cells if necessary
             if (!this._cellsData.has(cellGUID)) {
                 const propertiesName = this._properties ? Object.keys(this._properties) : [];
-                const viewer = new MoleculeViewer(this._getById(`gi-${cellGUID}`), propertiesName);
+                console.log("adding viewer ", this.warnings);
+                const viewer = new MoleculeViewer(this._getById(`gi-${cellGUID}`), propertiesName, this.warnings);
 
                 viewer.onselect = (atom: number) => {
                     if (this._target !== 'atom' || this._active !== cellGUID) {

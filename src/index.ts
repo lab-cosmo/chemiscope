@@ -24,6 +24,7 @@ import {
     GUID,
     PositioningCallback,
     WarningHandler,
+    Warnings,
     addWarningHandler,
     getNextColor,
 } from './utils';
@@ -165,9 +166,9 @@ class DefaultVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link DefaultVisualizer}
      */
-    public static load(config: DefaultConfig, dataset: Dataset): Promise<DefaultVisualizer> {
+    public static load(config: DefaultConfig, dataset: Dataset, warnings?: Warnings): Promise<DefaultVisualizer> {
         return new Promise((resolve) => {
-            const visualizer = new DefaultVisualizer(config, dataset);
+            const visualizer = new DefaultVisualizer(config, dataset, warnings);
             resolve(visualizer);
         });
     }
@@ -187,9 +188,11 @@ class DefaultVisualizer {
     // Controls the display target (atom or structure)
     private _toggle: DisplayTargetToggle | undefined;
 
+    public warnings: Warnings;
+
     // the constructor is private because the main entry point is the static
     // `load` function
-    private constructor(config: DefaultConfig, dataset: Dataset) {
+    private constructor(config: DefaultConfig, dataset: Dataset, warnings?: Warnings) {
         validateConfig(config as unknown as JsObject, ['meta', 'map', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
@@ -200,8 +203,10 @@ class DefaultVisualizer {
         this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
+        this.warnings = warnings ? warnings : new Warnings;
 
         // Structure viewer setup
+        console.log("loading grid with warnings", this.warnings);
         this.structure = new ViewersGrid(
             config.structure,
             this._indexer,
@@ -209,7 +214,8 @@ class DefaultVisualizer {
             this._target,
             dataset.properties,
             dataset.environments,
-            config.maxStructureViewers
+            config.maxStructureViewers,
+            this.warnings
         );
 
         if (config.loadStructure !== undefined) {
