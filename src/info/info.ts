@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
-import { binarySearch, getElement, Warnings } from '../utils';
+import { Warnings, binarySearch, getElement } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
 
@@ -88,8 +88,8 @@ export class EnvironmentInfo {
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
 
-        this.warnings = warnings ? warnings : new Warnings();
-
+        this.warnings = warnings?warnings:new Warnings;
+        
         this._shadow = hostElement.attachShadow({ mode: 'open' });
 
         // Add styles to shadow

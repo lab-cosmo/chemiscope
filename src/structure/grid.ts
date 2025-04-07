@@ -17,7 +17,7 @@ import {
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import * as styles from '../styles';
-import { GUID, PositioningCallback, getElement, Warnings } from '../utils';
+import { GUID, PositioningCallback, Warnings, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor } from '../utils';
 
 import { LoadOptions, MoleculeViewer } from './viewer';

@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, getByID, makeDraggable, Warnings } from '../utils';
+import { PositioningCallback, Warnings, getByID, makeDraggable } from '../utils';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';

@@ -3,7 +3,7 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { getByID, Warnings } from '../src/utils';
+import { Warnings, getByID } from '../src/utils';
 import { Dataset, Structure } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
 

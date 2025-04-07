@@ -1,7 +1,7 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
 import Plausible from 'plausible-tracker';
 
-import { generateGUID, getByID, Warnings } from '../../../src/utils';
+import { Warnings, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -19,11 +19,11 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
     protected warnings: Warnings = new Warnings;
-    protected static className = "base-view";
+    protected static className: string = "base-view";
 
     public render(): void {
         PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/' + this.className,
+            url: (location.pathname.split('/')[1] || '') + '/' + (this.className as string),
         });
 
         this.guid = `chsp-${generateGUID()}`;
@@ -86,7 +86,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     protected _updateWarningTimeout(): void {
-        const timeout = this.model.get('warning_timeout'); 
+        const timeout = this.model.get('warning_timeout') as unknown; 
         if (typeof timeout === 'number') {
             this.warnings.timeout = timeout;
         }        

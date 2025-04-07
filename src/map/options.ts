@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { arrayMaxMin, getByID, makeDraggable, PositioningCallback, Warnings } from '../utils';
+import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 

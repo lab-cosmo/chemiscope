@@ -7,7 +7,7 @@
 
 import assert from 'assert';
 
-import { getByID, Warnings } from './utils';
+import { Warnings, getByID } from './utils';
 import { Settings } from './dataset';
 
 /**
