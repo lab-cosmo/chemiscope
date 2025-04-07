@@ -39,7 +39,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             self.settings = data["settings"]
         self._settings_sync = True
         self.warning_timeout = warning_timeout
-        print("set timeout to ", self.warning_timeout)
 
     def save(self, path):
         """
