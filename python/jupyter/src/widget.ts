@@ -18,8 +18,8 @@ const PlausibleTracker = Plausible({
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
-    protected warnings: Warnings = new Warnings;
-    protected static className: string = "base-view";
+    protected warnings: Warnings = new Warnings();
+    protected static className: string = 'base-view';
 
     public render(): void {
         PlausibleTracker.trackPageview({
@@ -32,7 +32,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     public remove(): unknown {
-
         if (this.visualizer !== undefined) {
             this.visualizer.remove();
         }
@@ -86,10 +85,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     protected _updateWarningTimeout(): void {
-        const timeout = this.model.get('warning_timeout') as unknown; 
+        const timeout = this.model.get('warning_timeout') as unknown;
         if (typeof timeout === 'number') {
             this.warnings.timeout = timeout;
-        }        
+        }
     }
 }
 
@@ -100,7 +99,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
-    protected static className = "chemiscope-view";
+    protected static className = 'chemiscope-view';
 
     public render(): void {
         super.render();
@@ -111,7 +110,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         this._updateWarningTimeout();
         this.warnings.addHandler((message) => {
-            displayWarning(message,element, this.guid, this.warnings.timeout); 
+            displayWarning(message, element, this.guid, this.warnings.timeout);
         });
 
         element.innerHTML = `
@@ -182,7 +181,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
-    protected static className = "structure-view";
+    protected static className = 'structure-view';
 
     public render(): void {
         super.render();
@@ -193,7 +192,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         this._updateWarningTimeout();
         this.warnings.addHandler((message) => {
-            displayWarning(message,element, this.guid, this.warnings.timeout); 
+            displayWarning(message, element, this.guid, this.warnings.timeout);
         });
 
         element.innerHTML = `
@@ -260,7 +259,7 @@ export class StructureView extends ChemiscopeBaseView {
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
-    protected static className = "map-view";
+    protected static className = 'map-view';
 
     public render(): void {
         super.render();
@@ -271,7 +270,7 @@ export class MapView extends ChemiscopeBaseView {
 
         this._updateWarningTimeout();
         this.warnings.addHandler((message) => {
-            displayWarning(message,element, this.guid, this.warnings.timeout); 
+            displayWarning(message, element, this.guid, this.warnings.timeout);
         });
 
         element.innerHTML = `
