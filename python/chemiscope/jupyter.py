@@ -192,7 +192,8 @@ def show(
     show only a structure panel (``mode = "structure"``) or the map panel (``mode =
     "map"``). These modes also make it possible to view a dataset for which properties
     (or frames) are not available. The widget displays warning messages, that disappear
-    after the specified ``warning_timeout`` (in ms). Set to zero to disable warnings.
+    after the specified ``warning_timeout`` (in ms). Set to a negative value to disable
+    warnings.
 
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
