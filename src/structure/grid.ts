@@ -406,6 +406,15 @@ export class ViewersGrid {
         changeClasses(this._active, true);
     }
 
+    public exportPNG(): string {
+        const current=this._cellsData.get(this._active)
+        if (current!==undefined) {
+            return current.viewer.exportPNG();
+        } else {
+            return "";
+        }
+    }
+
     /**
      * Set a callback to get the initial positioning of the settings modal of
      * the viewers. The same callback is used for all viewers in the grid.

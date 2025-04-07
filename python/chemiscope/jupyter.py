@@ -4,6 +4,7 @@ import json
 import warnings
 
 import ipywidgets
+import asyncio
 from traitlets import Bool, Dict, Unicode
 
 from .input import create_input
@@ -14,6 +15,47 @@ from .version import __version__
 PACKAGE_NAME = "chemiscope"
 PACKAGE_VERSION = __version__
 
+def run_async_magic(coro):
+    """
+    Run a coroutine intelligently:
+    - Inside Jupyter, schedule and await it in the IPython event loop.
+    - Inside a normal script, run until complete.
+    """
+
+    print("run_async ", coro)
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        print("making new loop")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    if loop.is_running():
+        # We are inside a running loop (probably Jupyter)
+
+        try:
+            from IPython import get_ipython
+            ipython = get_ipython()
+
+            if ipython is not None:
+                # Use IPython-specific running method
+                print("running ipython ensure")
+                task = asyncio.ensure_future(coro)
+                while not task.done():
+                    loop._run_once()
+                return task.result()
+            else:
+                # No IPython? Ok, just return the coroutine (user must await)
+                return coro
+
+        except ImportError:
+            # Not in IPython, fallback
+            return coro
+
+    else:
+        # No event loop running -> normal script
+        print("run_until_complete")
+        return loop.run_until_complete(coro)
 
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
@@ -28,6 +70,11 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     settings = Dict().tag(sync=True)
     # switch to disable automatic update of settings
     _settings_sync = Bool().tag(sync=True)
+
+    # mechanisms to export images from the widget
+    _async_request_trait = Unicode("").tag(sync=True)  # Private trigger
+    exported_structure_png = Unicode("").tag(sync=True)    # Result (base64 PNG)
+    exported_map_png = Unicode("").tag(sync=True)    # Result (base64 PNG)
 
     def __init__(self, data, has_metadata):
         super().__init__()
@@ -56,6 +103,54 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
+
+    def export_structure_png(self):
+        """
+        Ask the frontend to export a PNG of the current viewer state.
+
+        :returns: future giving base64-encoded PNG string
+        """
+
+        self.exported_structure_png = "x"
+        self._async_request_trait = "x"
+
+        future = asyncio.get_event_loop().create_future()
+        def _handle_change(change):
+            if change["name"] == "exported_structure_png":
+                if not future.done():
+                    future.set_result(change["new"])
+                self.unobserve(_handle_change, names="exported_structure_png")
+
+        self.observe(_handle_change, names="exported_structure_png")
+
+        # trigger the frontend
+        self._async_request_trait = "structure_png"
+        
+        return run_async_magic(future)
+    
+    def export_map_png(self):
+        """
+        Ask the frontend to export a PNG of the current viewer state.
+
+        :returns: future giving base64-encoded PNG string
+        """
+
+        self.exported_map_png = "x"
+        self._async_request_trait = "x"
+
+        future = asyncio.get_event_loop().create_future()
+        def _handle_change(change):
+            if change["name"] == "exported_map_png":
+                if not future.done():
+                    future.set_result(change["new"])
+                self.unobserve(_handle_change, names="exported_map_png")
+
+        self.observe(_handle_change, names="exported_map_png")
+
+        # trigger the frontend
+        self._async_request_trait = "map_png"
+        
+        return run_async_magic(future)
 
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large

@@ -358,6 +358,23 @@ export class PropertiesMap {
         }
     }
 
+    
+    public async exportPNG(): Promise<string> {
+        /** exports image as PNG string */
+        const width = Math.max(this._plot._fullLayout.width, 600);
+        const ratio = this._plot._fullLayout.height / this._plot._fullLayout.width;
+        const height = width * ratio;
+    
+        const dataUrl = await Plotly.toImage(this._plot, {
+            format: 'png',
+            width: width,
+            height: height,
+            scale: 3,
+        });
+    
+        return dataUrl;
+    }
+
     /**
      * Processes the markers by updating their current value to structure or environment index on the current target
      * In 'structure' target, it set structure index, and in 'atom' target its environment index

@@ -27,6 +27,24 @@ class ChemiscopeBaseView extends DOMWidgetView {
         return super.remove();
     }
 
+    public render(): void {
+        PlausibleTracker.trackPageview({
+            url: (location.pathname.split('/')[1] || '') + '/chemiscope-view',
+        });
+
+        this.guid = `chsp-${generateGUID()}`;
+
+        this.model.on('change:_async_request_trait', () => {
+            const request = this.model.get('_async_request_trait');
+            console.log("got request ", request);
+            if (request === 'structure_png') {
+                void this._exportStructurePNG();
+            } else if (request === 'map_png') {
+                void this._exportMapPNG();
+            }
+        });
+    }
+
     protected _bindPythonSettings(): void {
         // update settings on the JS side when they are changed in Python
         this.model.on(
@@ -71,6 +89,38 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.model.save_changes();
         }
     }
+
+    protected async _exportStructurePNG(): Promise<void> {
+        console.log("print exporting png"); 
+        if (this.visualizer !== undefined && !(this.visualizer instanceof MapVisualizer)) {
+            const pngdata = await this.visualizer.structure.exportPNG();
+    
+            this.model.set('exported_structure_png', pngdata);
+        } else {
+            console.error("No structure visualizer available to export PNG");
+            this.model.set('exported_structure_png', '');
+        }
+        // resets async call
+        console.log("resetting trait"); 
+        this.model.set('_async_request_trait', '');
+        this.model.save_changes();
+    }
+
+    protected async _exportMapPNG(): Promise<void> {
+        console.log("print exporting  map png"); 
+        if (this.visualizer !== undefined && !(this.visualizer instanceof StructureVisualizer)) {
+            const pngdata = await this.visualizer.map.exportPNG();
+    
+            this.model.set('exported_map_png', pngdata);
+        } else {
+            console.error("No map visualizer available to export PNG");
+            this.model.set('exported_map_png', '');
+        }   
+        // resets async call
+        console.log("resetting trait"); 
+        this.model.set('_async_request_trait', '');
+        this.model.save_changes();
+    }
 }
 
 /**
@@ -82,11 +132,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/chemiscope-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
@@ -168,11 +214,7 @@ export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/structure-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
@@ -250,11 +292,7 @@ export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/map-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
