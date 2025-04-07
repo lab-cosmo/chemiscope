@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, getByID, makeDraggable, Warnings, sendWarning } from '../utils';
+import { PositioningCallback, getByID, makeDraggable, Warnings } from '../utils';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';
@@ -19,8 +19,6 @@ import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
 
 export class StructureOptions extends OptionsGroup {
-    public warnings: Warnings; 
-
     /// should we show bonds
     public bonds: HTMLOption<'boolean'>;
     /// should we show atoms
@@ -75,11 +73,10 @@ export class StructureOptions extends OptionsGroup {
         root: HTMLElement,
         positionSettings: PositioningCallback,
         propertiesName: string[] = [],
-        warnings? : Warnings,
+        warnings?: Warnings
     ) {
-        super();
+        super(warnings);
 
-        this.warnings = warnings?warnings:new Warnings;
         this.bonds = new HTMLOption('boolean', true);
         this.atoms = new HTMLOption('boolean', true);
         this.spaceFilling = new HTMLOption('boolean', false);
@@ -193,7 +190,7 @@ export class StructureOptions extends OptionsGroup {
         // now the only possible way of doing it
         if ('packedCell' in settings) {
             if (settings.packedCell !== false) {
-                this.warnings.send(
+                this.warnings.sendMessage(
                     'packedCell option has been removed, but it is set to true in the settings'
                 );
             }

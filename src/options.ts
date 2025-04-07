@@ -7,7 +7,7 @@
 
 import assert from 'assert';
 
-import { getByID, sendWarning } from './utils';
+import { getByID, Warnings } from './utils';
 import { Settings } from './dataset';
 
 /**
@@ -323,6 +323,13 @@ export abstract class OptionsGroup {
      * @return An object with the same structure as this class containing the
      *         values of all settings.
      */
+
+    public warnings: Warnings;
+
+    constructor(warnings?: Warnings) {
+        this.warnings = warnings ? warnings : new Warnings();
+    }
+
     public saveSettings(): Settings {
         const settings: Settings = {};
         this.foreachOption((keys, option) => {
@@ -377,7 +384,9 @@ export abstract class OptionsGroup {
                 }
                 // send warning if the value is invalid and omit applying it
                 if (value === undefined || value === null) {
-                    sendWarning(`ignored setting '${lastKey}' with invalid value '${value}'`);
+                    this.warnings.sendMessage(
+                        `ignored setting '${lastKey}' with invalid value '${value}'`
+                    );
                     return;
                 }
 
@@ -396,7 +405,7 @@ export abstract class OptionsGroup {
             }
         });
         if (Object.keys(copy).length !== 0) {
-            sendWarning(`ignored unknown settings '${JSON.stringify(copy)}'`);
+            this.warnings.sendMessage(`ignored unknown settings '${JSON.stringify(copy)}'`);
         }
     }
 

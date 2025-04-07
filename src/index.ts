@@ -20,14 +20,7 @@ import {
     UserStructure,
 } from './dataset';
 import { JsObject, getTarget, validateDataset } from './dataset';
-import {
-    GUID,
-    PositioningCallback,
-    WarningHandler,
-    Warnings,
-    addWarningHandler,
-    getNextColor,
-} from './utils';
+import { GUID, PositioningCallback, WarningHandler, Warnings, getNextColor } from './utils';
 import {
     ArrowParameters,
     CustomShapeParameters,
@@ -166,7 +159,11 @@ class DefaultVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link DefaultVisualizer}
      */
-    public static load(config: DefaultConfig, dataset: Dataset, warnings?: Warnings): Promise<DefaultVisualizer> {
+    public static load(
+        config: DefaultConfig,
+        dataset: Dataset,
+        warnings?: Warnings
+    ): Promise<DefaultVisualizer> {
         return new Promise((resolve) => {
             const visualizer = new DefaultVisualizer(config, dataset, warnings);
             resolve(visualizer);
@@ -178,6 +175,8 @@ class DefaultVisualizer {
     public meta: MetadataPanel;
     public structure: ViewersGrid;
 
+    public warnings: Warnings;
+
     private _indexer: EnvironmentIndexer;
     // Display target of the widgets, structure par default
     private _target: DisplayTarget = 'structure';
@@ -187,8 +186,6 @@ class DefaultVisualizer {
     private _pinned: GUID[];
     // Controls the display target (atom or structure)
     private _toggle: DisplayTargetToggle | undefined;
-
-    public warnings: Warnings;
 
     // the constructor is private because the main entry point is the static
     // `load` function
@@ -203,10 +200,9 @@ class DefaultVisualizer {
         this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
-        this.warnings = warnings ? warnings : new Warnings;
+        this.warnings = warnings ? warnings : new Warnings();
 
         // Structure viewer setup
-        console.log("loading grid with warnings", this.warnings);
         this.structure = new ViewersGrid(
             config.structure,
             this._indexer,
@@ -253,7 +249,8 @@ class DefaultVisualizer {
             getMapSettings(dataset.settings),
             this._indexer,
             this._target,
-            dataset.properties
+            dataset.properties,
+            this.warnings
         );
 
         this.map.onselect = (indexes) => {
@@ -283,7 +280,8 @@ class DefaultVisualizer {
             dataset.properties,
             this._indexer,
             this._target,
-            dataset.parameters
+            dataset.parameters,
+            this.warnings
         );
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
@@ -539,9 +537,13 @@ class StructureVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link StructureVisualizer}
      */
-    public static load(config: StructureConfig, dataset: Dataset): Promise<StructureVisualizer> {
+    public static load(
+        config: StructureConfig,
+        dataset: Dataset,
+        warnings?: Warnings
+    ): Promise<StructureVisualizer> {
         return new Promise((resolve) => {
-            const visualizer = new StructureVisualizer(config, dataset);
+            const visualizer = new StructureVisualizer(config, dataset, warnings);
             resolve(visualizer);
         });
     }
@@ -550,19 +552,22 @@ class StructureVisualizer {
     public meta: MetadataPanel;
     public structure: ViewersGrid;
 
+    public warnings: Warnings;
+
     private _indexer: EnvironmentIndexer;
     private _target: DisplayTarget;
 
     // the constructor is private because the main entry point is the static
     // `load` function
-    private constructor(config: StructureConfig, dataset: Dataset) {
+    private constructor(config: StructureConfig, dataset: Dataset, warnings?: Warnings) {
         validateConfig(config as unknown as JsObject, ['meta', 'info', 'structure']);
         validateDataset(dataset as unknown as JsObject);
 
         this._target = getTarget(dataset);
         this._indexer = new EnvironmentIndexer(dataset.structures, dataset.environments);
-
         this.meta = new MetadataPanel(config.meta, dataset.meta);
+
+        this.warnings = warnings ? warnings : new Warnings();
 
         // Structure viewer setup
         this.structure = new ViewersGrid(
@@ -572,7 +577,8 @@ class StructureVisualizer {
             this._target,
             dataset.properties,
             dataset.environments,
-            1 // only allow one structure
+            1, // only allow one structure
+            this.warnings
         );
 
         if (config.loadStructure !== undefined) {
@@ -596,7 +602,9 @@ class StructureVisualizer {
             config.info,
             dataset.properties,
             this._indexer,
-            this._target
+            this._target,
+            undefined,
+            this.warnings
         );
         this.info.onchange = (indexes) => {
             this.structure.show(indexes);
@@ -706,9 +714,13 @@ class MapVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link MapVisualizer}
      */
-    public static load(config: MapConfig, dataset: Dataset): Promise<MapVisualizer> {
+    public static load(
+        config: MapConfig,
+        dataset: Dataset,
+        warnings?: Warnings
+    ): Promise<MapVisualizer> {
         return new Promise((resolve) => {
-            const visualizer = new MapVisualizer(config, dataset);
+            const visualizer = new MapVisualizer(config, dataset, warnings);
             resolve(visualizer);
         });
     }
@@ -717,6 +729,8 @@ class MapVisualizer {
     public map: PropertiesMap;
     public meta: MetadataPanel;
 
+    public warnings: Warnings;
+
     private _indexer: EnvironmentIndexer;
 
     // Display target of the map widget, structure par default
@@ -724,7 +738,7 @@ class MapVisualizer {
 
     // the constructor is private because the main entry point is the static
     // `load` function
-    private constructor(config: MapConfig, dataset: Dataset) {
+    private constructor(config: MapConfig, dataset: Dataset, warnings?: Warnings) {
         validateConfig(config as unknown as JsObject, ['meta', 'map', 'info']);
         validateDataset(dataset as unknown as JsObject);
 
@@ -773,13 +787,16 @@ class MapVisualizer {
 
         this.meta = new MetadataPanel(config.meta, dataset.meta);
 
+        this.warnings = warnings ? warnings : new Warnings();
+
         // map setup
         this.map = new PropertiesMap(
             config.map,
             getMapSettings(dataset.settings),
             this._indexer,
             this._target,
-            dataset.properties
+            dataset.properties,
+            this.warnings
         );
 
         this.map.onselect = (indexes) => {
@@ -795,7 +812,9 @@ class MapVisualizer {
             config.info,
             dataset.properties,
             this._indexer,
-            this._target
+            this._target,
+            undefined,
+            (warnings = this.warnings)
         );
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
@@ -899,7 +918,6 @@ function getMapSettings(settings: Partial<Settings> | undefined): Settings {
 
 export {
     // free functions
-    addWarningHandler,
     version,
     // dataset definitions
     Dataset,
@@ -935,4 +953,5 @@ export {
     PositioningCallback,
     Indexes,
     WarningHandler,
+    Warnings,
 };

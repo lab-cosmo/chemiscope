@@ -4,7 +4,7 @@
  */
 
 import { Property } from '../dataset';
-import { sendWarning } from '../utils';
+import { Warnings } from '../utils';
 
 /** @hidden
  * Properties turned into numeric values to be displayed on the map.
@@ -134,19 +134,21 @@ export class MapData {
     public atom: NumericProperties;
     /** Maximal number of symbols (i.e. different values in string properties) in this dataset */
     public maxSymbols: number;
+    public warnings: Warnings;
 
     /** Create a new {@link MapData} containing values from the given properties */
-    constructor(properties: { [name: string]: Property }) {
+    constructor(properties: { [name: string]: Property }, warnings?: Warnings) {
         this.structure = {};
         this.atom = {};
         this.maxSymbols = -1;
+        this.warnings = warnings ? warnings : new Warnings();
 
         for (const name in properties) {
             let property;
             try {
                 property = propertyToNumeric(name, properties[name]);
             } catch (e) {
-                sendWarning(`warning: ${(e as Error).message}`);
+                this.warnings.sendMessage(`warning: ${(e as Error).message}`);
                 continue;
             }
             if (property !== undefined) {

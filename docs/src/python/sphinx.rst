@@ -49,7 +49,7 @@ and the ``map`` mode only the property map
 
 .. chemiscope:: ../datasets/showcase.json.gz
     :mode: map
-    :warning_timeout: 0.0 
+    :warning_timeout: 0 
     
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

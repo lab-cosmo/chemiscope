@@ -18,11 +18,13 @@ async function loadChemiscopeSphinx(
     visualizerMode = VISUALISER_MODE.DEFAULT,
     timeout = 4000
 ) {
-    // Handle warnings
-    Chemiscope.addWarningHandler((message) => displayWarning(divId, message, timeout));
     // Display loading
     toggleLoadingVisible(divId, true);
 
+    const warnings = new Chemiscope.Warnings;
+    warnings.timeout = timeout; // defaults to 4s visibility
+    warnings.addHandler((message) => { displayWarning(divId, message, warnings.timeout)});
+    
     // Load the visualizer
     try {
         const dataset = await fetchDataset(filePath);
@@ -41,7 +43,7 @@ async function loadChemiscopeSphinx(
 
         // Load widget
         const visualiser = getVisualizer(visualizerMode);
-        await visualiser.load(config, dataset);
+        let viz = await visualiser.load(config, dataset, warnings);
     } catch (error) {
         // Display errors
         console.error(error);
