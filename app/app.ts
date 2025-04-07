@@ -285,7 +285,8 @@ export class ChemiscopeApp {
 
 function displayWarning(message: string, timeout: number = 4000) {
     // draws a message box (and closes after the specified timeout)
-    if (timeout > 0) { // use a negative timeout not to print messages
+    if (timeout > 0) {
+        // use a negative timeout not to print messages
         const display = getByID('warning-display');
         display.getElementsByTagName('p')[0].innerText = message;
         display.style.display = 'block';
