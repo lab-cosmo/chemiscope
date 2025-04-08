@@ -4,7 +4,7 @@ import json
 import warnings
 
 import ipywidgets
-import asyncio
+import asyncio, base64
 from traitlets import Bool, Dict, Unicode
 
 from .input import create_input
@@ -15,47 +15,27 @@ from .version import __version__
 PACKAGE_NAME = "chemiscope"
 PACKAGE_VERSION = __version__
 
-def run_async_magic(coro):
+def save_base64_png(base64_string, filename=None):
     """
-    Run a coroutine intelligently:
-    - Inside Jupyter, schedule and await it in the IPython event loop.
-    - Inside a normal script, run until complete.
+    Save a base64-encoded PNG (possibly with data URI prefix) to an actual file.
     """
 
-    print("run_async ", coro)
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        print("making new loop")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    if filename is None:
+        return
 
-    if loop.is_running():
-        # We are inside a running loop (probably Jupyter)
+    print("saving png on ", filename)
 
-        try:
-            from IPython import get_ipython
-            ipython = get_ipython()
+    # If it starts with a data URI prefix, strip it
+    if base64_string.startswith("data:image/png;base64,"):
+        base64_string = base64_string[len("data:image/png;base64,"):]
 
-            if ipython is not None:
-                # Use IPython-specific running method
-                print("running ipython ensure")
-                task = asyncio.ensure_future(coro)
-                while not task.done():
-                    loop._run_once()
-                return task.result()
-            else:
-                # No IPython? Ok, just return the coroutine (user must await)
-                return coro
+    # Decode base64 to raw bytes
+    png_bytes = base64.b64decode(base64_string)
 
-        except ImportError:
-            # Not in IPython, fallback
-            return coro
+    # Write bytes to file
+    with open(filename, "wb") as f:
+        f.write(png_bytes)    
 
-    else:
-        # No event loop running -> normal script
-        print("run_until_complete")
-        return loop.run_until_complete(coro)
 
 class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
@@ -103,54 +83,64 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
-
-    def export_structure_png(self):
-        """
-        Ask the frontend to export a PNG of the current viewer state.
-
-        :returns: future giving base64-encoded PNG string
-        """
-
-        self.exported_structure_png = "x"
-        self._async_request_trait = "x"
-
-        future = asyncio.get_event_loop().create_future()
-        def _handle_change(change):
-            if change["name"] == "exported_structure_png":
-                if not future.done():
-                    future.set_result(change["new"])
-                self.unobserve(_handle_change, names="exported_structure_png")
-
-        self.observe(_handle_change, names="exported_structure_png")
-
-        # trigger the frontend
-        self._async_request_trait = "structure_png"
-        
-        return run_async_magic(future)
     
-    def export_map_png(self):
-        """
-        Ask the frontend to export a PNG of the current viewer state.
-
-        :returns: future giving base64-encoded PNG string
-        """
-
-        self.exported_map_png = "x"
+    async def _reset_request(self, traits=[]):
         self._async_request_trait = "x"
+        for trait_name in traits:
+            setattr(self, trait_name, "x")
 
-        future = asyncio.get_event_loop().create_future()
+    async def export_png(self, mode="structure", filename=None, timeout=4):
+        """
+        Export a PNG from the viewer.
+
+        :param kind: either "structure" or "map"
+        :param filename: if given, save the PNG to this path
+        :param timeout: timeout in seconds
+        
+        :returns: base64 PNG string
+        """
+        if mode not in ("structure", "map"):
+            raise ValueError(f"Unknown export kind: {kind}. Must be 'structure' or 'map'.")
+
+        # Decide which traits to work with
+        if mode == "structure":
+            trait_name = "exported_structure_png"
+            request_value = "structure_png"
+        else:
+            trait_name = "exported_map_png"
+            request_value = "map_png"
+
+        # Reset the values
+        await self._reset_request([trait_name])
+
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
         def _handle_change(change):
-            if change["name"] == "exported_map_png":
+            print("handle ", change, trait_name)
+            if change["name"] == trait_name:
                 if not future.done():
                     future.set_result(change["new"])
-                self.unobserve(_handle_change, names="exported_map_png")
+                self.unobserve(_handle_change, names=trait_name)
 
-        self.observe(_handle_change, names="exported_map_png")
+        # Observe first
+        self.observe(_handle_change, names=trait_name)
 
-        # trigger the frontend
-        self._async_request_trait = "map_png"
-        
-        return run_async_magic(future)
+        await asyncio.sleep(0)
+
+        # Trigger the frontend
+        self._async_request_trait = request_value
+
+        try:
+            png_uri = await asyncio.wait_for(future, timeout)
+        except asyncio.TimeoutError:
+            self.unobserve(_handle_change, names=trait_name)
+            raise TimeoutError(f"Timeout waiting for frontend to return {trait_name} after {timeout} seconds.")
+
+        # Save if filename provided
+        save_base64_png(png_uri, filename)
+
+        return png_uri
 
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large

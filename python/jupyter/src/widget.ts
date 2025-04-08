@@ -39,9 +39,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
             console.log("got request ", request);
             if (request === 'structure_png') {
                 void this._exportStructurePNG();
+                console.log("request done");
             } else if (request === 'map_png') {
                 void this._exportMapPNG();
-            }
+            }            
         });
     }
 
@@ -91,11 +92,12 @@ class ChemiscopeBaseView extends DOMWidgetView {
     }
 
     protected async _exportStructurePNG(): Promise<void> {
-        console.log("print exporting png"); 
+        console.log("exporting structure png"); 
         if (this.visualizer !== undefined && !(this.visualizer instanceof MapVisualizer)) {
             const pngdata = await this.visualizer.structure.exportPNG();
     
             this.model.set('exported_structure_png', pngdata);
+            console.log("set pngdata, ", pngdata.length);
         } else {
             console.error("No structure visualizer available to export PNG");
             this.model.set('exported_structure_png', '');
@@ -104,6 +106,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         console.log("resetting trait"); 
         this.model.set('_async_request_trait', '');
         this.model.save_changes();
+        console.log("export_png done"); 
     }
 
     protected async _exportMapPNG(): Promise<void> {
