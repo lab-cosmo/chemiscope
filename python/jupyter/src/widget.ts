@@ -19,11 +19,11 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
     protected warnings: Warnings = new Warnings();
-    protected static className: string = 'base-view';
+    protected getClassName(): string { return "base-view"; }
 
     public render(): void {
         PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/' + (this.className as string),
+            url: (location.pathname.split('/')[1] || '') + '/' + (this.getClassName() as string),
         });
 
         this.guid = `chsp-${generateGUID()}`;
@@ -99,7 +99,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
-    protected static className = 'chemiscope-view';
+    protected getClassName(): string { return "chemiscope-view"; }
 
     public render(): void {
         super.render();
@@ -181,7 +181,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
-    protected static className = 'structure-view';
+    protected getClassName(): string { return "structure-view"; }
 
     public render(): void {
         super.render();
@@ -259,7 +259,7 @@ export class StructureView extends ChemiscopeBaseView {
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
-    protected static className = 'map-view';
+    protected getClassName(): string { return "map-view"; }
 
     public render(): void {
         super.render();
