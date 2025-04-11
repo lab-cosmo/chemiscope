@@ -22,8 +22,8 @@ async function loadChemiscopeSphinx(
     toggleLoadingVisible(divId, true);
 
     const warnings = new Chemiscope.Warnings;
-    warnings.timeout = timeout; // defaults to 4s visibility
-    warnings.addHandler((message) => { displayWarning(divId, message, warnings.timeout)});
+    warnings.defaultTimeout = timeout; // defaults to 4s visibility
+    warnings.addHandler((message, timeout) => { displayWarning(divId, message, timeout)});
     
     // Load the visualizer
     try {
@@ -174,15 +174,17 @@ function hideElement(elementId) {
  * Displays a warning message in the specified div
  */
 function displayWarning(divId, message, timeout) {
-    if (timeout <= 0) {
+    if (timeout < 0) {
         return;
     }
     const display = document.getElementById(`${divId}-warning-display`);
     display.getElementsByTagName('p')[0].innerText = message;
     display.style.display = 'flex';
 
-    // Automatically remove the warning after 4 seconds
-    setTimeout(() => {
-        display.style.display = 'none';
-    }, timeout);
+    if (timeout>0) {
+        // Automatically remove the warning after the set timeout seconds
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
+    }
 }

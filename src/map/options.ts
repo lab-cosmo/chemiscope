@@ -35,7 +35,7 @@ export class AxisOptions extends OptionsGroup {
     public min: HTMLOption<'number'>;
     public max: HTMLOption<'number'>;
 
-    constructor(validProperties: string[], warnings?: Warnings) {
+    constructor(validProperties: string[], warnings: Warnings) {
         assert(validProperties.length > 0);
         super(warnings);
         this.max = new HTMLOption('number', NaN);
@@ -94,7 +94,7 @@ export class MapOptions extends OptionsGroup {
         properties: NumericProperties,
         positionSettings: PositioningCallback,
         settings: Settings = {},
-        warnings?: Warnings
+        warnings: Warnings
     ) {
         super(warnings);
 

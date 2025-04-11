@@ -4,14 +4,14 @@
  */
 
 /** A {@link WarningHandler} is called when a new warning is emitted */
-export type WarningHandler = (message: string) => void;
+export type WarningHandler = (message: string, timeout?: number) => void;
 
 /** A minimalistic class to handle warnings */
 export class Warnings {
     // set to zero for no timeout, to a negative value to
     // disable warnings. handlers can use the value given here
     // to hide the warnings after a given time
-    public timeout: number = 0;
+    public defaultTimeout: number = 0;
 
     private handlersList: WarningHandler[] = [
         // eslint-disable-next-line no-console
@@ -24,12 +24,14 @@ export class Warnings {
     }
 
     /** Sends a warning message though all handlers */
-    public sendMessage(message: string): void {
-        if (this.timeout < 0) {
+    public sendMessage(message: string, userTimeout: number = 0): void {
+        const timeout = userTimeout || this.defaultTimeout;
+        if (timeout < 0) {
             return;
         }
+
         for (const cb of this.handlersList) {
-            cb(message);
+            cb(message, timeout);
         }
     }
 }

@@ -152,9 +152,9 @@ export class ChemiscopeApp {
         }
 
         // adds warning handler
-        this.warnings.timeout = 4000; // 4s visibility
-        this.warnings.addHandler((message) => {
-            displayWarning(message, this.warnings.timeout);
+        this.warnings.defaultTimeout = 4000; // 4s visibility
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, timeout);
         });
 
         this.visualizer = await DefaultVisualizer.load(config, dataset, this.warnings);

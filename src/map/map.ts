@@ -252,7 +252,7 @@ export class PropertiesMap {
         indexer: EnvironmentIndexer,
         target: DisplayTarget,
         properties: { [name: string]: Property },
-        warnings?: Warnings
+        warnings: Warnings
     ) {
         this._indexer = indexer;
         this._target = target;
@@ -260,7 +260,7 @@ export class PropertiesMap {
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
 
-        this.warnings = warnings ? warnings : new Warnings();
+        this.warnings = warnings;
 
         // DOM structure outside the map:
         // - containerElement/element (#chemiscope-map)

@@ -326,8 +326,8 @@ export abstract class OptionsGroup {
 
     public warnings: Warnings;
 
-    constructor(warnings?: Warnings) {
-        this.warnings = warnings ? warnings : new Warnings();
+    constructor(warnings: Warnings) {
+        this.warnings = warnings;
     }
 
     public saveSettings(): Settings {

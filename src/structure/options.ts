@@ -73,7 +73,7 @@ export class StructureOptions extends OptionsGroup {
         root: HTMLElement,
         positionSettings: PositioningCallback,
         propertiesName: string[] = [],
-        warnings?: Warnings
+        warnings: Warnings = new Warnings()
     ) {
         super(warnings);
 

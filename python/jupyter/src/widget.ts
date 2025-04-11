@@ -87,7 +87,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected _updateWarningTimeout(): void {
         const timeout = this.model.get('warning_timeout') as unknown;
         if (typeof timeout === 'number') {
-            this.warnings.timeout = timeout;
+            this.warnings.defaultTimeout = timeout;
         }
     }
 }
@@ -109,8 +109,8 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         const element = this.el;
 
         this._updateWarningTimeout();
-        this.warnings.addHandler((message) => {
-            displayWarning(message, element, this.guid, this.warnings.timeout);
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
@@ -191,8 +191,8 @@ export class StructureView extends ChemiscopeBaseView {
         const element = this.el;
 
         this._updateWarningTimeout();
-        this.warnings.addHandler((message) => {
-            displayWarning(message, element, this.guid, this.warnings.timeout);
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
@@ -269,8 +269,8 @@ export class MapView extends ChemiscopeBaseView {
         const element = this.el;
 
         this._updateWarningTimeout();
-        this.warnings.addHandler((message) => {
-            displayWarning(message, element, this.guid, this.warnings.timeout);
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
@@ -337,11 +337,13 @@ function displayWarning(
     guid: string,
     timeout: number = 4000
 ) {
-    if (timeout > 0) {
-        const display = getByID(`${guid}-warning-display`, element);
-        display.style.display = 'block';
-        display.getElementsByTagName('p')[0].innerText = message;
+    if (timeout < 0) return;
 
+    const display = getByID(`${guid}-warning-display`, element);
+    display.style.display = 'block';
+    display.getElementsByTagName('p')[0].innerText = message;
+
+    if (timeout>0) {
         // automatically remove the warning after a set timeout
         setTimeout(() => {
             display.style.display = 'none';

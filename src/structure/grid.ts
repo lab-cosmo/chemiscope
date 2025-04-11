@@ -179,7 +179,7 @@ export class ViewersGrid {
         properties?: { [name: string]: Property },
         environments?: Environment[],
         maxViewers: number = 9,
-        warnings?: Warnings
+        warnings: Warnings = new Warnings()
     ) {
         this._target = target;
         this._structures = structures;
@@ -220,7 +220,7 @@ export class ViewersGrid {
             }
         };
 
-        this.warnings = warnings ? warnings : new Warnings();
+        this.warnings = warnings;
 
         // Initializes with 1 viewer upon opening.
         this._cellsData = new Map<GUID, ViewerGridData>();
