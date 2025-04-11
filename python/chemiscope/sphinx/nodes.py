@@ -57,7 +57,8 @@ def generate_html_content(
     Parameters:
     - filepath (str): The path to the generated dataset
     - mode (str): The display mode for the visualization
-    - warning_timeout (float): The timeout for hiding warning messages, in ms
+    - warning_timeout (float): The timeout for hiding warning messages (ms)
+        Set to -1 to disable warnings, and to zero to make them persistent.
 
     Returns:
     - str: The chemiscope widget wrapped in the html

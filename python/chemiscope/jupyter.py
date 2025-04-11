@@ -38,6 +38,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         if "settings" in data:
             self.settings = data["settings"]
         self._settings_sync = True
+        # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
 
     def save(self, path):
@@ -118,7 +119,8 @@ def show_input(path, mode="default", warning_timeout=10000):
     :param str path: load the chemiscope widget from path.
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
-    :param float warning_timeout: timeout (in ms) for warnings
+    :param float warning_timeout: timeout (in ms) for warnings. Set to a
+        negative value to disable warnings, and to zero to make them persistent.
 
     .. code-block:: python
 
@@ -193,7 +195,7 @@ def show(
     "map"``). These modes also make it possible to view a dataset for which properties
     (or frames) are not available. The widget displays warning messages, that disappear
     after the specified ``warning_timeout`` (in ms). Set to a negative value to disable
-    warnings.
+    warnings, and to zero to make them persistent.
 
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that

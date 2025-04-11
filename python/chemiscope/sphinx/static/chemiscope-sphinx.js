@@ -43,7 +43,7 @@ async function loadChemiscopeSphinx(
 
         // Load widget
         const visualiser = getVisualizer(visualizerMode);
-        let viz = await visualiser.load(config, dataset, warnings);
+        await visualiser.load(config, dataset, warnings);
     } catch (error) {
         // Display errors
         console.error(error);
