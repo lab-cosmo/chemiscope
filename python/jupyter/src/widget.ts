@@ -23,7 +23,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
     public render(): void {
         PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/' + (this.getClassName() as string),
+            url: (location.pathname.split('/')[1] || '') + '/' + (this.getClassName()),
         });
 
         this.guid = `chsp-${generateGUID()}`;
