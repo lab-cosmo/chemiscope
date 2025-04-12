@@ -19,11 +19,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
     protected warnings: Warnings = new Warnings();
-    protected getClassName(): string { return "base-view"; }
+    protected getClassName(): string {
+        return 'base-view';
+    }
 
     public render(): void {
         PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/' + (this.getClassName()),
+            url: (location.pathname.split('/')[1] || '') + '/' + this.getClassName(),
         });
 
         this.guid = `chsp-${generateGUID()}`;
@@ -99,7 +101,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
-    protected getClassName(): string { return "chemiscope-view"; }
+    protected getClassName(): string {
+        return 'chemiscope-view';
+    }
 
     public render(): void {
         super.render();
@@ -181,7 +185,9 @@ export class ChemiscopeView extends ChemiscopeBaseView {
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
-    protected getClassName(): string { return "structure-view"; }
+    protected getClassName(): string {
+        return 'structure-view';
+    }
 
     public render(): void {
         super.render();
@@ -259,7 +265,9 @@ export class StructureView extends ChemiscopeBaseView {
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
-    protected getClassName(): string { return "map-view"; }
+    protected getClassName(): string {
+        return 'map-view';
+    }
 
     public render(): void {
         super.render();
@@ -343,7 +351,7 @@ function displayWarning(
     display.style.display = 'block';
     display.getElementsByTagName('p')[0].innerText = message;
 
-    if (timeout>0) {
+    if (timeout > 0) {
         // automatically remove the warning after a set timeout
         setTimeout(() => {
             display.style.display = 'none';
