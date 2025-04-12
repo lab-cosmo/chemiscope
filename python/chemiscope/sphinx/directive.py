@@ -13,7 +13,7 @@ class ChemiscopeDirective(Directive):
     JSON or gzipped JSON file, relative to the path of the RST file, and `mode`, which
     can be `default`, `structure` or `map` depending on the desired type of
     visualization. `warning_timeout` specifies the time in milliseconds to display
-    a warning (set it to zero to disable warnings).
+    a warning (set it to 0 to make them persistent, and to -1 to disable).
 
     e.g.::
 
