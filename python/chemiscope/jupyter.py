@@ -4,7 +4,7 @@ import json
 import warnings
 
 import ipywidgets
-from traitlets import Bool, Dict, Unicode
+from traitlets import Bool, Dict, Int, Unicode
 
 from .input import create_input
 from .version import __version__
@@ -28,14 +28,18 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     settings = Dict().tag(sync=True)
     # switch to disable automatic update of settings
     _settings_sync = Bool().tag(sync=True)
+    # timeout for warning messages
+    warning_timeout = Int(10000).tag(sync=True)
 
-    def __init__(self, data, has_metadata):
+    def __init__(self, data, has_metadata, warning_timeout=10000):
         super().__init__()
         self.value = json.dumps(data)
         self.has_metadata = has_metadata
         if "settings" in data:
             self.settings = data["settings"]
         self._settings_sync = True
+        # timeout for warning messages (ms). 0 to make persistent, -1 to disable
+        self.warning_timeout = warning_timeout
 
     def save(self, path):
         """
@@ -86,27 +90,27 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 class ChemiscopeWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("ChemiscopeView").tag(sync=True)
 
-    def __init__(self, data, has_metadata):
-        super().__init__(data, has_metadata)
+    def __init__(self, data, has_metadata, warning_timeout):
+        super().__init__(data, has_metadata, warning_timeout)
 
 
 @ipywidgets.register
 class StructureWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("StructureView").tag(sync=True)
 
-    def __init__(self, data, has_metadata):
-        super().__init__(data, has_metadata)
+    def __init__(self, data, has_metadata, warning_timeout):
+        super().__init__(data, has_metadata, warning_timeout)
 
 
 @ipywidgets.register
 class MapWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
 
-    def __init__(self, data, has_metadata):
-        super().__init__(data, has_metadata)
+    def __init__(self, data, has_metadata, warning_timeout):
+        super().__init__(data, has_metadata, warning_timeout)
 
 
-def show_input(path, mode="default"):
+def show_input(path, mode="default", warning_timeout=10000):
     """
     Loads and shows the chemiscope widget in ``path``.
     If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed
@@ -115,6 +119,8 @@ def show_input(path, mode="default"):
     :param str path: load the chemiscope widget from path.
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
+    :param float warning_timeout: timeout (in ms) for warnings. Set to a
+        negative value to disable warnings, and to zero to make them persistent.
 
     .. code-block:: python
 
@@ -163,7 +169,9 @@ def show_input(path, mode="default"):
     except KeyError:
         raise ValueError("missing metadata in chemiscope.load")
 
-    return widget_class(dict_input, has_metadata=has_metadata)
+    return widget_class(
+        dict_input, has_metadata=has_metadata, warning_timeout=warning_timeout
+    )
 
 
 def show(
@@ -174,6 +182,7 @@ def show(
     shapes=None,
     settings=None,
     mode="default",
+    warning_timeout=10000,
 ):
     """
     Show the dataset defined by the given ``frames`` and ``properties`` (optionally
@@ -184,7 +193,9 @@ def show(
     The ``mode`` keyword also allows overriding the default two-panels visualization to
     show only a structure panel (``mode = "structure"``) or the map panel (``mode =
     "map"``). These modes also make it possible to view a dataset for which properties
-    (or frames) are not available.
+    (or frames) are not available. The widget displays warning messages, that disappear
+    after the specified ``warning_timeout`` (in ms). Set to a negative value to disable
+    warnings, and to zero to make them persistent.
 
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
@@ -277,7 +288,10 @@ def show(
         # and error is only visible in the console
         if len(dict_input["properties"]) < 2:
             raise ValueError("Need at least two properties to visualize a map widget")
-    return widget_class(dict_input, has_metadata=has_metadata)
+
+    return widget_class(
+        dict_input, has_metadata=has_metadata, warning_timeout=warning_timeout
+    )
 
 
 def _is_running_in_notebook():

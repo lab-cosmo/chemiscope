@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" dir="ltr">
     <head>
         <meta charset="utf-8" />
@@ -15,17 +15,21 @@
             // defines available examples (filename:label)
             var examples = {
                 'Arginine-Dipeptide': 'Arginine Dipeptide',
-                'AlphaMu': 'Dielectric Response',
+                AlphaMu: 'Dielectric Response',
                 'CSD-1000R': 'Chemical Shieldings',
                 'ROY-GCH': 'Generalized Convex Hull',
-                'Qm7b': 'Qm7b',
-                'Azaphenacenes': 'Azaphenacenes',
-                'Zeolites': 'Zeolites'
-            };        
+                Qm7b: 'Qm7b',
+                Azaphenacenes: 'Azaphenacenes',
+                Zeolites: 'Zeolites',
+            };
         </script>
 
         <!-- analytics -->
-        <script defer data-domain="chemiscope.org" src="https://plausible.io/js/plausible.js"></script>
+        <script
+            defer
+            data-domain="chemiscope.org"
+            src="https://plausible.io/js/plausible.js"
+        ></script>
 
         <!-- jquery -->
         <script
@@ -35,7 +39,10 @@
         ></script>
 
         <!-- font-awesome -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css"
+        />
         <link rel="icon" type="image/png" href="chemiscope-icon.png" sizes="32x32" />
         <script type="text/javascript" src="chemiscope-app.min.js"></script>
     </head>
@@ -60,15 +67,21 @@
                     <div class="collapse navbar-collapse" id="navbar">
                         <ul class="navbar-nav mr-auto">
                             <li class="nav-item">
-                                <a class="nav-link" href="https://chemiscope.org/docs/"><i class="fa fa-book"></i> Documentation</a>
+                                <a class="nav-link" href="https://chemiscope.org/docs/"
+                                    ><i class="fa fa-book"></i> Documentation</a
+                                >
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="modal" href="#about"><i class="fa fa-user"></i> About</a>
+                                <a class="nav-link" data-bs-toggle="modal" href="#about"
+                                    ><i class="fa fa-user"></i> About</a
+                                >
                             </li>
 
                             <li class="nav-item hide-if-standalone">
-                                <a class="nav-link" data-bs-toggle="modal" href="#sources"><i class="fa fa-download"></i> Sources</a>
+                                <a class="nav-link" data-bs-toggle="modal" href="#sources"
+                                    ><i class="fa fa-download"></i> Sources</a
+                                >
                             </li>
 
                             <li class="nav-item dropdown hide-if-standalone">
@@ -83,13 +96,19 @@
                                 >
                                     <i class="fa fa-images"></i> Examples
                                 </a>
-                                <div class="dropdown-menu" aria-labelledby="examples" id="examples-dropdown">
+                                <div
+                                    class="dropdown-menu"
+                                    aria-labelledby="examples"
+                                    id="examples-dropdown"
+                                >
                                     <!-- Menu items will be populated here based on the example dictionary defined above -->
                                 </div>
                             </li>
 
                             <li>
-                                <a class="nav-link" data-bs-toggle="modal" href="#load-save"> <i class="fa fa-file"></i> Load/Save </a>
+                                <a class="nav-link" data-bs-toggle="modal" href="#load-save">
+                                    <i class="fa fa-file"></i> Load/Save
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -98,7 +117,12 @@
         </header>
 
         <div class="container" style="height: 1em; padding: 0">
-            <div class="alert alert-dismissible alert-danger pop-on-top" role="alert" id="error-display" style="display: none">
+            <div
+                class="alert alert-dismissible alert-danger pop-on-top"
+                role="alert"
+                id="error-display"
+                style="display: none"
+            >
                 <button
                     type="button"
                     class="btn-close"
@@ -112,7 +136,12 @@
                 </details>
             </div>
 
-            <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="warning-display" style="display: none">
+            <div
+                class="alert alert-warning alert-dismissible pop-on-top"
+                role="alert"
+                id="warning-display"
+                style="display: none"
+            >
                 <p></p>
                 <button
                     type="button"
@@ -132,13 +161,18 @@
 
         <footer class="footer">
             <div class="container">
-                <div style="float: left; font-size: x-small">Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a></div>
+                <div style="float: left; font-size: x-small">
+                    Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a>
+                </div>
                 <div style="float: right; font-size: x-small">
-                    <i class="far fa-copyright"></i> 2021 <a href="https://cosmo.epfl.ch">COSMO@EPFL</a>
+                    <i class="far fa-copyright"></i> 2021
+                    <a href="https://cosmo.epfl.ch">COSMO@EPFL</a>
                     &nbsp; - &nbsp;
                     <span id="chemiscope-version">unknown version</span>
                 </div>
-                <div style="text-align: center">Chemiscope: interactive structure/property explorer for materials and molecules</div>
+                <div style="text-align: center">
+                    Chemiscope: interactive structure/property explorer for materials and molecules
+                </div>
             </div>
         </footer>
 
@@ -146,28 +180,43 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Chemiscope: interactive structure/property explorer for materials and molecules</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title">
+                            Chemiscope: interactive structure/property explorer for materials and
+                            molecules
+                        </h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
                     </div>
                     <div class="modal-body">
                         <p>
-                            Chemiscope is a tool for interactive exploration of databases of materials and molecules, correlating local and global
-                            structural representations with the properties of the systems.
+                            Chemiscope is a tool for interactive exploration of databases of
+                            materials and molecules, correlating local and global structural
+                            representations with the properties of the systems.
                         </p>
 
                         <p>
-                            Chemiscope is free and open source, distributed under the BSD license. It is developed by
-                            <a href="https://guillaume.fraux.fr">Guillaume Fraux</a> in the <a href="https://cosmo.epfl.ch">COSMO lab</a> at EPFL,
-                            with support from the <a href="http://nccr-marvel.ch">NCCR MARVEL</a> and <a href="http://max-centre.eu">MaX</a> European
-                            Centre of Excellence. Early development was influenced by the
-                            <a href="https://github.com/lab-cosmo/isv"> Interactive Sketch-map Visualizer</a>
+                            Chemiscope is free and open source, distributed under the BSD license.
+                            It is developed by
+                            <a href="https://guillaume.fraux.fr">Guillaume Fraux</a> in the
+                            <a href="https://cosmo.epfl.ch">COSMO lab</a> at EPFL, with support from
+                            the <a href="http://nccr-marvel.ch">NCCR MARVEL</a> and
+                            <a href="http://max-centre.eu">MaX</a> European Centre of Excellence.
+                            Early development was influenced by the
+                            <a href="https://github.com/lab-cosmo/isv">
+                                Interactive Sketch-map Visualizer</a
+                            >
                         </p>
 
                         <h5>References</h5>
                         <ul class="references">
                             <li>
                                 <a href="https://doi.org/10.21105/joss.02117">
-                                    Chemiscope: interactive structure-property explorer for materials and molecules
+                                    Chemiscope: interactive structure-property explorer for
+                                    materials and molecules
                                 </a>
                                 <br />G Fraux, RK Cersonsky, M Ceriotti - JOSS, 2020
                             </li>
@@ -182,23 +231,32 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Download chemiscope</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
                     </div>
                     <div class="modal-body">
                         <p>
-                            Chemiscope consists in a set of JavaScript modules to visualize atomic structures and map associated data. These modules
-                            can be assembled into all sorts of interactive visualization tools, such as that which you can use on these pages.
+                            Chemiscope consists in a set of JavaScript modules to visualize atomic
+                            structures and map associated data. These modules can be assembled into
+                            all sorts of interactive visualization tools, such as that which you can
+                            use on these pages.
                         </p>
 
                         <p>
                             If you are a developer you may be interested in downloading the
-                            <a href="https://github.com/lab-cosmo/chemiscope"> source code</a>, which is available on GitHub.
+                            <a href="https://github.com/lab-cosmo/chemiscope"> source code</a>,
+                            which is available on GitHub.
                         </p>
 
                         <p>
                             If you are a user, you may want to download a
                             <a href="chemiscope_standalone.html" download> standalone version </a>
-                            of the standard viewer, which you can use to display locally datasets prepared in the chemiscope JSON format.
+                            of the standard viewer, which you can use to display locally datasets
+                            prepared in the chemiscope JSON format.
                         </p>
                     </div>
                 </div>
@@ -210,21 +268,34 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Load and save data</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-load-save-modal"></button>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                            id="close-load-save-modal"
+                        ></button>
                     </div>
 
                     <div class="modal-body">
                         <h5>Dataset</h5>
                         <p>
-                            Using <a href="https://chemiscope.org">chemiscope.org</a>, you are able to visualize your own data, stored in a JSON file.
-                            Please see the <a href="https://chemiscope.org/docs/manual">documentation</a> for
-                            a complete description of the JSON format; as well as tools that can help you generate such files.
+                            Using <a href="https://chemiscope.org">chemiscope.org</a>, you are able
+                            to visualize your own data, stored in a JSON file. Please see the
+                            <a href="https://chemiscope.org/docs/manual">documentation</a> for a
+                            complete description of the JSON format; as well as tools that can help
+                            you generate such files.
                         </p>
 
                         <div class="input-group">
                             <label for="load-dataset" class="form-control">
                                 pick a file
-                                <input id="load-dataset" type="file" accept=".json,.gz" class="hidden-input-file" />
+                                <input
+                                    id="load-dataset"
+                                    type="file"
+                                    accept=".json,.gz"
+                                    class="hidden-input-file"
+                                />
                             </label>
                             <button
                                 class="btn btn-primary width-10em"
@@ -238,7 +309,13 @@
 
                         <div class="input-group" style="margin-top: 1em">
                             <span class="input-group-text">save as</span>
-                            <input id="save-dataset-name" class="form-control" type="text" value="dataset.json" autocomplete="off" />
+                            <input
+                                id="save-dataset-name"
+                                class="form-control"
+                                type="text"
+                                value="dataset.json"
+                                autocomplete="off"
+                            />
                             <button
                                 class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
                                 type="button"
@@ -251,24 +328,50 @@
 
                         <div class="grid-1-1" style="margin-top: 1em">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" id="save-dataset-settings" type="checkbox" checked />
-                                <label class="form-check-label" for="save-dataset-settings">include visualization state</label>
+                                <input
+                                    class="form-check-input"
+                                    id="save-dataset-settings"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="save-dataset-settings"
+                                    >include visualization state</label
+                                >
                             </div>
                             <div class="form-check form-switch hide-on-demand-structures">
-                                <input class="form-check-input" id="save-dataset-structures" type="checkbox" />
-                                <label class="form-check-label" for="save-dataset-structures">include all structures</label>
+                                <input
+                                    class="form-check-input"
+                                    id="save-dataset-structures"
+                                    type="checkbox"
+                                />
+                                <label class="form-check-label" for="save-dataset-structures"
+                                    >include all structures</label
+                                >
                             </div>
                         </div>
-                        <div class="alert alert-warning hide-on-demand-structures" role="alert" style="margin: 0; margin-top: 1em">
-                            The current dataset contains dynamically loaded structures, use 'include all structure' to include all of them in the file
+                        <div
+                            class="alert alert-warning hide-on-demand-structures"
+                            role="alert"
+                            style="margin: 0; margin-top: 1em"
+                        >
+                            The current dataset contains dynamically loaded structures, use 'include
+                            all structure' to include all of them in the file
                         </div>
 
                         <h5 style="margin-top: 1em">Visualization state</h5>
-                        <p>The visualization state is a JSON file including all settings changes made on the current dataset.</p>
+                        <p>
+                            The visualization state is a JSON file including all settings changes
+                            made on the current dataset.
+                        </p>
                         <div class="input-group">
                             <label for="load-settings" class="form-control">
                                 pick a file
-                                <input id="load-settings" type="file" accept=".json" class="hidden-input-file" />
+                                <input
+                                    id="load-settings"
+                                    type="file"
+                                    accept=".json"
+                                    class="hidden-input-file"
+                                />
                             </label>
                             <button
                                 class="btn btn-secondary width-10em"
@@ -282,7 +385,13 @@
 
                         <div class="input-group" style="margin-top: 1em">
                             <span class="input-group-text">save as</span>
-                            <input id="save-settings-name" class="form-control" type="text" value="settings.json" autocomplete="off" />
+                            <input
+                                id="save-settings-name"
+                                class="form-control"
+                                type="text"
+                                value="settings.json"
+                                autocomplete="off"
+                            />
                             <button
                                 class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
                                 type="button"
@@ -294,17 +403,38 @@
 
                             <div class="grid-1-1" style="margin-top: 1em">
                                 <div class="form-check form-switch align-middle">
-                                    <input class="form-check-input" id="save-settings-map" type="checkbox" checked />
-                                    <label class="form-check-label" for="save-settings-map">include map settings</label>
+                                    <input
+                                        class="form-check-input"
+                                        id="save-settings-map"
+                                        type="checkbox"
+                                        checked
+                                    />
+                                    <label class="form-check-label" for="save-settings-map"
+                                        >include map settings</label
+                                    >
                                 </div>
                                 <div class="form-check form-switch align-middle">
-                                    <input class="form-check-input" id="save-settings-structure" type="checkbox" checked />
-                                    <label class="form-check-label" for="save-settings-structure">include structure settings</label>
+                                    <input
+                                        class="form-check-input"
+                                        id="save-settings-structure"
+                                        type="checkbox"
+                                        checked
+                                    />
+                                    <label class="form-check-label" for="save-settings-structure"
+                                        >include structure settings</label
+                                    >
                                 </div>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" id="save-settings-selected" type="checkbox" checked />
-                                <label class="form-check-label" for="save-settings-selected">include selected environments</label>
+                                <input
+                                    class="form-check-input"
+                                    id="save-settings-selected"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="save-settings-selected"
+                                    >include selected environments</label
+                                >
                             </div>
                         </div>
                     </div>
@@ -317,7 +447,7 @@
         var dropdownMenu = document.getElementById('examples-dropdown');
 
         // Loop through the examples object and create menu items
-        Object.keys(examples).forEach(function(file) {
+        Object.keys(examples).forEach(function (file) {
             var label = examples[file];
 
             // Create a new span element for each menu item
@@ -325,7 +455,7 @@
             span.className = 'dropdown-item clickable';
 
             // Set the onclick handler
-            span.onclick = function() {
+            span.onclick = function () {
                 CHEMISCOPE_APP.loadExample(file);
             };
 
@@ -335,7 +465,6 @@
             // Append the span to the dropdown menu
             dropdownMenu.appendChild(span);
         });
-
     </script>
     <script type="text/javascript">
         /**

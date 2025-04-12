@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { GUID, PositioningCallback, arrayMaxMin, sendWarning } from '../utils';
+import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -207,6 +207,8 @@ export class PropertiesMap {
      */
     public positionSettingsModal: PositioningCallback;
 
+    public warnings: Warnings;
+
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// HTML element holding the full plot
@@ -249,13 +251,16 @@ export class PropertiesMap {
         settings: Settings,
         indexer: EnvironmentIndexer,
         target: DisplayTarget,
-        properties: { [name: string]: Property }
+        properties: { [name: string]: Property },
+        warnings: Warnings
     ) {
         this._indexer = indexer;
         this._target = target;
         this.onselect = () => {};
         this.activeChanged = () => {};
         this._selected = new Map<GUID, MarkerData>();
+
+        this.warnings = warnings;
 
         // DOM structure outside the map:
         // - containerElement/element (#chemiscope-map)
@@ -288,7 +293,7 @@ export class PropertiesMap {
         this._root.appendChild(this._plot);
 
         // Initialize data with the given properties
-        this._data = new MapData(properties);
+        this._data = new MapData(properties, this.warnings);
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
@@ -296,7 +301,8 @@ export class PropertiesMap {
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            settings
+            settings,
+            this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
@@ -649,7 +655,8 @@ export class PropertiesMap {
                     this._root,
                     this._getCurrentProperties(),
                     (rect) => this.positionSettingsModal(rect),
-                    {}
+                    {},
+                    this.warnings
                 );
             }
         };
@@ -752,7 +759,7 @@ export class PropertiesMap {
                 arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
                 axis.min.value <= 0
             ) {
-                sendWarning(
+                this.warnings.sendMessage(
                     'This property contains negative values. Note that taking the log will discard them.'
                 );
             }
@@ -804,7 +811,7 @@ export class PropertiesMap {
                 const min = axis.min.value;
                 const max = axis.max.value;
                 if (min > max) {
-                    sendWarning(
+                    this.warnings.sendMessage(
                         `The inserted min and max values in ${name} are such that min > max! The last inserted value was reset.`
                     );
                     if (minOrMax === 'min') {
@@ -1005,7 +1012,7 @@ export class PropertiesMap {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
             if (min > max) {
-                sendWarning(
+                this.warnings.sendMessage(
                     `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
                 );
                 if (minOrMax === 'min') {
@@ -1042,7 +1049,7 @@ export class PropertiesMap {
             const someValuesNaN = values.some((value) => isNaN(value));
 
             if (allValuesNaN) {
-                sendWarning(
+                this.warnings.sendMessage(
                     `The selected property contains only values ${invalidValues}. ` +
                         'To display this property, select an appropriate color scale. ' +
                         `The ${changed} will be set to its last value.`
@@ -1056,7 +1063,7 @@ export class PropertiesMap {
 
                 return false;
             } else if (someValuesNaN) {
-                sendWarning(
+                this.warnings.sendMessage(
                     `The selected property contains some values ${invalidValues}. ` +
                         'These values will be colored in grey.'
                 );
@@ -1317,7 +1324,7 @@ export class PropertiesMap {
             if (min <= max) {
                 return [min, max];
             }
-            sendWarning(
+            this.warnings.sendMessage(
                 `The inserted min and max values in ${axisName} are such that min > max!` +
                     `The default values will be used.`
             );

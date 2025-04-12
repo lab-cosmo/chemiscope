@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import { Parameter, Property } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
-import { binarySearch, getElement, sendWarning } from '../utils';
+import { Warnings, binarySearch, getElement } from '../utils';
 
 import * as plotlyStyles from '../map/plotly/plotly-styles';
 
@@ -54,6 +54,8 @@ export class EnvironmentInfo {
     /** delay in ms between "frames" during playback over structures/atoms, default 700 ms */
     public playbackDelay: number = 700;
 
+    public warnings: Warnings;
+
     private _shadow: ShadowRoot;
     private _root: HTMLElement;
     private _atom?: Info;
@@ -78,12 +80,16 @@ export class EnvironmentInfo {
         properties: { [name: string]: Property },
         indexer: EnvironmentIndexer,
         target: DisplayTarget,
-        parameters?: { [name: string]: Parameter }
+        parameters?: { [name: string]: Parameter },
+        warnings?: Warnings
     ) {
         // Create a host element to attach the shadow DOM
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
+
+        this.warnings = warnings ? warnings : new Warnings();
+
         this._shadow = hostElement.attachShadow({ mode: 'open' });
 
         // Add styles to shadow
@@ -257,7 +263,7 @@ export class EnvironmentInfo {
             if (this._atom !== undefined) {
                 const activeAtoms = this._indexer.activeAtoms(structure);
                 if (activeAtoms.length === 0) {
-                    sendWarning(
+                    this.warnings.sendMessage(
                         `Cannot change to structure ${
                             structure + 1
                         }, which does not contain any active atoms`
@@ -391,7 +397,7 @@ export class EnvironmentInfo {
             if (indexes === undefined) {
                 const structure = this._structure.slider.value();
                 const atom = this._atom.slider.value();
-                sendWarning(
+                this.warnings.sendMessage(
                     `Environment for atom ${atom} in structure ${structure} is not part of this dataset`
                 );
                 return;

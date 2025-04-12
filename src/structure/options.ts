@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, getByID, makeDraggable, sendWarning } from '../utils';
+import { PositioningCallback, Warnings, getByID, makeDraggable } from '../utils';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';
@@ -72,9 +72,10 @@ export class StructureOptions extends OptionsGroup {
     constructor(
         root: HTMLElement,
         positionSettings: PositioningCallback,
-        propertiesName: string[] = []
+        propertiesName: string[] = [],
+        warnings: Warnings = new Warnings()
     ) {
-        super();
+        super(warnings);
 
         this.bonds = new HTMLOption('boolean', true);
         this.atoms = new HTMLOption('boolean', true);
@@ -189,7 +190,7 @@ export class StructureOptions extends OptionsGroup {
         // now the only possible way of doing it
         if ('packedCell' in settings) {
             if (settings.packedCell !== false) {
-                sendWarning(
+                this.warnings.sendMessage(
                     'packedCell option has been removed, but it is set to true in the settings'
                 );
             }

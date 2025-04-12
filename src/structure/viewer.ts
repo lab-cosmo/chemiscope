@@ -8,8 +8,8 @@ import assert from 'assert';
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './assignBonds';
 
-import { arrayMaxMin, getElement, sendWarning, unreachable } from '../utils';
-import { PositioningCallback } from '../utils';
+import { arrayMaxMin, getElement, unreachable } from '../utils';
+import { PositioningCallback, Warnings } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
 import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
@@ -110,6 +110,7 @@ export class MoleculeViewer {
      */
     public positionSettingsModal: PositioningCallback;
 
+    public warnings: Warnings;
     /// Shadow root for isolation
     private _shadow: ShadowRoot;
     /// The HTML element serving as root element for the viewer
@@ -189,10 +190,11 @@ export class MoleculeViewer {
      *                where the viewer will be created
      * @param propertiesName list of properties keys to be used as options
      */
-    constructor(element: string | HTMLElement, propertiesName: string[]) {
+    constructor(element: string | HTMLElement, propertiesName: string[], warnings?: Warnings) {
         const containerElement = getElement(element);
         const hostElement = document.createElement('div');
         containerElement.appendChild(hostElement);
+        this.warnings = warnings ? warnings : new Warnings();
 
         hostElement.style.setProperty('height', '100%');
         this._shadow = hostElement.attachShadow({ mode: 'open' });
@@ -251,7 +253,8 @@ export class MoleculeViewer {
         this._options = new StructureOptions(
             this._root,
             (rect) => this.positionSettingsModal(rect),
-            propertiesName
+            propertiesName,
+            this.warnings
         );
 
         this._options.modal.shadow.adoptedStyleSheets = [
@@ -335,7 +338,8 @@ export class MoleculeViewer {
         this._options = new StructureOptions(
             this._root,
             (rect) => this.positionSettingsModal(rect),
-            propertiesName
+            propertiesName,
+            this.warnings
         );
 
         // Restore the previously saved styles
@@ -910,7 +914,7 @@ export class MoleculeViewer {
                 const values = this._colorValues(property, 'linear');
 
                 if (values.some((v) => v === null)) {
-                    sendWarning(
+                    this.warnings.sendMessage(
                         'The selected structure has undefined properties for some atoms,' +
                             ' these atoms will be colored in light gray.'
                     );
@@ -954,7 +958,7 @@ export class MoleculeViewer {
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
             if (min > max) {
-                sendWarning(
+                this.warnings.sendMessage(
                     `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
                 );
                 if (minOrMax === 'min') {

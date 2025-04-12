@@ -86,8 +86,8 @@ chemiscope.explore(
 # where :math:`r_{ij}` is the distance between atom :math:`i` and its neighbor
 # :math:`j`, :math:`k` is the moment order and :math:`r_c` is the cutoff radius.
 #
-# And then, the model will take a PCA of the above features to extract the three most
-# relevant dimensions.
+# Having computed these moments, the model will take a PCA of their values to
+# extract the three most relevant dimensions.
 
 
 class FeatureModel(torch.nn.Module):

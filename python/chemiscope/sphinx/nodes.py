@@ -31,7 +31,11 @@ def visit_chemiscope_html(self, node):
 
     self.body.append(
         generate_html_content(
-            node["filepath"], node["mode"], node["include_headers"], static_path
+            node["filepath"],
+            node["mode"],
+            node["warning_timeout"],
+            node["include_headers"],
+            static_path,
         )
     )
 
@@ -41,7 +45,11 @@ def depart_chemiscope_html(self, node):
 
 
 def generate_html_content(
-    filepath, mode="default", include_headers=True, static_path="_static"
+    filepath,
+    mode="default",
+    warning_timeout=4000,
+    include_headers=True,
+    static_path="_static",
 ):
     """
     Generate HTML content for displaying a chemiscope visualization.
@@ -49,6 +57,8 @@ def generate_html_content(
     Parameters:
     - filepath (str): The path to the generated dataset
     - mode (str): The display mode for the visualization
+    - warning_timeout (float): The timeout for hiding warning messages (ms)
+        Set to -1 to disable warnings, and to zero to make them persistent.
 
     Returns:
     - str: The chemiscope widget wrapped in the html
@@ -78,5 +88,6 @@ def generate_html_content(
         html_template.replace("{{div_id}}", div_id)
         .replace("{{filepath}}", filepath)
         .replace("{{mode}}", mode)
+        .replace("{{timeout}}", str(warning_timeout))
         .replace("{{static_path}}", static_path)
     )

@@ -10,8 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback } from '../utils';
-import { arrayMaxMin, getByID, makeDraggable, sendWarning } from '../utils';
+import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 
@@ -36,9 +35,9 @@ export class AxisOptions extends OptionsGroup {
     public min: HTMLOption<'number'>;
     public max: HTMLOption<'number'>;
 
-    constructor(validProperties: string[]) {
+    constructor(validProperties: string[], warnings: Warnings) {
         assert(validProperties.length > 0);
-        super();
+        super(warnings);
         this.max = new HTMLOption('number', NaN);
         this.min = new HTMLOption('number', NaN);
         this.property = new HTMLOption('string', validProperties[0]);
@@ -94,9 +93,10 @@ export class MapOptions extends OptionsGroup {
         root: Node,
         properties: NumericProperties,
         positionSettings: PositioningCallback,
-        settings: Settings = {}
+        settings: Settings = {},
+        warnings: Warnings
     ) {
-        super();
+        super(warnings);
 
         // Setup axes
         const propertiesNames = Object.keys(properties);
@@ -105,10 +105,10 @@ export class MapOptions extends OptionsGroup {
                 'Cannot show a map because the dataset contains fewer than two properties.'
             );
         }
-        this.x = new AxisOptions(propertiesNames);
-        this.y = new AxisOptions(propertiesNames);
+        this.x = new AxisOptions(propertiesNames, this.warnings);
+        this.y = new AxisOptions(propertiesNames, this.warnings);
         // For z and color '' is a valid value
-        this.z = new AxisOptions(propertiesNames.concat(['']));
+        this.z = new AxisOptions(propertiesNames.concat(['']), this.warnings);
         // Initialise symbol
         this.symbol = new HTMLOption('string', '');
         const validSymbols = [''];
@@ -365,7 +365,7 @@ export class MapOptions extends OptionsGroup {
         const someValuesNaN = values.some((value) => isNaN(value) || value < 0);
 
         if (someValuesNaN) {
-            sendWarning(
+            this.warnings.sendMessage(
                 `After applying the selected scaling mode ${scaleMode}, some point sizes` +
                     `evaluated to invalid values. These points will be displayed at the minimum size.`
             );
@@ -387,7 +387,7 @@ export class MapOptions extends OptionsGroup {
             // If we need more symbols than available, we'll send a warning
             // and repeat existing ones
             if (symbolsCount > POSSIBLE_SYMBOLS_IN_3D.length) {
-                sendWarning(
+                this.warnings.sendMessage(
                     `${symbolsCount} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`
                 );
             }

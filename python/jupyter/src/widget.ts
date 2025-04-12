@@ -1,7 +1,7 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
 import Plausible from 'plausible-tracker';
 
-import { addWarningHandler, generateGUID, getByID } from '../../../src/utils';
+import { Warnings, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -18,6 +18,20 @@ const PlausibleTracker = Plausible({
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
+    protected warnings: Warnings = new Warnings();
+    protected getClassName(): string {
+        return 'base-view';
+    }
+
+    public render(): void {
+        PlausibleTracker.trackPageview({
+            url: (location.pathname.split('/')[1] || '') + '/' + this.getClassName(),
+        });
+
+        this.guid = `chsp-${generateGUID()}`;
+
+        this.model.on('change:warning_timeout', () => this._updateWarningTimeout());
+    }
 
     public remove(): unknown {
         if (this.visualizer !== undefined) {
@@ -71,6 +85,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.model.save_changes();
         }
     }
+
+    protected _updateWarningTimeout(): void {
+        const timeout = this.model.get('warning_timeout') as unknown;
+        if (typeof timeout === 'number') {
+            this.warnings.defaultTimeout = timeout;
+        }
+    }
 }
 
 /**
@@ -80,27 +101,25 @@ class ChemiscopeBaseView extends DOMWidgetView {
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
+    protected getClassName(): string {
+        return 'chemiscope-view';
+    }
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/chemiscope-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+        this._updateWarningTimeout();
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
         <div>
-            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
+            <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
                 <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -136,7 +155,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         this._bindPythonSettings();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
-        void DefaultVisualizer.load(config, data)
+        void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
                 // update the Python side settings whenever a setting changes
@@ -166,22 +185,20 @@ export class ChemiscopeView extends ChemiscopeBaseView {
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
+    protected getClassName(): string {
+        return 'structure-view';
+    }
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/structure-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+        this._updateWarningTimeout();
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
@@ -217,7 +234,7 @@ export class StructureView extends ChemiscopeBaseView {
         this._bindPythonSettings();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
-        void StructureVisualizer.load(config, data)
+        void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
 
@@ -248,22 +265,20 @@ export class StructureView extends ChemiscopeBaseView {
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
+    protected getClassName(): string {
+        return 'map-view';
+    }
 
     public render(): void {
-        PlausibleTracker.trackPageview({
-            url: (location.pathname.split('/')[1] || '') + '/map-view',
-        });
-
-        this.guid = `chsp-${generateGUID()}`;
+        super.render();
 
         // this function works by first rendering the widget inside `this.el`,
         // and then inserting this.el inside the HTML document.
         const element = this.el;
 
-        addWarningHandler((message) => {
-            const display = getByID(`${this.guid}-warning-display`, element);
-            display.style.display = 'block';
-            display.getElementsByTagName('p')[0].innerText = message;
+        this._updateWarningTimeout();
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, element, this.guid, timeout);
         });
 
         element.innerHTML = `
@@ -299,7 +314,7 @@ export class MapView extends ChemiscopeBaseView {
         this._bindPythonSettings();
 
         const data = JSON.parse(this.model.get('value') as string) as Dataset;
-        void MapVisualizer.load(config, data)
+        void MapVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
 
@@ -321,5 +336,25 @@ export class MapView extends ChemiscopeBaseView {
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
         }
+    }
+}
+
+function displayWarning(
+    message: string,
+    element: HTMLElement,
+    guid: string,
+    timeout: number = 4000
+) {
+    if (timeout < 0) return;
+
+    const display = getByID(`${guid}-warning-display`, element);
+    display.style.display = 'block';
+    display.getElementsByTagName('p')[0].innerText = message;
+
+    if (timeout > 0) {
+        // automatically remove the warning after a set timeout
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
     }
 }

@@ -80,7 +80,7 @@ main.container-fluid {
 
 main .ratio {
     margin: auto;
-    width: 90%; 
+    width: 90%;
 }
 
 main .ratio > * {
@@ -99,7 +99,7 @@ main .ratio > * {
 
 @media screen and (min-width: 768px) {
     .ratio-5x7 {
-        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));        
+        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
     }
 
     main .ratio {

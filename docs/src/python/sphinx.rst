@@ -28,6 +28,9 @@ file and displays it. The directive requires a mandatory argument, that indicate
 the path (relative to the RST file) where the chemiscope JSON is to be found, 
 and an optional ``mode`` parameter that specifies the type of visualization to be used
 (``default``, ``structure``, or ``map`` - ``default`` being unimaginatively the default).
+The ``warning_timeout`` option determines if warnings should be hidden (-1)
+kept visible until manually closed (0) or automatically closed after the set
+time (positive number, in ms).
 
 For instance, to show a viewer combining structure and property panels you can 
 simply use the directive
@@ -40,15 +43,19 @@ Once compiled, this will show as this widget
  
 .. chemiscope:: ../datasets/showcase.json.gz
     
-The ``structure`` mode will show the structures only
+The ``structure`` mode will show the structures only,
+with disabled warnings
 
 .. chemiscope:: ../datasets/showcase.json.gz 
     :mode: structure
+    :warning_timeout: -1
+
  
-and the ``map`` mode only the property map
+and the ``map`` mode only the property map, with persistent warnings
 
 .. chemiscope:: ../datasets/showcase.json.gz
-    :mode: map 
+    :mode: map
+    :warning_timeout: 0 
     
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
