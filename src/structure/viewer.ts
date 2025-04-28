@@ -213,6 +213,15 @@ export class MoleculeViewer {
             backgroundAlpha: 0,
             disableFog: true,
             orthographic: true,
+            // Force-disable OffscreenCanvas in 3DMol. It seems to be broken in
+            // some cases, and pretending to use a grid of viewers is the only
+            // way I found to disable it.
+            //
+            // see https://github.com/lab-cosmo/chemiscope/issues/409
+            rows: 1,
+            cols: 1,
+            row: 0,
+            col: 0,
         });
         if (viewer === undefined) {
             throw Error('unable to create WebGL canvas');
