@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import gzip
+import io
 import json
 import warnings
 
@@ -115,8 +116,9 @@ def show_input(path, mode="default", warning_timeout=10000):
     Loads and shows the chemiscope widget in ``path``.
     If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed
     JSON string.
+    If ``path`` is a file-like object, it is read as a JSON string.
 
-    :param str path: load the chemiscope widget from path.
+    :param str | io.IOBase path: load the chemiscope widget from path.
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
     :param float warning_timeout: timeout (in ms) for warnings. Set to a
@@ -127,6 +129,11 @@ def show_input(path, mode="default", warning_timeout=10000):
         import chemiscope
 
         widget = chemiscope.show_input("dataset.json")
+
+        # or
+
+        with open("dataset.json", "r") as f:
+            widget = chemiscope.show_input(f)
 
     ..
     """
@@ -146,7 +153,9 @@ def show_input(path, mode="default", warning_timeout=10000):
     elif mode == "map":
         widget_class = MapWidget
 
-    if path.endswith(".gz"):
+    if isinstance(path, io.IOBase):
+        dict_input = json.load(path)
+    elif path.endswith(".gz"):
         with gzip.open(path, "rt") as f:
             dict_input = json.load(f)
     elif path.endswith(".json"):
