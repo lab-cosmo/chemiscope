@@ -77,6 +77,6 @@ explore = [
 ]
 
 metatensor = [
-    "metatensor-operations >=0.3,<0.4",
-    "metatensor-torch >=0.6,<0.7"
+    "metatensor-operations >=0.3.3,<0.4",
+    "metatensor-torch >=0.7.6,<0.8"
 ]
