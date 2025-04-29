@@ -113,16 +113,17 @@ class MapWidget(ChemiscopeWidgetBase):
 
 def show_input(path, mode="default", warning_timeout=10000):
     """
-    Loads and shows the chemiscope widget in ``path``.
-    If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed
-    JSON string.
+    Loads and shows the chemiscope input in ``path``.
+
+    If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed JSON string.
     If ``path`` is a file-like object, it is read as JSON input.
 
-    :param str | Path | io.IOBase path: load the chemiscope widget from path.
+    :param str | Path | file-like path: load the chemiscope input from this path or
+        file-like object
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
-    :param float warning_timeout: timeout (in ms) for warnings. Set to a
-        negative value to disable warnings, and to zero to make them persistent.
+    :param float warning_timeout: timeout (in ms) for warnings. Set to a negative value
+        to disable warnings, and to zero to make them persistent.
 
     .. code-block:: python
 
@@ -153,7 +154,10 @@ def show_input(path, mode="default", warning_timeout=10000):
     elif mode == "map":
         widget_class = MapWidget
 
-    if isinstance(path, (str, Path)):
+    if isinstance(path, Path):
+        path = str(path)
+
+    if isinstance(path, str):
         if path.endswith(".gz"):
             with gzip.open(path, "rt") as f:
                 dict_input = json.load(f)
@@ -162,8 +166,7 @@ def show_input(path, mode="default", warning_timeout=10000):
                 dict_input = json.load(f)
         else:
             raise ValueError(
-                "invalid file format in chemiscope.load,\
-                            expected .json or .json.gz"
+                "invalid file format in chemiscope.load, expected .json or .json.gz"
             )
     else:
         dict_input = json.load(path)

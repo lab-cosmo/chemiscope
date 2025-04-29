@@ -7,6 +7,7 @@ import gzip
 import json
 import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -387,8 +388,8 @@ def write_input(
     Create the input JSON file used by the default chemiscope visualizer, and save it to
     the given ``path``.
 
-    :param str path: name of the file to use to save the json data. If it ends with
-        '.gz', a gzip compressed file will be written
+    :param str | Path | file-like path: name of the file to use to save the json data.
+        If it ends with '.gz', a gzip compressed file will be written
 
     :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
         are supported
@@ -401,8 +402,8 @@ def write_input(
         specifying which atoms have properties attached and how far out atom-centered
         environments should be drawn by default.
 
-    :param dict shapes: optional dictionary of shapes to have available for display.
-        See :py:func:`create_input` for more information on how to define shapes.
+    :param dict shapes: optional dictionary of shapes to have available for display. See
+        :py:func:`create_input` for more information on how to define shapes.
 
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
@@ -513,12 +514,18 @@ def write_input(
     if "name" not in data["meta"] or data["meta"]["name"] == "<unknown>":
         data["meta"]["name"] = os.path.basename(path).split(".")[0]
 
-    if path.endswith(".gz"):
-        with gzip.open(path, "w", 9) as file:
-            file.write(json.dumps(data).encode("utf8"))
+    if isinstance(path, Path):
+        path = str(path)
+
+    if isinstance(path, str):
+        if path.endswith(".gz"):
+            with gzip.open(path, "w", 9) as file:
+                file.write(json.dumps(data).encode("utf8"))
+        else:
+            with open(path, "w") as file:
+                json.dump(data, file, indent=2)
     else:
-        with open(path, "w") as file:
-            json.dump(data, file, indent=2)
+        json.dump(data, path, indent=2)
 
 
 def _normalize_environments(environments, structures):
@@ -990,7 +997,7 @@ def _validate_shapes(structures, shapes):
                 import scipy.spatial
             except ImportError as e:
                 raise RuntimeError(
-                    "Missing simplices in custom shape, and scipy is not " "installed"
+                    "Missing simplices in custom shape, and scipy is not installed"
                 ) from e
 
             convex_hull = scipy.spatial.ConvexHull(shape["parameters"]["vertices"])
