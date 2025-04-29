@@ -2,6 +2,7 @@
 import gzip
 import json
 import warnings
+from pathlib import Path
 
 import ipywidgets
 from traitlets import Bool, Dict, Int, Unicode
@@ -112,21 +113,28 @@ class MapWidget(ChemiscopeWidgetBase):
 
 def show_input(path, mode="default", warning_timeout=10000):
     """
-    Loads and shows the chemiscope widget in ``path``.
-    If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed
-    JSON string.
+    Loads and shows the chemiscope input in ``path``.
 
-    :param str path: load the chemiscope widget from path.
+    If ``path`` ends with ``.gz``, the file is loaded as a gzip compressed JSON string.
+    If ``path`` is a file-like object, it is read as JSON input.
+
+    :param str | Path | file-like path: load the chemiscope input from this path or
+        file-like object
 
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
-    :param float warning_timeout: timeout (in ms) for warnings. Set to a
-        negative value to disable warnings, and to zero to make them persistent.
+    :param float warning_timeout: timeout (in ms) for warnings. Set to a negative value
+        to disable warnings, and to zero to make them persistent.
 
     .. code-block:: python
 
         import chemiscope
 
         widget = chemiscope.show_input("dataset.json")
+
+        # or
+
+        with open("dataset.json", "r") as f:
+            widget = chemiscope.show_input(f)
 
     ..
     """
@@ -146,17 +154,22 @@ def show_input(path, mode="default", warning_timeout=10000):
     elif mode == "map":
         widget_class = MapWidget
 
-    if path.endswith(".gz"):
-        with gzip.open(path, "rt") as f:
-            dict_input = json.load(f)
-    elif path.endswith(".json"):
-        with open(path, "rt") as f:
-            dict_input = json.load(f)
+    if isinstance(path, Path):
+        path = str(path)
+
+    if isinstance(path, str):
+        if path.endswith(".gz"):
+            with gzip.open(path, "rt") as f:
+                dict_input = json.load(f)
+        elif path.endswith(".json"):
+            with open(path, "rt") as f:
+                dict_input = json.load(f)
+        else:
+            raise ValueError(
+                "invalid file format in chemiscope.load, expected .json or .json.gz"
+            )
     else:
-        raise ValueError(
-            "invalid file format in chemiscope.load,\
-                         expected .json or .json.gz"
-        )
+        dict_input = json.load(path)
 
     try:
         meta = dict_input["meta"]
