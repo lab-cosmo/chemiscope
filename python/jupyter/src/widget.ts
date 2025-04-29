@@ -154,7 +154,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('value') as string) as Dataset;
+        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -233,7 +233,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('value') as string) as Dataset;
+        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
         void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -313,7 +313,7 @@ export class MapView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = JSON.parse(this.model.get('value') as string) as Dataset;
+        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
         void MapVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -357,4 +357,17 @@ function displayWarning(
             display.style.display = 'none';
         }, timeout);
     }
+}
+
+/**
+ * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+ * module output them, and they can be useful.
+ */
+function parseJsonWithNaN(text: string): unknown {
+    return JSON.parse(
+        text.replace(/\bNaN\b/g, '"***NaN***"'),
+        (key: string, value: unknown): unknown => {
+            return value === '***NaN***' ? NaN : value;
+        }
+    ) as unknown;
 }
