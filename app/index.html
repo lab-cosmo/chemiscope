@@ -502,6 +502,16 @@
         // `onclick` above
         let CHEMISCOPE_APP;
 
+        /**
+         * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+         * module output them, and they can be useful.
+         */
+        function parseJsonWithNaN(text) {
+            return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
+                return value === '***NaN***' ? NaN : value;
+            });
+        }
+
         async function loadDefaultDataset(app) {
             const standalone = document.getElementById('standalone-json-data');
 
@@ -537,7 +547,7 @@
             } else {
                 const data = standalone.innerText;
                 if (data.trim() !== '') {
-                    const dataset = JSON.parse(standalone.innerText);
+                    const dataset = parseJsonWithNaN(standalone.innerText);
                     const config = {
                         settings: dataset.settings || {},
                     };
