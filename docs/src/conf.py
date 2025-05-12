@@ -60,7 +60,7 @@ html_theme = "furo"
 
 html_theme_options = {
     "light_css_variables": {
-        "color-background-secondary": "#eaf2ff",
+        "color-background-secondary": "#f4f8ff",
     },
     "dark_css_variables": {
         "color-background-secondary": "#303d4f",
