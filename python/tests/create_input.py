@@ -6,6 +6,7 @@ import stk
 
 from chemiscope import all_atomic_environments, create_input
 
+
 # These should be the same molecule!
 TEST_FRAMES = [ase.Atoms("CO2")]
 TEST_FRAMES_STK = [stk.BuildingBlock("O=C=O")]

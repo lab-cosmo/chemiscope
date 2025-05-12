@@ -5,6 +5,7 @@ import numpy as np
 
 import chemiscope
 
+
 BASE_FRAME = ase.Atoms("CO2", positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]])
 
 

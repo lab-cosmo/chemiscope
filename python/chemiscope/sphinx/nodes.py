@@ -20,7 +20,6 @@ def depart_chemiscope_latex(self, node):
 
 
 def visit_chemiscope_html(self, node):
-
     # determines the path of the static resources
     # relative to the output document
     html_file_path = self.builder.get_outfilename(self.builder.current_docname)

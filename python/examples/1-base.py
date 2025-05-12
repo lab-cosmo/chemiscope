@@ -15,6 +15,7 @@ import ase.io
 
 import chemiscope
 
+
 # %%
 #
 # Load structures from an extended xyz file

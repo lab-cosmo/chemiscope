@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
-from ._ase import (
+from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
     _ase_extract_properties,
     _ase_get_atom_properties,
     _ase_get_structure_properties,
     _ase_to_json,
     _ase_valid_structures,
+    ase_merge_pi_frames,
+    ase_tensors_to_ellipsoids,
+    ase_vectors_to_arrows,
 )
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
     center_shape,
     ellipsoid_from_tensor,
 )
-
-from ._ase import (  # noqa: F401
-    ase_merge_pi_frames,
-    ase_tensors_to_ellipsoids,
-    ase_vectors_to_arrows,
-)
 from ._stk import (  # noqa: F401
-    _stk_valid_structures,
-    _stk_to_json,
-    convert_stk_bonds_as_shapes,
     _stk_all_atomic_environments,
     _stk_get_atom_properties,
     _stk_get_structure_properties,
+    _stk_to_json,
+    _stk_valid_structures,
+    convert_stk_bonds_as_shapes,
 )
 
 

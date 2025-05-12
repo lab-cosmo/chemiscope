@@ -1,6 +1,7 @@
 from ..jupyter import show
-from ._soap_pca import soap_pca_featurize
 from ._metatensor import metatensor_featurizer
+from ._soap_pca import soap_pca_featurize
+
 
 __all__ = ["explore", "metatensor_featurizer"]
 

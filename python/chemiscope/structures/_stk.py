@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple, Union
 
+
 try:
     from stk import Molecule
 
