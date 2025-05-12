@@ -5,6 +5,7 @@ import numpy as np
 
 from ._shapes import arrow_from_vector, ellipsoid_from_tensor
 
+
 try:
     import ase
 

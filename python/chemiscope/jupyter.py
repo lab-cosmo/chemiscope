@@ -10,6 +10,7 @@ from traitlets import Bool, Dict, Int, Unicode
 from .input import create_input
 from .version import __version__
 
+
 # this needs to match the version/name defined in
 # python/jupyter/src/labextension.ts
 PACKAGE_NAME = "chemiscope"

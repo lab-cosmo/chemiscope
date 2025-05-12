@@ -20,6 +20,7 @@ from scipy.spatial.transform import Rotation
 
 import chemiscope
 
+
 # %%
 #
 # Loads a dataset of structures

@@ -16,6 +16,7 @@ import numpy as np
 
 import chemiscope
 
+
 # %%
 #
 # Load a dataset of structures containing polarizability and dipole data

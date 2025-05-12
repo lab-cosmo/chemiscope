@@ -19,6 +19,7 @@ import numpy as np
 
 import chemiscope
 
+
 # %%
 # Load structures
 

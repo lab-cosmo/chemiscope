@@ -36,6 +36,7 @@ from metatensor.torch.atomistic import (
 
 import chemiscope
 
+
 frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
 # %%

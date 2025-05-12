@@ -5,6 +5,7 @@ import numpy as np
 
 import chemiscope
 
+
 CUBE_VERTICES = [
     [0, 0, 0],
     [1, 0, 0],

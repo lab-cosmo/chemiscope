@@ -8,6 +8,7 @@ import stk
 
 from chemiscope import write_input
 
+
 TEST_FRAMES = [ase.Atoms("CO2")]
 TEST_FRAMES_STK = [stk.BuildingBlock("NCCN")]
 

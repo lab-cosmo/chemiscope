@@ -5,6 +5,7 @@ from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
 
 from .file_path_iterator import FilePathIterator
 
+
 warnings.filterwarnings(
     "ignore",
     message="chemiscope.show only works in a jupyter notebook or a sphinx build",
