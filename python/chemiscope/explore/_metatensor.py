@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 
@@ -52,12 +54,7 @@ def metatensor_featurizer(
 
         chemiscope.explore(frames, featurize=featurizer)
 
-    For more examples, see the related :ref:`documentation
-    <chemiscope-explore-metatensor>`.
-
     .. _metatensor: https://docs.metatensor.org/latest/index.html
-    .. _chemiscope-explore-metatensor:
-        https://chemiscope.org/docs/examples/7-explore-advanced.html#example-with-metatensor-model
     """
 
     # Check if dependencies were installed
@@ -69,6 +66,12 @@ def metatensor_featurizer(
             f"Required package not found: {e}. Please install the dependency using "
             "'pip install chemiscope[metatensor]'."
         )
+
+    warnings.warn(
+        "`metatensor_featurizer` is deprecated, please update your code to "
+        "`metatomic_featurizer`",
+        stacklevel=2,
+    )
 
     # Initialize metatensor calculator
     CALCULATOR = MetatensorCalculator(
