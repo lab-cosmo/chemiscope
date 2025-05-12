@@ -1,13 +1,19 @@
 .. _reference:
 
-`chemiscope` functions reference
---------------------------------
+``chemiscope`` functions reference
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Input files
+-----------
 
 .. autofunction:: chemiscope.write_input
 
 .. autofunction:: chemiscope.create_input
 
 .. autofunction:: chemiscope.quick_settings
+
+Data management
+---------------
 
 .. autofunction:: chemiscope.extract_properties
 
@@ -21,8 +27,11 @@
 
 .. autofunction:: chemiscope.ase_tensors_to_ellipsoids
 
+.. autofunction:: chemiscope.convert_stk_bonds_as_shapes
+
+Dataset exploration
+-------------------
+
 .. autofunction:: chemiscope.explore
 
 .. autofunction:: chemiscope.metatensor_featurizer
-
-.. autofunction:: chemiscope.convert_stk_bonds_as_shapes
