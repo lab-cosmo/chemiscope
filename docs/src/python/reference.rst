@@ -34,4 +34,4 @@ Dataset exploration
 
 .. autofunction:: chemiscope.explore
 
-.. autofunction:: chemiscope.metatensor_featurizer
+.. autofunction:: chemiscope.metatomic_featurizer

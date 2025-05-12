@@ -1,19 +1,19 @@
 """
-.. _chemiscope-explore-metatensor:
+.. _chemiscope-explore-metatomic:
 
-Using `metatensor`_ models for dataset exploration
-==================================================
+Using metatomic models for dataset exploration
+==============================================
 
-In this example, we demonstrate how to create and use a `metatensor`_ model with
-:py:func:`chemiscope.metatensor_featurizer` to extract features from the model, which
-are then displayed using a chemiscope widget. To use this function, some additional
+In this example, we demonstrate how to create and use a `metatomic`_ model with
+:py:func:`chemiscope.metatomic_featurizer` to extract features from the model, which are
+then displayed using a chemiscope widget. To use this function, some additional
 dependencies are required. You can install them with the following command:
 
 .. code:: bash
 
-    pip install chemiscope[metatensor]
+    pip install chemiscope[metatomic]
 
-.. _metatensor: https://docs.metatensor.org/latest/index.html
+.. _metatomic: https://docs.metatensor.org/metatomic/
 """
 
 # %%
@@ -23,16 +23,6 @@ dependencies are required. You can install them with the following command:
 from typing import Dict, List, Optional
 
 import ase.io
-import torch
-from metatensor.torch import Labels, TensorBlock, TensorMap
-from metatensor.torch.atomistic import (
-    MetatensorAtomisticModel,
-    ModelCapabilities,
-    ModelMetadata,
-    ModelOutput,
-    NeighborListOptions,
-    System,
-)
 
 import chemiscope
 
@@ -46,13 +36,13 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 #
 # Most commonly, you will have an already existing model in metatensor format that
 # you'll want to use for dataset exploration. In this case, you'll have to create a
-# ``featurizer`` function using :py:func:`chemiscope.metatensor_featurizer`.
+# ``featurizer`` function using :py:func:`chemiscope.metatomic_featurizer`.
 #
-# ``metatensor_featurizer`` takes an existing model as input. It can be either a
-# ``MetatensorAtomisticModel`` instance or a path to a pre-trained model file (here
+# ``metatomic_featurizer`` takes an existing model as input. It can be either a
+# ``AtomisticModel`` instance or a path to a pre-trained model file (here
 # ``"model.pt"``)
 
-featurizer = chemiscope.metatensor_featurizer(model="model.pt")
+featurizer = chemiscope.metatomic_featurizer(model="model.pt")
 
 # %%
 #
@@ -72,7 +62,7 @@ chemiscope.explore(
 # -----------------------
 #
 # Let's now move on and see how one can define a fully custom model to use through the
-# metatensor interface.
+# metatomic interface.
 #
 # Here we will use an atom-centered representation, where each atomic environment is
 # represented with the moments of the positions of the neighbors up to a maximal order.
@@ -89,6 +79,17 @@ chemiscope.explore(
 #
 # Having computed these moments, the model will take a PCA of their values to
 # extract the three most relevant dimensions.
+
+import torch  # noqa: E402
+from metatensor.torch import Labels, TensorBlock, TensorMap  # noqa: E402
+from metatomic.torch import (  # noqa: E402
+    AtomisticModel,
+    ModelCapabilities,
+    ModelMetadata,
+    ModelOutput,
+    NeighborListOptions,
+    System,
+)
 
 
 class FeatureModel(torch.nn.Module):
@@ -207,19 +208,19 @@ capabilities = ModelCapabilities(
     dtype="float64",
 )
 
-mta_model = MetatensorAtomisticModel(model.eval(), metadata, capabilities)
+mta_model = AtomisticModel(model.eval(), metadata, capabilities)
 
 # %%
 #
 # For a more detailed example of exporting a model, please check the related
-# documentation `page
-# <https://docs.metatensor.org/latest/examples/atomistic/1-export-atomistic-model.html>`_
-# in `metatensor`_.
+# `tutorial
+# <https://docs.metatensor.org/metatomic/latest/examples/1-export-atomistic-model.html>`_
+# in metatomic documentation.
 #
 # Once the model is fully defined, we can use it with
-# :py:func:`chemiscope.metatensor_featurizer`:
+# :py:func:`chemiscope.metatomic_featurizer`:
 
-featurizer = chemiscope.metatensor_featurizer(mta_model, check_consistency=True)
+featurizer = chemiscope.metatomic_featurizer(mta_model, check_consistency=True)
 chemiscope.explore(
     frames=frames,
     featurize=featurizer,
@@ -227,9 +228,9 @@ chemiscope.explore(
 )
 
 # %%
-# The metatensor model can also be easily exported,
-# to be shared with collaborators for use in their
-# visualization workflows
+#
+# The metatomic model can also be easily exported, to be shared with collaborators for
+# use in their visualization workflows
 
 mta_model.save("model-exported.pt")
 # %%

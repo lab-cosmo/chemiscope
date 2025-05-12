@@ -1,4 +1,4 @@
-from .explore import explore, metatensor_featurizer  # noqa: F401
+from .explore import explore, metatensor_featurizer, metatomic_featurizer  # noqa: F401
 from .input import create_input, quick_settings, write_input  # noqa: F401
 from .jupyter import show, show_input  # noqa
 from .structures import (  # noqa: F401
