@@ -72,7 +72,7 @@ export interface Settings
         | boolean[]
         | Settings
         | Settings[]
-    > { }
+    > {}
 
 /** Various metadata associated with a dataset */
 export interface Metadata {

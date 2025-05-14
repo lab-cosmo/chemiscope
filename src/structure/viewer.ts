@@ -227,7 +227,7 @@ export class MoleculeViewer {
             throw Error('unable to create WebGL canvas');
         }
         this._viewer = viewer;
-        this.onselect = () => { };
+        this.onselect = () => {};
 
         this._cellInfo = document.createElement('span');
         this._cellInfo.classList.add(
@@ -569,7 +569,6 @@ export class MoleculeViewer {
                 atoms_selected[i].bonds = atoms_bonds[i];
                 atoms_selected[i].bondOrder = atoms_bondorders[i];
             }
-
         }
 
         if (this._environments === undefined) {
@@ -966,7 +965,7 @@ export class MoleculeViewer {
                 if (values.some((v) => v === null)) {
                     this.warnings.sendMessage(
                         'The selected structure has undefined properties for some atoms,' +
-                        ' these atoms will be colored in light gray.'
+                            ' these atoms will be colored in light gray.'
                     );
                 }
 
