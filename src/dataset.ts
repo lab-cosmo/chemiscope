@@ -120,6 +120,11 @@ export interface Structure {
      */
     cell?: number[];
     /**
+     * bonds in structures given as `[id1 id2 order]`, where
+     * **id1**, **id2**, and **order** are integers.
+     */
+    bonds?: Array<Array<number>>;
+    /**
      * possible shapes to display, multiple groups of shapes with different
      * names are allowed
      */
