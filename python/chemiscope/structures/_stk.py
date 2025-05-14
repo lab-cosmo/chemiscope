@@ -42,6 +42,10 @@ def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
     data["x"] = [float(pos_mat[atom.get_id()][0]) for atom in molecule.get_atoms()]
     data["y"] = [float(pos_mat[atom.get_id()][1]) for atom in molecule.get_atoms()]
     data["z"] = [float(pos_mat[atom.get_id()][2]) for atom in molecule.get_atoms()]
+    data["bonds"] = [
+        (bond.get_atom1().get_id(), bond.get_atom2().get_id(), bond.get_order())
+        for bond in molecule.get_bonds()
+    ]
 
     return data
 
