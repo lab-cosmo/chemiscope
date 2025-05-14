@@ -72,7 +72,7 @@ export interface Settings
         | boolean[]
         | Settings
         | Settings[]
-    > {}
+    > { }
 
 /** Various metadata associated with a dataset */
 export interface Metadata {
@@ -119,6 +119,11 @@ export interface Structure {
      * expressed in Angströms.
      */
     cell?: number[];
+    /**
+     * bonds in structures given as `[id1 id2 order]`, where
+     * **id1**, **id2**, and **order** are integers.
+     */
+    bonds?: Array<Array<number>>;
     /**
      * possible shapes to display, multiple groups of shapes with different
      * names are allowed
