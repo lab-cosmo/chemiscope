@@ -35,6 +35,17 @@ def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
     in the future.
 
     """
+
+    # stk specific bond order map.
+    bond_map = {
+        # stk int to chemiscope int.
+        1: 1,
+        2: 2,
+        3: 3,
+        # Represents dative bond types in stk.
+        9: 1,
+    }
+
     pos_mat = molecule.get_position_matrix()
     data = {}
     data["size"] = molecule.get_num_atoms()
