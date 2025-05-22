@@ -27,15 +27,7 @@ import chemiscope
 # %%
 #
 # Generate a list of stk BuildingBlocks (representation of a molecule) with
-# properties. This also includes working with rdkit, which comes installed
-# with stk.
-
-rdkitmol = rdkit.MolFromSmiles("Cc1ccccc1")
-rdkitmol = rdkit.AddHs(rdkitmol)
-rdkit.Kekulize(rdkitmol)
-params = rdkit.ETKDGv3()
-params.randomSeed = 0xF00D
-rdkit.EmbedMolecule(rdkitmol, params)
+# properties. We start by constructing a cage and host-guest complex with stk.
 
 cage = stk.ConstructedMolecule(
     topology_graph=stk.cage.FourPlusSix(
@@ -60,6 +52,22 @@ host_guest = stk.ConstructedMolecule(
         ),
     ),
 )
+
+# %%
+#
+# Including using stk to interface with rdkit molecules.
+
+rdkitmol = rdkit.MolFromSmiles("Cc1ccccc1")
+rdkitmol = rdkit.AddHs(rdkitmol)
+rdkit.Kekulize(rdkitmol)
+params = rdkit.ETKDGv3()
+params.randomSeed = 0xF00D
+rdkit.EmbedMolecule(rdkitmol, params)
+
+# %%
+#
+# We can put this into a list of stk.Molecule objects.
+
 
 structures = [
     # A mostly optimised cage molecule.
@@ -113,8 +121,9 @@ structures = [
 
 # %%
 #
-# Write their properties using any method, here we show using stko:
-# https://stko-docs.readthedocs.io/en/latest/
+# Here we use stko (https://stko-docs.readthedocs.io/en/latest/) to compute
+# properties of each molecule in the list and format it into the dictionary
+# required by chemiscope.
 
 energy = stko.UFFEnergy(ignore_inter_interactions=False)
 shape_calc = stko.ShapeCalculator()
@@ -127,7 +136,8 @@ properties = {
 
 # %%
 #
-# A chemiscope widget showing the result with standard, stk bonding.
+# A chemiscope widget showing the result with standard bonding derived from the
+# bonding topology in stk.
 
 chemiscope.show(
     frames=structures,
@@ -143,7 +153,6 @@ chemiscope.show(
         },
     ),
 )
-
 
 # %%
 #
@@ -168,8 +177,10 @@ chemiscope.write_input(
 
 # %%
 #
-# View the same molecule imported with ASE versus stk, where chemiscope will
-# automatically detect the bonds because ASE does not contain this information.
+# For comparison, we show the same molecule imported with ASE versus stk, where
+# chemiscope will automatically try to detect the bonds based on the geometry
+# (because ASE does not contain this information), which will not be right due
+# to the far-from equilibrium nature of the structure.
 
 structures[0].write("data/stk_cage.xyz")
 chemiscope.show(
@@ -187,34 +198,15 @@ chemiscope.show(
     ),
 )
 
-
-# %%
-#
-# Writing to a json.gz file.
-
-chemiscope.write_input(
-    path="vsase_example.json.gz",
-    frames=[ase.io.read("data/stk_cage.xyz")],
-    properties={i: [properties[i][0]] for i in properties},
-    meta=dict(name="Comparing with stk and ase bonding."),
-    settings=chemiscope.quick_settings(
-        x="aspheriticty",
-        y="uffenergy",
-        color="",
-        structure_settings={
-            "atoms": True,
-            "bonds": True,
-            "spaceFilling": False,
-        },
-    ),
-)
-
-
 # %%
 #
 # With the custom bond features, we can now overlay connections of interest on
-# the structure and existing topology. For example, showing the cage topology
-# in metal-organic cages.
+# the structure and existing topology by using, the
+# `convert_stk_bonds_to_shapes` function.
+# For example, here, we show the cage topology graph of metal-organic cages
+# as defined by the metal atoms only. We start by building a series of
+# Pd_nL_n2 metal-organic cages, with n=2,3,4,6 and the same organic ligand,
+# using stk.
 
 
 structures = [
@@ -269,8 +261,7 @@ structures = [
 
 # %%
 #
-# Write their properties using any method, here we show using stko:
-# https://stko-docs.readthedocs.io/en/latest/
+# Again, we write some properties.
 
 energy = stko.UFFEnergy(ignore_inter_interactions=False)
 shape_calc = stko.ShapeCalculator()
@@ -284,32 +275,49 @@ properties = {
 
 # %%
 #
-# Get the stk bonding information and convert them into shapes.
+# Now, we use some stk features to extract the metal atoms, and create "fake"
+# bonds between them.
+
 metal_atoms = [
+    # Atoms with atomic number 46 (Pd).
     [i.get_id() for i in molecule.get_atoms() if i.get_atomic_number() == 46]
     for molecule in structures
 ]
 
-bonds = [
+fake_bonds = [
+    # Combinations of those atoms, this does not filter for nearest neighbors.
     [(a1id, a2id) for a1id, a2id in it.combinations(metal_atoms[i], 2)]
     for i, molecule in enumerate(structures)
 ]
 
+# %%
+#
+# With these fake bonds, we can create a new list of stk structures only having
+# the fake bonds, to extract the shape dictionary defined by only the fake
+# bonds. Note that these fake bonds could be arbitrarily defined, as long as
+# they map to the atoms in the original structure.
+
 structures_with_pd_pd_bonds = [
     stk.BuildingBlock.init(
         atoms=struct.get_atoms(),
+        # Only including fake bonds.
         bonds=tuple(
             stk.Bond(
                 atom1=next(struct.get_atoms(a1id)),
                 atom2=next(struct.get_atoms(a2id)),
                 order=1,
             )
-            for a1id, a2id in bonds[i]
+            for a1id, a2id in fake_bonds[i]
         ),
         position_matrix=struct.get_position_matrix(),
     )
     for i, struct in enumerate(structures)
 ]
+
+# %%
+#
+# Another feature of the shape dictionary is that the user can alter the color
+# and radius of the bonds.
 
 shape_dict = chemiscope.convert_stk_bonds_as_shapes(
     frames=structures_with_pd_pd_bonds,
@@ -323,7 +331,8 @@ shape_string = ",".join(shape_dict.keys())
 
 # %%
 #
-# Now with added bonding information.
+# Now, we show the structure with the new fake bonds overlaid
+# (`bonds` and `shape` on).
 
 chemiscope.show(
     frames=structures,
@@ -344,13 +353,13 @@ chemiscope.show(
 
 # %%
 #
-# Write to json file with added shapes.
+# Write to json file.
 
 chemiscope.write_input(
     path="shape_example.json.gz",
     frames=structures,
     properties=properties,
-    meta=dict(name="Added all stk bonds."),
+    meta=dict(name="Added Pd-Pd bonds overlaid with the stk molecule."),
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
