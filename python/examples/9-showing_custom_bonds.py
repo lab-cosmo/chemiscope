@@ -26,6 +26,9 @@ import chemiscope
 
 # %%
 #
+# Interfacing chemiscope with stk molecules
+# ++++++++++++++++++++++++++++++++++++++++++
+#
 # Generate a list of stk BuildingBlocks (representation of a molecule) with
 # properties. We start by constructing a cage and host-guest complex with stk.
 
@@ -199,6 +202,9 @@ chemiscope.show(
 )
 
 # %%
+#
+# Showing custom bonds beyond the existing topology
+# ++++++++++++++++++++++++++++++++++++++++++++++++++
 #
 # With the custom bond features, we can now overlay connections of interest on
 # the structure and existing topology by using, the
