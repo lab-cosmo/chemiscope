@@ -120,6 +120,13 @@ export interface Structure {
      */
     cell?: number[];
     /**
+     * bonds in structures given as `[i, j, order]`, where
+     * `i`, `j`, and `order` are integers. `i` and `j` are the indices of
+     * the atoms bonded together, and `order` is the bond order, which can be
+     * 1 (for single bonds) or 2 (for double bonds) or 3 (for triple bonds)
+     */
+    bonds?: Array<[number, number, number]>;
+    /**
      * possible shapes to display, multiple groups of shapes with different
      * names are allowed
      */

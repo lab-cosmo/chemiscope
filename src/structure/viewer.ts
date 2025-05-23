@@ -529,7 +529,47 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-        assignBonds(this._current.model.selectedAtoms({}));
+        // To avoid editting the `atoms` object in `setup3DmolStructure`, I
+        // am handling the bonds here.
+        if (structure.bonds === undefined) {
+            assignBonds(this._current.model.selectedAtoms({}));
+        } else {
+            // Add bonds now if they are present.
+
+            // Assign the bonds from structure.bonds.
+            const atoms_bonds: { [id: number]: number[] } = {};
+            const atoms_bondorders: { [id: number]: number[] } = {};
+
+            for (let i: number = 0, n: number = structure.bonds.length; i < n; i++) {
+                const id1 = structure.bonds[i][0];
+                const id2 = structure.bonds[i][1];
+                const order = structure.bonds[i][2];
+
+                if (!(id1 in atoms_bonds)) {
+                    atoms_bonds[id1] = [];
+                    atoms_bondorders[id1] = [];
+                }
+                if (!(id2 in atoms_bonds)) {
+                    atoms_bonds[id2] = [];
+                    atoms_bondorders[id2] = [];
+                }
+                atoms_bonds[id1].push(id2);
+                atoms_bondorders[id1].push(order);
+                atoms_bonds[id2].push(id1);
+                atoms_bondorders[id2].push(order);
+            }
+
+            const atoms_selected = this._current.model.selectedAtoms({});
+
+            // Set up the lists, from assignBonds.
+            for (let i = 0, n = atoms_selected.length; i < n; i++) {
+                // Don't reindex if atoms are  already indexed
+                if (!atoms_selected[i].index) atoms_selected[i].index = i;
+
+                atoms_selected[i].bonds = atoms_bonds[i];
+                atoms_selected[i].bondOrder = atoms_bondorders[i];
+            }
+        }
 
         if (this._environments === undefined) {
             this._styles.noEnvs.replaceSync('.chsp-hide-if-no-environments { display: none; }');
@@ -1691,7 +1731,8 @@ export class MoleculeViewer {
             // for the background & highlighted atoms
             // https://github.com/3dmol/3Dmol.js/issues/166
             // prettier-ignore
-            const selection = { or: [
+            const selection = {
+                or: [
                     { index: center },
                     { within: { distance: this._options.environments.cutoff.value, sel: { index: center } } },
                 ],

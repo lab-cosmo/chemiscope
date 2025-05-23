@@ -35,6 +35,17 @@ def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
     in the future.
 
     """
+
+    # stk specific bond order map.
+    bond_map = {
+        # stk int to chemiscope int.
+        1: 1,
+        2: 2,
+        3: 3,
+        # Represents dative bond types in stk.
+        9: 1,
+    }
+
     pos_mat = molecule.get_position_matrix()
     data = {}
     data["size"] = molecule.get_num_atoms()
@@ -42,6 +53,17 @@ def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
     data["x"] = [float(pos_mat[atom.get_id()][0]) for atom in molecule.get_atoms()]
     data["y"] = [float(pos_mat[atom.get_id()][1]) for atom in molecule.get_atoms()]
     data["z"] = [float(pos_mat[atom.get_id()][2]) for atom in molecule.get_atoms()]
+    try:
+        data["bonds"] = [
+            (
+                bond.get_atom1().get_id(),
+                bond.get_atom2().get_id(),
+                bond_map[bond.get_order()],
+            )
+            for bond in molecule.get_bonds()
+        ]
+    except KeyError as e:
+        raise ValueError(f"Unknown bond order {e} (1, 2, 3, 9 (in stk) allowed)") from e
 
     return data
 

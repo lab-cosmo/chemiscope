@@ -25,8 +25,8 @@ or reductions with packages such as `ASAP`_ or `scikit-matter`_.
 The `ASAP`_ structural analysis package is another tool that can directly
 generate an output in chemiscope format.
 
-The easiest way to create a JSON input file is to use the ``chemiscope`` 
-:ref:`Python module <python-module>`. 
+The easiest way to create a JSON input file is to use the ``chemiscope``
+:ref:`Python module <python-module>`.
 Install the package with ``pip install chemiscope``, and use
 :py:func:`chemiscope.write_input` or :py:func:`chemiscope.create_input` in your
 own script to generate the JSON file.
@@ -130,16 +130,24 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
+                // OPTIONAL: bonds in the system, if any.
+                //
+                // This should be given as [i, j, order], where i, j, and
+                // order are integers. i and j are the indices of
+                // the atoms bonded together, and order is the bond order,
+                // which can be 1 (for single bonds) or 2 (for double bonds)
+                // or 3 (for triple bonds).
+                "bonds": [[0, 1, 1], [1, 2, 2],...],
             },
             // other structures as needed
             ...
         ],
 
-        // OPTIONAL: shapes to display in the structure viewer. 
+        // OPTIONAL: shapes to display in the structure viewer.
         // Multiple shapes groups with different names are supported.
         //
         // Each shape is defined by parameters that can be specified globally,
-        // at the structure level, or for individual atoms 
+        // at the structure level, or for individual atoms
         "shapes": {
             <name>: {
                 "kind" : <"sphere", "ellipsoid", "cylinder", "arrow", "custom">,
@@ -153,14 +161,14 @@ contains the following fields and values:
             <other_name>: {
                 "kind" : "sphere"
                 "parameters" : {
-                    "global" : { "radius" : 0.2 }                    
+                    "global" : { "radius" : 0.2 }
                 }
             },
             // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
             <other_name>: {
                 "kind" : "ellipsoid"
                 "parameters" : {
-                    "global" : {}, 
+                    "global" : {},
                     "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
                 }
             },
@@ -179,7 +187,7 @@ contains the following fields and values:
                     "global" : { "baseRadius" : 0.2, 'headRadius': 0.3, 'headLength' : 0.4 },
                     "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
                 }
-            },            
+            },
             // Custom shapes. Must provide list of vertices, and the vertex
             // indices associated with simplices (the latter are autocalculated)
             // if omitted
@@ -187,11 +195,11 @@ contains the following fields and values:
                 "kind" : "custom",
                 "parameters" : {
                     "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2], ...],
-                                 "simplices" : [[0,1,2], [1,3,4], [0,5,5]] }, 
+                                 "simplices" : [[0,1,2], [1,3,4], [0,5,5]] },
                     "atom" : [ {"scale" : 1}, {"scale" : 0.5}, ... ]
                 }
             }
-                            
+
         }
 
         // OPTIONAL: atom-centered environments descriptions
@@ -219,7 +227,7 @@ contains the following fields and values:
         // Each value inside the settings group is optional
         "settings": {
             // Visualization display target, either per atom-centered environments or per structure.
-            // Supported in default and structure visualizers; the atom visualizer uses the "atom" 
+            // Supported in default and structure visualizers; the atom visualizer uses the "atom"
             // target by default. To use "atom" target, make sure to provide a list of environments.
             "target": "atom" | "structure",
             // settings related to the map
