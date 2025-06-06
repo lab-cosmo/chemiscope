@@ -1,6 +1,7 @@
 from ..jupyter import show
 from ._metatensor import metatensor_featurizer
 from ._metatomic import metatomic_featurizer
+from ._sketchmap import sketchmap_featurizer
 from ._soap_pca import soap_pca_featurize
 
 
@@ -8,6 +9,7 @@ __all__ = [
     "explore",
     "metatensor_featurizer",
     "metatomic_featurizer",
+    "sketchmap_featurizer",
 ]
 
 
