@@ -387,6 +387,20 @@ class TestCreateInputProperties(unittest.TestCase):
             "if frames are not provided",
         )
 
+    def test_nan(self):
+        test_cases = [{"name": [2, np.nan, 4]}, {"name": np.array([2, np.nan, 4])}]
+
+        for properties in test_cases:
+            with self.assertRaises(Exception) as cm:
+                _data = create_input(properties=properties)
+        self.assertEqual(str(cm.exception), "Property 'name' has NaNs")
+
+        properties = {"name": np.array(["one", "two"])}
+        try:
+            _data = create_input(properties=properties)
+        except ValueError as e:
+            self.fail(f"unexpected exception raised for string values: {e}")
+
 
 class TestCreateInputEnvironments(unittest.TestCase):
     def test_manual_environments_list(self):
