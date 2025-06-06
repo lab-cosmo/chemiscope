@@ -122,7 +122,7 @@ class metatomic_featurizer:
             capabilities = self.model.capabilities()
             if not capabilities.outputs[self.output].per_atom:
                 raise ValueError(
-                    "this model does not support per-atom mtt::aux::energy_last_layer_features calculation"
+                    f"this model does not support '{self.output}' calculation"
                 )
 
             selected_atoms = mts.Labels(
@@ -150,7 +150,9 @@ class metatomic_featurizer:
 
         if not per_atom and self.use_mead_std:
             warnings.warn(
-                "To use mean and std combined features, provide 'environments' so model can produce per atom features"
+                "To use mean and std combined features, provide 'environments' so model"
+                "can produce per atom features",
+                stacklevel=2,
             )
 
         elif per_atom and self.use_mead_std:

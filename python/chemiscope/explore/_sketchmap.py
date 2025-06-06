@@ -38,8 +38,9 @@ class sketchmap_featurizer:
 
         if features.shape[1] != self.smap_model.input_dim:
             warnings.warn(
-                "Dimention of the mtt model features does not correspond to trained mlp checkpoint. "
-                "No sketchmap projection is done"
+                "Dimention of the mtt model features does not correspond to "
+                "trained mlp checkpoint. No sketchmap projection is done",
+                stacklevel=2,
             )
             return features
 
