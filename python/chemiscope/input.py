@@ -7,6 +7,7 @@ import gzip
 import json
 import os
 import warnings
+from numbers import Number
 from pathlib import Path
 
 import numpy as np
@@ -730,11 +731,26 @@ def _expand_properties(short_properties, n_structures, n_atoms):
         if isinstance(value, dict):
             properties[key] = value
         else:
-            if (not isinstance(value, list)) and (not isinstance(value, np.ndarray)):
+            is_list = isinstance(value, list)
+            is_np_array = isinstance(value, np.ndarray)
+
+            if (not is_list) and (not is_np_array):
                 raise ValueError(
                     "Property values should be either list or numpy array, "
                     f"got {type(value)} instead"
                 )
+
+            list_has_nan = is_list and any(
+                isinstance(v, Number) and np.isnan(v) for v in value
+            )
+            np_array_has_nan = (
+                is_np_array
+                and np.issubdtype(value.dtype, np.number)
+                and np.isnan(value).any()
+            )
+            if list_has_nan or np_array_has_nan:
+                raise ValueError(f"Property '{key}' has NaNs")
+
             if n_structures == n_atoms:
                 warnings.warn(
                     f"The target of the property '{key}' is ambiguous because "
