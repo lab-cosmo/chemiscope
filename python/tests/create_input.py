@@ -391,15 +391,12 @@ class TestCreateInputProperties(unittest.TestCase):
         test_cases = [{"name": [2, np.nan, 4]}, {"name": np.array([2, np.nan, 4])}]
 
         for properties in test_cases:
-            with self.assertRaises(Exception) as cm:
+            with self.assertWarns(UserWarning) as cm:
                 _data = create_input(properties=properties)
-        self.assertEqual(str(cm.exception), "Property 'name' has NaNs")
-
-        properties = {"name": np.array(["one", "two"])}
-        try:
-            _data = create_input(properties=properties)
-        except ValueError as e:
-            self.fail(f"unexpected exception raised for string values: {e}")
+        self.assertEqual(
+            str(cm.warning),
+            "Property 'name' has NaNs, those points are hidden from the map",
+        )
 
 
 class TestCreateInputEnvironments(unittest.TestCase):

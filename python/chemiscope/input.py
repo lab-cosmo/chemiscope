@@ -749,7 +749,10 @@ def _expand_properties(short_properties, n_structures, n_atoms):
                 and np.isnan(value).any()
             )
             if list_has_nan or np_array_has_nan:
-                raise ValueError(f"Property '{key}' has NaNs")
+                warnings.warn(
+                    f"Property '{key}' has NaNs, those points are hidden from the map",
+                    stacklevel=2,
+                )
 
             if n_structures == n_atoms:
                 warnings.warn(
