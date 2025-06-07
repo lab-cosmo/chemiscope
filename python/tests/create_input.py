@@ -387,6 +387,18 @@ class TestCreateInputProperties(unittest.TestCase):
             "if frames are not provided",
         )
 
+    def test_nan(self):
+        test_cases = [{"name": [2, np.nan, 4]}, {"name": np.array([2, np.nan, 4])}]
+
+        for properties in test_cases:
+            with self.assertWarns(UserWarning) as cm:
+                _data = create_input(properties=properties)
+        self.assertEqual(
+            str(cm.warning),
+            "Property 'name' has NaNs. If it is selected for display, the "
+            "corresponding points will be hidden from the map",
+        )
+
 
 class TestCreateInputEnvironments(unittest.TestCase):
     def test_manual_environments_list(self):
