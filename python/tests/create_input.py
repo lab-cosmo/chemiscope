@@ -395,7 +395,8 @@ class TestCreateInputProperties(unittest.TestCase):
                 _data = create_input(properties=properties)
         self.assertEqual(
             str(cm.warning),
-            "Property 'name' has NaNs, those points are hidden from the map",
+            "Property 'name' has NaNs. If it is selected for display, the "
+            "corresponding points will be hidden from the map",
         )
 
 

@@ -750,7 +750,8 @@ def _expand_properties(short_properties, n_structures, n_atoms):
             )
             if list_has_nan or np_array_has_nan:
                 warnings.warn(
-                    f"Property '{key}' has NaNs, those points are hidden from the map",
+                    f"Property '{key}' has NaNs. If it is selected for display, the "
+                    "corresponding points will be hidden from the map",
                     stacklevel=2,
                 )
 
