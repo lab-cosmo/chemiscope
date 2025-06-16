@@ -51,6 +51,7 @@ class MADExplorer(nn.Module):
     def __init__(
         self,
         mtt_model: Union[str, Path, mta.AtomisticModel],
+        mlp_checkpoint: Optional[str] = None,
         extensions_directory: str = None,
         check_consistency: bool = None,
         input_dim: int = 1024,
@@ -83,6 +84,14 @@ class MADExplorer(nn.Module):
 
         self.projector = MLPProjector(input_dim, output_dim).to(self.device)
 
+        if mlp_checkpoint:
+            self.projector_checkpoint = torch.load(mlp_checkpoint, weights_only=False)
+            self.projector.load_state_dict(
+                self.projector_checkpoint["projector_state_dict"]
+            )
+        else:
+            self.projector_checkpoint = None
+
     def forward(
         self,
         systems: List[mta.System],
@@ -114,7 +123,25 @@ class MADExplorer(nn.Module):
 
         systems = [s.to(self.dtype, self.device) for s in systems]
         features = self._get_descriptors(systems, options)
-        projections = self.projector(features)
+
+        high_scaler = self.projector_checkpoint["scaler_highdim"]
+        low_scaler = self.projector_checkpoint["scaler_lowdim"]
+
+        features_np = features.numpy()
+
+        if high_scaler:
+            scaled_features = high_scaler.transform(features_np)
+            features_tensor = torch.FloatTensor(scaled_features)
+        else:
+            features_tensor = torch.FloatTensor(features)
+
+        with torch.no_grad():
+            X_reduced = self.projector(features_tensor)
+
+        projections = X_reduced.detach().numpy()
+
+        if low_scaler:
+            projections = low_scaler.inverse_transform(X_reduced)
 
         num_atoms, num_projections = projections.shape
         sample_labels = mts.Labels("system", torch.arange(num_atoms).reshape(-1, 1))
@@ -122,8 +149,10 @@ class MADExplorer(nn.Module):
             "projection", torch.arange(num_projections).reshape(-1, 1)
         )
 
+        projections_tensor = torch.FloatTensor(projections)
+
         block = mts.TensorBlock(
-            values=projections,
+            values=projections_tensor,
             samples=sample_labels,
             components=[],
             properties=prop_labels,
@@ -168,7 +197,7 @@ class MADExplorer(nn.Module):
         return self.petmad.capabilities().atomic_types
 
 
-model = MADExplorer("pet-mad-latest.pt")
+model = MADExplorer("pet-mad-latest.pt", mlp_checkpoint="mtt_projection_model.pt")
 
 metadata = mta.ModelMetadata(
     name="mad-explorer",
@@ -194,6 +223,6 @@ capabilities = mta.ModelCapabilities(
     atomic_types=model.get_atomic_types(),
 )
 
-wrapper = mta.AtomisticModel(model.eval(), metadata, capabilities)
+mad_explorer = mta.AtomisticModel(model.eval(), metadata, capabilities)
 
-featurizer = chemiscope.metatomic_featurizer(wrapper, length_unit="angstrom")
+featurizer = chemiscope.metatomic_featurizer(mad_explorer, length_unit="angstrom")
