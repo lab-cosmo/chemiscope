@@ -6,8 +6,6 @@ import metatomic.torch as mta
 import torch
 from torch import nn
 
-import chemiscope
-
 
 class MLPProjector(nn.Module):
     """A simple MLP used to project feature vectors to low dimention representations"""
@@ -224,5 +222,3 @@ capabilities = mta.ModelCapabilities(
 )
 
 mad_explorer = mta.AtomisticModel(model.eval(), metadata, capabilities)
-
-featurizer = chemiscope.metatomic_featurizer(mad_explorer, length_unit="angstrom")
