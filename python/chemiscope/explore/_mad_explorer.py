@@ -10,11 +10,7 @@ import chemiscope
 
 
 class MLPProjector(nn.Module):
-    """
-    A simple MLP used to project feature vectors to low-D representations
-
-    TODO more doc
-    """
+    """A simple MLP used to project feature vectors to low dimention representations"""
 
     def __init__(self, input_dim: int = 1024, output_dim: int = 3):
         super().__init__()
@@ -36,9 +32,20 @@ class MLPProjector(nn.Module):
 
 class MADExplorer(nn.Module):
     """
-    Metatomic model wrapper for visualizing PET-MAD last-layer features using a simple projector
+    Metatomic wrapper model for that extracts PET-MAD last-layer features and
+    projects them into a low-dimensional space using an MLP.
 
-    TODO: more doc
+    The model is intended for exploratory analysis and visualization of the
+    learned representations.
+
+    :param mtt_model: path to a saved PET-MAD model or an instance of a loaded
+        model
+    :param extensions_directory: path to model extensions
+    :param check_consistency: whether to verify consistency between model and
+        system inputs
+    :param input_dim : dimensionality of the input PET-MAD features
+    :param output_dim: target low dimensionality for the projected features
+    :param device: device on which to run the model
     """
 
     def __init__(
@@ -106,9 +113,7 @@ class MADExplorer(nn.Module):
         )
 
         systems = [s.to(self.dtype, self.device) for s in systems]
-
         features = self._get_descriptors(systems, options)
-
         projections = self.projector(features)
 
         num_atoms, num_projections = projections.shape
@@ -130,7 +135,16 @@ class MADExplorer(nn.Module):
 
         return {"features": tensor_map}
 
-    def _get_descriptors(self, systems, options) -> torch.Tensor:
+    def _get_descriptors(
+        self, systems: List[mta.System], options: mta.ModelEvaluationOptions
+    ) -> torch.Tensor:
+        """
+        Compute embeddings for the given systems using the PET-MAD model.
+
+        The method computes per-atom mean and std of features and returns as a
+        combined tensor.
+        """
+
         output = self.petmad(
             systems,
             options,
