@@ -66,8 +66,6 @@ class metatomic_featurizer:
         check_consistency=None,
         device=None,
         length_unit="Angstrom",
-        output="features",
-        use_mead_std=False,
     ):
         # Check if dependencies were installed
         global mta, mts, torch, vesin_metatomic
@@ -92,12 +90,10 @@ class metatomic_featurizer:
 
         self.length_unit = length_unit
         self.check_consistency = check_consistency
-        self.output = output
-        self.use_mead_std = use_mead_std
 
         capabilities = self.model.capabilities()
-        if output not in capabilities.outputs:
-            raise ValueError(f"this model does not have a '{output}' output")
+        if "features" not in capabilities.outputs:
+            raise ValueError("this model does not have a 'features' output")
 
         if capabilities.dtype == "float32":
             self.dtype = torch.float32
@@ -116,13 +112,12 @@ class metatomic_featurizer:
         )
 
         systems = [s.to(self.dtype, self.device) for s in systems]
-        per_atom = environments is not None
 
-        if per_atom:
+        if environments is not None:
             capabilities = self.model.capabilities()
-            if not capabilities.outputs[self.output].per_atom:
+            if not capabilities.outputs["features"].per_atom:
                 raise ValueError(
-                    f"this model does not support '{self.output}' calculation"
+                    "this model does not support per-atom features calculation"
                 )
 
             selected_atoms = mts.Labels(
@@ -136,7 +131,7 @@ class metatomic_featurizer:
 
         options = mta.ModelEvaluationOptions(
             length_unit=self.length_unit,
-            outputs={self.output: mta.ModelOutput(per_atom=per_atom)},
+            outputs={"features": mta.ModelOutput(per_atom=environments is not None)},
             selected_atoms=selected_atoms,
         )
 
@@ -146,26 +141,7 @@ class metatomic_featurizer:
             check_consistency=self.check_consistency,
         )
 
-        features = outputs[self.output]
-
-        if not per_atom and self.use_mead_std:
-            warnings.warn(
-                "To use mean and std combined features, provide 'environments' so model"
-                "can produce per atom features",
-                stacklevel=2,
-            )
-
-        elif per_atom and self.use_mead_std:
-            mean = mts.mean_over_samples(features, "atom")
-            mean_vals = torch.cat([block.values for block in mean.blocks()], dim=0)
-
-            std = mts.std_over_samples(features, "atom")
-            std_vals = torch.cat([block.values for block in std.blocks()], dim=0)
-
-            combined_features = torch.cat([mean_vals, std_vals], dim=1)
-            return combined_features.detach().cpu().numpy()
-
-        return features.block().values.detach().cpu().numpy()
+        return outputs["features"].block().values.detach().cpu().numpy()
 
 
 def _find_best_device(supported_devices, requested_device):
