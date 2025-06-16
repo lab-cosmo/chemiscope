@@ -82,42 +82,55 @@ class MADExplorer(nn.Module):
         outputs: Dict[str, mta.ModelOutput],
         selected_atoms: Optional[mts.Labels],
     ) -> Dict[str, mts.TensorMap]:
-        if selected_atoms is None:
+        if list(outputs.keys()) != ["features"]:
             raise ValueError(
-                "MADExplorer requires 'selected_atoms' to be provided"
+                f"`outputs` keys ({', '.join(outputs.keys())}) contain unsupported "
+                "keys. Only 'features' is supported"
             )
 
-        systems = [s.to(self.dtype, self.device) for s in systems]
+        if not outputs["features"].per_atom:
+            raise NotImplementedError(
+                "Model uses per-atom features to get mean and std features"
+            )
 
-        capabilities = self.petmad.capabilities()
+        if selected_atoms is None:
+            raise ValueError("MADExplorer requires 'selected_atoms' to be provided")
 
+        length_unit = self.petmad.capabilities().length_unit
         options = mta.ModelEvaluationOptions(
-            length_unit=capabilities.length_unit,
+            length_unit=length_unit,
             outputs={
                 self.output_name: mta.ModelOutput(per_atom=selected_atoms is not None)
             },
             selected_atoms=selected_atoms,
         )
 
-        features = self._get_petmad_features(systems, options)
+        systems = [s.to(self.dtype, self.device) for s in systems]
+
+        features = self._get_descriptors(systems, options)
+
         projections = self.projector(features)
+
+        num_atoms, num_projections = projections.shape
+        sample_labels = mts.Labels("system", torch.arange(num_atoms).reshape(-1, 1))
+        prop_labels = mts.Labels(
+            "projection", torch.arange(num_projections).reshape(-1, 1)
+        )
 
         block = mts.TensorBlock(
             values=projections,
-            samples=mts.Labels("system", torch.arange(len(projections)).reshape(-1, 1)),
+            samples=sample_labels,
             components=[],
-            properties=mts.Labels(
-                "projection", torch.tensor([[i] for i in range(projections.shape[1])])
-            ),
+            properties=prop_labels,
         )
 
-        return {
-            "features": mts.TensorMap(
-                keys=mts.Labels("_", torch.tensor([[0]])), blocks=[block]
-            )
-        }
+        tensor_map = mts.TensorMap(
+            keys=mts.Labels("_", torch.tensor([[0]])), blocks=[block]
+        )
 
-    def _get_petmad_features(self, systems, options) -> torch.Tensor:
+        return {"features": tensor_map}
+
+    def _get_descriptors(self, systems, options) -> torch.Tensor:
         output = self.petmad(
             systems,
             options,
@@ -145,11 +158,12 @@ model = MADExplorer("pet-mad-latest.pt")
 
 metadata = mta.ModelMetadata(
     name="mad-explorer",
-    description="Exploration tool for PET-MAD model features",
+    description="Exploration tool for PET-MAD model features upon SMAP projections",
     authors=["TODO"],
     references={
         "architecture": ["https://arxiv.org/abs/2305.19302v3"],
         "model": ["http://arxiv.org/abs/2503.14118"],
+        "implementation": ["https://doi.org/10.1073/pnas.1108486108"],
     },
 )
 
