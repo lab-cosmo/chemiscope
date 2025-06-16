@@ -1,46 +1,66 @@
-import torch
-from torch import nn
 from pathlib import Path
-import metatomic.torch as mta
-import metatensor.torch as mts
-
 from typing import Dict, List, Optional, Union
 
-import warnings
+import metatensor.torch as mts
+import metatomic.torch as mta
+import torch
+from torch import nn
 
 import chemiscope
 
 
-class MADExplorer(nn.Module):
-    def __init__(
-        self,
-        model: Union[str, Path, mta.AtomisticModel],
-        extensions_directory: str = None,
-        check_consistency: bool = None,
-        input_dim: int = 1024,
-        output_dim: int = 2,
-        device=None,
-    ):
+class MLPProjector(nn.Module):
+    """
+    A simple MLP used to project feature vectors to low-D representations
+
+    TODO more doc
+    """
+
+    def __init__(self, input_dim: int = 1024, output_dim: int = 3):
         super().__init__()
 
         self.input_dim = input_dim
         self.output_dim = output_dim
 
-        if isinstance(model, (str, Path)):
-            self.petmad = mta.load_atomistic_model(
-                model, extensions_directory=extensions_directory
-            )
-        else:
-            self.petmad = model
+        self.fc1 = nn.Linear(self.input_dim, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 128)
+        self.output = nn.Linear(128, self.output_dim)
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        x = torch.relu(self.fc1(features))
+        x = torch.relu(self.fc2(x))
+        x = torch.relu(self.fc3(x))
+        return self.output(x)
+
+
+class MADExplorer(nn.Module):
+    """
+    Metatomic model wrapper for visualizing PET-MAD last-layer features using a simple projector
+
+    TODO: more doc
+    """
+
+    def __init__(
+        self,
+        mtt_model: Union[str, Path, mta.AtomisticModel],
+        extensions_directory: str = None,
+        check_consistency: bool = None,
+        input_dim: int = 1024,
+        output_dim: int = 3,
+        device: Optional[Union[str, torch.device]] = "cpu",
+    ):
+        super().__init__()
 
         self.check_consistency = check_consistency
         self.device = device
 
-        # MLP layers
-        self.fc1 = nn.Linear(input_dim, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.output = nn.Linear(128, output_dim)
+        if isinstance(mtt_model, (str, Path)):
+            self.petmad = mta.load_atomistic_model(
+                mtt_model, extensions_directory=extensions_directory
+            )
+        else:
+            self.petmad = mtt_model
 
         capabilities = self.petmad.capabilities()
 
@@ -54,14 +74,18 @@ class MADExplorer(nn.Module):
             assert capabilities.dtype == "float64"
             self.dtype = torch.float64
 
+        self.projector = MLPProjector(input_dim, output_dim).to(self.device)
+
     def forward(
         self,
         systems: List[mta.System],
         outputs: Dict[str, mta.ModelOutput],
         selected_atoms: Optional[mts.Labels],
     ) -> Dict[str, mts.TensorMap]:
-        if len(selected_atoms) == 0:
-            raise ValueError("Provide 'selected_atoms' to see visualisation")
+        if selected_atoms is None:
+            raise ValueError(
+                "MADExplorer requires 'selected_atoms' to be provided"
+            )
 
         systems = [s.to(self.dtype, self.device) for s in systems]
 
@@ -70,17 +94,13 @@ class MADExplorer(nn.Module):
         options = mta.ModelEvaluationOptions(
             length_unit=capabilities.length_unit,
             outputs={
-                self.output_name: mta.ModelOutput(
-                    quantity="length",
-                    unit="angstrom",
-                    per_atom=selected_atoms is not None,
-                )
+                self.output_name: mta.ModelOutput(per_atom=selected_atoms is not None)
             },
             selected_atoms=selected_atoms,
         )
 
         features = self._get_petmad_features(systems, options)
-        projections = self._mlp_forward(features)
+        projections = self.projector(features)
 
         block = mts.TensorBlock(
             values=projections,
@@ -97,16 +117,7 @@ class MADExplorer(nn.Module):
             )
         }
 
-    def _mlp_forward(self, features):
-        x = torch.relu(self.fc1(features))
-        x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
-        return self.output(x)
-
-    def get_atomic_types(self):
-        return self.petmad.capabilities().atomic_types
-
-    def _get_petmad_features(self, systems, options):
+    def _get_petmad_features(self, systems, options) -> torch.Tensor:
         output = self.petmad(
             systems,
             options,
@@ -122,18 +133,19 @@ class MADExplorer(nn.Module):
             std_vals = torch.cat([block.values for block in std.blocks()], dim=0)
 
             combined_features = torch.cat([mean_vals, std_vals], dim=1)
-            # return combined_features.detach().cpu().numpy()
             return combined_features.detach()
         else:
             return features.block().values.detach()
-            # return features.block().values.detach().cpu()
+
+    def get_atomic_types(self) -> List[int]:
+        return self.petmad.capabilities().atomic_types
 
 
 model = MADExplorer("pet-mad-latest.pt")
 
 metadata = mta.ModelMetadata(
     name="mad-explorer",
-    description="TODO",
+    description="Exploration tool for PET-MAD model features",
     authors=["TODO"],
     references={
         "architecture": ["https://arxiv.org/abs/2305.19302v3"],
