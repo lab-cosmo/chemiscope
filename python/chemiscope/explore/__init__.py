@@ -22,7 +22,7 @@ def explore(
     """
     Automatically explore a dataset containing all structures in ``frames``.
 
-    This function computes some low-dimensionality representation of the frames, and
+    This function computes a low-dimensionality representation of the frames, and
     uses chemiscope to visualize both the resulting embedding and the structures
     simultaneously. ``featurize`` can be used to specify a custom representation and/or
     dimensionality reduction method.
@@ -35,10 +35,12 @@ def explore(
 
     :param list frames: list of frames
 
-    :param callable featurize: optional. Function to compute features and perform
-        dimensionality reduction on the ``frames``. The function should take ``frames``
-        as input and return a 2D array of reduced features. If ``None``, a default SOAP
-        and PCA based featurizer is used.
+    :param callable featurize: Optional callable to compute features and perform
+        dimensionality reduction on the ``frames``. The callable should take ``frames``
+        as the first argument and ``environments`` as the second argument. The return
+        value must be a features array of dimension number of frames times number of
+        features. If ``None``, a default SOAP and the first two dimensions of Principal
+        Component Analysis (PCA) are used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -47,7 +49,7 @@ def explore(
 
     :param environments: optional. List of environments (described as ``(structure id,
         center id, cutoff)``) to include when extracting the atomic properties. Can be
-        extracted from frames with :py:func:`all_atomic_environments`. or manually
+        extracted from frames with :py:func:`all_atomic_environments` or manually
         defined.
 
     :param dict settings: optional dictionary of settings to use when displaying the
@@ -70,7 +72,7 @@ def explore(
     Here is an example using this function with and without a featurizer function. The
     frames are obtained by reading the structures from a file that `ase <ase-io_>`_ can
     read, and performing Kernel PCA using `sklearn`_ on a descriptor computed with SOAP
-    with `dscribe`_ library.
+    using the `dscribe`_ library.
 
     .. code-block:: python
 
