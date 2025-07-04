@@ -38,9 +38,10 @@ def explore(
     :param callable featurize: Optional callable to compute features and perform
         dimensionality reduction on the ``frames``. The callable should take ``frames``
         as the first argument and ``environments`` as the second argument. The return
-        value must be a features array of dimension number of frames times number of
-        features. If ``None``, a default SOAP and the first two dimensions of Principal
-        Component Analysis (PCA) are used.
+        value must be a features array of shape ``(n_frames, n_features)`` if
+        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. If
+        ``None``, a default SOAP and the first two dimensions of Principal Component
+        Analysis (PCA) are used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
