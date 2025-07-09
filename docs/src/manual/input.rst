@@ -285,6 +285,10 @@ contains the following fields and values:
                     // in the case of `inverse` scaling, this is reversed.
                     "reverse": false | true,
                 },
+                // whether points in the map should have a thin black outline
+                "markerOutline": true | false,
+                // whether the points in the map should be linked by a thin black trace
+                "joinPoints": false | true,
             },
             // Settings related to the structure viewers grid. This is an array
             // containing the settings for each separate viewer
