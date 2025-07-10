@@ -1,4 +1,6 @@
 """
+.. _explore-advanced-example:
+
 Advanced dataset exploration
 ============================
 

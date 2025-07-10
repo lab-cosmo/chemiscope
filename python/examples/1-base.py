@@ -2,9 +2,9 @@
 Simple chemiscope input
 =======================
 
-This example demonstrates the basic usage of the chemiscope package, reading structures
-and properties from an ASE package and preparing a chemiscope file to visualize them.
-Use `chemiscope.show` in a Jupyter notebook for interactive visualization
+This example demonstrates the basic usage of the ``chemiscope`` package, reading
+structures and properties from an `ASE package <https://wiki.fysik.dtu.dk/ase>`_ and
+preparing a chemiscope file to visualize them. First, import dependencies:
 
 """
 
@@ -18,7 +18,7 @@ import chemiscope
 
 # %%
 #
-# Load structures from an extended xyz file
+# Load structures from an extended xyz file:
 
 frames = ase.io.read("data/showcase.xyz", ":")
 
@@ -36,7 +36,7 @@ chemiscope.show(
     # it's always good to set some metadata to explain what the dataset - title is bare
     # minimum
     meta=dict(name="Dipole and polarizability"),
-    # it is possible to set _all_ visualization parameters with a dictionary format.
+    # it is possible to set all visualization parameters with a dictionary format.
     # this is a shortcut for the most basic ones
     settings=chemiscope.quick_settings(
         x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
@@ -46,10 +46,9 @@ chemiscope.show(
 
 # %%
 #
-# For sharing with collaborators, or when one does not want to use an interactive
-# notebook, one can also write a JSON (or compressed JSON) file that contains all
-# information about structures and properties, and can be viewed at chemiscope.org
-# Save as a file that can be viewed at chemiscope.org
+# To share the visualization with collaborators or view it on `chemiscope.org
+# <https://chemiscope.org>`_, save the dataset as a JSON (or compressed JSON) file. This
+# file contain all information about structures, properties, and visualization settings.
 
 chemiscope.write_input(
     "showcase.json.gz",
@@ -63,7 +62,7 @@ chemiscope.write_input(
 
 # %%
 #
-# In a notebook it is also possible to load a `.json` file and create an interactive
-# widget from it.
+# In a Jupyter notebook, you can load a previously saved ``.json`` or ``.json.gz`` file
+# to recreate the interactive widget.
 
 chemiscope.show_input("showcase.json.gz")
