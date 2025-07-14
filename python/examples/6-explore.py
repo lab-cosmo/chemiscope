@@ -68,20 +68,12 @@ frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 # %%
 #
 # Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
-# interactive widget with the reduced dimensionality of data.
+# interactive widget with the reduced dimensionality of data. In this basic case, no
+# featurizer function is provided, so `PETMADFeaturizer
+# <https://arxiv.org/abs/2506.19674>`_  is used to compute `PET-MAD
+# <https://arxiv.org/abs/2503.14118>`_ features and projects them into a 3D latent
+# sketch-map space.
 chemiscope.explore(frames)
-
-# %%
-#
-# In this basic case, no featurizer function is provided, so
-# :py:func:`chemiscope.explore` uses a default method that applies
-# `SOAP (Smooth Overlap of Atomic Positions)
-# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ to
-# compute atomic structure descriptors and then performs `PCA (Principal Component
-# Analysis)
-# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html>`_
-# for dimensionality reduction. The resulting components are then added to the
-# properties to be used in visualization.
 
 
 # %%
@@ -90,14 +82,19 @@ chemiscope.explore(frames)
 # specific atom-centered environments. They can be manually defined by specifying a list
 # of tuples in the format ``(structure_index, atom_index, cutoff)``, as shown in
 # this example. Alternatively, the environments can be extracted from the frames using
-# the function :py:func:`all_atomic_environments`.
+# the function :py:func:`chemiscope.all_atomic_environments`.
 #
 # We also demonstrate a way to provide properties for visualization. The frames and
-# properties related to the indexes in the ``environments`` will be extracted.
+# properties related to the indexes in the ``environments`` will be extracted. In
+# ``settings`` we specify what properties to should be used for the axes and for
+# colorization.
 
 properties = chemiscope.extract_properties(frames, only=["energy"])
 environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
-chemiscope.explore(frames, environments=environments, properties=properties)
+settings = chemiscope.quick_settings(x="features[1]", y="features[2]", color="energy")
+chemiscope.explore(
+    frames, environments=environments, properties=properties, settings=settings
+)
 
 # %%
 #
@@ -127,11 +124,11 @@ from sklearn.decomposition import KernelPCA  # noqa
 def soap_kpca_featurize(frames, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported by this featurizer")
-    # Initialise soap calculator. The detailed explanation of the provided
+
+    # Initialise SOAP calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
-        # the dataset used in the example contains only carbon
-        species=["C"],
+        species=["C"],  # the dataset used in the example contains only carbon
         r_cut=4.5,
         n_max=8,
         l_max=6,
