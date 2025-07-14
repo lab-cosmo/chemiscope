@@ -19,3 +19,4 @@ stko
 # required for the examples of chemiscope.explore
 mace-torch
 scikit-learn
+dscribe

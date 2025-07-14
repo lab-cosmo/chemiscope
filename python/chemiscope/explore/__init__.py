@@ -150,7 +150,7 @@ def explore(
 
     :return: a chemiscope widget for interactive visualization
 
-    To use this function, additional dependencies are required, specifically, `pet-mad`_
+    To use this function, additional dependencies are required, specifically, `pet_mad`_
     used for the default dimensionality reduction. They can be installed with the
     following command:
 
