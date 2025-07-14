@@ -1,12 +1,8 @@
 from ..jupyter import show
-from ._metatensor import metatensor_featurizer
 from ._metatomic import metatomic_featurizer
-from ._soap_pca import soap_pca_featurize
-
 
 __all__ = [
     "explore",
-    "metatensor_featurizer",
     "metatomic_featurizer",
 ]
 
@@ -120,6 +116,14 @@ def explore(
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
+    # Check if dependencies were installed
+    try:
+        from pet_mad.explore import PETMADFeaturizer
+    except ImportError as e:
+        raise ImportError(
+            f"Required package not found: {e}. Please install the "
+            "dependencies with `pip install chemiscope[explore]`."
+        )
 
     # Validate inputs
     if featurize is not None and not callable(featurize):
@@ -132,7 +136,8 @@ def explore(
         X_reduced = featurize(frames, environments)
     else:
         # Run default featurizer
-        X_reduced = soap_pca_featurize(frames, environments)
+        featurizer = PETMADFeaturizer(version="latest")
+        X_reduced = featurizer(frames, environments)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced
