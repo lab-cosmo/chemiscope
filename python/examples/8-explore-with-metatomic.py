@@ -11,7 +11,7 @@ dependencies are required. You can install them with the following command:
 
 .. code:: bash
 
-    pip install chemiscope[metatomic]
+    pip install chemiscope[explore]
 
 .. _metatomic: https://docs.metatensor.org/metatomic/
 """
