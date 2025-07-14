@@ -27,9 +27,8 @@ def explore(
     reduction method.
 
     If no function is provided as a ``featurize`` argument, a default `PETMADFeaturizer
-    <https://arxiv.org/abs/2506.19674>`_ is used. It computes `PET-MAD
-    <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
-    into a 3D latent space using sketch-map.
+    <https://arxiv.org/abs/2506.19674>`_ is used. It computes `PET-MAD`_ features from
+    the structures and projects them into a 3D latent space using sketch-map.
 
     :param list frames: list of frames
 
@@ -66,7 +65,7 @@ def explore(
 
     :return: a chemiscope widget for interactive visualization
 
-    To use this function, additional dependencies are required, specifically, `pet_mad`_
+    To use this function, additional dependencies are required, specifically, `PET-MAD`_
     used for the default dimensionality reduction. They can be installed with the
     following command:
 
@@ -120,7 +119,7 @@ def explore(
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
-    .. _pet_mad: https://github.com/lab-cosmo/pet-mad
+    .. _PET-MAD: https://github.com/lab-cosmo/pet-mad
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html

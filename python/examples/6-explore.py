@@ -125,7 +125,7 @@ def soap_kpca_featurize(frames, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported by this featurizer")
 
-    # Initialise SOAP calculator. The detailed explanation of the provided
+    # Initialize SOAP calculator. The detailed explanation of the provided
     # hyperparameters can be checked in the documentation of the library (``dscribe``).
     soap = SOAP(
         species=["C"],  # the dataset used in the example contains only carbon
