@@ -11,22 +11,22 @@ Online visualizer at chemiscope.org
 Uploading datasets
 ^^^^^^^^^^^^^^^^^^
 
-The simplest way to share chemiscope dataset is to send the corresponding file
+The simplest way to share the chemiscope dataset is to send the corresponding file
 (``my-dataset.json`` or ``my-dataset.json.gz``) to your collaborators.
 
 They can then load this file from the main chemiscope website:
-https://chemiscope.org/. Here they can use the *Load/Save* menu to upload the
+https://chemiscope.org/. Here, they can use the *Load/Save* menu to upload the
 dataset to the website.
 
-Loading from an URL
-^^^^^^^^^^^^^^^^^^^
+Loading from a URL
+^^^^^^^^^^^^^^^^^^
 
-You can also host your dataset in any publicly accessible web server such as
+You can also host your dataset on any publicly accessible web server such as
 your home page. Given a file hosted at
 ``https://university.edu/~myself/dataset.json``, you can then load this file
 directly in chemiscope by going to
 ``https://chemiscope.org/?load=https://university.edu/~myself/dataset.json``.
-This allow you to create links to directly open a given dataset in the main
+This allows you to create links to directly open a given dataset in the main
 chemiscope website, loading such dataset from your own webpage.
 
 In general, you can set the ``load`` GET parameter on ``https://chemiscope.org``
@@ -40,7 +40,7 @@ You can save the current visualization settings from the website using the
 *Load/Save* menu. This will allow you to download a JSON file, which you can use
 later to reset visualization state.
 
-If you are loading a file from an URL by creating a link that looks like
+If you are loading a file from a URL by creating a link that looks like
 ``https://chemiscope.org/?load=https://university.edu/dataset.json.gz``, you can
 use the ``settings`` GET parameter to specify the URL of saved settings:
 ``https://chemiscope.org/?load=https://university.edu/dataset.json.gz&settings=https://university.edu/settings.json``

@@ -1,15 +1,12 @@
 .. _input:
 
 Chemiscope input files
-===============================
+======================
 
-When using the default chemiscope interface, all the structures and properties
-in a dataset are loaded from a single JSON file. These sections describe how to
-generate such JSON file, either using a pre-existing python script that does
-most of the work for you, or by writing the JSON file directly. Since the
-resulting JSON file can be quite large and thus harder to share with
-collaborators, the default chemiscope interface also allows to load JSON files
-compressed with gzip.
+The default Chemiscope interface loads all structures and properties of a dataset from a
+single JSON file. This section describe how to create such a file using provided Python
+tools or by manually writing the JSON. As JSON files can become large and hard to share
+with collaborators Chemiscope also supports loading JSON files compressed with gzip.
 
 tl;dr if you would like to generate a simple chemiscope for your dataset, we
 have a `Google Colab notebook <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_
@@ -18,12 +15,17 @@ that can help!
 Tools that can create chemiscope inputs
 ---------------------------------------
 
-Note that chemiscope does not compute structural representations or
-dimensionality reduction, and the command line interface works iff
-there are mappable quantities in the file. You can generate such representations
-or reductions with packages such as `ASAP`_ or `scikit-matter`_.
-The `ASAP`_ structural analysis package is another tool that can directly
-generate an output in chemiscope format.
+Chemiscope can directly visualize datasets with precomputed mappable quantities, e.g.,
+structural representations or reduced-dimensionality features, using its command-line
+interface. To generate these quantities, external packages like `scikit-matter`_ or
+`ASAP`_ can be used. The ASAP package, for instance, can produce directly output in
+Chemiscope-compatible format.
+
+Alternatively, Chemiscope's :ref:` :py:func:chemiscope.explore <_explore-example>`
+function can automatically compute representations and perform dimensionality reduction
+using the default `featurizer <https://arxiv.org/abs/2506.19674>`_ to project structures
+into the PET-MAD low-dimensional latent space. Custom featurization is also supported
+for advanced use cases.
 
 The easiest way to create a JSON input file is to use the ``chemiscope``
 :ref:`Python module <python-module>`.
@@ -39,11 +41,11 @@ a file `ase`_ can read, the ``chemiscope`` python package also installs a
 Input file reference
 --------------------
 
-If you can not or do not want to use the ``chemiscope`` python package to create
-your input files, you can also directly write the JSON file conforming to the
-schema described here. The input file follows closely the `Dataset`_ typescript
-interface used in the library. Using a pseudo-JSON format, the file should
-contains the following fields and values:
+If you can not or do not want to use the ``chemiscope`` python package to create your
+input files, you can also directly write the JSON file conforming to the schema
+described here. The input file follows closely the `Dataset`_ typescript interface used
+in the library. Using a JSON format, the file should contain the following fields and
+values:
 
 .. code-block:: javascript
 
@@ -52,9 +54,9 @@ contains the following fields and values:
         // will be rendered as markdown.
         "meta": {
             // the name of the dataset
-            "name": "this is my name"
+            "name": "this is my name",
             // description of the dataset, OPTIONAL
-            "description": "This contains data from ..."
+            "description": "This contains data from ...",
             // authors of the dataset, OPTIONAL
             "authors": ["John Doe", "Mr Green, green@example.com"],
             // references for the dataset, OPTIONAL
@@ -66,7 +68,7 @@ contains the following fields and values:
 
         // list of properties in this dataset
         "properties": {
-            // Each property have at least a name, a target and some values.
+            // Each property has at least a name, a target, and some values.
             // Optional entries for the units and descriptions can also be added.
             <name>: {
                 // the property target: is it defined per atom or for the full
@@ -79,7 +81,7 @@ contains the following fields and values:
                 // data.
                 //
                 // the first dimension of the multidimensional property corresponds
-                // to the number atoms/structures, the second dimension corresponds
+                // to the number of atoms/structures, the second dimension corresponds
                 // to the size of the array of values per atom/structure.
                 "values": [1, 2, 3, ...] | ["first", "second", "first", ...] | [[1, 3, 5], [2, 4, 6], ...],
 
@@ -92,24 +94,25 @@ contains the following fields and values:
                 // required multidimensional properties
                 "parameter": ["parameter_name"]
             }
-        }
+        },
+
         // OPTIONAL: list of parameters to be used with multidimensional properties
         "parameters": {
-            // each Parameter must have a name, and an array of values that should match
+            // each parameter must have a name and an array of values that should match
             // the second dimension of the associated multidimensional properties
             <name>: {
                 // an array of numbers containing the values of the parameter
                 // the size should correspond to the second dimension of the
                 // corresponding multidimensional property
-                "values": [0, 0.1, 0.2]
+                "values": [0, 0.1, 0.2],
 
                 // OPTIONAL free-form description of the parameter as a string
-                "name": "a short description of this parameter"
+                "name": "a short description of this parameter",
                 // OPTIONAL units of the values in the values array
                 "units": "eV"
 
             }
-        }
+        },
 
         // list of structures in this dataset
         "structures": [
@@ -172,7 +175,7 @@ contains the following fields and values:
                     "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
                 }
             },
-            // Cylinder, with the given radiys, and `vector` direction
+            // Cylinder, with the given radius and `vector` direction
             <other_name>: {
                 "kind" : "cylinder"
                 "parameters" : {
@@ -180,7 +183,7 @@ contains the following fields and values:
                     "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
                 }
             },
-            // Arrow, with the given shape parameters, and `vector` direction
+            // Arrow, with the given shape parameters and `vector` direction
             <other_name>: {
                 "kind" : "arrow"
                 "parameters" : {
@@ -188,8 +191,8 @@ contains the following fields and values:
                     "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
                 }
             },
-            // Custom shapes. Must provide list of vertices, and the vertex
-            // indices associated with simplices (the latter are autocalculated)
+            // Custom shapes. Must provide a list of vertices, and the vertex
+            // indices associated with simplices (the latter are auto-calculated)
             // if omitted
             <yet_another> : {
                 "kind" : "custom",
@@ -202,7 +205,7 @@ contains the following fields and values:
 
         }
 
-        // OPTIONAL: atom-centered environments descriptions
+        // OPTIONAL: atom-centered environment descriptions
         //
         // If present, there should be one environment for each atom in each
         // structure.
@@ -221,7 +224,7 @@ contains the following fields and values:
 
         // OPTIONAL: setting for each panel
         //
-        // Adding these values allow to setup how a given dataset should be
+        // Adding these values allows to setup how a given dataset should be
         // visualized in chemiscope.
         //
         // Each value inside the settings group is optional
@@ -235,7 +238,7 @@ contains the following fields and values:
                 // x axis settings
                 "x": {
                     // name of the property to use for this axis, this must be
-                    // one of the key from the root `properties` table.
+                    // one of the keys from the root `properties` table.
                     "property": "<name>",
                     // should the axis use linear or logarithmic scaling
                     "scale": "linear" | "log",
@@ -244,18 +247,18 @@ contains the following fields and values:
                     // upper bound of the axis
                     "max": 1.42,
                 },
-                // y axis setting, using the the same keys as x axis setting
+                // y axis setting, using the same keys as x axis setting
                 "y": {
                     // ...
                 },
-                // z axis setting, using the the same keys as x axis setting
+                // z axis setting, using the same keys as x axis setting
                 "z": {
                     // property can be set to an empty string to get a 2D map
                     "property": "",
                     // ...
                 },
-                // name of the property to use for markers symbols, this must be
-                // one of the key from the root `properties` table. The
+                // name of the property to use for marker symbols, this must be
+                // one of the keys from the root `properties` table. The
                 // associated property should have string values
                 "symbol": "<name>",
                 // point color setting, using the the same keys as x axis setting
@@ -271,14 +274,14 @@ contains the following fields and values:
                     // scaling factor for the axis, between 1 and 100
                     "factor": 55,
                     // mode to scale the markers with respect to the properties
-                      // `constant`: all markers are same size, scaled by `factor`
+                      // `constant`: all markers are the same size, scaled by `factor`
                       // `linear`: markers are directly proportional to the property
                       // `log`: markers are proportional to the logarithm of the property
                       // `sqrt`: markers are proportional to the square root of the property
                       // `inverse`: markers are inversely proportional to the property
                     "mode": "constant" | "linear" | "log" | "sqrt | "inverse"",
                     // name of the property to use for the markers size, this
-                    // must be one of the key from the root `properties` table.
+                    // must be one of the keys from the root `properties` table.
                     "property": "<name>",
                     // if false, markers scale from smallest to largest property value
                     // if true, marker scale from largest to smallest property value
@@ -330,7 +333,7 @@ contains the following fields and values:
                     // options related to the coloring of the atoms
                     "color": {
                         // name of the property to use for coloring, this must be
-                        // one of the key from the root `properties` table.
+                        // one of the keys from the root `properties` table.
                         // the default value is "element"
                         "property": "element" | "<name>",
                         // if the atoms should not be colored by element,
@@ -363,7 +366,7 @@ contains the following fields and values:
             // will be shown in the structure viewer grid and indicated on
             // the map.
             //
-            // This list should containg 0-based indexes of the environment in
+            // This list should contain 0-based indexes of the environment in
             // the root "environments" object; or of the structure in the root
             // "environments" if no environments are present.
             //
@@ -380,7 +383,7 @@ contains the following fields and values:
         }
     }
 
-.. _Dataset: api/interfaces/main.dataset.html
+.. _Dataset: /api/interfaces/Dataset.html
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
 .. _ASAP: https://github.com/BingqingCheng/ASAP
