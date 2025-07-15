@@ -7,8 +7,8 @@ data-driven descriptors of their geometry to cluster together similar motifs. He
 geometric descriptors have been computed by PCA starting from SOAP representations but
 are provided as text files to avoid external dependencies for the example.
 
-The same parameters demonstrated on this example can be used with ``chemiscope.show`` to
-visualize an interactive widget in a Jupyter notebook.
+The same parameters demonstrated on this example can be used with
+:py:func:`chemiscope.show` to visualize an interactive widget in a Jupyter notebook.
 """
 
 # %%
@@ -29,8 +29,8 @@ frames = ase.io.read("data/trajectory.xyz", ":")
 #
 # Load the SOAP-PCA descriptors. To obtain them yourself, check the :ref:`examples
 # <explore-advanced-example>` of feature calculation and dimentionality reduction.
-# Chemiscope also provides ``chemiscope.explore`` function to obtain low-dimentional
-# representation based on PETMAD features.
+# Chemiscope also provides :py:func:`chemiscope.explore` function to obtain
+# low-dimentional representation based on PET-MAD features.
 
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
@@ -72,8 +72,8 @@ for frame_i, frame in enumerate(frames):
 
 # %%
 #
-# Create a visualization and save it as a file that can be viewed at `chemiscope.org
-# <https://chemiscope.org>`_:
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
 
 chemiscope.write_input(
     "trajectory-pca.json.gz",

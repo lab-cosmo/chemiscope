@@ -7,8 +7,8 @@ properties in the structure panel, using different types of
 predefined shapes (ellipsoids for tensors, arrows for vectors).
 The example also shows how to define custom shapes.
 
-Note that the same parameters can be used with `chemiscope.show` to visualize an
-interactive widget in a Jupyter notebook.
+Note that the same parameters can be used with :py:func:`chemiscope.show` to visualize
+an interactive widget in a Jupyter notebook.
 """
 
 # %%
@@ -61,14 +61,14 @@ for a in frames:
 # Shapes generation
 # -----------------
 #
-# Here we define shapes that will later be used to create the input;
-# input generation can also be achieved as a single call, but in practice
-# it is wise to define separate entities for better readability
+# Here we define shapes that will later be used to create the input.
+# Input generation can also be achieved as a single call, but in practice
+# it is wise to define separate entities for better readability.
 
 # %%
 #
-# Cubes with smooth shading, centered on atoms. these are created as
-# "custom" shapes and then are just scaled to atom-dependent sizes
+# Cubes with smooth shading, centered on atoms. These are created as
+# "custom" shapes and then are just scaled to atom-dependent sizes:
 
 atom_sizes = {"O": 0.4, "N": 0.5, "C": 0.45, "H": 0.2}
 smooth_cubes = dict(
@@ -112,8 +112,8 @@ smooth_cubes = dict(
 
 # %%
 #
-# Structure-based shapes. also demonstrates how to achieve sharp-edge shading.
-# requires defining multiple times the same vertices
+# Structure-based shapes. Also demonstrates how to achieve sharp-edge shading.
+# It requires defining multiple times the same vertices:
 
 sharp_cubes = dict(
     kind="custom",
@@ -197,7 +197,7 @@ irreverent_shape = dict(
 
 # %%
 #
-# Dipole moments visualized as arrows. this is just to demonstrate manual insertion,
+# Dipole moments visualized as arrows. This is just to demonstrate manual insertion,
 # see below to extract directly from the ASE info
 dipoles_manual = (
     dict(
@@ -239,7 +239,8 @@ for d in dipoles_auto["parameters"][
 
 # %%
 #
-# Create a visualization and save it as a file that can be viewed at chemiscope.org
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
 
 chemiscope.write_input(
     "shapes-example.json.gz",

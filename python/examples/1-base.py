@@ -4,8 +4,8 @@ Simple chemiscope input
 
 This example demonstrates the basic usage of the ``chemiscope`` package, reading
 structures and properties from an `ASE package <https://wiki.fysik.dtu.dk/ase>`_ and
-preparing a chemiscope file to visualize them. First, import dependencies:
-
+preparing a chemiscope file to visualize them using :py:func:`chemiscope.show`. First,
+import dependencies:
 """
 
 # %%
@@ -46,9 +46,9 @@ chemiscope.show(
 
 # %%
 #
-# To share the visualization with collaborators or view it on `chemiscope.org
-# <https://chemiscope.org>`_, save the dataset as a JSON (or compressed JSON) file. This
-# file contain all information about structures, properties, and visualization settings.
+# To share the visualization with collaborators or view it on `<chemiscope.org>`_, save
+# the dataset as a JSON (or compressed JSON) file. This file contain all information
+# about structures, properties, and visualization settings.
 
 chemiscope.write_input(
     "showcase.json.gz",
