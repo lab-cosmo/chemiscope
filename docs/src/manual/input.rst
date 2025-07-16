@@ -38,6 +38,19 @@ a file `ase`_ can read, the ``chemiscope`` python package also installs a
 :ref:`chemiscope-input <chemiscope-input-cli>` command line script.
 
 
+Python quick example
+~~~~~~~~~~~~~~~~~~~~
+.. code-block:: python
+
+   from chemiscope import write_input
+   write_input(
+       "output.json",
+       structures=ase_atoms_list,  # List of ASE Atoms
+       properties={"energy": [...]},  # Your properties
+       meta={"name": "My Dataset"}
+   )
+
+
 Input file reference
 --------------------
 
@@ -46,6 +59,290 @@ input files, you can also directly write the JSON file conforming to the schema
 described here. The input file follows closely the `Dataset`_ typescript interface used
 in the library. Using a JSON format, the file should contain the following fields and
 values:
+
+
+Quick overview
+~~~~~~~~~~~~~~
+The Chemiscope JSON file consists of these top-level entries:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 50 15
+
+   * - Key
+     - Description
+     - Required?
+   * - ``meta``
+     - Dataset metadata (name, authors, etc.)
+     - No
+   * - ``structures``
+     - List of atomic structures (coordinates, cell, bonds)
+     - Yes
+   * - ``properties``
+     - Properties mapped to atoms/structures (energy, forces, PCA, etc)
+     - Yes
+   * - ``shapes``
+     - Custom shapes (spheres, arrows) to visualize in structures
+     - No
+   * - ``settings``
+     - Default visualization settings (map axes, colors, etc.)
+     - No
+   * - ``environments``
+     - Atom-centered neighborhoods
+     - No
+   * - ``parameters``
+     - Parameters for multidimensional properties (e.g., time series)
+     - No
+
+
+Below is the detailed description of the values types and examlpes for each entry.
+
+Metadata (``meta``)
+~~~~~~~~~~~~~~~~~~~
+
+Optional. Contains description of your dataset. The fields will be rendered as markdown.
+
+.. list-table:: Metadata fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``name``
+     - string
+     - Short title of your dataset
+     - Yes
+     - ``"XXX dataset"``
+   * - ``description``
+     - string
+     - Detailed explanation of content/origin
+     - No
+     - ``"A dataset from ..."``
+   * - ``references``
+     - string[]
+     - Citations/links (one per array item)
+     - No
+     - ``["DOI:10.1234/abc", "'A new molecular construction', Journal of Random Words 19
+       (1923) pp 3333, DOI: 10.0000/0001100", "'nice website' http://example.com"]``
+               
+                
+Example:
+++++++++
+
+.. code-block:: json
+
+   "meta": {
+     "name": "MAD PCA",
+     "description": "1000 validation structures from the *MAD dataset* under PCA",
+     "authors": ["Author 1"],
+     "references": ["https://arxiv.org/abs/2506.19674"]
+   }
+
+
+Properties (``properties``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Required. Defines all dataset properties to be available for a display inside the
+widget. Each property is a key-value pair where the key is the property name.
+
+.. list-table:: Property fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``target``
+     - string
+     - Scope of the property: ``"atom"`` or ``"structure"``
+     - Yes
+     - ``"atom"``
+   * - ``values``
+     - number[] | string[] | number[][]
+     - Property values (shape depends on target, see below)
+     - Yes
+     - ``[1.2, 3.4]``
+   * - ``units``
+     - string
+     - Physical units of the values
+     - No
+     - ``"eV/Å"``
+   * - ``description``
+     - string
+     - Property description
+     - No
+     - ``"DFT-calculated forces"``
+   * - ``parameter``
+     - string[]
+     - Links to ``parameters`` for multidimensional data
+     - No*
+     - ``["time"]``
+
+\* Required for multidimensional properties
+
+Properties value shapes
++++++++++++++++++++++++
+
+The ``values`` field can contain scalars (numbers or strings) or multidimensional
+arrays, depending on the property's target and purpose. The shape and type of ``values``
+must match the ``target`` and data requirements:
+
+.. list-table:: Value array requirements
+   :header-rows: 1
+   :widths: 20 30 50
+
+   * - ``target``
+     - Allowed ``values`` type
+     - Shape requirements
+   * - ``"structure"``
+     - ``number[] | string[] | number[][]``
+     - Scalar: length = number of structures.
+       Multidimensional: ``[n_structures, n_components]``
+   * - ``"atom"``
+     - ``number[] | string[] | number[][]``
+     - Scalar: length = total atoms in dataset.
+       Multidimensional: ``[n_atoms, n_components]``
+
+
+Examples
+++++++++
+
+1. Atomic scalar property (e.g., charges):
+
+.. code-block:: json
+
+   "properties": {
+     "charge": {
+       "target": "atom",
+       "values": [0.5, -0.5, "..."],  // One per atom
+       "units": "e",
+       "description": "Charges"
+     }
+   }
+
+2. Structure vector property (e.g., energies at different temperatures):
+
+.. code-block:: json
+
+   "properties": {
+     "energy": {
+       "target": "structure",
+       "values": [[-1.0, -1.1], [-2.0, -2.1], "..."],  // [n_structures, n_temperatures]
+       "parameter": ["temperature"],
+       "units": "eV"
+     }
+   }
+
+3. Categorical property (e.g., structure labels):
+
+.. code-block:: json
+
+   "properties": {
+     "phase": {
+       "target": "structure",
+       "values": ["liquid", "solid", "..."],  // String categories
+       "description": "Phase classification"
+     }
+   }
+
+
+Structures (``structures``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Required. Contains all atomic configurations in your dataset. In the most common use
+case, it is automatically converted internally from the list of ASE.Atoms object. In
+details, each structure is defined as an object with the following fields:
+
+.. list-table:: Structure fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``size``
+     - integer
+     - Number of atoms in the structure
+     - Yes
+     - ``5``
+   * - ``names``
+     - string[]
+     - Chemical symbols (length must match ``size``)
+     - Yes
+     - ``["H", "O", "H"]``
+   * - ``x``
+     - number[]
+     - X coordinates (Å)
+     - Yes
+     - ``[0.0, 1.5]``
+   * - ``y``
+     - number[]
+     - Y coordinates (Å)
+     - Yes
+     - ``[0.0, 0.0]``
+   * - ``z``
+     - number[]
+     - Z coordinates (Å)
+     - Yes
+     - ``[0.0, -1.5]``
+   * - ``cell``
+     - number[9]
+     - Unit cell vectors as ``[ax,ay,az,bx,by,bz,cx,cy,cz]`` (Å)
+     - No
+     - ``[10,0,0,0,10,0,0,0,10]``
+   * - ``bonds``
+     - integer[][3]
+     - Bonds as ``[[i,j,order],...]`` (0-based indices)
+     - No
+     - ``[[0,1,1]]``
+
+
+Example:
+++++++++
+
+1. Minimal water molecule:
+
+.. code-block:: json
+
+   {
+     "size": 3,
+     "names": ["O", "H", "H"],
+     "x": [0.0, 0.76, -0.76],
+     "y": [0.0, 0.59, 0.59],
+     "z": [0.0, 0.0, 0.0]
+   }
+
+2. Periodic system with bonds:
+
+.. code-block:: json
+
+   {
+     "size": 8,
+     "names": ["C", "C", "H", "H", "O", "O", "H", "H"],
+     "x": ["..."],
+     "y": ["..."],
+     "z": ["..."],
+     "cell": [10,0,0, 0,10,0, 0,0,10],
+     "bonds": [
+       [0,1,2],  // C=C double bond
+       [0,2,1],  // C-H single bond
+       [4,5,1]   // O-O single bond
+     ]
+   }
+
+
+Map
+~~~
 
 .. code-block:: javascript
 
