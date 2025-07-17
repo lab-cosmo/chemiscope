@@ -1,5 +1,3 @@
-import warnings
-
 from ..jupyter import show
 from ._metatomic import metatomic_featurizer
 
@@ -9,60 +7,16 @@ __all__ = [
     "metatomic_featurizer",
 ]
 
-FEATURIZER_VERSIONS = {"pet-mad-1.0": "1.0.0"}
-
-
-def get_featurizer(name, device=None, batch_size=1):
-    try:
-        from pet_mad.explore import PETMADFeaturizer
-    except ImportError as e:
-        raise ImportError(
-            f"Required package not found: {e}. Please install the "
-            "dependencies with `pip install chemiscope[explore]`."
-        )
-
-    if name not in FEATURIZER_VERSIONS:
-        raise ValueError(
-            f"The featurizer version {name} does not exist. Available options are: "
-            f"{', '.join(FEATURIZER_VERSIONS)}"
-        )
-
-    version = FEATURIZER_VERSIONS.get(name)
-
-    # TEMPORAIRE WORKAROUND TILL LLPR WRAPPER NOT FIXED IN PETMAD CHECKPOINT
-    from urllib.request import urlretrieve  # noqa
-
-    url = "https://huggingface.co/lab-cosmo/pet-mad/resolve/v1.0.1/models/pet-mad-latest.ckpt"
-    checkpoint_path = "pet-mad-v1.0.1.ckpt"
-    urlretrieve(url, checkpoint_path)
-
-    featurizer = PETMADFeaturizer(
-        version=version,
-        pet_checkpoint_path=checkpoint_path,
-        device=device,
-        batch_size=batch_size,
-    )
-    # END OF WORKAROUND. NEXT LINE TO BE UNCOMMENT ONCE FIXED
-    """
-    featurizer = PETMADFeaturizer(
-        version=version, device=device, batch_size=batch_size
-    )
-    """
-
-    return featurizer
-
 
 def explore(
     frames,
-    featurizer=None,
+    featurize=None,
     properties=None,
     environments=None,
     settings=None,
     mode="default",
     device=None,
     batch_size=1,
-    write_input=None,
-    **kwargs,
 ):
     """
     Automatically generate an interactive Chemiscope visualization of atomic structures.
@@ -78,13 +32,12 @@ def explore(
 
     :param list frames: list of frames
 
-    :param string or callable featurizer: Used to compute features and perform
-        dimensionality reduction on the ``frames`` (previously named ``featurize``). For
-        automatic default option, use ``pet-mad-1.0`` The callable should take
-        ``frames`` as the first argument and ``environments`` as the second argument.
-        The return value must be a features array of shape ``(n_frames, n_features)`` if
-        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. By
-        providing a string version, the related ``PETMADFeaturizer`` is used.
+    :param callable featurize: Optional callable to compute features and perform
+        dimensionality reduction on the ``frames``. The callable should take ``frames``
+        as the first argument and ``environments`` as the second argument. The return
+        value must be a features array of shape ``(n_frames, n_features)`` if
+        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. If
+        ``None``, a default ``PETMADFeaturizer`` is used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -109,9 +62,6 @@ def explore(
 
     :param int batch_size: optional. Number of structures processed in each batch with
         the default ``PETMADFeaturizer``.
-
-    :param string write_input: optional. A path to save the chemiscope visualization.
-        Afterwards, the file can be loaded using :py:func:`chemiscope.read_input`
 
     :return: a chemiscope widget for interactive visualization
 
@@ -176,43 +126,33 @@ def explore(
     """
     # Check if dependencies were installed
     try:
-        import pet_mad  # noqa
+        from pet_mad.explore import PETMADFeaturizer
     except ImportError as e:
         raise ImportError(
             f"Required package not found: {e}. Please install the "
             "dependencies with `pip install chemiscope[explore]`."
         )
 
-    if "featurize" in kwargs:
-        if featurizer is not None:
-            raise ValueError(
-                "Both 'featurizer' and deprecated 'featurize' are provided"
-            )
-        featurizer = kwargs.pop("featurize")
-        warnings.warn(
-            "'featurize' was deprecated and renamed to 'featurizer'", stacklevel=1
-        )
-
+    # Validate inputs
+    if featurize is not None and not callable(featurize):
+        raise TypeError("'featurize' must be a callable (function)")
     if properties is None:
         properties = {}
 
     # Apply dimensionality reduction from the provided featurizer
-    if isinstance(featurizer, str):
-        featurizer_instance = get_featurizer(featurizer, device, batch_size)
-        X_reduced = featurizer_instance(frames, environments)
-    elif callable(featurizer):
-        X_reduced = featurizer(frames, environments)
+    if featurize is not None:
+        X_reduced = featurize(frames, environments)
     else:
-        raise ValueError(
-            "Featurizer must be a version (string) of the default featurizer or a "
-            "callable (function). Available default featurizer options are: "
-            f"{', '.join(FEATURIZER_VERSIONS)}"
+        # Run default featurizer
+        featurizer = PETMADFeaturizer(
+            version="latest", device=device, batch_size=batch_size
         )
+        X_reduced = featurizer(frames, environments)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced
 
-    cs = show(
+    return show(
         frames=frames,
         properties=properties,
         shapes=None,
@@ -220,8 +160,3 @@ def explore(
         settings=settings,
         mode=mode,
     )
-
-    if write_input is not None:
-        cs.save(write_input)
-
-    return cs
