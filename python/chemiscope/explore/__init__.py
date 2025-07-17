@@ -1,5 +1,3 @@
-import warnings
-
 from ..jupyter import show
 from ..structures import extract_properties
 from ._metatomic import metatomic_featurizer

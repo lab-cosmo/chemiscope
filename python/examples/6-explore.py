@@ -81,11 +81,7 @@ properties = chemiscope.extract_properties(frames, only=["energy"])
 environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
 settings = chemiscope.quick_settings(x="features[1]", y="features[2]", color="energy")
 chemiscope.explore(
-    frames,
-    featurizer="pet-mad-1.0",
-    environments=environments,
-    properties=properties,
-    settings=settings,
+    frames, environments=environments, properties=properties, settings=settings
 )
 
 # %%
