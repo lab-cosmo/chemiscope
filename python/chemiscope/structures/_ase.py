@@ -222,9 +222,13 @@ def _remove_invalid_properties(properties, origin):
     Remove invalid properties from the ``properties`` dictionary. ``origin`` is
     used in error messages as the property origin
     """
-    to_remove = []
+    to_remove = set()
+
     for name, property in properties.items():
-        for value in property["values"]:
+        values = property["values"]
+
+        for value in values:
+            # check type consistency
             if not _is_convertible_to_property(value):
                 warnings.warn(
                     f"value '{value}' of type '{type(value)}' for the '{name}' "
@@ -232,8 +236,21 @@ def _remove_invalid_properties(properties, origin):
                     "string, this property will be ignored.",
                     stacklevel=2,
                 )
-                to_remove.append(name)
+                to_remove.add(name)
                 break
+
+        if name in to_remove or not hasattr(values[0], "__len__"):
+            continue
+
+        # check length consistency
+        lengths = [len(v) for v in property["values"]]
+        if len(set(lengths)) != 1:
+            to_remove.add(name)
+            warnings.warn(
+                f"values of the property '{name}' have inconsistent length, it will be "
+                "ignored",
+                stacklevel=2,
+            )
 
     for name in to_remove:
         del properties[name]
