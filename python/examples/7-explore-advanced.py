@@ -193,5 +193,5 @@ def mace_mp0_tsne(frames, environments):
 # of atom, cutoff]``.
 
 chemiscope.explore(
-    m3cd_frames, featurize=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
+    m3cd_frames, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
 )

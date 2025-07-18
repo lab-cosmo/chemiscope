@@ -1,3 +1,5 @@
+import warnings
+
 from ..jupyter import show
 from ..structures import extract_properties
 from ._metatomic import metatomic_featurizer
@@ -211,13 +213,17 @@ def explore(
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
-    # Check if dependencies were installed
-    try:
-        from pet_mad.explore import PETMADFeaturizer
-    except ImportError as e:
-        raise ImportError(
-            f"Required package not found: {e}. Please install the "
-            "dependencies with `pip install chemiscope[explore]`."
+
+    if "featurize" in kwargs:
+        if featurizer is not None:
+            raise ValueError(
+                "Both 'featurizer' and deprecated 'featurize' are provided"
+            )
+        featurizer = kwargs.pop("featurize")
+        warnings.warn(
+            "'featurize' was deprecated and renamed to 'featurizer'. Explicitly set "
+            "this parameter to silence this warning",
+            stacklevel=1,
         )
 
     if "featurize" in kwargs:
