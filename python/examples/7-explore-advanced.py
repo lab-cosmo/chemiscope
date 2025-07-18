@@ -101,7 +101,7 @@ properties = chemiscope.extract_properties(qm9_frames, only=["mu"])
 #
 # Provide the created featurizer and the properties to :py:func:`chemiscope.explore`.
 
-cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne, properties=properties)
+cs = chemiscope.explore(qm9_frames, featurizer=mace_off_tsne, properties=properties)
 
 # %%
 #
@@ -192,5 +192,5 @@ def mace_mp0_tsne(frames, environments):
 # of atom, cutoff]``.
 
 chemiscope.explore(
-    m3cd_frames, featurize=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
+    m3cd_frames, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
 )
