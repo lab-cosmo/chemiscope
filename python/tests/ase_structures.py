@@ -161,8 +161,8 @@ class TestExtractProperties(unittest.TestCase):
 
         self.assertEqual(
             str(cm.warning),
-            "values of the property 'invalid_prop' have inconsistent length, it will be"
-            " ignored",
+            "values of the property 'invalid_prop' have inconsistent length across "
+            "different structures, it will be ignored",
         )
 
         self.assertEqual(set(properties.keys()), {"valid_prop", "non_iter_prop"})

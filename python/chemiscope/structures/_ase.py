@@ -247,8 +247,8 @@ def _remove_invalid_properties(properties, origin):
         if len(set(lengths)) != 1:
             to_remove.add(name)
             warnings.warn(
-                f"values of the property '{name}' have inconsistent length, it will be "
-                "ignored",
+                f"values of the property '{name}' have inconsistent length across "
+                "different structures, it will be ignored",
                 stacklevel=2,
             )
 
