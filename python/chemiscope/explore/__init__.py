@@ -1,12 +1,9 @@
 from ..jupyter import show
-from ._metatensor import metatensor_featurizer
 from ._metatomic import metatomic_featurizer
-from ._soap_pca import soap_pca_featurize
 
 
 __all__ = [
     "explore",
-    "metatensor_featurizer",
     "metatomic_featurizer",
 ]
 
@@ -18,20 +15,20 @@ def explore(
     environments=None,
     settings=None,
     mode="default",
+    device=None,
+    batch_size=1,
 ):
     """
-    Automatically explore a dataset containing all structures in ``frames``.
+    Automatically generate an interactive Chemiscope visualization of atomic structures.
 
-    This function computes a low-dimensionality representation of the frames, and
-    uses chemiscope to visualize both the resulting embedding and the structures
-    simultaneously. ``featurize`` can be used to specify a custom representation and/or
-    dimensionality reduction method.
+    This function creates a low-dimensional representation of the input ``frames`` and
+    displays them using a Chemiscope widget. It supports automatic featurization with
+    `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom featurization
+    function.
 
-    If no function is provided as a ``featurize`` argument, a default SOAP and PCA based
-    featurizer is used. SOAP parameters (e.g., cutoff radius, number of radial and
-    angular functions, etc.) are predefined. The SOAP computation uses all available CPU
-    cores for parallelization. PCA reduces the dimensionality to two components by
-    default.
+    The default ``PETMADFeaturizer`` computes `PET-MAD
+    <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
+    into the 3D MAD latent space.
 
     :param list frames: list of frames
 
@@ -40,8 +37,7 @@ def explore(
         as the first argument and ``environments`` as the second argument. The return
         value must be a features array of shape ``(n_frames, n_features)`` if
         ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. If
-        ``None``, a default SOAP and the first two dimensions of Principal Component
-        Analysis (PCA) are used.
+        ``None``, a default ``PETMADFeaturizer`` is used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -60,11 +56,18 @@ def explore(
     :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
         of "default", "structure", or "map". The default mode is "default".
 
+    :param str device: torch device to use for the calculation with the default
+            ``PETMADFeaturizer``. If `None`, we will try the options in the model's
+            ``supported_device`` in order.
+
+    :param int batch_size: optional. Number of structures processed in each batch with
+        the default ``PETMADFeaturizer``.
+
     :return: a chemiscope widget for interactive visualization
 
-    To use this function, additional dependencies are required, specifically, `dscribe`_
-    and `sklearn`_ libraries used for the default dimensionality reduction. They can be
-    installed with the following command:
+    To use this function, additional dependencies are required, specifically, `pet-mad`_
+    used for the default dimensionality reduction. They can be installed with the
+    following command:
 
     .. code:: bash
 
@@ -85,7 +88,7 @@ def explore(
         # Read the structures from the dataset
         frames = ase.io.read("trajectory.xyz", ":")
 
-        # 1) Basic usage with the default featurizer (SOAP + PCA)
+        # 1) Basic usage with the default featurizer (PET-MAD featurization + SMAP)
         chemiscope.explore(frames)
 
 
@@ -116,10 +119,19 @@ def explore(
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _pet_mad: https://github.com/lab-cosmo/pet-mad
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
+    # Check if dependencies were installed
+    try:
+        from pet_mad.explore import PETMADFeaturizer
+    except ImportError as e:
+        raise ImportError(
+            f"Required package not found: {e}. Please install the "
+            "dependencies with `pip install chemiscope[explore]`."
+        )
 
     # Validate inputs
     if featurize is not None and not callable(featurize):
@@ -132,7 +144,10 @@ def explore(
         X_reduced = featurize(frames, environments)
     else:
         # Run default featurizer
-        X_reduced = soap_pca_featurize(frames, environments)
+        featurizer = PETMADFeaturizer(
+            version="latest", device=device, batch_size=batch_size
+        )
+        X_reduced = featurizer(frames, environments)
 
     # Add dimensionality reduction results to properties
     properties["features"] = X_reduced
