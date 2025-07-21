@@ -5,8 +5,8 @@ Trajectory plotting
 This example demonstrates the visualization of trajectory data. It also includes
 visualization of atomic forces.
 
-The same parameters can be used with `chemiscope.show` to visualize an interactive
-widget in a Jupyter notebook.
+The same parameters can be used with :py:func:`chemiscope.show` to visualize an
+interactive widget in a Jupyter notebook.
 """
 
 # %%
@@ -39,7 +39,8 @@ properties = {
 
 # %%
 #
-# Create a visualization and save it as a file that can be viewed at chemiscope.org
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
 
 chemiscope.write_input(
     "trajectory-md.json.gz",

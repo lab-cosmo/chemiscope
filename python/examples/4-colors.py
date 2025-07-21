@@ -4,8 +4,8 @@ Atom property coloring
 
 This example demonstrates how to color atoms based on scalar properties.
 
-Note that the same parameters can be used with `chemiscope.show` to visualize an
-interactive widget in a Jupyter notebook.
+Note that the same parameters can be used with :py:func:`chemiscope.show` to visualize
+an interactive widget in a Jupyter notebook.
 """
 
 # %%
@@ -54,7 +54,8 @@ for frame in frames:
 
 # %%
 #
-# Create a visualization and save it as a file that can be viewed at chemiscope.org
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
 
 chemiscope.write_input(
     "colors-example.json.gz",
