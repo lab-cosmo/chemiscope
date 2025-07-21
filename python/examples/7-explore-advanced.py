@@ -28,6 +28,8 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/
             file.write(response.content)
 
 
+fetch_dataset("mace-off-tsne-qm9.json.gz")
+
 # %%
 #
 # Example with MACE-OFF and t-SNE
@@ -108,10 +110,9 @@ cs = chemiscope.explore(qm9_frames, featurize=mace_off_tsne, properties=properti
 # Here we display the visualization of the pre-computed data using the described
 # function for 6k structures taken from the `QM9
 # <https://jla-gardner.github.io/load-atoms/index.html>`_ dataset. The map is zoomed in
-# to highlight a cluster of zwitterions grouped together by running the previosly
+# to highlight a cluster of zwitterions grouped together by running the previously
 # defined ``mace_off_tsne`` featurizer.
 
-fetch_dataset("mace-off-tsne-qm9.json.gz")
 chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
 
 # %%
