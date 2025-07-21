@@ -49,7 +49,8 @@ import chemiscope
 #
 # This example shows the basic usage of :py:func:`chemiscope.explore`. First, load a
 # dataset of structures as `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_
-# objects. Here, we use the samples from the M3CD dataset:
+# objects. Here, we use the samples from the `M3CD dataset
+# <https://doi.org/10.24435/materialscloud:rw-t0>`_:
 
 frames = ase.io.read("data/explore_m3cd.xyz", ":")
 
