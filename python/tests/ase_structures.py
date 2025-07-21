@@ -145,6 +145,30 @@ class TestExtractProperties(unittest.TestCase):
 
         self.assertEqual(len(properties.keys()), 0)
 
+    def test_different_lengths(self):
+        frame_1 = BASE_FRAME.copy()
+        frame_1.info["valid_prop"] = [1, 2]
+        frame_1.info["invalid_prop"] = [1, 2]
+        frame_1.info["non_iter_prop"] = 3
+
+        frame_2 = BASE_FRAME.copy()
+        frame_2.info["valid_prop"] = [3, 4]
+        frame_2.info["invalid_prop"] = [1]
+        frame_2.info["non_iter_prop"] = 4
+
+        with self.assertWarns(UserWarning) as cm:
+            properties = chemiscope.extract_properties([frame_1, frame_2])
+
+        self.assertEqual(
+            str(cm.warning),
+            "values of the property 'invalid_prop' have inconsistent length across "
+            "different structures, it will be ignored",
+        )
+
+        self.assertEqual(set(properties.keys()), {"valid_prop", "non_iter_prop"})
+        self.assertEqual(properties["valid_prop"]["values"], [[1, 2], [3, 4]])
+        self.assertEqual(properties["non_iter_prop"]["values"], [3, 4])
+
 
 if __name__ == "__main__":
     unittest.main()
