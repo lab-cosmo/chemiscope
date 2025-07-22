@@ -95,6 +95,10 @@ def explore(
     `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom featurization
     function.
 
+    The default ``PETMADFeaturizer`` computes `PET-MAD
+    <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
+    into the 3D MAD latent space.
+
     If available, all properties are extracted automatically from the structures.
 
     If one does not specify a ``featurizer`` (or sets it as a ``None``), only properties
@@ -116,6 +120,27 @@ def explore(
         features array of shape ``(n_frames, n_features)`` if ``environments`` is
         ``None``, or ``(n_environments, n_features)`` otherwise. By providing a string
         version, the related ``PETMADFeaturizer`` is used.
+):
+    """
+    Automatically generate an interactive Chemiscope visualization of atomic structures.
+
+    This function creates a low-dimensional representation of the input ``frames`` and
+    displays them using a Chemiscope widget. It supports automatic featurization with
+    `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom featurization
+    function.
+
+    The default ``PETMADFeaturizer`` computes `PET-MAD
+    <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
+    into the 3D MAD latent space.
+
+    :param list frames: list of frames
+
+    :param callable featurize: Optional callable to compute features and perform
+        dimensionality reduction on the ``frames``. The callable should take ``frames``
+        as the first argument and ``environments`` as the second argument. The return
+        value must be a features array of shape ``(n_frames, n_features)`` if
+        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. If
+        ``None``, a default ``PETMADFeaturizer`` is used.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -151,6 +176,10 @@ def explore(
     :return: a chemiscope widget for interactive visualization
 
     To use this function, additional dependencies are required, specifically, `pet_mad`_
+
+    :return: a chemiscope widget for interactive visualization
+
+    To use this function, additional dependencies are required, specifically, `pet-mad`_
     used for the default dimensionality reduction. They can be installed with the
     following command:
 
@@ -179,7 +208,6 @@ def explore(
         # or
         featurizer = chemiscope.get_featurizer("pet-mad-1.0")
         chemiscope.explore(frames, featurizer=featurizer)
-
 
         # Define a function for dimensionality reduction
         def soap_kpca_featurize(frames, environments):
@@ -213,6 +241,14 @@ def explore(
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
+    # Check if dependencies were installed
+    try:
+        from pet_mad.explore import PETMADFeaturizer
+    except ImportError as e:
+        raise ImportError(
+            f"Required package not found: {e}. Please install the "
+            "dependencies with `pip install chemiscope[explore]`."
+        )
 
     if "featurize" in kwargs:
         if featurizer is not None:
