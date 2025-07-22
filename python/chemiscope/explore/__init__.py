@@ -216,18 +216,6 @@ def explore(
             stacklevel=1,
         )
 
-    if "featurize" in kwargs:
-        if featurizer is not None:
-            raise ValueError(
-                "Both 'featurizer' and deprecated 'featurize' are provided"
-            )
-        featurizer = kwargs.pop("featurize")
-        warnings.warn(
-            "'featurize' was deprecated and renamed to 'featurizer'. Explicitly set "
-            "this parameter to silence this warning",
-            stacklevel=1,
-        )
-
     if properties is None:
         properties = {}
 
@@ -239,8 +227,8 @@ def explore(
         merged_properties["features"] = featurizer_instance(frames, environments)
     elif callable(featurizer):
         merged_properties["features"] = featurizer(frames, environments)
-    elif featurizer is not None:
-        versions = FEATURIZER_VERSION_MAP.keys()
+    elif featurizer is None:
+        versions = list(FEATURIZER_VERSION_MAP.keys())
         raise ValueError(
             "Featurizer must be a version (string) of the default featurizer, "
             "callable (function) or a None. Available default featurizer options are: "
@@ -254,6 +242,9 @@ def explore(
                 "Either provide additional properties or use a featurizer that "
                 "generates features (e.g., 'pet-mad-1.0'). "
             )
+
+        # automatically set features to axes if no map settings
+        settings = _configure_map_settings(settings, merged_properties)
 
     widget = show(
         frames=frames,
@@ -284,3 +275,35 @@ def _count_effective_properties(properties):
         else:
             count += 1
     return count
+
+
+def _configure_map_settings(settings, merged_properties):
+    """
+    Pre-define axes and color properties if not specified in settings. First two
+    features dimentions are used as x and y axes and color is set to any other
+    non-features property if not provided
+    """
+    settings = {} if settings is None else settings
+    settings.setdefault("map", {})
+
+    axes_not_set = all(key not in settings["map"] for key in ["x", "y"])
+    color_not_set = "color" not in settings["map"]
+
+    if axes_not_set and "features" in merged_properties:
+        features = merged_properties["features"]
+
+        if hasattr(features, "shape") and features.shape[1] >= 2:
+            settings["map"].update(
+                {
+                    "x": {"property": "features[1]"},
+                    "y": {"property": "features[2]"},
+                }
+            )
+
+            if color_not_set and len(merged_properties) > 1:
+                for prop in merged_properties:
+                    if prop != "features":
+                        settings["map"]["color"] = {"property": prop}
+                        break
+
+    return settings
