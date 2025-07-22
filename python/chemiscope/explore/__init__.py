@@ -238,9 +238,10 @@ def explore(
     if mode != "structure":
         if _count_effective_properties(merged_properties) < 2:
             raise ValueError(
-                "Need at least two effective properties to visualize a map widget. "
-                "Either provide additional properties or use a featurizer that "
-                "generates features (e.g., 'pet-mad-1.0'). "
+                "To display the widget, you need to provide at least two properties to "
+                "plot: either pass explicit properties using the 'properties' argument,"
+                " where each dimension counts as a separate property, or use a "
+                "featurizer (e.g. 'pet-mad-1.0') that generates properties (features)"
             )
 
         # automatically set features to axes if no map settings
