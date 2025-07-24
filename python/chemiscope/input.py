@@ -588,11 +588,11 @@ def quick_settings(
 
     ``map_settings`` and ``structure_settings`` will override the values if specified,
     e.g. ``quick_settings(x="PCA[1]", map_settings={"x": "energy"})`` will set "energy"
-    as x-ax
+    as x-ax.
 
     All the parameters are optional.
 
-    :param str x: top The property to show on the x axis of the map
+    :param str x: The property to show on the x axis of the map
 
     :param str y: The property to show on the y axis of the map.
 
@@ -624,6 +624,8 @@ def quick_settings(
     :param dict structure_settings: Additional settings for the structure viewer
         (following the chemiscope settings schema). It will override the settings
         specied from other parameters, e.g., ``structure_color``
+
+    :param kwargs: for backward compatibility to accept deprecated ``color`` property
     """
 
     if target not in ["atom", "structure"]:
@@ -631,6 +633,11 @@ def quick_settings(
             f"Invalid value {target} for `target`, "
             "should be either `atom` or `structure`."
         )
+
+    if map_settings is not None and not isinstance(map_settings, dict):
+        raise TypeError("map_settings must be a dict if specified")
+    if structure_settings is not None and not isinstance(structure_settings, dict):
+        raise TypeError("structure_settings must be a dict if specified")
 
     if "color" in kwargs:
         warnings.warn(
@@ -643,21 +650,29 @@ def quick_settings(
     computed_map_settings = {"joinPoints": trajectory}
 
     properties = {"x": x, "y": y, "z": z, "color": map_color, "size": size}
-    for prop_name, value in properties.items():
+    for key, value in properties.items():
         if value is not None:
-            computed_map_settings.update({prop_name: {"property": x}})
+            if not isinstance(value, str):
+                raise TypeError(f"{key} must be a string, got {type(value)}")
+            computed_map_settings.update({key: {"property": x}})
 
     if symbol is not None:
+        if not isinstance(symbol, str):
+            raise TypeError(f"'symbol' must be a string, got {type(symbol)}")
         computed_map_settings.update({"symbol": symbol})
 
     computed_structure_settings = {
         "keepOrientation": trajectory,
         "playbackDelay": 50 if trajectory else 500,
         "unitCell": periodic,
-        "supercell": [3, 3, 3] if (periodic and (target == "atom")) else [1, 1, 1],
+        "supercell": [3, 3, 3] if periodic and target == "atom" else [1, 1, 1],
     }
 
-    if structure_color:
+    if structure_color is not None:
+        if not isinstance(structure_color, str):
+            raise TypeError(
+                f"{structure_color} must be a string, got {type(structure_color)}"
+            )
         computed_structure_settings.update({"color": {"property": structure_color}})
 
     if map_settings is not None:
