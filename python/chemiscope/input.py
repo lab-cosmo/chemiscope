@@ -569,28 +569,38 @@ def _normalize_environments(environments, structures):
 
 
 def quick_settings(
-    x="",
-    y="",
-    z="",
-    color="",
-    size="",
-    symbol="",
+    x=None,
+    y=None,
+    z=None,
+    map_color=None,
+    structure_color=None,
+    size=None,
+    symbol=None,
     trajectory=False,
     periodic=False,
     target="structure",
     map_settings=None,
     structure_settings=None,
+    **kwargs,
 ):
     """A utility function to return a ``settings`` dictionary with the most basic
     options for a chemiscope viewer (e.g. what to show on the axes).
 
-    :param str x: The property to show on the x axis of the map.
+    ``map_settings`` and ``structure_settings`` will override the values if specified,
+    e.g. ``quick_settings(x="PCA[1]", map_settings={"x": "energy"})`` will set "energy"
+    as x-ax
+
+    All the parameters are optional.
+
+    :param str x: top The property to show on the x axis of the map
 
     :param str y: The property to show on the y axis of the map.
 
     :param str z: The property to show on the z axis of the map.
 
-    :param str color: The property to use to color the map.
+    :param str map_color: The property to use to color the map.
+
+    :param str structure_color: The property to use to color the structure.
 
     :param str size: The property to use to determine data point size.
 
@@ -608,10 +618,12 @@ def quick_settings(
         the properties shown should be those of environments or of structures.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
-        settings schema).
+        settings schema). It will override the settings specied from other map
+        parameters, e.g., ``x``, ``y``, ``z`` -axes, ``map_color`` etc.
 
     :param dict structure_settings: Additional settings for the structure viewer
-        (following the chemiscope settings schema).
+        (following the chemiscope settings schema). It will override the settings
+        specied from other parameters, e.g., ``structure_color``
     """
 
     if target not in ["atom", "structure"]:
@@ -620,24 +632,23 @@ def quick_settings(
             "should be either `atom` or `structure`."
         )
 
-    if (x + y + z + color + size + symbol) == "":
-        # if at least one of the properties is requested
-        computed_map_settings = {}
-    else:
-        computed_map_settings = {
-            "x": {"property": x},
-            "y": {"property": y},
-            "z": {"property": z},
-            "color": {"property": color},
-            "size": {"property": size},
-            "symbol": symbol,
-        }
+    if "color" in kwargs:
+        warnings.warn(
+            "'color' property was deprecated and replaced with 'map_color' and "
+            "'structure_color'",
+            stacklevel=1,
+        )
+        map_color = kwargs["color"]
 
-    computed_map_settings.update(
-        {
-            "joinPoints": trajectory,
-        }
-    )
+    computed_map_settings = {{"joinPoints": trajectory}}
+
+    properties = {"x": x, "y": y, "z": z, "color": map_color, "size": size}
+    for prop_name, value in properties.items():
+        if value is not None:
+            computed_map_settings.update({prop_name: {"property": x}})
+
+    if symbol is not None:
+        computed_map_settings.update({"symbol": symbol})
 
     computed_structure_settings = {
         "keepOrientation": trajectory,
@@ -646,9 +657,11 @@ def quick_settings(
         "supercell": [3, 3, 3] if (periodic and (target == "atom")) else [1, 1, 1],
     }
 
+    if structure_color:
+        computed_structure_settings.update({"color": {"property": structure_color}})
+
     if map_settings is not None:
         computed_map_settings.update(map_settings)
-
     if structure_settings is not None:
         computed_structure_settings.update(structure_settings)
 
