@@ -243,8 +243,8 @@ def show(
         # NB: due to how traitlet work, you should always set the value of
         # the `settings` property. Only the properties that are explicitly
         # indicated will be modified.
-        widget.settings = {"map": {"palette": "seismic"}}
-        widget.settings["map"]["palette"] = "viridis"  # << does nothing!
+        widget.settings = {"map": {"symbol": "tag"}}
+        widget.settings["map"]["symbol"] = "tag"  # << does nothing!
 
         # Save the file for later use
         widget.save("dataset.json")

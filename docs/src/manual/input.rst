@@ -263,9 +263,10 @@ contains the following fields and values:
                     // property can be set to an empty string for uniform color
                     "property": "",
                     // ...
+
+                    // Color palette to use, default to 'inferno'
+                    "palette": "cividis",
                 },
-                // Color palette to use, default to 'inferno'
-                "palette": "cividis",
                 // settings related to the markers sizes
                 "size": {
                     // scaling factor for the axis, between 1 and 100
