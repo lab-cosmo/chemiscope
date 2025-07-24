@@ -640,7 +640,7 @@ def quick_settings(
         )
         map_color = kwargs["color"]
 
-    computed_map_settings = {{"joinPoints": trajectory}}
+    computed_map_settings = {"joinPoints": trajectory}
 
     properties = {"x": x, "y": y, "z": z, "color": map_color, "size": size}
     for prop_name, value in properties.items():
