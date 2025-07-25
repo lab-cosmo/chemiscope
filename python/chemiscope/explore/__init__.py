@@ -36,12 +36,12 @@ def get_featurizer(name, device=None, batch_size=1):
         from pet_mad.explore import PETMADFeaturizer
     except ImportError as e:
         raise ImportError(
-            f"Required package not found: {e}. Please install the "
-            "dependencies with `pip install chemiscope[explore]`."
-        )
+            "Required package not found. Please install the dependencies with "
+            "`pip install chemiscope[explore]`."
+        ) from e
 
     if not isinstance(name, str):
-        raise TypeError(f"Featurizer name must be a string, got {type(name)}")
+        raise TypeError(f"featurizer name must be a string, not {type(name)}")
 
     versions = FEATURIZER_VERSION_MAP.keys()
     if name not in FEATURIZER_VERSION_MAP:
@@ -100,8 +100,7 @@ def explore(
         option, use ``pet-mad-1.0``. The callable should take ``frames`` as the first
         argument and ``environments`` as the second argument. The return value must be a
         features array of shape ``(n_frames, n_features)`` if ``environments`` is
-        ``None``, or ``(n_environments, n_features)`` otherwise. By providing a string
-        version, the related ``PETMADFeaturizer`` is used.
+        ``None``, or ``(n_environments, n_features)`` otherwise.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -127,8 +126,9 @@ def explore(
     :param int batch_size: optional. Number of structures processed in each batch with
         the default ``PETMADFeaturizer``.
 
-    :param string write_input: optional. A path to save the chemiscope visualization.
-        Afterwards, the file can be loaded using :py:func:`chemiscope.read_input`
+    :param string write_input: optional. A path to save the chemiscope input file
+        created by this function. Afterwards, the file can be loaded using
+        :py:func:`chemiscope.read_input`
 
     :param kwargs: additional keyword arguments passed to support backward
         compatibility. Currently, only the deprecated ``featurize`` argument is
@@ -163,7 +163,7 @@ def explore(
         # Read the structures from the dataset
         frames = ase.io.read("trajectory.xyz", ":")
 
-        # 1) Basic usage with the default featurizer (PET-MAD featurization + SMAP)
+        # 1) Basic usage with default featurizer (PET-MAD featurization + Sketch-Map)
         chemiscope.explore(frames, featurizer="pet-mad-1.0")
 
         # or
