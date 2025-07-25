@@ -7,10 +7,10 @@ from ._metatomic import metatomic_featurizer
 
 __all__ = ["explore", "metatomic_featurizer", "get_featurizer"]
 
-FEATURIZER_VERSION_MAP = {"pet-mad-1.0": "1.0.0"}
+KNOWN_FEATURIZERS = ["pet-mad-1.0"]
 
 
-def get_featurizer(name, device=None, batch_size=1):
+def get_featurizer(name):
     """
     Get a featurizer by name for feature extraction. Currently available version is:
     "pet-mad-1.0", which returns an instance of `PETMADFeaturizer
@@ -33,6 +33,7 @@ def get_featurizer(name, device=None, batch_size=1):
             pip install chemiscope[explore]
     """
     try:
+        import torch
         from pet_mad.explore import PETMADFeaturizer
     except ImportError as e:
         raise ImportError(
@@ -43,18 +44,19 @@ def get_featurizer(name, device=None, batch_size=1):
     if not isinstance(name, str):
         raise TypeError(f"featurizer name must be a string, not {type(name)}")
 
-    versions = FEATURIZER_VERSION_MAP.keys()
-    if name not in FEATURIZER_VERSION_MAP:
-        raise ValueError(
-            f"The featurizer version {name} does not exist. Available options are: "
-            f"{', '.join(versions) if len(versions > 1) else versions[0]}"
+    if name == "pet-mad-1.0":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = PETMADFeaturizer(version="1.0.0", device=device, batch_size=1)
+        return model
+    else:
+        options = (
+            ", ".join(KNOWN_FEATURIZERS)
+            if len(KNOWN_FEATURIZERS) > 1
+            else KNOWN_FEATURIZERS[0]
         )
-
-    version = FEATURIZER_VERSION_MAP.get(name)
-
-    featurizer = PETMADFeaturizer(version=version, device=device, batch_size=batch_size)
-
-    return featurizer
+        raise ValueError(
+            f"unknown featurizer: {name}. Available options are: {options}"
+        )
 
 
 def explore(
@@ -64,8 +66,6 @@ def explore(
     environments=None,
     settings=None,
     mode="default",
-    device=None,
-    batch_size=1,
     write_input=None,
     **kwargs,
 ):
@@ -216,24 +216,18 @@ def explore(
             stacklevel=1,
         )
 
-    if properties is None:
-        properties = {}
-
-    extracted_properties = extract_properties(frames, environments)
-    merged_properties = {**extracted_properties, **properties}
+    merged_properties = {}
 
     if isinstance(featurizer, str):
-        featurizer_instance = get_featurizer(featurizer, device, batch_size)
+        featurizer_instance = get_featurizer(featurizer)
         merged_properties["features"] = featurizer_instance(frames, environments)
     elif callable(featurizer):
         merged_properties["features"] = featurizer(frames, environments)
-    elif featurizer is None:
-        versions = list(FEATURIZER_VERSION_MAP.keys())
-        raise ValueError(
-            "Featurizer must be a version (string) of the default featurizer, "
-            "callable (function) or a None. Available default featurizer options are: "
-            f"{', '.join(versions) if len(versions) > 1 else versions[0]}"
-        )
+
+    merged_properties.update(extract_properties(frames, environments))
+
+    if properties is not None:
+        merged_properties.update(properties)
 
     if mode != "structure":
         if _count_effective_properties(merged_properties) < 2:
@@ -243,9 +237,6 @@ def explore(
                 " where each dimension counts as a separate property, or use a "
                 "featurizer (e.g. 'pet-mad-1.0') that generates properties (features)"
             )
-
-        # automatically set features to axes if no map settings
-        settings = _configure_map_settings(settings, merged_properties)
 
     widget = show(
         frames=frames,
@@ -276,35 +267,3 @@ def _count_effective_properties(properties):
         else:
             count += 1
     return count
-
-
-def _configure_map_settings(settings, merged_properties):
-    """
-    Pre-define axes and color properties if not specified in settings. First two
-    features dimentions are used as x and y axes and color is set to any other
-    non-features property if not provided
-    """
-    settings = {} if settings is None else settings
-    settings.setdefault("map", {})
-
-    axes_not_set = all(key not in settings["map"] for key in ["x", "y"])
-    color_not_set = "color" not in settings["map"]
-
-    if axes_not_set and "features" in merged_properties:
-        features = merged_properties["features"]
-
-        if hasattr(features, "shape") and features.shape[1] >= 2:
-            settings["map"].update(
-                {
-                    "x": {"property": "features[1]"},
-                    "y": {"property": "features[2]"},
-                }
-            )
-
-            if color_not_set and len(merged_properties) > 1:
-                for prop in merged_properties:
-                    if prop != "features":
-                        settings["map"]["color"] = {"property": prop}
-                        break
-
-    return settings
