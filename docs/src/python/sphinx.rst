@@ -44,15 +44,27 @@ Once compiled, this will show as this widget
 
 .. chemiscope:: ../datasets/showcase.json.gz
 
-The ``structure`` mode will show the structures only,
-with disabled warnings
+The ``structure`` mode will show the structures only, with disabled warnings. It is also
+possible to add an optional ``warning_timeout`` parameter:
+
+.. code-block:: rst
+
+    .. chemiscope:: ../datasets/showcase.json.gz
+        :mode: structure
+        :warning_timeout: -1
 
 .. chemiscope:: ../datasets/showcase.json.gz
     :mode: structure
     :warning_timeout: -1
 
 
-and the ``map`` mode only the property map, with persistent warnings
+The ``map`` mode shows only the property map, with persistent warnings
+
+.. code-block:: rst
+
+    .. chemiscope:: ../datasets/showcase.json.gz
+        :mode: map
+        :warning_timeout: 0
 
 .. chemiscope:: ../datasets/showcase.json.gz
     :mode: map
