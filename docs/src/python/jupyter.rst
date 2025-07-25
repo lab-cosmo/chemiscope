@@ -16,3 +16,9 @@ Creating a chemiscope widget
 
 .. autofunction:: chemiscope.show
 .. autofunction:: chemiscope.show_input
+
+Dataset exploration
+-------------------
+
+.. autofunction:: chemiscope.explore
+.. autofunction:: chemiscope.metatomic_featurizer

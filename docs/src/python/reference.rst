@@ -28,10 +28,3 @@ Data management
 .. autofunction:: chemiscope.ase_tensors_to_ellipsoids
 
 .. autofunction:: chemiscope.convert_stk_bonds_as_shapes
-
-Dataset exploration
--------------------
-
-.. autofunction:: chemiscope.explore
-
-.. autofunction:: chemiscope.metatomic_featurizer
