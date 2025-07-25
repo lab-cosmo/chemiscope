@@ -1135,7 +1135,7 @@ export class PropertiesMap {
         }
 
         // ======= color palette
-        this._options.palette.onchange.push(() => {
+        this._options.color.palette.onchange.push(() => {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);

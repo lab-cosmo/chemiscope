@@ -66,13 +66,13 @@ export class MapOptions extends OptionsGroup {
     public x: AxisOptions;
     public y: AxisOptions;
     public z: AxisOptions;
-    public palette: HTMLOption<'string'>;
     public symbol: HTMLOption<'string'>;
     public color: {
         mode: HTMLOption<'string'>;
         property: HTMLOption<'string'>;
         min: HTMLOption<'number'>;
         max: HTMLOption<'number'>;
+        palette: HTMLOption<'string'>;
     };
     public size: {
         factor: HTMLOption<'number'>;
@@ -119,19 +119,17 @@ export class MapOptions extends OptionsGroup {
         }
         this.symbol.validate = optionValidator(validSymbols, 'symbol');
 
-        // Initialise palette
-        this.palette = new HTMLOption('string', 'inferno');
-        this.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
-
         // Initialise color
         this.color = {
             mode: new HTMLOption('string', 'linear'),
             property: new HTMLOption('string', ''),
             min: new HTMLOption('number', NaN),
             max: new HTMLOption('number', NaN),
+            palette: new HTMLOption('string', 'inferno'),
         };
         this.color.property.validate = optionValidator(propertiesNames.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
+        this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         // Initialise size
         this.size = {
@@ -205,6 +203,15 @@ export class MapOptions extends OptionsGroup {
                 color.mode = color.scale;
                 delete color.scale;
             }
+        }
+        if ('palette' in settings) {
+            if ('color' in settings) {
+                const color = settings.color as Settings;
+                color.palette = settings.palette;
+            } else {
+                settings.color = { palette: settings.palete };
+            }
+            delete settings.palette;
         }
         super.applySettings(settings);
     }
@@ -525,7 +532,7 @@ export class MapOptions extends OptionsGroup {
         for (const key in COLOR_MAPS) {
             selectPalette.options.add(new Option(key, key));
         }
-        this.palette.bind(selectPalette, 'value');
+        this.color.palette.bind(selectPalette, 'value');
 
         // ======= marker symbols
         const selectSymbolProperty = this.getModalElement<HTMLSelectElement>('map-symbol-property');
@@ -557,7 +564,7 @@ export class MapOptions extends OptionsGroup {
 
     /** Get the colorscale to use for markers in the main plotly trace */
     public colorScale(): Plotly.ColorScale {
-        return COLOR_MAPS[this.palette.value];
+        return COLOR_MAPS[this.color.palette.value];
     }
 
     /** Changes the min/max range label between linear and log appropriately */
