@@ -588,7 +588,7 @@ def quick_settings(
 
     ``map_settings`` and ``structure_settings`` will override the values if specified,
     e.g. ``quick_settings(x="PCA[1]", map_settings={"x": "energy"})`` will set "energy"
-    as x-ax.
+    as x-axis.
 
     All the parameters are optional.
 
@@ -641,8 +641,7 @@ def quick_settings(
 
     if "color" in kwargs:
         warnings.warn(
-            "'color' property was deprecated and replaced with 'map_color' and "
-            "'structure_color'",
+            "'color' property is deprecated and replaced with 'map_color'",
             stacklevel=1,
         )
         map_color = kwargs["color"]
