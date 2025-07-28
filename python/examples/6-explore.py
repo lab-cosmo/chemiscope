@@ -58,10 +58,15 @@ frames = ase.io.read("data/explore_m3cd.xyz", ":")
 # %%
 #
 # Next, pass the frames to :py:func:`chemiscope.explore` to generate an interactive
-# Chemiscope. In this basic case, no featurizer function is provided, so
-# `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ is used:
+# Chemiscope. In this basic case, we provide the featurizer version to be used:
 
-chemiscope.explore(frames)
+chemiscope.explore(frames, featurizer="pet-mad-1.0")
+
+# %%
+#
+# We can also save the visualization to send it to the colloborators or reopen
+# separatelly with :py:func:`chemiscope.read_input`:
+chemiscope.explore(frames, featurizer="pet-mad-1.0", write_input="m3cd.chemiscope.json")
 
 
 # %%
@@ -76,7 +81,11 @@ properties = chemiscope.extract_properties(frames, only=["energy"])
 environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
 settings = chemiscope.quick_settings(x="features[1]", y="features[2]", color="energy")
 chemiscope.explore(
-    frames, environments=environments, properties=properties, settings=settings
+    frames,
+    featurizer="pet-mad-1.0",
+    environments=environments,
+    properties=properties,
+    settings=settings,
 )
 
 # %%
@@ -123,7 +132,7 @@ def fractional_composition_featurize(frames, environments):
 settings = chemiscope.quick_settings(x="features[1]", y="features[2]")
 chemiscope.explore(
     frames,
-    featurize=fractional_composition_featurize,
+    featurizer=fractional_composition_featurize,
     settings=settings,
 )
 

@@ -1,22 +1,64 @@
+import warnings
+
 from ..jupyter import show
+from ..structures import extract_properties
 from ._metatomic import metatomic_featurizer
 
 
-__all__ = [
-    "explore",
-    "metatomic_featurizer",
-]
+__all__ = ["explore", "metatomic_featurizer", "get_featurizer"]
+
+KNOWN_FEATURIZERS = ["pet-mad-1.0"]
+
+
+def get_featurizer(name):
+    """
+    Get a featurizer by name for feature extraction. Currently available version is:
+    "pet-mad-1.0", which returns an instance of `PETMADFeaturizer
+    <https://arxiv.org/abs/2506.19674>`_.
+
+    :param str name: name of the featurizer. Must match one of the known versions.
+        Currently available is "pet-mad-1.0"
+
+    .. warning::
+
+        This function requires additional dependencies. Install them using:
+
+        .. code:: bash
+
+            pip install chemiscope[explore]
+    """
+    try:
+        import torch
+        from pet_mad.explore import PETMADFeaturizer
+    except ImportError as e:
+        raise ImportError(
+            "Required package not found. Please install the dependencies with "
+            "`pip install chemiscope[explore]`."
+        ) from e
+
+    if not isinstance(name, str):
+        raise TypeError(f"featurizer name must be a string, not {type(name)}")
+
+    if name == "pet-mad-1.0":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = PETMADFeaturizer(version="1.0.0", device=device, batch_size=1)
+        return model
+    else:
+        raise ValueError(
+            f"unknown featurizer: {name}. Available options "
+            f"are: {', '.join(KNOWN_FEATURIZERS)}"
+        )
 
 
 def explore(
     frames,
-    featurize=None,
+    featurizer=None,
     properties=None,
     environments=None,
     settings=None,
     mode="default",
-    device=None,
-    batch_size=1,
+    write_input=None,
+    **kwargs,
 ):
     """
     Automatically generate an interactive Chemiscope visualization of atomic structures.
@@ -30,14 +72,26 @@ def explore(
     <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
     into the 3D MAD latent space.
 
+    If available, all properties are extracted automatically from the structures.
+
+    If one does not specify a ``featurizer`` (or sets it as a ``None``), only properties
+    will be displayed on the map visualizer panel, as long as there are at least two of
+    them.
+
+    Overall, the visualization can include: properties extracted from the frames,
+    additional user-provided properties, features from either the built-in PET-MAD
+    featurizer, with dimensionality reduction, or a custom user-provided featurization
+    functions.
+
     :param list frames: list of frames
 
-    :param callable featurize: Optional callable to compute features and perform
-        dimensionality reduction on the ``frames``. The callable should take ``frames``
-        as the first argument and ``environments`` as the second argument. The return
-        value must be a features array of shape ``(n_frames, n_features)`` if
-        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise. If
-        ``None``, a default ``PETMADFeaturizer`` is used.
+    :param featurizer: either string specifying a featurizer version (currently only
+        'pet-mad-1.0'), a custom callable function, or None. Used to compute features
+        and perform dimensionality reduction on the ``frames``. For automatic default
+        option, use ``pet-mad-1.0``. The callable should take ``frames`` as the first
+        argument and ``environments`` as the second argument. The return value must be a
+        features array of shape ``(n_frames, n_features)`` if ``environments`` is
+        ``None``, or ``(n_environments, n_features)`` otherwise.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -62,6 +116,18 @@ def explore(
 
     :param int batch_size: optional. Number of structures processed in each batch with
         the default ``PETMADFeaturizer``.
+
+    :param string write_input: optional. A path to save the chemiscope input file
+        created by this function. Afterwards, the file can be loaded using
+        :py:func:`chemiscope.read_input`
+
+    :param kwargs: additional keyword arguments passed to support backward
+        compatibility. Currently, only the deprecated ``featurize`` argument is
+        supported, which was renamed to ``featurizer``
+
+    :return: a chemiscope widget for interactive visualization
+
+    To use this function, additional dependencies are required, specifically, `pet_mad`_
 
     :return: a chemiscope widget for interactive visualization
 
@@ -88,8 +154,12 @@ def explore(
         # Read the structures from the dataset
         frames = ase.io.read("trajectory.xyz", ":")
 
-        # 1) Basic usage with the default featurizer (PET-MAD featurization + SMAP)
-        chemiscope.explore(frames)
+        # 1) Basic usage with default featurizer (PET-MAD featurization + Sketch-Map)
+        chemiscope.explore(frames, featurizer="pet-mad-1.0")
+
+        # or
+        featurizer = chemiscope.get_featurizer("pet-mad-1.0")
+        chemiscope.explore(frames, featurizer=featurizer)
 
 
         # Define a function for dimensionality reduction
@@ -114,7 +184,7 @@ def explore(
 
 
         # 2) Example with a custom featurizer function
-        chemiscope.explore(frames, featurize=soap_kpca_featurize)
+        chemiscope.explore(frames, featurizer=soap_kpca_featurize)
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
@@ -124,39 +194,67 @@ def explore(
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
-    # Check if dependencies were installed
-    try:
-        from pet_mad.explore import PETMADFeaturizer
-    except ImportError as e:
-        raise ImportError(
-            f"Required package not found: {e}. Please install the "
-            "dependencies with `pip install chemiscope[explore]`."
+
+    if "featurize" in kwargs:
+        if featurizer is not None:
+            raise ValueError(
+                "Both 'featurizer' and deprecated 'featurize' are provided"
+            )
+        featurizer = kwargs.pop("featurize")
+        warnings.warn(
+            "'featurize' was deprecated and renamed to 'featurizer'. Explicitly set "
+            "this parameter to silence this warning",
+            stacklevel=1,
         )
 
-    # Validate inputs
-    if featurize is not None and not callable(featurize):
-        raise TypeError("'featurize' must be a callable (function)")
-    if properties is None:
-        properties = {}
+    merged_properties = {}
 
-    # Apply dimensionality reduction from the provided featurizer
-    if featurize is not None:
-        X_reduced = featurize(frames, environments)
-    else:
-        # Run default featurizer
-        featurizer = PETMADFeaturizer(
-            version="latest", device=device, batch_size=batch_size
-        )
-        X_reduced = featurizer(frames, environments)
+    if isinstance(featurizer, str):
+        featurizer_instance = get_featurizer(featurizer)
+        merged_properties["features"] = featurizer_instance(frames, environments)
+    elif callable(featurizer):
+        merged_properties["features"] = featurizer(frames, environments)
 
-    # Add dimensionality reduction results to properties
-    properties["features"] = X_reduced
+    merged_properties.update(extract_properties(frames, environments))
 
-    return show(
+    if properties is not None:
+        merged_properties.update(properties)
+
+    if mode != "structure":
+        if _count_effective_properties(merged_properties) < 2:
+            raise ValueError(
+                "To display the widget, you need to provide at least two properties to "
+                "plot: either pass explicit properties using the 'properties' argument,"
+                " where each dimension counts as a separate property, or use a "
+                "featurizer (e.g. 'pet-mad-1.0') that generates properties (features)"
+            )
+
+    widget = show(
         frames=frames,
-        properties=properties,
+        properties=merged_properties,
         shapes=None,
         environments=environments,
         settings=settings,
         mode=mode,
     )
+
+    if write_input is not None:
+        widget.save(write_input)
+
+    return widget
+
+
+def _count_effective_properties(properties):
+    """
+    Count the total number of properties that can we displayed in the widget,
+    where each dimension counts as a separate property
+    """
+    count = 0
+    for value in properties.values():
+        if hasattr(value, "shape") and len(value.shape) > 1:
+            # for multi-dimentional props, each will be displayed as a separate property
+            # in the widget
+            count += value.shape[1]
+        else:
+            count += 1
+    return count

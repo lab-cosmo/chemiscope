@@ -50,7 +50,7 @@ class metatomic_featurizer:
             "model.pt", extensions_directory="extensions"
         )
 
-        chemiscope.explore(frames, featurize=featurizer)
+        chemiscope.explore(frames, featurizer=featurizer)
 
     For more examples, see the related :ref:`documentation
     <chemiscope-explore-metatomic>`.
