@@ -1,0 +1,508 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Use with sphinx-gallery" href="python/gallery.html" />
+        <link rel="prefetch" href="_static/chemiscope-icon-no-name.svg" as="image" />
+
+    <link rel="shortcut icon" href="_static/chemiscope-icon.png"/><!-- Generated with Sphinx 8.2.3 and Furo 2025.07.19 -->
+        <title>Chemiscope as a library - chemiscope 0.8.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/chemiscope.css?v=842a4e29" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-background-secondary: #f4f8ff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  --color-background-secondary: #303d4f;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  --color-background-secondary: #303d4f;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">chemiscope 0.8.6 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/chemiscope-icon-no-name.svg" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">chemiscope 0.8.6 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Chemiscope</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/4-colors.html">Atom property coloring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/7-explore-advanced.html">Advanced dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/8-explore-with-metatomic.html">Using metatomic models for dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/9-showing-custom-bonds.html">Using stk structures and showing custom bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="manual/index.html">User manual</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of User manual</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="manual/properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manual/panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manual/input.html">Chemiscope input files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manual/sharing.html">Sharing datasets with collaborators</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="python/index.html">Python module</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Python module</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="python/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python/cli.html">Command line interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python/reference.html"><code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> functions reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python/jupyter.html">Jupyter notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python/sphinx.html">Chemiscope in <code class="docutils literal notranslate"><span class="pre">sphinx</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="python/gallery.html">Use with <code class="docutils literal notranslate"><span class="pre">sphinx-gallery</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Chemiscope as a library</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/embedding.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="chemiscope-as-a-library">
+<span id="dev-manual"></span><h1>Chemiscope as a library<a class="headerlink" href="#chemiscope-as-a-library" title="Link to this heading">¶</a></h1>
+<p>It is possible to use chemiscope as a software library when writing your own
+web-based interface. This page documents how to get the library and provides a few
+usage examples.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should also look at the <a class="reference external" href="api/index.html">API documentation</a> for a list
+of all public classes, interfaces and functions in chemiscope.</p>
+</div>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
+<p>Chemiscope relies on different external dependencies that you should load in all
+the HTML pages using it. You can serve these from your own web server, or use a
+CDN to deliver them.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://getbootstrap.com/">Bootstrap</a> for HTML styling and basic UI;</p></li>
+<li><p>3Dmol.js relies on the ubiquitous <a class="reference external" href="https://jquery.com/">JQuery</a></p></li>
+</ul>
+</section>
+<section id="getting-and-building-the-code">
+<h2>Getting and building the code<a class="headerlink" href="#getting-and-building-the-code" title="Link to this heading">¶</a></h2>
+<section id="pre-built-version">
+<h3>Pre-built version<a class="headerlink" href="#pre-built-version" title="Link to this heading">¶</a></h3>
+<p>The easiest way to do so is to download the latest release from <a class="reference external" href="https://github.com/lab-cosmo/chemiscope/releases">the release
+page</a> on GitHub. The main
+file is <code class="docutils literal notranslate"><span class="pre">chemiscope.min.js</span></code>, containing the code required to create the
+default visualizer. This file exports a single global object <code class="docutils literal notranslate"><span class="pre">Chemiscope</span></code>,
+which contains references to</p>
+<ul class="simple">
+<li><p><a class="reference external" href="api/classes/DefaultVisualizer.html">Chemiscope.DefaultVisualizer</a></p></li>
+<li><p><a class="reference external" href="api/index.html#addWarningHandler">Chemiscope.addWarningHandler</a></p></li>
+<li><p><a class="reference external" href="api/classes/MetadataPanel.html">Chemiscope.MetadataPanel</a></p></li>
+<li><p><a class="reference external" href="api/classes/ViewersGrid.html">Chemiscope.ViewersGrid</a></p></li>
+<li><p><a class="reference external" href="api/classes/PropertiesMap.html">Chemiscope.PropertiesMap</a></p></li>
+<li><p><a class="reference external" href="api/classes/EnvironmentInfo.html">Chemiscope.EnvironmentInfo</a></p></li>
+<li><p><a class="reference external" href="api/classes/EnvironmentIndexer.html">Chemiscope.EnvironmentIndexer</a></p></li>
+</ul>
+<p>Partial builds are also available, in particular <code class="docutils literal notranslate"><span class="pre">molecule-viewer.min.js</span></code>
+which only contains code related to <a class="reference external" href="api/classes/MoleculeViewer.html">Chemiscope.MoleculeViewer</a>, making the minified JavaScript file much smaller. Other
+partial builds containing only part of chemiscope can be added upon request.</p>
+</section>
+<section id="build-from-sources">
+<h3>Build from sources<a class="headerlink" href="#build-from-sources" title="Link to this heading">¶</a></h3>
+<p>Chemiscope is written in TypeScript, a statically typed language which compiles
+to JavaScript. It uses the standard JavaScript ecosystem tools for dependency
+management, <code class="docutils literal notranslate"><span class="pre">npm</span></code>. To build chemiscope from sources, you will first need to
+get the sources, either as an archive from <a class="reference external" href="https://github.com/lab-cosmo/chemiscope/releases">the release page</a>, or using git</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/lab-cosmo/chemiscope
+</pre></div>
+</div>
+<p>You will also need <a class="reference external" href="https://nodejs.org/en/">node.js</a> and <a class="reference external" href="https://docs.npmjs.com/cli/npm">npm</a>, which you can install with your favorite
+package manager.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>chemiscope
+npm<span class="w"> </span>install
+npm<span class="w"> </span>run<span class="w"> </span>build
+</pre></div>
+</div>
+<p>This should create a <code class="docutils literal notranslate"><span class="pre">dist</span></code> directory, containing all the minified JavaScript
+libraries.</p>
+</section>
+<section id="usage-inside-a-javascript-project">
+<h3>Usage inside a JavaScript project<a class="headerlink" href="#usage-inside-a-javascript-project" title="Link to this heading">¶</a></h3>
+<p>If you already have a JavaScript project using <code class="docutils literal notranslate"><span class="pre">npm</span></code> or <code class="docutils literal notranslate"><span class="pre">yarn</span></code>, you can use
+the version of Chemiscope available on npm. Add it to your project with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>install<span class="w"> </span>chemiscope
+</pre></div>
+</div>
+<p>And import the library inside your own code using</p>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">Chemiscope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;chemiscope&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If you are using TypeScript, definition files are also provided with the npm
+package, and should give you auto-completion, inline documentation and interface
+checking.</p>
+</section>
+</section>
+<section id="usage-example">
+<h2>Usage example<a class="headerlink" href="#usage-example" title="Link to this heading">¶</a></h2>
+<p>Below is the minimal HTML and JavaScript code needed to load and use the default
+chemiscope interface. Additional code would be required to load the dataset,
+using JSON files or directly.</p>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;utf-8&quot;</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Chemiscope basic example<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+
+        <span class="cm">&lt;!-- Load all dependencies --&gt;</span>
+        <span class="cm">&lt;!-- jquery --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">script</span>
+            <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js&quot;</span>
+            <span class="na">integrity</span><span class="o">=</span><span class="s">&quot;sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=&quot;</span>
+            <span class="na">crossorigin</span><span class="o">=</span><span class="s">&quot;anonymous&quot;</span>
+        <span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+        <span class="cm">&lt;!-- Chemiscope code and default viewer code --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">script</span> <span class="na">defer</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;chemiscope.min.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+        <span class="cm">&lt;!-- Create basic DOM element for the different panels to live in --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;meta&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;map&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;structure&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;width: 400px; height: 400px&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;info&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="cm">&lt;!-- We appreciate a citation back to the main chemiscope website --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;font-size: x-small; float: right&quot;</span><span class="p">&gt;</span>
+            powered by <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;https://chemiscope.org&quot;</span><span class="p">&gt;</span>chemiscope<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="c1">// show errors in the webpage</span>
+<span class="w">        </span><span class="nb">window</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">insertAdjacentHTML</span><span class="p">(</span>
+<span class="w">                </span><span class="s1">&#39;beforebegin&#39;</span><span class="p">,</span>
+<span class="w">                </span><span class="sb">`&lt;div style=&quot;margin: auto; color: red;&quot;&gt;ERROR: </span><span class="si">${</span><span class="nx">error</span><span class="si">}</span><span class="sb">&lt;/div&gt;`</span>
+<span class="w">            </span><span class="p">);</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span><span class="p">&gt;</span>
+<span class="w">        </span><span class="c1">// load data from anywhere</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">dataset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">structures</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">properties</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">shapes</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded</span>
+<span class="w">            </span><span class="nx">environments</span><span class="o">:</span><span class="w"> </span><span class="c1">// to be loaded (optional)</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// id of the different elements</span>
+<span class="w">            </span><span class="nx">map</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;map&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;meta&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">info</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">structure</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">};</span>
+
+<span class="w">        </span><span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;DOMContentLoaded&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// once all javascript have been loaded, we can setup the</span>
+<span class="w">            </span><span class="c1">// DefaultVisualizer instance.</span>
+<span class="w">            </span><span class="nx">Chemiscope</span><span class="p">.</span><span class="nx">DefaultVisualizer</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">dataset</span><span class="p">);</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="python/gallery.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Use with <code class="docutils literal notranslate"><span class="pre">sphinx-gallery</span></code></div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Guillaume Fraux
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Chemiscope as a library</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#getting-and-building-the-code">Getting and building the code</a><ul>
+<li><a class="reference internal" href="#pre-built-version">Pre-built version</a></li>
+<li><a class="reference internal" href="#build-from-sources">Build from sources</a></li>
+<li><a class="reference internal" href="#usage-inside-a-javascript-project">Usage inside a JavaScript project</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage-example">Usage example</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=279f42e0"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

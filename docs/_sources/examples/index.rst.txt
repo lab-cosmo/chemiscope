@@ -1,0 +1,219 @@
+:orphan:
+
+.. _examples:
+
+Examples
+========
+
+This page lists a few examples of visualizations based on chemiscope.
+Rather than providing a demonstration of a scientifc application, as for the
+examples on `the main page <http://chemiscope.org>`_, these examples
+consist in short Python scripts that demonstrate how to make a chemiscope
+viewer file that uses some particular features (e.g. atom coloring or shape
+visualization).
+
+You can find more usage examples, in combination with other atomistic
+simulation packages, in the
+`chemiscope chapter <http://atomistic-cookbook.org/software/chemiscope.html>`_
+of the `atomistic cookbook <http://atomistic-cookbook.org/>`_.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the basic usage of the chemiscope package, reading structures and properties from an ASE package and preparing a chemiscope file to visualize them. Use chemiscope.show in a Jupyter notebook for interactive visualization">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_1-base_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_1-base.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Simple chemiscope input</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the visualization of structures (or environments) using data-driven descriptors of their geometry, to cluster together similar motifs. Here the geometric descriptors have been computed by PCA starting from SOAP representations, but are provided as text files to avoid external dependencies for the example.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_2-structure_map_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_2-structure_map.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Structure-property maps</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the visualization of trajectory data. It also includes visualization of atomic forces.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_3-trajectory_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_3-trajectory.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Trajectory plotting</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates how to color atoms based on scalar properties.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_4-colors_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_4-colors.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Atom property coloring</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates how to visualize structure and atomic properties in the structure panel, using different types of predefined shapes (ellipsoids for tensors, arrows for vectors). The example also shows how to define custom shapes.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_5-shapes_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_5-shapes.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Shape visualization</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="The :pychemiscope.explore function provides a streamlined way to visualize datasets as the low dimensional maps. This approach provides a quick and interactive overview of dataset composition and structure without the need to manually implement and configure the representation processes. This is particularly useful when the specific choice of hyperparameters does not significantly impact the resulting low-dimensionality map.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_6-explore_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_6-explore.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Exploring dataset with chemiscope</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="The previous example &lt;explore-example&gt; introduced :pychemiscope.explore and how to use it for automatic exploration of dataset. In this example, we&#x27;ll show some more representations and give additional featurizers you can use in your own code.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_7-explore-advanced_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_7-explore-advanced.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Advanced dataset exploration</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="In this example, we demonstrate how to create and use a `metatomic`_ model with :pychemiscope.metatomic_featurizer to extract features from the model, which are then displayed using a chemiscope widget. To use this function, some additional dependencies are required. You can install them with the following command:">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_8-explore-with-metatomic_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_8-explore-with-metatomic.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Using metatomic models for dataset exploration</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates interfacing stk with chemiscope and the use of shapes to show custom bonding in a molecule.">
+
+.. only:: html
+
+  .. image:: /examples/images/thumb/sphx_glr_9-showing-custom-bonds_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_examples_9-showing-custom-bonds.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Using stk structures and showing custom bonds</div>
+    </div>
+
+
+.. thumbnail-parent-div-close
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /examples/1-base
+   /examples/2-structure_map
+   /examples/3-trajectory
+   /examples/4-colors
+   /examples/5-shapes
+   /examples/6-explore
+   /examples/7-explore-advanced
+   /examples/8-explore-with-metatomic
+   /examples/9-showing-custom-bonds
+
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-gallery
+
+    .. container:: sphx-glr-download sphx-glr-download-python
+
+      :download:`Download all examples in Python source code: examples_python.zip </examples/examples_python.zip>`
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download all examples in Jupyter notebooks: examples_jupyter.zip </examples/examples_jupyter.zip>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_
