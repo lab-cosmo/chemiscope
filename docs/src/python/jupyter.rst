@@ -21,4 +21,5 @@ Dataset exploration
 -------------------
 
 .. autofunction:: chemiscope.explore
+.. autofunction:: chemiscope.get_featurizer
 .. autofunction:: chemiscope.metatomic_featurizer

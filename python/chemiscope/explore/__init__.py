@@ -19,14 +19,9 @@ def get_featurizer(name):
     :param str name: name of the featurizer. Must match one of the known versions.
         Currently available is "pet-mad-1.0"
 
-    :param str device: optional. device to run the featurizer on (e.g., "cpu" or "cuda")
-
-    :param int batch_size: optional. number of structures to process per batch during
-        featurization, defaults to 1
-
     .. warning::
 
-        Requires additional dependencies. Install it using:
+        This function requires additional dependencies. Install them using:
 
         .. code:: bash
 
@@ -49,13 +44,9 @@ def get_featurizer(name):
         model = PETMADFeaturizer(version="1.0.0", device=device, batch_size=1)
         return model
     else:
-        options = (
-            ", ".join(KNOWN_FEATURIZERS)
-            if len(KNOWN_FEATURIZERS) > 1
-            else KNOWN_FEATURIZERS[0]
-        )
         raise ValueError(
-            f"unknown featurizer: {name}. Available options are: {options}"
+            f"unknown featurizer: {name}. Available options "
+            f"are: {', '.join(KNOWN_FEATURIZERS)}"
         )
 
 
