@@ -940,6 +940,16 @@ def _validate_property(name, property):
             warnings.warn(f"ignoring unexpected property key: {key}", stacklevel=2)
 
 
+def _typetransform_scalar(data):
+    """Transform a single scalar value to either string or float."""
+    if isinstance(data, (str, np.str_)):
+        return str(data)
+    elif isinstance(data, bytes):
+        return data.decode("utf8")
+    else:
+        return float(data)
+
+
 def _typetransform(data, name):
     """
     Transform the given data to either a list of string or a list of floats.
@@ -949,25 +959,20 @@ def _typetransform(data, name):
                  error messages
     """
     assert isinstance(data, list) and len(data) > 0
-    if isinstance(data[0], str):
-        return list(map(str, data))
-    elif isinstance(data[0], bytes):
-        return list(map(lambda u: u.decode("utf8"), data))
-    else:
-        try:
-            values = []
-            for value in data:
-                if isinstance(value, np.ndarray) and value.shape == (1,):
-                    values.append(float(value[0]))
-                else:
-                    values.append(float(value))
 
-            return values
-        except Exception:
-            raise Exception(
-                f"unsupported type in property '{name}' values: "
-                "should be string or number"
-            )
+    try:
+        values = []
+        for value in data:
+            if isinstance(value, np.ndarray) and value.shape == (1,):
+                values.append(_typetransform_scalar(value[0]))
+            else:
+                values.append(_typetransform_scalar(value))
+
+        return values
+    except Exception:
+        raise Exception(
+            f"unsupported type in property '{name}' values: should be string or number"
+        )
 
 
 def _validate_shapes(structures, shapes):
