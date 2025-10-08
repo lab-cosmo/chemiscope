@@ -95,17 +95,11 @@ learning representations and dimensionality reduction. For examples and detailed
 usage, refer to the related
 [documentation](https://chemiscope.org/docs/examples/explore.html).
 
-To use the explore functionality, you'll need to install the required
-dependencies with:
+To use the explore functionality as well as `chemiscope.metatomic_featurizer`, you'll
+need to install the required dependencies with:
 
 ```bash
 pip install chemiscope[explore]
-```
-
-To use `chemiscope.metatensor_featurizer` for providing your trained model
-to get the features for `chemiscope.explore`, install the dependencies with:
-```bash
-pip install chemiscope[metatensor]
 ```
 
 ## sphinx and sphinx-gallery integration

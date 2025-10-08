@@ -11,7 +11,7 @@ dependencies are required. You can install them with the following command:
 
 .. code:: bash
 
-    pip install chemiscope[metatomic]
+    pip install chemiscope[explore]
 
 .. _metatomic: https://docs.metatensor.org/metatomic/
 """
@@ -52,7 +52,7 @@ featurizer = chemiscope.metatomic_featurizer(model="model.pt")
 
 chemiscope.explore(
     frames=frames,
-    featurize=featurizer,
+    featurizer=featurizer,
     environments=chemiscope.all_atomic_environments(frames),
 )
 
@@ -223,7 +223,7 @@ mta_model = AtomisticModel(model.eval(), metadata, capabilities)
 featurizer = chemiscope.metatomic_featurizer(mta_model, check_consistency=True)
 chemiscope.explore(
     frames=frames,
-    featurize=featurizer,
+    featurizer=featurizer,
     environments=chemiscope.all_atomic_environments(frames),
 )
 

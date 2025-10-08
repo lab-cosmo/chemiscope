@@ -569,28 +569,38 @@ def _normalize_environments(environments, structures):
 
 
 def quick_settings(
-    x="",
-    y="",
-    z="",
-    color="",
-    size="",
-    symbol="",
+    x=None,
+    y=None,
+    z=None,
+    map_color=None,
+    structure_color=None,
+    size=None,
+    symbol=None,
     trajectory=False,
     periodic=False,
     target="structure",
     map_settings=None,
     structure_settings=None,
+    **kwargs,
 ):
     """A utility function to return a ``settings`` dictionary with the most basic
     options for a chemiscope viewer (e.g. what to show on the axes).
 
-    :param str x: The property to show on the x axis of the map.
+    ``map_settings`` and ``structure_settings`` will override the values if specified,
+    e.g. ``quick_settings(x="PCA[1]", map_settings={"x": "energy"})`` will set "energy"
+    as x-axis.
+
+    All the parameters are optional.
+
+    :param str x: The property to show on the x axis of the map
 
     :param str y: The property to show on the y axis of the map.
 
     :param str z: The property to show on the z axis of the map.
 
-    :param str color: The property to use to color the map.
+    :param str map_color: The property to use to color the map.
+
+    :param str structure_color: The property to use to color the structure.
 
     :param str size: The property to use to determine data point size.
 
@@ -608,10 +618,14 @@ def quick_settings(
         the properties shown should be those of environments or of structures.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
-        settings schema).
+        settings schema). It will override the settings specied from other map
+        parameters, e.g., ``x``, ``y``, ``z`` -axes, ``map_color`` etc.
 
     :param dict structure_settings: Additional settings for the structure viewer
-        (following the chemiscope settings schema).
+        (following the chemiscope settings schema). It will override the settings
+        specied from other parameters, e.g., ``structure_color``
+
+    :param kwargs: for backward compatibility to accept deprecated ``color`` property
     """
 
     if target not in ["atom", "structure"]:
@@ -620,35 +634,48 @@ def quick_settings(
             "should be either `atom` or `structure`."
         )
 
-    if (x + y + z + color + size + symbol) == "":
-        # if at least one of the properties is requested
-        computed_map_settings = {}
-    else:
-        computed_map_settings = {
-            "x": {"property": x},
-            "y": {"property": y},
-            "z": {"property": z},
-            "color": {"property": color},
-            "size": {"property": size},
-            "symbol": symbol,
-        }
+    if map_settings is not None and not isinstance(map_settings, dict):
+        raise TypeError("map_settings must be a dict if specified")
+    if structure_settings is not None and not isinstance(structure_settings, dict):
+        raise TypeError("structure_settings must be a dict if specified")
 
-    computed_map_settings.update(
-        {
-            "joinPoints": trajectory,
-        }
-    )
+    if "color" in kwargs:
+        warnings.warn(
+            "'color' property is deprecated and replaced with 'map_color'",
+            stacklevel=1,
+        )
+        map_color = kwargs["color"]
+
+    computed_map_settings = {"joinPoints": trajectory}
+
+    properties = {"x": x, "y": y, "z": z, "color": map_color, "size": size}
+    for key, value in properties.items():
+        if value is not None:
+            if not isinstance(value, str):
+                raise TypeError(f"{key} must be a string, got {type(value)}")
+            computed_map_settings.update({key: {"property": x}})
+
+    if symbol is not None:
+        if not isinstance(symbol, str):
+            raise TypeError(f"'symbol' must be a string, got {type(symbol)}")
+        computed_map_settings.update({"symbol": symbol})
 
     computed_structure_settings = {
         "keepOrientation": trajectory,
         "playbackDelay": 50 if trajectory else 500,
         "unitCell": periodic,
-        "supercell": [3, 3, 3] if (periodic and (target == "atom")) else [1, 1, 1],
+        "supercell": [3, 3, 3] if periodic and target == "atom" else [1, 1, 1],
     }
+
+    if structure_color is not None:
+        if not isinstance(structure_color, str):
+            raise TypeError(
+                f"{structure_color} must be a string, got {type(structure_color)}"
+            )
+        computed_structure_settings.update({"color": {"property": structure_color}})
 
     if map_settings is not None:
         computed_map_settings.update(map_settings)
-
     if structure_settings is not None:
         computed_structure_settings.update(structure_settings)
 
@@ -913,6 +940,16 @@ def _validate_property(name, property):
             warnings.warn(f"ignoring unexpected property key: {key}", stacklevel=2)
 
 
+def _typetransform_scalar(data):
+    """Transform a single scalar value to either string or float."""
+    if isinstance(data, (str, np.str_)):
+        return str(data)
+    elif isinstance(data, bytes):
+        return data.decode("utf8")
+    else:
+        return float(data)
+
+
 def _typetransform(data, name):
     """
     Transform the given data to either a list of string or a list of floats.
@@ -922,25 +959,20 @@ def _typetransform(data, name):
                  error messages
     """
     assert isinstance(data, list) and len(data) > 0
-    if isinstance(data[0], str):
-        return list(map(str, data))
-    elif isinstance(data[0], bytes):
-        return list(map(lambda u: u.decode("utf8"), data))
-    else:
-        try:
-            values = []
-            for value in data:
-                if isinstance(value, np.ndarray) and value.shape == (1,):
-                    values.append(float(value[0]))
-                else:
-                    values.append(float(value))
 
-            return values
-        except Exception:
-            raise Exception(
-                f"unsupported type in property '{name}' values: "
-                "should be string or number"
-            )
+    try:
+        values = []
+        for value in data:
+            if isinstance(value, np.ndarray) and value.shape == (1,):
+                values.append(_typetransform_scalar(value[0]))
+            else:
+                values.append(_typetransform_scalar(value))
+
+        return values
+    except Exception:
+        raise Exception(
+            f"unsupported type in property '{name}' values: should be string or number"
+        )
 
 
 def _validate_shapes(structures, shapes):

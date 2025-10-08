@@ -11,6 +11,7 @@ const ALL_EXAMPLES = [
     'Azaphenacenes.json.gz',
     'ROY-GCH.json.gz',
     'Zeolites.json.gz',
+    'Amorphous-Silicon.json.gz',
 ];
 
 let needsUpdate = false;

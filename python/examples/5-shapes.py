@@ -267,8 +267,7 @@ chemiscope.write_input(
             "x": {"property": "alpha[1]"},
             "y": {"property": "alpha[2]"},
             "z": {"property": "alpha[3]"},
-            "palette": "seismic",
-            "color": {"property": ""},
+            "color": {"property": "", "palette": "seismic"},
         },
         "structure": [
             {

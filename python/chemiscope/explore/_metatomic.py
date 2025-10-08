@@ -30,7 +30,7 @@ class metatomic_featurizer:
 
     .. code:: bash
 
-        pip install chemiscope[metatomic]
+        pip install chemiscope[explore]
 
     Here is an example using a pre-trained `metatomic`_ model, stored as a ``model.pt``
     file with the compiled extensions stored in the ``extensions/`` directory. The
@@ -50,7 +50,7 @@ class metatomic_featurizer:
             "model.pt", extensions_directory="extensions"
         )
 
-        chemiscope.explore(frames, featurize=featurizer)
+        chemiscope.explore(frames, featurizer=featurizer)
 
     For more examples, see the related :ref:`documentation
     <chemiscope-explore-metatomic>`.
@@ -78,7 +78,7 @@ class metatomic_featurizer:
             except ImportError as e:
                 raise ImportError(
                     f"Required package not found: {e}. Please install the "
-                    "dependencies with `pip install chemiscope[metatomic]`."
+                    "dependencies with `pip install chemiscope[explore]`."
                 )
 
         if isinstance(model, (str, Path)):

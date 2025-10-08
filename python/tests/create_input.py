@@ -138,23 +138,27 @@ class TestCreateInputProperties(unittest.TestCase):
 
     def test_ndarray_properties(self):
         for TF in (TEST_FRAMES, TEST_FRAMES_STK):
-            # shape N
+            # shape N, float
             properties = {"name": {"target": "atom", "values": np.array([2, 3, 4])}}
             data = create_input(frames=TF, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"].keys()), 1)
 
-            # shape N
+            # shape N, strings
             properties = {
-                "name": {"target": "atom", "values": np.array(["2", "3", "4"])}
+                "name": {
+                    "target": "atom",
+                    "values": np.array(["2", "3", "4"]),
+                }
             }
+            self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
             data = create_input(frames=TF, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
             self.assertEqual(len(data["properties"].keys()), 1)
 
-            # shape N x 1
+            # shape N x 1, float
             properties = {
                 "name": {"target": "atom", "values": np.array([[2], [3], [4]])}
             }
@@ -163,7 +167,20 @@ class TestCreateInputProperties(unittest.TestCase):
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"].keys()), 1)
 
-            # shape N x 3
+            # shape N x 1, string
+            properties = {
+                "name": {
+                    "target": "atom",
+                    "values": np.array([["2"], ["3"], ["4"]]),
+                }
+            }
+            self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
+            data = create_input(frames=TF, properties=properties)
+            self.assertEqual(data["properties"]["name"]["target"], "atom")
+            self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
+            self.assertEqual(len(data["properties"].keys()), 1)
+
+            # shape N x 3, float
             properties = {
                 "name": {
                     "target": "atom",
@@ -177,6 +194,25 @@ class TestCreateInputProperties(unittest.TestCase):
             self.assertEqual(data["properties"]["name[2]"]["values"], [2, 2, 2])
             self.assertEqual(data["properties"]["name[3]"]["target"], "atom")
             self.assertEqual(data["properties"]["name[3]"]["values"], [4, 4, 4])
+            self.assertEqual(len(data["properties"].keys()), 3)
+
+            # shape N x 3, string
+            properties = {
+                "name": {
+                    "target": "atom",
+                    "values": np.array(
+                        [["1", "2", "4"], ["1", "2", "4"], ["1", "2", "4"]],
+                    ),
+                }
+            }
+            self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
+            data = create_input(frames=TF, properties=properties)
+            self.assertEqual(data["properties"]["name[1]"]["target"], "atom")
+            self.assertEqual(data["properties"]["name[1]"]["values"], ["1", "1", "1"])
+            self.assertEqual(data["properties"]["name[2]"]["target"], "atom")
+            self.assertEqual(data["properties"]["name[2]"]["values"], ["2", "2", "2"])
+            self.assertEqual(data["properties"]["name[3]"]["target"], "atom")
+            self.assertEqual(data["properties"]["name[3]"]["values"], ["4", "4", "4"])
             self.assertEqual(len(data["properties"].keys()), 3)
 
     def test_shortened_properties(self):

@@ -5,21 +5,23 @@ Exploring dataset with chemiscope
 =================================
 
 The :py:func:`chemiscope.explore` function provides a streamlined way to visualize
-datasets by automatically computing representation and using dimensionality reduction.
-This function simplifies the process of dataset exploration by offering a quick overview
-through computed properties and dimensionality reduction, allowing to rapidly gain
-insights into the composition and structure of data without need to manually implement
-and fine-tune the representation process.
+datasets as the low dimensional maps. This approach provides a quick and interactive
+overview of dataset composition and structure without the need to manually implement and
+configure the representation processes. This is particularly useful when the specific
+choice of hyperparameters does not significantly impact the resulting low-dimensionality
+map.
 
-This is particularly useful when the specific choice of hyperparameters does not
-significantly impact the resulting 2D map. By passing a list of `ase.Atoms
-<https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects (or similar structures from
-other libraries) to :py:func:`chemiscope.explore`, it is possible to generate a
-chemiscope widget, providing an immediate and intuitive visualization of the dataset.
+By passing a list of `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects
+(or similar structures from other libraries) to :py:func:`chemiscope.explore`, it is
+possible to generate a chemiscope widget, providing an immediate and intuitive
+visualization of the dataset.
 
-Additionally, :py:func:`chemiscope.explore` allows to provide a custom function for
-representation and dimensionality reduction, offering flexibility for more advanced
-usage.
+By default, the method uses the `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_,
+which computes representations as the `PET-MAD <https://arxiv.org/abs/2503.14118>`_
+features and maps them a low-dimensional MAD dataset latent space.
+
+For more advanced use cases, :py:func:`chemiscope.explore` allows to provide a custom
+function for representation and dimensionality reduction.
 
 To use this function, some additional dependencies are required. You can install them
 with the following command:
@@ -28,28 +30,16 @@ with the following command:
 
     pip install chemiscope[explore]
 
-In this example, we will explore several use cases, starting from basic applications to
-more customized scenarios.
+In this example, we will explore basic and advanced use cases, from simple dataset
+visualization to custom featurization.
 
 First, let's import the necessary packages that will be used throughout the examples.
 """
 
 # %%
-import os
-
 import ase.io
-import requests
 
 import chemiscope
-
-
-def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/"):
-    """Helper function to load the pre-computed examples"""
-    local_path = "data/" + filename
-    if not os.path.isfile(local_path):
-        response = requests.get(base_url + filename)
-        with open(local_path, "wb") as file:
-            file.write(response.content)
 
 
 # %%
@@ -57,125 +47,95 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/
 # Basic example
 # +++++++++++++
 #
-# This example shows the basic usage of the :py:func:`chemiscope.explore`. At first,
-# read or load the structures from the dataset. Here we use an `ASE package
-# <https://wiki.fysik.dtu.dk/ase>`_ to read the structures from the file and have the
-# frames as the `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects.
+# This example shows the basic usage of :py:func:`chemiscope.explore`. First, load a
+# dataset of structures as `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_
+# objects. Here, we use the samples from the `M3CD dataset
+# <https://doi.org/10.24435/materialscloud:rw-t0>`_:
 
-frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
-
-
-# %%
-#
-# Provide the frames to the :py:func:`chemiscope.explore`. It will generate a Chemiscope
-# interactive widget with the reduced dimensionality of data.
-chemiscope.explore(frames)
-
-# %%
-#
-# In this basic case, no featurizer function is provided, so
-# :py:func:`chemiscope.explore` uses a default method that applies
-# `SOAP (Smooth Overlap of Atomic Positions)
-# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ to
-# compute atomic structure descriptors and then performs `PCA (Principal Component
-# Analysis)
-# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html>`_
-# for dimensionality reduction. The resulting components are then added to the
-# properties to be used in visualization.
+frames = ase.io.read("data/explore_m3cd.xyz", ":")
 
 
 # %%
 #
-# Besides this, it is possible to run the dimentionality reduction algorithm and display
-# specific atom-centered environments. They can be manually defined by specifying a list
-# of tuples in the format ``(structure_index, atom_index, cutoff)``, as shown in
-# this example. Alternatively, the environments can be extracted from the frames using
-# the function :py:func:`all_atomic_environments`.
+# Next, pass the frames to :py:func:`chemiscope.explore` to generate an interactive
+# Chemiscope. In this basic case, we provide the featurizer version to be used:
+
+chemiscope.explore(frames, featurizer="pet-mad-1.0")
+
+# %%
 #
-# We also demonstrate a way to provide properties for visualization. The frames and
-# properties related to the indexes in the ``environments`` will be extracted.
+# We can also save the visualization to send it to the colloborators or reopen
+# separatelly with :py:func:`chemiscope.read_input`:
+chemiscope.explore(frames, featurizer="pet-mad-1.0", write_input="m3cd.chemiscope.json")
+
+
+# %%
+#
+# Besides this, it is possible to specify atom-centered environments and properties.
+# Environments can be manually defined as a list of tuples in the format
+# ``(structure_index, atom_index, cutoff)`` or extracted automatically using
+# :py:func:`chemiscope.all_atomic_environments`. We can also configure visualisation
+# settings, such as axis and color properties.
 
 properties = chemiscope.extract_properties(frames, only=["energy"])
 environments = [(0, 0, 3.5), (1, 0, 3.5), (2, 1, 3.5)]
-chemiscope.explore(frames, environments=environments, properties=properties)
+settings = chemiscope.quick_settings(x="features[1]", y="features[2]", color="energy")
+chemiscope.explore(
+    frames,
+    featurizer="pet-mad-1.0",
+    environments=environments,
+    properties=properties,
+    settings=settings,
+)
 
 # %%
 #
-# Example with custom featurizer and custom properties
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Example with custom featurizer
+# ++++++++++++++++++++++++++++++
 #
-# This part illustrates how to create a custom function for dimensionality reduction
-# as an argument (``featurize``) to :py:func:`chemiscope.explore`. Inside this function,
-# we perform descriptor calculation using `SOAP
-# <https://singroup.github.io/dscribe/latest/tutorials/descriptors/soap.html>`_ and
-# then reduce the dimensionality with `Kernel PCA
-# <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.KernelPCA.html>`_.
-#
-# First, let's import the necessary packages.
-from dscribe.descriptors import SOAP  # noqa
-from sklearn.decomposition import KernelPCA  # noqa
+# For advanced use cases, you can define a custom featurization function. For example,
+# we can describe structures based on their chemical compositions. The function must
+# take two arguments: ``frames`` (the input structures) and ``environments`` (optional
+# argument for the atom-centered environments). Below, we create a function to calculate
+# fractional composition vectors and apply PCA for dimensionality reduction:
 
-# %%
-#
-# Define the function ``soap_kpca_featurize`` which takes two arguments
-# (``frames``, which contains the structures provided to
-# :py:func:`chemiscope.explore` and internally passed to the ``featurize`` function;
-# ``environments``,  optional aurgument with the atom-centered environments,
-# if they were provided to the :py:func:`chemiscope.explore`.
+import numpy as np  # noqa
+from sklearn.decomposition import PCA  # noqa
 
 
-def soap_kpca_featurize(frames, environments):
+def fractional_composition_featurize(frames, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported by this featurizer")
-    # Initialise soap calculator. The detailed explanation of the provided
-    # hyperparameters can be checked in the documentation of the library (``dscribe``).
-    soap = SOAP(
-        # the dataset used in the example contains only carbon
-        species=["C"],
-        r_cut=4.5,
-        n_max=8,
-        l_max=6,
-        sigma=0.2,
-        rbf="gto",
-        average="outer",
-        periodic=True,
-        weighting={"function": "pow", "c": 1, "m": 5, "d": 1, "r0": 3.5},
-    )
 
-    # Compute features
-    descriptors = soap.create(frames)
+    dimentionality = 100
 
-    # Apply KPCA
-    transformer = KernelPCA(n_components=2, gamma=0.05)
+    features = []
 
-    # Return a 2D array of reduced features
-    return transformer.fit_transform(descriptors)
+    for frame in frames:
+        unique, counts = np.unique(frame.numbers, return_counts=True)
+        fractions = counts / len(frame.numbers)
+
+        feature_vector = np.zeros(dimentionality)
+        for element_number, franction in zip(unique, fractions):
+            feature_vector[element_number - 1] = franction
+
+        features.append(feature_vector)
+
+    pca = PCA(n_components=3)
+    return pca.fit_transform(features)
 
 
 # %%
 #
-# Provide the created function to :py:func:`chemiscope.explore`.
+# Pass the custom featurizer to :py:func:`chemiscope.explore`:
 
-cs = chemiscope.explore(frames, featurize=soap_kpca_featurize)
-
-# %%
-#
-# We can also provide the additional properties inside, for example, let's extract
-# energy from the frames using :py:func:`chemiscope.extract_properties`.
-
-properties = chemiscope.extract_properties(frames, only=["energy"])
-cs = chemiscope.explore(frames, featurize=soap_kpca_featurize, properties=properties)
+settings = chemiscope.quick_settings(x="features[1]", y="features[2]")
+chemiscope.explore(
+    frames,
+    featurizer=fractional_composition_featurize,
+    settings=settings,
+)
 
 # %%
 #
-# Note: It is possible to add parallelization when computing the SOAP descriptors and
-# performing dimensionality reduction with KernelPCA by providing the ``n_jobs``
-# parameter. This allows the computation to utilize multiple CPU cores for faster
-# processing. An example of how to include ``n_jobs`` is shown below on this page.
-#
-# To showcase the results of the ``soap_kpca`` function, we have pre-computed it for
-# the 6k structures from the `C-GAP-20U
-# <https://jla-gardner.github.io/load-atoms/datasets/C-GAP-20U.html>`_ dataset:
-
-fetch_dataset("soap_kpca_c-gap-20u.json.gz")
-chemiscope.show_input("data/soap_kpca_c-gap-20u.json.gz")
+# For more advanced examples, see the :ref:`next tutorial <advanced-explore-example>`.

@@ -75,16 +75,7 @@ docstring-code-format = true
 
 [project.optional-dependencies]
 explore = [
-    "dscribe",
-    "scikit-learn",
-]
-
-metatensor = [
-    "metatensor-operations >=0.3.3,<0.4",
-    "metatensor-torch >=0.7.6,<0.8",
-]
-
-metatomic = [
+    "pet_mad>=1.3,<2.0",
     "metatomic-torch >=0.1.0,<0.2",
     "vesin >=0.3.5,<0.4",
 ]

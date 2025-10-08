@@ -66,17 +66,18 @@ chemiscope.write_input(
         "anisotropy": np.vstack(anisotropy),
         "alpha_eigenvalues": np.vstack(alpha_eigenvalues),
     },
-    # it is also possible to define the default visualization settings
+    # it is also possible to define the default visualization settings, e.g. map axes,
+    # color property and palette, optionally
     settings={
         "map": {
             "x": {"property": "alpha_eigenvalues[1]"},
             "y": {"property": "alpha_eigenvalues[2]"},
             "z": {"property": "alpha_eigenvalues[3]"},
-            "color": {"property": "anisotropy"},
+            "color": {"property": "anisotropy", "palette": "inferno"},
         },
         "structure": [
             {
-                "color": {"property": "anisotropy"},
+                "color": {"property": "anisotropy", "palette": "bwr"},
             }
         ],
     },
