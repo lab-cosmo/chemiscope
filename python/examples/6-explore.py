@@ -116,7 +116,7 @@ def fractional_composition_featurize(frames, environments):
         fractions = counts / len(frame.numbers)
 
         feature_vector = np.zeros(dimentionality)
-        for element_number, franction in zip(unique, fractions):
+        for element_number, franction in zip(unique, fractions, strict=True):
             feature_vector[element_number - 1] = franction
 
         features.append(feature_vector)

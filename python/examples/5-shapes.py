@@ -42,6 +42,7 @@ for a in frames:
                 a.arrays["axy"],
                 a.arrays["axz"],
                 a.arrays["ayz"],
+                strict=True,
             )
         ]
     )
