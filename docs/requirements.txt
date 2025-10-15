@@ -1,20 +1,13 @@
 sphinx>=4
-sphinx_rtd_theme   # sphinx theme
 sphinx-argparse-cli
 sphinx-gallery
 furo
 
-# required to be able to import chemiscope in the doc
-numpy
-ipywidgets
-matplotlib
+# different structure providers
 ase
-# These three pins are to avoid rdkit version 2024.3.5. Once a later version
-# is available, the latest version (assuming Python >= 3.11) of all three
-# should be ok.
-rdkit
 stk
 stko
+rdkit>=2025
 
 # required for the examples of chemiscope.explore
 mace-torch

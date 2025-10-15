@@ -49,10 +49,10 @@ import chemiscope
 #
 # This example shows the basic usage of :py:func:`chemiscope.explore`. First, load a
 # dataset of structures as `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_
-# objects. Here, we use the samples from the `M3CD dataset
+# objects. Here, we use the samples from the `MC3D dataset
 # <https://doi.org/10.24435/materialscloud:rw-t0>`_:
 
-frames = ase.io.read("data/explore_m3cd.xyz", ":")
+frames = ase.io.read("data/explore_mc3d.xyz", ":")
 
 
 # %%
@@ -64,9 +64,13 @@ chemiscope.explore(frames, featurizer="pet-mad-1.0")
 
 # %%
 #
-# We can also save the visualization to send it to the colloborators or reopen
+# We can also save the visualization to send it to colloborators or reopen
 # separatelly with :py:func:`chemiscope.read_input`:
-chemiscope.explore(frames, featurizer="pet-mad-1.0", write_input="m3cd.chemiscope.json")
+chemiscope.explore(
+    frames,
+    featurizer="pet-mad-1.0",
+    write_input="mc3d.chemiscope.json.gz",
+)
 
 
 # %%

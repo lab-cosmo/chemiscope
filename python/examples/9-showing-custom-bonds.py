@@ -15,6 +15,7 @@ some rudimentary properties of `stk` molecules. `stko` can be installed with
 """
 
 import itertools as it
+import tempfile
 
 import ase.io
 import stk
@@ -185,21 +186,22 @@ chemiscope.write_input(
 # (because ASE does not contain this information), which will not be right due
 # to the far-from equilibrium nature of the structure.
 
-structures[0].write("data/stk_cage.xyz")
-chemiscope.show(
-    frames=[ase.io.read("data/stk_cage.xyz")],
-    properties={i: [properties[i][0]] for i in properties},
-    settings=chemiscope.quick_settings(
-        x="aspheriticty",
-        y="uffenergy",
-        color="",
-        structure_settings={
-            "atoms": True,
-            "bonds": True,
-            "spaceFilling": False,
-        },
-    ),
-)
+with tempfile.NamedTemporaryFile(suffix=".xyz") as tmpfile:
+    structures[0].write(tmpfile.name)
+    chemiscope.show(
+        frames=[ase.io.read(tmpfile.name)],
+        properties={i: [properties[i][0]] for i in properties},
+        settings=chemiscope.quick_settings(
+            x="aspheriticty",
+            y="uffenergy",
+            color="",
+            structure_settings={
+                "atoms": True,
+                "bonds": True,
+                "spaceFilling": False,
+            },
+        ),
+    )
 
 # %%
 #
