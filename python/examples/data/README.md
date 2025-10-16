@@ -18,7 +18,7 @@ This file contains 5 structures from the QM9 dataset.
 -   **Dataset Source**: [QM9 on Load-atoms](https://jla-gardner.github.io/load-atoms/datasets/QM9.html)
 -   **Reference**: Ramakrishnan, R., Dral, P., Rupp, M. et al. Quantum chemistry structures and properties of 134 kilo molecules. Sci Data 1, 140022 (2014). https://doi.org/10.1038/sdata.2014.22
 
-### explore_m3cd.xyz
+### explore_mc3d.xyz
 
 This file contains 5 structures from the original MC3D crystals from MC3DML dataset.
 
