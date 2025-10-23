@@ -35,7 +35,10 @@ def _mda_to_json(ag):
         for atom in ag
         # `element` is better, but not always available, e.g. xyz file
     ]
-    data["names"] = [atom.name for atom in ag]
+    if hasattr(ag, "names"):
+        data["names"] = [atom.name for atom in ag]
+    else:
+        data["names"] = data["elements"]
     data["x"] = [float(value) for value in ag.positions[:, 0]]
     data["y"] = [float(value) for value in ag.positions[:, 1]]
     data["z"] = [float(value) for value in ag.positions[:, 2]]
@@ -47,7 +50,7 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
-    if ag.chainIDs is not None:
+    if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
         data["chains"] = [atom.chainID for atom in ag]
     if ag.dimensions is not None:
         data["cell"] = list(
@@ -57,13 +60,12 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
-    if ag.resnames is not None:
+    if hasattr(ag, "resnames") and ag.resnames is not None:
         data["residues"] = [atom.resname for atom in ag]
+    if hasattr(ag, "resids") and ag.resids is not None:
         data["resids"] = [int(atom.resid) for atom in ag]
 
     return data
-
-
 
 
 def _mda_get_secondary_structure(data_collection, ag):
@@ -71,10 +73,14 @@ def _mda_get_secondary_structure(data_collection, ag):
     ss_results = translate(long_run.results.dssp_ndarray)
     for iframe, ss in enumerate(ss_results):
         ssbegin = [False] + [ss[i - 1] != ss[i] for i in range(1, len(ss))]
-        ssend = [ss[i] != ss[i + 1] for i in range(0, len(ss) - 1)] +  [False]
+        ssend = [ss[i] != ss[i + 1] for i in range(0, len(ss) - 1)] + [False]
         resindexs = [int(atom.residue.resindex) for atom in ag]
-        data_collection[iframe]["secondaryStructure"] = [SS_MAPPING[ss[resindex]] for resindex in resindexs]
-        data_collection[iframe]["ssbegin"] = [ssbegin[resindex] for resindex in resindexs]
+        data_collection[iframe]["secondaryStructure"] = [
+            SS_MAPPING[ss[resindex]] for resindex in resindexs
+        ]
+        data_collection[iframe]["ssbegin"] = [
+            ssbegin[resindex] for resindex in resindexs
+        ]
         data_collection[iframe]["ssend"] = [ssend[resindex] for resindex in resindexs]
 
     return data_collection
