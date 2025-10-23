@@ -2,8 +2,6 @@
 from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
     _ase_extract_properties,
-    _ase_get_atom_properties,
-    _ase_get_structure_properties,
     _ase_to_json,
     _ase_valid_structures,
     ase_merge_pi_frames,
@@ -12,8 +10,6 @@ from ._ase import (  # noqa: F401
 )
 from ._mda import (  # noqa: F401
     _mda_extract_properties,
-    _mda_get_atom_properties,
-    _mda_get_structure_properties,
     _mda_to_json,
     _mda_valid_structures,
 )
@@ -24,8 +20,6 @@ from ._shapes import (  # noqa: F401
 )
 from ._stk import (  # noqa: F401
     _stk_all_atomic_environments,
-    _stk_get_atom_properties,
-    _stk_get_structure_properties,
     _stk_to_json,
     _stk_valid_structures,
     convert_stk_bonds_as_shapes,
@@ -72,42 +66,6 @@ def frames_to_json(frames):
         # Be careful of the lazy loading of `frames.atoms`, which is updated during the
         # iteration of the trajectory
         return [_mda_to_json(frames) for _ in frames.universe.trajectory]
-    else:
-        raise Exception("reached unreachable code")
-
-
-def _get_atom_properties(frames):
-    """
-    Get existing "atom" properties from the given ``frames``. This is used
-    to check if the user might be missing some properties because chemiscope is
-    no longer automatically extracting properties
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_get_atom_properties(frames)
-    elif adapter == "stk":
-        return _stk_get_atom_properties(frames)
-    elif adapter == "mda":
-        return _mda_get_atom_properties(frames)
-    else:
-        raise Exception("reached unreachable code")
-
-
-def _get_structure_properties(frames):
-    """
-    Get existing "structure" properties from the given ``frames``. This is used
-    to check if the user might be missing some properties because chemiscope is
-    no longer automatically extracting properties
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_get_structure_properties(frames)
-    elif adapter == "stk":
-        return _stk_get_structure_properties(frames)
-    elif adapter == "mda":
-        return _mda_get_structure_properties(frames)
     else:
         raise Exception("reached unreachable code")
 
