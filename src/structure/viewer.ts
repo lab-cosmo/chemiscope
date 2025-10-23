@@ -75,7 +75,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
             atom = { ...atom, chain: structure.chains[i] };
         }
         if (structure.secondaryStructure !== undefined) {
-            if (structure.secondaryStructure[i] !== "-") {
+            if (structure.secondaryStructure[i] !== '-') {
                 atom = { ...atom, ss: structure.secondaryStructure[i] };
             }
         }
@@ -279,9 +279,7 @@ export class MoleculeViewer {
         this._root.appendChild(this._cellInfo);
 
         this._residueInfo = document.createElement('span');
-        this._residueInfo.classList.add(
-            'chsp-hide-if-no-residue'
-        );
+        this._residueInfo.classList.add('chsp-hide-if-no-residue');
         this._root.appendChild(this._residueInfo);
 
         const noCellStyle = new CSSStyleSheet();
@@ -526,11 +524,9 @@ export class MoleculeViewer {
             this._styles.noCell.replaceSync('');
         }
         this._showSupercellInfo();
-        
+
         if (structure.resids === undefined) {
-            this._styles.noResidue.replaceSync(
-                '.chsp-hide-if-no-residue { display: none; }'
-            );
+            this._styles.noResidue.replaceSync('.chsp-hide-if-no-residue { display: none; }');
         } else {
             this._styles.noResidue.replaceSync('');
             this._options.bonds.value = false;
@@ -1639,7 +1635,7 @@ export class MoleculeViewer {
                 };
             }
         } else if (bgStyle === 'cartoon') {
-                style.cartoon = {
+            style.cartoon = {
                 opacity: defaultOpacity(),
                 thickness: 0.3,
                 arrows: true,
