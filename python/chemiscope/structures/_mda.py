@@ -70,11 +70,6 @@ def _mda_get_atom_properties(ag) -> dict:
     return all_properties
 
 
-def _mda_get_structure_properties(frames) -> dict:
-    # mda cannot have structure properties, so skipping.
-    return {}
-
-
 def _mda_atom_properties(ag, only=None, atoms_mask=None):
     all_properties = _mda_get_atom_properties(ag)
     if only is None:
@@ -99,16 +94,9 @@ def _mda_atom_properties(ag, only=None, atoms_mask=None):
     return properties
 
 
-def _mda_structure_properties(frames, only):
-    all_properties = _mda_get_structure_properties(frames)
-
-    return all_properties
-
-
 def _mda_extract_properties(ag, only=None, environments=None):
     """implementation of ``extract_properties`` for MDAnalysis"""
-
-    properties = _mda_structure_properties(ag, only)
+    properties = {}
 
     if environments is not None:
         atoms_mask = [[False] * len(f) for f in ag.universe.trajectory]
