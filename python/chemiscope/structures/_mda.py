@@ -12,7 +12,8 @@ except ImportError:
     HAVE_MDA = False
 
 
-ss_mapping = {
+SS_MAPPING = {
+    # Markers of secondary, from mda's to 3dmol's
     "H": "h",
     "E": "s",
     "-": "c",
@@ -72,7 +73,7 @@ def _mda_get_secondary_structure(data_collection, ag):
         ssbegin = [False] + [ss[i - 1] != ss[i] for i in range(1, len(ss))]
         ssend = [ss[i] != ss[i + 1] for i in range(0, len(ss) - 1)] +  [False]
         resindexs = [int(atom.residue.resindex) for atom in ag]
-        data_collection[iframe]["secondaryStructure"] = [ss_mapping[ss[resindex]] for resindex in resindexs]
+        data_collection[iframe]["secondaryStructure"] = [SS_MAPPING[ss[resindex]] for resindex in resindexs]
         data_collection[iframe]["ssbegin"] = [ssbegin[resindex] for resindex in resindexs]
         data_collection[iframe]["ssend"] = [ssend[resindex] for resindex in resindexs]
 

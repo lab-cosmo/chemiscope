@@ -86,7 +86,7 @@ export class StructureOptions extends OptionsGroup {
         this.shape = new HTMLOption('string', '');
         this.unitCell = new HTMLOption('boolean', false);
         this.rotation = new HTMLOption('boolean', false);
-        this.cartoon = new HTMLOption('boolean', true);
+        this.cartoon = new HTMLOption('boolean', false);
 
         this.supercell = [
             new HTMLOption('int', 1),

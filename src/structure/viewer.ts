@@ -189,6 +189,9 @@ export class MoleculeViewer {
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
+    /// Show some information on the currently displayed protein (or other things) to
+    // the user
+    private _residueInfo: HTMLElement;
     /// Options related to the trajectory
     private _trajectoryOptions: HTMLElement;
 
@@ -197,6 +200,9 @@ export class MoleculeViewer {
         /// hide options related to unit cell if there is no unit cell in the
         /// current structure
         noCell: CSSStyleSheet;
+        /// hide options related to residues if there is no residue information in the
+        /// current structure
+        noResidue: CSSStyleSheet;
         /// hide options related to environments if there are no environments
         /// for the current structure
         noEnvs: CSSStyleSheet;
@@ -272,13 +278,21 @@ export class MoleculeViewer {
         );
         this._root.appendChild(this._cellInfo);
 
+        this._residueInfo = document.createElement('span');
+        this._residueInfo.classList.add(
+            'chsp-hide-if-no-residue'
+        );
+        this._root.appendChild(this._residueInfo);
+
         const noCellStyle = new CSSStyleSheet();
+        const noResidueStyle = new CSSStyleSheet();
         const noEnvsStyle = new CSSStyleSheet();
         const noShapeStyle = new CSSStyleSheet();
         const noPropsStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
+            noResidue: noResidueStyle,
             noEnvs: noEnvsStyle,
             noShape: noShapeStyle,
             noProperties: noPropsStyle,
@@ -287,6 +301,7 @@ export class MoleculeViewer {
         this._shadow.adoptedStyleSheets = [
             ...(containerElement.getRootNode() as ShadowRoot).adoptedStyleSheets,
             noCellStyle,
+            noResidueStyle,
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
@@ -302,6 +317,7 @@ export class MoleculeViewer {
         this._options.modal.shadow.adoptedStyleSheets = [
             ...this._options.modal.shadow.adoptedStyleSheets,
             noCellStyle,
+            noResidueStyle,
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
@@ -510,6 +526,17 @@ export class MoleculeViewer {
             this._styles.noCell.replaceSync('');
         }
         this._showSupercellInfo();
+        
+        if (structure.resids === undefined) {
+            this._styles.noResidue.replaceSync(
+                '.chsp-hide-if-no-residue { display: none; }'
+            );
+        } else {
+            this._styles.noResidue.replaceSync('');
+            this._options.bonds.value = false;
+            this._options.atoms.value = false;
+            this._options.cartoon.value = true;
+        }
 
         if (options.trajectory === undefined || !options.trajectory) {
             this._trajectoryOptions.style.display = 'none';
@@ -1207,10 +1234,6 @@ export class MoleculeViewer {
         // main style
         if (!this._environmentsEnabled()) {
             this._current.model.setStyle({}, this._mainStyle());
-            console.log("=== model ===", this._current.model);
-            const CA_atoms = this._current.model.selectedAtoms({atom:"CA"});
-            console.log("=== CA atoms (count) ===", CA_atoms.length);
-            console.log("=== sample CA ===", CA_atoms.slice(0, 3));
             return;
         }
 
@@ -1496,7 +1519,6 @@ export class MoleculeViewer {
             } as unknown as $3Dmol.StickStyleSpec;
         }
         if (this._options.cartoon.value) {
-            console.log("=== QX cartoon3 build test ===");
             style.cartoon = {
                 color: 'spectrum',
                 arrows: true,
