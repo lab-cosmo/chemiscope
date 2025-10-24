@@ -189,8 +189,7 @@ export class MoleculeViewer {
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
-    /// Show some information on the currently displayed protein (or other things) to
-    // the user
+    /// Show settings specific to biomolecules
     private _residueInfo: HTMLElement;
     /// Options related to the trajectory
     private _trajectoryOptions: HTMLElement;
