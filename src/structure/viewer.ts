@@ -50,7 +50,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        let atom = {
+        const atom = {
             serial: i,
             elem: structure.elements ? structure.elements[i] : structure.names[i],
             atom: structure.names[i],
@@ -1220,8 +1220,8 @@ export class MoleculeViewer {
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
-            this._current.model.setStyle({hetflag: true}, this._mainStyle(false));
-            this._current.model.setStyle({hetflag: false}, this._mainStyle(true));
+            this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
+            this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
             return;
         }
 
@@ -1492,7 +1492,7 @@ export class MoleculeViewer {
      * Get the main style used for all atoms/atoms inside the environment when
      * highlighting a specific environment
      */
-    private _mainStyle(isProtein: boolean=false): Partial<$3Dmol.AtomStyleSpec> {
+    private _mainStyle(isProtein: boolean = false): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
         if (this._options.atoms.value && !isProtein) {
             style.sphere = {
