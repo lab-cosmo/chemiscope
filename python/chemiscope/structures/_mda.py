@@ -50,18 +50,14 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
+    data["hetflag"] = [True for _ in ag]
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
         data["chains"] = [atom.chainID for atom in ag]
-    if ag.dimensions is not None:
-        data["cell"] = list(
-            np.concatenate(
-                mda.lib.mdamath.triclinic_vectors(ag.dimensions),
-                dtype=np.float64,
-                # should be np.float64 otherwise not serializable
-            )
-        )
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["residues"] = [atom.resname for atom in ag]
+        # atom selection requires the `resname`
+        for idx in ag.select_atoms("protein or nucleic").indices:
+            data["hetflag"][idx] = False
     if hasattr(ag, "resids") and ag.resids is not None:
         data["resids"] = [int(atom.resid) for atom in ag]
 
@@ -71,7 +67,10 @@ def _mda_to_json(ag):
 def _mda_get_secondary_structure(data_collection, ag):
     long_run = DSSP(ag).run()
     ss_results = translate(long_run.results.dssp_ndarray)
-    for iframe, ss in enumerate(ss_results):
+    full_ss_results = np.full((ss_results.shape[0], len(ag.universe.residues)), "-")
+    for i, res_index in enumerate(ag.select_atoms("protein").residues.resindices):
+        full_ss_results[:, res_index] = ss_results[:, i]
+    for iframe, ss in enumerate(full_ss_results):
         ssbegin = [False] + [ss[i - 1] != ss[i] for i in range(1, len(ss))]
         ssend = [ss[i] != ss[i + 1] for i in range(0, len(ss) - 1)] + [False]
         resindexs = [int(atom.residue.resindex) for atom in ag]

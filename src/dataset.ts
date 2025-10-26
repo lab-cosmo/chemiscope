@@ -150,6 +150,8 @@ export interface Structure {
     ssbegin?: boolean[];
     /** If a secondary structure ends here */
     ssend?: boolean[];
+    /** If atom is a heteroatom (not sure but I assume it means non-biomolecule) */
+    hetflag?: boolean[];
 }
 
 /**

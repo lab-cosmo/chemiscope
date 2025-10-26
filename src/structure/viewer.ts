@@ -27,15 +27,6 @@ function defaultOpacity(): number {
     return 0.85;
 }
 
-interface Atom {
-    serial: number;
-    elem: string;
-    x: number;
-    y: number;
-    z: number;
-    [key: string]: string | number | boolean;
-}
-
 /**
  * Add data from the `structure` to the `model`
  *
@@ -59,34 +50,37 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        let atom: Atom = {
+        let atom = {
             serial: i,
             elem: structure.elements ? structure.elements[i] : structure.names[i],
             atom: structure.names[i],
             x: x,
             y: y,
             z: z,
-            // ss: "s",
-        };
+            hetflag: true,
+        } as unknown as $3Dmol.AtomSpec;
         if (structure.residues !== undefined) {
-            atom = { ...atom, resn: structure.residues[i] };
+            atom.resn = structure.residues[i];
         }
         if (structure.chains !== undefined) {
-            atom = { ...atom, chain: structure.chains[i] };
+            atom.chain = structure.chains[i];
         }
         if (structure.secondaryStructure !== undefined) {
             if (structure.secondaryStructure[i] !== '-') {
-                atom = { ...atom, ss: structure.secondaryStructure[i] };
+                atom.ss = structure.secondaryStructure[i];
             }
         }
         if (structure.resids !== undefined) {
-            atom = { ...atom, resi: structure.resids[i] };
+            atom.resi = structure.resids[i];
+        }
+        if (structure.hetflag !== undefined) {
+            atom.hetflag = structure.hetflag[i];
         }
         if (structure.ssbegin !== undefined && structure.ssbegin[i]) {
-            atom = { ...atom, ssbegin: structure.ssbegin[i] };
+            atom.ssbegin = structure.ssbegin[i];
         }
         if (structure.ssend !== undefined && structure.ssend[i]) {
-            atom = { ...atom, ssend: structure.ssend[i] };
+            atom.ssend = structure.ssend[i];
         }
         atoms.push(atom);
     }
@@ -528,8 +522,6 @@ export class MoleculeViewer {
             this._styles.noResidue.replaceSync('.chsp-hide-if-no-residue { display: none; }');
         } else {
             this._styles.noResidue.replaceSync('');
-            this._options.bonds.value = false;
-            this._options.atoms.value = false;
             this._options.cartoon.value = true;
         }
 
@@ -1228,7 +1220,8 @@ export class MoleculeViewer {
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
-            this._current.model.setStyle({}, this._mainStyle());
+            this._current.model.setStyle({hetflag: true}, this._mainStyle(false));
+            this._current.model.setStyle({hetflag: false}, this._mainStyle(true));
             return;
         }
 
@@ -1499,21 +1492,21 @@ export class MoleculeViewer {
      * Get the main style used for all atoms/atoms inside the environment when
      * highlighting a specific environment
      */
-    private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
+    private _mainStyle(isProtein: boolean=false): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
-        if (this._options.atoms.value) {
+        if (this._options.atoms.value && !isProtein) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.SphereStyleSpec;
         }
-        if (this._options.bonds.value) {
+        if (this._options.bonds.value && !isProtein) {
             style.stick = {
                 radius: 0.15,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
         }
-        if (this._options.cartoon.value) {
+        if (this._options.cartoon.value && isProtein) {
             style.cartoon = {
                 color: 'spectrum',
                 arrows: true,
