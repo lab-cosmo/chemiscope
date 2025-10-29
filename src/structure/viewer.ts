@@ -6,8 +6,7 @@
 import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
-// import { computeSecondaryStructure } from "3dmol/src/parsers/utils/computeSecondaryStructure";
-import { assignBonds } from './assignBonds';
+import { assignBonds, computeSecondaryStructure } from './topology';
 
 import { arrayMaxMin, getElement, unreachable } from '../utils';
 import { PositioningCallback, Warnings } from '../utils';
@@ -59,31 +58,27 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
             z: z,
             hetflag: true,
         } as unknown as $3Dmol.AtomSpec;
+
         if (structure.residues !== undefined) {
             atom.resn = structure.residues[i];
         }
+
         if (structure.chains !== undefined) {
             atom.chain = structure.chains[i];
         }
-        if (structure.secondaryStructure !== undefined) {
-            if (structure.secondaryStructure[i] !== '-') {
-                atom.ss = structure.secondaryStructure[i];
-            }
-        }
+
         if (structure.resids !== undefined) {
             atom.resi = structure.resids[i];
         }
-        if (structure.hetflag !== undefined) {
-            atom.hetflag = structure.hetflag[i];
+
+        if (structure.hetatom !== undefined) {
+            atom.hetflag = structure.hetatom[i];
         }
-        if (structure.ssbegin !== undefined && structure.ssbegin[i]) {
-            atom.ssbegin = structure.ssbegin[i];
-        }
-        if (structure.ssend !== undefined && structure.ssend[i]) {
-            atom.ssend = structure.ssend[i];
-        }
+
         atoms.push(atom);
     }
+
+    computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);
 
     model.addAtoms(atoms);
 }

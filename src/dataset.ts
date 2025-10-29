@@ -144,14 +144,8 @@ export interface Structure {
     resids?: number[];
     /** Chain names of all atoms in the structure, if available */
     chains?: string[];
-    /** Secondary structure of all atoms in the structure, if available */
-    secondaryStructure?: string[];
-    /** If a secondary structure starts here */
-    ssbegin?: boolean[];
-    /** If a secondary structure ends here */
-    ssend?: boolean[];
-    /** If atom is a heteroatom (not sure but I assume it means non-biomolecule) */
-    hetflag?: boolean[];
+    /** If atom is a heteroatom, i.e. not part of a biomolecule (protein, dna, …) */
+    hetatom?: boolean[];
 }
 
 /**

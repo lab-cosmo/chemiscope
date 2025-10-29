@@ -10,7 +10,6 @@ from ._ase import (  # noqa: F401
 )
 from ._mda import (  # noqa: F401
     _mda_extract_properties,
-    _mda_get_secondary_structure,
     _mda_to_json,
     _mda_valid_structures,
 )
@@ -66,10 +65,8 @@ def frames_to_json(frames):
     elif adapter == "mda":
         # Be careful of the lazy loading of `frames.atoms`, which is updated during the
         # iteration of the trajectory
-        data_collection = [_mda_to_json(frames) for _ in frames.universe.trajectory]
-        if all("residues" in data for data in data_collection):
-            data_collection = _mda_get_secondary_structure(data_collection, frames)
-        return data_collection
+        return [_mda_to_json(frames) for _ in frames.universe.trajectory]
+
     else:
         raise Exception("reached unreachable code")
 
