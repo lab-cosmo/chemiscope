@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
       - name: configure access to git repositories in package-lock.json
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
       - name: install npm dependencies

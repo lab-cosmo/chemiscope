@@ -19,7 +19,7 @@ def _stk_valid_structures(
     if HAVE_STK and isinstance(frames, Molecule):
         # deal with the user passing a single frame
         return [frames], True
-    elif HAVE_STK and isinstance(frames[0], Molecule):
+    elif HAVE_STK and isinstance(frames, list) and isinstance(frames[0], Molecule):
         for frame in frames:
             assert isinstance(frame, Molecule)
         return frames, True
@@ -167,13 +167,3 @@ def convert_stk_bonds_as_shapes(
                 shape_dict[bname]["parameters"]["structure"].append(fake_bond)
 
     return shape_dict
-
-
-def _stk_get_atom_properties(frames: List[Molecule]) -> list:
-    # stk cannot have atom properties or structure properties, so skipping.
-    return []
-
-
-def _stk_get_structure_properties(frames: List[Molecule]) -> list:
-    # stk cannot have atom properties or structure properties, so skipping.
-    return []

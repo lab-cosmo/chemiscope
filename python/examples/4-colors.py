@@ -41,6 +41,7 @@ for frame in frames:
         frame.arrays["axy"],
         frame.arrays["axz"],
         frame.arrays["ayz"],
+        strict=True,
     ):
         polarizability.append((axx + ayy + azz) / 3)
 

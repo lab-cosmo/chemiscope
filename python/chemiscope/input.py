@@ -28,8 +28,8 @@ def create_input(
     Create a dictionary that can be saved to JSON using the format used by the default
     chemiscope visualizer.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
-        are supported
+    :param list frames: list of atomic structures. For now, only `ase.Atoms`_,
+        `stk.BuildingBlocks`_, and `MDAnalysis.AtomGroup`_ objects are supported
 
     :param dict meta: optional metadata of the dataset, see below
 
@@ -257,6 +257,8 @@ def create_input(
 
 
     .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
+    .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
+    .. _`MDAnalysis.AtomGroup`: https://docs.mdanalysis.org/2.9.0/documentation_pages/core/groups.html#MDAnalysis.core.groups.AtomGroup
     """
 
     data = {

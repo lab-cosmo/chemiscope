@@ -2,13 +2,16 @@
 from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
     _ase_extract_properties,
-    _ase_get_atom_properties,
-    _ase_get_structure_properties,
     _ase_to_json,
     _ase_valid_structures,
     ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
+)
+from ._mda import (  # noqa: F401
+    _mda_extract_properties,
+    _mda_to_json,
+    _mda_valid_structures,
 )
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
@@ -17,8 +20,6 @@ from ._shapes import (  # noqa: F401
 )
 from ._stk import (  # noqa: F401
     _stk_all_atomic_environments,
-    _stk_get_atom_properties,
-    _stk_get_structure_properties,
     _stk_to_json,
     _stk_valid_structures,
     convert_stk_bonds_as_shapes,
@@ -39,6 +40,10 @@ def _guess_adapter(frames):
     if use_stk:
         return stk_frames, "stk"
 
+    mda_frames, use_mda = _mda_valid_structures(frames)
+    if use_mda:
+        return mda_frames, "mda"
+
     raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
 
 
@@ -57,39 +62,10 @@ def frames_to_json(frames):
         return [_ase_to_json(frame) for frame in frames]
     elif adapter == "stk":
         return [_stk_to_json(frame) for frame in frames]
-    else:
-        raise Exception("reached unreachable code")
-
-
-def _get_atom_properties(frames):
-    """
-    Get existing "atom" properties from the given ``frames``. This is used
-    to check if the user might be missing some properties because chemiscope is
-    no longer automatically extracting properties
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_get_atom_properties(frames)
-    elif adapter == "stk":
-        return _stk_get_atom_properties(frames)
-
-    else:
-        raise Exception("reached unreachable code")
-
-
-def _get_structure_properties(frames):
-    """
-    Get existing "structure" properties from the given ``frames``. This is used
-    to check if the user might be missing some properties because chemiscope is
-    no longer automatically extracting properties
-    """
-    frames, adapter = _guess_adapter(frames)
-
-    if adapter == "ASE":
-        return _ase_get_structure_properties(frames)
-    elif adapter == "stk":
-        return _stk_get_structure_properties(frames)
+    elif adapter == "mda":
+        # Be careful of the lazy loading of `frames.atoms`, which is updated during the
+        # iteration of the trajectory
+        return [_mda_to_json(frames) for _ in frames.universe.trajectory]
     else:
         raise Exception("reached unreachable code")
 
@@ -111,9 +87,12 @@ def extract_properties(frames, only=None, environments=None):
     if adapter == "ASE":
         return _ase_extract_properties(frames, only, environments)
 
+    elif adapter == "mda":
+        return _mda_extract_properties(frames, only, environments)
+
     elif adapter == "stk":
         raise RuntimeError(
-            "stk molecules do not contain properties, you must manually provide them"
+            "stk structures do not contain properties, you must manually provide them"
         )
 
     else:

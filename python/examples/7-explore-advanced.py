@@ -130,9 +130,9 @@ from mace.calculators import mace_mp  # noqa
 
 # %%
 #
-# Load the frames. In this example we are loading the reduced M3CD dataset.
+# Load the frames. In this example we are loading the reduced MC3D dataset.
 
-m3cd_frames = ase.io.read("data/explore_m3cd.xyz", ":")
+mc3d_frames = ase.io.read("data/explore_mc3d.xyz", ":")
 
 
 # %%
@@ -193,5 +193,5 @@ def mace_mp0_tsne(frames, environments):
 # of atom, cutoff]``.
 
 chemiscope.explore(
-    m3cd_frames, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
+    mc3d_frames, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
 )

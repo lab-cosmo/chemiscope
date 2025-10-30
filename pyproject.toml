@@ -1,7 +1,7 @@
 [project]
 name = "chemiscope"
 dynamic = ["version"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "ipywidgets>=7,<9",
