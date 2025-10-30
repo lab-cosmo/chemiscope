@@ -5,7 +5,7 @@ User manual
 
 This manual presents an overview of how to use the Chemiscope viewer in its standard
 implementations, including the web tool and the Jupyter widget. It does not discuss in
-detail how to build a low-dimensional representation of a chemical dataset - Chemiscope
+detail how to build a low-dimensional representation of a chemical dataset - chemiscope
 is primarily a visualization tool, but it also offers functionality to for dataset
 exploration based on automatically computed structural representations.
 

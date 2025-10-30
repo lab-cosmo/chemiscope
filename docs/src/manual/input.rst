@@ -3,10 +3,10 @@
 Chemiscope input files
 ======================
 
-The default Chemiscope interface loads all structures and properties of a dataset from a
+The default chemiscope interface loads all structures and properties of a dataset from a
 single JSON file. This section describe how to create such a file using provided Python
 tools or by manually writing the JSON. As JSON files can become large and hard to share
-with collaborators Chemiscope also supports loading JSON files compressed with gzip.
+with collaborators chemiscope also supports loading JSON files compressed with gzip.
 
 tl;dr if you would like to generate a simple chemiscope for your dataset, we
 have a `Google Colab notebook <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_
@@ -19,9 +19,9 @@ Chemiscope can directly visualize datasets with precomputed mappable quantities,
 structural representations or reduced-dimensionality features, using its command-line
 interface. To generate these quantities, external packages like `scikit-matter`_ or
 `ASAP`_ can be used. The ASAP package, for instance, can produce directly output in
-Chemiscope-compatible format.
+chemiscope-compatible format.
 
-Alternatively, Chemiscope's :ref:` :py:func:chemiscope.explore <_explore-example>`
+Alternatively, chemiscope's :ref:` :py:func:chemiscope.explore <_explore-example>`
 function can automatically compute representations and perform dimensionality reduction
 using the default `featurizer <https://arxiv.org/abs/2506.19674>`_ to project structures
 into the PET-MAD low-dimensional latent space. Custom featurization is also supported
@@ -63,7 +63,8 @@ values:
 
 Quick overview
 ~~~~~~~~~~~~~~
-The Chemiscope JSON file consists of these top-level entries:
+
+The chemiscope JSON file consists of these top-level entries: 
 
 .. list-table::
    :header-rows: 1
