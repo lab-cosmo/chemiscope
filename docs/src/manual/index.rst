@@ -11,10 +11,10 @@ exploration based on automatically computed structural representations.
 
 This section starts introducing the concept of structural and physical properties,
 before describing how to use the different panels in the standard visualization. It
-continues by presenting how you can generate a Chemiscope input file to load on
+continues by presenting how you can generate a chemiscope input file to load on
 https://chemiscope.org, as well as within a standalone HTML viewer that works offline.
 See the :ref:`Python module documentation <python-module>` for how to interact with
-Chemiscope in a script, or to explore a dataset directly inside a Jupyter notebook.
+chemiscope in a script, or to explore a dataset directly inside a Jupyter notebook.
 
 .. _chemiscope: https://chemiscope.org
 

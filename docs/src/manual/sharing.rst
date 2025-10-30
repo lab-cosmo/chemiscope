@@ -11,7 +11,7 @@ Online visualizer at chemiscope.org
 Uploading datasets
 ^^^^^^^^^^^^^^^^^^
 
-The simplest way to share the chemiscope dataset is to send the corresponding file
+The simplest way to share a chemiscope dataset is to send the corresponding file
 (``my-dataset.json`` or ``my-dataset.json.gz``) to your collaborators.
 
 They can then load this file from the main chemiscope website:
