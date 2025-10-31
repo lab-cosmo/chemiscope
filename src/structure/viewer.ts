@@ -74,7 +74,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         if (structure.hetatom !== undefined) {
             atom.hetflag = structure.hetatom[i];
         }
-        atom.ss = "c"; // initialize to coil by default, the same as in 3Dmol
+        atom.ss = 'c'; // initialize to coil by default, the same as in 3Dmol
 
         atoms.push(atom);
     }
