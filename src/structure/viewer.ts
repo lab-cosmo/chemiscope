@@ -74,12 +74,13 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         if (structure.hetatom !== undefined) {
             atom.hetflag = structure.hetatom[i];
         }
+        atom.ss = "c"; // initialize to coil by default, the same as in 3Dmol
 
         atoms.push(atom);
     }
 
     computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);
-
+    console.log('=== atoms ===', atoms);
     model.addAtoms(atoms);
 }
 
@@ -1489,19 +1490,20 @@ export class MoleculeViewer {
      */
     private _mainStyle(isProtein: boolean = false): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
-        if (this._options.atoms.value && !isProtein) {
+        const showProteinAtomsAndBonds = isProtein && !this._options.cartoon.value;
+        if (this._options.atoms.value && (!isProtein || showProteinAtomsAndBonds)) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.SphereStyleSpec;
         }
-        if (this._options.bonds.value && !isProtein) {
+        if (this._options.bonds.value && (!isProtein || showProteinAtomsAndBonds)) {
             style.stick = {
                 radius: 0.15,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
         }
-        if (this._options.cartoon.value && isProtein) {
+        if (!showProteinAtomsAndBonds && isProtein) {
             style.cartoon = {
                 color: 'spectrum',
                 arrows: true,

@@ -535,7 +535,7 @@ export function checkStructure(s: JsObject): string {
         return 'missing "size"';
     }
 
-    for (const key of ['names', 'x', 'y', 'z']) {
+    for (const key of ['names', 'x', 'y', 'z', 'hetatom']) {
         if (!(key in s)) {
             return `missing "${key}"`;
         }
@@ -552,6 +552,15 @@ export function checkStructure(s: JsObject): string {
     if ('cell' in s) {
         if (!(Array.isArray(s.cell) && s.cell.length === 9)) {
             return '"cell" must be an array of size 9';
+        }
+    }
+
+    for (const key of ['chainIDs', 'resnames', 'resids']) {
+        if (key in s) {
+            const array = s[key];
+            if (!Array.isArray(array)) {
+                return `"${key}" must be an array`;
+            }
         }
     }
 
