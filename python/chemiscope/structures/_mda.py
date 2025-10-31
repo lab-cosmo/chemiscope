@@ -5,7 +5,6 @@ import numpy as np
 
 try:
     import MDAnalysis as mda
-    from MDAnalysis.analysis.dssp import DSSP, translate
 
     HAVE_MDA = True
 except ImportError:

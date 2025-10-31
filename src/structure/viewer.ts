@@ -80,7 +80,6 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
     }
 
     computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);
-    console.log('=== atoms ===', atoms);
     model.addAtoms(atoms);
 }
 
