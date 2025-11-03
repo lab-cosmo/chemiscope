@@ -555,22 +555,8 @@ export function checkStructure(s: JsObject): string {
         }
     }
 
-    for (const key of ['hetatom']) {
-        if (!(key in s)) {
-            continue;
-        }
-        const array = s[key];
-        if (!Array.isArray(array)) {
-            return `"${key}" must be an array`;
-        }
-
-        if (s.size > 0 && array.length !== s.size) {
-            return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
-        }
-    }
-
     let biomolInfoCount = 0;
-    for (const key of ['chains', 'residues', 'resids']) {
+    for (const key of ['hetatom', 'chains', 'residues', 'resids']) {
         if (key in s) {
             biomolInfoCount++;
             const array = s[key];
@@ -582,8 +568,8 @@ export function checkStructure(s: JsObject): string {
             }
         }
     }
-    if (biomolInfoCount > 0 && biomolInfoCount !== 3) {
-        return 'found at least one of "chains", "residues" and "resids", but not all of them';
+    if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
+        return 'found at least one of "hetatom", "chains", "residues" and "resids", but not all of them';
     }
 
     return '';

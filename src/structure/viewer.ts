@@ -267,7 +267,7 @@ export class MoleculeViewer {
         this._root.appendChild(this._cellInfo);
 
         this._biomolOptions = document.createElement('span');
-        this._biomolOptions.classList.add('chsp-hide-if-no-residue');
+        this._biomolOptions.classList.add('chsp-hide-if-not-biomol');
         this._root.appendChild(this._biomolOptions);
 
         const noCellStyle = new CSSStyleSheet();
@@ -514,7 +514,7 @@ export class MoleculeViewer {
         this._showSupercellInfo();
 
         if (structure.resids === undefined) {
-            this._styles.noResidue.replaceSync('.chsp-hide-if-no-residue { display: none; }');
+            this._styles.noResidue.replaceSync('.chsp-hide-if-not-biomol { display: none; }');
         } else {
             this._styles.noResidue.replaceSync('');
             this._options.cartoon.value = true;

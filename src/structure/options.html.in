@@ -20,7 +20,7 @@
                   <input class="form-check-input" id="space-filling" type="checkbox" />
                   <label class="form-check-label" for="space-filling" title="show atoms as spheres">space filling</label>
                </div>
-               <div class="form-check form-switch chsp-hide-if-no-residue">
+               <div class="form-check form-switch chsp-hide-if-not-biomol">
                   <input class="form-check-input" id="cartoon" type="checkbox" />
                   <label class="form-check-label" for="cartoon" title="render molecules as cartoons">cartoon</label>
                </div>
