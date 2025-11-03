@@ -535,7 +535,7 @@ export function checkStructure(s: JsObject): string {
         return 'missing "size"';
     }
 
-    for (const key of ['names', 'x', 'y', 'z', 'hetatom']) {
+    for (const key of ['names', 'x', 'y', 'z']) {
         if (!(key in s)) {
             return `missing "${key}"`;
         }
@@ -555,13 +555,35 @@ export function checkStructure(s: JsObject): string {
         }
     }
 
-    for (const key of ['chainIDs', 'resnames', 'resids']) {
+    for (const key of ['hetatom']) {
+        if (!(key in s)) {
+            continue;
+        }
+        const array = s[key];
+        if (!Array.isArray(array)) {
+            return `"${key}" must be an array`;
+        }
+
+        if (s.size > 0 && array.length !== s.size) {
+            return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
+        }
+    }
+
+    let biomolInfoCount = 0;
+    for (const key of ['chains', 'residues', 'resids']) {
         if (key in s) {
+            biomolInfoCount++;
             const array = s[key];
             if (!Array.isArray(array)) {
                 return `"${key}" must be an array`;
             }
+            if (s.size > 0 && array.length !== s.size) {
+                return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
+            }
         }
+    }
+    if (biomolInfoCount > 0 && biomolInfoCount !== 3) {
+        return 'found at least one of "chains", "residues" and "resids", but not all of them';
     }
 
     return '';

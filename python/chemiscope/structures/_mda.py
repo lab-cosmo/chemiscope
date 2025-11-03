@@ -11,14 +11,6 @@ except ImportError:
     HAVE_MDA = False
 
 
-SS_MAPPING = {
-    # Markers of secondary, from mda's to 3dmol's
-    "H": "h",
-    "E": "s",
-    "-": "c",
-}
-
-
 def _mda_valid_structures(frames):
     if HAVE_MDA and isinstance(frames, mda.AtomGroup):
         return frames, True

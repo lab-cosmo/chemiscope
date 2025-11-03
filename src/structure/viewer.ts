@@ -57,6 +57,7 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
             y: y,
             z: z,
             hetflag: true,
+            ss: 'c', // initialize to coil by default, the same as in 3Dmol
         } as unknown as $3Dmol.AtomSpec;
 
         if (structure.residues !== undefined) {
@@ -74,7 +75,6 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         if (structure.hetatom !== undefined) {
             atom.hetflag = structure.hetatom[i];
         }
-        atom.ss = 'c'; // initialize to coil by default, the same as in 3Dmol
 
         atoms.push(atom);
     }
@@ -179,7 +179,7 @@ export class MoleculeViewer {
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
     /// Show settings specific to biomolecules
-    private _residueInfo: HTMLElement;
+    private _biomolOptions: HTMLElement;
     /// Options related to the trajectory
     private _trajectoryOptions: HTMLElement;
 
@@ -266,9 +266,9 @@ export class MoleculeViewer {
         );
         this._root.appendChild(this._cellInfo);
 
-        this._residueInfo = document.createElement('span');
-        this._residueInfo.classList.add('chsp-hide-if-no-residue');
-        this._root.appendChild(this._residueInfo);
+        this._biomolOptions = document.createElement('span');
+        this._biomolOptions.classList.add('chsp-hide-if-no-residue');
+        this._root.appendChild(this._biomolOptions);
 
         const noCellStyle = new CSSStyleSheet();
         const noResidueStyle = new CSSStyleSheet();
