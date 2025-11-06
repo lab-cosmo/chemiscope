@@ -45,7 +45,10 @@ def _mda_to_json(ag):
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
         data["chains"] = [atom.chainID for atom in ag]
     if hasattr(ag, "resnames") and ag.resnames is not None:
-        data["residues"] = [atom.resname for atom in ag]
+        data["residues"] = [
+            atom.resname if atom.resname is not None and atom.resname != "" else "UNK"
+            for atom in ag
+        ]
         # atom selection requires the `resname`
         for idx in ag.select_atoms("protein or nucleic").indices:
             data["hetatom"][idx] = False
