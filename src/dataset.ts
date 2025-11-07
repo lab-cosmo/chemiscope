@@ -138,7 +138,7 @@ export interface Structure {
     };
     /** Element names of all atoms in the structure, if available */
     elements?: string[];
-    /** Residue names of all atoms in the structure, if available */
+    /** Residue names of all atoms in the structure, if available. Under the case where some of the residue names are not available, `UNK` would be automatically assigned */
     residues?: string[];
     /** Residue IDs of all atoms in the structure, if available */
     resids?: number[];
