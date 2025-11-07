@@ -3,39 +3,29 @@
 Chemiscope input files
 ======================
 
-The default chemiscope interface loads all structures and properties of a dataset from a
-single JSON file. This section describe how to create such a file using provided Python
-tools or by manually writing the JSON. As JSON files can become large and hard to share
-with collaborators chemiscope also supports loading JSON files compressed with gzip.
+Chemiscope loads datasets from a single JSON file containing structures, properties, and
+optional metadata. For large files, use gzip compression (e.g., ``output.json.gz``) to
+ease sharing and loading.
 
-tl;dr if you would like to generate a simple chemiscope for your dataset, we
-have a `Google Colab notebook <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_
-that can help!
+This section covers creation methods, from provided Python tools or by manual JSON
+writing.
 
-Tools that can create chemiscope inputs
----------------------------------------
+For a simple way to generate an input file, we have a `Google Colab notebook
+<https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_.
 
-Chemiscope can directly visualize datasets with precomputed mappable quantities, e.g.,
-structural representations or reduced-dimensionality features, using its command-line
-interface. To generate these quantities, external packages like `scikit-matter`_ or
-`ASAP`_ can be used. The ASAP package, for instance, can produce directly output in
-chemiscope-compatible format.
+The easiest programmatic way is the ``chemiscope`` Python package. Install it via:
 
-Alternatively, chemiscope's :ref:` :py:func:chemiscope.explore <_explore-example>`
-function can automatically compute representations and perform dimensionality reduction
-using the default `featurizer <https://arxiv.org/abs/2506.19674>`_ to project structures
-into the PET-MAD low-dimensional latent space. Custom featurization is also supported
-for advanced use cases.
+.. code-block:: bash
 
-The easiest way to create a JSON input file is to use the ``chemiscope``
-:ref:`Python module <python-module>`.
-Install the package with ``pip install chemiscope``, and use
-:py:func:`chemiscope.write_input` or :py:func:`chemiscope.create_input` in your
-own script to generate the JSON file.
+   pip install chemiscope
 
-If all the properties you want to include into chemiscope are already stored in
-a file `ase`_ can read, the ``chemiscope`` python package also installs a
-:ref:`chemiscope-input <chemiscope-input-cli>` command line script.
+You can then either use :py:func:`chemiscope.write_input` to save a JSON file and
+display the widget using :py:func:`chemiscope.show_input` or see it through
+chemiscope.org or use :py:func:`chemiscope.show` with the same arguments as
+:py:func:`chemiscope.write_input` to just see it in your Jupyter notebook. This method
+is best when you have structures (e.g., as ASE Atoms list) and properties in Python
+scripts. See the :ref:`Python module documentation <python-module>` for full API
+details.
 
 
 Python quick example
@@ -43,26 +33,18 @@ Python quick example
 .. code-block:: python
 
    from chemiscope import write_input
+
    write_input(
        "output.json",
-       structures=ase_atoms_list,  # List of ASE Atoms
-       properties={"energy": [...]},  # Your properties
-       meta={"name": "My Dataset"}
+       structures=[
+        ase.Atoms('H2O', positions=[(0, 0, 0), (0.76, 0.59, 0), (-0.76, 0.59, 0)])
+       ],
+       properties={"PCA[1]": [...], "PCA[2]": [...]},  # Your properties
    )
 
 
-Input file reference
---------------------
-
-If you can not or do not want to use the ``chemiscope`` python package to create your
-input files, you can also directly write the JSON file conforming to the schema
-described here. The input file follows closely the `Dataset`_ typescript interface used
-in the library. Using a JSON format, the file should contain the following fields and
-values:
-
-
-Quick overview
-~~~~~~~~~~~~~~
+Input API
+~~~~~~~~~
 
 The chemiscope JSON file consists of these top-level entries: 
 
@@ -96,7 +78,7 @@ The chemiscope JSON file consists of these top-level entries:
      - No
 
 
-Below is the detailed description of the values types and examlpes for each entry.
+Below is the detailed description of the values types and examples for each entry.
 
 Metadata (``meta``)
 ~~~~~~~~~~~~~~~~~~~
@@ -123,14 +105,19 @@ Optional. Contains description of your dataset. The fields will be rendered as m
      - Detailed explanation of content/origin
      - No
      - ``"A dataset from ..."``
+   * - ``authors``
+     - string[]
+     - List of dataset authors
+     - No
+     - ``["Author 1", "Author 2"]``
    * - ``references``
      - string[]
      - Citations/links (one per array item)
      - No
      - ``["DOI:10.1234/abc", "'A new molecular construction', Journal of Random Words 19
        (1923) pp 3333, DOI: 10.0000/0001100", "'nice website' http://example.com"]``
-               
-                
+
+
 Example:
 ++++++++
 
@@ -148,7 +135,15 @@ Properties (``properties``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Required. Defines all dataset properties to be available for a display inside the
-widget. Each property is a key-value pair where the key is the property name.
+widget. The field is a dictionary where each key is the property name (e.g., `"energy"`,
+`"charge"`) and each value is the property definition, either in *full form* (explicit
+dictionary with target and metadata) or *short form* (values only, target inferred from
+array length).
+
+Full definition
++++++++++++++++
+
+Each property is a dictionary with the following fields:
 
 .. list-table:: Property fields
    :header-rows: 1
@@ -167,7 +162,7 @@ widget. Each property is a key-value pair where the key is the property name.
      - ``"atom"``
    * - ``values``
      - number[] | string[] | number[][]
-     - Property values (shape depends on target, see below)
+     - Values (scalars or arrays; see shapes below)
      - Yes
      - ``[1.2, 3.4]``
    * - ``units``
@@ -182,83 +177,566 @@ widget. Each property is a key-value pair where the key is the property name.
      - ``"DFT-calculated forces"``
    * - ``parameter``
      - string[]
-     - Links to ``parameters`` for multidimensional data
-     - No*
+     - For multidimensional: single parameter name (links to ``parameters`` top-level)
+     - If multidimensional properties
      - ``["time"]``
 
-\* Required for multidimensional properties
+Example:
 
-Properties value shapes
-+++++++++++++++++++++++
+.. code-block:: python
 
-The ``values`` field can contain scalars (numbers or strings) or multidimensional
-arrays, depending on the property's target and purpose. The shape and type of ``values``
-must match the ``target`` and data requirements:
+   properties = {
+       "forces": {
+           "target": "atom",
+           "values": [[0.1, 0.0, -0.1], [0.2, -0.1, 0.0]],
+           "units": "eV/Å",
+           "description": "DFT-calculated forces"
+       }
+   }
 
-.. list-table:: Value array requirements
+
+Shortened definition
+++++++++++++++++++++
+
+You can omit the dictionary and provide only the array of values. The target (``"atom"``
+or ``"structure"``) is automatically inferred by comparing the array length to
+``n_atoms`` and ``n_structures``.
+
+Example:
+
+.. code-block:: python
+
+   properties = {
+       "energy": [-5.0, -4.8],  # inferred as "structure" if 2 structures
+   }
+
+If the number of atoms equals the number of structures, Chemiscope assumes
+``"structure"`` by default and issues a warning.
+
+Value types and shapes
+++++++++++++++++++++++
+
+.. list-table:: Supported value formats
    :header-rows: 1
-   :widths: 20 30 50
+   :widths: 15 25 40 20
+   :class: tight-table
 
+   * - Type
+     - Format
+     - Details
+     - Example
+   * - **Scalar**
+     - 1D list or ndarray
+     - Length must match ``n_atoms`` (for ``target="atom"``) or ``n_structures`` (for
+       ``target="structure"``).
+     - ``[0.1, 0.2, 0.3]``
+   * - **Multi-dimensional**
+     - 2D ndarray (``[n_samples, n_components]``)
+     - Generates multiple properties (e.g., ``PCA[1]``, ``PCA[2]``)
+     - ``[[0.1, 0.2], [0.3, 0.4]]``
+   * - **Categorical**
+     - List of strings
+     - Used for symbols setting
+     - ``["H", "O", "O"]``
+
+
+Settings (``settings``)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Optional. Preconfigures the default visualization settings for the dataset, such as map
+axes, colors, and structure viewer options. The ``settings`` field is a dictionary with
+top-level keys for different panels.
+
+Top-level settings
+++++++++++++++++++
+
+.. list-table:: Top-level settings
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
    * - ``target``
-     - Allowed ``values`` type
-     - Shape requirements
-   * - ``"structure"``
-     - ``number[] | string[] | number[][]``
-     - Scalar: length = number of structures.
-       Multidimensional: ``[n_structures, n_components]``
-   * - ``"atom"``
-     - ``number[] | string[] | number[][]``
-     - Scalar: length = total atoms in dataset.
-       Multidimensional: ``[n_atoms, n_components]``
+     - string
+     - Default view: ``"atom"`` or ``"structure"`` (requires environments for
+       ``"atom"``)
+     - No
+     - ``"atom"``
+   * - ``map``
+     - dict
+     - Map panel settings (axes, colors, etc.)
+     - No
+     - See below
+   * - ``structure``
+     - array[dict]
+     - Structure viewer settings (one dict per viewer; up to 9)
+     - No
+     - See below
+   * - ``pinned``
+     - integer[]
+     - Indices of environments/structures to pin in viewers (up to 9; defaults to [0])
+     - No
+     - ``[0, 5, 10]``
+
+Map settings (``map``)
+++++++++++++++++++++++
+
+Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
+
+.. list-table:: Map settings
+   :header-rows: 1
+   :widths: 15 15 30 15 25
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``x`` / ``y`` / ``z``
+     - dict
+     - Axis config: ``{"property": "<name>", "scale": "linear"|"log", "min": number,
+       "max": number}``
+     - No
+     - ``{"property": "PCA[1]", "scale": "linear"}``
+   * - ``color``
+     - dict
+     - Color config: like axis, plus ``"palette"`` option for colormap selection.  
+       Supported palettes:  
+       ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``, ``"cividis"``,  
+       ``"hsv"``, ``"twilight"``, ``"twilight_shifted"``.
+     - No
+     - ``{"property": "energy", "palette": "viridis"}``
+   * - ``size``
+     - dict
+     - Size config: ``{"property": "<name>", "mode":
+       "constant"|"linear"|"log"|"sqrt"|"inverse", "factor": 1–100, "reverse": bool}``
+     - No
+     - ``{"property": "volume", "mode": "sqrt", "factor": 50}``
+   * - ``symbol``
+     - string
+     - Property name for categorical symbols (string values)
+     - No
+     - ``"phase"``
+   * - ``markerOutline``
+     - bool
+     - Thin black outline on markers
+     - No
+     - ``true``
+   * - ``joinPoints``
+     - bool
+     - Connect points with a thin black line (e.g., for trajectories)
+     - No
+     - ``false``
+
+
+Structure settings (``structure``)
+++++++++++++++++++++++++++++++++++
+
+Array of dicts (one per viewer).
+
+.. list-table:: Structure settings
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``bonds``
+     - bool
+     - Show bonds
+     - No
+     - true
+   * - ``atoms``
+     - bool
+     - Show atoms
+     - No
+     - true
+   * - ``spaceFilling``
+     - bool
+     - Use space-filling representation
+     - No
+     - false
+   * - ``atomLabels``
+     - bool
+     - Show atom labels
+     - No
+     - false
+   * - ``unitCell``
+     - bool
+     - Show unit cell
+     - No
+     - true
+   * - ``supercell``
+     - integer[3]
+     - Repetitions in a/b/c directions
+     - No
+     - ``[2, 2, 2]``
+   * - ``rotation``
+     - bool
+     - Auto-rotate molecule
+     - No
+     - false
+   * - ``axes``
+     - string
+     - Axis system: ``"none"|"xyz"|"abc"``
+     - No
+     - ``"xyz"``
+   * - ``keepOrientation``
+     - bool
+     - Maintain orientation when changing structures
+     - No
+     - true
+   * - ``environments``
+     - dict
+     - Environment options: ``{"activated": bool, "center": bool, "cutoff": number,
+       "bgStyle": "licorice"|"ball-stick"|"hide", "bgColor": "grey"|"CPK"|"property"}``
+     - No
+     - ``{"activated": true, "cutoff": 3.5}``
+   * - ``color``
+     - dict
+     - Atom coloring: ``{"property": "element"|"<name>", "transform":
+       "linear"|"log10"|"sqrt"|"inverse", "min": number, "max": number, "palette":
+       "bwr"}``
+     - No
+     - ``{"property": "charge", "palette": "bwr"}``
 
 
 Examples
 ++++++++
 
-1. Atomic scalar property (e.g., charges):
+1. Basic 2D map with color:
 
 .. code-block:: json
 
-   "properties": {
-     "charge": {
-       "target": "atom",
-       "values": [0.5, -0.5, "..."],  // One per atom
-       "units": "e",
-       "description": "Charges"
+   "settings": {
+     "map": {
+       "x": {"property": "PCA[1]"},
+       "y": {"property": "PCA[2]"},
+       "z": {"property": ""},
+       "color": {"property": "energy"}
      }
    }
 
-2. Structure vector property (e.g., energies at different temperatures):
+2. Trajectory mode with pinned structures:
 
 .. code-block:: json
 
-   "properties": {
-     "energy": {
-       "target": "structure",
-       "values": [[-1.0, -1.1], [-2.0, -2.1], "..."],  // [n_structures, n_temperatures]
-       "parameter": ["temperature"],
-       "units": "eV"
-     }
+   "settings": {
+     "target": "structure",
+     "map": {"joinPoints": true},
+     "structure": [{
+       "keepOrientation": true,
+       "playbackDelay": 50
+     }],
+     "pinned": [0, 10, 20]
    }
 
-3. Categorical property (e.g., structure labels):
+Environments (``environments``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Optional. Specifies atom-centered environments for datasets where properties are
+associated with specific atoms rather than entire structures. Omitting this field
+defaults to structure-level visualization only.
+
+The ``environments`` field is an array of objects, each defining an environment. To
+generate, use helper function :py:func:`chemiscope.all_atomic_environments`.
+
+Environment definition
+++++++++++++++++++++++
+
+Each environment is a dictionary with:
+
+.. list-table:: Environment fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``structure``
+     - integer
+     - 0-based index of the structure in ``structures``
+     - Yes
+     - 0
+   * - ``center``
+     - integer
+     - 0-based index of the central atom in the structure
+     - Yes
+     - 8
+   * - ``cutoff``
+     - number
+     - Spherical cutoff radius (in Å; must be > 0)
+     - Yes
+     - 3.5
+
+
+Examples
+++++++++
 
 .. code-block:: json
 
-   "properties": {
-     "phase": {
-       "target": "structure",
-       "values": ["liquid", "solid", "..."],  // String categories
-       "description": "Phase classification"
+   "environments": [
+     {"structure": 0, "center": 0, "cutoff": 3.5},
+     {"structure": 0, "center": 1, "cutoff": 3.5},
+     {"structure": 0, "center": 2, "cutoff": 3.5}
+   ]
+
+Shapes (``shapes``)
+~~~~~~~~~~~~~~~~~~~
+
+Optional. Defines custom 3D shapes (e.g., spheres, arrows) to overlay in the structure
+viewer. This is useful for visualizing additional features like atomic forces (as
+arrows), uncertainty ellipsoids, or custom meshes.
+
+The ``shapes`` field is a dictionary where each key is a shape group name (e.g.,
+"forces"), and the value is the shape group definition. Multiple groups can be defined
+for different visualizations.
+
+Shape group definition
+++++++++++++++++++++++
+
+Each shape group is a dictionary with the following fields:
+
+.. list-table:: Shape group fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``kind``
+     - string
+     - Shape type: ``"sphere"``, ``"ellipsoid"``, ``"cylinder"``, ``"arrow"``, or
+       ``"custom"``
+     - Yes
+     - ``"arrow"``
+   * - ``parameters``
+     - dict
+     - Parameters at different levels: ``"global"`` (all shapes), ``"structure"`` (per
+       structure), ``"atom"`` (per atom/environment)
+     - Yes
+     - See below
+
+Parameter levels
+++++++++++++++++
+
+Parameters are specified in a nested dictionary and merged from general to specific:
+
+- ``global``: Dictionary of default parameters applied to all shapes in the group.
+- ``structure``: List of dictionaries, one per structure. Overrides ``global`` for that structure.
+- ``atom``: Flat list of dictionaries, one per atom. Overrides ``structure`` and ``global`` for that atom.
+
+Common parameters
++++++++++++++++++
+
+These apply to any shape kind:
+
+.. list-table:: Common parameters
+   :header-rows: 1
+   :widths: 15 15 30 15
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``position``
+     - number[3]
+     - Center position (defaults to structure origin or atom position)
+     - No
+   * - ``scale``
+     - number
+     - Scaling factor for size
+     - No
+   * - ``orientation``
+     - number[4]
+     - Rotation quaternion (x, y, z, w); ignored for ``cylinder`` and ``arrow``
+     - No
+   * - ``color``
+     - string | hex
+     - Color (e.g., ``"red"`` or ``0xFF0000``)
+     - No
+
+Kind-specific parameters
+++++++++++++++++++++++++
+
+Each shape kind supports additional parameters (in addition to the common ones above).
+
+**Sphere**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``radius``
+     - number
+     - Sphere radius.
+     - Yes
+
+**Ellipsoid**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``semiaxes``
+     - number[3]
+     - Semi-axes lengths along x, y, z.
+     - Yes
+
+**Cylinder**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``vector``
+     - number[3]
+     - Direction and length; tip at vector end.
+     - Yes
+   * - ``radius``
+     - number
+     - Cylinder radius.
+     - Yes
+
+**Arrow**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``vector``
+     - number[3]
+     - Direction and length; tip at vector end.
+     - Yes
+   * - ``baseRadius``
+     - number
+     - Shaft radius.
+     - Yes
+   * - ``headRadius``
+     - number
+     - Arrowhead radius.
+     - Yes
+   * - ``headLength``
+     - number
+     - Arrowhead length; may extend beyond base if the vector is short.
+     - Yes
+
+**Custom**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``vertices``
+     - number[N][3]
+     - List of vertex positions.
+     - Yes
+   * - ``simplices``
+     - integer[M][3]
+     - Mesh triangulation indices.
+     - No
+
+Examples
+++++++++
+
+1. Global spheres (same for all structures/atoms):
+
+.. code-block:: json
+
+   "shapes": {
+     "highlight_spheres": {
+       "kind": "sphere",
+       "parameters": {
+         "global": {"radius": 0.5, "color": "red"}
+       }
      }
    }
+
+2. Per-atom arrows (e.g., for forces):
+
+.. code-block:: json
+
+   "shapes": {
+     "forces": {
+       "kind": "arrow",
+       "parameters": {
+         "global": {"baseRadius": 0.1, "headRadius": 0.2, "headLength": 0.3},
+         "atom": [  // length = total atoms
+           {"vector": [1.0, 0.0, 0.0]},
+           {"vector": [0.0, 1.0, 0.0]},
+           /* ... */
+         ]
+       }
+     }
+   }
+
+3. Custom mesh with per-structure scaling:
+
+.. code-block:: json
+
+   "shapes": {
+     "tetrahedron": {
+       "kind": "custom",
+       "parameters": {
+         "global": {
+           "vertices": [[0,0,0], [1,0,0], [0,1,0], [0,0,1]],
+           "simplices": [[0,1,2], [0,1,3], [0,2,3], [1,2,3]]
+         },
+         "structure": [  // length = number of structures
+           {"scale": 1.0},
+           {"scale": 2.0},
+           /* ... */
+         ]
+       }
+     }
+   }
+
 
 
 Structures (``structures``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Required. Contains all atomic configurations in your dataset. In the most common use
-case, it is automatically converted internally from the list of ASE.Atoms object. In
+case, it is automatically converted internally from the list of ``ASE.Atoms`` object. In
 details, each structure is defined as an object with the following fields:
 
 .. list-table:: Structure fields
@@ -311,8 +789,6 @@ details, each structure is defined as an object with the following fields:
 Example:
 ++++++++
 
-1. Minimal water molecule:
-
 .. code-block:: json
 
    {
@@ -323,367 +799,68 @@ Example:
      "z": [0.0, 0.0, 0.0]
    }
 
-2. Periodic system with bonds:
+
+Parameters (``parameters``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Optional. Defines the variables for multidimensional properties. This is required when
+properties use the ``parameters`` field in the ``properties``.
+
+The ``parameters`` field is a dictionary where each key is a name (referenced in
+property ``parameters``), and the value is the parameter definition.
+
+Parameter definition
+++++++++++++++++++++
+
+Each parameter is a dictionary with the following fields:
+
+.. list-table:: Parameter fields
+   :header-rows: 1
+   :widths: 15 15 30 15 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+     - Example
+   * - ``values``
+     - number[]
+     - Array of values (length must match the second dimension of linked properties)
+     - Yes
+     - ``[0, 10, 20]``
+   * - ``name``
+     - string
+     - Display name
+     - No
+     - ``"Time steps"``
+   * - ``units``
+     - string
+     - Units
+     - No
+     - ``"fs"``
+
+Example
++++++++
 
 .. code-block:: json
 
-   {
-     "size": 8,
-     "names": ["C", "C", "H", "H", "O", "O", "H", "H"],
-     "x": ["..."],
-     "y": ["..."],
-     "z": ["..."],
-     "cell": [10,0,0, 0,10,0, 0,0,10],
-     "bonds": [
-       [0,1,2],  // C=C double bond
-       [0,2,1],  // C-H single bond
-       [4,5,1]   // O-O single bond
-     ]
-   }
-
-
-Map
-~~~
-
-.. code-block:: javascript
-
-    {
-        // metadata of the dataset. `description`, `authors` and `references`
-        // will be rendered as markdown.
-        "meta": {
-            // the name of the dataset
-            "name": "this is my name",
-            // description of the dataset, OPTIONAL
-            "description": "This contains data from ...",
-            // authors of the dataset, OPTIONAL
-            "authors": ["John Doe", "Mr Green, green@example.com"],
-            // references for the dataset, OPTIONAL
-            "references": [
-                "'A new molecular construction', Journal of Random Words 19 (1923) pp 3333, DOI: 10.0000/0001100",
-                "'nice website' http://example.com",
-            ],
-        },
-
-        // list of properties in this dataset
-        "properties": {
-            // Each property has at least a name, a target, and some values.
-            // Optional entries for the units and descriptions can also be added.
-            <name>: {
-                // the property target: is it defined per atom or for the full
-                // structures
-                "target": "atom" | "structure",
-                // values of the properties can either be numbers, strings
-                // or array of numbers.
-                //
-                // string properties are assumed to represent categories of
-                // data.
-                //
-                // the first dimension of the multidimensional property corresponds
-                // to the number of atoms/structures, the second dimension corresponds
-                // to the size of the array of values per atom/structure.
-                "values": [1, 2, 3, ...] | ["first", "second", "first", ...] | [[1, 3, 5], [2, 4, 6], ...],
-
-                // OPTIONAL: units of the property' value
-                "units": "A/fs^2",
-                // OPTIONAL: free-form description of the property as a string
-                "description": "acceleration of the atoms in the structure ...",
-                // OPTIONAL: an array containing a single string of the name of
-                // the parameter (from the `parameters`` object below). This is
-                // required multidimensional properties
-                "parameter": ["parameter_name"]
-            }
-        },
-
-        // OPTIONAL: list of parameters to be used with multidimensional properties
-        "parameters": {
-            // each parameter must have a name and an array of values that should match
-            // the second dimension of the associated multidimensional properties
-            <name>: {
-                // an array of numbers containing the values of the parameter
-                // the size should correspond to the second dimension of the
-                // corresponding multidimensional property
-                "values": [0, 0.1, 0.2],
-
-                // OPTIONAL free-form description of the parameter as a string
-                "name": "a short description of this parameter",
-                // OPTIONAL units of the values in the values array
-                "units": "eV"
-
-            }
-        },
-
-        // list of structures in this dataset
-        "structures": [
-            {
-                // number of atoms in the structure
-                "size": 42,
-                // names of the atoms in the structure
-                "names": ["H", "O", "C", "C", ...],
-                // x cartesian coordinate of all the atoms, in Angstroms
-                "x": [0, 1.5, 5.2, ...],
-                // y cartesian coordinate of all the atoms, in Angstroms
-                "y": [5.7, 7, -2.4, ...],
-                // z cartesian coordinate of all the atoms, in Angstroms
-                "z": [8.1, 2.9, -1.3, ...],
-                // OPTIONAL: unit cell of the system, if any.
-                //
-                // This should be given as [ax ay az bx by bz cx cy cz], where
-                // a, b, and c are the unit cell vectors. All values are
-                // expressed in Angstroms.
-                "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
-                // OPTIONAL: bonds in the system, if any.
-                //
-                // This should be given as [i, j, order], where i, j, and
-                // order are integers. i and j are the indices of
-                // the atoms bonded together, and order is the bond order,
-                // which can be 1 (for single bonds) or 2 (for double bonds)
-                // or 3 (for triple bonds).
-                "bonds": [[0, 1, 1], [1, 2, 2],...],
-            },
-            // other structures as needed
-            ...
-        ],
-
-        // OPTIONAL: shapes to display in the structure viewer.
-        // Multiple shapes groups with different names are supported.
-        //
-        // Each shape is defined by parameters that can be specified globally,
-        // at the structure level, or for individual atoms
-        "shapes": {
-            <name>: {
-                "kind" : <"sphere", "ellipsoid", "cylinder", "arrow", "custom">,
-                "parameters" : {
-                    "global" : { <global_parameters_dictionary> },
-                    "structure" : [ <list_of_structure_parameter_dictionaries> ],
-                    "atom" : [ <list_of_atom_parameter_dictionaries> ]
-                }
-            },
-            // Sphere shapes, with the given `radius`
-            <other_name>: {
-                "kind" : "sphere"
-                "parameters" : {
-                    "global" : { "radius" : 0.2 }
-                }
-            },
-            // Ellipsoid shapes, with the given `[ax, ay, az]` semi-axes
-            <other_name>: {
-                "kind" : "ellipsoid"
-                "parameters" : {
-                    "global" : {},
-                    "structure" : [ {"semiaxes": [1, 1, 2]}, ... ]
-                }
-            },
-            // Cylinder, with the given radius and `vector` direction
-            <other_name>: {
-                "kind" : "cylinder"
-                "parameters" : {
-                    "global" : { "radius" : 0.2 },
-                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
-                }
-            },
-            // Arrow, with the given shape parameters and `vector` direction
-            <other_name>: {
-                "kind" : "arrow"
-                "parameters" : {
-                    "global" : { "baseRadius" : 0.2, 'headRadius': 0.3, 'headLength' : 0.4 },
-                    "atom" : [ {"vector" : [0,0,1]}, {"vector": [0,1,1]}, ... ]
-                }
-            },
-            // Custom shapes. Must provide a list of vertices, and the vertex
-            // indices associated with simplices (the latter are auto-calculated)
-            // if omitted
-            <yet_another> : {
-                "kind" : "custom",
-                "parameters" : {
-                    "global" : { "vertices" : [[x1,y1,z1], [x2,y2,z2], ...],
-                                 "simplices" : [[0,1,2], [1,3,4], [0,5,5]] },
-                    "atom" : [ {"scale" : 1}, {"scale" : 0.5}, ... ]
-                }
-            }
-
-        }
-
-        // OPTIONAL: atom-centered environment descriptions
-        //
-        // If present, there should be one environment for each atom in each
-        // structure.
-        "environments": [
-            {
-                // index of the structure in the above structures list
-                "structure": 0,
-                // index of the central atom in structures
-                "center": 8,
-                // spherical cutoff radius, expressed in Angstroms
-                "cutoff": 3.5,
-            },
-            // more environments
-            ...
-        ]
-
-        // OPTIONAL: setting for each panel
-        //
-        // Adding these values allows to setup how a given dataset should be
-        // visualized in chemiscope.
-        //
-        // Each value inside the settings group is optional
-        "settings": {
-            // Visualization display target, either per atom-centered environments or per structure.
-            // Supported in default and structure visualizers; the atom visualizer uses the "atom"
-            // target by default. To use "atom" target, make sure to provide a list of environments.
-            "target": "atom" | "structure",
-            // settings related to the map
-            "map": {
-                // x axis settings
-                "x": {
-                    // name of the property to use for this axis, this must be
-                    // one of the keys from the root `properties` table.
-                    "property": "<name>",
-                    // should the axis use linear or logarithmic scaling
-                    "scale": "linear" | "log",
-                    // lower bound of the axis
-                    "min": -0.23,
-                    // upper bound of the axis
-                    "max": 1.42,
-                },
-                // y axis setting, using the same keys as x axis setting
-                "y": {
-                    // ...
-                },
-                // z axis setting, using the same keys as x axis setting
-                "z": {
-                    // property can be set to an empty string to get a 2D map
-                    "property": "",
-                    // ...
-                },
-                // name of the property to use for marker symbols, this must be
-                // one of the keys from the root `properties` table. The
-                // associated property should have string values
-                "symbol": "<name>",
-                // point color setting, using the the same keys as x axis setting
-                "color": {
-                    // property can be set to an empty string for uniform color
-                    "property": "",
-                    // ...
-
-                    // Color palette to use, default to 'inferno'
-                    "palette": "cividis",
-                },
-                // settings related to the markers sizes
-                "size": {
-                    // scaling factor for the axis, between 1 and 100
-                    "factor": 55,
-                    // mode to scale the markers with respect to the properties
-                      // `constant`: all markers are the same size, scaled by `factor`
-                      // `linear`: markers are directly proportional to the property
-                      // `log`: markers are proportional to the logarithm of the property
-                      // `sqrt`: markers are proportional to the square root of the property
-                      // `inverse`: markers are inversely proportional to the property
-                    "mode": "constant" | "linear" | "log" | "sqrt | "inverse"",
-                    // name of the property to use for the markers size, this
-                    // must be one of the keys from the root `properties` table.
-                    "property": "<name>",
-                    // if false, markers scale from smallest to largest property value
-                    // if true, marker scale from largest to smallest property value
-                    // in the case of `inverse` scaling, this is reversed.
-                    "reverse": false | true,
-                },
-                // whether points in the map should have a thin black outline
-                "markerOutline": true | false,
-                // whether the points in the map should be linked by a thin black trace
-                "joinPoints": false | true,
-            },
-            // Settings related to the structure viewers grid. This is an array
-            // containing the settings for each separate viewer
-            "structure": [
-                {
-                    // show bonds between atoms
-                    "bonds": true,
-                    // show the atoms
-                    "atoms": true,
-                    // use space filling representation
-                    "spaceFilling": false,
-                    // show atoms labels
-                    "atomLabels": false,
-                    // show unit cell information and lines
-                    "unitCell": false,
-                    // number of repetitions in the `a/b/c` direction for the supercell
-                    "supercell": [2, 2, 3],
-                    // make the molecule spin
-                    "rotation": false,
-                    // which axis system to use
-                    "axes": "none" | "xyz" | "abc",
-                    // keep the orientation constant when loading a new structure
-                    "keepOrientation": false,
-                    // options related to atom-centered environments
-                    "environments": {
-                        // should we display environments & environments options
-                        "activated": true,
-                        // automatically center the environment when loading it
-                        "center": false,
-                        // the cutoff value for spherical environments
-                        "cutoff": 3.5
-                        // which style for atoms not in the environment
-                        "bgStyle": "licorice" | "ball-stick" | "hide",
-                        // which colors for atoms not in the environment
-                        // it is possible to color those atoms by the property
-                        // currently selected
-                        "bgColor": "grey" | "CPK" | "property",
-                    };
-                    // options related to the coloring of the atoms
-                    "color": {
-                        // name of the property to use for coloring, this must be
-                        // one of the keys from the root `properties` table.
-                        // the default value is "element"
-                        "property": "element" | "<name>",
-                        // if the atoms should not be colored by element,
-                        // this is the transformation to apply to the property
-                        // the default value is "linear"
-                        // if the value of the selected property value of an atom
-                        // is missing, the atom will be colored in light grey
-                        // if the value is not a real number or infinite,
-                        // the atom will be colored in dark grey
-                        "transform": "linear" | "log10" | "sqrt" | "inverse",
-                        // minimum property value to use for the color scale
-                        // the color corresponding to this value will be used
-                        // for atoms with a smaller value
-                        // the min value should not be bigger than the max value
-                        "min": "<number>",
-                        // maximum property value to use for the color scale
-                        // the color corresponding to this value will be used
-                        // for atoms with a bigger value
-                        // the max value should not be bigger than the min value
-                        "max": "<number>",
-                        // color palette used to color the atoms, default to 'bwr'
-                        // coloring atoms from blue to white to red according to
-                        // the property value.
-                        "palette": "bwr",
-                    };
-                },
-                // ...
-            ]
-            // List of environments to display (up to 9). These environments
-            // will be shown in the structure viewer grid and indicated on
-            // the map.
-            //
-            // This list should contain 0-based indexes of the environment in
-            // the root "environments" object; or of the structure in the root
-            // "environments" if no environments are present.
-            //
-            // If both this list and the "structure" settings list above are
-            // present, they should have the same size and will be used together
-            // (first element of "structure" setting used for the first "pinned"
-            // value; and so on).
-            //
-            // This defaults to [0], i.e. showing only the first
-            // environment/structure.
-            "pinned": [
-                33, 67, 12, 0,
-            ]
-        }
+    "parameters": {
+      "time": {
+        "values": [0, 10, 20, 30],  // matches length in linked property
+        "name": "Simulation time",
+        "units": "fs"
+      }
     }
 
-.. _Dataset: /api/interfaces/Dataset.html
+    // linked property (from properties section)
+    "properties": {
+      "energy": {
+        "target": "structure",
+        "values": [[-1.0, -1.1, -1.2, -1.3], /* ... */],
+        "parameters": ["time"],
+        "units": "eV"
+      }
+    }
 
 .. _ase: https://wiki.fysik.dtu.dk/ase/index.html
-.. _ASAP: https://github.com/BingqingCheng/ASAP
-.. _scikit-matter: https://scikit-matter.readthedocs.io/en/latest/
