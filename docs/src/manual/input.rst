@@ -306,9 +306,10 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
    * - ``color``
      - dict
      - Color config: like axis, plus ``"palette"`` option for colormap selection.  
-       Supported palettes:  
-       ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``, ``"cividis"``,  
-       ``"hsv"``, ``"twilight"``, ``"twilight_shifted"``.
+       Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
+       ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
+       (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
+       ``"tab20"``, ``"tab20b"``, ``"tab20bc``
      - No
      - ``{"property": "energy", "palette": "viridis"}``
    * - ``size``
