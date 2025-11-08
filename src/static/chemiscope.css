@@ -537,6 +537,15 @@
     column-gap: 1em;
 }
 
+.chsp-atom-labels-property {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1em;
+    margin: 0.5em 0;
+}
+
 .chsp-atom-extra-options > * {
     margin: 0.5em 0;
 }

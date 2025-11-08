@@ -54,6 +54,7 @@ export class StructureOptions extends OptionsGroup {
         // which colors for atoms not in the environment
         bgColor: HTMLOption<'string'>;
     };
+    // options related to atom coloring
     public color: {
         property: HTMLOption<'string'>;
         transform: HTMLOption<'string'>;
@@ -61,6 +62,8 @@ export class StructureOptions extends OptionsGroup {
         max: HTMLOption<'number'>;
         palette: HTMLOption<'string'>;
     };
+    // options related to atom labeling
+    public labelsProperty: HTMLOption<'string'>;
 
     /// The Modal instance
     private _modal: Modal;
@@ -135,6 +138,13 @@ export class StructureOptions extends OptionsGroup {
             'transform'
         );
         this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
+
+        this.labelsProperty = new HTMLOption('string', 'element');
+
+        // validate atom properties for coloring
+        if (propertiesName.includes('element')) {
+            this.labelsProperty.validate = optionValidator(propertiesName, 'labels');
+        }
 
         this.environments.bgColor.validate = optionValidator(
             ['grey', 'CPK', 'property'],
@@ -304,6 +314,18 @@ export class StructureOptions extends OptionsGroup {
         }
         this.color.palette.bind(selectPalette, 'value');
 
+        // ======= data used as labels values
+        const selectLabelsProperty =
+            this.getModalElement<HTMLSelectElement>('atom-labels-property');
+        // first option is 'element'
+        selectLabelsProperty.options.length = 0;
+        if (!propertiesName.includes('element')) {
+            selectLabelsProperty.options.add(new Option('element', 'element'));
+        }
+        for (const property of propertiesName) {
+            selectLabelsProperty.options.add(new Option(property, property));
+        }
+        this.labelsProperty.bind(selectLabelsProperty, 'value');
         this.axes.bind(this.getModalElement('axes'), 'value');
         this.keepOrientation.bind(this.getModalElement('keep-orientation'), 'checked');
         this.playbackDelay.bind(this.getModalElement('playback-delay'), 'value');
