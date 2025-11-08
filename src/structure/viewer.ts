@@ -17,7 +17,6 @@ import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes
 import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
-import { time } from 'console';
 
 /** We need to use the same opacity everywhere since 3Dmol uses 1 opacity per model */
 function defaultOpacity(): number {
@@ -1630,7 +1629,10 @@ export class MoleculeViewer {
             // makes removing all labels very slow. We temporarily patch show()
             // to a no-op to avoid this.
 
-            const viewer_noshow = this._viewer as any;
+            const viewer_noshow = this._viewer as unknown as {
+                show: () => void;
+                removeLabel: (label: $3Dmol.Label, noshow?: boolean) => void;
+            };
             const old_show = viewer_noshow.show;
 
             viewer_noshow.show = () => {}; // suppress renders
@@ -1652,11 +1654,11 @@ export class MoleculeViewer {
         const structure = this._current.structure;
 
         // All atoms from all models (central + supercell + highlighted env)
-        const atoms = this._viewer.selectedAtoms({}) as $3Dmol.AtomSpec[];
+        const atoms = this._viewer.selectedAtoms({});
 
         for (const atom of atoms) {
             // Heuristic for “visible”: has some style and is not marked hidden
-            const style: any = (atom as any).style || {};
+            const style = atom.style || {};
             const sphere = style.sphere;
             const stick = style.stick;
 
@@ -1696,9 +1698,12 @@ export class MoleculeViewer {
             const position = new $3Dmol.Vector3(atom.x, atom.y, atom.z);
 
             let label_str = name;
-            if (this._options.labelsProperty.value != 'element') {
+            if (
+                this._options.labelsProperty.value !== 'element' &&
+                this._properties !== undefined
+            ) {
                 label_str = this._formatLabel(
-                    this._properties![this._options.labelsProperty.value][serial]
+                    this._properties[this._options.labelsProperty.value][serial]
                 );
             }
 
@@ -1720,56 +1725,6 @@ export class MoleculeViewer {
         }
 
         this._viewer.render();
-    }
-
-    private _updateAtomLabelsOLD(showLabels: boolean) {
-        if (this._current === undefined) {
-            return;
-        }
-
-        // remove all labels (if there are any)
-        /*        const viewer_noshow = this._viewer as any;
-        const old_show = viewer_noshow.show;
-
-        viewer_noshow.show = () => {};          // suppress renders
-
-        for (const label of this._current.atomLabels) {
-            viewer_noshow.removeLabel(label);     // still does linear search, but no render
-        }
-
-        viewer_noshow.show = old_show;           // restore
-        */
-        this._current.atomLabels = [];
-
-        if (showLabels) {
-            const structure = this._current.structure;
-            for (let i = 0; i < structure.size; i++) {
-                const position = new $3Dmol.Vector3(structure.x[i], structure.y[i], structure.z[i]);
-                const name = structure.names[i];
-
-                let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
-                if (color === 0xffffff || color === 'white') {
-                    color = 0x000000;
-                }
-
-                let label_str = name;
-                if (this._options.labelsProperty.value != 'element') {
-                    label_str = this._formatLabel(
-                        this._properties![this._options.labelsProperty.value][i]
-                    );
-                }
-
-                const label = this._viewer.addLabel(label_str, {
-                    position: position,
-                    inFront: true,
-                    fontColor: color,
-                    fontSize: 14,
-                    showBackground: false,
-                    alignment: new $3Dmol.Vector2(2.0, 2.0),
-                });
-                this._current.atomLabels.push(label);
-            }
-        }
     }
 
     private _formatLabel(value: string | number | undefined): string {
