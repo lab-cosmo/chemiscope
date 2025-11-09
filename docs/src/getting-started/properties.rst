@@ -46,8 +46,25 @@ the structure of an environment or structure as *structural properties*
 and other associated properties associated (such as energy, density, ...) as
 *physical properties*.
 
+
+Chemiscope can directly visualize datasets with precomputed mappable quantities, e.g.,
+structural representations or reduced-dimensionality features, using its command-line
+interface. To generate these quantities, external packages like `scikit-matter`_ or
+`ASAP`_ can be used. The ASAP package, for instance, can produce directly output in
+chemiscope-compatible format.
+
+Alternatively, chemiscope's :ref:`explore example <explore-example>` function can
+automatically compute representations and perform dimensionality reduction using the
+default `featurizer <https://arxiv.org/abs/2506.19674>`_ to project structures into the
+PET-MAD low-dimensional latent space. Custom featurization is also supported for
+advanced use cases.
+
+
+.. _ase: https://wiki.fysik.dtu.dk/ase/index.html
+.. _ASAP: https://github.com/BingqingCheng/ASAP
 .. _atom density representations: https://doi.org/10.1063/1.5090481
 .. _Behler-Parrinello symmetry functions: https://doi.org/10.1103/physrevlett.98.146401
+.. _PCovR: https://doi.org/10.1088/2632-2153/aba9ef
 .. _PCA: https://en.wikipedia.org/wiki/Principal_component_analysis
 .. _sketch-map: https://doi.org/10.1073/pnas.1108486108
-.. _PCovR: https://doi.org/10.1088/2632-2153/aba9ef
+.. _scikit-matter: https://scikit-matter.readthedocs.io/en/latest/

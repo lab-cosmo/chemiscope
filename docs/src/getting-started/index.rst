@@ -1,7 +1,7 @@
-.. _user-manual:
+.. _getting-started:
 
-User manual
-===========
+Getting started
+===============
 
 This manual presents an overview of how to use the Chemiscope viewer in its standard
 implementations, including the web tool and the Jupyter widget. It does not discuss in
@@ -21,6 +21,7 @@ chemiscope in a script, or to explore a dataset directly inside a Jupyter notebo
 .. toctree::
     :maxdepth: 2
 
+    installation
     properties
     panels
     input

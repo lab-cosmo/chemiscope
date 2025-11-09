@@ -7,7 +7,7 @@ chemiscope is to provide interactive exploration of large databases of materials
 and molecules and help researchers find structure-properties correlations
 inside such databases. The screenshot below shows an example of such database
 being visualized with chemiscope. 
-The :ref:`first part of this documentation <user-manual>`
+The :ref:`first part of this documentation <getting-started>`
 describes the default interface of chemiscope and how to use it with your own database,
 both using the stand-alone viewer or through the :ref:`python module <python-module>`
 and/or the :ref:`jupyter widget <jupyter>`.
@@ -49,8 +49,8 @@ What's in this documentation?
     :maxdepth: 2
 
     Chemiscope <self>
+    getting-started/index
     examples/index
-    manual/index
     python/index
     embedding
 
