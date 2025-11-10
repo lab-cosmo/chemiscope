@@ -21,11 +21,15 @@ def _mda_valid_structures(frames):
 def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
-    data["names"] = [
+    data["elements"] = [
         atom.element if hasattr(atom, "element") else atom.type
         for atom in ag
         # `element` is better, but not always available, e.g. xyz file
     ]
+    if hasattr(ag, "names"):
+        data["names"] = [atom.name for atom in ag]
+    else:
+        data["names"] = data["elements"]
     data["x"] = [float(value) for value in ag.positions[:, 0]]
     data["y"] = [float(value) for value in ag.positions[:, 1]]
     data["z"] = [float(value) for value in ag.positions[:, 2]]
@@ -37,6 +41,19 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
+    data["hetatom"] = [True for _ in ag]
+    if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
+        data["chains"] = [atom.chainID for atom in ag]
+    if hasattr(ag, "resnames") and ag.resnames is not None:
+        data["resnames"] = [
+            atom.resname if atom.resname is not None and atom.resname != "" else "UNK"
+            for atom in ag
+        ]
+        # atom selection requires the `resname`
+        for idx in ag.select_atoms("protein or nucleic").indices:
+            data["hetatom"][idx] = False
+    if hasattr(ag, "resids") and ag.resids is not None:
+        data["resids"] = [int(atom.resid) for atom in ag]
 
     return data
 
