@@ -304,7 +304,7 @@ contains the following fields and values:
                     // show atoms labels
                     "atomLabels": false,
                     // use an environment property value for the atom labels
-                    "labelsProperty": false,
+                    "labelsProperty": "element",
                     // show unit cell information and lines
                     "unitCell": false,
                     // number of repetitions in the `a/b/c` direction for the supercell
