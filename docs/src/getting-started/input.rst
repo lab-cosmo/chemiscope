@@ -13,11 +13,7 @@ writing.
 For a simple way to generate an input file, we have a `Google Colab notebook
 <https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_.
 
-The easiest programmatic way is the ``chemiscope`` Python package. Install it via:
-
-.. code-block:: bash
-
-   pip install chemiscope
+The easiest programmatic way is the ``chemiscope`` Python package.
 
 You can then either use :py:func:`chemiscope.write_input` to save a JSON file and
 display the widget using :py:func:`chemiscope.show_input` or see it through
@@ -32,16 +28,42 @@ Python quick example
 ~~~~~~~~~~~~~~~~~~~~
 .. code-block:: python
 
-   from chemiscope import write_input
+    import ase
+    import chemiscope
+    import numpy as np
 
-   write_input(
-       "output.json",
-       structures=[
-        ase.Atoms('H2O', positions=[(0, 0, 0), (0.76, 0.59, 0), (-0.76, 0.59, 0)])
-       ],
-       properties={"PCA[1]": [...], "PCA[2]": [...]},  # Your properties
-   )
+    structures = [
+        ase.Atoms('H2O', positions=[(0, 0, 0), (0.76, 0.59, 0), (-0.76, 0.59, 0)]),
+        ase.Atoms('H2', positions=[(0, 0, 0), (0.74, 0, 0)])
+    ]
 
+    properties = {
+        "energy": {
+            "target": "structure",
+            "values": [-76.4, -13.6],
+            "units": "eV",
+            "description": "Total energy"
+        },
+        "PCA": np.random.rand(len(structures), 2)
+    }
+
+    chemiscope.write_input(
+        "output.json",
+        frames=structures,
+        properties=properties,
+    )
+
+    # Display in Jupyter (or upload to chemiscope.org)
+    chemiscope.show_input("output.json")
+
+For direct display without saving a file:
+
+.. code-block:: python
+
+    chemiscope.show(
+        frames=structures,
+        properties=properties,
+    )
 
 Input API
 ~~~~~~~~~
@@ -309,7 +331,7 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
-       ``"tab20"``, ``"tab20b"``, ``"tab20bc``
+       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``
      - No
      - ``{"property": "energy", "palette": "viridis"}``
    * - ``size``
