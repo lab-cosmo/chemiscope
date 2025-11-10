@@ -136,6 +136,27 @@ export interface Structure {
          */
         [name: string]: ShapeParameters;
     };
+    /** Element names of all atoms in the structure, if available */
+    elements?: string[];
+    /** Residue name for all atoms in the structure, if available.
+     * Atoms without a residue (e.g. water molecules, ions, etc.) should have
+     * their resname set to `"UNK"`.
+     *
+     * This is used for cartoon representation. */
+    resnames?: string[];
+    /** Residue index for all atoms in the structure, if available.
+     * This is only used for secondary structure assignment. */
+    resids?: number[];
+    /** Chain names of all atoms in the structure, if available.
+     * This is only used for secondary structure assignment. */
+    chains?: string[];
+    /**
+     * Wether an atom is a heteroatom, i.e. not part of a biomolecule (protein, dna, …).
+     * If this is not provided, it is assumed to be true for all atoms.
+     *
+     * This is only used for secondary structure assignment and cartoon representation.
+     */
+    hetatom?: boolean[];
 }
 
 /**
@@ -543,6 +564,23 @@ export function checkStructure(s: JsObject): string {
         if (!(Array.isArray(s.cell) && s.cell.length === 9)) {
             return '"cell" must be an array of size 9';
         }
+    }
+
+    let biomolInfoCount = 0;
+    for (const key of ['hetatom', 'chains', 'resnames', 'resids']) {
+        if (key in s) {
+            biomolInfoCount++;
+            const array = s[key];
+            if (!Array.isArray(array)) {
+                return `"${key}" must be an array`;
+            }
+            if (s.size > 0 && array.length !== s.size) {
+                return `wrong size for "${key}", expected ${s.size}, got ${array.length}`;
+            }
+        }
+    }
+    if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
+        return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
     }
 
     return '';
