@@ -116,9 +116,10 @@ contains the following fields and values:
             {
                 // number of atoms in the structure
                 "size": 42,
-                // elements of the atoms in the structure
-                "elements": ["H", "O", "C", "C", ...],
-                // names of the atoms in the structure, can be "CA", "CG1"... if your are using `MDAnalysis` and passing in biomolecule stuff
+                // names of the atoms in the structure. If the atom names do not
+                // correspond to element names (for example in biomolecules,
+                // using CA for some Carbon), the `elements` field should also
+                // be provided.
                 "names": ["H", "O", "C", "C", ...],
                 // x cartesian coordinate of all the atoms, in Angstroms
                 "x": [0, 1.5, 5.2, ...],
@@ -132,6 +133,8 @@ contains the following fields and values:
                 // a, b, and c are the unit cell vectors. All values are
                 // expressed in Angstroms.
                 "cell": [10, 0, 0, 0, 10, 0, 0, 0, 10],
+                // OPTIONAL: name of the elements of the atoms in the structure
+                "elements": ["H", "O", "C", "C", ...],
                 // OPTIONAL: bonds in the system, if any.
                 //
                 // This should be given as [i, j, order], where i, j, and
@@ -140,29 +143,18 @@ contains the following fields and values:
                 // which can be 1 (for single bonds) or 2 (for double bonds)
                 // or 3 (for triple bonds).
                 "bonds": [[0, 1, 1], [1, 2, 2],...],
-                // OPTIONAL: hetero atoms in the system, if any.
-                //
-                // This is available if a `MDAnalysis.AtomsGroup` is passed in and the 
-                // `resname` field of `AtomsGroup` exists. The values are by default
-                // `false`, and are set as `true` only if the atom is selected by
-                // `AtomsGroup.select_atoms("protein or nucleic")`
-                "hetatom": [false, false,... true, true, ...],
-                // OPTIONAL: indices of the chain that an atom belongs to
-                //
-                // This is available if a `MDAnalysis.AtomsGroup` is passed in and the 
-                // `chainID` field of `AtomsGroup` exists.
-                "chains": ["A", "A",... "B", "B",..],
                 // OPTIONAL: names of the residue that an atom belongs to
                 //
-                // This is available if a `MDAnalysis.AtomsGroup` is passed in and the 
-                // `resnames` field of `AtomsGroup` exists. The missing residue names
-                // will be automatically set as "UNK"
-                "residues": ["GLY", "GLY",... "ILE", "PHE",..],
-                // OPTIONAL: indices of the residue that an atom belongs to
-                //
-                // This is available if a `MDAnalysis.AtomsGroup` is passed in and the 
-                // `resids` field of `AtomsGroup` exists.
+                // Missing residue names should be set to "UNK"
+                "resnames": ["GLY", "GLY",... "ILE", "PHE",..],
+                // OPTIONAL: index of the residue that an atom belongs to
                 "resids": [16, 16,... 56, 56, ...],
+                // OPTIONAL: flag indicating if an atom is a heteroatom; i.e.
+                // not part of a biomolecule such as a protein or nucleic acid.
+                // If this is not provided, it is assumed to be true for all atoms.
+                "hetatom": [false, false,... true, true, ...],
+                // OPTIONAL: name of the biomolecule chain that an atom belongs to
+                "chains": ["A", "A",... "B", "B",..],
             },
             // other structures as needed
             ...

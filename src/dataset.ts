@@ -138,13 +138,24 @@ export interface Structure {
     };
     /** Element names of all atoms in the structure, if available */
     elements?: string[];
-    /** Residue names of all atoms in the structure, if available. Under the case where some of the residue names are not available, `UNK` would be automatically assigned */
-    residues?: string[];
-    /** Residue IDs of all atoms in the structure, if available */
+    /** Residue name for all atoms in the structure, if available.
+     * Atoms without a residue (e.g. water molecules, ions, etc.) should have
+     * their resname set to `"UNK"`.
+     *
+     * This is used for cartoon representation. */
+    resnames?: string[];
+    /** Residue index for all atoms in the structure, if available.
+     * This is only used for secondary structure assignment. */
     resids?: number[];
-    /** Chain names of all atoms in the structure, if available */
+    /** Chain names of all atoms in the structure, if available.
+     * This is only used for secondary structure assignment. */
     chains?: string[];
-    /** If atom is a heteroatom, i.e. not part of a biomolecule (protein, dna, …) */
+    /**
+     * Wether an atom is a heteroatom, i.e. not part of a biomolecule (protein, dna, …).
+     * If this is not provided, it is assumed to be true for all atoms.
+     *
+     * This is only used for secondary structure assignment and cartoon representation.
+     */
     hetatom?: boolean[];
 }
 
@@ -556,7 +567,7 @@ export function checkStructure(s: JsObject): string {
     }
 
     let biomolInfoCount = 0;
-    for (const key of ['hetatom', 'chains', 'residues', 'resids']) {
+    for (const key of ['hetatom', 'chains', 'resnames', 'resids']) {
         if (key in s) {
             biomolInfoCount++;
             const array = s[key];
@@ -569,7 +580,7 @@ export function checkStructure(s: JsObject): string {
         }
     }
     if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
-        return 'found at least one of "hetatom", "chains", "residues" and "resids", but not all of them';
+        return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
     }
 
     return '';

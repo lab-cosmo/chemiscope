@@ -60,8 +60,8 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
             ss: 'c', // initialize to coil by default, the same as in 3Dmol
         } as unknown as $3Dmol.AtomSpec;
 
-        if (structure.residues !== undefined) {
-            atom.resn = structure.residues[i];
+        if (structure.resnames !== undefined) {
+            atom.resn = structure.resnames[i];
         }
 
         if (structure.chains !== undefined) {
@@ -513,7 +513,7 @@ export class MoleculeViewer {
         }
         this._showSupercellInfo();
 
-        if (structure.resids === undefined) {
+        if (structure.resnames === undefined) {
             this._styles.noResidue.replaceSync('.chsp-hide-if-not-biomol { display: none; }');
         } else {
             this._styles.noResidue.replaceSync('');
