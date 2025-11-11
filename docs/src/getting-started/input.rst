@@ -420,7 +420,8 @@ Array of dicts (one per viewer).
    * - ``environments``
      - dict
      - Environment options: ``{"activated": bool, "center": bool, "cutoff": number,
-       "bgStyle": "licorice"|"ball-stick"|"hide", "bgColor": "grey"|"CPK"|"property"}``
+       "bgStyle": "licorice"|"ball-stick"|"cartoon"|"hide", "bgColor":
+       "grey"|"CPK"|"property"}``
      - No
      - ``{"activated": true, "cutoff": 3.5}``
    * - ``color``
@@ -759,8 +760,8 @@ Structures (``structures``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Required. Contains all atomic configurations in your dataset. In the most common use
-case, it is automatically converted internally from the list of ``ASE.Atoms`` object. In
-details, each structure is defined as an object with the following fields:
+case, it is automatically converted internally from a list of ``ASE.Atoms`` objects.
+Each structure is represented as an object with the following fields:
 
 .. list-table:: Structure fields
    :header-rows: 1
@@ -799,14 +800,54 @@ details, each structure is defined as an object with the following fields:
      - ``[0.0, -1.5]``
    * - ``cell``
      - number[9]
-     - Unit cell vectors as ``[ax,ay,az,bx,by,bz,cx,cy,cz]`` (Å)
+     - Unit cell vectors as ``[ax, ay, az, bx, by, bz, cx, cy, cz]`` (Å)
      - No
-     - ``[10,0,0,0,10,0,0,0,10]``
+     - ``[10, 0, 0, 0, 10, 0, 0, 0, 10]``
+   * - ``pbc``
+     - bool[3]
+     - Periodic boundary conditions for x, y, z.
+     - No
+     - ``[true, true, true]``
    * - ``bonds``
      - integer[][3]
-     - Bonds as ``[[i,j,order],...]`` (0-based indices)
+     - List of bonds as ``[[i, j, order], ...]`` (0-based atom indices).
      - No
-     - ``[[0,1,1]]``
+     - ``[[0, 1, 1], [1, 2, 1]]``
+   * - ``elements``
+     - string[]
+     - Optional alternative to ``names`` for element symbols
+     - No
+     - ``["C", "H", "H", "O"]``
+   * - ``resnames``
+     - string[]
+     - Residue names (useful for biomolecules)
+     - No
+     - ``["GLY", "GLY", "HOH"]``
+   * - ``resids``
+     - integer[]
+     - Residue indices corresponding to each atom
+     - No
+     - ``[1, 1, 2]``
+   * - ``chains``
+     - string[]
+     - Chain identifiers for biomolecules
+     - No
+     - ``["A", "A", "B"]``
+   * - ``hetatom``
+     - bool[]
+     - Marks heteroatoms (non-standard or non-biopolymer atoms)
+     - No
+     - ``[false, false, true]``
+   * - ``energy``
+     - number
+     - Scalar energy value for the structure (arbitrary units)
+     - No
+     - ``-112.35``
+   * - ``forces``
+     - number[][3]
+     - Per-atom force vectors (same length as ``size``).
+     - No
+     - ``[[0.0, 0.1, 0.0], ...]``
 
 
 Example:
