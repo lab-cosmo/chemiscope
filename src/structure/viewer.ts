@@ -211,6 +211,8 @@ export class MoleculeViewer {
     private _colorReset: HTMLButtonElement;
     // Button used to see more color options
     private _colorMoreOptions: HTMLButtonElement;
+    // Switch do disable automatic updates
+    private _disableStyleUpdates: boolean = false;
 
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
@@ -746,7 +748,11 @@ export class MoleculeViewer {
      * Applies saved settings, possibly filling in with default values
      */
     public applySettings(settings: Settings): void {
+        // prevent multiple (time consuming) style updates during application
+        this._disableStyleUpdates = true;
         this._options.applySettings(settings);
+        this._disableStyleUpdates = false;
+        this._updateStyle();
     }
 
     /**
@@ -1195,7 +1201,7 @@ export class MoleculeViewer {
      * Update the styles of all atoms as required
      */
     private _updateStyle(): void {
-        if (this._current === undefined) {
+        if (this._current === undefined || this._disableStyleUpdates) {
             return;
         }
         if (this._options.shape.value !== '') {
