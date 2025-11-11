@@ -66,6 +66,7 @@ def frames_to_json(frames):
         # Be careful of the lazy loading of `frames.atoms`, which is updated during the
         # iteration of the trajectory
         return [_mda_to_json(frames) for _ in frames.universe.trajectory]
+
     else:
         raise Exception("reached unreachable code")
 

@@ -6,7 +6,7 @@
 import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
-import { assignBonds } from './assignBonds';
+import { assignBonds, computeSecondaryStructure } from './topology';
 
 import { arrayMaxMin, getElement, unreachable } from '../utils';
 import { PositioningCallback, Warnings } from '../utils';
@@ -49,15 +49,37 @@ function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void 
         const x = structure.x[i];
         const y = structure.y[i];
         const z = structure.z[i];
-        atoms.push({
+        const atom = {
             serial: i,
-            elem: structure.names[i],
+            elem: structure.elements ? structure.elements[i] : structure.names[i],
+            atom: structure.names[i],
             x: x,
             y: y,
             z: z,
-        });
+            hetflag: true,
+            ss: 'c', // initialize to coil by default, the same as in 3Dmol
+        } as unknown as $3Dmol.AtomSpec;
+
+        if (structure.resnames !== undefined) {
+            atom.resn = structure.resnames[i];
+        }
+
+        if (structure.chains !== undefined) {
+            atom.chain = structure.chains[i];
+        }
+
+        if (structure.resids !== undefined) {
+            atom.resi = structure.resids[i];
+        }
+
+        if (structure.hetatom !== undefined) {
+            atom.hetflag = structure.hetatom[i];
+        }
+
+        atoms.push(atom);
     }
 
+    computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);
     model.addAtoms(atoms);
 }
 
@@ -156,6 +178,8 @@ export class MoleculeViewer {
     private _resetSupercell!: HTMLButtonElement;
     /// Show some information on the currently displayed cell to the user
     private _cellInfo: HTMLElement;
+    /// Show settings specific to biomolecules
+    private _biomolOptions: HTMLElement;
     /// Options related to the trajectory
     private _trajectoryOptions: HTMLElement;
 
@@ -164,6 +188,9 @@ export class MoleculeViewer {
         /// hide options related to unit cell if there is no unit cell in the
         /// current structure
         noCell: CSSStyleSheet;
+        /// hide options related to residues if there is no residue information in the
+        /// current structure
+        noResidue: CSSStyleSheet;
         /// hide options related to environments if there are no environments
         /// for the current structure
         noEnvs: CSSStyleSheet;
@@ -239,13 +266,19 @@ export class MoleculeViewer {
         );
         this._root.appendChild(this._cellInfo);
 
+        this._biomolOptions = document.createElement('span');
+        this._biomolOptions.classList.add('chsp-hide-if-not-biomol');
+        this._root.appendChild(this._biomolOptions);
+
         const noCellStyle = new CSSStyleSheet();
+        const noResidueStyle = new CSSStyleSheet();
         const noEnvsStyle = new CSSStyleSheet();
         const noShapeStyle = new CSSStyleSheet();
         const noPropsStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
+            noResidue: noResidueStyle,
             noEnvs: noEnvsStyle,
             noShape: noShapeStyle,
             noProperties: noPropsStyle,
@@ -254,6 +287,7 @@ export class MoleculeViewer {
         this._shadow.adoptedStyleSheets = [
             ...(containerElement.getRootNode() as ShadowRoot).adoptedStyleSheets,
             noCellStyle,
+            noResidueStyle,
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
@@ -269,6 +303,7 @@ export class MoleculeViewer {
         this._options.modal.shadow.adoptedStyleSheets = [
             ...this._options.modal.shadow.adoptedStyleSheets,
             noCellStyle,
+            noResidueStyle,
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
@@ -477,6 +512,13 @@ export class MoleculeViewer {
             this._styles.noCell.replaceSync('');
         }
         this._showSupercellInfo();
+
+        if (structure.resnames === undefined) {
+            this._styles.noResidue.replaceSync('.chsp-hide-if-not-biomol { display: none; }');
+        } else {
+            this._styles.noResidue.replaceSync('');
+            this._options.cartoon.value = true;
+        }
 
         if (options.trajectory === undefined || !options.trajectory) {
             this._trajectoryOptions.style.display = 'none';
@@ -778,6 +820,7 @@ export class MoleculeViewer {
             this._viewer.render();
         };
 
+        this._options.cartoon.onchange.push(restyleAndRender);
         this._options.spaceFilling.onchange.push(restyleAndRender);
         this._options.bonds.onchange.push(restyleAndRender);
         this._options.atoms.onchange.push(restyleAndRender);
@@ -1172,7 +1215,8 @@ export class MoleculeViewer {
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
-            this._current.model.setStyle({}, this._mainStyle());
+            this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
+            this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
             return;
         }
 
@@ -1443,19 +1487,27 @@ export class MoleculeViewer {
      * Get the main style used for all atoms/atoms inside the environment when
      * highlighting a specific environment
      */
-    private _mainStyle(): Partial<$3Dmol.AtomStyleSpec> {
+    private _mainStyle(isProtein: boolean = false): Partial<$3Dmol.AtomStyleSpec> {
         const style: Partial<$3Dmol.AtomStyleSpec> = {};
-        if (this._options.atoms.value) {
+        const showProteinAtomsAndBonds = isProtein && !this._options.cartoon.value;
+        if (this._options.atoms.value && (!isProtein || showProteinAtomsAndBonds)) {
             style.sphere = {
                 scale: this._options.spaceFilling.value ? 1.0 : 0.22,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.SphereStyleSpec;
         }
-        if (this._options.bonds.value) {
+        if (this._options.bonds.value && (!isProtein || showProteinAtomsAndBonds)) {
             style.stick = {
                 radius: 0.15,
                 colorfunc: this._colorFunction(),
             } as unknown as $3Dmol.StickStyleSpec;
+        }
+        if (!showProteinAtomsAndBonds && isProtein) {
+            style.cartoon = {
+                color: 'spectrum',
+                arrows: true,
+                opacity: 1.0,
+            } as unknown as $3Dmol.CartoonStyleSpec;
         }
 
         return style;
@@ -1570,6 +1622,12 @@ export class MoleculeViewer {
                     opacity: defaultOpacity(),
                 };
             }
+        } else if (bgStyle === 'cartoon') {
+            style.cartoon = {
+                opacity: defaultOpacity(),
+                thickness: 0.3,
+                arrows: true,
+            };
         } else {
             unreachable();
         }
@@ -1584,6 +1642,9 @@ export class MoleculeViewer {
 
             if (style.sphere !== undefined) {
                 style.sphere.color = 0x808080;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon.color = 0x808080;
             }
         } else if (bgColor === 'property') {
             if (style.stick !== undefined) {
@@ -1603,6 +1664,14 @@ export class MoleculeViewer {
                     opacity: defaultOpacity(),
                     colorfunc: this._colorFunction(),
                 } as unknown as $3Dmol.SphereStyleSpec;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon = {
+                    opacity: defaultOpacity(),
+                    thickness: 0.3,
+                    arrows: true,
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.CartoonStyleSpec;
             }
         } else {
             unreachable();
