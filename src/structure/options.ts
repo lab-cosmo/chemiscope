@@ -144,9 +144,14 @@ export class StructureOptions extends OptionsGroup {
 
         this.labelsProperty = new HTMLOption('string', 'element');
 
-        // validate atom properties for coloring
+        // validate atom properties for labels
         if (propertiesName.includes('element')) {
             this.labelsProperty.validate = optionValidator(propertiesName, 'labels');
+        } else {
+            this.labelsProperty.validate = optionValidator(
+                propertiesName.concat(['element']),
+                'labels'
+            );
         }
 
         this.environments.bgColor.validate = optionValidator(

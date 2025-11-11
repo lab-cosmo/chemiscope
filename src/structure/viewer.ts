@@ -637,7 +637,7 @@ export class MoleculeViewer {
             this._styles.noProperties.replaceSync('');
         }
 
-        if (this._options.atomLabels.value) {
+        if (!this._options.atomLabels.value) {
             this._styles.noLabels.replaceSync('.chsp-hide-if-no-atom-labels { display: none; }');
         } else {
             this._styles.noLabels.replaceSync('');
@@ -663,8 +663,6 @@ export class MoleculeViewer {
             this._options.shape.bind(selectShape, 'multival');
         }
 
-        this._updateStyle();
-
         if (!keepOrientation) {
             this._resetView();
         }
@@ -673,9 +671,12 @@ export class MoleculeViewer {
             this._centerView();
         }
 
-        // make sure to reset axes/labels when the structure changes
+        // make sure to reset axes when the structure changes
         this._options.axes.changed('JS');
-        this._options.atomLabels.changed('JS');
+
+        // we don't update the style here as it will be done in
+        // showViewer, which is called just after load in grid.ts
+        // which is in practice the only place where load is used.
 
         this._viewer.render(() => {
             if (onLoadingDone) {
@@ -839,7 +840,7 @@ export class MoleculeViewer {
         this._options.atoms.onchange.push(restyleAndRender);
 
         this._options.atomLabels.onchange.push((showLabels) => {
-            this._updateAtomLabels();
+            restyleAndRender();
             if (!showLabels) {
                 this._styles.noLabels.replaceSync(
                     '.chsp-hide-if-no-atom-labels { display: none; }'
@@ -885,8 +886,7 @@ export class MoleculeViewer {
             // resets shapes before checking if there are shapes to add
             this._resetShapes();
 
-            this._updateStyle();
-            this._viewer.render();
+            restyleAndRender();
         });
 
         const changedSuperCell = () => {
@@ -919,8 +919,7 @@ export class MoleculeViewer {
             if (this._environmentsEnabled()) {
                 this._setEnvironmentInteractions();
             }
-            this._updateStyle();
-            this._viewer.render();
+            restyleAndRender();
         };
         this._options.supercell[0].onchange.push(changedSuperCell);
         this._options.supercell[1].onchange.push(changedSuperCell);
@@ -1110,7 +1109,6 @@ export class MoleculeViewer {
         // ======= labels settings
         // setup state when the property changes
         const labelsPropertyChanged = () => {
-            this._updateAtomLabels();
             restyleAndRender();
         };
         this._options.labelsProperty.onchange.push(labelsPropertyChanged);
@@ -1203,27 +1201,27 @@ export class MoleculeViewer {
         if (this._options.shape.value !== '') {
             this._addShapes();
         }
-
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
-            return;
+        } else {
+            assert(this._highlighted !== undefined);
+            // otherwise, render all atoms with hidden/background style
+            this._current.model.setStyle({}, this._hiddenStyle());
+            // and the central atom with central/highlighted style
+            this._current.model.setStyle(
+                { index: this._highlighted.center },
+                this._centralStyle(0.4),
+                /* add */ true
+            );
+
+            // and the environment around the central atom with main style
+            this._highlighted.model.setStyle({}, this._mainStyle());
         }
 
-        assert(this._highlighted !== undefined);
-        // otherwise, render all atoms with hidden/background style
-        this._current.model.setStyle({}, this._hiddenStyle());
-        // and the central atom with central/highlighted style
-        this._current.model.setStyle(
-            { index: this._highlighted.center },
-            this._centralStyle(0.4),
-            /* add */ true
-        );
-
-        // and the environment around the central atom with main style
-        this._highlighted.model.setStyle({}, this._mainStyle());
+        // update atom labels as well, as they depend on atom styling
         this._updateAtomLabels();
     }
 
@@ -1704,13 +1702,15 @@ export class MoleculeViewer {
             };
             const old_show = viewer_noshow.show;
 
-            viewer_noshow.show = () => {}; // suppress renders
+            try {
+                viewer_noshow.show = () => {}; // suppress renders
 
-            for (const label of this._current.atomLabels) {
-                viewer_noshow.removeLabel(label); // still does linear search, but no render
+                for (const label of this._current.atomLabels) {
+                    viewer_noshow.removeLabel(label); // still does linear search, but no render
+                }
+            } finally {
+                viewer_noshow.show = old_show; // restore
             }
-
-            viewer_noshow.show = old_show; // restore
         }
         this._current.atomLabels = [];
 
@@ -1729,19 +1729,13 @@ export class MoleculeViewer {
             // Heuristic for “visible”: has some style and is not marked hidden
             const style = atom.style || {};
             const sphere = style.sphere;
-            const stick = style.stick;
 
             const sphereVisible =
                 sphere !== undefined &&
                 sphere.hidden !== true &&
                 (sphere.opacity === undefined || sphere.opacity > 0);
 
-            const stickVisible =
-                stick !== undefined &&
-                stick.hidden !== true &&
-                (stick.opacity === undefined || stick.opacity > 0);
-
-            if (!sphereVisible && !stickVisible) {
+            if (!sphereVisible) {
                 continue; // atom not actually drawn
             }
 
@@ -1753,9 +1747,8 @@ export class MoleculeViewer {
                 const n = structure.size;
                 serial = atom.index % n;
             }
-            if (serial === undefined || serial < 0 || serial >= structure.size) {
-                continue;
-            }
+
+            assert(serial !== undefined);
 
             const name = structure.names[serial];
 
