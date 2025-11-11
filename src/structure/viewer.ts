@@ -579,8 +579,8 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-        // To avoid editting the `atoms` object in `setup3DmolStructure`, I
-        // am handling the bonds here.
+        // To avoid editing the `atoms` object in `setup3DmolStructure`,
+        // the bonds are handled here
         if (structure.bonds === undefined) {
             assignBonds(this._current.model.selectedAtoms({}));
         } else {
