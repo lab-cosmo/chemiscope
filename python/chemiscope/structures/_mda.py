@@ -137,3 +137,12 @@ def _mda_extract_properties(ag, only=None, environments=None):
             properties[name] = values
 
     return properties
+
+
+def _mda_all_atomic_environments(ag, cutoff):
+    "Extract all atomic environments out of a set of MDAnalysis AtomGroup objects"
+    environments = []
+    for structure_i, frame in enumerate(ag.universe.trajectory):
+        for atom_i in range(len(frame)):
+            environments.append((structure_i, atom_i, cutoff))
+    return environments

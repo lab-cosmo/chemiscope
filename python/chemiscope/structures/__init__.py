@@ -12,6 +12,7 @@ from ._mda import (  # noqa: F401
     _mda_extract_properties,
     _mda_to_json,
     _mda_valid_structures,
+    _mda_all_atomic_environments
 )
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
@@ -116,5 +117,7 @@ def all_atomic_environments(frames, cutoff=3.5):
         return _ase_all_atomic_environments(frames, cutoff)
     elif adapter == "stk":
         return _stk_all_atomic_environments(frames, cutoff)
+    elif adapter == "mda":
+        return _mda_all_atomic_environments(frames, cutoff)
     else:
         raise Exception("reached unreachable code")
