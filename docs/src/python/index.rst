@@ -11,7 +11,6 @@ a command-line command to convert structure files to a JSON input.
 .. toctree::
     :maxdepth: 2
 
-    installation
     cli
     reference
     jupyter

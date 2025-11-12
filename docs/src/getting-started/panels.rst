@@ -2,7 +2,7 @@ Different panels and settings
 =============================
 
 The default chemiscope visualizer is organized in three main panels: the map,
-the structure viewer and the environment information display. Additionally,
+the structure viewer, and the environment information display. Additionally,
 clicking on the dataset title (on top of the map) will display some metadata
 about the dataset (description, authors, references). This section will
 present each one, as well as the main settings accessible to customize the
@@ -10,8 +10,8 @@ display.
 
 The map is a 2D or 3D scatter plot showing properties for all the environments
 in the dataset. You can set which properties (structural or physical) should be
-used as the x, y, and potentially z axis; as well as for color and size of the
-points. Additionally, properties which have string values (and not numeric
+used as the x, y, and potentially z axis, as well as for color and size of the
+points. Additionally, properties that have string values (and not numeric
 values) can be used as category data to set the symbols used for the points. To
 open the settings modal window, click on the hamburger menu (the ☰ symbol) on
 the left of the dataset title.
@@ -60,7 +60,7 @@ two modes.
 
 .. figure:: ../img/target-toggle.png
 
-    Visualisation target toggle
+    Visualization target toggle
 
 .. _3Dmol.js: https://3dmol.csb.pitt.edu/
 
