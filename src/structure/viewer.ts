@@ -1114,10 +1114,7 @@ export class MoleculeViewer {
 
         // ======= labels settings
         // setup state when the property changes
-        const labelsPropertyChanged = () => {
-            restyleAndRender();
-        };
-        this._options.labelsProperty.onchange.push(labelsPropertyChanged);
+        this._options.labelsProperty.onchange.push(restyleAndRender);
 
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
