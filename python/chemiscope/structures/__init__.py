@@ -9,10 +9,10 @@ from ._ase import (  # noqa: F401
     ase_vectors_to_arrows,
 )
 from ._mda import (  # noqa: F401
+    _mda_all_atomic_environments,
     _mda_extract_properties,
     _mda_to_json,
     _mda_valid_structures,
-    _mda_all_atomic_environments
 )
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
