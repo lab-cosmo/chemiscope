@@ -541,9 +541,7 @@ export class MoleculeViewer {
         // unload previous structure
         this._viewer.removeAllModels();
         if (this._current !== undefined) {
-            for (const label of this._current.atomLabels) {
-                this._viewer.removeLabel(label);
-            }
+            this._viewer.removeAllLabels();
         }
 
         if (this._highlighted !== undefined) {
@@ -1810,13 +1808,14 @@ export class MoleculeViewer {
                 return value.toString();
             }
 
-            // 3 significant digits, scientific notation when appropriate
-            const s = value.toPrecision(3); // e.g. 12.3213213 -> "12.3", 0.354123123 -> "0.354", 6.724353247e-21 -> "6.77e-21"
+            // 3 significant digits, force scientific notation for small or large values
+            // e.g. 12.3213213 -> "12.3", 0.354123123 -> "0.354", 6.724353247e-21 -> "6.77e-21"
+            let s = value.toPrecision(3);
+            if (Math.abs(value) < 1e-2 || Math.abs(value) >= 1e3) {
+                s = value.toExponential(2);
+            }
 
-            // Split mantissa/exponent so we can clean up trailing zeros in the mantissa only
-            const [mantissa, exponent] = s.split('e');
-
-            return exponent ? `${mantissa}e${exponent}` : mantissa;
+            return s;
         }
 
         return String(value);
