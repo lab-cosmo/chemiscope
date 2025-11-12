@@ -4,7 +4,7 @@ Visualize biomolecules with MDAnalysis
 
 This example shows how to visualize biomolecules in chemiscope with `MDAnalysis
 <https://www.mdanalysis.org/>`_, and how to leverage the `select_atoms()
-<https://userguide.mdanalysis.org/stable/selections.html>_` method to only show the
+<https://userguide.mdanalysis.org/stable/selections.html>`_ method to only show the
 atoms of interest.
 
 Biomolecules are often consisting of a large number of atoms, which makes the classical
@@ -25,9 +25,9 @@ import chemiscope
 # Retrieving the PDB file from RCSB Protein Data Bank
 # +++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-# The `RCSB Protein Data Bank <https://www.rcsb.org/>`_ is a database of crystal
-# structures of proteins, nucleic acids and small molecules. To start with, we will
-# retrieve a structure from the PDB database. Here we choose "10MH", a complex
+# The `RCSB Protein Data Bank <https://www.rcsb.org/>`_ (RCSB PDB) is a database of
+# crystal structures of proteins, nucleic acids and small molecules. To start with, we
+# will retrieve a structure from the PDB database. Here we choose "10MH", a complex
 # consisting of a protein, a nucleic acid, small molecules, and crystallographic water.
 
 pdb_id = "10MH"
@@ -42,17 +42,17 @@ urllib.request.urlretrieve(
 #
 # We can use `MDAnalysis <https://www.mdanalysis.org/>`_ to read the PDB file.
 
-u = mda.Universe(f"./{pdb_id}.pdb")
+universe = mda.Universe(f"./{pdb_id}.pdb")
 
 # %%
 #
 # The `chemiscope` takes a `MDAnalysis.AtomGroup
-# <https://userguide.mdanalysis.org/stable/atomgroup.html>_` as input. You can toggle
+# <https://userguide.mdanalysis.org/stable/atomgroup.html>`_ as input. You can toggle
 # the cartoon representation in the hamburger menu in the top-right corner of the
 # widget. When the cartoon representation is off, the representation will automatically
 # fall back to the ball-and-stick.
 
-ag = u.atoms
+ag = universe.atoms
 chemiscope.show(
     frames=ag,
     mode="structure",
@@ -66,8 +66,8 @@ chemiscope.show(
 # The crystallographic water in the structure is not of interest, so we can use the
 # `select_atoms()` method to only show the complex for a cleaner visualization.
 
-ag = u.select_atoms("not water")
+sol = universe.select_atoms("not water")
 chemiscope.show(
-    frames=ag,
+    frames=sol,
     mode="structure",
 )
