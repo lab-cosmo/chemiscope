@@ -71,3 +71,85 @@ chemiscope.show(
     frames=sol,
     mode="structure",
 )
+
+# %%
+#
+# Exploring the sampled conformational space ++++++++++++++++++++++++++++++++++++++++++
+#
+# We can use the map mode to explore the conformational space sampled by the MD
+# simulation easily. Here, we use a `protein-ligand system
+# <https://zenodo.org/records/17477539>`_ taken from the zenodo platform as an example.
+
+complx = mda.Universe(
+    "data/epcr_gla_2vpx2500ts_10degr.pdb", "data/epcr_gla_2vpx2500ts_10degr.xtc"
+)
+
+# %%
+#
+# We describe the conformational space by two features: the distance between the
+# geometric centers of protein and ligand, and the root mean square deviation (RMSD) of
+# the atomic positions of protein with respect to its initial conformation.
+
+import numpy as np  # noqa
+from MDAnalysis.analysis.distances import distance_array  # noqa
+from MDAnalysis.analysis.rms import RMSD  # noqa
+
+# Distance calculation
+distances = []
+for _ in complx.trajectory:
+    ligand_center = complx.select_atoms("resname VPX").center_of_geometry()
+    protein_center = complx.select_atoms("protein").center_of_geometry()
+    distances.append(
+        distance_array(ligand_center, protein_center, box=complx.dimensions)
+    )
+distances = np.array(distances).flatten()
+
+# RMSD calculation
+ref = mda.Universe("data/epcr_gla_2vpx2500ts_10degr.pdb")
+R = RMSD(complx, ref, select="backbone")
+R.run()
+rmsd = R.results.rmsd.T[2]
+
+# %%
+#
+# We can then use the map mode to visualize the sampled conformational space.
+
+chemiscope.show(
+    frames=complx.atoms,
+    meta={
+        "name": "Protein-Ligand Complex",
+        "description": (
+            "Conformational space of a protein-ligand complex featurized "
+            "by the protein-ligand distance and the protein RMSD"
+        ),
+        "authors": ["The chemiscope developers"],
+        "references": [
+            (
+                "A. Iakhiaev, Stochastic resonance represents one of the mechanisms "
+                "that trigger protein ligand unbinding, Journal of Molecular Graphics "
+                "and Modelling, Volume 142, 2026, 109211"
+            )
+        ],
+    },
+    properties={
+        "Protein-Ligand Distance": {
+            "target": "structure",
+            "values": distances,
+            "units": "Å",
+            "description": (
+                "Distance between the geometric centers of protein and ligand"
+            ),
+        },
+        "Protein Backbone RMSD": {
+            "target": "structure",
+            "values": rmsd,
+            "units": "Å",
+            "description": (
+                "RMSD of the atomic positions of protein with respect to "
+                "its initial conformation"
+            ),
+        },
+    },
+)
+
+# %%

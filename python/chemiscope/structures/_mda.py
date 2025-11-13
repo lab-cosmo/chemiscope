@@ -44,6 +44,8 @@ def _mda_to_json(ag):
     data["hetatom"] = [True for _ in ag]
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
         data["chains"] = [atom.chainID for atom in ag]
+    elif hasattr(ag, "segids") and ag.segids is not None:
+        data["chains"] = [atom.segid for atom in ag]
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["resnames"] = [
             atom.resname if atom.resname is not None and atom.resname != "" else "UNK"

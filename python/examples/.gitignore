@@ -2,3 +2,5 @@
 model-exported.pt
 data/stk_cages.xyz
 10MH.pdb
+data/.epcr_gla_2vpx2500ts_10degr.xtc_offsets.lock
+data/.epcr_gla_2vpx2500ts_10degr.xtc_offsets.npz
