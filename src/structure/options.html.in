@@ -7,7 +7,7 @@
          </div>
          <div class="modal-body">
             <h5 class="chsp-settings-section-title">Representation</h5>
-            <div class="chsp-settings-representation">
+            <div class="chsp-settings-representation" style="grid-template-columns: 1fr 1fr 1fr 1fr">
                <div class="form-check form-switch">
                   <input class="form-check-input" id="atoms" type="checkbox" />
                   <label class="form-check-label" for="atoms" title="show atoms as spheres">atoms</label>
@@ -18,12 +18,14 @@
                </div>
                <div class="form-check form-switch">
                   <input class="form-check-input" id="space-filling" type="checkbox" />
-                  <label class="form-check-label" for="space-filling" title="show atoms as spheres">space filling</label>
+                  <label class="form-check-label" for="space-filling" title="use space-filling spheres">filling</label>
                </div>
                <div class="form-check form-switch chsp-hide-if-not-biomol">
                   <input class="form-check-input" id="cartoon" type="checkbox" />
                   <label class="form-check-label" for="cartoon" title="render molecules as cartoons">cartoon</label>
                </div>
+            </div>
+            <div class="chsp-settings-representation">
                <div class="form-check form-switch">
                   <input class="form-check-input" id="atom-labels" type="checkbox" />
                   <label class="form-check-label" for="atom-labels" title="show element symbols">atom labels</label>
@@ -32,14 +34,18 @@
                   <input class="form-check-input" id="unit-cell" type="checkbox" />
                   <label class="form-check-label" for="unit-cell" title="show the unit cell">unit cell</label>
                </div>
-               <div class="form-check form-switch">
-                  <input class="form-check-input" id="rotation" type="checkbox" />
-                  <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
+            </div>
+            <div class="chsp-atom-labels-property chsp-hide-if-no-atom-properties chsp-hide-if-no-atom-labels">
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="atom-labels-property" style="width: 4em">labels:</label>
+                  <select id="atom-labels-property" class="form-select">
+                     <option value="element">element</option>
+                  </select>
                </div>
             </div>
-            <div class="chsp-atom-color-property chsp-hide-if-no-atom-properties">               
+            <div class="chsp-atom-color-property chsp-hide-if-no-atom-properties">
                <div class="input-group input-group-sm">
-                  <label class="input-group-text" for="atom-color-property">color:</label>
+                  <label class="input-group-text" for="atom-color-property" style="width: 4em">color:</label>
                   <select id="atom-color-property" class="form-select">
                      <option value="element">element (CPK)</option>
                   </select>
@@ -87,7 +93,6 @@
                      <button class="btn btn-sm btn-secondary" type="button" id="atom-color-reset" style="width: 100%">reset min/max</button>
                   </div>
                </div>
-
             </div>
             <div class="chsp-hide-if-no-shapes" style="margin-top: 1em">
                <div class="input-group input-group-sm">
@@ -130,7 +135,7 @@
                   <option class="chsp-hide-if-no-cell" value="abc">abc</option>
                </select>
             </div>
-                <div style="margin-bottom: 0.8em"></div>
+            <div style="margin-bottom: 0.8em"></div>
             <div class="chsp-hide-if-no-environments">
                <div style="margin-bottom: 1.5em"></div>
                <h5 class="chsp-settings-section-title">Environments</h5>
@@ -200,6 +205,11 @@
                <button class="btn btn-secondary chsp-hide-if-no-cell" id="align-a">a</button>
                <button class="btn btn-secondary chsp-hide-if-no-cell" id="align-b">b</button>
                <button class="btn btn-secondary chsp-hide-if-no-cell" id="align-c">c</button>
+               <span></span>
+               <div class="form-check form-switch">
+                  <input class="form-check-input" id="rotation" type="checkbox" />
+                  <label class="form-check-label" for="rotation" title="rotate the camera continuously">rotation</label>
+               </div>
             </div>
             <div id="trajectory-settings-group">
                <div style="margin-bottom: 1.5em"></div>

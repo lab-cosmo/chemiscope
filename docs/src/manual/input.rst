@@ -320,6 +320,8 @@ contains the following fields and values:
                     "spaceFilling": false,
                     // show atoms labels
                     "atomLabels": false,
+                    // use an environment property value for the atom labels
+                    "labelsProperty": "element",
                     // show unit cell information and lines
                     "unitCell": false,
                     // number of repetitions in the `a/b/c` direction for the supercell
