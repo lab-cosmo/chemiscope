@@ -120,7 +120,7 @@ export class ViewersGrid {
      * The callback gets two parameter: the structure index (0-based); and the
      * full {@link UserStructure}.
      */
-    public loadStructure: (index: number, structure: unknown) => Structure;
+    public loadStructure: (index: number, structure: unknown) => Structure | Promise<Structure>;
 
     public warnings: Warnings;
 
@@ -573,17 +573,19 @@ export class ViewersGrid {
      * @param  index index of the structure
      * @return       a Structure instance
      */
-    private _structure(index: number): Structure {
+    private async _structure(index: number): Promise<Structure> {
         if (this._resolvedStructures[index] === undefined) {
-            const s = this.loadStructure(index, this._structures[index]);
-            const check = checkStructure(s as unknown as JsObject);
+            const maybe = this.loadStructure(index, this._structures[index]);
+            const structure = maybe instanceof Promise ? await maybe : maybe;
+
+            const check = checkStructure(structure as unknown as JsObject);
             if (check !== '') {
                 throw Error(
                     `got invalid object as structure: ${check}
-    the object was ${JSON.stringify(s)}`
+    the object was ${JSON.stringify(structure)}`
                 );
             }
-            this._resolvedStructures[index] = s;
+            this._resolvedStructures[index] = structure;
         }
         return this._resolvedStructures[index];
     }
@@ -657,7 +659,10 @@ export class ViewersGrid {
         structureIndex: number,
         atomIndex?: number
     ): Promise<void> {
-        return new Promise((resolve) => {
+        return new Promise(async (resolve, _) => {
+            const structure = await this._structure(structureIndex);
+            const properties = this._propertiesForStructure(structureIndex);
+
             // Initialize load options with trajectory enabled
             const options: Partial<LoadOptions> = {
                 trajectory: true,
@@ -675,8 +680,7 @@ export class ViewersGrid {
 
             // Load the structure into the viewer
             viewer.load(
-                this._structure(structureIndex),
-                this._propertiesForStructure(structureIndex),
+                structure, properties,
                 options,
                 () => {
                     // Resolve the Promise when the viewer has finished loading
