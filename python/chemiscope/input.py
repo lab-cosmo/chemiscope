@@ -383,7 +383,18 @@ def create_input(
 
 def write_external_structures(frames, prefix="structure"):
     """
-    Write external structures to JSON files and return the list of paths.
+    Export a list of frames to external JSON structure files,
+    and returns a list of dictionaries that can be used to
+    create a chemiscope dataset that references them.
+
+    .. code-block:: python
+
+        frames = ase.io.read("trajectory.xyz", ":")
+        user_frames = chemiscope.write_external_structures(
+            frames, prefix="my_structure"
+        )
+        write_input("chemiscope.json", frames=user_frames)
+
 
     :param list frames: list of atomic structures in a format that can
             be understood by `chemiscope`.

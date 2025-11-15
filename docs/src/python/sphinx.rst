@@ -77,11 +77,11 @@ External structure files
 It is possible to use the ``chemiscope`` directive to load datasets that
 reference external structure files. This is useful when the structures are
 large, or when the same structures are to be used in multiple datasets.
-The main `dataset.jison` file should contain structure entries that reference
-external `.json` files, as described in the :ref:`input documentation
-<python-input>`. The paths should be defined relative to the position of the
-main chemiscope file, as the external files will then be copied in the 
-output folder automatically. 
+The main `dataset.json` file should contain structure entries that reference
+external `.json` files - that can be created for instance using
+:py:func:`write_external_structures`. The paths should be defined relative 
+to the position of the main chemiscope file, and the external files will 
+be copied to the documentation build folder automatically. 
 
 .. code-block:: rst
 
