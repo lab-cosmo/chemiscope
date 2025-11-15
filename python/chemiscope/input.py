@@ -28,8 +28,12 @@ def create_input(
     Create a dictionary that can be saved to JSON using the format used by the default
     chemiscope visualizer.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_,
-        `stk.BuildingBlocks`_, and `MDAnalysis.AtomGroup`_ objects are supported
+    :param list frames: list of atomic structures. These can be either `chemiscope`
+        compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
+        `MDAnalysis.AtomGroup`_ objects. It is also possible to provide a list of
+        paths to `.json` files containing chemiscope-compatible structures. These
+        will be loaded dynamically when the dataset is opened in a chemiscope widget,
+        as long as the files are accessible from the viewer environment.
 
     :param dict meta: optional metadata of the dataset, see below
 
@@ -375,6 +379,30 @@ def create_input(
             data["parameters"][key] = param
 
     return data
+
+
+def write_external_structures(frames, prefix="structure"):
+    """
+    Write external structures to JSON files and return the list of paths.
+
+    :param list frames: list of atomic structures as paths to JSON files.
+    :return: list of paths to JSON files.
+    """
+
+    json_frames = frames_to_json(frames)
+
+    if "data" in json_frames[0]:
+        raise ValueError(
+            "external frames should be valid structures, but got external frames instead"
+        )
+
+    user_frames = []
+    for i, frame in enumerate(json_frames):
+        path = f"{prefix}-{i}.json"
+        json.dump(frame, open(path, "w"), indent=2)
+        user_frames.append({"size": frame["size"], "data": path})
+
+    return user_frames
 
 
 def write_input(
