@@ -37,19 +37,18 @@ def _chemiscope_valid_structures(frames):
     :return: tuple (frames as list, boolean indicating if frames are valid)
     """
 
-    frames_list = list(frames)
-    if len(frames_list) == 0:
-        return frames_list, False
+    if not hasattr(frames, "__iter__"):
+        return frames, False
 
-    first_frame = frames_list[0]
+    first_frame = frames[0]
     if not isinstance(first_frame, dict):
-        return frames_list, False
+        return frames, False
 
     required_keys = {"size", "names", "x", "y", "z"}
     if "size" not in first_frame:
-        return frames_list, False
+        return frames, False
 
-    for frame in frames_list:
+    for frame in frames:
         assert isinstance(frame, dict), (
             "inconsistent frame types: "
             f"expected dict but got {frame.__class__.__name__}"
@@ -62,7 +61,7 @@ def _chemiscope_valid_structures(frames):
                 f"missing keys {required_keys - set(frame.keys())}"
             )
 
-    return frames_list, True
+    return frames, True
 
 
 def _guess_adapter(frames):
