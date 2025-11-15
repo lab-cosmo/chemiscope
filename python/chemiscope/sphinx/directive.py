@@ -42,9 +42,6 @@ class ChemiscopeDirective(Directive):
         dataset_rel_path = self.arguments[0].strip()
         dataset_path = source_path + dataset_rel_path
 
-        print("SRC", source)
-        print("WTH", dataset_path)
-
         # Ensure unique file name to avoid clashes if the same file name is used in
         # different directives.
         with open(dataset_path, "rb") as fd:
@@ -54,6 +51,8 @@ class ChemiscopeDirective(Directive):
         # Copy dataset to the docs/build/html/_datasets folder
         build_file_path, rel_file_path = self.get_build_file_path(filename)
         copy_file(dataset_path, build_file_path)
+        # moves files referenced by external structures in a folder with
+        # a name based on the dataset file
         copy_external_structures(dataset_path, f"{build_file_path}-ext/")
 
         # Create the chemiscope node
@@ -94,8 +93,6 @@ class ChemiscopeDirective(Directive):
 
         # Relative path *for the output files*
         rel_file_path = os.path.relpath(build_file_path, html_file_dir)
-
-        print("BUILD PATH", build_file_path, rel_file_path)
         return build_file_path, rel_file_path
 
     def create_node(self, rel_file_path, include_headers=True):

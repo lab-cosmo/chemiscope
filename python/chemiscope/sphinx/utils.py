@@ -17,7 +17,7 @@ def copy_file(src_file, dst_file):
     shutil.copyfile(src_file, dst_file)
 
 
-def copy_external_structures(src_json: str, dst_json: str) -> None:
+def copy_external_structures(src_json: str, destination: str) -> None:
     """Copy external structure JSON files referenced by `src_json`
     into the same `_datasets` tree as `dst_json`, preserving relative paths.
     """
@@ -46,7 +46,6 @@ def copy_external_structures(src_json: str, dst_json: str) -> None:
         return
 
     src_base = os.path.dirname(src_json)
-    dst_base = os.path.dirname(dst_json)
 
     for struct in structures:
         if not isinstance(struct, dict):
@@ -68,15 +67,11 @@ def copy_external_structures(src_json: str, dst_json: str) -> None:
         # Source file: relative to *original* JSON location
         src_struct = os.path.join(src_base, rel_path)
 
-        print("Copying external structure:", src_struct)
-
         if not os.path.exists(src_struct):
             # Optional: log a warning if you have access to a logger
             # logger.warning("Missing external structure file %s", src_struct)
             continue
 
-        # Destination: under the same `_datasets` dir as dst_json
-        dst_struct = os.path.join(dst_base, rel_path)
+        # Destination: under the target destination folder
+        dst_struct = os.path.join(destination, rel_path)
         copy_file(src_struct, dst_struct)
-
-        print("Cpyied external structure:", src_struct, dst_struct)
