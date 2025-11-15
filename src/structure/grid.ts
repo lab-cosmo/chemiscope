@@ -654,39 +654,38 @@ export class ViewersGrid {
      * @param structureIndex index of the structure to be loaded
      * @param atomIndex optional index of the atom to highlight
      */
-    private _loadViewer(
+    private async _loadViewer(
         viewer: MoleculeViewer,
         structureIndex: number,
         atomIndex?: number
     ): Promise<void> {
-        return new Promise(async (resolve, _) => {
-            const structure = await this._structure(structureIndex);
-            const properties = this._propertiesForStructure(structureIndex);
+        //return new Promise((resolve, _error) => {
+        //    void _error; // explicitly mark as intentionally unused
 
-            // Initialize load options with trajectory enabled
-            const options: Partial<LoadOptions> = {
-                trajectory: true,
-            };
+        const structure = await this._structure(structureIndex);
+        const properties = this._propertiesForStructure(structureIndex);
 
-            // If environments are defined, add them to the options
-            if (this._environments !== undefined) {
-                options.environments = this._environments[structureIndex];
+        // Initialize load options with trajectory enabled
+        const options: Partial<LoadOptions> = {
+            trajectory: true,
+        };
 
-                // If the target is per atom, add the atom index to the highlight
-                if (this._target === 'atom') {
-                    options.highlight = atomIndex;
-                }
+        // If environments are defined, add them to the options
+        if (this._environments !== undefined) {
+            options.environments = this._environments[structureIndex];
+
+            // If the target is per atom, add the atom index to the highlight
+            if (this._target === 'atom') {
+                options.highlight = atomIndex;
             }
+        }
 
-            // Load the structure into the viewer
-            viewer.load(
-                structure, properties,
-                options,
-                () => {
-                    // Resolve the Promise when the viewer has finished loading
-                    resolve();
-                }
-            );
+        // Load the structure into the viewer
+        await new Promise<void>((resolve) => {
+            viewer.load(structure, properties, options, () => {
+                // Resolve the Promise when the viewer has finished loading
+                resolve();
+            });
         });
     }
 

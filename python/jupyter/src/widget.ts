@@ -6,7 +6,7 @@ import { Warnings, generateGUID, getByID } from '../../../src/utils';
 // Import the CSS
 import './widget.css';
 
-import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
+import { DefaultConfig, DefaultVisualizer, MapVisualizer, StructureConfig, StructureVisualizer } from '../../../src/index';
 import { Dataset, Settings, Structure, UserStructure } from '../../../src/dataset';
 
 const PlausibleTracker = Plausible({
@@ -14,6 +14,13 @@ const PlausibleTracker = Plausible({
     // jupyter typically runs on localhost
     trackLocalhost: true,
 });
+
+interface StructureRequest {
+    type: string;
+    requestId: number;
+    structure?: Structure | string;
+    error?: string;
+}
 
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
@@ -106,13 +113,14 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected _enableStructureMessages(): void {
         this.model.on(
             'msg:custom',
-            (content: any, buffers: unknown[]) => {
+            (content: StructureRequest, _buffers: unknown[]) => {
+                void _buffers; // explicitly mark as intentionally unused
                 if (!content || typeof content !== 'object') {
                     return;
                 }
 
                 if (content.type === 'load-structure-result') {
-                    const requestId = content.requestId as number;
+                    const requestId = content.requestId;
                     const pending = this._pendingStructureRequests.get(requestId);
                     if (pending) {
                         this._pendingStructureRequests.delete(requestId);
@@ -123,7 +131,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                         pending.resolve(structure);
                     }
                 } else if (content.type === 'load-structure-error') {
-                    const requestId = content.requestId as number;
+                    const requestId = content.requestId;
                     const pending = this._pendingStructureRequests.get(requestId);
                     if (pending) {
                         this._pendingStructureRequests.delete(requestId);
@@ -142,13 +150,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Ask Python to load one structure given the user-defined `data`.
      * `data` is typically the filename or an object containing it.
      */
-    protected _requestStructureFromPython(index: number, data: unknown): Promise<Structure> {        
-        
-        if (typeof data !== 'string') {
-            throw new Error(`UserStructure.data for index ${index} is not a string or object`);            
-        } 
-        const filename = data as string;
-        
+    protected _requestStructureFromPython(index: number, filename: string): Promise<Structure> {                        
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
             this._pendingStructureRequests.set(requestId, { resolve, reject });
@@ -166,13 +168,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * If the dataset uses `UserStructure`, wrap the structure config so that
      * chemiscope will ask Python to load each structure on demand.
      */
-    protected _attachStructureLoaderToConfig(config: any, data: Dataset): void {
-        const structures = (data as any).structures as (Structure | UserStructure)[] | undefined;
+    protected _attachStructureLoaderToConfig(config: DefaultConfig | StructureConfig, data: Dataset): void {
+        const structures = data.structures;
         if (!Array.isArray(structures) || structures.length === 0) {
             return;
         }
 
-        const sample = structures[0] as any;
+        const sample = structures[0];
         const hasUserData = sample && typeof sample === 'object' && 'data' in sample;
         if (!hasUserData) {
             // Normal (already-expanded) structures, nothing to do
@@ -187,7 +189,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         config.loadStructure = async (index: number, raw: unknown): Promise<Structure> => {
             const wrapper = raw as UserStructure;
             
-            const promise = this._requestStructureFromPython(index, wrapper.data);
+            const promise = this._requestStructureFromPython(index, wrapper.data as string);
             return promise;
         };
     }

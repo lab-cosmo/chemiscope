@@ -63,7 +63,7 @@ export interface DefaultConfig {
     /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
     /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
-    loadStructure?: (index: number, structure: unknown) => Structure;
+    loadStructure?: (index: number, structure: unknown) => Structure | Promise<Structure>;
     /** Maximum number of structure viewers allowed in {@link ViewersGrid} */
     maxStructureViewers?: number;
 }
@@ -501,10 +501,10 @@ class DefaultVisualizer {
         if (getStructures) {
             copy.structures = [] as Structure[];
             for (let i = 0; i < this._dataset.structures.length; i++) {
-                const structure = this.structure.loadStructure(i, this._dataset.structures[i])
+                const structure = this.structure.loadStructure(i, this._dataset.structures[i]);
                 if (structure instanceof Promise) {
                     throw new Error(
-                        "loadStructure returned a Promise, but this code path must be synchronous"
+                        'loadStructure returned a Promise, but this code path must be synchronous'
                     );
                 }
 
@@ -526,7 +526,7 @@ export interface StructureConfig {
     /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
     /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
-    loadStructure?: (index: number, structure: unknown) => Structure;
+    loadStructure?: (index: number, structure: unknown) => Structure | Promise<Structure>;
 }
 
 /**
