@@ -40,10 +40,15 @@ async function loadChemiscopeSphinx(
         };
 
         const has_external_structures = dataset.structures && dataset.structures.length > 0 && dataset.structures[0].data;
-        console.log("Loading visualizer :", visualizerMode, has_external_structures);
+        console.log("Loading visualizer :", visualizerMode, has_external_structures,
+            filePath
+        );
         if (visualizerMode !== VISUALISER_MODE.MAP && has_external_structures) {
+            // base href for external structures
+            const baseHref = filePath + "-ext/";
+            
             config.loadStructure = async (_, structure) => {
-                const url = structure.data;
+                const url = baseHref + String(structure.data).replace(/^\/+/, ""); 
 
                 console.log("Fetching structure:", url);
 

@@ -79,9 +79,9 @@ reference external structure files. This is useful when the structures are
 large, or when the same structures are to be used in multiple datasets.
 The main `dataset.jison` file should contain structure entries that reference
 external `.json` files, as described in the :ref:`input documentation
-<python-input>`. When the viewer is loaded, it will fetch the external files
-dynamically *as long as they are accessible from the browser at the specified
-path*.
+<python-input>`. The paths should be defined relative to the position of the
+main chemiscope file, as the external files will then be copied in the 
+output folder automatically. 
 
 .. code-block:: rst
 
