@@ -43,7 +43,6 @@ class ChemiscopeDirective(Directive):
         dataset_path = source_path + dataset_rel_path
 
         print("SRC", source)
-
         print("WTH", dataset_path)
 
         # Ensure unique file name to avoid clashes if the same file name is used in

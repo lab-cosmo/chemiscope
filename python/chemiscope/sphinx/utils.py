@@ -31,6 +31,7 @@ def copy_external_structures(src_json: str, dst_json: str) -> None:
         fd.close()
     except Exception:
         # if anything goes wrong reading the dataset, just skip
+        print("Warning: could not read dataset JSON to copy external structures")
         return
 
     if not isinstance(dataset, dict):
@@ -51,32 +52,23 @@ def copy_external_structures(src_json: str, dst_json: str) -> None:
         if not isinstance(struct, dict):
             continue
 
-        data = struct.get("data")
-
-        rel_path: str | None = None
+        data = struct["data"]
 
         # Case 1: data is a simple string: "frames/frame_0001.json"
         if isinstance(data, str):
             rel_path = data
+        else:
+            raise ValueError(
+                "unsupported external structure data format: "
+                f"expected string but got {data.__class__.__name__}"
+            )
 
-        # Case 2: data is a dict with a filename/path/file key
-        elif isinstance(data, dict):
-            candidate = data.get("filename") or data.get("path") or data.get("file")
-            if isinstance(candidate, str):
-                rel_path = candidate
-
-        if rel_path is None:
-            continue
-
-        # Ignore absolute paths; only support relative ones
-        if os.path.isabs(rel_path):
-            continue
-
-        # Normalise to avoid "../" nonsense
         rel_path = os.path.normpath(rel_path)
 
         # Source file: relative to *original* JSON location
         src_struct = os.path.join(src_base, rel_path)
+
+        print("Copying external structure:", src_struct)
 
         if not os.path.exists(src_struct):
             # Optional: log a warning if you have access to a logger
@@ -86,3 +78,5 @@ def copy_external_structures(src_json: str, dst_json: str) -> None:
         # Destination: under the same `_datasets` dir as dst_json
         dst_struct = os.path.join(dst_base, rel_path)
         copy_file(src_struct, dst_struct)
+
+        print("Cpyied external structure:", src_struct, dst_struct)
