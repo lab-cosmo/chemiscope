@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
     _ase_extract_properties,

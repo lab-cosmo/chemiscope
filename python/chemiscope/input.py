@@ -385,7 +385,10 @@ def write_external_structures(frames, prefix="structure"):
     """
     Write external structures to JSON files and return the list of paths.
 
-    :param list frames: list of atomic structures as paths to JSON files.
+    :param list frames: list of atomic structures in a format that can
+            be understood by `chemiscope`.
+    :param str prefix: prefix to use for the generated JSON files.
+
     :return: list of paths to JSON files.
     """
 
@@ -393,7 +396,7 @@ def write_external_structures(frames, prefix="structure"):
 
     if "data" in json_frames[0]:
         raise ValueError(
-            "external frames should be valid structures, but got external frames instead"
+            "frames should be valid structures, but got external links instead"
         )
 
     user_frames = []

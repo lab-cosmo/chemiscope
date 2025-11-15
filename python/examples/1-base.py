@@ -73,15 +73,15 @@ chemiscope.show_input("showcase.json.gz")
 # %%
 #
 # When working with large datasets, it is also possible to save separately the structure
-# data, and have chemiscope load them on demand. This can be done with a couple of utility
-# functions. Note that you will need to share the structure files alongside the main
-# dataset file, and that it will not be possible to use the standalone viewer at `chemiscope.org`,
-# as it requires all data to be in a single file.
+# data, and have chemiscope load them on demand. This can be done with a couple of
+# utility functions. Note that you will need to share the structure files alongside the
+# main dataset file, and that it will not be possible to use the standalone viewer
+# at `chemiscope.org`, as it requires all data to be included in the JSON file.
 
 # This will write the external structures as separate files `showcase-external-*.json`
 external_frames = chemiscope.write_external_structures(frames, "showcase-external")
 
-# We also use this to demonstrate the 'structure' mode of chemiscope that does not display a map.
+# We also use this to demonstrate the 'structure' mode of chemiscope
 
 chemiscope.show(
     frames=external_frames,
