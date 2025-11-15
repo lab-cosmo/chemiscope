@@ -6,7 +6,13 @@ import { Warnings, generateGUID, getByID } from '../../../src/utils';
 // Import the CSS
 import './widget.css';
 
-import { DefaultConfig, DefaultVisualizer, MapVisualizer, StructureConfig, StructureVisualizer } from '../../../src/index';
+import {
+    DefaultConfig,
+    DefaultVisualizer,
+    MapVisualizer,
+    StructureConfig,
+    StructureVisualizer,
+} from '../../../src/index';
 import { Dataset, Settings, Structure, UserStructure } from '../../../src/dataset';
 
 const PlausibleTracker = Plausible({
@@ -127,7 +133,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
                         // python can send either a string (JSON-serialized) or an object
                         const raw = content.structure;
                         const structure: Structure =
-                            typeof raw === 'string' ? (JSON.parse(raw) as Structure) : (raw as Structure);
+                            typeof raw === 'string'
+                                ? (JSON.parse(raw) as Structure)
+                                : (raw as Structure);
                         pending.resolve(structure);
                     }
                 } else if (content.type === 'load-structure-error') {
@@ -135,7 +143,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     const pending = this._pendingStructureRequests.get(requestId);
                     if (pending) {
                         this._pendingStructureRequests.delete(requestId);
-                        pending.reject(new Error(content.error || 'unknown error while loading structure'));
+                        pending.reject(
+                            new Error(content.error || 'unknown error while loading structure')
+                        );
                     }
                     if (content.error) {
                         this.warnings.sendMessage(`Error loading structure: ${content.error}`);
@@ -150,7 +160,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Ask Python to load one structure given the user-defined `data`.
      * `data` is typically the filename or an object containing it.
      */
-    protected _requestStructureFromPython(index: number, filename: string): Promise<Structure> {                        
+    protected _requestStructureFromPython(index: number, filename: string): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
             this._pendingStructureRequests.set(requestId, { resolve, reject });
@@ -168,7 +178,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * If the dataset uses `UserStructure`, wrap the structure config so that
      * chemiscope will ask Python to load each structure on demand.
      */
-    protected _attachStructureLoaderToConfig(config: DefaultConfig | StructureConfig, data: Dataset): void {
+    protected _attachStructureLoaderToConfig(
+        config: DefaultConfig | StructureConfig,
+        data: Dataset
+    ): void {
         const structures = data.structures;
         if (!Array.isArray(structures) || structures.length === 0) {
             return;
@@ -188,7 +201,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         // StructureConfig.loadStructure gets the full UserStructure as second arg
         config.loadStructure = async (index: number, raw: unknown): Promise<Structure> => {
             const wrapper = raw as UserStructure;
-            
+
             const promise = this._requestStructureFromPython(index, wrapper.data as string);
             return promise;
         };
@@ -259,8 +272,8 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         // If `data.structures` is an array of `UserStructure`, this
         // will wrap the structure config with a loader that calls Python.
-        this._attachStructureLoaderToConfig(config, data);        
-        
+        this._attachStructureLoaderToConfig(config, data);
+
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -343,8 +356,8 @@ export class StructureView extends ChemiscopeBaseView {
 
         // If `data.structures` is an array of `UserStructure`, this
         // will wrap the structure config with a loader that calls Python.
-        this._attachStructureLoaderToConfig(config, data);        
-        
+        this._attachStructureLoaderToConfig(config, data);
+
         void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
