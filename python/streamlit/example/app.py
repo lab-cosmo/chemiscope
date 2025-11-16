@@ -27,7 +27,13 @@ if uploaded is not None:
         meta={"name": "Streamlit demo"},
     )
 
-    viewer(dataset, height=1000)
+    n_structures = len(frames)  # or dataset["structures"]["size"]
+
+    # Slider controlling which structure is shown
+    idx = st.slider("Structure index", min_value=0, max_value=n_structures - 1, value=0)
+
+    viewer(dataset, selected_index=idx, height=700, key="chemiscope")
+
 else:
     st.info("Upload an .xyz file to see the Chemiscope viewer.")
 

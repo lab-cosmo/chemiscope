@@ -32,6 +32,7 @@ def viewer(
     *,
     key: str | None = None,
     height: int = 600,
+    selected_index: int | None = None,
 ) -> Any:
     """
     Render a Chemiscope viewer inside a Streamlit app.
@@ -48,5 +49,6 @@ def viewer(
 
     st.write("DEBUG: viewer() called with dataset keys =", list(dataset.keys()))
     st.write("build path =", _get_build_path())
-    return _component_func(dataset=dataset, height=height, key=key)
+    return _component_func(dataset=dataset, height=height, selected_index=selected_index,
+ key=key)
 
