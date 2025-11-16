@@ -52,11 +52,11 @@ function onRender(event: Event): void {
   }
 
   const root = getOrCreateRoot();
-  root.innerHTML = `<div class="container-fluid">
+  root.innerHTML = `<div class="container-fluid" style="padding: 0; background-color: white; opacity: 1;">
       <div class="row">
           <div class="col-md-6" style="padding: 0">
               <div class="ratio ratio-1x1">
-                  <div id="chemiscope-meta" style="z-index: 10"></div>
+                  <div id="chemiscope-meta" style="z-index: 10; height: 50px"></div>
                   <div id="chemiscope-map" style="position: absolute"></div>
               </div>
           </div>
@@ -64,7 +64,7 @@ function onRender(event: Event): void {
           <div class="col-md-6" style="padding: 0">
               <div class="ratio ratio-5x7">
                   <div>
-                      <div id="chemiscope-structure" style="height:450px"></div>
+                      <div id="chemiscope-structure" style="height:420px"></div>
                       <div id="chemiscope-info"></div>
                   </div>
               </div>
