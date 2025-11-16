@@ -12,4 +12,5 @@ from .structures import (  # noqa: F401
     ellipsoid_from_tensor,
     extract_properties,
 )
+from .streamlit import viewer as streamlit_viewer  # noqa: F401
 from .version import __version__  # noqa: F401
