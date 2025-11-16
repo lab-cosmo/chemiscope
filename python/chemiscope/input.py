@@ -398,7 +398,7 @@ def write_external_structures(frames, prefix="structure"):
 
     :param list frames: list of atomic structures in a format that can
             be understood by `chemiscope`.
-    :param str prefix: prefix to use for the generated JSON files.
+    :param str prefix: prefix to use for each generated JSON filename. Files will be named like "{prefix}-0.json", "{prefix}-1.json" etc.
 
     :return: list of paths to JSON files.
     """
