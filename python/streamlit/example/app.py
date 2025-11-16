@@ -16,12 +16,9 @@ if uploaded is not None:
 
     # read from the uploaded file-like object
     frames = ase.io.read(file_obj, ":", format="extxyz")
-    st.write("DEBUG: frames loaded =", len(frames))
 
     # very simple example: extract all properties chemiscope knows about
     properties = chemiscope.extract_properties(frames)
-
-    st.write("DEBUG: properties")
 
     # default meta/settings; you can customize as usual
     dataset = chemiscope.create_input(
@@ -30,8 +27,7 @@ if uploaded is not None:
         meta={"name": "Streamlit demo"},
     )
 
-    st.write("DEBUG: created dataset")
-    viewer(dataset, height=700)
+    viewer(dataset, height=1000)
 else:
     st.info("Upload an .xyz file to see the Chemiscope viewer.")
 

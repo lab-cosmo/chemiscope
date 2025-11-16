@@ -52,33 +52,31 @@ function onRender(event: Event): void {
   }
 
   const root = getOrCreateRoot();
-  root.innerHTML = ""; // clear previous render
+  root.innerHTML = `<div class="container-fluid">
+      <div class="row">
+          <div class="col-md-6" style="padding: 0">
+              <div class="ratio ratio-1x1">
+                  <div id="chemiscope-meta" style="z-index: 10"></div>
+                  <div id="chemiscope-map" style="position: absolute"></div>
+              </div>
+          </div>
 
-  // Create the standard chemiscope containers
-  const meta = document.createElement("div");
-  meta.id = "meta";
-
-  const map = document.createElement("div");
-  map.id = "map";
-
-  const structure = document.createElement("div");
-  structure.id = "structure";
-  structure.style.width = "100%";
-  structure.style.height = `${height - 100}px`;
-
-  const info = document.createElement("div");
-  info.id = "info";
-
-  root.appendChild(meta);
-  root.appendChild(map);
-  root.appendChild(structure);
-  root.appendChild(info);
+          <div class="col-md-6" style="padding: 0">
+              <div class="ratio ratio-5x7">
+                  <div>
+                      <div id="chemiscope-structure" style="height:450px"></div>
+                      <div id="chemiscope-info"></div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>`;
 
   const config = {
-    meta: "meta",
-    map: "map",
-    structure: "structure",
-    info: "info",
+      map: 'chemiscope-map',
+      info: 'chemiscope-info',
+      meta: 'chemiscope-meta',
+      structure: 'chemiscope-structure',
   };
 
   console.log("loading chemiscope visualizer");
