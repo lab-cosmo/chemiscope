@@ -83,13 +83,8 @@ chemiscope.show_input("showcase.json.gz")
 
 # This will write the external structures as separate files `showcase-external-*.json`
 external_frames = chemiscope.write_external_structures(frames, "showcase-external")
-print("External structure files:")
-for f in sorted(glob.glob("showcase-external*.json")):
-    print("  ", f)
-
 
 # We also use this to demonstrate the 'structure' mode of chemiscope
-
 chemiscope.show(
     frames=external_frames,
     mode="structure",
@@ -105,3 +100,7 @@ print("\nCompressed dataset files:")
 for f in sorted(glob.glob("showcase*.json.gz")):
     size = os.path.getsize(f)
     print(f"  {f}  ({size} bytes)")
+
+print("External structure files:")
+for f in sorted(glob.glob("showcase-external*.json")):
+    print("  ", f)
