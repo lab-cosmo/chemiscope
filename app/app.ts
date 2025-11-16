@@ -14,7 +14,7 @@ import './app.css';
 
 interface Configuration {
     /// optional callback to load the structures on demand.
-    loadStructure?: (index: number, structure: unknown) => Structure;
+    loadStructure?: (index: number, structure: unknown) => Promise<any>;
 }
 
 export class ChemiscopeApp {
@@ -81,17 +81,18 @@ export class ChemiscopeApp {
             loadStructure: undefined,
         };
         if (example == 'Azaphenacenes') {
-            // example of asynchronous structure loading
-            config.loadStructure = (_: number, structure: any) => {
-                return JSON.parse(
-                    $.ajax({
-                        type: 'GET',
-                        url: `examples/${structure.data}`,
-                        // this is getting deprecated, but the best option until
-                        // we change loadStructure to be an async callback
-                        async: false,
-                    }).responseText
-                );
+            // example of dynamic structure loading
+            config.loadStructure = async (_, structure:any) => {
+                const url = `examples/${structure.data}`
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to fetch structure file "${url}": ${response.status} ${response.statusText}`
+                    );
+                }
+
+                return await response.json();
             };
         }
 

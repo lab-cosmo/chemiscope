@@ -43,6 +43,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
 
+        # listen for custom messages from the JS side
+        self.on_msg(self._handle_js_msg)
+
     def save(self, path):
         """
         Save the dataset displayed by this widget as JSON to the given ``path``.
@@ -62,6 +65,63 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
+
+    def _handle_js_msg(self, _, content, buffers):
+        """Handle custom messages sent from the JS widget.
+
+        Expected messages:
+
+        - {"type": "load-structure",
+           "requestId": int,
+           "filename": "relative/path.json[.gz]"}
+        """
+        msg_type = content.get("type", None)
+
+        if msg_type == "load-structure":
+            # Reads a structure file and sends it back to the JS side
+            request_id = content.get("requestId")
+            filename = content.get("filename")
+
+            if filename is None:
+                self.send(
+                    {
+                        "type": "load-structure-error",
+                        "requestId": request_id,
+                        "error": "missing filename in load-structure message",
+                    }
+                )
+                return
+
+            try:
+                path = Path(filename)
+
+                # Allow gzip-compressed structure files as well
+                if str(path).endswith(".gz"):
+                    with gzip.open(path, "rt") as f:
+                        structure = json.load(f)
+                else:
+                    with path.open("rt") as f:
+                        structure = json.load(f)
+
+            except Exception as exc:
+                self.send(
+                    {
+                        "type": "load-structure-error",
+                        "requestId": request_id,
+                        "error": f"failed to load structure from '{filename}': {exc}",
+                    }
+                )
+            else:
+                # `structure` must be a plain JSON-serialisable object that matches
+                # chemiscope's `Structure` interface on the JS side.
+                self.send(
+                    {
+                        "type": "load-structure-result",
+                        "requestId": request_id,
+                        "filename": filename,
+                        "structure": structure,
+                    }
+                )
 
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large
@@ -333,6 +393,34 @@ def _is_running_in_notebook():
             return False
     except NameError:
         return False
+
+
+def _read_structure_as_chemiscope(path):
+    """
+    Read a single structure file and return a chemiscope Structure dict:
+      {
+        "size": N,
+        "names": [...],                # chemical symbols
+        "x": [...], "y": [...], "z": [...],
+        "cell": [[...],[...],[...]],   # optional, included if periodic
+        # (you can extend with bonds/species/charges if desired)
+      }
+
+    By default, uses ASE to support many formats. If you prefer to point
+    `structure_files` to pre-converted JSON files (already in chemiscope's
+    Structure shape), replace the ASE block with a JSON loader.
+    """
+    # If the path points to a .json already in chemiscope Structure shape,
+    # you can fast-path it:
+    if path.lower().endswith(".json"):
+        import json
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # minimal validation
+        if not isinstance(data, dict) or "x" not in data or "names" not in data:
+            raise ValueError("JSON file is not a chemiscope Structure")
+        return data
 
 
 def _is_running_in_sphinx_gallery():

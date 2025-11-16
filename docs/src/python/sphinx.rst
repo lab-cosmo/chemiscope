@@ -70,6 +70,29 @@ The ``map`` mode shows only the property map, with persistent warnings
     :mode: map
     :warning_timeout: 0
 
+
+External structure files
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to use the ``chemiscope`` directive to load datasets that
+reference external structure files. This is useful when the structures are
+large, or when the same structures are to be used in multiple datasets.
+The main `dataset.json` file should contain structure entries that reference
+external `.json` files - that can be created for instance using
+:py:func:`write_external_structures`. The paths should be defined relative 
+to the position of the main chemiscope file, and the external files will 
+be copied to the documentation build folder automatically. 
+
+.. code-block:: rst
+
+    .. chemiscope:: ../datasets/showcase-external.json
+        :mode: default
+        :warning_timeout: 0
+
+.. chemiscope:: ../datasets/showcase-external.json
+    :mode: default
+    :warning_timeout: 0
+
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
