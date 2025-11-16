@@ -502,11 +502,9 @@ class DefaultVisualizer {
             copy.structures = [] as Structure[];
             for (let i = 0; i < this._dataset.structures.length; i++) {
                 const structure = this.structure.loadStructure(i, this._dataset.structures[i]);
-                if (structure instanceof Promise) {
-                    throw new Error(
-                        'loadStructure returned a Promise, but this code path must be synchronous'
-                    );
-                }
+                // this code path should only be reached with the default loader, that is
+                // synchronous
+                assert(!(structure instanceof Promise));
 
                 copy.structures.push(structure);
             }

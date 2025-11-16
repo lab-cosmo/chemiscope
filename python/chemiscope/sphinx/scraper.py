@@ -65,8 +65,6 @@ class ChemiscopeScraper:
             src_dataset = os.path.join(os.path.dirname(src_file), dataset_filename)
             widget.save(src_dataset)
 
-            print(" SCRAPER COPYING FILES ")
-            print(src_file, src_dataset, dataset_filename, rst_dataset_dir)
             copy_external_structures(src_dataset, rst_dataset_dir)
 
             rel_file_path = os.path.join("_datasets", dataset_filename)

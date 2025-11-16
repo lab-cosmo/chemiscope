@@ -11,6 +11,9 @@ Use `chemiscope.show` in a Jupyter notebook for interactive visualization
 # %%
 #
 
+import glob
+import os
+
 import ase.io
 
 import chemiscope
@@ -80,6 +83,10 @@ chemiscope.show_input("showcase.json.gz")
 
 # This will write the external structures as separate files `showcase-external-*.json`
 external_frames = chemiscope.write_external_structures(frames, "showcase-external")
+print("External structure files:")
+for f in sorted(glob.glob("showcase-external*.json")):
+    print("  ", f)
+
 
 # We also use this to demonstrate the 'structure' mode of chemiscope
 
@@ -87,3 +94,14 @@ chemiscope.show(
     frames=external_frames,
     mode="structure",
 )
+
+# The dataset file is smaller and will take up less browser memory when loaded
+chemiscope.write_input(
+    "showcase-nostructures.json.gz",
+    frames=external_frames,
+)
+
+print("\nCompressed dataset files:")
+for f in sorted(glob.glob("showcase*.json.gz")):
+    size = os.path.getsize(f)
+    print(f"  {f}  ({size} bytes)")

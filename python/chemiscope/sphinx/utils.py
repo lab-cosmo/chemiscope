@@ -53,7 +53,7 @@ def copy_external_structures(src_json: str, destination: str) -> None:
 
         data = struct["data"]
 
-        # Case 1: data is a simple string: "frames/frame_0001.json"
+        # Expecting data to be just the path of the structure.json
         if isinstance(data, str):
             rel_path = data
         else:
@@ -68,9 +68,7 @@ def copy_external_structures(src_json: str, destination: str) -> None:
         src_struct = os.path.join(src_base, rel_path)
 
         if not os.path.exists(src_struct):
-            # Optional: log a warning if you have access to a logger
-            # logger.warning("Missing external structure file %s", src_struct)
-            continue
+            raise FileNotFoundError(f"External structure file {src_struct} missing")
 
         # Destination: under the target destination folder
         dst_struct = os.path.join(destination, rel_path)
