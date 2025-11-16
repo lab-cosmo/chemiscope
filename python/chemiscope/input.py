@@ -31,9 +31,10 @@ def create_input(
     :param list frames: list of atomic structures. These can be either `chemiscope`
         compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
         `MDAnalysis.AtomGroup`_ objects. It is also possible to provide a list of
-        paths to `.json` files containing chemiscope-compatible structures. These
-        will be loaded dynamically when the dataset is opened in a chemiscope widget,
-        as long as the files are accessible from the viewer environment.
+        ``{"size": <n-atoms>, "data": <structure-path.json>}`` dictionaries,
+        referencing external `.json` files that will be loaded dynamically when
+        the dataset is opened in a chemiscope widget, as long as the files are
+        accessible from the viewer environment.
 
     :param dict meta: optional metadata of the dataset, see below
 
@@ -381,7 +382,7 @@ def create_input(
     return data
 
 
-def write_external_structures(frames, prefix="structure"):
+def write_external_structures(frames, prefix="structure", gzip=True):
     """
     Export a list of frames to external JSON structure files,
     and returns a list of dictionaries that can be used to
@@ -398,7 +399,11 @@ def write_external_structures(frames, prefix="structure"):
 
     :param list frames: list of atomic structures in a format that can
             be understood by `chemiscope`.
-    :param str prefix: prefix to use for each generated JSON filename. Files will be named like "{prefix}-0.json", "{prefix}-1.json" etc.
+    :param str prefix: prefix to use for each generated JSON filename.
+        Files will be named like `{prefix}-0.json`, `{prefix}-1.json` etc.
+    :param str gzip: whether the structures should be compressed, and
+        saved as `.json.gz` files
+
 
     :return: list of paths to JSON files.
     """
@@ -412,8 +417,13 @@ def write_external_structures(frames, prefix="structure"):
 
     user_frames = []
     for i, frame in enumerate(json_frames):
-        path = f"{prefix}-{i}.json"
-        json.dump(frame, open(path, "w"), indent=2)
+        if zip:
+            path = f"{prefix}-{i}.json.gz"
+            with gzip.open(path, "w", 9) as file:
+                file.write(json.dumps(frame, indent=2).encode("utf8"))
+        else:
+            path = f"{prefix}-{i}.json"
+            json.dump(frame, open(path, "w"), indent=2)
         user_frames.append({"size": frame["size"], "data": path})
 
     return user_frames

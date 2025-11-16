@@ -81,8 +81,8 @@ chemiscope.show_input("showcase.json.gz")
 # main dataset file, and that it will not be possible to use the standalone viewer
 # at `chemiscope.org`, as it requires all data to be included in the JSON file.
 
-# This will write the external structures as separate files `showcase-external-*.json`
-external_frames = chemiscope.write_external_structures(frames, "showcase-external")
+# This will write the external structures as separate files `structure-*.json`
+external_frames = chemiscope.write_external_structures(frames, "structure", gzip=True)
 
 # We also use this to demonstrate the 'structure' mode of chemiscope
 chemiscope.show(
@@ -102,5 +102,5 @@ for f in sorted(glob.glob("showcase*.json.gz")):
     print(f"  {f}  ({size} bytes)")
 
 print("External structure files:")
-for f in sorted(glob.glob("showcase-external*.json")):
+for f in sorted(glob.glob("structure-*.json.gz")):
     print("  ", f)

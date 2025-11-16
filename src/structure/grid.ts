@@ -659,9 +659,6 @@ export class ViewersGrid {
         structureIndex: number,
         atomIndex?: number
     ): Promise<void> {
-        //return new Promise((resolve, _error) => {
-        //    void _error; // explicitly mark as intentionally unused
-
         const structure = await this._structure(structureIndex);
         const properties = this._propertiesForStructure(structureIndex);
 
