@@ -47,8 +47,6 @@ def viewer(
         Height in pixels for the viewer.
     """
 
-    st.write("DEBUG: viewer() called with dataset keys =", list(dataset.keys()))
-    st.write("build path =", _get_build_path())
     return _component_func(dataset=dataset, height=height, selected_index=selected_index,
  key=key)
 

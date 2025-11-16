@@ -6,9 +6,15 @@ import {
 
 const ROOT_ID = "chemiscope-root";
 let visualizer: any | null = null;
+let indexer: any | null = null;
 let visualizerLoaded = false;
 let lastSelection: number | null = null;
+let lastReportedSelection: number | null = null; // CS -> ST
+let originalMapOnselect: any | null = null;
+let originalStructOnselect: any | null = null;
+let originalInfoOnchange: any | null = null;
 
+// Get the Chemiscope object from window
 function getChemiscope(): any | null {
   const cs = (window as any).Chemiscope;
   if (!cs) {
@@ -37,17 +43,91 @@ function getOrCreateRoot(): HTMLDivElement {
   return root;
 }
 
-function applySelection(index: number): void {
-  if (!visualizer || !visualizer.structure) {
+// Apply a selection coming from Streamlit (structure index)
+function applySelectionFromStructure(structureIndex: number): void {
+  if (!visualizer || !indexer) return;
+
+  // We interpret the Streamlit slider as controlling per-structure selection.
+  // Use the indexer in "structure" target mode to get full Indexes.
+  const indexes = indexer.fromStructureAtom("structure", structureIndex);
+  if (!indexes) {
+    console.warn("No environment for structure index", structureIndex);
     return;
   }
 
   try {
-    visualizer.structure.show({ structure: index, atom: 0 });
+    console.log("selecting structure from ST", indexes)
+    // 1) Move the active marker on the map
+    visualizer.map.select(indexes);
+
+    // 2) Mirror what a user click does: notify the rest of the system
+    //    (DefaultVisualizer wired map.onselect to update info + structure)
+    console.log("maponselect", originalMapOnselect)
+    if (originalMapOnselect) {
+      originalMapOnselect(indexes); // uses the unwrapped version to avoid infinite loops
+    }
   } catch (err) {
-    console.error("Error applying selection to chemiscope:", err);
+    console.error("Error applying selection to chemiscope from slider:", err);
   }
 }
+
+function reportSelectionToStreamlit(structureIndex: number): void {
+  console.log("reporting selection to Streamlit:", structureIndex); 
+  if (structureIndex === lastReportedSelection) {
+    return; // nothing new
+  }
+  lastReportedSelection = structureIndex;
+
+  try {
+    Streamlit.setComponentValue(structureIndex);
+  } catch (err) {
+    console.error("Error sending selection back to Streamlit:", err);
+  }
+}
+
+function installReverseSyncCallbacks(): void {
+  if (!visualizer) return;
+  console.log("installing callbacks")
+
+  const sendFromIndexes = (indexes: any) => {
+    if (!indexes || typeof indexes.structure !== "number") return;
+    const s = indexes.structure as number;
+    // update our forward-selection cache as well
+    lastSelection = s;
+    reportSelectionToStreamlit(s);
+  };
+
+  // Wrap map.onselect
+  originalMapOnselect = visualizer.map.onselect;
+  visualizer.map.onselect = (indexes: any) => {
+    console.log("map.onselect called with indexes:", indexes);
+    if (typeof originalMapOnselect === "function") {
+      originalMapOnselect(indexes);
+    }
+    sendFromIndexes(indexes);
+  };
+
+  // Wrap structure.onselect
+  originalStructOnselect = visualizer.structure.onselect;
+  visualizer.structure.onselect = (indexes: any) => {
+    console.log("structure.onselect called with indexes:", indexes);
+    if (typeof originalStructOnselect === "function") {
+      originalStructOnselect(indexes);
+    }
+    sendFromIndexes(indexes);
+  };
+
+  // Wrap info.onchange
+  originalInfoOnchange = visualizer.info.onchange;
+  visualizer.info.onchange = (indexes: any) => {
+    console.log("info.onchange called with indexes:", indexes);
+    if (typeof originalInfoOnchange === "function") {
+      originalInfoOnchange(indexes);
+    }
+    sendFromIndexes(indexes);
+  };
+}
+
 
 
 function onRender(event: Event): void {
@@ -110,10 +190,19 @@ function onRender(event: Event): void {
         .then((v: any) => {
           visualizer = v;
 
+          // Build our own EnvironmentIndexer from the current dataset
+          const ds = v.dataset(true); // get structures resolved
+          indexer = new Chemiscope.EnvironmentIndexer(
+            ds.structures,
+            ds.environments
+          );
+
+          installReverseSyncCallbacks(); 
+
           // If we already have a pending selection, apply it
           if (selectedIndex !== null) {
             lastSelection = selectedIndex;
-            applySelection(selectedIndex);
+            applySelectionFromStructure(selectedIndex);
           }
         })
         .catch((err: unknown) => {
@@ -127,7 +216,7 @@ function onRender(event: Event): void {
       visualizer
     ) {
       lastSelection = selectedIndex;
-      applySelection(selectedIndex);
+      applySelectionFromStructure(selectedIndex);
     }
   }
 
