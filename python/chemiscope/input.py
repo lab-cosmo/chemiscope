@@ -382,7 +382,10 @@ def create_input(
     return data
 
 
-def write_external_structures(frames, prefix="structure", compress=True):
+from time import time
+
+
+def write_external_structures(frames, prefix="structure", compresslevel=5):
     """
     Export a list of frames to external JSON structure files,
     and returns a list of dictionaries that can be used to
@@ -401,30 +404,37 @@ def write_external_structures(frames, prefix="structure", compress=True):
             be understood by `chemiscope`.
     :param str prefix: prefix to use for each generated JSON filename.
         Files will be named like `{prefix}-0.json`, `{prefix}-1.json` etc.
-    :param str compress: whether the structures should be compressed, and
-        saved as `.json.gz` files
-
+    :param str compresslevel: if zero, structures are saved
+        as uncompressed `.json` files, otherwise they are compressed
+        and saved as `.json.gz` files, according to the desired
+        compression level (1:fast, large file; 9: slow, small file).
 
     :return: list of paths to JSON files.
     """
 
+    ttojson = -time()
     json_frames = frames_to_json(frames)
+    ttojson += time()
+    print(f"Time for conversion {ttojson}")
 
     if "data" in json_frames[0]:
         raise ValueError(
             "frames should be valid structures, but got external links instead"
         )
 
+    ttowrite = -time()
     user_frames = []
     for i, frame in enumerate(json_frames):
-        if zip:
+        if compresslevel > 0:
             path = f"{prefix}-{i}.json.gz"
-            with gzip.open(path, "w", 9) as file:
+            with gzip.open(path, "w", compresslevel) as file:
                 file.write(json.dumps(frame, indent=2).encode("utf8"))
         else:
             path = f"{prefix}-{i}.json"
             json.dump(frame, open(path, "w"), indent=2)
         user_frames.append({"size": frame["size"], "data": path})
+    ttowrite += time()
+    print(f"Time for writing {ttowrite}")
 
     return user_frames
 
