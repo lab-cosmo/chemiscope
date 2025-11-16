@@ -382,7 +382,7 @@ def create_input(
     return data
 
 
-def write_external_structures(frames, prefix="structure", gzip=True):
+def write_external_structures(frames, prefix="structure", compress=True):
     """
     Export a list of frames to external JSON structure files,
     and returns a list of dictionaries that can be used to
@@ -401,7 +401,7 @@ def write_external_structures(frames, prefix="structure", gzip=True):
             be understood by `chemiscope`.
     :param str prefix: prefix to use for each generated JSON filename.
         Files will be named like `{prefix}-0.json`, `{prefix}-1.json` etc.
-    :param str gzip: whether the structures should be compressed, and
+    :param str compress: whether the structures should be compressed, and
         saved as `.json.gz` files
 
 
