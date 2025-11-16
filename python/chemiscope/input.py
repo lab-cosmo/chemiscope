@@ -382,9 +382,6 @@ def create_input(
     return data
 
 
-from time import time
-
-
 def write_external_structures(frames, prefix="structure", compresslevel=5):
     """
     Export a list of frames to external JSON structure files,
@@ -412,17 +409,13 @@ def write_external_structures(frames, prefix="structure", compresslevel=5):
     :return: list of paths to JSON files.
     """
 
-    ttojson = -time()
     json_frames = frames_to_json(frames)
-    ttojson += time()
-    print(f"Time for conversion {ttojson}")
 
     if "data" in json_frames[0]:
         raise ValueError(
             "frames should be valid structures, but got external links instead"
         )
 
-    ttowrite = -time()
     user_frames = []
     for i, frame in enumerate(json_frames):
         if compresslevel > 0:
@@ -433,8 +426,6 @@ def write_external_structures(frames, prefix="structure", compresslevel=5):
             path = f"{prefix}-{i}.json"
             json.dump(frame, open(path, "w"), indent=2)
         user_frames.append({"size": frame["size"], "data": path})
-    ttowrite += time()
-    print(f"Time for writing {ttowrite}")
 
     return user_frames
 
