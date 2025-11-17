@@ -1947,7 +1947,7 @@ export class MoleculeViewer {
      * Reset the view by re-centering it and zooming to fit the model as much as
      * possible inside the views.
      */
-    public _resetView(): void {
+    private _resetView(): void {
         this._viewer.zoomTo();
         this._viewer.zoom(2.0);
         this._viewer.setSlab(-1000, 1000);
