@@ -48,14 +48,6 @@ async function loadChemiscopeSphinx(
                 const url = baseHref + String(structure.data).replace(/^\/+/, ""); 
 
                 return await fetchDataset(url);
-/*                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(
-                        `Failed to fetch structure file "${url}": ${response.status} ${response.statusText}`
-                    );
-                }
-
-                return await response.json();*/
             };
         }
 

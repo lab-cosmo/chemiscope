@@ -207,9 +207,6 @@ def _ase_to_json(frame):
     data = {}
     data["size"] = len(frame)
     data["names"] = list(frame.symbols)
-    # data["x"] = [float(value) for value in frame.positions[:, 0]]
-    # data["y"] = [float(value) for value in frame.positions[:, 1]]
-    # data["z"] = [float(value) for value in frame.positions[:, 2]]
     data["x"] = frame.positions[:, 0].tolist()
     data["y"] = frame.positions[:, 1].tolist()
     data["z"] = frame.positions[:, 2].tolist()
