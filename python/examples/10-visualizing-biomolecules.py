@@ -78,8 +78,8 @@ chemiscope.show(
 # ++++++++++++++++++++++++++++++++++++++++++
 #
 # We can use the map mode to explore the conformational space sampled by the MD
-# simulation easily. Here, we use a protein-lipid system taken from the 
-# `MDAnalysisData <https://www.mdanalysis.org/MDAnalysisData/index.html>`_ as an
+# simulation easily. Here, we use a protein-lipid system taken from the
+# `MDAnalysisTests <https://userguide.mdanalysis.org/stable/testing.html>`_ as an
 # example.
 
 from MDAnalysis.tests.datafiles import GRO_MEMPROT, XTC_MEMPROT  # noqa

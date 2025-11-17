@@ -9,7 +9,7 @@ stk
 stko
 rdkit>=2025
 MDAnalysis
-MDAnalysisData
+MDAnalysisTests
 
 # required for the examples of chemiscope.explore
 mace-torch
