@@ -160,7 +160,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Ask Python to load one structure given the user-defined `data`.
      * `data` is typically the filename or an object containing it.
      */
-    protected _requestStructureFromPython(index: number, filename: string): Promise<Structure> {
+    protected _requestStructureFromPython(index: number, structure: UserStructure): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
             this._pendingStructureRequests.set(requestId, { resolve, reject });
@@ -169,7 +169,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 type: 'load-structure',
                 requestId,
                 index,
-                filename,
+                data: structure.data as string,
             });
         });
     }
@@ -202,7 +202,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         config.loadStructure = async (index: number, raw: unknown): Promise<Structure> => {
             const wrapper = raw as UserStructure;
 
-            const promise = this._requestStructureFromPython(index, wrapper.data as string);
+            const promise = this._requestStructureFromPython(index, wrapper);
             return promise;
         };
     }

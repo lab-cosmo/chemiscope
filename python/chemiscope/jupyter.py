@@ -80,9 +80,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         if msg_type == "load-structure":
             # Reads a structure file and sends it back to the JS side
             request_id = content.get("requestId")
-            filename = content.get("filename")
+            data = content.get("data")
 
-            if filename is None:
+            if data is None:
                 self.send(
                     {
                         "type": "load-structure-error",
@@ -91,9 +91,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                     }
                 )
                 return
-
             try:
-                path = Path(filename)
+                # read structure from file (including relative path)
+                path = Path(data)
 
                 # Allow gzip-compressed structure files as well
                 if str(path).endswith(".gz"):
@@ -102,7 +102,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 else:
                     with path.open("rt") as f:
                         structure = json.load(f)
-
+                # `structure` must be a plain JSON-serialisable object that matches
+                # chemiscope's `Structure` interface on the JS side.
+                self.send(
+                    {
+                        "type": "load-structure-result",
+                        "requestId": request_id,
+                        "structure": structure,
+                    }
+                )
             except Exception as exc:
                 self.send(
                     {
@@ -111,18 +119,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                         "error": f"failed to load structure from '{filename}': {exc}",
                     }
                 )
-            else:
-                # `structure` must be a plain JSON-serialisable object that matches
-                # chemiscope's `Structure` interface on the JS side.
-                self.send(
-                    {
-                        "type": "load-structure-result",
-                        "requestId": request_id,
-                        "filename": filename,
-                        "structure": structure,
-                    }
-                )
-
+            
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large
         class_name = self.__class__.__name__
