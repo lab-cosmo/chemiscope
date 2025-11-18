@@ -1205,7 +1205,9 @@ export class MoleculeViewer {
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
+            // render hetero atoms with not-protein mode (e.g. ball-and-stick)
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
+            // render non-hetero atoms with protein mode (e.g. cartoon)
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
         } else {
             assert(this._highlighted !== undefined);
