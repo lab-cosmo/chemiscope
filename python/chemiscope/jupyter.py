@@ -116,7 +116,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                     {
                         "type": "load-structure-error",
                         "requestId": request_id,
-                        "error": f"failed to load structure from '{filename}': {exc}",
+                        "error": f"failed to load structure from '{data}': {exc}",
                     }
                 )
 
