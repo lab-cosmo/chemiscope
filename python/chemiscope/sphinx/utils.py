@@ -18,8 +18,9 @@ def copy_file(src_file, dst_file):
 
 
 def copy_external_structures(src_json: str, destination: str) -> None:
-    """Copy external structure JSON files referenced by `src_json`
-    into the same `_datasets` tree as `dst_json`, preserving relative paths.
+    """
+    Copy external structure JSON files referenced by ``src_json``
+    into the same ``_datasets`` tree as ``destination``, preserving relative paths.
     """
 
     try:

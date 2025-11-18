@@ -187,8 +187,8 @@ class ChemiscopeBaseView extends DOMWidgetView {
             return;
         }
 
-        const sample = structures[0];
-        const hasUserData = sample && typeof sample === 'object' && 'data' in sample;
+        const structure = structures[0];
+        const hasUserData = structure && typeof structure === 'object' && 'data' in structure;
         if (!hasUserData) {
             // Normal (already-expanded) structures, nothing to do
             return;

@@ -83,7 +83,7 @@ chemiscope.show_input("showcase.json.gz")
 
 # This will write the external structures as separate files `structure-*.json`
 external_frames = chemiscope.write_external_structures(
-    frames, "structure", compresslevel=True
+    frames, prefix="structure"
 )
 
 # We also use this to demonstrate the 'structure' mode of chemiscope

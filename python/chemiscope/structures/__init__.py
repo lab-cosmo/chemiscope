@@ -100,7 +100,6 @@ def frames_to_json(frames):
     """
     frames, adapter = _guess_adapter(frames)
 
-    json_frames = []
     if adapter == "chemiscope":
         json_frames = frames
     elif adapter == "ASE":
