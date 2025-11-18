@@ -406,7 +406,10 @@ def write_external_structures(frames, prefix="structure", compresslevel=5):
         and saved as `.json.gz` files, according to the desired
         compression level (1:fast, large file; 9: slow, small file).
 
-    :return: list of paths to JSON files.
+    :return: list of paths to JSON file as a list of
+        {"size":<natoms>, "data":<filename>} records that can be
+        used to create a concise chemiscope file that references
+        external files as structures
     """
 
     json_frames = frames_to_json(frames)
