@@ -160,7 +160,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Ask Python to load one structure given the user-defined `data`.
      * `data` is typically the filename or an object containing it.
      */
-    protected _requestStructureFromPython(index: number, structure: UserStructure): Promise<Structure> {
+    protected _requestStructureFromPython(
+        index: number,
+        structure: UserStructure
+    ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
             this._pendingStructureRequests.set(requestId, { resolve, reject });

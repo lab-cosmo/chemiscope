@@ -119,7 +119,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                         "error": f"failed to load structure from '{filename}': {exc}",
                     }
                 )
-            
+
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large
         class_name = self.__class__.__name__
