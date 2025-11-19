@@ -32,12 +32,24 @@ async function loadChemiscopeSphinx(
         const dataset = await fetchDataset(filePath);
 
         // Setup visualizer config
-        const config = {
+        let config = {
             map: `${divId}-map`,
             info: `${divId}-info`,
             meta: `${divId}-meta`,
             structure: `${divId}-structure`,
         };
+
+        const has_external_structures = dataset.structures && dataset.structures.length > 0 && dataset.structures[0].data;
+        if (visualizerMode !== VISUALISER_MODE.MAP && has_external_structures) {
+            // base href for external structures
+            const baseHref = filePath + "-ext/";
+
+            config.loadStructure = async (_, structure) => {
+                const url = baseHref + String(structure.data).replace(/^\/+/, ""); 
+
+                return await fetchDataset(url);
+            };
+        }
 
         // Prepare html for the visualizer
         const root = document.getElementById(divId);

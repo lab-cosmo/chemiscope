@@ -372,6 +372,9 @@ export class MoleculeViewer {
         window.requestAnimationFrame(() => {
             window.dispatchEvent(new Event('resize'));
         });
+
+        // default view when creating the viewer
+        this._resetView();
     }
 
     /**
@@ -675,7 +678,7 @@ export class MoleculeViewer {
         this._options.axes.changed('JS');
 
         // we don't update the style here as it will be done in
-        // showViewer, which is called just after load in grid.ts
+        // showInViewer, which is called just after load in grid.ts
         // which is in practice the only place where load is used.
 
         this._viewer.render(() => {
@@ -710,6 +713,7 @@ export class MoleculeViewer {
 
         this._setHoverable(active);
     }
+
     /**
      * Highlight a given `atom` in the current structure.
      *
