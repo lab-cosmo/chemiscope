@@ -127,6 +127,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 }
 
                 if (content.type === 'load-structure-result') {
+                    console.log('got structure', content.requestId);
                     const requestId = content.requestId;
                     const pending = this._pendingStructureRequests.get(requestId);
                     if (pending) {
@@ -167,6 +168,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
+            console.log('requesting', requestId, structure.data);
             this._pendingStructureRequests.set(requestId, { resolve, reject });
 
             this.model.send({

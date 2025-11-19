@@ -33,15 +33,32 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     # timeout for warning messages
     warning_timeout = Int(10000).tag(sync=True)
 
-    def __init__(self, data, has_metadata, warning_timeout=10000):
+    def __init__(
+        self, data, has_metadata, warning_timeout=10000, cache_structures=True
+    ):
         super().__init__()
-        self.value = json.dumps(data)
         self.has_metadata = has_metadata
         if "settings" in data:
             self.settings = data["settings"]
         self._settings_sync = True
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
+
+        # hold structures on the python side to save js memory
+        self._structures_cache = {}
+        if cache_structures and "data" not in data["structures"][0]:
+            structure_refs = []
+            for i, structure in enumerate(data["structures"]):
+                if "data" in structure:
+                    raise ValueError("Mixed explicit and external structures in frames")
+                self._structures_cache[f"structure-{i}"] = structure
+                structure_refs.append(
+                    {"size": structure["size"], "data": f"structure-{i}"}
+                )
+            data["structures"] = structure_refs
+
+        # pass data to javascript through a traitlet
+        self.value = json.dumps(data)
 
         # listen for custom messages from the JS side
         self.on_msg(self._handle_js_msg)
@@ -62,6 +79,11 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         # update the settings in the data to the latest value
         data = json.loads(self.value)
         data["settings"] = self.settings
+        if len(self._structures_cache) > 0:
+            # there are cached structures, add them to the dump
+            data["structures"] = [
+                structure for structure in self._structures_cache.values()
+            ]
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
@@ -91,34 +113,46 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                     }
                 )
                 return
-            try:
-                # read structure from file (including relative path)
-                path = Path(data)
-
-                # Allow gzip-compressed structure files as well
-                if str(path).endswith(".gz"):
-                    with gzip.open(path, "rt") as f:
-                        structure = json.load(f)
-                else:
-                    with path.open("rt") as f:
-                        structure = json.load(f)
-                # `structure` must be a plain JSON-serialisable object that matches
-                # chemiscope's `Structure` interface on the JS side.
+            if data in self._structures_cache:
+                print("fetching structure")
+                # structure is cached
                 self.send(
                     {
                         "type": "load-structure-result",
                         "requestId": request_id,
-                        "structure": structure,
+                        "structure": self._structures_cache[data],
                     }
                 )
-            except Exception as exc:
-                self.send(
-                    {
-                        "type": "load-structure-error",
-                        "requestId": request_id,
-                        "error": f"failed to load structure from '{data}': {exc}",
-                    }
-                )
+            else:
+                # structure is an external file
+                try:
+                    # read structure from file (including relative path)
+                    path = Path(data)
+
+                    # Allow gzip-compressed structure files as well
+                    if str(path).endswith(".gz"):
+                        with gzip.open(path, "rt") as f:
+                            structure = json.load(f)
+                    else:
+                        with path.open("rt") as f:
+                            structure = json.load(f)
+                    # `structure` must be a plain JSON-serialisable object that matches
+                    # chemiscope's `Structure` interface on the JS side.
+                    self.send(
+                        {
+                            "type": "load-structure-result",
+                            "requestId": request_id,
+                            "structure": structure,
+                        }
+                    )
+                except Exception as exc:
+                    self.send(
+                        {
+                            "type": "load-structure-error",
+                            "requestId": request_id,
+                            "error": f"failed to load structure from '{data}': {exc}",
+                        }
+                    )
 
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large
@@ -149,27 +183,27 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 class ChemiscopeWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("ChemiscopeView").tag(sync=True)
 
-    def __init__(self, data, has_metadata, warning_timeout):
-        super().__init__(data, has_metadata, warning_timeout)
+    def __init__(self, data, has_metadata, warning_timeout, cache_structures):
+        super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
 @ipywidgets.register
 class StructureWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("StructureView").tag(sync=True)
 
-    def __init__(self, data, has_metadata, warning_timeout):
-        super().__init__(data, has_metadata, warning_timeout)
+    def __init__(self, data, has_metadata, warning_timeout, cache_structures):
+        super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
 @ipywidgets.register
 class MapWidget(ChemiscopeWidgetBase):
     _view_name = Unicode("MapView").tag(sync=True)
 
-    def __init__(self, data, has_metadata, warning_timeout):
-        super().__init__(data, has_metadata, warning_timeout)
+    def __init__(self, data, has_metadata, warning_timeout, cache_structures):
+        super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
-def show_input(path, mode="default", warning_timeout=10000):
+def show_input(path, mode="default", warning_timeout=10000, cache_structures=True):
     """
     Loads and shows the chemiscope input in ``path``.
 
@@ -182,6 +216,8 @@ def show_input(path, mode="default", warning_timeout=10000):
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
     :param float warning_timeout: timeout (in ms) for warnings. Set to a negative value
         to disable warnings, and to zero to make them persistent.
+    :param bool cache_structures: whether to cache structure data on the Python side
+        to reduce the JScript memory footprint
 
     .. code-block:: python
 
@@ -241,7 +277,10 @@ def show_input(path, mode="default", warning_timeout=10000):
         raise ValueError("missing metadata in chemiscope.load")
 
     return widget_class(
-        dict_input, has_metadata=has_metadata, warning_timeout=warning_timeout
+        dict_input,
+        has_metadata=has_metadata,
+        warning_timeout=warning_timeout,
+        cache_structures=cache_structures,
     )
 
 
@@ -254,6 +293,7 @@ def show(
     settings=None,
     mode="default",
     warning_timeout=10000,
+    cache_structures=True,
 ):
     """
     Show the dataset defined by the given ``frames`` and ``properties`` (optionally
@@ -267,6 +307,8 @@ def show(
     (or frames) are not available. The widget displays warning messages, that disappear
     after the specified ``warning_timeout`` (in ms). Set to a negative value to disable
     warnings, and to zero to make them persistent.
+    ``cache_structures`` is a flag determining whether to cache structure data on the
+    Python side to reduce the JScript memory footprint.
 
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
@@ -361,7 +403,10 @@ def show(
             raise ValueError("Need at least two properties to visualize a map widget")
 
     return widget_class(
-        dict_input, has_metadata=has_metadata, warning_timeout=warning_timeout
+        dict_input,
+        has_metadata=has_metadata,
+        warning_timeout=warning_timeout,
+        cache_structures=cache_structures,
     )
 
 
