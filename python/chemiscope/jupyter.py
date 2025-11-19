@@ -43,6 +43,9 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
 
+        # listen for custom messages from the JS side
+        self.on_msg(self._handle_js_msg)
+
     def save(self, path):
         """
         Save the dataset displayed by this widget as JSON to the given ``path``.
@@ -62,6 +65,60 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
+
+    def _handle_js_msg(self, _, content, buffers):
+        """Handle custom messages sent from the JS widget.
+
+        Expected messages:
+
+        - {"type": "load-structure",
+           "requestId": int,
+           "filename": "relative/path.json[.gz]"}
+        """
+        msg_type = content.get("type", None)
+
+        if msg_type == "load-structure":
+            # Reads a structure file and sends it back to the JS side
+            request_id = content.get("requestId")
+            data = content.get("data")
+
+            if data is None:
+                self.send(
+                    {
+                        "type": "load-structure-error",
+                        "requestId": request_id,
+                        "error": "missing filename in load-structure message",
+                    }
+                )
+                return
+            try:
+                # read structure from file (including relative path)
+                path = Path(data)
+
+                # Allow gzip-compressed structure files as well
+                if str(path).endswith(".gz"):
+                    with gzip.open(path, "rt") as f:
+                        structure = json.load(f)
+                else:
+                    with path.open("rt") as f:
+                        structure = json.load(f)
+                # `structure` must be a plain JSON-serialisable object that matches
+                # chemiscope's `Structure` interface on the JS side.
+                self.send(
+                    {
+                        "type": "load-structure-result",
+                        "requestId": request_id,
+                        "structure": structure,
+                    }
+                )
+            except Exception as exc:
+                self.send(
+                    {
+                        "type": "load-structure-error",
+                        "requestId": request_id,
+                        "error": f"failed to load structure from '{data}': {exc}",
+                    }
+                )
 
     def __repr__(self, max_length=64):
         # string representation of the chemiscope widget, outputs that are too large

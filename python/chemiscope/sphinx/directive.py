@@ -4,7 +4,7 @@ import os
 from docutils.parsers.rst import Directive
 
 from .nodes import chemiscope
-from .utils import copy_file
+from .utils import copy_external_structures, copy_file
 
 
 class ChemiscopeDirective(Directive):
@@ -51,6 +51,9 @@ class ChemiscopeDirective(Directive):
         # Copy dataset to the docs/build/html/_datasets folder
         build_file_path, rel_file_path = self.get_build_file_path(filename)
         copy_file(dataset_path, build_file_path)
+        # moves files referenced by external structures in a folder with
+        # a name based on the dataset file
+        copy_external_structures(dataset_path, f"{build_file_path}-ext/")
 
         # Create the chemiscope node
         node = self.create_node(
@@ -73,6 +76,7 @@ class ChemiscopeDirective(Directive):
         Returns:
         - tuple: A tuple containing the build file path and the relative file path
         """
+
         # Get the destination folder
         outdir = self.state.document.settings.env.app.outdir
         target_dir = os.path.join(outdir, "_datasets")
@@ -82,14 +86,13 @@ class ChemiscopeDirective(Directive):
         build_file_path = os.path.join(target_dir, filename)
 
         # Get path of output dataset relative to output HTML
-        env = self.state.document.settings.env  #
+        env = self.state.document.settings.env
         builder = env.app.builder
         html_file_path = builder.get_outfilename(env.docname)
         html_file_dir = os.path.dirname(html_file_path)
 
         # Relative path *for the output files*
         rel_file_path = os.path.relpath(build_file_path, html_file_dir)
-
         return build_file_path, rel_file_path
 
     def create_node(self, rel_file_path, include_headers=True):
