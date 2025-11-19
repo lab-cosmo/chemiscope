@@ -114,7 +114,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 )
                 return
             if data in self._structures_cache:
-                print("fetching structure")
                 # structure is cached
                 self.send(
                     {
