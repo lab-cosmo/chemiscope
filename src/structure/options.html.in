@@ -187,7 +187,7 @@
                         <select id="env-bg-style" class="form-select">
                            <option value="licorice">licorice</option>
                            <option value="ball-stick">ball and stick</option>
-                           <option value="cartoon">cartoon</option>
+                           <option class="chsp-hide-if-not-biomol" value="cartoon">cartoon</option>
                            <option value="hide">hide</option>
                         </select>
                      </div>
