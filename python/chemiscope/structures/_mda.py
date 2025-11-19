@@ -45,6 +45,7 @@ def _mda_to_json(ag):
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
         data["chains"] = [atom.chainID for atom in ag]
     elif hasattr(ag, "segids") and ag.segids is not None:
+        # segids are sometimes abused to store chain ids in PDBs, so we use them here
         data["chains"] = [atom.segid for atom in ag]
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["resnames"] = [
