@@ -9,12 +9,14 @@ html {
     grid-column-gap: 0px;
     justify-items: center;
     overflow: hidden;
+    background-color: white;
 }
 
 .chemiscope-viewer-one-col {
     margin: auto;
     max-width: 500px;
     height: 550px;
+    background-color: white;
 }
 
 .chemiscope-meta-and-map {
