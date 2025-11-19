@@ -114,15 +114,18 @@ rmsd = R.results.rmsd.T[2]
 #
 # We can then use the map mode to visualize the sampled conformational space.
 
+# Given that trajectories can be very large, we load the frames on disk to 
+# reduce the memory usage of the viewer
+frames = chemiscope.write_external_structures(complx.atoms, "protein-rmsd")
+
 chemiscope.show(
-    frames=complx.atoms,
+    frames=frames,
     meta={
         "name": "Protein-Lipid Complex",
         "description": (
             "Conformational space of a protein-lipid complex featurized "
             "by the protein-lipid z-axis distance and the protein RMSD"
         ),
-        "authors": ["The chemiscope developers"],
     },
     properties={
         "Protein-Lipid Distance": {
