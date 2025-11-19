@@ -571,3 +571,28 @@
     height: 25px;
     margin-left: 5px;
 }
+
+/* make sure there are sane styling options for the modal dialogues,
+to avoid unreadable text when using dark themes */
+:root {
+    --cs-modal-background-light: white;
+    --cs-modal-text-light: #222;
+    --cs-modal-background-dark: #222;
+    --cs-modal-text-dark: white;
+}
+
+.modal-content,
+.modal-header,
+.modal-footer {
+    color: var(--cs-modal-text-light);
+    background-color: var(--cs-modal-background-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal-content,
+    .modal-header,
+    .modal-footer {
+        background-color: var(--cs-modal-background-dark);
+        color: var(--cs-modal-text-dark);
+    }
+}

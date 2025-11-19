@@ -4,13 +4,13 @@ Visualize biomolecules with MDAnalysis
 
 This example shows how to visualize biomolecules in chemiscope with `MDAnalysis
 <https://www.mdanalysis.org/>`_, and how to leverage the `select_atoms()
-<https://userguide.mdanalysis.org/stable/selections.html>`_ method to only show the
-atoms of interest.
+<https://userguide.mdanalysis.org/stable/selections.html>`_ method to show only
+a subset of the atoms.
 
-Biomolecules are often consisting of a large number of atoms, which makes the classical
-ball-and-stick repersentation of molecules hard to be understood. Cartoon representation
-focuses on the main structural elements, such as backbone atoms, to highlight the
-secondary structure, and is often more readable.
+Biomolecules often contain a large number of atoms, which makes the classical
+ball-and-stick representation of molecules hard to be understand.
+The "cartoon" representation focuses on the main structural elements, such as
+backbone atoms, to highlight the secondary structure, and is often more readable.
 """
 
 import urllib.request
@@ -40,7 +40,8 @@ urllib.request.urlretrieve(
 # Reading the PDB file and visualizing it in Chemiscope
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-# We can use `MDAnalysis <https://www.mdanalysis.org/>`_ to read the PDB file.
+# We use `MDAnalysis <https://www.mdanalysis.org/>`_ to read the PDB file, interpreting
+# also the metadata that describes the structure of the protein.
 
 universe = mda.Universe(f"./{pdb_id}.pdb")
 
@@ -50,12 +51,13 @@ universe = mda.Universe(f"./{pdb_id}.pdb")
 # <https://userguide.mdanalysis.org/stable/atomgroup.html>`_ as input. You can toggle
 # the cartoon representation in the hamburger menu in the top-right corner of the
 # widget. When the cartoon representation is off, the representation will automatically
-# fall back to the ball-and-stick.
+# fall back to the ball-and-stick representation.
 
 ag = universe.atoms
 chemiscope.show(
     frames=ag,
     mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
 )
 
 # %%
@@ -70,6 +72,7 @@ sol = universe.select_atoms("not water")
 chemiscope.show(
     frames=sol,
     mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
 )
 
 # %%
@@ -114,12 +117,12 @@ rmsd = R.results.rmsd.T[2]
 #
 # We can then use the map mode to visualize the sampled conformational space.
 
-# Given that trajectories can be very large, we load the frames on disk to 
+# Given that trajectories can be very large, we load the frames on disk to
 # reduce the memory usage of the viewer
-frames = chemiscope.write_external_structures(complx.atoms, "protein-rmsd")
+external_frames = chemiscope.write_external_structures(complx.atoms, "protein-rmsd")
 
 chemiscope.show(
-    frames=frames,
+    frames=external_frames,
     meta={
         "name": "Protein-Lipid Complex",
         "description": (
