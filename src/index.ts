@@ -502,11 +502,15 @@ class DefaultVisualizer {
             copy.structures = [] as Structure[];
             for (let i = 0; i < this._dataset.structures.length; i++) {
                 const structure = this.structure.loadStructure(i, this._dataset.structures[i]);
-                // this code path should only be reached with the default loader, that is
-                // synchronous
-                assert(!(structure instanceof Promise));
 
-                copy.structures.push(structure);
+                Promise.resolve(structure).then(
+                    (resolved) => {
+                        copy.structures[i] = resolved;
+                    },
+                    (err: unknown) => {
+                        throw Error(`could not load structure at index ${i}: ${err}`);
+                    }
+                );
             }
         }
         return copy;

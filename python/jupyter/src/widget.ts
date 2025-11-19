@@ -1,4 +1,5 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
+import { JSONValue } from '@lumino/coreutils';
 import Plausible from 'plausible-tracker';
 
 import { Warnings, generateGUID, getByID } from '../../../src/utils';
@@ -172,7 +173,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 type: 'load-structure',
                 requestId,
                 index,
-                data: structure.data as string,
+                data: structure.data as JSONValue,
             });
         });
     }

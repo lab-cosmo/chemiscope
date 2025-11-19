@@ -3,9 +3,9 @@
 Chemiscope in ``sphinx``
 ========================
 
-The chemiscope python module also provides a ``sphinx`` extension that can process
-a custom RST directive into an interacting viewer, that can be embedded in the
-generated HTML documentation.
+The chemiscope python module also provides a ``sphinx`` extension that can
+process a custom RST directive into an interacting viewer, that can be embedded
+in the generated HTML documentation.
 
 Configuration
 ^^^^^^^^^^^^^
@@ -44,8 +44,8 @@ Once compiled, this will show as this widget
 
 .. chemiscope:: ../datasets/showcase.json.gz
 
-The ``structure`` mode will show the structures only, with disabled warnings. It is also
-possible to add an optional ``warning_timeout`` parameter:
+The ``structure`` mode will show the structures only, with disabled warnings. It
+is also possible to add an optional ``warning_timeout`` parameter:
 
 .. code-block:: rst
 
@@ -76,13 +76,15 @@ External structure files
 
 It is possible to use the ``chemiscope`` directive to load datasets that
 reference external structure files. This is useful when the structures are
-large, or when the same structures are to be used in multiple datasets.
-The main `dataset.json` file should contain structure entries that reference
-external `.json` files - that can be created for instance using
-:py:func:`~chemiscope.write_external_structures`.
-The paths should be defined relative 
-to the position of the main chemiscope file, and the external files will 
-be copied to the documentation build folder automatically. 
+large, or when the same structures are to be used in multiple datasets. The main
+`dataset.json` file should contain structure entries that follows the
+`UserStructure`_ interface, with the ``data`` field set to the path of the
+structure to be loaded. The structure files can be created manually or using
+:py:func:`~chemiscope.write_external_structures`. The paths should be defined
+relative to the position of the main chemiscope file, and the external files
+will be copied to the documentation build folder automatically.
+
+.. _UserStructure: https://chemiscope.org/docs/api/interfaces/UserStructure.html
 
 .. code-block:: rst
 
@@ -97,10 +99,10 @@ be copied to the documentation build folder automatically.
 Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Because of the need to dynamically load the chemiscope module and the
-desired file, it is not possible to load the widget by viewing the
-the raw HTML pages. Instead, one needs to run a local HTTP server.
-For instance, using the port 8765,
+Because of the need to dynamically load the chemiscope module and the desired
+file, it is not possible to load the widget by viewing the the raw HTML pages.
+Instead, one needs to run a local HTTP server. For instance, using the port
+8765,
 
 .. code-block:: bash
 
