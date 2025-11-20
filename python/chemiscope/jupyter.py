@@ -81,9 +81,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         data["settings"] = self.settings
         if len(self._structures_cache) > 0:
             # there are cached structures, add them to the dump
-            data["structures"] = [
-                structure for structure in self._structures_cache.values()
-            ]
+            data["structures"] = list(self._structures_cache.values())
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
