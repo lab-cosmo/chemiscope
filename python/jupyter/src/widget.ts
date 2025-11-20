@@ -167,9 +167,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
         structure: UserStructure
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
-        return new Promise<Structure>(async (resolve, reject) => {
+        return new Promise<Structure>((resolve, reject) => {
             if (this._pendingStructureRequests.size > 0) {
                 // avoid piling up too many requests
+                // eslint-disable-next-line no-console
                 console.warn(
                     `Skipping frame ${index} - ${structure.data}. Increase playback delay.)`
                 );
