@@ -22,7 +22,8 @@ def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
     data["elements"] = [
-        element for element in (ag.elements if hasattr(ag, "elements") else ag.types)
+        element
+        for element in (ag.elements if hasattr(ag, "elements") else ag.types)
         # `element` is better, but not always available, e.g. xyz file
     ]
     if hasattr(ag, "names"):
