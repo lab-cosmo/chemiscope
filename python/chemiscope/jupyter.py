@@ -120,6 +120,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                         "type": "load-structure-result",
                         "requestId": request_id,
                         "structure": self._structures_cache[data],
+                        "data": data,  # also sends back data to cross-check
                     }
                 )
             else:
@@ -142,6 +143,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                             "type": "load-structure-result",
                             "requestId": request_id,
                             "structure": structure,
+                            "data": data,  # also sends back data to cross-check
                         }
                     )
                 except Exception as exc:
