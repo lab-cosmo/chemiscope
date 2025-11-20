@@ -172,7 +172,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 // avoid piling up too many requests
                 // eslint-disable-next-line no-console
                 console.warn(
-                    `Skipping frame ${index} - ${structure.data}. Increase playback delay.)`
+                    `Skipping frame ${index} - ${structure.data}. Increase playback delay.`
                 );
             } else {
                 // queue a request for the structure
