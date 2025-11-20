@@ -22,12 +22,11 @@ def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
     data["elements"] = [
-        atom.element if hasattr(atom, "element") else atom.type
-        for atom in ag
+        element for element in (ag.elements if hasattr(ag, "elements") else ag.types)
         # `element` is better, but not always available, e.g. xyz file
     ]
     if hasattr(ag, "names"):
-        data["names"] = [atom.name for atom in ag]
+        data["names"] = [name for name in ag.names]
     else:
         data["names"] = data["elements"]
     data["x"] = [float(value) for value in ag.positions[:, 0]]
@@ -41,22 +40,22 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
-    data["hetatom"] = [True for _ in ag]
+    data["hetatom"] = [True] * ag.n_atoms
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
-        data["chains"] = [atom.chainID for atom in ag]
+        data["chains"] = [chainID for chainID in ag.chainIDs]
     elif hasattr(ag, "segids") and ag.segids is not None:
         # segids are sometimes abused to store chain ids in PDBs, so we use them here
-        data["chains"] = [atom.segid for atom in ag]
+        data["chains"] = [segid for segid in ag.segids]
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["resnames"] = [
-            atom.resname if atom.resname is not None and atom.resname != "" else "UNK"
-            for atom in ag
+            resname if resname is not None and resname != "" else "UNK"
+            for resname in ag.resnames
         ]
         # atom selection requires the `resname`
         for idx in ag.select_atoms("protein or nucleic").indices:
             data["hetatom"][idx] = False
     if hasattr(ag, "resids") and ag.resids is not None:
-        data["resids"] = [int(atom.resid) for atom in ag]
+        data["resids"] = [int(resid) for resid in ag.resids]
 
     return data
 
