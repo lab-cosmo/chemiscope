@@ -26,6 +26,7 @@ interface StructureRequest {
     type: string;
     requestId: number;
     structure?: Structure | string;
+    data?: string;
     error?: string;
 }
 
@@ -167,14 +168,23 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
-            this._pendingStructureRequests.set(requestId, { resolve, reject });
+            if (this._pendingStructureRequests.size > 0) {
+                // avoid piling up too many requests
+                // eslint-disable-next-line no-console
+                console.warn(
+                    `Skipping frame ${index} - ${structure.data}. Increase playback delay.`
+                );
+            } else {
+                // queue a request for the structure
+                this._pendingStructureRequests.set(requestId, { resolve, reject });
 
-            this.model.send({
-                type: 'load-structure',
-                requestId,
-                index,
-                data: structure.data as JSONValue,
-            });
+                this.model.send({
+                    type: 'load-structure',
+                    requestId,
+                    index,
+                    data: structure.data as JSONValue,
+                });
+            }
         });
     }
 
