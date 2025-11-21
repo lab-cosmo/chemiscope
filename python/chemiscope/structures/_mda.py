@@ -21,18 +21,20 @@ def _mda_valid_structures(frames):
 def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
-    data["elements"] = [
-        atom.element if hasattr(atom, "element") else atom.type
-        for atom in ag
-        # `element` is better, but not always available, e.g. xyz file
-    ]
+    data["elements"] = (
+        ag.elements.tolist() if hasattr(ag, "elements") else ag.types.tolist()
+    )
+    # `element` is better, but not always available, e.g. xyz file
     if hasattr(ag, "names"):
-        data["names"] = [atom.name for atom in ag]
+        data["names"] = ag.names.tolist()
     else:
         data["names"] = data["elements"]
-    data["x"] = [float(value) for value in ag.positions[:, 0]]
-    data["y"] = [float(value) for value in ag.positions[:, 1]]
-    data["z"] = [float(value) for value in ag.positions[:, 2]]
+    x, y, z = ag.positions.T
+    data["x"] = x.tolist()
+    data["y"] = y.tolist()
+    data["z"] = z.tolist()
+    hetatom = np.full(ag.n_atoms, True)
+
     if ag.dimensions is not None:
         data["cell"] = list(
             np.concatenate(
@@ -41,22 +43,24 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
-    data["hetatom"] = [True for _ in ag]
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
-        data["chains"] = [atom.chainID for atom in ag]
+        data["chains"] = ag.chainIDs.tolist()
     elif hasattr(ag, "segids") and ag.segids is not None:
         # segids are sometimes abused to store chain ids in PDBs, so we use them here
-        data["chains"] = [atom.segid for atom in ag]
+        data["chains"] = ag.segids.tolist()
+
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["resnames"] = [
-            atom.resname if atom.resname is not None and atom.resname != "" else "UNK"
-            for atom in ag
+            resname if resname is not None and resname != "" else "UNK"
+            for resname in ag.resnames
         ]
         # atom selection requires the `resname`
-        for idx in ag.select_atoms("protein or nucleic").indices:
-            data["hetatom"][idx] = False
+        hetatom[ag.select_atoms("protein or nucleic").indices] = False
+
     if hasattr(ag, "resids") and ag.resids is not None:
-        data["resids"] = [int(atom.resid) for atom in ag]
+        data["resids"] = ag.resids.view(dtype=int).tolist()
+
+    data["hetatom"] = hetatom.tolist()
 
     return data
 
