@@ -49,12 +49,9 @@ html_extra_path = []
 examples_dirs = os.path.join(ROOT, "python", "examples")
 
 def get_sorted_examples(directory):
-    if not os.path.isdir(directory):
-        return []
-    
     files = [f for f in os.listdir(directory) if f.endswith('.py')]
     
-    def natural_sort_key(filename):
+    def sort_key(filename):
         match = re.search(r'(\d+)', filename)
         if match:
             # numbered files
@@ -63,7 +60,7 @@ def get_sorted_examples(directory):
         # unnumbered files
         return (1, filename)
 
-    return sorted(files, key=natural_sort_key)
+    return sorted(files, key=sort_key)
 
 sorted_examples = get_sorted_examples(examples_dirs)
 
