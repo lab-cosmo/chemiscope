@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8" />
+        <title>Structure widget example</title>
+
+        <!-- jquery -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM="
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- bootstrap -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+            crossorigin="anonymous"
+        />
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- The code for molecule-viewer -->
+        <script type="text/javascript" src="molecule-viewer.min.js"></script>
+
+        <style>
+            .description {
+                width: 600px;
+                margin: 1em auto 1em auto;
+                padding: 8px;
+            }
+
+            .viewer {
+                width: 600px;
+                height: 400px;
+                margin: auto;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1 style="text-align: center; margin-bottom: 1em">3Dmol widget example</h1>
+
+        <div style="width: 600px; margin: auto">
+            <h4>Crystal with environments</h4>
+        </div>
+        <div id="crystal" class="viewer"></div>
+        <div class="card description">
+            Example of a crystal structure (see the options related to the unit cell) with atom
+            centered environments.
+        </div>
+
+        <div style="width: 600px; margin: auto">
+            <h4>Simple molecule</h4>
+        </div>
+        <div id="molecule" class="viewer"></div>
+        <div class="card description">
+            Example of a single molecule, without unit cell or environments.
+        </div>
+    </body>
+
+    <script type="text/javascript">
+        // prettier-ignore
+        const crystalData = {
+            size: 8,
+            names: ["C", "C", "C", "C", "C", "C", "C", "C"],
+            x: [0.39589082, 0.39589082, 1.63234082, 1.63234082, 0.39589082, 0.39589082, 1.63234082, 1.63234082],
+            y: [1.56386071, 3.06796929, 4.50090951, 0.13092049, 0.84082421, 3.79100579, 1.18871093, 3.44311907],
+            z: [4.50090951, 0.13092049, 3.06796929, 1.56386071, 1.18871093, 3.44311907, 3.79100579, 0.84082421],
+            cell: [2.4729, 2.8361778918473426e-16, 2.8361778918473426e-16, 0.0, 4.63183, 2.8361778918473426e-16, 0.0, 0.0, 4.63183],
+        };
+
+        // prettier-ignore
+        const moleculeData = {
+            size: 35,
+            names: ["C", "C", "O", "H", "H", "H", "N", "C", "C", "O", "H", "H", "C", "C", "C", "N", "C", "N", "N", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H", "N", "C", "H", "H", "H", "H"],
+            x: [-1.8, -1.4, -0.5, -2.1, -2.6, -0.9, -2.0, -1.6, -1.4, -2.1, -2.6, -0.6, -2.6, -2.7, -1.5, -0.2, 0.7,  1.6,  0.7,  -2.4, -3.6, -3.6, -2.7, -1.5, -1.8, -0.1, 2.2,  1.2,  0.0,  -0.5, -0.2, -0.0, -0.8, -0.5, 0.9],
+            y: [3.7,  3.0,  3.5,  4.7,  3.1,  3.8,  1.8,  1.0,  -0.4, -0.9, 1.4,  1.4,  1.0,  2.3,  2.5,  2.7,  1.7,  2.1,  0.5,  0.2,  0.8,  2.3,  3.2,  1.6,  3.3,  3.6,  1.4,  2.7,  0.3,  -1.1, -2.5, -0.7, -2.8, -3.2, -2.7],
+            z: [0.6, 1.9, 2.6, 0.8, 0.1, -0.1, 2.2, 3.3, 2.8, 1.8, 1.5, 3.6, 4.5, 5.3, 6.3, 5.8, 5.4, 4.4, 5.8, 5.1, 4.0, 5.9, 4.6, 7.0, 7.0, 5.3, 4.1, 3.7, 6.6, 3.5, 3.2, 4.3, 2.3, 4.1, 3.0],
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const crystal = new Chemiscope.MoleculeViewer('crystal');
+            crystal.load(crystalData, {
+                supercell: [2, 2, 2],
+                environments: Array(8).fill({ cutoff: 2.5 }),
+            });
+            crystal.highlight(2);
+            crystal.onselect = (index) => crystal.highlight(index);
+
+            const molecule = new Chemiscope.MoleculeViewer('molecule');
+            molecule.load(moleculeData);
+        });
+    </script>
+</html>
