@@ -46,22 +46,30 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         # hold structures on the python side to save js memory
         self._structures_cache = {}
-        if cache_structures and "data" not in data["structures"][0]:
-            structure_refs = []
-            for i, structure in enumerate(data["structures"]):
-                if "data" in structure:
-                    raise ValueError("Mixed explicit and external structures in frames")
-                self._structures_cache[f"structure-{i}"] = structure
-                structure_refs.append(
-                    {"size": structure["size"], "data": f"structure-{i}"}
-                )
-            data["structures"] = structure_refs
+        if cache_structures:
+            data["structures"] = self._cache_structures(data["structures"])
 
         # pass data to javascript through a traitlet
         self.value = json.dumps(data)
 
         # listen for custom messages from the JS side
         self.on_msg(self._handle_js_msg)
+
+    def _cache_structures(self, structures):
+        """Cache full structures and return structure references"""
+        if not structures or "data" in structures[0]:
+            return structures
+
+        structure_refs = []
+        for i, structure in enumerate(structures):
+            if "data" in structure:
+                raise ValueError("Mixed explicit and external structures in frames")
+
+            cache_key = f"structure-{i}"
+            self._structures_cache[cache_key] = structure
+            structure_refs.append({"size": structure["size"], "data": cache_key})
+
+        return structure_refs
 
     def save(self, path):
         """
