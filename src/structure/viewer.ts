@@ -200,6 +200,8 @@ export class MoleculeViewer {
         /// hide options related to atom coloring if there are no atom properties
         /// in the current structure
         noProperties: CSSStyleSheet;
+        /// hide options related to atom labels if atom labels are not displayed
+        noLabels: CSSStyleSheet;
     };
     /// List of atom-centered environments for the current structure
     private _environments?: (Environment | undefined)[];
@@ -209,6 +211,8 @@ export class MoleculeViewer {
     private _colorReset: HTMLButtonElement;
     // Button used to see more color options
     private _colorMoreOptions: HTMLButtonElement;
+    // Switch do disable automatic updates
+    private _disableStyleUpdates: boolean = false;
 
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
@@ -275,6 +279,7 @@ export class MoleculeViewer {
         const noEnvsStyle = new CSSStyleSheet();
         const noShapeStyle = new CSSStyleSheet();
         const noPropsStyle = new CSSStyleSheet();
+        const noLabelsStyle = new CSSStyleSheet();
 
         this._styles = {
             noCell: noCellStyle,
@@ -282,6 +287,7 @@ export class MoleculeViewer {
             noEnvs: noEnvsStyle,
             noShape: noShapeStyle,
             noProperties: noPropsStyle,
+            noLabels: noLabelsStyle,
         };
 
         this._shadow.adoptedStyleSheets = [
@@ -291,6 +297,7 @@ export class MoleculeViewer {
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
+            noLabelsStyle,
         ];
 
         this._options = new StructureOptions(
@@ -307,6 +314,7 @@ export class MoleculeViewer {
             noEnvsStyle,
             noShapeStyle,
             noPropsStyle,
+            noLabelsStyle,
         ];
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('atom-color-reset');
         this._colorMoreOptions =
@@ -364,6 +372,9 @@ export class MoleculeViewer {
         window.requestAnimationFrame(() => {
             window.dispatchEvent(new Event('resize'));
         });
+
+        // default view when creating the viewer
+        this._resetView();
     }
 
     /**
@@ -395,7 +406,7 @@ export class MoleculeViewer {
             this._options.getModalElement<HTMLButtonElement>('atom-color-more-options');
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
-        // Disable as by default, color property is element
+        // Disable as by default, color and labels property is element
         this._colorReset.disabled = true;
         this._colorMoreOptions.disabled = true;
 
@@ -533,9 +544,7 @@ export class MoleculeViewer {
         // unload previous structure
         this._viewer.removeAllModels();
         if (this._current !== undefined) {
-            for (const label of this._current.atomLabels) {
-                this._viewer.removeLabel(label);
-            }
+            this._viewer.removeAllLabels();
         }
 
         if (this._highlighted !== undefined) {
@@ -571,8 +580,8 @@ export class MoleculeViewer {
                 cstyle: { hidden: true },
             });
         }
-        // To avoid editting the `atoms` object in `setup3DmolStructure`, I
-        // am handling the bonds here.
+        // To avoid editing the `atoms` object in `setup3DmolStructure`,
+        // the bonds are handled here
         if (structure.bonds === undefined) {
             assignBonds(this._current.model.selectedAtoms({}));
         } else {
@@ -630,6 +639,13 @@ export class MoleculeViewer {
         } else {
             this._styles.noProperties.replaceSync('');
         }
+
+        if (!this._options.atomLabels.value) {
+            this._styles.noLabels.replaceSync('.chsp-hide-if-no-atom-labels { display: none; }');
+        } else {
+            this._styles.noLabels.replaceSync('');
+        }
+
         // update the options for shape visualization
         if (structure.shapes === undefined) {
             this._styles.noShape.replaceSync('.chsp-hide-if-no-shapes { display: none; }');
@@ -650,8 +666,6 @@ export class MoleculeViewer {
             this._options.shape.bind(selectShape, 'multival');
         }
 
-        this._updateStyle();
-
         if (!keepOrientation) {
             this._resetView();
         }
@@ -660,9 +674,12 @@ export class MoleculeViewer {
             this._centerView();
         }
 
-        // make sure to reset axes/labels when the structure changes
+        // make sure to reset axes when the structure changes
         this._options.axes.changed('JS');
-        this._options.atomLabels.changed('JS');
+
+        // we don't update the style here as it will be done in
+        // showInViewer, which is called just after load in grid.ts
+        // which is in practice the only place where load is used.
 
         this._viewer.render(() => {
             if (onLoadingDone) {
@@ -696,6 +713,7 @@ export class MoleculeViewer {
 
         this._setHoverable(active);
     }
+
     /**
      * Highlight a given `atom` in the current structure.
      *
@@ -732,7 +750,11 @@ export class MoleculeViewer {
      * Applies saved settings, possibly filling in with default values
      */
     public applySettings(settings: Settings): void {
+        // prevent multiple (time consuming) style updates during application
+        this._disableStyleUpdates = true;
         this._options.applySettings(settings);
+        this._disableStyleUpdates = false;
+        this._updateStyle();
     }
 
     /**
@@ -826,43 +848,13 @@ export class MoleculeViewer {
         this._options.atoms.onchange.push(restyleAndRender);
 
         this._options.atomLabels.onchange.push((showLabels) => {
-            if (this._current === undefined) {
-                return;
-            }
-
-            if (showLabels) {
-                assert(this._current.atomLabels.length === 0);
-
-                const structure = this._current.structure;
-                for (let i = 0; i < structure.size; i++) {
-                    const position = new $3Dmol.Vector3(
-                        structure.x[i],
-                        structure.y[i],
-                        structure.z[i]
-                    );
-                    const name = structure.names[i];
-
-                    let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
-                    if (color === 0xffffff || color === 'white') {
-                        color = 0x000000;
-                    }
-
-                    const label = this._viewer.addLabel(name, {
-                        position: position,
-                        inFront: true,
-                        fontColor: color,
-                        fontSize: 14,
-                        showBackground: false,
-                        alignment: new $3Dmol.Vector2(2.0, 2.0),
-                    });
-                    this._current.atomLabels.push(label);
-                }
+            restyleAndRender();
+            if (!showLabels) {
+                this._styles.noLabels.replaceSync(
+                    '.chsp-hide-if-no-atom-labels { display: none; }'
+                );
             } else {
-                // remove all labels
-                for (const label of this._current.atomLabels) {
-                    this._viewer.removeLabel(label);
-                }
-                this._current.atomLabels = [];
+                this._styles.noLabels.replaceSync('');
             }
         });
 
@@ -902,9 +894,9 @@ export class MoleculeViewer {
             // resets shapes before checking if there are shapes to add
             this._resetShapes();
 
-            this._updateStyle();
-            this._viewer.render();
+            restyleAndRender();
         });
+
         const changedSuperCell = () => {
             this._showSupercellInfo();
             if (this._current === undefined) {
@@ -935,8 +927,7 @@ export class MoleculeViewer {
             if (this._environmentsEnabled()) {
                 this._setEnvironmentInteractions();
             }
-            this._updateStyle();
-            this._viewer.render();
+            restyleAndRender();
         };
         this._options.supercell[0].onchange.push(changedSuperCell);
         this._options.supercell[1].onchange.push(changedSuperCell);
@@ -1003,7 +994,7 @@ export class MoleculeViewer {
                 this._colorMoreOptions.disabled = false;
                 this._options.color.palette.enable();
 
-                const values = this._colorValues(property, 'linear');
+                const values = this._transformValues(property, 'linear');
 
                 if (values.some((v) => v === null)) {
                     this.warnings.sendMessage(
@@ -1071,7 +1062,7 @@ export class MoleculeViewer {
             assert(property !== 'element');
             const transform = this._options.color.transform.value;
 
-            const values = this._colorValues(property, transform);
+            const values = this._transformValues(property, transform);
             // To change min and max values when the transform has been changed
             const { min, max } = arrayMaxMin(values);
 
@@ -1122,6 +1113,10 @@ export class MoleculeViewer {
             this._updateColorBar();
             restyleAndRender();
         });
+
+        // ======= labels settings
+        // setup state when the property changes
+        this._options.labelsProperty.onchange.push(restyleAndRender);
 
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
@@ -1205,33 +1200,36 @@ export class MoleculeViewer {
      * Update the styles of all atoms as required
      */
     private _updateStyle(): void {
-        if (this._current === undefined) {
+        if (this._current === undefined || this._disableStyleUpdates) {
             return;
         }
         if (this._options.shape.value !== '') {
             this._addShapes();
         }
-
         // if there is no environment to highlight, render all atoms with the
         // main style
         if (!this._environmentsEnabled()) {
+            // render hetero atoms with not-protein mode (e.g. ball-and-stick)
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
+            // render non-hetero atoms with protein mode (e.g. cartoon)
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
-            return;
+        } else {
+            assert(this._highlighted !== undefined);
+            // otherwise, render all atoms with hidden/background style
+            this._current.model.setStyle({}, this._hiddenStyle());
+            // and the central atom with central/highlighted style
+            this._current.model.setStyle(
+                { index: this._highlighted.center },
+                this._centralStyle(0.4),
+                /* add */ true
+            );
+
+            // and the environment around the central atom with main style
+            this._highlighted.model.setStyle({}, this._mainStyle());
         }
 
-        assert(this._highlighted !== undefined);
-        // otherwise, render all atoms with hidden/background style
-        this._current.model.setStyle({}, this._hiddenStyle());
-        // and the central atom with central/highlighted style
-        this._current.model.setStyle(
-            { index: this._highlighted.center },
-            this._centralStyle(0.4),
-            /* add */ true
-        );
-
-        // and the environment around the central atom with main style
-        this._highlighted.model.setStyle({}, this._mainStyle());
+        // update atom labels as well, as they depend on atom styling
+        this._updateAtomLabels();
     }
 
     private _addAxes(value: string): void {
@@ -1517,7 +1515,7 @@ export class MoleculeViewer {
      * Get the values that should be used to color atoms when coloring them
      * according to properties
      */
-    private _colorValues(property: string, transform: string): Array<number | null> {
+    private _transformValues(property: string, transform: string): Array<number | null> {
         assert(this._properties !== undefined);
         assert(Object.keys(this._properties).includes(property));
 
@@ -1565,7 +1563,7 @@ export class MoleculeViewer {
 
         const transform = this._options.color.transform.value;
 
-        const currentProperty = this._colorValues(property, transform);
+        const currentProperty = this._transformValues(property, transform);
         const min = this._options.color.min.value;
         const max = this._options.color.max.value;
 
@@ -1692,6 +1690,138 @@ export class MoleculeViewer {
                 opacity: defaultOpacity(),
             },
         };
+    }
+
+    private _updateAtomLabels(): void {
+        if (this._current === undefined) {
+            return;
+        }
+
+        // remove all labels (if there are any)
+        if (this._current.atomLabels.length > 0) {
+            // removeLabel calls show() internally, which triggers a render and
+            // makes removing all labels very slow. We temporarily patch show()
+            // to a no-op to avoid this.
+
+            const viewer_noshow = this._viewer as unknown as {
+                show: () => void;
+                removeLabel: (label: $3Dmol.Label, noshow?: boolean) => void;
+            };
+            const old_show = viewer_noshow.show;
+
+            try {
+                viewer_noshow.show = () => {}; // suppress renders
+
+                for (const label of this._current.atomLabels) {
+                    viewer_noshow.removeLabel(label); // still does linear search, but no render
+                }
+            } finally {
+                viewer_noshow.show = old_show; // restore
+            }
+        }
+        this._current.atomLabels = [];
+
+        // If labels are turned off in the UI, stop here
+        if (!this._options.atomLabels.value) {
+            this._viewer.render();
+            return;
+        }
+
+        const structure = this._current.structure;
+
+        // All atoms from all models (central + supercell + highlighted env)
+        const atoms = this._viewer.selectedAtoms({});
+
+        for (const atom of atoms) {
+            // Heuristic for “visible”: has some style and is not marked hidden
+            const style = atom.style || {};
+            const sphere = style.sphere;
+
+            const sphereVisible =
+                sphere !== undefined &&
+                sphere.hidden !== true &&
+                (sphere.opacity === undefined || sphere.opacity > 0);
+
+            if (!sphereVisible) {
+                continue; // atom not actually drawn
+            }
+
+            // Map back to the original structure index.
+            // 3Dmol keeps `serial` for the central cell; for replicated atoms
+            // we can safely fall back to index % structure.size.
+            let serial = atom.serial;
+            if (serial === undefined && atom.index !== undefined) {
+                const n = structure.size;
+                serial = atom.index % n;
+            }
+
+            assert(serial !== undefined);
+
+            const name = structure.names[serial];
+
+            let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
+            if (color === 0xffffff || color === 'white') {
+                color = 0x000000;
+            }
+
+            const position = new $3Dmol.Vector3(atom.x, atom.y, atom.z);
+
+            let label_str = name;
+            if (
+                this._options.labelsProperty.value !== 'element' &&
+                this._properties !== undefined
+            ) {
+                label_str = this._formatLabel(
+                    this._properties[this._options.labelsProperty.value][serial]
+                );
+            }
+
+            const label = this._viewer.addLabel(
+                label_str,
+                {
+                    position: position,
+                    inFront: true,
+                    fontColor: color,
+                    fontSize: 14,
+                    showBackground: false,
+                    alignment: 'bottomLeft',
+                },
+                undefined,
+                true
+            );
+
+            this._current.atomLabels.push(label);
+        }
+
+        this._viewer.render();
+    }
+
+    private _formatLabel(value: string | number | undefined): string {
+        if (value === undefined) {
+            return '';
+        }
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (typeof value === 'number') {
+            if (!Number.isFinite(value)) {
+                // handle NaN, Infinity, -Infinity nicely
+                return value.toString();
+            }
+
+            // 3 significant digits, force scientific notation for small or large values
+            // e.g. 12.3213213 -> "12.3", 0.354123123 -> "0.354", 6.724353247e-21 -> "6.77e-21"
+            let s = value.toPrecision(3);
+            if (Math.abs(value) < 1e-2 || Math.abs(value) >= 1e3) {
+                s = value.toExponential(2);
+            }
+
+            return s;
+        }
+
+        return String(value);
     }
 
     /**
@@ -1913,17 +2043,17 @@ export class MoleculeViewer {
 
     // this is duplicated from map.ts - should really move all this stuff in a utils module
     // and uniform the names and modes of operation
-    private _colorTitle(): string {
+    private _transformTitle(): string {
         let title = this._options.color.property.value;
         switch (this._options.color.transform.value) {
             case 'inverse':
                 title = `(${title})⁻¹`;
                 break;
             case 'log':
-                title = `log<sub>10</sub>(${title})`;
+                title = `log₁₀(${title})`;
                 break;
             case 'sqrt':
-                title = `&#x221A;(${title})`;
+                title = `√(${title})`;
                 break;
             case 'linear':
                 break;
@@ -1939,7 +2069,7 @@ export class MoleculeViewer {
      */
     private _addColorBar(): ColorBar {
         const palette = this._options.color.palette.value;
-        const title = this._colorTitle();
+        const title = this._transformTitle();
 
         const viewerWidth = this._viewer.container?.clientWidth;
         const viewerHeight = this._viewer.container?.clientHeight;

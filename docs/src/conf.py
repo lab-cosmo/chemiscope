@@ -1,9 +1,10 @@
 import os
+import re
+import warnings
 
 import chemiscope
 from chemiscope.sphinx import ChemiscopeScraper
-
-import warnings
+from sphinx_gallery.sorting import ExplicitOrder
 
 # Filter out warning to hide it in the documentation. It comes from the import of MACE
 warnings.filterwarnings("ignore", message="Can't initialize NVML")
@@ -46,11 +47,28 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_extra_path = []
 
 examples_dirs = os.path.join(ROOT, "python", "examples")
+
+def get_sorted_examples(directory):
+    files = [f for f in os.listdir(directory) if f.endswith('.py')]
+    
+    def sort_key(filename):
+        match = re.search(r'(\d+)', filename)
+        if match:
+            # numbered files
+            return (0, int(match.group(1)))
+    
+        # unnumbered files
+        return (1, filename)
+
+    return sorted(files, key=sort_key)
+
+sorted_examples = get_sorted_examples(examples_dirs)
+
 sphinx_gallery_conf = {
     "examples_dirs": examples_dirs,
     "gallery_dirs": "examples",
     "filename_pattern": ".*",
-    "within_subsection_order": "FileNameSortKey",
+    "within_subsection_order": ExplicitOrder(sorted_examples),
     "image_scrapers": ("matplotlib", ChemiscopeScraper()),
 }
 

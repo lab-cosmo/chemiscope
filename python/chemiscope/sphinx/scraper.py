@@ -4,6 +4,7 @@ import warnings
 from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
 
 from .file_path_iterator import FilePathIterator
+from .utils import copy_external_structures
 
 
 warnings.filterwarnings(
@@ -27,8 +28,9 @@ class ChemiscopeScraper:
 
     def __call__(self, _block, block_vars, _gallery_conf):
         """
-        Extracts Chemiscope widget data, saves it .json dataset in the .rst directory
-        and generates a .rst directive for embedding.
+        Extracts Chemiscope widget data, saves its .json dataset in the .rst directory
+        and generates a .rst directive for embedding. Also copies external structures
+        if present.
 
         Triggered on the each output of the script.
 
@@ -48,15 +50,22 @@ class ChemiscopeScraper:
             self.seen.add(id(widget))
 
             # Get the target directory to save the dataset next to the .rst files
-            src_file = block_vars.get("target_file")  # Python file
-            rst_dataset_dir = os.path.join(os.path.dirname(src_file), "_datasets")
+            target_file = block_vars.get("target_file")  # Python file
+            rst_dataset_dir = os.path.join(os.path.dirname(target_file), "_datasets")
             os.makedirs(rst_dataset_dir, exist_ok=True)
 
             # Save the related dataset to the directory next to the related .rst file
-            infix = os.path.splitext(os.path.basename(src_file))[0]
+            infix = os.path.splitext(os.path.basename(target_file))[0]
             dataset_filename = self.get_dataset_filename(infix)
             dataset_file_path = os.path.join(rst_dataset_dir, dataset_filename)
             widget.save(dataset_file_path)
+
+            # also saves in-place to facilitate copying external structures
+            src_file = block_vars.get("src_file")
+            src_dataset = os.path.join(os.path.dirname(src_file), dataset_filename)
+            widget.save(src_dataset)
+
+            copy_external_structures(src_dataset, rst_dataset_dir)
 
             rel_file_path = os.path.join("_datasets", dataset_filename)
 

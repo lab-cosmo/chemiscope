@@ -456,7 +456,7 @@
 .chsp-settings-representation {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-row-gap: 1ex;
+    grid-row-gap: 0.25ex;
 }
 
 .chsp-settings-representation label {
@@ -475,7 +475,7 @@
 .chsp-settings-camera {
     display: grid;
     gap: 1em;
-    grid-template-columns: repeat(7, auto);
+    grid-template-columns: repeat(9, auto);
     justify-content: center;
 }
 
@@ -537,6 +537,15 @@
     column-gap: 1em;
 }
 
+.chsp-atom-labels-property {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1em;
+    margin: 0.5em 0;
+}
+
 .chsp-atom-extra-options > * {
     margin: 0.5em 0;
 }
@@ -561,4 +570,29 @@
     width: 25px;
     height: 25px;
     margin-left: 5px;
+}
+
+/* make sure there are sane styling options for the modal dialogues,
+to avoid unreadable text when using dark themes */
+:root {
+    --cs-modal-background-light: white;
+    --cs-modal-text-light: #222;
+    --cs-modal-background-dark: #222;
+    --cs-modal-text-dark: white;
+}
+
+.modal-content,
+.modal-header,
+.modal-footer {
+    color: var(--cs-modal-text-light);
+    background-color: var(--cs-modal-background-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal-content,
+    .modal-header,
+    .modal-footer {
+        background-color: var(--cs-modal-background-dark);
+        color: var(--cs-modal-text-dark);
+    }
 }

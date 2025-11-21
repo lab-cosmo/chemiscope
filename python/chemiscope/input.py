@@ -28,8 +28,13 @@ def create_input(
     Create a dictionary that can be saved to JSON using the format used by the default
     chemiscope visualizer.
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_,
-        `stk.BuildingBlocks`_, and `MDAnalysis.AtomGroup`_ objects are supported
+    :param list frames: list of atomic structures. These can be either `chemiscope`
+        compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
+        `MDAnalysis.AtomGroup`_ objects. It is also possible to provide a list of
+        ``{"size": <n-atoms>, "data": <structure-path.json>}`` dictionaries,
+        referencing external `.json` files that will be loaded dynamically when
+        the dataset is opened in a chemiscope widget, as long as the files are
+        accessible from the viewer environment.
 
     :param dict meta: optional metadata of the dataset, see below
 
@@ -375,6 +380,57 @@ def create_input(
             data["parameters"][key] = param
 
     return data
+
+
+def write_external_structures(frames, prefix="structure", compresslevel=5):
+    """
+    Export a list of frames to external JSON structure files,
+    and returns a list of dictionaries that can be used to
+    create a chemiscope dataset that references them.
+
+    .. code-block:: python
+
+        frames = ase.io.read("trajectory.xyz", ":")
+        user_frames = chemiscope.write_external_structures(
+            frames, prefix="my_structure"
+        )
+        write_input("chemiscope.json", frames=user_frames)
+
+
+    :param list frames: list of atomic structures in a format that can
+            be understood by `chemiscope`.
+    :param str prefix: prefix to use for each generated JSON filename.
+        Files will be named like `{prefix}-0.json`, `{prefix}-1.json` etc.
+    :param str compresslevel: if zero, structures are saved
+        as uncompressed `.json` files, otherwise they are compressed
+        and saved as `.json.gz` files, according to the desired
+        compression level (1:fast, large file; 9: slow, small file).
+
+    :return: list of paths to JSON file as a list of
+        {"size":<natoms>, "data":<filename>} records that can be
+        used to create a concise chemiscope file that references
+        external files as structures
+    """
+
+    json_frames = frames_to_json(frames)
+
+    if "data" in json_frames[0]:
+        raise ValueError(
+            "frames should be valid structures, but got external links instead"
+        )
+
+    user_frames = []
+    for i, frame in enumerate(json_frames):
+        if compresslevel > 0:
+            path = f"{prefix}-{i}.json.gz"
+            with gzip.open(path, "w", compresslevel) as file:
+                file.write(json.dumps(frame, indent=2).encode("utf8"))
+        else:
+            path = f"{prefix}-{i}.json"
+            json.dump(frame, open(path, "w"), indent=2)
+        user_frames.append({"size": frame["size"], "data": path})
+
+    return user_frames
 
 
 def write_input(
