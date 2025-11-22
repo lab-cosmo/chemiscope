@@ -10,11 +10,6 @@ ease sharing and loading.
 This section covers creation methods, from provided Python tools or by manual JSON
 writing.
 
-For a simple way to generate an input file, we have a `Google Colab notebook
-<https://colab.research.google.com/drive/1NU0gjtaHcB5Oc3NbFZiQYtctY2190hDu>`_.
-
-The easiest programmatic way is the ``chemiscope`` Python package.
-
 You can then either use :py:func:`chemiscope.write_input` to save a JSON file and
 display the widget using :py:func:`chemiscope.show_input` or see it through
 chemiscope.org or use :py:func:`chemiscope.show` with the same arguments as
@@ -392,6 +387,11 @@ Array of dicts (one per viewer).
      - Show atom labels
      - No
      - false
+   * - ``labelsProperty``
+     - string
+     - An environment property value for the atom labels
+     - No
+     - ``element``
    * - ``unitCell``
      - bool
      - Show unit cell

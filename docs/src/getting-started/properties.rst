@@ -2,36 +2,35 @@
 Introduction to structural properties
 =====================================
 
-Before we get started, we will introduce a few concepts that underlie the
-concept and the usage of chemiscope. Chemiscope is designed to help navigating
-*structure-property maps*, i.e. 2D or 3D representations of a set of
-atomic scale entities that reflect how structure influences materials
-properties.
+This section provides an overview of the concepts underlying the usage of chemiscope.
+The tool is designed to help navigating *structure-property maps*, which are 2d- or
+3d-dimensional embeddings that reflect how variations in atomic structure influence
+materials properties.
 
-Chemiscope can work with two kinds of entities: full structures or atom-centred
-environments. A structure consists of a set of atoms, possibly representing the periodic
-repeat unit of an infinite structure. An environment consists of a set of neighbors that
-surround a central atom within a set cutoff radius. In both cases, these entities are
-fully defined by the position and nature of the atoms present in the structure or in the
-neighborhood of the environment center.
+Chemiscope works with two kinds of entities: full structures and atom-centered
+environments. A structure contains all atoms in a configuration, for example the unit
+cell of a crystal or the geometry of a molecule. An environment consists of a set of
+neighbors that surround a central atom within a chosen cutoff radius. In both cases,
+these entities are fully defined by the positions of the atoms and their chemical
+elements.
 
-For each structure or environment, one may have computed *properties*, e.g., the
-cohesive energy of a molecule, or the NMR chemical shielding of a nucleus, or
-*structural representations*, i.e. functions of the spatial arrangement of the atoms
-that achieve a description of the structure that is as complete as possible yet concise.
-Examples of such representations are for instance `atom density representations`_ or
-`Behler-Parrinello symmetry functions`_. These representations are usually
-high-dimensional vectors, hard to visualize and interpret. For this reason, one usually
-applies a dimensionality reduction algorithm, such as `PCA`_, `sketch-map`_, `PCovR`_,
-*etc.*  The interpretation of the resulting descriptor will differ depending on both the
-descriptor used to represent the structures or environments and the dimensionality
-reduction algorithm applied.
+Each structure or environment can be associated with *properties*. Some of these, such
+as energy, forces, density, or NMR shielding, represent *physical properties* that
+describe the system. Others are *structural representations* that encode the geometry
+itself. These include a wide family of descriptors, ranging from traditional
+hand-crafted functions, such as `Behler-Parrinello symmetry functions`_, to more recent
+approaches such as `SOAP`_, Atomic Cluster Expansion (`ACE`_), or latent embeddings
+extracted from graph neural network potentials (e.g. `PET-MAD`_). These
+representations are usually high-dimensional vectors, hard to visualize and interpret.
+For this reason, it is common to apply dimensionality reduction algorithm, such as
+`PCA`_, `sketch-map`_, `PCovR`_, *etc.* These methods compress the descriptor into a
+small number of components that can be visualized on a map. The interpretability of the
+low-dimensional embedding depends both on the representation that was originally used
+and on the algorithm used to reduce its dimensionality.
 
-Chemiscope simplifies visualizing the correlations between structural
-representations and properties associated with structures and environments,
-by representing in an interactive fashion these atomic-scale entities as points
-on a map, and by associating these points with an explicit, 3D visualization
-of the structure of the material or molecule.
+Chemiscope provides an interface that links each structure or environment to a point in
+a reduced-dimensionality map and to a 3d-dimensional visualization of its atomic
+configuration.
 
 .. figure:: ../img/mol-to-map.*
     :width: 65 %
@@ -41,30 +40,19 @@ of the structure of the material or molecule.
 
 Chemiscope is completely agnostic with respect to how properties and structural
 representations are generated.
-In the rest of this document, we will refer to properties describing
-the structure of an environment or structure as *structural properties*
-and other associated properties associated (such as energy, density, ...) as
-*physical properties*.
 
+There are two main ways to prepare data for chemiscope. One option is to compute
+structural descriptors or low-dimensional features using external tools, such as
+`scikit-matter`_ or `ASAP`_, and then load them into chemiscope. The other option is to
+let chemiscope compute these representations automatically, using
+:py:func:`chemiscope.explore`.
 
-Chemiscope can directly visualize datasets with precomputed mappable quantities, e.g.,
-structural representations or reduced-dimensionality features, using its command-line
-interface. To generate these quantities, external packages like `scikit-matter`_ or
-`ASAP`_ can be used. The ASAP package, for instance, can produce directly output in
-chemiscope-compatible format.
-
-Alternatively, chemiscope's :ref:`explore example <explore-example>` function can
-automatically compute representations and perform dimensionality reduction using the
-default `featurizer <https://arxiv.org/abs/2506.19674>`_ to project structures into the
-PET-MAD low-dimensional latent space. Custom featurization is also supported for
-advanced use cases.
-
-
-.. _ase: https://wiki.fysik.dtu.dk/ase/index.html
+.. _ACE: https://doi.org/10.1103/PhysRevB.99.014104
 .. _ASAP: https://github.com/BingqingCheng/ASAP
-.. _atom density representations: https://doi.org/10.1063/1.5090481
 .. _Behler-Parrinello symmetry functions: https://doi.org/10.1103/physrevlett.98.146401
 .. _PCovR: https://doi.org/10.1088/2632-2153/aba9ef
 .. _PCA: https://en.wikipedia.org/wiki/Principal_component_analysis
+.. _PET-MAD: https://arxiv.org/abs/2503.14118
 .. _sketch-map: https://doi.org/10.1073/pnas.1108486108
 .. _scikit-matter: https://scikit-matter.readthedocs.io/en/latest/
+.. _SOAP: https://doi.org/10.1103/PhysRevB.87.184115

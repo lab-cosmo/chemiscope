@@ -29,8 +29,8 @@ frames = ase.io.read("data/trajectory.xyz", ":")
 #
 # Load the SOAP-PCA descriptors. To obtain them yourself, check the :ref:`examples
 # <explore-advanced-example>` of feature calculation and dimentionality reduction.
-# Chemiscope also provides :py:func:`chemiscope.explore` function to obtain
-# low-dimentional representation based on PET-MAD features.
+# Chemiscope also provides :py:func:`chemiscope.explore` function to automatically
+# create the features using machine learning models.
 
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
