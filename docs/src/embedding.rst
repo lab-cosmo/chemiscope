@@ -9,13 +9,13 @@ usage examples.
 
 .. note::
     You should also look at the `API documentation <api/index.html>`_ for a list
-    of all public classes, interfaces and functions in chemiscope.
+    of all public classes, interfaces, and functions in chemiscope.
 
 Dependencies
 ^^^^^^^^^^^^
 
 Chemiscope relies on different external dependencies that you should load in all
-the HTML pages using it. You can serve these from your own web server, or use a
+the HTML pages using it. You can serve these from your own web server or use a
 CDN to deliver them.
 
 - `Bootstrap <https://getbootstrap.com/>`_ for HTML styling and basic UI;
@@ -58,11 +58,11 @@ partial builds containing only part of chemiscope can be added upon request.
 Build from sources
 ------------------
 
-Chemiscope is written in TypeScript, a statically typed language which compiles
+Chemiscope is written in TypeScript, a statically typed language that compiles
 to JavaScript. It uses the standard JavaScript ecosystem tools for dependency
 management, ``npm``. To build chemiscope from sources, you will first need to
 get the sources, either as an archive from `the release page
-<https://github.com/lab-cosmo/chemiscope/releases>`_, or using git
+<https://github.com/lab-cosmo/chemiscope/releases>`_ or using git:
 
 .. code-block:: bash
 
@@ -78,7 +78,7 @@ package manager.
     npm install
     npm run build
 
-This should create a ``dist`` directory, containing all the minified JavaScript
+This should create a ``dist`` directory containing all the minified JavaScript
 libraries.
 
 Usage inside a JavaScript project
@@ -91,22 +91,22 @@ the version of Chemiscope available on npm. Add it to your project with
 
     npm install chemiscope
 
-And import the library inside your own code using
+And import the library inside your own code using:
 
 .. code-block:: js
 
     const Chemiscope = require("chemiscope");
 
 If you are using TypeScript, definition files are also provided with the npm
-package, and should give you auto-completion, inline documentation and interface
+package, and should give you auto-completion, inline documentation, and interface
 checking.
 
 Usage example
 ^^^^^^^^^^^^^
 
 Below is the minimal HTML and JavaScript code needed to load and use the default
-chemiscope interface. Additional code would be required to load the dataset,
-using JSON files or directly.
+chemiscope interface. Additional code would be required to load the dataset directly or
+using JSON files.
 
 .. literalinclude:: embedded-example.html
     :language: html
