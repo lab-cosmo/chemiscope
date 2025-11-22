@@ -3,7 +3,7 @@ Simple chemiscope input
 =======================
 
 This example demonstrates the basic usage of the ``chemiscope`` package, reading
-structures and properties from structures stored as 
+structures and properties from structures stored as
  `ASE <https://wiki.fysik.dtu.dk/ase>`_  objects, and
 preparing a chemiscope file to visualize them using :py:func:`chemiscope.show`. First,
 import dependencies:
