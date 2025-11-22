@@ -25,4 +25,5 @@ chemiscope in a script, or to explore a dataset directly inside a Jupyter notebo
     properties
     panels
     input
+    json-format
     sharing

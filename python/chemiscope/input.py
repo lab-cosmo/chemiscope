@@ -56,6 +56,8 @@ def create_input(
     :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
 
+    For complete format specifications, parameter types, and more examples, see `JSON
+    file format <json-format>`.
 
     Dataset metadata
     ----------------
