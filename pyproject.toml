@@ -79,3 +79,4 @@ explore = [
     "metatomic-torch >=0.1.0,<0.2",
     "vesin >=0.3.5,<0.4",
 ]
+streamlit = ["streamlit>=1.25"]
