@@ -8,7 +8,7 @@ The tool is designed to help navigating *structure-property maps*, which are 2d-
 materials properties.
 
 Chemiscope works with two kinds of entities: full structures and atom-centered
-environments. A structure contains all atoms in a configuration, for example the unit
+environments. A structure contains all atoms in a configuration, for example, the unit
 cell of a crystal or the geometry of a molecule. An environment consists of a set of
 neighbors that surround a central atom within a chosen cutoff radius. In both cases,
 these entities are fully defined by the positions of the atoms and their chemical
