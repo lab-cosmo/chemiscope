@@ -983,6 +983,7 @@ export class MoleculeViewer {
         // setup state when the property changes
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
+
             if (property !== 'element') {
                 this._options.color.transform.enable();
                 this._options.color.transform.value = 'linear';
