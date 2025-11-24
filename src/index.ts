@@ -63,7 +63,7 @@ export interface DefaultConfig {
     /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
     /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
-    loadStructure?: (index: number, structure: unknown) => Structure | Promise<Structure>;
+    loadStructure?: (index: number, structure: unknown) => Promise<Structure>;
     /** Maximum number of structure viewers allowed in {@link ViewersGrid} */
     maxStructureViewers?: number;
 }
@@ -159,15 +159,14 @@ class DefaultVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link DefaultVisualizer}
      */
-    public static load(
+    public static async load(
         config: DefaultConfig,
         dataset: Dataset,
         warnings?: Warnings
     ): Promise<DefaultVisualizer> {
-        return new Promise((resolve) => {
-            const visualizer = new DefaultVisualizer(config, dataset, warnings);
-            resolve(visualizer);
-        });
+        const visualizer = new DefaultVisualizer(config, dataset, warnings);
+        await visualizer._loadInitial(dataset);
+        return visualizer;
     }
 
     public map: PropertiesMap;
@@ -255,7 +254,9 @@ class DefaultVisualizer {
 
         this.map.onselect = (indexes) => {
             this.info.show(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes).catch((err: unknown) => {
+                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+            });
         };
 
         this.map.activeChanged = (guid, indexes) => {
@@ -285,13 +286,18 @@ class DefaultVisualizer {
         );
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes).catch((err: unknown) => {
+                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+            });
         };
 
         this.structure.delayChanged = (delay) => {
             this.info.playbackDelay = delay;
         };
+    }
 
+    private async _loadInitial(dataset: Dataset): Promise<void> {
+        // Loads the initial structure/environment
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
 
         // if we have sparse environments, make sure to use the first
@@ -313,10 +319,9 @@ class DefaultVisualizer {
         const firstGUID = this.structure.active;
         this.map.addMarker(firstGUID, getNextColor([]), initial);
         this._pinned.push(firstGUID);
-        this.structure.show(initial);
+        await this.structure.show(initial);
         this.info.show(initial);
 
-        console.log("Applying settings, properties", this.structure._properties);
         // setup additional pinned values from the settings if needed
         if (dataset.settings !== undefined) {
             delete dataset.settings.map;
@@ -426,7 +431,9 @@ class DefaultVisualizer {
             const indexes = this._indexer.fromEnvironment(settings.pinned[0], this._target);
             this.map.select(indexes);
             this.info.show(indexes);
-            this.structure.show(indexes);
+            this.structure.show(indexes).catch((err: unknown) => {
+                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+            });
 
             // Create additional viewers as needed
             for (const environment of settings.pinned.slice(1)) {
@@ -445,12 +452,13 @@ class DefaultVisualizer {
                 this._pinned.push(guid);
                 this.info.show(indexes);
                 this.structure.setActive(guid);
-                this.structure.show(indexes);
+                this.structure.show(indexes).catch((err: unknown) => {
+                    this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+                });
             }
         }
 
         if (settings.structure !== undefined) {
-            console.log("Applying structure settings", this.structure._properties);
             this.structure.applySettings(settings.structure as Settings[]);
         }
     }
@@ -530,7 +538,7 @@ export interface StructureConfig {
     /** Id of the DOM element to use for the structure viewer grid */
     structure: string | HTMLElement;
     /** Custom structure loading callback, used to set {@link ViewersGrid.loadStructure} */
-    loadStructure?: (index: number, structure: unknown) => Structure | Promise<Structure>;
+    loadStructure?: (index: number, structure: unknown) => Promise<Structure>;
 }
 
 /**
@@ -548,15 +556,14 @@ class StructureVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link StructureVisualizer}
      */
-    public static load(
+    public static async load(
         config: StructureConfig,
         dataset: Dataset,
         warnings?: Warnings
     ): Promise<StructureVisualizer> {
-        return new Promise((resolve) => {
-            const visualizer = new StructureVisualizer(config, dataset, warnings);
-            resolve(visualizer);
-        });
+        const visualizer = new StructureVisualizer(config, dataset, warnings);
+        await visualizer._loadInitial(dataset);
+        return visualizer;
     }
 
     public info: EnvironmentInfo;
@@ -618,13 +625,18 @@ class StructureVisualizer {
             this.warnings
         );
         this.info.onchange = (indexes) => {
-            this.structure.show(indexes);
+            this.structure.show(indexes).catch((err: unknown) => {
+                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+            });
         };
 
         this.structure.delayChanged = (delay) => {
             this.info.playbackDelay = delay;
         };
+    }
 
+    private async _loadInitial(dataset: Dataset): Promise<void> {
+        // Loads the initial structure/environment
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
         // if we have sparse environments, make sure to use the first
         // environment actually part of the dataset
@@ -642,7 +654,7 @@ class StructureVisualizer {
             initial = this._indexer.fromEnvironment(dataset.settings.pinned[0], this._target);
         }
 
-        this.structure.show(initial);
+        await this.structure.show(initial);
         this.info.show(initial);
 
         // apply settings if needed
@@ -725,13 +737,14 @@ class MapVisualizer {
      * @param  dataset visualizer input, containing a dataset and optional visualization settings
      * @return         Promise that resolves to a {@link MapVisualizer}
      */
-    public static load(
+    public static async load(
         config: MapConfig,
         dataset: Dataset,
         warnings?: Warnings
     ): Promise<MapVisualizer> {
         return new Promise((resolve) => {
             const visualizer = new MapVisualizer(config, dataset, warnings);
+            visualizer._loadInitial(dataset);
             resolve(visualizer);
         });
     }
@@ -830,7 +843,10 @@ class MapVisualizer {
         this.info.onchange = (indexes) => {
             this.map.select(indexes);
         };
+    }
 
+    private _loadInitial(dataset: Dataset): void {
+        // Loads the initial structure/environment
         let initial: Indexes = { environment: 0, structure: 0, atom: 0 };
 
         // if we have sparse environments, make sure to use the first

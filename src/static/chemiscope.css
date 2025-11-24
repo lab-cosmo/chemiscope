@@ -575,10 +575,10 @@
 /* make sure there are sane styling options for the modal dialogues,
 to avoid unreadable text when using dark themes */
 :root {
-    --cs-modal-background-light: white;
+    --cs-modal-background-light: #eee;
     --cs-modal-text-light: #222;
     --cs-modal-background-dark: #222;
-    --cs-modal-text-dark: white;
+    --cs-modal-text-dark: #eee;
 }
 
 .modal-content,
