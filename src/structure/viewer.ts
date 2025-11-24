@@ -323,6 +323,7 @@ export class MoleculeViewer {
         // Disable as by default color property is element, so no color bar available
         this._colorMoreOptions.disabled = true;
 
+        console.log("connecting options in constructor");
         this._connectOptions();
         this._trajectoryOptions = this._options.getModalElement('trajectory-settings-group');
 
@@ -411,6 +412,7 @@ export class MoleculeViewer {
         this._colorMoreOptions.disabled = true;
 
         // Connect event handlers for the new options
+        console.log("connecting color options in refreshOptions");
         this._connectOptions();
 
         // Adapt settings to the display target
@@ -479,6 +481,7 @@ export class MoleculeViewer {
         // everything
         this.resize();
 
+        console.log("setting viewer properties", properties, this);
         this._properties = properties;
 
         let previousDefaultCutoff = undefined;
@@ -750,6 +753,7 @@ export class MoleculeViewer {
      * Applies saved settings, possibly filling in with default values
      */
     public applySettings(settings: Settings): void {
+        console.log("viewer applysettings", this._properties);
         // prevent multiple (time consuming) style updates during application
         this._disableStyleUpdates = true;
         this._options.applySettings(settings);
@@ -981,10 +985,11 @@ export class MoleculeViewer {
 
         // ======= color settings
         // setup state when the property changes
+        console.log('Connecting color options', this._properties);
         const colorPropertyChanged = () => {
             const property = this._options.color.property.value;
-
-            if (property !== 'element') {
+            console.log('Color property changed to', property, this._properties);
+            if (this._properties !== undefined && property !== 'element') {
                 this._options.color.transform.enable();
                 this._options.color.transform.value = 'linear';
                 this._options.color.min.enable();
@@ -1516,6 +1521,7 @@ export class MoleculeViewer {
      * according to properties
      */
     private _transformValues(property: string, transform: string): Array<number | null> {
+        console.log("transforming values ", this._properties, property, transform);
         assert(this._properties !== undefined);
         assert(Object.keys(this._properties).includes(property));
 

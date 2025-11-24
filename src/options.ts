@@ -464,6 +464,7 @@ function foreachOptionImpl(
         const currentKeys = keys.concat([key]);
         const element = options[key];
         if (element instanceof HTMLOption) {
+            console.log("callback", key, element);
             callback(currentKeys, element);
         } else if (typeof element === 'object' && element !== null) {
             foreachOptionImpl(element as Record<string, unknown>, callback, currentKeys);

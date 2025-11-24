@@ -316,6 +316,7 @@ class DefaultVisualizer {
         this.structure.show(initial);
         this.info.show(initial);
 
+        console.log("Applying settings, properties", this.structure._properties);
         // setup additional pinned values from the settings if needed
         if (dataset.settings !== undefined) {
             delete dataset.settings.map;
@@ -449,6 +450,7 @@ class DefaultVisualizer {
         }
 
         if (settings.structure !== undefined) {
+            console.log("Applying structure settings", this.structure._properties);
             this.structure.applySettings(settings.structure as Settings[]);
         }
     }

@@ -131,7 +131,7 @@ export class ViewersGrid {
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
     /// List of per-atom properties in the dataset
-    private _properties: Record<string, number[]>;
+    public _properties: Record<string, number[]>;
     /// Widget display target (structure or atom)
     private _target: DisplayTarget;
     /// Cached string representation of structures
@@ -440,6 +440,7 @@ export class ViewersGrid {
             return;
         }
 
+        console.log("Applying structure grid settings", this._properties);
         assert(settings.length === this._cellsData.size);
         for (const [i, data] of enumerate(this._cellsData.values())) {
             data.viewer.applySettings(settings[i]);
