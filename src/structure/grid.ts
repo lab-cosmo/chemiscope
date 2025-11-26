@@ -120,7 +120,7 @@ export class ViewersGrid {
      * The callback gets two parameter: the structure index (0-based); and the
      * full {@link UserStructure}.
      */
-    public loadStructure: (index: number, structure: unknown) => Structure | Promise<Structure>;
+    public loadStructure: (index: number, structure: unknown) => Promise<Structure>;
 
     public warnings: Warnings;
 
@@ -208,16 +208,19 @@ export class ViewersGrid {
         // Set the environments to synchronize with the modal and grid
         this._environments = this._calculatedEnvironments;
 
-        this.loadStructure = (_, s) => {
-            // check that the data does conform to the Structure interface
-            if (checkStructure(s as JsObject) !== '') {
-                throw Error(
-                    'got custom data for this structure, but no custom loadStructure callback\n' +
-                        `the object was ${JSON.stringify(s)}`
+        // Default structure loading function
+        this.loadStructure = (_: unknown, s: unknown): Promise<Structure> => {
+            const error = checkStructure(s as JsObject);
+            if (error !== '') {
+                return Promise.reject(
+                    new Error(
+                        'got custom data for this structure, but no custom loadStructure callback\n' +
+                            `the object was ${JSON.stringify(s)}`
+                    )
                 );
-            } else {
-                return s as Structure;
             }
+
+            return Promise.resolve(s as Structure);
         };
 
         this.warnings = warnings;
@@ -289,8 +292,8 @@ export class ViewersGrid {
      *
      * @param  indexes         structure / atom pair to display
      */
-    public show(indexes: Indexes): void {
-        this._showInViewer(this.active, indexes).catch((e: unknown) => {
+    public async show(indexes: Indexes): Promise<void> {
+        await this._showInViewer(this.active, indexes).catch((e: unknown) => {
             throw e;
         });
     }
@@ -575,8 +578,7 @@ export class ViewersGrid {
      */
     private async _structure(index: number): Promise<Structure> {
         if (this._resolvedStructures[index] === undefined) {
-            const maybe = this.loadStructure(index, this._structures[index]);
-            const structure = maybe instanceof Promise ? await maybe : maybe;
+            const structure = await this.loadStructure(index, this._structures[index]);
 
             const check = checkStructure(structure as unknown as JsObject);
             if (check !== '') {
@@ -659,9 +661,7 @@ export class ViewersGrid {
         structureIndex: number,
         atomIndex?: number
     ): Promise<void> {
-        const structure = await this._structure(structureIndex);
         const properties = this._propertiesForStructure(structureIndex);
-
         // Initialize load options with trajectory enabled
         const options: Partial<LoadOptions> = {
             trajectory: true,
@@ -676,6 +676,8 @@ export class ViewersGrid {
                 options.highlight = atomIndex;
             }
         }
+
+        const structure = await this._structure(structureIndex);
 
         // Load the structure into the viewer
         await new Promise<void>((resolve) => {
