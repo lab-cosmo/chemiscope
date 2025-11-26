@@ -1,6 +1,6 @@
 {
   "name": "chemiscope",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "An interactive structure/property explorer for materials and molecules",
   "author": "Guillaume Fraux <guillaume.fraux@epfl.ch>",
   "license": "BSD-3-Clause",
