@@ -1,0 +1,64 @@
+
+:orphan:
+
+.. _sphx_glr_sg_execution_times:
+
+
+Computation times
+=================
+**00:30.903** total execution time for 10 files **from all galleries**:
+
+.. container::
+
+  .. raw:: html
+
+    <style scoped>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" class="init">
+    $(document).ready( function () {
+        $('table.sg-datatable').DataTable({order: [[1, 'desc']]});
+    } );
+    </script>
+
+  .. list-table::
+   :header-rows: 1
+   :class: table table-striped sg-datatable
+
+   * - Example
+     - Time
+     - Mem (MB)
+   * - :ref:`sphx_glr_examples_7-explore-advanced.py` (``../../python/examples/7-explore-advanced.py``)
+     - 00:23.935
+     - 0.0
+   * - :ref:`sphx_glr_examples_6-explore.py` (``../../python/examples/6-explore.py``)
+     - 00:03.884
+     - 0.0
+   * - :ref:`sphx_glr_examples_10-visualizing-biomolecules.py` (``../../python/examples/10-visualizing-biomolecules.py``)
+     - 00:02.093
+     - 0.0
+   * - :ref:`sphx_glr_examples_9-showing-custom-bonds.py` (``../../python/examples/9-showing-custom-bonds.py``)
+     - 00:00.582
+     - 0.0
+   * - :ref:`sphx_glr_examples_8-explore-with-metatomic.py` (``../../python/examples/8-explore-with-metatomic.py``)
+     - 00:00.145
+     - 0.0
+   * - :ref:`sphx_glr_examples_5-shapes.py` (``../../python/examples/5-shapes.py``)
+     - 00:00.108
+     - 0.0
+   * - :ref:`sphx_glr_examples_1-base.py` (``../../python/examples/1-base.py``)
+     - 00:00.100
+     - 0.0
+   * - :ref:`sphx_glr_examples_3-trajectory.py` (``../../python/examples/3-trajectory.py``)
+     - 00:00.024
+     - 0.0
+   * - :ref:`sphx_glr_examples_2-structure_map.py` (``../../python/examples/2-structure_map.py``)
+     - 00:00.023
+     - 0.0
+   * - :ref:`sphx_glr_examples_4-colors.py` (``../../python/examples/4-colors.py``)
+     - 00:00.009
+     - 0.0
