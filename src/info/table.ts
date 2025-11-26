@@ -68,9 +68,8 @@ export class Table {
 
         const tbody = group.querySelector('tbody') as HTMLTableSectionElement;
         for (const name in properties) {
-            const tr = document.createElement('tr');
             const td = document.createElement('td');
-
+            
             //  add the units to the property if it exists, this is identical to the _title in ../map/map.ts
             const units = properties[name].units;
             let title = name;
@@ -90,32 +89,55 @@ export class Table {
                 td.innerText = title;
             }
 
-            tr.appendChild(td);
-            const cell = document.createElement('td');
-            tr.appendChild(cell);
-            tbody.appendChild(tr);
-
             const propertyParameter = properties[name].parameters;
+
             if (typeof propertyParameter === 'undefined') {
+                // scalar property - create a row with two cells, label | value 
+                const tr = document.createElement('tr');
+                tr.appendChild(td);
+                const cell = document.createElement('td');
+                tr.appendChild(cell);
+                tbody.appendChild(tr);
+
                 this._properties.push({
                     cell: cell,
                     values: properties[name].values,
                 });
             } else if (parameters && typeof propertyParameter[0] === 'string') {
+                // function property - create two rows: label | button // plot as 2 cols
+                
+                const trLabel = document.createElement('tr');
+                trLabel.appendChild(td);
+                const buttonTd = document.createElement('td');
+                buttonTd.style.textAlign = 'right'; 
+                trLabel.appendChild(buttonTd);
+                tbody.appendChild(trLabel);
+
+                const trPlot = document.createElement('tr');
+                // start hidden!
+                trPlot.style.display = 'none';
+                trPlot.classList.add('chsp-info-plotarea');
+
+                const plotCell = document.createElement('td');
+                plotCell.colSpan = 2;
+                plotCell.style.textAlign = 'center';                
+                trPlot.appendChild(plotCell);
+                tbody.appendChild(trPlot);
+
+                const plotHolder = document.createElement('div');
+                plotHolder.style.display = 'none';
+                plotHolder.style.width = '80%';
+                plotHolder.style.margin = '0 auto';
+                plotCell.appendChild(plotHolder);              
+
                 let xlabel = propertyParameter[0];
                 const parameterUnits = parameters[propertyParameter[0]].units as string;
                 if (parameterUnits !== undefined) {
                     xlabel += `/${parameterUnits}`;
                 }
 
-                const plotHolder = document.createElement('div');
-                plotHolder.style.display = 'block';
-                plotHolder.style.width = '100%';
-
-                cell.appendChild(plotHolder);
-
                 this._properties.push({
-                    cell: cell,
+                    cell: plotCell,
                     values: properties[name].values,
                     parameter: parameters[propertyParameter[0]].values,
                     xlabel: xlabel,
@@ -125,15 +147,19 @@ export class Table {
                 // add show/hide button to td
                 const button = document.createElement('button');
                 button.classList.add('btn', 'btn-secondary', 'btn-sm', 'chsp-toggle-plot-btn');
-                button.textContent = 'Show/Hide';
+                button.textContent = 'Show';
                 button.onclick = () => {
-                    if (plotHolder.style.display === 'block') {
-                        plotHolder.style.display = 'none';
-                    } else {
+                    if (plotHolder.style.display === 'none') {
+                        trPlot.style.display = 'table-row';
                         plotHolder.style.display = 'block';
+                        button.textContent = 'Hide';
+                    } else {
+                        trPlot.style.display = 'none';
+                        plotHolder.style.display = 'none';
+                        button.textContent = 'Show';
                     }
                 };
-                td.appendChild(button);
+                buttonTd.appendChild(button);
             }
         }
         this.show({ environment: 0, structure: 0, atom: 0 });
@@ -162,9 +188,13 @@ export class Table {
                 s.cell.innerText = s.values[index].toString();
             } else {
                 // now we plot!!
-                const widthPlotCell = this._root.offsetWidth / 1.5;
-
+                
+                // Get the plotHolder element
                 assert(s.cell.firstElementChild !== null);
+                const plotHolder = s.cell.firstElementChild as HTMLElement;
+
+                // CHANGE: Use the clientWidth of the plotHolder for plotting size
+                const widthPlotCell = this._root.offsetWidth * 0.6;
 
                 plotMultiDimensionalProperties(
                     s.parameter as number[],

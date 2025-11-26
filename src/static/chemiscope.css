@@ -233,8 +233,10 @@
 
 .chsp-properties-table {
     height: 100%;
-    width: 80%;
+    width: 90%;
     margin: auto;
+    border: 1px solid #222;
+    background-color: #ffffffee;
 }
 
 .chsp-properties-table td,
@@ -397,7 +399,8 @@
     left: 0;
     right: 0;
     z-index: 10;
-    background-color: white;
+    background-color: transparent;
+    width : 100%;
     /* max-height is set in JavaScript */
     overflow: auto;
 }
@@ -409,6 +412,11 @@
 .chsp-info-table table {
     margin: 0;
 }
+
+.chsp-info-plotarea {
+    background-color: #eeeeeebb !important;
+}
+
 
 /* Change the atoms slider thumb color to green, to match structure highlight */
 .chsp-atom-slider::-webkit-slider-thumb {
