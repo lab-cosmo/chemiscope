@@ -400,7 +400,7 @@
     right: 0;
     z-index: 10;
     background-color: transparent;
-    width : 100%;
+    width: 100%;
     /* max-height is set in JavaScript */
     overflow: auto;
 }
@@ -416,7 +416,6 @@
 .chsp-info-plotarea {
     background-color: #eeeeeebb !important;
 }
-
 
 /* Change the atoms slider thumb color to green, to match structure highlight */
 .chsp-atom-slider::-webkit-slider-thumb {

@@ -69,7 +69,7 @@ export class Table {
         const tbody = group.querySelector('tbody') as HTMLTableSectionElement;
         for (const name in properties) {
             const td = document.createElement('td');
-            
+
             //  add the units to the property if it exists, this is identical to the _title in ../map/map.ts
             const units = properties[name].units;
             let title = name;
@@ -92,7 +92,7 @@ export class Table {
             const propertyParameter = properties[name].parameters;
 
             if (typeof propertyParameter === 'undefined') {
-                // scalar property - create a row with two cells, label | value 
+                // scalar property - create a row with two cells, label | value
                 const tr = document.createElement('tr');
                 tr.appendChild(td);
                 const cell = document.createElement('td');
@@ -105,11 +105,11 @@ export class Table {
                 });
             } else if (parameters && typeof propertyParameter[0] === 'string') {
                 // function property - create two rows: label | button // plot as 2 cols
-                
+
                 const trLabel = document.createElement('tr');
                 trLabel.appendChild(td);
                 const buttonTd = document.createElement('td');
-                buttonTd.style.textAlign = 'right'; 
+                buttonTd.style.textAlign = 'right';
                 trLabel.appendChild(buttonTd);
                 tbody.appendChild(trLabel);
 
@@ -120,7 +120,7 @@ export class Table {
 
                 const plotCell = document.createElement('td');
                 plotCell.colSpan = 2;
-                plotCell.style.textAlign = 'center';                
+                plotCell.style.textAlign = 'center';
                 trPlot.appendChild(plotCell);
                 tbody.appendChild(trPlot);
 
@@ -128,7 +128,7 @@ export class Table {
                 plotHolder.style.display = 'none';
                 plotHolder.style.width = '80%';
                 plotHolder.style.margin = '0 auto';
-                plotCell.appendChild(plotHolder);              
+                plotCell.appendChild(plotHolder);
 
                 let xlabel = propertyParameter[0];
                 const parameterUnits = parameters[propertyParameter[0]].units as string;
@@ -188,12 +188,6 @@ export class Table {
                 s.cell.innerText = s.values[index].toString();
             } else {
                 // now we plot!!
-                
-                // Get the plotHolder element
-                assert(s.cell.firstElementChild !== null);
-                const plotHolder = s.cell.firstElementChild as HTMLElement;
-
-                // CHANGE: Use the clientWidth of the plotHolder for plotting size
                 const widthPlotCell = this._root.offsetWidth * 0.6;
 
                 plotMultiDimensionalProperties(
