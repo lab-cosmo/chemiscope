@@ -191,3 +191,34 @@ main .ratio > * {
     bottom: 0;
     width: 100%;
 }
+
+/* scroll bands for mobile devices */
+@media (max-width: 768px) {
+    .scroll-band-container {
+        position: relative;
+        width: 100%;
+    }
+
+    /* invisible scroll bands */
+    .scroll-band-left,
+    .scroll-band-right {
+        position: absolute;
+        z-index: 20;
+        top: 0;
+        height: 100%;
+
+        /* width of the safe scroll area */
+        width: 10%;
+
+        pointer-events: auto;
+        background-color: transparent;
+        touch-action: pan-y;
+    }
+
+    .scroll-band-left {
+        left: 0;
+    }
+    .scroll-band-right {
+        right: 0;
+    }
+}

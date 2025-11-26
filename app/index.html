@@ -158,8 +158,12 @@
             </div>
         </div>
 
-        <main id="chemiscope-container"></main>
+        <div class="scroll-band-container">
+            <main id="chemiscope-container"></main>
 
+            <div class="scroll-band-left"></div>
+            <div class="scroll-band-right"></div>
+        </div>
         <footer class="footer">
             <div class="container">
                 <div style="float: left; font-size: x-small">
@@ -569,6 +573,59 @@
                     throw e;
                 })
             );
+        });
+    </script>
+    <script>
+        // script to forward clicks through the scroll bands
+        function deepElementFromPoint(x, y) {
+            // gets an element at the given coordinates, diving into open shadow roots
+            let el = document.elementFromPoint(x, y);
+            let shadowHit;
+
+            // Walk down through open shadow roots as long as they exist
+            while (el && el.shadowRoot && typeof el.shadowRoot.elementFromPoint === 'function') {
+                shadowHit = el.shadowRoot.elementFromPoint(x, y);
+                if (!shadowHit || shadowHit === el) break;
+                el = shadowHit;
+            }
+
+            return el;
+        }
+
+        function onScrollBandClick(e) {
+            const band = e.currentTarget;
+
+            // Don’t let this original click bubble and do anything else
+            e.stopPropagation();
+            e.preventDefault();
+
+            const x = e.clientX;
+            const y = e.clientY;
+
+            // Temporarily make the band transparent to hit-testing
+            band.style.pointerEvents = 'none';
+            const underlying = deepElementFromPoint(x, y);
+            band.style.pointerEvents = 'auto';
+
+            if (!underlying || underlying === band) {
+                return;
+            }
+            underlying.dispatchEvent(
+                new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    button: e.button || 0,
+                })
+            );
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.scroll-band-left, .scroll-band-right').forEach((band) => {
+                band.addEventListener('click', onScrollBandClick);
+            });
         });
     </script>
 </html>
