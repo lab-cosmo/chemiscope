@@ -131,7 +131,7 @@ export class ViewersGrid {
     /// List of structures in the dataset
     private _structures: Structure[] | UserStructure[];
     /// List of per-atom properties in the dataset
-    public _properties: Record<string, number[]>;
+    private _properties: Record<string, number[]>;
     /// Widget display target (structure or atom)
     private _target: DisplayTarget;
     /// Cached string representation of structures
