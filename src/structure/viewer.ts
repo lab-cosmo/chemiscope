@@ -475,10 +475,6 @@ export class MoleculeViewer {
         options: Partial<LoadOptions> = {},
         onLoadingDone?: () => void
     ): void {
-        // if the canvas size changed since last structure, make sure we update
-        // everything
-        this.resize();
-
         this._properties = properties;
 
         let previousDefaultCutoff = undefined;
@@ -677,7 +673,11 @@ export class MoleculeViewer {
         // make sure to reset axes when the structure changes
         this._options.axes.changed('JS');
 
-        // we don't update the style here as it will be done in
+        // if the canvas size changed since last structure, make sure we update
+        // everything. this also redraws the colorbar
+        this.resize();
+
+        // we don't update the atom style here as it will be done in
         // showInViewer, which is called just after load in grid.ts
         // which is in practice the only place where load is used.
 
@@ -2194,6 +2194,7 @@ export class MoleculeViewer {
     }
 
     private _updateColorBar() {
+        console.log('Updating color bar', this._options.color.property);
         this._deleteColorBar();
         if (this._options.color.property.value !== 'element') {
             this._colorBar = this._addColorBar();
