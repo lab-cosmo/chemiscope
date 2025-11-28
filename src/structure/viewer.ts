@@ -2194,7 +2194,6 @@ export class MoleculeViewer {
     }
 
     private _updateColorBar() {
-        console.log('Updating color bar', this._options.color.property);
         this._deleteColorBar();
         if (this._options.color.property.value !== 'element') {
             this._colorBar = this._addColorBar();
