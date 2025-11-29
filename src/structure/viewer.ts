@@ -257,6 +257,7 @@ export class MoleculeViewer {
         if (viewer === undefined) {
             throw Error('unable to create WebGL canvas');
         }
+
         this._viewer = viewer;
         this.onselect = () => {};
 
@@ -437,7 +438,9 @@ export class MoleculeViewer {
      */
     public resize(): void {
         this._viewer.resize();
-        this._updateColorBar();
+        if (!this._disableStyleUpdates) {
+            this._updateColorBar();
+        }
     }
 
     /**
@@ -784,7 +787,7 @@ export class MoleculeViewer {
     }
 
     /* Set the given list of active atoms as hoverable **/
-    public _setHoverable(active: number[]): void {
+    private _setHoverable(active: number[]): void {
         assert(this._current !== undefined);
         this._viewer.setHoverDuration(0);
 
@@ -838,8 +841,11 @@ export class MoleculeViewer {
 
     private _connectOptions(): void {
         const restyleAndRender = () => {
-            this._updateStyle();
-            this._viewer.render();
+            if (!this._disableStyleUpdates) {
+                this._updateStyle();
+                this._updateColorBar();
+                this._viewer.render();
+            }
         };
 
         this._options.cartoon.onchange.push(restyleAndRender);
@@ -976,7 +982,9 @@ export class MoleculeViewer {
                 };
             }
 
-            restyleAndRender();
+            if (!this._disableStyleUpdates) {
+                restyleAndRender();
+            }
         });
 
         // ======= color settings
@@ -1032,7 +1040,6 @@ export class MoleculeViewer {
                 this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
             }
 
-            this._updateColorBar();
             restyleAndRender();
         };
         this._options.color.property.onchange.push(colorPropertyChanged);
@@ -1052,7 +1059,6 @@ export class MoleculeViewer {
                 return;
             }
             this._setScaleStep([min, max]);
-            this._updateColorBar();
             restyleAndRender();
         };
 
@@ -1072,7 +1078,7 @@ export class MoleculeViewer {
             this._options.color.max.value = max;
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
-            this._updateColorBar();
+            if (!this._disableStyleUpdates) this._updateColorBar();
             restyleAndRender();
         });
 
@@ -1104,13 +1110,11 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
-            this._updateColorBar();
             restyleAndRender();
         });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
-            this._updateColorBar();
             restyleAndRender();
         });
 
@@ -1300,8 +1304,6 @@ export class MoleculeViewer {
         }
 
         this._resetShapes();
-
-        assert(this._current.atomLabels.length === 0);
 
         const structure = this._current.structure;
         assert(!(structure.shapes === undefined));
