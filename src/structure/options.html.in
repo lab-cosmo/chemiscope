@@ -216,8 +216,8 @@
                <h5 class="chsp-settings-section-title">Trajectory</h5>
                <div class="chsp-settings-trajectory">
                   <div class="input-group input-group-sm">
-                     <label class="input-group-text" for="playback-delay" title="playback delay in milliseconds" style="cursor: help">
-                        playback delay
+                     <label class="input-group-text" for="playback-delay" title="playback delay in milliseconds per frame" style="cursor: help">
+                        frame delay
                      </label>
                      <input id="playback-delay" class="form-control" type="number" min="100" value="700" step="100" />
                   </div>

@@ -73,6 +73,7 @@ export class MapOptions extends OptionsGroup {
         min: HTMLOption<'number'>;
         max: HTMLOption<'number'>;
         palette: HTMLOption<'string'>;
+        opacity: HTMLOption<'number'>;
     };
     public size: {
         factor: HTMLOption<'number'>;
@@ -126,11 +127,16 @@ export class MapOptions extends OptionsGroup {
             min: new HTMLOption('number', NaN),
             max: new HTMLOption('number', NaN),
             palette: new HTMLOption('string', 'inferno'),
+            opacity: new HTMLOption('number', 100),
         };
         this.color.property.validate = optionValidator(propertiesNames.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
         this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
-
+        this.color.opacity.validate = (value) => {
+            if (value < 1 || value > 100) {
+                throw Error(`opacity must be between 1 and 100, got ${value}`);
+            }
+        };
         // Initialise size
         this.size = {
             factor: new HTMLOption('number', 50),
@@ -533,6 +539,7 @@ export class MapOptions extends OptionsGroup {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');
+        this.color.opacity.bind(this.getModalElement('map-opacity'), 'value');
 
         // ======= marker symbols
         const selectSymbolProperty = this.getModalElement<HTMLSelectElement>('map-symbol-property');

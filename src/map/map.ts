@@ -1141,6 +1141,13 @@ export class PropertiesMap {
             } as unknown as Layout);
         });
 
+        // ======= opacity
+        this._options.color.opacity.onchange.push(() => {
+            this._restyle({
+                'marker.opacity': this._options.color.opacity.value / 100,
+            });
+        });
+
         // ======= markers symbols
         this._options.symbol.onchange.push(() => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);

@@ -1,6 +1,6 @@
 .. _input:
 
-Creating input with Python
+Creating inputs with Python
 ===========================
 
 Chemiscope loads datasets from a single JSON file containing structures, properties, and

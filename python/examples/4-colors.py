@@ -1,8 +1,9 @@
 """
-Atom property coloring
-======================
+Atom property coloring and labels
+=================================
 
-This example demonstrates how to color atoms based on scalar properties.
+This example demonstrates how to color atoms based on scalar properties, and how to
+visualize property values as labels for the atoms.
 
 Note that the same parameters can be used with :py:func:`chemiscope.show` to visualize
 an interactive widget in a Jupyter notebook.
@@ -68,7 +69,8 @@ chemiscope.write_input(
         "alpha_eigenvalues": np.vstack(alpha_eigenvalues),
     },
     # it is also possible to define the default visualization settings, e.g. map axes,
-    # color property and palette, optionally
+    # color property and palette, and to indicate that we want to show atom labels
+    # with the anisotropy value
     settings={
         "map": {
             "x": {"property": "alpha_eigenvalues[1]"},
@@ -79,6 +81,8 @@ chemiscope.write_input(
         "structure": [
             {
                 "color": {"property": "anisotropy", "palette": "bwr"},
+                "atomLabels": True,
+                "labelsProperty": "anisotropy",
             }
         ],
     },

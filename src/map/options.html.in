@@ -160,6 +160,11 @@
 
                      <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%">reset min/max</button>
                   </div>
+
+                  <div class="input-group input-group-sm" style="grid-column: auto / span 2">
+                     <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
+                     <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
+                  </div>
                </div>
 
                <div class="input-group input-group-sm">
