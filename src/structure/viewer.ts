@@ -1732,6 +1732,7 @@ export class MoleculeViewer {
         // All atoms from all models (central + supercell + highlighted env)
         const atoms = this._viewer.selectedAtoms({});
 
+        const visibleAtoms = [];
         for (const atom of atoms) {
             // Heuristic for “visible”: has some style and is not marked hidden
             const style = atom.style || {};
@@ -1742,10 +1743,20 @@ export class MoleculeViewer {
                 sphere.hidden !== true &&
                 (sphere.opacity === undefined || sphere.opacity > 0);
 
-            if (!sphereVisible) {
-                continue; // atom not actually drawn
+            if (sphereVisible) {
+                visibleAtoms.push(atom);
             }
+        }
 
+        if (visibleAtoms.length > 1000) {
+            this.warnings.sendMessage(
+                'Atom labels are disabled when more than 1000 atoms are visible to avoid performance issues.'
+            );
+            this._viewer.render();
+            return;
+        }
+
+        for (const atom of visibleAtoms) {
             // Map back to the original structure index.
             // 3Dmol keeps `serial` for the central cell; for replicated atoms
             // we can safely fall back to index % structure.size.
@@ -1761,7 +1772,7 @@ export class MoleculeViewer {
 
             let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
             if (color === 0xffffff || color === 'white') {
-                color = 0x000000;
+                color = 0x444444; //use dark gray for white atoms for better visibility
             }
 
             const position = new $3Dmol.Vector3(atom.x, atom.y, atom.z);
