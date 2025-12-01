@@ -531,6 +531,7 @@ export class MapOptions extends OptionsGroup {
         this.color.mode.bind(this.getModalElement('map-color-transform'), 'value');
         this.color.min.bind(this.getModalElement('map-color-min'), 'value');
         this.color.max.bind(this.getModalElement('map-color-max'), 'value');
+        this.color.opacity.bind(this.getModalElement('map-opacity'), 'value');
 
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('map-color-palette');
@@ -539,7 +540,6 @@ export class MapOptions extends OptionsGroup {
             selectPalette.options.add(new Option(key, key));
         }
         this.color.palette.bind(selectPalette, 'value');
-        this.color.opacity.bind(this.getModalElement('map-opacity'), 'value');
 
         // ======= marker symbols
         const selectSymbolProperty = this.getModalElement<HTMLSelectElement>('map-symbol-property');
