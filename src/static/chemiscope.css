@@ -246,6 +246,13 @@
     border-top: none;
 }
 
+/* plot container inside property table */
+.chsp-info-plot-holder {
+    width: 80%;
+    margin: 0 auto;
+    aspect-ratio: 4 / 3;
+}
+
 .chsp-settings-section-title {
     font-weight: bold;
 }

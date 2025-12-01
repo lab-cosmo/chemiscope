@@ -36,6 +36,9 @@ export class Table {
     private _header: HTMLTableCellElement;
     private _properties: TableProperty[];
 
+    private _collapse: HTMLElement;
+    private _currentIndexes: Indexes | undefined;
+
     /**
      * Create and append a new table inside the given `HTMLElement`.
      *
@@ -62,6 +65,13 @@ export class Table {
         const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
         this._root = root;
+        this._collapse = group;
+        // when the panel is expanded, re-draw plots for the latest indices
+        group.addEventListener('shown.bs.collapse', () => {
+            if (this._currentIndexes !== undefined) {
+                this.show(this._currentIndexes);
+            }
+        });
 
         this._header = group.querySelector('th') as HTMLTableCellElement;
         this._target = target;
@@ -127,8 +137,7 @@ export class Table {
 
                 const plotHolder = document.createElement('div');
                 plotHolder.style.display = 'none';
-                plotHolder.style.width = '80%';
-                plotHolder.style.margin = '0 auto';
+                plotHolder.classList.add('chsp-info-plot-holder');
                 plotCell.appendChild(plotHolder);
 
                 let xlabel = propertyParameter[0];
@@ -154,6 +163,9 @@ export class Table {
                         trPlot.style.display = 'table-row';
                         plotHolder.style.display = 'block';
                         button.textContent = 'Hide';
+                        if (this._currentIndexes !== undefined) {
+                            this.show(this._currentIndexes);
+                        }
                     } else {
                         trPlot.style.display = 'none';
                         plotHolder.style.display = 'none';
@@ -173,6 +185,8 @@ export class Table {
     public show(indexes: Indexes): void {
         let displayId;
         let index;
+        this._currentIndexes = indexes;
+
         if (this._target === 'structure') {
             displayId = indexes.structure + 1;
             index = indexes.structure;
@@ -194,16 +208,18 @@ export class Table {
                 }
             } else {
                 // now we plot!!
-                const widthPlotCell = this._root.offsetWidth * 0.6;
 
-                plotMultiDimensionalProperties(
-                    s.parameter as number[],
-                    s.values[index] as number[],
-                    s.cell.firstElementChild as HTMLElement,
-                    widthPlotCell,
-                    s.xlabel,
-                    s.ylabel
-                );
+                const plotHolder = s.cell.firstElementChild as HTMLElement;
+                const tableIsShown = this._collapse.classList.contains('show');
+                if (tableIsShown && plotHolder && plotHolder.style.display !== 'none') {
+                    plotMultiDimensionalProperties(
+                        s.parameter as number[],
+                        s.values[index] as number[],
+                        s.cell.firstElementChild as HTMLElement,
+                        s.xlabel,
+                        s.ylabel
+                    );
+                }
             }
         }
     }
