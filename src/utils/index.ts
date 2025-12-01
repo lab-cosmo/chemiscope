@@ -177,7 +177,7 @@ export function fixedWidthFloat(value: number, width: number = 4): string {
     if (value === 0) {
         return '0';
     } else if (value > 0) {
-        // we can use the full 'width; characters for the number
+        // we can use the full 'width' characters for the number
         if (value < Math.pow(10, width) && value > 0.9 * Math.pow(0.1, width - 2)) {
             if (Number.isInteger(value)) {
                 return value.toString();
