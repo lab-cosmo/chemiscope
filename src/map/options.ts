@@ -73,6 +73,7 @@ export class MapOptions extends OptionsGroup {
         min: HTMLOption<'number'>;
         max: HTMLOption<'number'>;
         palette: HTMLOption<'string'>;
+        opacity: HTMLOption<'number'>;
     };
     public size: {
         factor: HTMLOption<'number'>;
@@ -126,11 +127,16 @@ export class MapOptions extends OptionsGroup {
             min: new HTMLOption('number', NaN),
             max: new HTMLOption('number', NaN),
             palette: new HTMLOption('string', 'inferno'),
+            opacity: new HTMLOption('number', 100),
         };
         this.color.property.validate = optionValidator(propertiesNames.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
         this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
-
+        this.color.opacity.validate = (value) => {
+            if (value < 1 || value > 100) {
+                throw Error(`opacity must be between 1 and 100, got ${value}`);
+            }
+        };
         // Initialise size
         this.size = {
             factor: new HTMLOption('number', 50),
@@ -525,6 +531,7 @@ export class MapOptions extends OptionsGroup {
         this.color.mode.bind(this.getModalElement('map-color-transform'), 'value');
         this.color.min.bind(this.getModalElement('map-color-min'), 'value');
         this.color.max.bind(this.getModalElement('map-color-max'), 'value');
+        this.color.opacity.bind(this.getModalElement('map-opacity'), 'value');
 
         // ======= color palette
         const selectPalette = this.getModalElement<HTMLSelectElement>('map-color-palette');
