@@ -542,6 +542,8 @@ export class ViewersGrid {
 
         // Load the viewer with the current indexes
         await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+        // Highlight the atom if needed. This also trigger a style update for the atoms
+        data.viewer.highlight(envView ? data.current.atom : undefined);
     }
 
     /**
