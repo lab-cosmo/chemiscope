@@ -235,6 +235,7 @@
     height: 100%;
     width: 90%;
     margin: auto;
+    overflow-x: auto;
     border: 1px solid #222;
     background-color: #ffffffee;
 }

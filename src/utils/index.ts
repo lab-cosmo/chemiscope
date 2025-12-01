@@ -171,3 +171,46 @@ export function binarySearch(array: number[], value: number): number {
 
     return -1;
 }
+
+/** Try to format a float to ensure it fits in a fixed characters limit */
+export function fixedWidthFloat(value: number, width: number = 4): string {
+    if (value === 0) {
+        return '0';
+    } else if (value > 0) {
+        // we can use the full 'width; characters for the number
+        if (value < Math.pow(10, width) && value > 0.9 * Math.pow(0.1, width - 2)) {
+            if (Number.isInteger(value)) {
+                return value.toString();
+            } else {
+                // convert to fixed format with width-1 decimals, then truncate to fit
+                // in width characters
+                let result = value.toFixed(width - 1).substring(0, width);
+                if (result[3] === '.') {
+                    result = result.substring(0, width - 1);
+                }
+                return result;
+            }
+        } else {
+            // convert to exponential format with no decimal part
+            return value.toExponential(0).replace('+', '');
+        }
+    } else {
+        // we only have 3 characters, we need one for the '-' sign
+        if (value > -Math.pow(10, width - 1) && value < -0.9 * Math.pow(0.1, width - 3)) {
+            if (Number.isInteger(value)) {
+                return value.toString();
+            } else {
+                // convert to fixed format with width-2 decimals (minus!)
+                // then truncate to fit in width characters
+                let result = value.toFixed(width - 1).substring(0, width);
+                if (result[3] === '.') {
+                    result = result.substring(0, width);
+                }
+                return result;
+            }
+        } else {
+            // convert to exponential format with no decimal part
+            return value.toExponential(0).replace('+', '');
+        }
+    }
+}

@@ -8,6 +8,7 @@ import assert from 'assert';
 import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
 import { plotMultiDimensionalProperties } from './plotting';
+import { fixedWidthFloat } from '../utils';
 
 /**
  * TableProperty holds the objects to show the properties in the info bar
@@ -185,7 +186,12 @@ export class Table {
         this._header.innerText = `Properties for ${this._target} ${displayId}`;
         for (const s of this._properties) {
             if (!Array.isArray(s.values[index])) {
-                s.cell.innerText = s.values[index].toString();
+                // scalar property
+                if (typeof s.values[index] === 'number') {
+                    s.cell.innerText = fixedWidthFloat(s.values[index] as number, 6);
+                } else {
+                    s.cell.innerText = s.values[index].toString();
+                }
             } else {
                 // now we plot!!
                 const widthPlotCell = this._root.offsetWidth * 0.6;
