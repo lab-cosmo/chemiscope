@@ -167,7 +167,9 @@ class TestExtractProperties(unittest.TestCase):
             "different structures, it will be ignored",
         )
 
-        self.assertEqual(set(properties.keys()), {"valid_prop", "valid_string", "non_iter_prop"})
+        self.assertEqual(
+            set(properties.keys()), {"valid_prop", "valid_string", "non_iter_prop"}
+        )
         self.assertEqual(properties["valid_prop"]["values"], [[1, 2], [3, 4]])
         self.assertEqual(properties["valid_string"]["values"], ["hello", "1345"])
         self.assertEqual(properties["non_iter_prop"]["values"], [3, 4])
