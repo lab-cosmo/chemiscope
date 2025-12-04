@@ -154,6 +154,7 @@ class TestExtractProperties(unittest.TestCase):
 
         frame_2 = BASE_FRAME.copy()
         frame_2.info["valid_prop"] = [3, 4]
+        # this will be turned into a string because it is a string in the other frame
         frame_2.info["valid_string"] = 1345
         frame_2.info["invalid_prop"] = [1]
         frame_2.info["non_iter_prop"] = 4
