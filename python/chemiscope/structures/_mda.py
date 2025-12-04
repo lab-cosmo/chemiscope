@@ -10,6 +10,8 @@ try:
 except ImportError:
     HAVE_MDA = False
 
+BIO_PROPERTIES = ["hetatom", "resids", "resnames", "chains"]
+
 
 def _mda_valid_structures(frames):
     if HAVE_MDA and isinstance(frames, mda.AtomGroup):
@@ -66,6 +68,16 @@ def _mda_to_json(ag):
         ).tolist()
 
     data["hetatom"] = hetatom.tolist()
+
+    # remove bio-related properties if any of them are missing
+    existing_properties = []
+    for prop in BIO_PROPERTIES:
+        if prop in data:
+            existing_properties.append(prop)
+
+    if len(existing_properties) != len(BIO_PROPERTIES):
+        for prop in existing_properties:
+            del data[prop]
 
     return data
 

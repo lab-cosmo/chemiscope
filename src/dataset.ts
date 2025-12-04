@@ -566,10 +566,10 @@ export function checkStructure(s: JsObject): string {
         }
     }
 
-    // let biomolInfoCount = 0;
+    let biomolInfoCount = 0;
     for (const key of ['hetatom', 'chains', 'resnames', 'resids']) {
         if (key in s) {
-            // biomolInfoCount++;
+            biomolInfoCount++;
             const array = s[key];
             if (!Array.isArray(array)) {
                 return `"${key}" must be an array`;
@@ -579,9 +579,9 @@ export function checkStructure(s: JsObject): string {
             }
         }
     }
-    // if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
-    //     return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
-    // }
+    if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
+        return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
+    }
 
     return '';
 }
