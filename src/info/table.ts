@@ -8,6 +8,7 @@ import assert from 'assert';
 import { Parameter, Property, Target } from '../dataset';
 import { Indexes } from '../indexer';
 import { plotMultiDimensionalProperties } from './plotting';
+import { fixedWidthFloat } from '../utils';
 
 /**
  * TableProperty holds the objects to show the properties in the info bar
@@ -35,6 +36,9 @@ export class Table {
     private _header: HTMLTableCellElement;
     private _properties: TableProperty[];
 
+    private _collapse: HTMLElement;
+    private _currentIndexes: Indexes | undefined;
+
     /**
      * Create and append a new table inside the given `HTMLElement`.
      *
@@ -61,6 +65,13 @@ export class Table {
         const group = template.content.firstChild as HTMLElement;
         root.appendChild(group);
         this._root = root;
+        this._collapse = group;
+        // when the panel is expanded, re-draw plots for the latest indices
+        group.addEventListener('shown.bs.collapse', () => {
+            if (this._currentIndexes !== undefined) {
+                this.show(this._currentIndexes);
+            }
+        });
 
         this._header = group.querySelector('th') as HTMLTableCellElement;
         this._target = target;
@@ -68,7 +79,6 @@ export class Table {
 
         const tbody = group.querySelector('tbody') as HTMLTableSectionElement;
         for (const name in properties) {
-            const tr = document.createElement('tr');
             const td = document.createElement('td');
 
             //  add the units to the property if it exists, this is identical to the _title in ../map/map.ts
@@ -90,32 +100,54 @@ export class Table {
                 td.innerText = title;
             }
 
-            tr.appendChild(td);
-            const cell = document.createElement('td');
-            tr.appendChild(cell);
-            tbody.appendChild(tr);
-
             const propertyParameter = properties[name].parameters;
+
             if (typeof propertyParameter === 'undefined') {
+                // scalar property - create a row with two cells, label | value
+                const tr = document.createElement('tr');
+                tr.appendChild(td);
+                const cell = document.createElement('td');
+                tr.appendChild(cell);
+                tbody.appendChild(tr);
+
                 this._properties.push({
                     cell: cell,
                     values: properties[name].values,
                 });
             } else if (parameters && typeof propertyParameter[0] === 'string') {
+                // function property - create two rows: label | button // plot as 2 cols
+
+                const trLabel = document.createElement('tr');
+                trLabel.appendChild(td);
+                const buttonTd = document.createElement('td');
+                buttonTd.style.textAlign = 'right';
+                trLabel.appendChild(buttonTd);
+                tbody.appendChild(trLabel);
+
+                const trPlot = document.createElement('tr');
+                // start hidden!
+                trPlot.style.display = 'none';
+                trPlot.classList.add('chsp-info-plotarea');
+
+                const plotCell = document.createElement('td');
+                plotCell.colSpan = 2;
+                plotCell.style.textAlign = 'center';
+                trPlot.appendChild(plotCell);
+                tbody.appendChild(trPlot);
+
+                const plotHolder = document.createElement('div');
+                plotHolder.style.display = 'none';
+                plotHolder.classList.add('chsp-info-plot-holder');
+                plotCell.appendChild(plotHolder);
+
                 let xlabel = propertyParameter[0];
                 const parameterUnits = parameters[propertyParameter[0]].units as string;
                 if (parameterUnits !== undefined) {
                     xlabel += `/${parameterUnits}`;
                 }
 
-                const plotHolder = document.createElement('div');
-                plotHolder.style.display = 'block';
-                plotHolder.style.width = '100%';
-
-                cell.appendChild(plotHolder);
-
                 this._properties.push({
-                    cell: cell,
+                    cell: plotCell,
                     values: properties[name].values,
                     parameter: parameters[propertyParameter[0]].values,
                     xlabel: xlabel,
@@ -125,15 +157,22 @@ export class Table {
                 // add show/hide button to td
                 const button = document.createElement('button');
                 button.classList.add('btn', 'btn-secondary', 'btn-sm', 'chsp-toggle-plot-btn');
-                button.textContent = 'Show/Hide';
+                button.textContent = 'Show';
                 button.onclick = () => {
-                    if (plotHolder.style.display === 'block') {
-                        plotHolder.style.display = 'none';
-                    } else {
+                    if (plotHolder.style.display === 'none') {
+                        trPlot.style.display = 'table-row';
                         plotHolder.style.display = 'block';
+                        button.textContent = 'Hide';
+                        if (this._currentIndexes !== undefined) {
+                            this.show(this._currentIndexes);
+                        }
+                    } else {
+                        trPlot.style.display = 'none';
+                        plotHolder.style.display = 'none';
+                        button.textContent = 'Show';
                     }
                 };
-                td.appendChild(button);
+                buttonTd.appendChild(button);
             }
         }
         this.show({ environment: 0, structure: 0, atom: 0 });
@@ -146,6 +185,8 @@ export class Table {
     public show(indexes: Indexes): void {
         let displayId;
         let index;
+        this._currentIndexes = indexes;
+
         if (this._target === 'structure') {
             displayId = indexes.structure + 1;
             index = indexes.structure;
@@ -159,21 +200,26 @@ export class Table {
         this._header.innerText = `Properties for ${this._target} ${displayId}`;
         for (const s of this._properties) {
             if (!Array.isArray(s.values[index])) {
-                s.cell.innerText = s.values[index].toString();
+                // scalar property
+                if (typeof s.values[index] === 'number') {
+                    s.cell.innerText = fixedWidthFloat(s.values[index] as number, 6);
+                } else {
+                    s.cell.innerText = s.values[index].toString();
+                }
             } else {
                 // now we plot!!
-                const widthPlotCell = this._root.offsetWidth / 1.5;
 
-                assert(s.cell.firstElementChild !== null);
-
-                plotMultiDimensionalProperties(
-                    s.parameter as number[],
-                    s.values[index] as number[],
-                    s.cell.firstElementChild as HTMLElement,
-                    widthPlotCell,
-                    s.xlabel,
-                    s.ylabel
-                );
+                const plotHolder = s.cell.firstElementChild as HTMLElement;
+                const tableIsShown = this._collapse.classList.contains('show');
+                if (tableIsShown && plotHolder && plotHolder.style.display !== 'none') {
+                    plotMultiDimensionalProperties(
+                        s.parameter as number[],
+                        s.values[index] as number[],
+                        s.cell.firstElementChild as HTMLElement,
+                        s.xlabel,
+                        s.ylabel
+                    );
+                }
             }
         }
     }

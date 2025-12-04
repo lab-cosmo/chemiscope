@@ -9,7 +9,6 @@ export function plotMultiDimensionalProperties(
     x: number[],
     y: number[],
     root: HTMLElement,
-    plotWidth: number,
     xlabel?: string,
     ylabel?: string
 ): void {
@@ -49,14 +48,12 @@ export function plotMultiDimensionalProperties(
             y: 0.5,
         },
         margin: {
-            l: plotWidth / 6.0,
+            l: 42,
             r: 0,
-            b: plotWidth / 6.0,
+            b: 36,
             t: 0,
             pad: 0,
         },
-        width: plotWidth,
-        height: plotWidth / 1.35, // hardcoded ratio. TODO: to be changed
         tracetoggle: false,
     };
 

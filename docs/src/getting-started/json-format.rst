@@ -268,13 +268,14 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
      - ``{"property": "PCA[1]", "scale": "linear"}``
    * - ``color``
      - dict
-     - Color config: like axis, plus ``"palette"`` option for colormap selection.  
+     - Color config: like axis, plus ``"palette"`` option for colormap selection, and
+       ```"opacity"`` to make traces transparent.  
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
-       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``
+       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100.
      - No
-     - ``{"property": "energy", "palette": "viridis"}``
+     - ``{"property": "energy", "palette": "viridis", "opacity": 100}``
    * - ``size``
      - dict
      - Size config: ``{"property": "<name>", "mode":

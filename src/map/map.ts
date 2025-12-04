@@ -553,7 +553,7 @@ export class PropertiesMap {
                 },
                 // prevent plolty from messing with opacity when doing bubble
                 // style charts (different sizes for each point)
-                opacity: 1,
+                opacity: this._options.color.opacity.value / 100,
                 size: this._sizes(0)[0],
                 sizemode: 'area',
                 symbol: this._symbols(0)[0],
@@ -1003,6 +1003,7 @@ export class PropertiesMap {
                 {
                     hovertemplate: this._options.hovertemplate(),
                     'marker.color': this._colors(0),
+                    'marker.opacity': this._options.color.opacity.value / 100,
                 },
                 [0]
             );
@@ -1095,6 +1096,7 @@ export class PropertiesMap {
                     {
                         hovertemplate: this._options.hovertemplate(),
                         'marker.color': this._colors(0),
+                        'marker.opacity': this._options.color.opacity.value / 100,
                     },
                     [0]
                 );
@@ -1127,6 +1129,7 @@ export class PropertiesMap {
             this._options.color.mode.enable();
             this._options.color.min.enable();
             this._options.color.max.enable();
+            this._options.color.opacity.enable();
             this._colorReset.disabled = false;
         } else {
             this._options.color.min.disable();
@@ -1139,6 +1142,13 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+        });
+
+        // ======= opacity
+        this._options.color.opacity.onchange.push(() => {
+            this._restyle({
+                'marker.opacity': this._options.color.opacity.value / 100,
+            });
         });
 
         // ======= markers symbols
@@ -1664,6 +1674,7 @@ export class PropertiesMap {
             this._restyle(
                 {
                     'marker.color': this._colors(1),
+                    'marker.opacity': this._options.color.opacity.value / 100,
                     'marker.size': this._sizes(1),
                     'marker.symbol': this._symbols(1),
                     x: this._coordinates(this._options.x, 1),

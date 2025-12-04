@@ -713,7 +713,7 @@ def quick_settings(
         if value is not None:
             if not isinstance(value, str):
                 raise TypeError(f"{key} must be a string, got {type(value)}")
-            computed_map_settings.update({key: {"property": x}})
+            computed_map_settings.update({key: {"property": value}})
 
     if symbol is not None:
         if not isinstance(symbol, str):
