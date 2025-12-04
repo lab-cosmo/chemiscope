@@ -60,6 +60,11 @@ def _mda_to_json(ag):
     if hasattr(ag, "resids") and ag.resids is not None:
         data["resids"] = ag.resids.view(dtype=int).tolist()
 
+    if hasattr(ag, "bonds") and ag.bonds is not None:
+        data["bonds"] = np.hstack(
+            (ag.bonds.indices, np.full((len(ag.bonds), 1), 1))
+        ).tolist()
+
     data["hetatom"] = hetatom.tolist()
 
     return data

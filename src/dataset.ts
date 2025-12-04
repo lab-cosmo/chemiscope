@@ -579,9 +579,9 @@ export function checkStructure(s: JsObject): string {
             }
         }
     }
-    if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
-        return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
-    }
+    // if (biomolInfoCount > 0 && biomolInfoCount !== 4) {
+    //     return 'found at least one of "hetatom", "chains", "resnames" and "resids", but not all of them';
+    // }
 
     return '';
 }

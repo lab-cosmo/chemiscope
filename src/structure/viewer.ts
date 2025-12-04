@@ -590,26 +590,21 @@ export class MoleculeViewer {
             // Assign the bonds from structure.bonds.
             const atoms_bonds: { [id: number]: number[] } = {};
             const atoms_bondorders: { [id: number]: number[] } = {};
-
+            // Ensure that every atom has a bond list, even if it is empty
+            for (let i: number = 0, n: number = structure.size; i < n; i++) {
+                atoms_bonds[i] = [];
+                atoms_bondorders[i] = [];
+            }
             for (let i: number = 0, n: number = structure.bonds.length; i < n; i++) {
                 const id1 = structure.bonds[i][0];
                 const id2 = structure.bonds[i][1];
                 const order = structure.bonds[i][2];
 
-                if (!(id1 in atoms_bonds)) {
-                    atoms_bonds[id1] = [];
-                    atoms_bondorders[id1] = [];
-                }
-                if (!(id2 in atoms_bonds)) {
-                    atoms_bonds[id2] = [];
-                    atoms_bondorders[id2] = [];
-                }
                 atoms_bonds[id1].push(id2);
                 atoms_bondorders[id1].push(order);
                 atoms_bonds[id2].push(id1);
                 atoms_bondorders[id2].push(order);
             }
-
             const atoms_selected = this._current.model.selectedAtoms({});
 
             // Set up the lists, from assignBonds.
