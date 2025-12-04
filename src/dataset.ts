@@ -566,10 +566,10 @@ export function checkStructure(s: JsObject): string {
         }
     }
 
-    let biomolInfoCount = 0;
+    // let biomolInfoCount = 0;
     for (const key of ['hetatom', 'chains', 'resnames', 'resids']) {
         if (key in s) {
-            biomolInfoCount++;
+            // biomolInfoCount++;
             const array = s[key];
             if (!Array.isArray(array)) {
                 return `"${key}" must be an array`;
