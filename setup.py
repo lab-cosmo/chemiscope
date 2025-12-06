@@ -37,12 +37,21 @@ NPM_BUILD_INPUT = [
     # build configuration
     "tsconfig.json",
     "webpack.config.ts",
+    # streamlit component
+    *glob.glob("python/streamlit/src/**/*", recursive=True),
+    *glob.glob("python/streamlit/*.*"),
 ]
 
 NPM_BUILD_OUTPUT = [
+    # jupyter extensions
     "python/jupyter/nbextension/chemiscope.min.js",
     "python/jupyter/labextension/package.json",
+    # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
+    # streamlit component
+    "python/streamlit/build/main.js",
+    "python/streamlit/build/chemiscope.min.js",
+    "python/streamlit/build/index.html",
 ]
 
 
@@ -117,6 +126,15 @@ def run_npm_build():
         )
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
+
+        streamlit_dir = os.path.join(root, "python", "streamlit")
+        if os.path.exists(os.path.join(streamlit_dir, "package.json")):
+            subprocess.run("npm ci", check=True, shell=True, cwd=streamlit_dir)
+            subprocess.run("npm run build", check=True, shell=True, cwd=streamlit_dir)
+            shutil.copyfile(
+                src=os.path.join(root, "dist", "chemiscope.min.js"),
+                dst=os.path.join(streamlit_dir, "build", "chemiscope.min.js"),
+            )
 
 
 if __name__ == "__main__":
