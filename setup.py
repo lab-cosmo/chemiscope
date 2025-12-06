@@ -49,9 +49,9 @@ NPM_BUILD_OUTPUT = [
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
     # streamlit component
-    "python/chemiscope/stcomponent/main.js",
-    "python/chemiscope/stcomponent/chemiscope.min.js",
-    "python/chemiscope/stcomponent/index.html",
+    "python/streamlit/build/main.js",
+    "python/streamlit/build/chemiscope.min.js",
+    "python/streamlit/build/index.html",
 ]
 
 
@@ -127,26 +127,14 @@ def run_npm_build():
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
 
-        # 🔽 NEW: build the Streamlit component if present
         streamlit_dir = os.path.join(root, "python", "streamlit")
         if os.path.exists(os.path.join(streamlit_dir, "package.json")):
             subprocess.run("npm ci", check=True, shell=True, cwd=streamlit_dir)
             subprocess.run("npm run build", check=True, shell=True, cwd=streamlit_dir)
-
-            streamlit_build = os.path.join(streamlit_dir, "build")
-            target_dir = os.path.join(root, "python", "chemiscope", "stcomponent")
-            if os.path.exists(streamlit_build):
-                os.makedirs(target_dir, exist_ok=True)
-                for fname in ("main.js", "index.html"):
-                    src_path = os.path.join(streamlit_build, fname)
-                    dst_path = os.path.join(target_dir, fname)
-                    if os.path.exists(src_path):
-                        shutil.copyfile(src=src_path, dst=dst_path)
-
-        shutil.copyfile(
-            src="dist/chemiscope.min.js",
-            dst="python/chemiscope/stcomponent/chemiscope.min.js",
-        )
+            shutil.copyfile(
+                src=os.path.join(root, "dist", "chemiscope.min.js"),
+                dst=os.path.join(streamlit_dir, "build", "chemiscope.min.js"),
+            )
 
 
 if __name__ == "__main__":
@@ -163,7 +151,7 @@ if __name__ == "__main__":
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
         },
-        package_data={"chemiscope": ["chemiscope/sphinx/static/*", "stcomponent/*"]},
+        package_data={"chemiscope": ["chemiscope/sphinx/static/*"]},
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (
