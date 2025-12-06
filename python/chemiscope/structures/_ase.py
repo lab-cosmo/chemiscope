@@ -31,6 +31,17 @@ def _ase_valid_structures(frames):
         return frames, False
 
 
+def _ase_normalize_value(value):
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    elif isinstance(value, (np.int32, np.int64)):
+        return int(value)
+    elif isinstance(value, (np.float32, np.float64)):
+        return float(value)
+    else:
+        return value
+
+
 def _ase_get_atom_properties(frames):
     IGNORED_ASE_ARRAYS = ["positions", "numbers", "center_atoms_mask"]
     # extract the set of common properties between all frames
@@ -88,7 +99,7 @@ def _ase_get_structure_properties(frames):
         info["energy"] = frames[0].calc.results["energy"]
 
     for name in info.keys():
-        all_properties[name] = [info[name]]
+        all_properties[name] = [_ase_normalize_value(info[name])]
 
     for frame in frames[1:]:
         info = frame.info.copy()
@@ -98,7 +109,7 @@ def _ase_get_structure_properties(frames):
 
         for name in info.keys():
             if name in all_properties:
-                all_properties[name].append(info[name])
+                all_properties[name].append(_ase_normalize_value(info[name]))
             else:
                 extra.add(name)
 
@@ -113,6 +124,13 @@ def _ase_get_structure_properties(frames):
             f"of frames: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
+
+    # ensures that if a property is a mix of strings and numbers, everything
+    # is converted to string (as these should be categorical properties)
+    for name in all_properties.keys():
+        property = all_properties[name]
+        if any(isinstance(x, str) for x in property):
+            all_properties[name] = [str(x) for x in property]
 
     return all_properties
 
@@ -239,7 +257,11 @@ def _remove_invalid_properties(properties, origin):
                 to_remove.add(name)
                 break
 
-        if name in to_remove or not hasattr(values[0], "__len__"):
+        if (
+            name in to_remove
+            or not hasattr(values[0], "__len__")
+            or isinstance(values[0], str)
+        ):
             continue
 
         # check length consistency
