@@ -1,12 +1,17 @@
-import streamlit as st
-import ase.io
-import chemiscope
 from io import StringIO
 
-from chemiscope.streamlit import viewer  # or chemiscope.streamlit_viewer if you re-exported
+import ase.io
+import streamlit as st
+
+import chemiscope
+from chemiscope.streamlit import (
+    viewer,
+)  # or chemiscope.streamlit_viewer if you re-exported
+
 
 def _mark_slider_change():
     st.session_state["selection_source"] = "slider"
+
 
 st.set_page_config(page_title="Chemiscope + Streamlit demo", layout="wide")
 st.title("Chemiscope inside Streamlit (plain TypeScript component)")
@@ -63,11 +68,14 @@ if uploaded is not None:
         )
 
     with col2:
-        st.markdown(
-            f"**Selected structure:** {st.session_state.selected_structure}"
-        )        
+        st.markdown(f"**Selected structure:** {st.session_state.selected_structure}")
 
-    selection_from_viewer = viewer(dataset, selected_index=st.session_state.selected_structure, height=700, key="chemiscope")
+    selection_from_viewer = viewer(
+        dataset,
+        selected_index=st.session_state.selected_structure,
+        height=700,
+        key="chemiscope",
+    )
 
     if selection_from_viewer is not None:
         try:
@@ -75,10 +83,12 @@ if uploaded is not None:
         except (TypeError, ValueError):
             new_idx = st.session_state.selected_structure
 
-        if ( st.session_state.selection_source != "slider" and
-            0 <= new_idx < n_structures and 
-            new_idx != st.session_state.selected_structure):
-            st.session_state[pending_key] = new_idx            
+        if (
+            st.session_state.selection_source != "slider"
+            and 0 <= new_idx < n_structures
+            and new_idx != st.session_state.selected_structure
+        ):
+            st.session_state[pending_key] = new_idx
             st.rerun()
 
         st.session_state.selection_source = "viewer"
@@ -86,4 +96,3 @@ if uploaded is not None:
 
 else:
     st.info("Upload an .xyz file to see the Chemiscope viewer.")
-

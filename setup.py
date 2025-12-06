@@ -131,7 +131,17 @@ def run_npm_build():
         streamlit_dir = os.path.join(root, "python", "streamlit")
         if os.path.exists(os.path.join(streamlit_dir, "package.json")):
             subprocess.run("npm ci", check=True, shell=True, cwd=streamlit_dir)
-            subprocess.run("npm run build", check=True, shell=True, cwd=streamlit_dir)      
+            subprocess.run("npm run build", check=True, shell=True, cwd=streamlit_dir)
+
+            streamlit_build = os.path.join(streamlit_dir, "build")
+            target_dir = os.path.join(root, "python", "chemiscope", "stcomponent")
+            if os.path.exists(streamlit_build):
+                os.makedirs(target_dir, exist_ok=True)
+                for fname in ("main.js", "index.html"):
+                    src_path = os.path.join(streamlit_build, fname)
+                    dst_path = os.path.join(target_dir, fname)
+                    if os.path.exists(src_path):
+                        shutil.copyfile(src=src_path, dst=dst_path)
 
         shutil.copyfile(
             src="dist/chemiscope.min.js",

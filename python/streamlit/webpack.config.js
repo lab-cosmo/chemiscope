@@ -7,7 +7,7 @@ module.exports = {
   mode: "production",
   entry: "./src/index.ts",   // <= main TS file
   output: {
-    path: path.resolve(__dirname, "../chemiscope/stcomponent"),
+    path: path.resolve(__dirname, "build"),
     filename: "main.js",
     publicPath: "",
   },
