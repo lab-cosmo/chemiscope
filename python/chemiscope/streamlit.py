@@ -56,6 +56,7 @@ def viewer(
     key: str | None = None,
     height: int = 600,
     selected_index: int | None = None,
+    mode: str = "default",
 ) -> Any:
     """
     Render a Chemiscope viewer inside a Streamlit app.
@@ -72,5 +73,5 @@ def viewer(
 
     _ensure_component()
     return _component_func(
-        dataset=dataset, height=height, selected_index=selected_index, key=key
+        dataset=dataset, height=height, selected_index=selected_index, key=key, mode=mode
     )

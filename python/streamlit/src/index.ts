@@ -3,6 +3,7 @@ import {
   Streamlit,
   RenderData,
 } from "streamlit-component-lib";
+//import "./chemiscope-streamlit.css";
 
 const ROOT_ID = "chemiscope-root";
 let visualizer: any | null = null;
@@ -128,14 +129,13 @@ function installReverseSyncCallbacks(): void {
   };
 }
 
-
-
 function onRender(event: Event): void {
   const data = (event as CustomEvent<RenderData>).detail;
   const args = data.args as {
     dataset: any;
     height?: number;
     selected_index?: number;
+    mode?: string;
   };
 
   const dataset = args.dataset;
@@ -143,6 +143,8 @@ function onRender(event: Event): void {
   const selectedIndex = typeof args.selected_index === "number"
     ? args.selected_index
     : null;
+
+  const mode = typeof args.mode === "string" ? args.mode : "default";
 
   if (!dataset) {
     return;
@@ -158,35 +160,17 @@ function onRender(event: Event): void {
     visualizerLoaded = true;
 
     const root = getOrCreateRoot();
-      root.innerHTML = `<div class="container-fluid" style="padding: 0; background-color: white; opacity: 1;">
-          <div class="row">
-              <div class="col-md-6" style="padding: 0">
-                  <div class="ratio ratio-1x1">
-                      <div id="chemiscope-meta" style="z-index: 10; height: 50px"></div>
-                      <div id="chemiscope-map" style="position: absolute"></div>
-                  </div>
-              </div>
-
-              <div class="col-md-6" style="padding: 0">
-                  <div class="ratio ratio-5x7">
-                      <div>
-                          <div id="chemiscope-structure" style="height:420px"></div>
-                          <div id="chemiscope-info"></div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>`;
+      root.innerHTML = generateHTMLForMode(mode);
 
       const config = {
-          map: 'chemiscope-map',
-          info: 'chemiscope-info',
-          meta: 'chemiscope-meta',
-          structure: 'chemiscope-structure',
+        map: 'chemiscope-map',
+        info: 'chemiscope-info',
+        meta: 'chemiscope-meta',
+        structure: 'chemiscope-structure',
       };
-          
 
-      Chemiscope.DefaultVisualizer.load(config as any, dataset as any)
+      const visualizerClass = getVisualizerForMode(mode, Chemiscope);
+      visualizerClass.load(config as any, dataset as any)
         .then((v: any) => {
           visualizer = v;
 
@@ -227,69 +211,107 @@ Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
 Streamlit.setComponentReady();
 
 
-/*
-function onRender(event: Event): void {
-  console.log("rendering")
-  const data = (event as CustomEvent<RenderData>).detail;
-  const args = data.args as { dataset: any; height?: number };
-
-  const dataset = args.dataset;
-  const height = typeof args.height === "number" ? args.height : 600;
-
-  if (!dataset) {
-    return; // nothing to render yet
+function getVisualizerForMode(mode: string, Chemiscope: any): any {
+  switch (mode) {
+    case "structure":
+      return Chemiscope.StructureVisualizer;
+    case "map":
+      return Chemiscope.MapVisualizer;
+    default:
+      return Chemiscope.DefaultVisualizer;
   }
-
-  const Chemiscope = getChemiscope();
-  if (!Chemiscope) {
-    return; // error already logged
-  }
-
-  const root = getOrCreateRoot();
-  root.innerHTML = `<div class="container-fluid" style="padding: 0; background-color: white; opacity: 1;">
-      <div class="row">
-          <div class="col-md-6" style="padding: 0">
-              <div class="ratio ratio-1x1">
-                  <div id="chemiscope-meta" style="z-index: 10; height: 50px"></div>
-                  <div id="chemiscope-map" style="position: absolute"></div>
-              </div>
-          </div>
-
-          <div class="col-md-6" style="padding: 0">
-              <div class="ratio ratio-5x7">
-                  <div>
-                      <div id="chemiscope-structure" style="height:420px"></div>
-                      <div id="chemiscope-info"></div>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </div>`;
-
-  const config = {
-      map: 'chemiscope-map',
-      info: 'chemiscope-info',
-      meta: 'chemiscope-meta',
-      structure: 'chemiscope-structure',
-  };
-
-  console.log("loading chemiscope visualizer");
-
-  // Load chemiscope visualizer
-  Chemiscope.DefaultVisualizer.load(config as any, dataset as any).catch(
-    (err: unknown) => {
-      // eslint-disable-next-line no-console
-      console.error("Error loading chemiscope visualizer:", err);
-    },
-  );
-
-  // Adjust iframe height
-  Streamlit.setFrameHeight(height + 40);
 }
+function generateHTMLForMode(mode: string): string {
+  const defaultStyle = 'style="height: 550px;"';
+  const componentCss = `
+    <style>
+      .chemiscope-streamlit .visualizer-container {
+          display: flex;
+          flex-wrap: wrap;
+          background: white;
+          padding-bottom: 16px;
+          height: 100%;
+      }
 
-// register render handler
-Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+      .chemiscope-streamlit .visualizer-column {
+          flex: 1;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          padding-left: 10px;
+          min-width: 250px;
+      }
 
-// let Streamlit know we're ready
-Streamlit.setComponentReady();
-*/
+      .chemiscope-streamlit .visualizer-column-right {
+          flex: 1;
+          position: relative;
+          padding-right: 10px;
+          min-width: 250px;
+      }
+
+      .chemiscope-streamlit .visualizer-item {
+          width: 100%;
+          height: 100%;
+          flex: 1;
+      }
+
+      .chemiscope-streamlit .visualizer-info {
+          flex-shrink: 0;
+      }
+
+      .chemiscope-streamlit .visualizer-structure-mode,
+      .chemiscope-streamlit .visualizer-map-mode {
+          margin: auto;
+          max-width: 500px;
+          height: 100%;
+      }
+
+      .chemiscope-streamlit .visualizer-map-mode {
+          display: block;
+      }
+    </style>
+  `;
+
+  switch (mode) {
+    case "structure":
+      return `
+        ${componentCss}
+        <div class="chemiscope-streamlit" ${defaultStyle}>
+          <div class="visualizer-container visualizer-structure-mode">
+            <div class="visualizer-column">
+              <div id="chemiscope-meta"></div>
+              <div id="chemiscope-structure" class="visualizer-item"></div>
+              <div id="chemiscope-info" class="visualizer-info"></div>
+            </div>
+          </div>
+        </div>`;
+
+    case "map":
+      return `
+        ${componentCss}
+        <div class="chemiscope-streamlit" ${defaultStyle}>
+          <div class="visualizer-container visualizer-map-mode">
+            <div class="visualizer-column">
+              <div id="chemiscope-meta"></div>
+              <div id="chemiscope-map" class="visualizer-item"></div>
+            </div>
+          </div>
+        </div>`;
+
+    default:
+      return `
+        ${componentCss}
+        <div class="chemiscope-streamlit" ${defaultStyle}>
+          <div class="visualizer-container">
+            <div class="visualizer-column-right">
+              <div id="chemiscope-meta"></div>
+              <div id="chemiscope-map" class="visualizer-item"></div>
+            </div>
+            <div class="visualizer-column">
+              <div id="chemiscope-structure" class="visualizer-item"></div>
+              <div id="chemiscope-info" class="visualizer-info"></div>
+            </div>
+          </div>
+        </div>`;
+  }
+}
