@@ -1,4 +1,5 @@
 import { Streamlit, RenderData } from 'streamlit-component-lib';
+import './chemiscope-streamlit.css';
 
 const ROOT_ID = 'chemiscope-root';
 let visualizer: any | null = null;
@@ -148,6 +149,7 @@ function onRender(event: Event): void {
 
     const Chemiscope = getChemiscope();
     if (!Chemiscope) {
+        displayWarning(ROOT_ID, 'Chemiscope library not loaded. Check script imports.', 0);
         return;
     }
 
@@ -177,8 +179,15 @@ function onRender(event: Event): void {
             }
         }
 
+        const warnings = new Chemiscope.Warnings();
+        warnings.addHandler((message: string, timeout: number = 4000) => {
+            displayWarning(ROOT_ID, message, timeout);
+        });
+
+        toggleLoadingVisible(ROOT_ID, true);
+
         visualizerClass
-            .load(config as any, dataset as any)
+            .load(config as any, dataset as any, warnings)
             .then((v: any) => {
                 visualizer = v;
                 const ds = v.dataset(true);
@@ -190,13 +199,25 @@ function onRender(event: Event): void {
                     applySelectionFromStructure(selectedIndex);
                 }
             })
-            .catch((err: unknown) => console.error('Error loading visualizer:', err));
+            .catch((err: unknown) => {
+                console.error('Error loading visualizer:', err);
+                displayWarning(ROOT_ID, 'Error loading visualization: ' + String(err));
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    toggleLoadingVisible(ROOT_ID, false);
+                }, 100000);
+
+                //toggleLoadingVisible(ROOT_ID, false);
+            });
     } else {
+        // 1. Selection Update
         if (selectedIndex !== null && selectedIndex !== lastSelection && visualizer) {
             lastSelection = selectedIndex;
             applySelectionFromStructure(selectedIndex);
         }
 
+        // 2. Settings Update
         if (settings && visualizer) {
             try {
                 const newStr = JSON.stringify(settings);
@@ -206,6 +227,7 @@ function onRender(event: Event): void {
                 }
             } catch (err) {
                 console.error('Error applying settings:', err);
+                displayWarning(ROOT_ID, 'Error applying settings: ' + String(err), 4000);
             }
         }
 
@@ -294,5 +316,35 @@ function generateHTMLForMode(mode: string, width?: number | 'stretch'): string {
           </div>
         </div>
       </div>`;
+    }
+}
+
+function toggleLoadingVisible(divId: string, visible: boolean = true): void {
+    const loader = document.getElementById(`${divId}-loading`);
+    if (loader) {
+        loader.style.display = visible ? 'block' : 'none';
+    }
+}
+
+function displayWarning(divId: string, message: any, timeout: number = 4000): void {
+    const display = document.getElementById(`${divId}-warning-display`);
+    if (!display) {
+        console.error('Warning display element not found:', `${divId}-warning-display`);
+        return;
+    }
+
+    const textMessage = message instanceof Error ? message.toString() : String(message);
+    const paragraph = display.getElementsByTagName('p')[0];
+    if (paragraph) {
+        paragraph.innerText = textMessage;
+    }
+
+    display.style.display = 'flex';
+
+    if (timeout > 0) {
+        // Automatically remove the warning after the set timeout
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
     }
 }

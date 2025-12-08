@@ -8,6 +8,3 @@ __pycache__/
 *.pyc
 *.egg-info
 MANIFEST
-
-python/streamlit/build/
-python/streamlit/node_modules/
