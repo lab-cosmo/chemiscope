@@ -14,6 +14,7 @@ let lastReportedSelection: number | null = null; // CS -> ST
 let originalMapOnselect: any | null = null;
 let originalStructOnselect: any | null = null;
 let originalInfoOnchange: any | null = null;
+let lastSettings: any | null = null;
 
 // Get the Chemiscope object from window
 function getChemiscope(): any | null {
@@ -136,7 +137,9 @@ function onRender(event: Event): void {
     height?: number;
     selected_index?: number;
     mode?: string;
+    settings?: Map<string, any>;
   };
+  console.log(args);
 
   const dataset = args.dataset;
   const height = typeof args.height === "number" ? args.height : 600;
@@ -145,6 +148,7 @@ function onRender(event: Event): void {
     : null;
 
   const mode = typeof args.mode === "string" ? args.mode : "default";
+  const settings = args.settings || {};
 
   if (!dataset) {
     return;
@@ -170,6 +174,15 @@ function onRender(event: Event): void {
       };
 
       const visualizerClass = getVisualizerForMode(mode, Chemiscope);
+
+      if (settings && Object.keys(settings).length > 0) {
+        try {
+          dataset.settings = Object.assign({}, dataset.settings, settings);
+        } catch (err) {
+          console.warn("Could not attach settings to dataset:", err);
+        }
+      }
+
       visualizerClass.load(config as any, dataset as any)
         .then((v: any) => {
           visualizer = v;
@@ -202,6 +215,18 @@ function onRender(event: Event): void {
       lastSelection = selectedIndex;
       applySelectionFromStructure(selectedIndex);
     }
+
+    // Apply settings updates dynamically if provided by Streamlit
+    try {
+      if (settings && visualizer) {
+        const newSettingsStr = JSON.stringify(settings);
+        if (newSettingsStr !== JSON.stringify(lastSettings)) {
+          visualizer.applySettings(settings);
+        }
+      }
+    } catch (err) {
+      console.error("Error applying settings to visualizer:", err);
+    }
   }
 
   Streamlit.setFrameHeight(height + 40);
@@ -221,6 +246,7 @@ function getVisualizerForMode(mode: string, Chemiscope: any): any {
       return Chemiscope.DefaultVisualizer;
   }
 }
+
 function generateHTMLForMode(mode: string): string {
   const defaultStyle = 'style="height: 550px;"';
   const componentCss = `

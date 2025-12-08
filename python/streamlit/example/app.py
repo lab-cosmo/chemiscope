@@ -2,9 +2,21 @@ import json
 from io import StringIO
 
 import ase.io
-import chemiscope
 import streamlit as st
+
+import chemiscope
 from chemiscope.streamlit import viewer
+
+
+def build_settings(palette="inferno", opacity=100, factor=30, join_points=False):
+    return {
+        "map": {
+            "color": {"palette": palette, "opacity": opacity},
+            "size": {"factor": factor},
+            "joinPoints": join_points,
+        }
+    }
+
 
 st.set_page_config(page_title="Chemiscope + Streamlit demo", layout="wide")
 st.title("Chemiscope inside Streamlit")
@@ -28,8 +40,15 @@ with st.sidebar:
     height = st.slider(
         "Viewer height", min_value=100, max_value=2000, value=700, step=100
     )
+    opacity = st.slider("Opacity", min_value=0, max_value=100, value=100, step=10)
+    size = st.slider("Points size", min_value=1, max_value=100, value=30, step=10)
+    palette = st.selectbox(
+        "Palette",
+        ["viridis", "magma", "plasma"],
+    )
+    join_points = st.checkbox("Link points", value=False)
 
-    st.divider()
+    settings = build_settings(palette, opacity, size, join_points)
 
 uploaded = st.file_uploader("Upload an extended XYZ file", type=["xyz"])
 
@@ -71,7 +90,7 @@ if uploaded is not None:
         dataset,
         height=height,  # TODO
         mode=mode_display,
-        #  settings=settings,  TODO
+        settings=settings,
         key="chemiscope",
     )
 

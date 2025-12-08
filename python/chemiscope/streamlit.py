@@ -57,6 +57,7 @@ def viewer(
     height: int = 600,
     selected_index: int | None = None,
     mode: str = "default",
+    settings: dict | None = None,
 ) -> Any:
     """
     Render a Chemiscope viewer inside a Streamlit app.
@@ -69,9 +70,21 @@ def viewer(
         Optional Streamlit widget key.
     height
         Height in pixels for the viewer.
+    selected_index
+        Optional initial structure index to select.
+    mode
+        Optional visualization mode: "default", "structure", or "map".
+    settings
+        Optional settings dictionary (from quick_settings or custom dict) to configure
+        the viewer appearance and behavior.
     """
 
     _ensure_component()
     return _component_func(
-        dataset=dataset, height=height, selected_index=selected_index, key=key, mode=mode
+        dataset=dataset,
+        height=height,
+        selected_index=selected_index,
+        key=key,
+        mode=mode,
+        settings=settings,
     )
