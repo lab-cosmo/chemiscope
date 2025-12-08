@@ -38,8 +38,17 @@ with st.sidebar:
         available_modes = ["default"]
 
     height = st.slider(
-        "Viewer height", min_value=100, max_value=2000, value=700, step=100
+        "Custom height (px)", min_value=100, max_value=2000, value=700, step=50
     )
+    width_option = st.selectbox("Width mode", ["stretch", "custom"], index=0)
+    if width_option == "custom":
+        width_value = st.slider(
+            "Custom width (px)", min_value=200, max_value=2000, value=1200, step=50
+        )
+        width = width_value
+    else:
+        width = width_option
+
     opacity = st.slider("Opacity", min_value=0, max_value=100, value=100, step=10)
     size = st.slider("Points size", min_value=1, max_value=100, value=30, step=10)
     palette = st.selectbox(
@@ -86,9 +95,10 @@ if uploaded is not None:
 
     mode_display = "default" if len(available_modes) > 1 else available_modes[0]
 
-    _component = viewer(
+    viewer(
         dataset,
-        height=height,  # TODO
+        height=height,
+        width=width,
         mode=mode_display,
         settings=settings,
         key="chemiscope",
@@ -97,17 +107,11 @@ if uploaded is not None:
     st.divider()
     st.subheader("Export")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Refresh Viewer", use_container_width=True):
-            st.rerun()
-
-    with col2:
-        json_data = json.dumps(dataset, indent=2)
-        st.download_button(
-            label="Download JSON dataset",
-            data=json_data,
-            file_name=f"{uploaded.name.split('.')[0]}.chemiscope.json",
-            mime="application/json",
-            use_container_width=True,
-        )
+    json_data = json.dumps(dataset, indent=2)
+    st.download_button(
+        label="Download JSON dataset",
+        data=json_data,
+        file_name=f"{uploaded.name.split('.')[0]}.chemiscope.json",
+        mime="application/json",
+        use_container_width=True,
+    )

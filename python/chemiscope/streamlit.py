@@ -54,7 +54,8 @@ def viewer(
     dataset: Mapping[str, Any],
     *,
     key: str | None = None,
-    height: int = 600,
+    width: str | int = "stretch",
+    height: int | None = None,
     selected_index: int | None = None,
     mode: str = "default",
     settings: dict | None = None,
@@ -81,10 +82,11 @@ def viewer(
 
     _ensure_component()
     return _component_func(
-        dataset=dataset,
-        height=height,
-        selected_index=selected_index,
         key=key,
+        width=width,
+        height=height,
+        dataset=dataset,
+        selected_index=selected_index,
         mode=mode,
         settings=settings,
     )
