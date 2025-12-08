@@ -6,7 +6,7 @@ let visualizer: any | null = null;
 let indexer: any | null = null;
 let visualizerLoaded = false;
 let lastSelection: number | null = null;
-let lastReportedSelection: number | null = null; // CS -> ST
+let lastReportedSelection: number | null = null;
 let originalMapOnselect: any | null = null;
 let originalStructOnselect: any | null = null;
 let originalInfoOnchange: any | null = null;
@@ -73,7 +73,7 @@ function applySelectionFromStructure(structureIndex: number): void {
     }
 }
 
-function reportSelectionToStreamlit(structureIndex: number): void {
+function reportSelectionToStreamlit(structureIndex: number | null): void {
     if (structureIndex === lastReportedSelection) {
         return;
     }
@@ -90,11 +90,12 @@ function installReverseSyncCallbacks(): void {
     if (!visualizer) return;
 
     const sendFromIndexes = (indexes: any) => {
-        if (!indexes || typeof indexes.structure !== 'number') {
-            return;
+        let structureIndexToSend: number | null = null;
+        if (indexes && typeof indexes.structure === 'number') {
+            structureIndexToSend = indexes.structure;
         }
-        lastSelection = indexes.structure;
-        reportSelectionToStreamlit(indexes.structure);
+        lastSelection = structureIndexToSend;
+        reportSelectionToStreamlit(structureIndexToSend);
     };
 
     originalMapOnselect = visualizer.map.onselect;
@@ -114,7 +115,6 @@ function installReverseSyncCallbacks(): void {
         sendFromIndexes(indexes);
     };
 
-    // Wrap info.onchange
     originalInfoOnchange = visualizer.info.onchange;
     visualizer.info.onchange = (indexes: any) => {
         console.log('info.onchange called with indexes:', indexes);
@@ -204,11 +204,7 @@ function onRender(event: Event): void {
                 displayWarning(ROOT_ID, 'Error loading visualization: ' + String(err));
             })
             .finally(() => {
-                setTimeout(() => {
-                    toggleLoadingVisible(ROOT_ID, false);
-                }, 100000);
-
-                //toggleLoadingVisible(ROOT_ID, false);
+                toggleLoadingVisible(ROOT_ID, false);
             });
     } else {
         // 1. Selection Update

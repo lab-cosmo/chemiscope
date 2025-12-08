@@ -18,6 +18,33 @@ def build_settings(palette="inferno", opacity=100, factor=30, join_points=False)
     }
 
 
+@st.cache_data(show_spinner="Loading and processing structures...")
+def process_uploaded_file(uploaded_file_bytes, file_name):
+    try:
+        text = uploaded_file_bytes.decode("utf-8")
+        file_obj = StringIO(text)
+
+        frames = ase.io.read(file_obj, ":", format="extxyz")
+
+        if len(frames) == 0:
+            raise ValueError("No structures found in the file.")
+
+        properties = chemiscope.extract_properties(frames)
+
+        dataset = chemiscope.create_input(
+            frames=frames,
+            properties=properties,
+            meta={"name": file_name},
+        )
+
+        return dataset, frames
+
+    except Exception as e:
+        st.error(f"Error processing file: {str(e)}")
+        st.stop()
+        return None, None
+
+
 st.set_page_config(page_title="Chemiscope + Streamlit demo", layout="wide")
 st.title("Chemiscope inside Streamlit")
 
@@ -62,40 +89,18 @@ with st.sidebar:
 uploaded = st.file_uploader("Upload an extended XYZ file", type=["xyz"])
 
 if uploaded is not None:
-    with st.spinner("Loading and processing structures..."):
-        try:
-            text = uploaded.getvalue().decode("utf-8")
-            file_obj = StringIO(text)
+    uploaded_bytes = uploaded.getvalue()
+    file_name = uploaded.name
 
-            progress_text = "Reading structures from file..."
-            progress_bar = st.progress(0, text=progress_text)
+    dataset, frames = process_uploaded_file(uploaded_bytes, file_name)
+    st.session_state["data_frames"] = frames
 
-            frames = ase.io.read(file_obj, ":", format="extxyz")
-
-            if len(frames) == 0:
-                st.error("No structures found in the uploaded file")
-                st.stop()
-
-            progress_bar.progress(33, text="Extracting properties...")
-
-            properties = chemiscope.extract_properties(frames)
-            progress_bar.progress(66, text="Creating Chemiscope dataset...")
-
-            dataset = chemiscope.create_input(
-                frames=frames,
-                properties=properties,
-                meta={"name": uploaded.name},
-            )
-
-            progress_bar.progress(100, text="Ready!")
-
-        except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
-            st.stop()
+    if dataset is None:
+        st.stop()
 
     mode_display = "default" if len(available_modes) > 1 else available_modes[0]
 
-    viewer(
+    selected_index = viewer(
         dataset,
         height=height,
         width=width,
@@ -104,9 +109,15 @@ if uploaded is not None:
         key="chemiscope",
     )
 
-    st.divider()
-    st.subheader("Export")
+    if selected_index is not None:
+        st.text(f"Selected: {selected_index}")
+        st.write(frames[selected_index])
+    else:
+        st.text("No selection")
 
+    st.divider()
+
+    st.subheader("Export")
     json_data = json.dumps(dataset, indent=2)
     st.download_button(
         label="Download JSON dataset",

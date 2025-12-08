@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 
 # flip this to False when using the dev server (npm start)
@@ -59,6 +59,7 @@ def viewer(
     selected_index: int | None = None,
     mode: str = "default",
     settings: dict | None = None,
+    on_select: Callable[..., Any] | None = None,
 ) -> Any:
     """
     Render a Chemiscope viewer inside a Streamlit app.
@@ -78,6 +79,9 @@ def viewer(
     settings
         Optional settings dictionary (from quick_settings or custom dict) to configure
         the viewer appearance and behavior.
+    on_select
+        Optional callback function to be called when the structure selection changes.
+        The callback receives the new selected index or None if unselected.
     """
 
     _ensure_component()
@@ -89,4 +93,5 @@ def viewer(
         selected_index=selected_index,
         mode=mode,
         settings=settings,
+        on_change=on_select,
     )
