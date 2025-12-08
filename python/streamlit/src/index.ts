@@ -37,10 +37,13 @@ function getOrCreateRoot(): HTMLDivElement {
 
 function applyWidthPolicy(widthArg: string | number, root: HTMLDivElement) {
     if (widthArg === 'stretch') {
-        root.style.width = '100%';
+        root.style.justifyContent = 'stretch';
     } else if (typeof widthArg === 'number') {
-        root.style.width = widthArg + 'px';
-        root.style.maxWidth = '100%';
+        const viewer = root.querySelector('.chemiscope-streamlit') as HTMLElement;
+        if (viewer) {
+            viewer.style.width = widthArg + 'px';
+        }
+        root.style.justifyContent = 'center';
     }
 }
 
@@ -226,9 +229,18 @@ function getVisualizerForMode(mode: string, Chemiscope: any): any {
     }
 }
 
-function generateHTMLForMode(mode: string): string {
+function generateHTMLForMode(mode: string, width?: number | 'stretch'): string {
+    const widthStyle =
+        width && width !== 'stretch' ? `width: ${width}px; margin: 0 auto;` : 'width: 100%;';
+
     const componentCss = `
   <style>
+    #chemiscope-root {
+      ${widthStyle}
+      height: 100%;
+      display: flex;
+    }
+
     .chemiscope-streamlit { width: 100%; height: 100%; }
     .visualizer-container { display: flex; flex-direction: row; width: 100%; height: 100%; }
     .visualizer-column, .visualizer-column-right {
