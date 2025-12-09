@@ -84,15 +84,15 @@ def needs_npm_build():
 
 def build_streamlit_component(root):
     streamlit_dir = os.path.join(root, "python", "streamlit")
+    streamlit_build_dir = os.path.join(streamlit_dir, "build")
+    os.makedirs(streamlit_build_dir, exist_ok=True)
 
     src_lib = os.path.join(root, "dist", "chemiscope.min.js")
-    dst_lib = os.path.join(streamlit_dir, "build", "chemiscope.min.js")
+    dst_lib = os.path.join(streamlit_build_dir, "chemiscope.min.js")
     if os.path.exists(src_lib):
         shutil.copyfile(src_lib, dst_lib)
     else:
-        warnings.warn(
-            f"Missing {src_lib}, skipping copy to Streamlit build folder", stacklevel=1
-        )
+        raise FileNotFoundError(f"Missing {src_lib}, cannot continue Streamlit build")
 
     subprocess.run(["npm", "ci"], check=True, cwd=streamlit_dir)
     subprocess.run(["npm", "run", "build"], check=True, cwd=streamlit_dir)
@@ -101,7 +101,7 @@ def build_streamlit_component(root):
     os.makedirs(stcomponent_dir, exist_ok=True)
 
     for file in ["main.js", "index.html"]:
-        src_file = os.path.join(streamlit_dir, "build", file)
+        src_file = os.path.join(streamlit_build_dir, file)
         dst_file = os.path.join(stcomponent_dir, file)
         if os.path.exists(src_file):
             shutil.copyfile(src_file, dst_file)
@@ -110,13 +110,7 @@ def build_streamlit_component(root):
                 f"Expected Streamlit build file not found: {src_file}", stacklevel=1
             )
 
-    if os.path.exists(src_lib):
-        shutil.copyfile(src_lib, os.path.join(stcomponent_dir, "chemiscope.min.js"))
-    else:
-        warnings.warn(
-            "Main chemiscope library not found at dist/chemiscope.min.js",
-            stacklevel=1,
-        )
+    shutil.copyfile(src_lib, os.path.join(stcomponent_dir, "chemiscope.min.js"))
 
 
 def run_npm_build():
