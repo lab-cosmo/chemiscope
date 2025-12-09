@@ -1,65 +1,31 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Optional
 
 
-# flip this to False when using the dev server (npm start)
-_RELEASE = True
-
-# Lazily declared component function. We avoid importing streamlit at
-# module import time so the package can be imported in environments where
-# streamlit is not installed (e.g. building docs).
 _component_func = None
 
 
 def _get_build_path() -> str:
     here = os.path.dirname(__file__)
-    # prefer a local development build next to the component source
-    src_build = os.path.normpath(os.path.join(here, "..", "streamlit", "build"))
+    src_build = os.path.normpath(os.path.join(here, "..", "build"))
+
     if os.path.exists(src_build):
         return src_build
-    # fallback to the packaged stcomponent folder
     return os.path.join(here, "stcomponent")
-
-
-def _ensure_component():
-    """Ensure `_component_func` is declared by importing Streamlit and
-    calling `declare_component`. Raises a helpful ImportError if Streamlit
-    is missing.
-    """
-    global _component_func
-    if _component_func is not None:
-        return
-
-    try:
-        import streamlit.components.v1 as components
-    except Exception as exc:  # pragma: no cover - optional dependency
-        raise ImportError(
-            "Streamlit is required to use chemiscope.streamlit.viewer. "
-            "Install it with: pip install 'chemiscope[streamlit]'"
-        ) from exc
-
-    if _RELEASE:
-        _component_func = components.declare_component(
-            "chemiscope_viewer", path=_get_build_path()
-        )
-    else:
-        _component_func = components.declare_component(
-            "chemiscope_viewer", url="http://localhost:3001"
-        )
 
 
 def viewer(
     dataset: Mapping[str, Any],
     *,
-    key: str | None = None,
     width: str | int = "stretch",
-    height: int | None = None,
-    selected_index: int | None = None,
+    height: int = 550,
     mode: str = "default",
-    settings: dict | None = None,
-    on_select: Callable[..., Any] | None = None,
+    key: Optional[str] = None,
+    selected_index: Optional[int] = None,
+    settings: Optional[dict] = None,
+    on_select: Optional[Callable[..., Any]] = None,
 ) -> Any:
     """
     Render a Chemiscope viewer inside a Streamlit app.
@@ -68,23 +34,37 @@ def viewer(
     ----------
     dataset
         Chemiscope dataset (same dict used in write_input/create_input).
+    width
+        Width in pixels or "stretch" for full width.
+    height
+        Height in pixels for the viewer (or None to auto-size).
+    mode
+        Visualization mode: "default", "structure", or "map".
     key
         Optional Streamlit widget key.
-    height
-        Height in pixels for the viewer.
     selected_index
         Optional initial structure index to select.
-    mode
-        Optional visualization mode: "default", "structure", or "map".
     settings
-        Optional settings dictionary (from quick_settings or custom dict) to configure
-        the viewer appearance and behavior.
+        Optional settings dictionary to configure the viewer appearance and behavior.
     on_select
-        Optional callback function to be called when the structure selection changes.
-        The callback receives the new selected index or None if unselected.
+        Optional callback function called when the structure selection changes.
+        Receives the new selected index or None if unselected.
     """
+    global _component_func
 
-    _ensure_component()
+    if _component_func is None:
+        try:
+            import streamlit.components.v1 as components
+        except ImportError as exc:
+            raise ImportError(
+                "Streamlit is required to use chemiscope.streamlit.viewer. "
+                "Install it with: pip install 'chemiscope[streamlit]'"
+            ) from exc
+
+        _component_func = components.declare_component(
+            "chemiscope_viewer", path=_get_build_path()
+        )
+
     return _component_func(
         key=key,
         width=width,

@@ -1,11 +1,12 @@
 import { RenderData, Streamlit } from 'streamlit-component-lib';
 import {
-    getOrCreateRoot,
+    CONFIG,
+    applyHeightPolicy,
     applyWidthPolicy,
-    toggleLoadingVisible,
     displayWarning,
     generateHTMLForMode,
-    CONFIG,
+    getOrCreateRoot,
+    toggleLoadingVisible,
 } from './dom-utils';
 
 type ChemiscopeMode = 'default' | 'structure' | 'map';
@@ -129,7 +130,7 @@ export class ChemiscopeComponent {
         root.innerHTML = generateHTMLForMode(mode);
 
         applyWidthPolicy(widthArg, root);
-        this.applyHeightPolicy(heightArg, root);
+        applyHeightPolicy(heightArg, root);
 
         this.initializeVisualizer(Chemiscope, dataset, settings, selectedIndex);
     }
@@ -151,12 +152,7 @@ export class ChemiscopeComponent {
 
         const root = getOrCreateRoot();
         applyWidthPolicy(widthArg, root);
-        this.applyHeightPolicy(heightArg, root);
-    }
-
-    private applyHeightPolicy(heightArg: number, root: HTMLElement): void {
-        root.style.height = heightArg + 'px';
-        Streamlit.setFrameHeight(heightArg);
+        applyHeightPolicy(heightArg, root);
     }
 
     private applySelectionFromStructure(structureIndex: number): void {

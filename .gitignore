@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 chemiscope_standalone.html
+python/chemiscope/stcomponent
 
 .tox/
 __pycache__/

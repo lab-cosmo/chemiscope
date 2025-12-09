@@ -1,3 +1,5 @@
+import { Streamlit } from 'streamlit-component-lib';
+
 const ROOT_ID = 'chemiscope-root';
 
 export const CONFIG = {
@@ -34,6 +36,11 @@ export function applyWidthPolicy(widthArg: string | number, root: HTMLDivElement
         root.style.justifyContent = 'center';
         viewer.style.width = widthArg + 'px';
     }
+}
+
+export function applyHeightPolicy(heightArg: number, root: HTMLElement): void {
+    root.style.height = heightArg + 'px';
+    Streamlit.setFrameHeight(heightArg);
 }
 
 export function toggleLoadingVisible(visible: boolean = true): void {
