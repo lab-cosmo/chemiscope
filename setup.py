@@ -82,6 +82,43 @@ def needs_npm_build():
     return last_output_modification_time < last_input_modification_time
 
 
+def build_streamlit_component(root):
+    streamlit_dir = os.path.join(root, "python", "streamlit")
+
+    src_lib = os.path.join(root, "dist", "chemiscope.min.js")
+    dst_lib = os.path.join(streamlit_dir, "build", "chemiscope.min.js")
+    if os.path.exists(src_lib):
+        shutil.copyfile(src_lib, dst_lib)
+    else:
+        warnings.warn(
+            f"Missing {src_lib}, skipping copy to Streamlit build folder", stacklevel=1
+        )
+
+    subprocess.run(["npm", "ci"], check=True, cwd=streamlit_dir)
+    subprocess.run(["npm", "run", "build"], check=True, cwd=streamlit_dir)
+
+    stcomponent_dir = os.path.join(root, "python", "chemiscope", "stcomponent")
+    os.makedirs(stcomponent_dir, exist_ok=True)
+
+    for file in ["main.js", "index.html"]:
+        src_file = os.path.join(streamlit_dir, "build", file)
+        dst_file = os.path.join(stcomponent_dir, file)
+        if os.path.exists(src_file):
+            shutil.copyfile(src_file, dst_file)
+        else:
+            warnings.warn(
+                f"Expected Streamlit build file not found: {src_file}", stacklevel=1
+            )
+
+    if os.path.exists(src_lib):
+        shutil.copyfile(src_lib, os.path.join(stcomponent_dir, "chemiscope.min.js"))
+    else:
+        warnings.warn(
+            "Main chemiscope library not found at dist/chemiscope.min.js",
+            stacklevel=1,
+        )
+
+
 def run_npm_build():
     """Build the JavaScript code required by the jupyter widget using npm"""
     root = os.path.dirname(os.path.realpath(__file__))
@@ -127,14 +164,7 @@ def run_npm_build():
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
 
-        streamlit_dir = os.path.join(root, "python", "streamlit")
-        if os.path.exists(os.path.join(streamlit_dir, "package.json")):
-            subprocess.run("npm ci", check=True, shell=True, cwd=streamlit_dir)
-            subprocess.run("npm run build", check=True, shell=True, cwd=streamlit_dir)
-            shutil.copyfile(
-                src=os.path.join(root, "dist", "chemiscope.min.js"),
-                dst=os.path.join(streamlit_dir, "build", "chemiscope.min.js"),
-            )
+        build_streamlit_component(root)
 
 
 if __name__ == "__main__":
@@ -151,7 +181,13 @@ if __name__ == "__main__":
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
         },
-        package_data={"chemiscope": ["chemiscope/sphinx/static/*"]},
+        package_data={
+            "chemiscope": [
+                "sphinx/static/*",
+                "stcomponent/*",
+                "stcomponent/**/*",
+            ]
+        },
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (

@@ -1,21 +1,24 @@
 {
   "name": "chemiscope-streamlit-component",
   "version": "0.0.1",
+  "description": "Chemiscope viewer component for Streamlit",
   "private": true,
   "main": "build/main.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "start": "webpack serve --config webpack.config.js --mode=development --port=3001"
+    "build": "webpack --mode=production --config webpack.config.js",
+    "start": "webpack serve --mode=development --config webpack.config.js"
   },
   "dependencies": {
     "streamlit-component-lib": "^2.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "ts-loader": "^9.0.0",
-    "webpack": "^5.0.0",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^4.0.0",
-    "html-webpack-plugin": "^5.0.0"
+    "css-loader": "^6.8.1",
+    "html-webpack-plugin": "^5.5.3",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
   }
 }
