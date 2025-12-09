@@ -91,38 +91,52 @@ function installReverseSyncCallbacks(): void {
 
     const sendFromIndexes = (indexes: any) => {
         let structureIndexToSend: number | null = null;
+        
         if (indexes && typeof indexes.structure === 'number') {
             structureIndexToSend = indexes.structure;
         }
+
         lastSelection = structureIndexToSend;
         reportSelectionToStreamlit(structureIndexToSend);
     };
 
-    originalMapOnselect = visualizer.map.onselect;
-    visualizer.map.onselect = (indexes: any) => {
-        if (typeof originalMapOnselect === 'function') {
-            originalMapOnselect(indexes);
-        }
-        sendFromIndexes(indexes);
-    };
+    if (visualizer.map) {
+        originalMapOnselect = visualizer.map.onselect;
+        visualizer.map.onselect = (indexes: any) => {
+            if (typeof originalMapOnselect === 'function') {
+                originalMapOnselect(indexes);
+            }
+            sendFromIndexes(indexes);
+        };
+    } else {
+        originalMapOnselect = null;
+    }
 
-    originalStructOnselect = visualizer.structure.onselect;
-    visualizer.structure.onselect = (indexes: any) => {
-        console.log('structure.onselect called with indexes:', indexes);
-        if (typeof originalStructOnselect === 'function') {
-            originalStructOnselect(indexes);
-        }
-        sendFromIndexes(indexes);
-    };
+    if (visualizer.structure) {
+        originalStructOnselect = visualizer.structure.onselect;
+        visualizer.structure.onselect = (indexes: any) => {
+            console.log('structure.onselect called with indexes:', indexes);
+            if (typeof originalStructOnselect === 'function') {
+                originalStructOnselect(indexes);
+            }
+            sendFromIndexes(indexes);
+        };
+    } else {
+        originalStructOnselect = null;
+    }
 
-    originalInfoOnchange = visualizer.info.onchange;
-    visualizer.info.onchange = (indexes: any) => {
-        console.log('info.onchange called with indexes:', indexes);
-        if (typeof originalInfoOnchange === 'function') {
-            originalInfoOnchange(indexes);
-        }
-        sendFromIndexes(indexes);
-    };
+    if (visualizer.info) {
+        originalInfoOnchange = visualizer.info.onchange;
+        visualizer.info.onchange = (indexes: any) => {
+            console.log('info.onchange called with indexes:', indexes);
+            if (typeof originalInfoOnchange === 'function') {
+                originalInfoOnchange(indexes);
+            }
+            sendFromIndexes(indexes);
+        };
+    } else {
+        originalInfoOnchange = null;
+    }
 }
 
 function onRender(event: Event): void {
@@ -190,8 +204,7 @@ function onRender(event: Event): void {
             .load(config as any, dataset as any, warnings)
             .then((v: any) => {
                 visualizer = v;
-                const ds = v.dataset(true);
-                indexer = new Chemiscope.EnvironmentIndexer(ds.structures, ds.environments);
+                indexer = new Chemiscope.EnvironmentIndexer(dataset.structures, dataset.environments);
                 installReverseSyncCallbacks();
 
                 if (selectedIndex !== null) {
