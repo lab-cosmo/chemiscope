@@ -15,6 +15,7 @@ a command-line command to convert structure files to a JSON input.
     reference
     jupyter
     sphinx
+    streamlit
     gallery
 
 
