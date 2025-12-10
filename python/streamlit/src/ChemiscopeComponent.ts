@@ -63,7 +63,6 @@ export class ChemiscopeComponent {
         visualizer: null as ChemiscopeVisualizer | null,
         indexer: null as any | null,
         loaded: false,
-        lastSelection: null as number | null,
         lastReportedSelection: null as number | null,
         lastSettings: null as string | null,
         originalMapOnselect: null as any,
@@ -86,10 +85,13 @@ export class ChemiscopeComponent {
             return;
         }
 
-        const selectedIndex = typeof args.selected_index === 'number' ? args.selected_index : null;
-        const mode: ChemiscopeMode = (
-            typeof args.mode === 'string' ? args.mode : 'default'
-        ) as ChemiscopeMode;
+        const selectedIndex = this.state.loaded
+            ? null
+            : typeof args.selected_index === 'number'
+              ? args.selected_index
+              : null;
+
+        const mode = (typeof args.mode === 'string' ? args.mode : 'default') as ChemiscopeMode;
         const settings = args.settings || {};
         const widthArg = args.width ?? 'stretch';
         const heightArg = typeof args.height === 'number' ? args.height : 550;
@@ -111,7 +113,7 @@ export class ChemiscopeComponent {
                 heightArg
             );
         } else {
-            this.handleUpdate(selectedIndex, settings, widthArg, heightArg);
+            this.handleUpdate(settings, widthArg, heightArg);
         }
     }
 
@@ -136,17 +138,10 @@ export class ChemiscopeComponent {
     }
 
     private handleUpdate(
-        selectedIndex: number | null,
         settings: Record<string, any>,
         widthArg: string | number,
         heightArg: number
     ): void {
-        // Selection update
-        if (selectedIndex !== null && selectedIndex !== this.state.lastSelection) {
-            this.state.lastSelection = selectedIndex;
-            this.applySelectionFromStructure(selectedIndex);
-        }
-
         // Settings update
         this.handleSettingsUpdate(settings);
 
@@ -167,12 +162,7 @@ export class ChemiscopeComponent {
             return;
         }
 
-        try {
-            visualizer.map?.select(indexes);
-            this.state.originalMapOnselect?.(indexes);
-        } catch (err) {
-            console.error('Error applying selection:', err);
-        }
+        visualizer.map?.select(indexes);
     }
 
     private sendSelectionToStreamlit(indexes: any): void {
@@ -182,21 +172,11 @@ export class ChemiscopeComponent {
             structureIdToSend = indexes.structure;
         }
 
-        if (structureIdToSend === this.state.lastSelection) {
-            return;
-        }
-        this.state.lastSelection = structureIdToSend;
-
         if (structureIdToSend === this.state.lastReportedSelection) {
             return;
         }
         this.state.lastReportedSelection = structureIdToSend;
-
-        try {
-            Streamlit.setComponentValue(structureIdToSend);
-        } catch (err) {
-            console.error('Error sending selection:', err);
-        }
+        Streamlit.setComponentValue(structureIdToSend);
     }
 
     private installReverseSyncCallbacks(): void {
@@ -231,7 +211,6 @@ export class ChemiscopeComponent {
         if (visualizer.info) {
             this.state.originalInfoOnchange = visualizer.info.onchange;
             visualizer.info.onchange = (indexes: any) => {
-                console.log('info.onchange called with indexes:', indexes);
                 this.state.originalInfoOnchange?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -275,7 +254,7 @@ export class ChemiscopeComponent {
                 this.installReverseSyncCallbacks();
 
                 if (selectedIndex !== null) {
-                    this.state.lastSelection = selectedIndex;
+                    this.state.lastReportedSelection = selectedIndex;
                     this.applySelectionFromStructure(selectedIndex);
                 }
             })
