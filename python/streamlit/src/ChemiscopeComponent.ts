@@ -64,6 +64,7 @@ export class ChemiscopeComponent {
         indexer: null as any | null,
         loaded: false,
         lastReportedSelection: null as number | null,
+        lastAppliedSelection: null as number | null,
         lastSettings: null as string | null,
         originalMapOnselect: null as any,
         originalStructOnselect: null as any,
@@ -113,7 +114,7 @@ export class ChemiscopeComponent {
                 heightArg
             );
         } else {
-            this.handleUpdate(settings, widthArg, heightArg);
+            this.handleUpdate(args, settings, widthArg, heightArg);
         }
     }
 
@@ -138,12 +139,19 @@ export class ChemiscopeComponent {
     }
 
     private handleUpdate(
+        args: ChemiscopeArgs,
         settings: Record<string, any>,
         widthArg: string | number,
         heightArg: number
     ): void {
         // Settings update
         this.handleSettingsUpdate(settings);
+
+        // Handle external selection changes
+        if (typeof args.selected_index === 'number' && args.selected_index !== this.state.lastAppliedSelection) {
+            this.applySelectionFromStructure(args.selected_index);
+            this.state.lastAppliedSelection = args.selected_index;
+        }
 
         const root = getOrCreateRoot();
         applyWidthPolicy(widthArg, root);
@@ -163,6 +171,10 @@ export class ChemiscopeComponent {
         }
 
         visualizer.map?.select(indexes);
+
+        if (this.state.originalMapOnselect) {
+            this.state.originalMapOnselect(indexes);
+        }
     }
 
     private sendSelectionToStreamlit(indexes: any): void {
@@ -255,6 +267,7 @@ export class ChemiscopeComponent {
 
                 if (selectedIndex !== null) {
                     this.state.lastReportedSelection = selectedIndex;
+                    this.state.lastAppliedSelection = selectedIndex;
                     this.applySelectionFromStructure(selectedIndex);
                 }
             })

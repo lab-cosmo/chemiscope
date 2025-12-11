@@ -101,6 +101,23 @@ def display_selected_structure():
         st.text("No structure selected")
 
 
+def create_selection(uploaded: bool) -> int | None:
+    if not uploaded:
+        st.info("Upload a file to enable external selection control")
+        return None
+
+    frames = st.session_state.get("uploaded_frames", [])
+
+    external_index = st.slider(
+        "Select structure by index",
+        min_value=0,
+        max_value=len(frames) - 1,
+        value=0,
+    )
+
+    return external_index
+
+
 def create_sidebar_widgets(uploaded: bool) -> Tuple[Dict[str, Any], str, int, str]:
     st.header("On load viewer settings")
 
@@ -204,6 +221,8 @@ else:
     dataset, frames = process_uploaded_file(uploaded_bytes, file_name)
     st.session_state["uploaded_frames"] = frames
 
+    external_selected_index = create_selection(True)
+
     viewer(
         dataset,
         height=height,
@@ -212,6 +231,7 @@ else:
         settings=settings,
         key="chemiscope_viewer",
         on_select=on_structure_select,
+        selected_index=external_selected_index,
     )
 
     st.markdown("---")
