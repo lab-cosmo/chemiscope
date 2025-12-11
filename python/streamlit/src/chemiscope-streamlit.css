@@ -8,6 +8,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background: white;
 }
 
 .visualizer-container {
@@ -24,6 +25,8 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    background: white;
+    color: #212529;
 }
 
 .visualizer-item {
