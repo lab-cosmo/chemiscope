@@ -7,15 +7,6 @@ from typing import Any, Callable, Mapping, Optional
 _component_func = None
 
 
-def _get_build_path() -> str:
-    here = os.path.dirname(__file__)
-    src_build = os.path.normpath(os.path.join(here, "..", "build"))
-
-    if os.path.exists(src_build):
-        return src_build
-    return os.path.join(here, "stcomponent")
-
-
 def viewer(
     dataset: Mapping[str, Any],
     *,
@@ -61,8 +52,9 @@ def viewer(
                 "Install it with: pip install 'chemiscope[streamlit]'"
             ) from exc
 
+        build_path = os.path.join(os.path.dirname(__file__), "stcomponent")
         _component_func = components.declare_component(
-            "chemiscope_viewer", path=_get_build_path()
+            "chemiscope_viewer", path=build_path
         )
 
     return _component_func(

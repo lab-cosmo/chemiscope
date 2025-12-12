@@ -49,9 +49,9 @@ NPM_BUILD_OUTPUT = [
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
     # streamlit component
-    "python/streamlit/build/main.js",
-    "python/streamlit/build/chemiscope.min.js",
-    "python/streamlit/build/index.html",
+    "python/chemiscope/stcomponent/main.js",
+    "python/chemiscope/stcomponent/chemiscope.min.js",
+    "python/chemiscope/stcomponent/index.html",
 ]
 
 
