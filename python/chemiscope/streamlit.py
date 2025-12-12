@@ -58,9 +58,7 @@ def viewer(
                 "Install it with: pip install 'chemiscope[streamlit]'"
             ) from exc
 
-        build_path = os.path.normpath(
-            os.path.join(os.path.dirname(__file__), "..", "build")
-        )
+        build_path = os.path.join(os.path.dirname(__file__), "stcomponent")
         _component_func = components.declare_component(
             "chemiscope_viewer", path=build_path
         )
