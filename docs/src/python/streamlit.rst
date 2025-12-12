@@ -37,7 +37,7 @@ function. Here's a minimal example:
     dataset = chemiscope.create_input(frames)
 
     # Display the viewer
-    chemiscope.streamlit.viewer(dataset)
+    chemiscope.streamlit.viewer(dataset, mode="structure")
 
 Run the application:
 
