@@ -31,6 +31,7 @@ interface ChemiscopeVisualizer {
     };
     structure?: {
         onselect: ((indexes: any) => void) | null;
+        activeChanged?: ((guid: any, indexes: any) => void) | null;
     };
     info?: {
         onchange: ((indexes: any) => void) | null;
@@ -68,6 +69,7 @@ export class ChemiscopeComponent {
         lastSettings: null as string | null,
         originalMapOnselect: null as any,
         originalStructOnselect: null as any,
+        originalStructActiveChanged: null as any,
         originalInfoOnchange: null as any,
     };
 
@@ -148,7 +150,10 @@ export class ChemiscopeComponent {
         this.handleSettingsUpdate(settings);
 
         // Handle external selection changes
-        if (typeof args.selected_index === 'number' && args.selected_index !== this.state.lastAppliedSelection) {
+        if (
+            typeof args.selected_index === 'number' &&
+            args.selected_index !== this.state.lastAppliedSelection
+        ) {
             this.applySelectionFromStructure(args.selected_index);
             this.state.lastAppliedSelection = args.selected_index;
         }
@@ -215,8 +220,23 @@ export class ChemiscopeComponent {
                 this.state.originalStructOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
+
+            if (typeof visualizer.structure.activeChanged === 'function') {
+                const originalActiveChanged = visualizer.structure.activeChanged.bind(
+                    visualizer.structure
+                );
+                this.state.originalStructActiveChanged = originalActiveChanged;
+
+                visualizer.structure.activeChanged = (guid: any, indexes: any) => {
+                    originalActiveChanged?.(guid, indexes);
+                    this.sendSelectionToStreamlit(indexes);
+                };
+            } else {
+                this.state.originalStructActiveChanged = null;
+            }
         } else {
             this.state.originalStructOnselect = null;
+            this.state.originalStructActiveChanged = null;
         }
 
         // Info onchange
