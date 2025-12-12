@@ -37,6 +37,13 @@ interface ChemiscopeVisualizer {
         onchange: ((indexes: any) => void) | null;
     };
     applySettings: (settings: Record<string, any>) => void;
+    saveSettings: () => Record<string, any>;
+    onSettingChange: (callback: (keys: string[], value: unknown) => void) => void;
+}
+
+enum StreamlitValue {
+    SELECTION = 'selected_id',
+    SETTINGS = 'settings',
 }
 
 function getChemiscope(): any | null {
@@ -64,9 +71,20 @@ export class ChemiscopeComponent {
         visualizer: null as ChemiscopeVisualizer | null,
         indexer: null as any | null,
         loaded: false,
-        lastReportedSelection: null as number | null,
-        lastAppliedSelection: null as number | null,
-        lastSettings: null as string | null,
+
+        // Track selections
+        lastSentSelection: null as number | null,
+        lastReceivedSelection: null as number | null,
+
+        // Track settings
+        lastSentSettings: null as string | null,
+        lastReceivedSettings: null as string | null,
+
+        // Prevent update loops
+        isProcessingSelection: false,
+        isProcessingSettings: false,
+
+        // Original callbacks
         originalMapOnselect: null as any,
         originalStructOnselect: null as any,
         originalStructActiveChanged: null as any,
@@ -82,20 +100,13 @@ export class ChemiscopeComponent {
 
     private onRender(data: RenderData): void {
         const args = data.args as ChemiscopeArgs;
-
         const dataset = args.dataset;
+
         if (!dataset) {
             return;
         }
 
-        const selectedIndex = this.state.loaded
-            ? null
-            : typeof args.selected_index === 'number'
-              ? args.selected_index
-              : null;
-
         const mode = (typeof args.mode === 'string' ? args.mode : 'default') as ChemiscopeMode;
-        const settings = args.settings || {};
         const widthArg = args.width ?? 'stretch';
         const heightArg = typeof args.height === 'number' ? args.height : 550;
 
@@ -110,13 +121,13 @@ export class ChemiscopeComponent {
                 Chemiscope,
                 dataset,
                 mode,
-                settings,
-                selectedIndex,
+                args.settings || {},
+                args.selected_index,
                 widthArg,
                 heightArg
             );
         } else {
-            this.handleUpdate(args, settings, widthArg, heightArg);
+            this.handleUpdate(args, widthArg, heightArg);
         }
     }
 
@@ -125,7 +136,7 @@ export class ChemiscopeComponent {
         dataset: Record<string, any>,
         mode: ChemiscopeMode,
         settings: Record<string, any>,
-        selectedIndex: number | null,
+        selectedIndex: number | null | undefined,
         widthArg: string | number,
         heightArg: number
     ): void {
@@ -137,63 +148,127 @@ export class ChemiscopeComponent {
         applyWidthPolicy(widthArg, root);
         applyHeightPolicy(heightArg, root);
 
+        // Store initial received values
+        this.state.lastReceivedSelection = selectedIndex !== undefined ? selectedIndex : null;
+        this.state.lastReceivedSettings = JSON.stringify(settings);
+
         this.initializeVisualizer(Chemiscope, dataset, settings, selectedIndex);
     }
 
-    private handleUpdate(
-        args: ChemiscopeArgs,
-        settings: Record<string, any>,
-        widthArg: string | number,
-        heightArg: number
-    ): void {
-        // Settings update
-        this.handleSettingsUpdate(settings);
-
-        // Handle external selection changes
-        if (
-            typeof args.selected_index === 'number' &&
-            args.selected_index !== this.state.lastAppliedSelection
-        ) {
-            this.applySelectionFromStructure(args.selected_index);
-            this.state.lastAppliedSelection = args.selected_index;
-        }
-
+    private handleUpdate(args: ChemiscopeArgs, widthArg: string | number, heightArg: number): void {
         const root = getOrCreateRoot();
         applyWidthPolicy(widthArg, root);
         applyHeightPolicy(heightArg, root);
+
+        // Handle traitlet-style updates
+        this.handleSettingsUpdate(args.settings);
+        this.handleSelectionUpdate(args.selected_index);
     }
 
-    private applySelectionFromStructure(structureIndex: number): void {
+    private handleSelectionUpdate(selectedIndex: number | null | undefined): void {
+        if (selectedIndex === undefined) {
+            return;
+        }
+
+        // Only process if selection actually changed
+        if (selectedIndex !== this.state.lastReceivedSelection) {
+            this.state.lastReceivedSelection = selectedIndex;
+
+            // Skip if we're already processing a selection
+            if (!this.state.isProcessingSelection) {
+                this.applyExternalSelection(selectedIndex);
+            }
+        }
+    }
+
+    private handleSettingsUpdate(settings: Record<string, any> | undefined): void {
+        if (!settings || !this.state.visualizer) {
+            return;
+        }
+
+        const settingsStr = JSON.stringify(settings);
+
+        // Only process if settings actually changed
+        if (settingsStr !== this.state.lastReceivedSettings) {
+            this.state.lastReceivedSettings = settingsStr;
+
+            // Skip if we're already processing settings
+            if (!this.state.isProcessingSettings) {
+                this.state.isProcessingSettings = true;
+                try {
+                    this.state.visualizer.applySettings(settings);
+                } catch (err) {
+                    console.error('Error applying settings:', err);
+                } finally {
+                    this.state.isProcessingSettings = false;
+                }
+            }
+        }
+    }
+
+    private applyExternalSelection(selectedIndex: number | null | undefined): void {
         const { visualizer, indexer } = this.state;
         if (!visualizer || !indexer) {
             return;
         }
 
-        const indexes = indexer.fromStructureAtom('structure', structureIndex);
-        if (!indexes) {
-            console.warn('No environment for structure index', structureIndex);
+        if (selectedIndex === null) {
+            // Handle deselection if needed
             return;
         }
 
-        visualizer.map?.select(indexes);
+        const indexes = indexer.fromStructureAtom('structure', selectedIndex);
+        if (!indexes) {
+            console.warn('No environment for structure index', selectedIndex);
+            return;
+        }
 
-        if (this.state.originalMapOnselect) {
-            this.state.originalMapOnselect(indexes);
+        // Select in the map visualizer
+        if (visualizer.map) {
+            visualizer.map.select(indexes);
         }
     }
 
     private sendSelectionToStreamlit(indexes: any): void {
-        let structureIdToSend: number | null = null;
+        if (this.state.isProcessingSelection) {
+            return;
+        }
 
+        let structureIdToSend: number | null = null;
         if (indexes && typeof indexes.structure === 'number') {
             structureIdToSend = indexes.structure;
         }
 
-        if (structureIdToSend === this.state.lastReportedSelection) {
+        // Only send if changed
+        if (structureIdToSend !== this.state.lastSentSelection) {
+            this.state.lastSentSelection = structureIdToSend;
+
+            // Get current settings
+            const currentSettings = this.state.visualizer?.saveSettings() || {};
+
+            Streamlit.setComponentValue({
+                [StreamlitValue.SETTINGS]: currentSettings,
+                [StreamlitValue.SELECTION]: structureIdToSend,
+            });
+        }
+    }
+
+    private sendSettingsToStreamlit(settings: Record<string, any>): void {
+        if (this.state.isProcessingSettings) {
             return;
         }
-        this.state.lastReportedSelection = structureIdToSend;
-        Streamlit.setComponentValue(structureIdToSend);
+
+        const settingsStr = JSON.stringify(settings);
+
+        // Only send if changed
+        if (settingsStr !== this.state.lastSentSettings) {
+            this.state.lastSentSettings = settingsStr;
+
+            Streamlit.setComponentValue({
+                [StreamlitValue.SETTINGS]: settings,
+                [StreamlitValue.SELECTION]: this.state.lastSentSelection,
+            });
+        }
     }
 
     private installReverseSyncCallbacks(): void {
@@ -209,8 +284,6 @@ export class ChemiscopeComponent {
                 this.state.originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
-        } else {
-            this.state.originalMapOnselect = null;
         }
 
         // Structure onselect
@@ -231,12 +304,7 @@ export class ChemiscopeComponent {
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };
-            } else {
-                this.state.originalStructActiveChanged = null;
             }
-        } else {
-            this.state.originalStructOnselect = null;
-            this.state.originalStructActiveChanged = null;
         }
 
         // Info onchange
@@ -246,24 +314,27 @@ export class ChemiscopeComponent {
                 this.state.originalInfoOnchange?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
-        } else {
-            this.state.originalInfoOnchange = null;
         }
+
+        // Settings change - from visualizer to Streamlit
+        visualizer.onSettingChange((_keys: string[], _value: unknown) => {
+            const currentSettings = visualizer.saveSettings();
+            this.sendSettingsToStreamlit(currentSettings);
+        });
     }
 
     private initializeVisualizer(
         Chemiscope: any,
         dataset: Record<string, any>,
         settings: Record<string, any>,
-        selectedIndex: number | null
+        selectedIndex: number | null | undefined
     ): void {
         const mode = dataset.metadata?.mode || 'default';
         const visualizerClass = getVisualizerClass(mode, Chemiscope);
 
-        // Merge user settings into dataset settings
+        // Merge initial settings
         try {
             dataset.settings = Object.assign({}, dataset.settings, settings);
-            this.state.lastSettings = JSON.stringify(settings);
         } catch (e) {
             console.warn('Could not attach settings to dataset:', e);
         }
@@ -283,12 +354,12 @@ export class ChemiscopeComponent {
                     dataset.structures,
                     dataset.environments
                 );
+
                 this.installReverseSyncCallbacks();
 
+                // Apply initial selection if provided
                 if (selectedIndex !== null) {
-                    this.state.lastReportedSelection = selectedIndex;
-                    this.state.lastAppliedSelection = selectedIndex;
-                    this.applySelectionFromStructure(selectedIndex);
+                    this.applyExternalSelection(selectedIndex);
                 }
             })
             .catch((err: unknown) => {
@@ -298,22 +369,5 @@ export class ChemiscopeComponent {
             .finally(() => {
                 toggleLoadingVisible(false);
             });
-    }
-
-    private handleSettingsUpdate(settings: Record<string, any>): void {
-        if (!this.state.visualizer) {
-            return;
-        }
-
-        try {
-            const newStr = JSON.stringify(settings);
-            if (newStr !== this.state.lastSettings) {
-                this.state.visualizer.applySettings(settings);
-                this.state.lastSettings = newStr;
-            }
-        } catch (err) {
-            console.error('Error applying settings:', err);
-            displayWarning('Error applying settings: ' + String(err), 4000);
-        }
     }
 }
