@@ -239,7 +239,7 @@ export class ChemiscopeComponent {
         } finally {
             setTimeout(() => {
                 this.state.isProcessingSelection = false;
-            }, 100);
+            }, 500);
         }
     }
 
@@ -268,7 +268,7 @@ export class ChemiscopeComponent {
 
             setTimeout(() => {
                 this.state.isProcessingSelection = false;
-            }, 100);
+            }, 500);
         }
     }
 
@@ -291,7 +291,7 @@ export class ChemiscopeComponent {
 
             setTimeout(() => {
                 this.state.isProcessingSettings = false;
-            }, 100);
+            }, 500);
         }
     }
 
@@ -310,7 +310,7 @@ export class ChemiscopeComponent {
             };
         }
 
-        // Structure onselect
+        // Structure onselect - selection from structure viewer to Streamlit
         if (visualizer.structure) {
             this.state.originalStructOnselect = visualizer.structure.onselect;
             visualizer.structure.onselect = (indexes: any) => {
