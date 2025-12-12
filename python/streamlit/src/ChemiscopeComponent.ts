@@ -15,7 +15,7 @@ interface ChemiscopeArgs {
     dataset: Record<string, any>;
     height?: number;
     width?: number | string;
-    selected_index?: number;
+    selected_index?: number | undefined;
     mode?: ChemiscopeMode;
     settings?: Record<string, any>;
 }
@@ -30,6 +30,7 @@ interface ChemiscopeVisualizer {
         onselect: ((indexes: any) => void) | null;
     };
     structure?: {
+        select: (indexes: any) => void;
         onselect: ((indexes: any) => void) | null;
         activeChanged?: ((guid: any, indexes: any) => void) | null;
     };
@@ -136,7 +137,7 @@ export class ChemiscopeComponent {
         dataset: Record<string, any>,
         mode: ChemiscopeMode,
         settings: Record<string, any>,
-        selectedIndex: number | null | undefined,
+        selectedIndex: number | undefined,
         widthArg: string | number,
         heightArg: number
     ): void {
@@ -212,20 +213,33 @@ export class ChemiscopeComponent {
             return;
         }
 
-        if (selectedIndex === null) {
-            // Handle deselection if needed
-            return;
-        }
+        this.state.isProcessingSelection = true;
 
-        const indexes = indexer.fromStructureAtom('structure', selectedIndex);
-        if (!indexes) {
-            console.warn('No environment for structure index', selectedIndex);
-            return;
-        }
+        try {
+            if (selectedIndex === null) {
+                // Handle deselection if needed
+                return;
+            }
 
-        // Select in the map visualizer
-        if (visualizer.map) {
-            visualizer.map.select(indexes);
+            const indexes = indexer.fromStructureAtom('structure', selectedIndex);
+            if (!indexes) {
+                console.warn('No environment for structure index', selectedIndex);
+                return;
+            }
+
+            if (visualizer.map) {
+                visualizer.map.select(indexes);
+            }
+            if (visualizer.structure && typeof visualizer.structure.select === 'function') {
+                visualizer.structure.select(indexes);
+            }
+            if (visualizer.info && typeof visualizer.info.onchange === 'function') {
+                visualizer.info.onchange(indexes);
+            }
+        } finally {
+            setTimeout(() => {
+                this.state.isProcessingSelection = false;
+            }, 100);
         }
     }
 
@@ -242,6 +256,7 @@ export class ChemiscopeComponent {
         // Only send if changed
         if (structureIdToSend !== this.state.lastSentSelection) {
             this.state.lastSentSelection = structureIdToSend;
+            this.state.isProcessingSelection = true;
 
             // Get current settings
             const currentSettings = this.state.visualizer?.saveSettings() || {};
@@ -250,6 +265,10 @@ export class ChemiscopeComponent {
                 [StreamlitValue.SETTINGS]: currentSettings,
                 [StreamlitValue.SELECTION]: structureIdToSend,
             });
+
+            setTimeout(() => {
+                this.state.isProcessingSelection = false;
+            }, 100);
         }
     }
 
@@ -263,11 +282,16 @@ export class ChemiscopeComponent {
         // Only send if changed
         if (settingsStr !== this.state.lastSentSettings) {
             this.state.lastSentSettings = settingsStr;
+            this.state.isProcessingSettings = true;
 
             Streamlit.setComponentValue({
                 [StreamlitValue.SETTINGS]: settings,
                 [StreamlitValue.SELECTION]: this.state.lastSentSelection,
             });
+
+            setTimeout(() => {
+                this.state.isProcessingSettings = false;
+            }, 100);
         }
     }
 
@@ -359,7 +383,10 @@ export class ChemiscopeComponent {
 
                 // Apply initial selection if provided
                 if (selectedIndex !== null) {
-                    this.applyExternalSelection(selectedIndex);
+                    // Small delay to ensure visualizer is fully loaded
+                    setTimeout(() => {
+                        this.applyExternalSelection(selectedIndex);
+                    }, 500);
                 }
             })
             .catch((err: unknown) => {
