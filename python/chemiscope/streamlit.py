@@ -4,8 +4,6 @@ import os
 import uuid
 from typing import Any, Callable, Mapping, Optional
 
-import streamlit as st
-
 
 _component_func = None
 
@@ -49,15 +47,16 @@ def viewer(
     """
     global _component_func
 
-    if _component_func is None:
-        try:
-            import streamlit.components.v1 as components
-        except ImportError as exc:
-            raise ImportError(
-                "Streamlit is required to use chemiscope.streamlit.viewer. "
-                "Install it with: pip install 'chemiscope[streamlit]'"
-            ) from exc
+    try:
+        import streamlit as st
+        import streamlit.components.v1 as components
+    except ImportError:
+        raise ImportError(
+            "Streamlit is required to use chemiscope.streamlit.viewer. "
+            "Install it with: pip install 'chemiscope[streamlit]'"
+        )
 
+    if _component_func is None:
         build_path = os.path.join(os.path.dirname(__file__), "stcomponent")
         _component_func = components.declare_component(
             "chemiscope_viewer", path=build_path
@@ -87,18 +86,18 @@ def viewer(
         selection_changed = new_selection != current_state["selected_index"]
         settings_changed = new_settings != current_state["settings"]
 
-        if not (selection_changed or settings_changed):
-            return
+        if selection_changed:
+            current_state["selected_index"] = new_selection
+            if on_select:
+                on_select(new_selection)
 
-        current_state["selected_index"] = new_selection
-        current_state["settings"] = new_settings
-        current_state["last_update"] = "component"
+        if settings_changed:
+            current_state["settings"] = new_settings
+            if on_settings_change:
+                on_settings_change(new_settings)
 
-        if selection_changed and on_select:
-            on_select(new_selection)
-
-        if settings_changed and on_settings_change:
-            on_settings_change(new_settings)
+        if selection_changed or settings_changed:
+            current_state["last_update"] = "component"
 
     current_state = st.session_state[state_key]
 
