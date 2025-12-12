@@ -10,8 +10,7 @@ from chemiscope.streamlit import viewer
 
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
-    "structure_mode": True,
-    "map_mode": True,
+    "mode": "default",
     "height": 500,
     "opacity": 100,
     "size": 30,
@@ -30,13 +29,13 @@ def build_settings(
     settings = {}
     s_state = st.session_state.settings
 
-    if s_state["map_mode"]:
+    if s_state["mode"] in ["default", "map"]:
         settings["map"] = {
             "color": {"palette": palette, "opacity": opacity},
             "size": {"factor": size},
         }
 
-    if s_state["structure_mode"]:
+    if s_state["mode"] in ["default", "structure"]:
         settings["structure"] = [{"bonds": show_bonds, "spaceFilling": space_filling}]
 
     return settings
@@ -94,31 +93,21 @@ def display_selected_structure():
 def create_sidebar_widgets(uploaded: bool):
     st.header("Viewer Settings on Load")
     s = st.session_state.settings
-    settings_locked = uploaded
 
-    st.subheader("Viewer Modes")
-    structure_mode = st.checkbox(
-        "Structure", value=s["structure_mode"], disabled=settings_locked
-    )
-    map_mode = st.checkbox("Map", value=s["map_mode"], disabled=settings_locked)
-    modes = ["structure"] if structure_mode else []
-    if map_mode:
-        modes.append("map")
-    if not modes:
-        modes = ["default"]
+    mode = st.radio("Viewer Mode", ["default", "structure", "map"], disabled=uploaded)
 
     st.subheader("Display Settings")
     height = st.slider("Height", 100, 1200, s["height"], 50)
 
     st.subheader("Structure Settings")
-    is_map_only = modes == ["map"]
+    is_map_only = mode == "map"
     show_bonds = st.checkbox("Show Bonds", value=s["show_bonds"], disabled=is_map_only)
     space_filling = st.checkbox(
         "Space Filling", value=s["space_filling"], disabled=is_map_only
     )
 
     st.subheader("Map Settings")
-    is_structure_only = modes == ["structure"]
+    is_structure_only = mode == "structure"
     opacity = st.slider("Opacity", 0, 100, s["opacity"], 10, disabled=is_structure_only)
     size = st.slider("Point size", 1, 100, s["size"], 10, disabled=is_structure_only)
     palette_options = ["viridis", "magma", "plasma", "inferno", "cividis"]
@@ -130,9 +119,8 @@ def create_sidebar_widgets(uploaded: bool):
     )
 
     viewer_settings = build_settings(palette, opacity, size, show_bonds, space_filling)
-    mode_display = modes[0] if len(modes) == 1 else "default"
 
-    return viewer_settings, height, mode_display
+    return viewer_settings, height, mode
 
 
 st.set_page_config(page_title="Chemiscope + Streamlit", layout="wide")
