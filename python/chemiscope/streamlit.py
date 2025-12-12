@@ -1,11 +1,26 @@
-from __future__ import annotations
-
 import os
-import uuid
+from copy import deepcopy
 from typing import Any, Callable, Mapping, Optional
 
 
 _component_func = None
+
+
+def _prepared_dataset(dataset: Mapping[str, Any], mode: str):
+    ds = deepcopy(dataset)
+    meta = ds.setdefault("metadata", {})
+    meta["mode"] = mode
+
+    if mode == "structure":
+        props = ds.setdefault("properties", {})
+        if "index" not in props:
+            structures = ds.get("structures", [])
+            props["index"] = {
+                "target": "structure",
+                "values": list(range(len(structures))),
+            }
+
+    return ds
 
 
 def viewer(
@@ -15,7 +30,7 @@ def viewer(
     mode: str = "default",
     width: str | int = "stretch",
     height: int = 550,
-    key: Optional[str] = None,
+    key: str = "chemiscope_viewer",
     selected_index: Optional[int] = None,
     on_select: Optional[Callable[[Optional[int]], Any]] = None,
     on_settings_change: Optional[Callable[[dict], Any]] = None,
@@ -36,15 +51,15 @@ def viewer(
         Width in pixels or "stretch" for full width.
     height: int, default is 500
         Height in pixels for the viewer (or None to auto-size).
-    key: is
-        Optional Streamlit widget key.
-    selected_index: int
+    key: str
+        Streamlit widget key.
+    selected_index: int, optional
         Structure index to select. Can also be used to update the selection
         from outside the component if set to a streamlit state variable.
-    on_select: callable
+    settings: dict, optional
         Optional callback function called when the structure selection changes.
         Receives the new selected index or None if unselected.
-    on_settings_change: callable
+    on_settings_change: callable, optional
         Called when settings change
     """
     global _component_func
@@ -64,8 +79,17 @@ def viewer(
             "chemiscope_viewer", path=build_path
         )
 
-    if key is None:
-        key = f"chemiscope_viewer_{uuid.uuid4().hex[:8]}"
+    if mode not in ("default", "structure", "map"):
+        raise ValueError(
+            f"Invalid mode '{mode}', expected 'default', 'structure', or 'map'"
+        )
+
+    has_frames = "structures" in dataset and len(dataset["structures"]) > 0
+    has_properties = "properties" in dataset and len(dataset["properties"]) > 0
+    if mode == "structure" and not has_frames:
+        raise ValueError("Cannot show structure: dataset has no frames")
+    if mode == "map" and (not has_properties or len(dataset["properties"]) < 2):
+        raise ValueError("Map mode requires at least two properties")
 
     state_key = f"{key}_state"
     if state_key not in st.session_state:
@@ -127,7 +151,7 @@ def viewer(
         current_state["last_update"] = None
 
     return _component_func(
-        dataset=dataset,
+        dataset=_prepared_dataset(dataset, mode),
         settings=current_state["settings"],
         mode=mode,
         key=key,
