@@ -37,6 +37,7 @@ interface ChemiscopeVisualizer {
     info?: {
         onchange: ((indexes: any) => void) | null;
     };
+    select: (indexes: any) => void;
     applySettings: (settings: Record<string, any>) => void;
     saveSettings: () => Record<string, any>;
     onSettingChange: (callback: (keys: string[], value: unknown) => void) => void;
@@ -89,7 +90,7 @@ export class ChemiscopeComponent {
         originalMapOnselect: null as any,
         originalStructOnselect: null as any,
         originalStructActiveChanged: null as any,
-        originalInfoOnchange: null as any,
+        originalSelect: null as any,
     };
 
     constructor() {
@@ -229,22 +230,11 @@ export class ChemiscopeComponent {
                 return;
             }
 
-            if (visualizer.map) {
-                //visualizer.map.select(indexes);
-                this.state.originalMapOnselect?.(indexes);
-            }
-            if (visualizer.structure && typeof visualizer.structure.select === 'function') {
-                //visualizer.structure.select(indexes);
-                this.state.originalStructOnselect?.(indexes);
-            }
-            if (visualizer.info && typeof visualizer.info.onchange === 'function') {
-                //visualizer.info.onchange(indexes);
-                this.state.originalInfoOnchange?.(indexes);
-            }
+            this.state.originalSelect?.(indexes);            
         } finally {
             setTimeout(() => {
                 this.state.isProcessingSelection = false;
-            }, 500);
+            }, 100);
         }
     }
 
@@ -309,9 +299,11 @@ export class ChemiscopeComponent {
 
         // Map onselect
         if (visualizer.map) {
-            this.state.originalMapOnselect = visualizer.map.onselect;
+            const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map);
+
+            this.state.originalMapOnselect = originalMapOnselect;
             visualizer.map.onselect = (indexes: any) => {
-                this.state.originalMapOnselect?.(indexes);
+                originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
         }
@@ -320,6 +312,7 @@ export class ChemiscopeComponent {
         if (visualizer.structure) {
             this.state.originalStructOnselect = visualizer.structure.onselect;
             visualizer.structure.onselect = (indexes: any) => {
+                console.log("structure.onselect");
                 this.state.originalStructOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -331,6 +324,7 @@ export class ChemiscopeComponent {
                 this.state.originalStructActiveChanged = originalActiveChanged;
 
                 visualizer.structure.activeChanged = (guid: any, indexes: any) => {
+                    console.log("activechanged");
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };
@@ -339,9 +333,12 @@ export class ChemiscopeComponent {
 
         // Info onchange
         if (visualizer.info) {
-            this.state.originalInfoOnchange = visualizer.info.onchange;
-            visualizer.info.onchange = (indexes: any) => {
-                this.state.originalInfoOnchange?.(indexes);
+            const originalSelect = visualizer.select.bind(visualizer);
+            this.state.originalSelect = originalSelect;
+
+            visualizer.select = (indexes: any) => {
+                console.log("visualizerselect");
+                originalSelect(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
         }
