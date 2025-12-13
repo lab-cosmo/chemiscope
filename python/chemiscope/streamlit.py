@@ -28,6 +28,7 @@ def viewer(
     *,
     settings: Optional[dict] = None,
     mode: str = "default",
+    no_info_panel: bool = False,
     width: str | int = "stretch",
     height: int = 550,
     key: str = "chemiscope_viewer",
@@ -47,6 +48,8 @@ def viewer(
         behavior, as generated e.g. by :py:func:`chemiscope.quick_settings`.
     mode: str
         Visualization mode: "default", "structure", or "map".
+    no_info_panel: bool
+        Hide the info panel, disabling in-widget selection for "structure" mode
     width: str | int, default is "stretch"
         Width in pixels or "stretch" for full width.
     height: int, default is 500
@@ -156,6 +159,7 @@ def viewer(
         dataset=_prepared_dataset(dataset, mode),
         settings=current_state["settings"],
         mode=mode,
+        no_info_panel=no_info_panel,
         key=key,
         width=width,
         height=height,

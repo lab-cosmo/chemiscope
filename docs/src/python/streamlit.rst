@@ -138,7 +138,8 @@ structure from other parts of the app.
 Given that the chemiscope viewer has its own mechanism to change the selected
 structure, it is essential to set up a callback that updates the same state 
 variable that controls the selected index through the ``selected_index``
-option.
+option. If you want to use the chemiscope component as a "passive" structure
+viewer, you can use ``mode="structure"`` and ``no_info_panel=True``.
 
 
 Custom settings
@@ -166,6 +167,10 @@ options, as obtained for instance using :py:func:`chemiscope.quick_settings`:
        mode="default"
    )
 
+Settings can also be manipulated in a bi-directional manner using 
+the ``on_settings_change`` to define a callback. You can see the 
+app example for an example of how this can be used to manipulate
+the visualization and map style from the app.
 
 API reference
 ^^^^^^^^^^^^^

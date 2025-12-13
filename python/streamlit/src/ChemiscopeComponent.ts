@@ -18,6 +18,7 @@ interface ChemiscopeArgs {
     selected_index?: number | undefined;
     mode?: ChemiscopeMode;
     settings?: Record<string, any>;
+    no_info_panel?: boolean;
 }
 
 interface ChemiscopeWindow extends Window {
@@ -79,10 +80,10 @@ export class ChemiscopeComponent {
 
         // Track settings
         currentSettings: null as string | null,
-        
+
         // Track source of the selection events to avoid loops
         selectionFromPython: false,
-        settingsFromPython: false, 
+        settingsFromPython: false,
 
         // Original callbacks
         originalMapOnselect: null as any,
@@ -107,6 +108,7 @@ export class ChemiscopeComponent {
         }
 
         const mode = (typeof args.mode === 'string' ? args.mode : 'default') as ChemiscopeMode;
+        const noInfo = typeof args.no_info_panel === 'boolean' ? args.no_info_panel : false;
         const widthArg = args.width ?? 'stretch';
         const heightArg = typeof args.height === 'number' ? args.height : 550;
 
@@ -124,7 +126,8 @@ export class ChemiscopeComponent {
                 args.settings || {},
                 args.selected_index,
                 widthArg,
-                heightArg
+                heightArg,
+                noInfo
             );
         } else {
             this.handleUpdate(args, widthArg, heightArg);
@@ -138,12 +141,13 @@ export class ChemiscopeComponent {
         settings: Record<string, any>,
         selectedIndex: number | undefined,
         widthArg: string | number,
-        heightArg: number
+        heightArg: number,
+        noInfo: boolean
     ): void {
         this.state.loaded = true;
 
         const root = getOrCreateRoot();
-        root.innerHTML = generateHTMLForMode(mode);
+        root.innerHTML = generateHTMLForMode(mode, noInfo);
 
         applyWidthPolicy(widthArg, root);
         applyHeightPolicy(heightArg, root);
@@ -170,11 +174,11 @@ export class ChemiscopeComponent {
         if (selectedIndex === undefined) {
             return;
         }
-        
+
         // Only process if selection actually changed
         if (selectedIndex !== this.state.currentSelection) {
-            console.log("update selection");
-            
+            console.log('update selection');
+
             this.state.selectionFromPython = true;
             try {
                 this.state.currentSelection = selectedIndex;
@@ -186,7 +190,7 @@ export class ChemiscopeComponent {
     }
 
     private handleSettingsUpdate(settings: Record<string, any> | undefined): void {
-        console.log('Handling settings update')
+        console.log('Handling settings update');
         if (!settings || !this.state.visualizer) {
             return;
         }
@@ -195,7 +199,7 @@ export class ChemiscopeComponent {
 
         // Only process if settings actually changed
         if (settingsStr !== this.state.currentSettings) {
-            console.log("update settings");            
+            console.log('update settings');
 
             this.state.settingsFromPython = true;
             try {
@@ -208,7 +212,12 @@ export class ChemiscopeComponent {
     }
 
     private applySelection(selectedIndex: number | null | undefined): void {
-        console.log('Applying selection:', selectedIndex, 'from python', this.state.selectionFromPython);
+        console.log(
+            'Applying selection:',
+            selectedIndex,
+            'from python',
+            this.state.selectionFromPython
+        );
         const { visualizer, indexer } = this.state;
         if (!visualizer || !indexer) {
             return;
@@ -224,14 +233,14 @@ export class ChemiscopeComponent {
             console.warn('No environment for structure index', selectedIndex);
             return;
         }
-        
-        console.log("calling originalselect, ", indexes);
+
+        console.log('calling originalselect, ', indexes);
         this.state.originalSelect?.(indexes);
     }
 
     private sendSelectionToStreamlit(indexes: any): void {
         console.log('Sending selection to Streamlit:', indexes, this.state.selectionFromPython);
-        if (this.state.selectionFromPython) { 
+        if (this.state.selectionFromPython) {
             return;
         }
 
@@ -240,14 +249,14 @@ export class ChemiscopeComponent {
             structureIdToSend = indexes.structure;
         }
 
-        console.log("send:", structureIdToSend, "current ", this.state.currentSelection)
+        console.log('send:', structureIdToSend, 'current ', this.state.currentSelection);
         // Only send if changed
         if (structureIdToSend !== this.state.currentSelection) {
             this.state.currentSelection = structureIdToSend;
-            
+
             // Get current settings
             const currentSettings = this.state.visualizer?.saveSettings() || {};
-            
+
             Streamlit.setComponentValue({
                 [StreamlitValue.SETTINGS]: currentSettings,
                 [StreamlitValue.SELECTION]: structureIdToSend,
@@ -256,7 +265,7 @@ export class ChemiscopeComponent {
     }
 
     private sendSettingsToStreamlit(settings: Record<string, any>): void {
-        console.log('Sending settings to Streamlit:', settings, this.state.settingsFromPython);        
+        console.log('Sending settings to Streamlit:', settings, this.state.settingsFromPython);
         if (this.state.settingsFromPython) {
             return;
         }
@@ -266,7 +275,7 @@ export class ChemiscopeComponent {
         // Only send if changed
         if (settingsStr !== this.state.currentSettings) {
             this.state.currentSettings = settingsStr;
-            
+
             Streamlit.setComponentValue({
                 [StreamlitValue.SETTINGS]: settings,
                 [StreamlitValue.SELECTION]: this.state.currentSelection,
@@ -286,7 +295,7 @@ export class ChemiscopeComponent {
 
             this.state.originalMapOnselect = originalMapOnselect;
             visualizer.map.onselect = (indexes: any) => {
-                console.log("map.onselect");
+                console.log('map.onselect');
                 originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -299,7 +308,7 @@ export class ChemiscopeComponent {
             );
             this.state.originalStructOnselect = originalStructOnselect;
             visualizer.structure.onselect = (indexes: any) => {
-                console.log("structure.onselect");
+                console.log('structure.onselect');
                 originalStructOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -311,7 +320,7 @@ export class ChemiscopeComponent {
                 this.state.originalStructActiveChanged = originalActiveChanged;
 
                 visualizer.structure.activeChanged = (guid: any, indexes: any) => {
-                    console.log("structure.activeChanged");
+                    console.log('structure.activeChanged');
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };
@@ -324,8 +333,8 @@ export class ChemiscopeComponent {
             this.state.originalSelect = originalSelect;
 
             visualizer.select = (indexes: any) => {
-                console.log("visualizer.select");
-                 
+                console.log('visualizer.select');
+
                 originalSelect(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -333,7 +342,7 @@ export class ChemiscopeComponent {
 
         // Settings change - from visualizer to Streamlit
         visualizer.onSettingChange((_keys: string[], _value: unknown) => {
-            console.log("onsettingschange");
+            console.log('onsettingschange');
             const currentSettings = visualizer.saveSettings();
             this.sendSettingsToStreamlit(currentSettings);
         });
@@ -378,7 +387,7 @@ export class ChemiscopeComponent {
                     this.state.selectionFromPython = true;
                     try {
                         this.state.currentSelection = selectedIndex;
-                        this.applySelection(selectedIndex);                    
+                        this.applySelection(selectedIndex);
                     } finally {
                         this.state.selectionFromPython = false;
                     }
