@@ -294,6 +294,7 @@ class DefaultVisualizer {
     }
 
     public select(indexes: Indexes): void {
+        this.info.show(indexes);
         this.map.select(indexes);
         this.structure.show(indexes).catch((err: unknown) => {
             this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
@@ -638,6 +639,7 @@ class StructureVisualizer {
     }
 
     public select(indexes: Indexes): void {
+        this.info.show(indexes);
         this.structure.show(indexes).catch((err: unknown) => {
             this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
         });
@@ -854,6 +856,7 @@ class MapVisualizer {
     }
 
     public select(indexes: Indexes): void {
+        this.info.show(indexes);
         this.map.select(indexes);
     }
 
