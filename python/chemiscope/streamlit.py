@@ -59,6 +59,8 @@ def viewer(
     settings: dict, optional
         Optional callback function called when the structure selection changes.
         Receives the new selected index or None if unselected.
+    on_select: callable, optional
+        Called when the selected structure changes
     on_settings_change: callable, optional
         Called when settings change
     """

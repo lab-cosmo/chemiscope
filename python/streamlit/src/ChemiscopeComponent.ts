@@ -231,7 +231,7 @@ export class ChemiscopeComponent {
 
     private sendSelectionToStreamlit(indexes: any): void {
         console.log('Sending selection to Streamlit:', indexes, this.state.selectionFromPython);
-        if (this.state.selectionFromPython) {
+        if (this.state.selectionFromPython) { 
             return;
         }
 
@@ -240,14 +240,14 @@ export class ChemiscopeComponent {
             structureIdToSend = indexes.structure;
         }
 
+        console.log("send:", structureIdToSend, "current ", this.state.currentSelection)
         // Only send if changed
         if (structureIdToSend !== this.state.currentSelection) {
             this.state.currentSelection = structureIdToSend;
             
             // Get current settings
             const currentSettings = this.state.visualizer?.saveSettings() || {};
-            this.state.currentSettings = JSON.stringify(currentSettings);
-
+            
             Streamlit.setComponentValue({
                 [StreamlitValue.SETTINGS]: currentSettings,
                 [StreamlitValue.SELECTION]: structureIdToSend,
