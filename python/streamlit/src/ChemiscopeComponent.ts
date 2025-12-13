@@ -167,6 +167,7 @@ export class ChemiscopeComponent {
     }
 
     private handleSelectionUpdate(selectedIndex: number | null | undefined): void {
+        console.log('Handling selection update:', selectedIndex);
         if (selectedIndex === undefined) {
             return;
         }
@@ -208,6 +209,7 @@ export class ChemiscopeComponent {
     }
 
     private applyExternalSelection(selectedIndex: number | null | undefined): void {
+        console.log('Applying external selection:', selectedIndex);
         const { visualizer, indexer } = this.state;
         if (!visualizer || !indexer) {
             return;
@@ -228,13 +230,16 @@ export class ChemiscopeComponent {
             }
 
             if (visualizer.map) {
-                visualizer.map.select(indexes);
+                //visualizer.map.select(indexes);
+                this.state.originalMapOnselect?.(indexes);
             }
             if (visualizer.structure && typeof visualizer.structure.select === 'function') {
-                visualizer.structure.select(indexes);
+                //visualizer.structure.select(indexes);
+                this.state.originalStructOnselect?.(indexes);
             }
             if (visualizer.info && typeof visualizer.info.onchange === 'function') {
-                visualizer.info.onchange(indexes);
+                //visualizer.info.onchange(indexes);
+                this.state.originalInfoOnchange?.(indexes);
             }
         } finally {
             setTimeout(() => {
@@ -244,6 +249,7 @@ export class ChemiscopeComponent {
     }
 
     private sendSelectionToStreamlit(indexes: any): void {
+        console.log('Sending selection to Streamlit:', indexes);
         if (this.state.isProcessingSelection) {
             return;
         }
