@@ -26,7 +26,7 @@
     "url": "git+https://github.com/lab-cosmo/chemiscope.git"
   },
   "scripts": {
-    "test": "eslint src python/jupyter/src && prettier --check src python/jupyter/src",
+    "test": "eslint src python/jupyter/src python/streamlit/src && prettier --check src python/jupyter/src python/streamlit/src",
     "build": "rimraf dist && webpack --mode production --config webpack.config.js && npm run merge-dts",
     "build:nbextension": "webpack --mode production --config python/webpack.config.nbextension.js",
     "build:labextension": "npm run build && jupyter labextension build .",
