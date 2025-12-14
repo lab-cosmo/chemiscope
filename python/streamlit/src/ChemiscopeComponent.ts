@@ -34,6 +34,7 @@ interface ChemiscopeVisualizer {
         select: (indexes: any) => void;
         onselect: ((indexes: any) => void) | null;
         activeChanged?: ((guid: any, indexes: any) => void) | null;
+        setActive?: (guid: any) => void;
     };
     info?: {
         onchange: ((indexes: any) => void) | null;
@@ -77,6 +78,7 @@ export class ChemiscopeComponent {
 
         // Track selections
         currentSelection: null as number | null,
+        currentActive: null as string | null,
 
         // Track settings
         currentSettings: null as string | null,
@@ -100,6 +102,7 @@ export class ChemiscopeComponent {
     }
 
     private onRender(data: RenderData): void {
+        console.log('********* RENDERING STREAMLIT COMPONENT ************');
         const args = data.args as ChemiscopeArgs;
         const dataset = args.dataset;
 
@@ -163,6 +166,11 @@ export class ChemiscopeComponent {
         const root = getOrCreateRoot();
         applyWidthPolicy(widthArg, root);
         applyHeightPolicy(heightArg, root);
+
+        /*if (this.state.currentActive !== null && this.state.currentActive !== undefined) {
+            console.log("setting attiva ", this.state.currentActive);
+            this.state.visualizer?.structure?.setActive?.(this.state.currentActive);
+        }*/
 
         // Handle traitlet-style updates
         this.handleSettingsUpdate(args.settings);
@@ -256,6 +264,8 @@ export class ChemiscopeComponent {
 
             // Get current settings
             const currentSettings = this.state.visualizer?.saveSettings() || {};
+            const settingsStr = JSON.stringify(currentSettings);
+            this.state.currentSettings = settingsStr;
 
             Streamlit.setComponentValue({
                 [StreamlitValue.SETTINGS]: currentSettings,
@@ -320,7 +330,7 @@ export class ChemiscopeComponent {
                 this.state.originalStructActiveChanged = originalActiveChanged;
 
                 visualizer.structure.activeChanged = (guid: any, indexes: any) => {
-                    console.log('structure.activeChanged');
+                    console.log('structure.activeChanged', guid, indexes);
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };

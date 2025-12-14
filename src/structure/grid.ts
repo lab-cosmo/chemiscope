@@ -347,7 +347,13 @@ export class ViewersGrid {
 
         // If we removed the active marker, change the active one
         if (this._active === guid) {
-            this.setActive(getFirstKey(this._cellsData, guid));
+            const newActive = getFirstKey(this._cellsData, guid);
+
+            this.setActive(newActive);
+
+            const data = this._cellsData.get(newActive);
+            assert(data !== undefined);
+            this.activeChanged(newActive, data.current);
         }
 
         // remove HTML inserted by the viewer
@@ -568,6 +574,7 @@ export class ViewersGrid {
         await this._showInViewer(newGUID, data.current);
         newData.viewer.applySettings(data.viewer.saveSettings());
         this.setActive(newGUID);
+
         return newData;
     }
 
@@ -780,6 +787,7 @@ export class ViewersGrid {
                     return;
                 }
                 this.oncreate(this.active, data.color, data.current);
+                this.activeChanged(this.active, data.current);
             };
             cell.appendChild(duplicate);
 
