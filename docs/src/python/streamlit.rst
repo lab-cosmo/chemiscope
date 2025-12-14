@@ -56,12 +56,13 @@ to customize the viewer appearance and behavior:
     chemiscope.streamlit.viewer(
         dataset,                      # Chemiscope dataset
         settings=settings,            # Custom settings dict
-        mode="default",               # Visualization mode
+        mode="default",               # Visualization mode: "default", "map", or "structure"
         key="my_viewer",              # Unique widget key
         width="stretch",              # Width: "stretch" or pixels
         height=600,                   # Height in pixels
-        selected_index=sel_id,        # Selection control
-        on_select=callback_function   # Selection callback
+        selected_index=sel_id,        # Initial selected structure index
+        on_select=callback_function   # Callback for selection changes
+        on_settings_change=callback_function   # Callback for settings changes
     )
 
 Visualization modes
@@ -170,7 +171,20 @@ options, as obtained for instance using :py:func:`chemiscope.quick_settings`:
 Settings can also be manipulated in a bi-directional manner using 
 the ``on_settings_change`` to define a callback. You can see the 
 app example for an example of how this can be used to manipulate
-the visualization and map style from the app.
+the visualization and map style from the app. Simple example:
+
+.. code-block:: python
+
+    def handle_settings_change(settings):
+        print("Visualization settings changed:", settings)
+        # store settings in session state, e.g. to update other components
+        st.session_state.viewer_settings = settings
+
+    chemiscope.streamlit.viewer(
+        dataset,
+        settings=settings,
+        on_settings_change=handle_settings_change
+    )
 
 API reference
 ^^^^^^^^^^^^^

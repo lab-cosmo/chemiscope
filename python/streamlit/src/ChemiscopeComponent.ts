@@ -365,7 +365,7 @@ export class ChemiscopeComponent {
                 const message = err instanceof Error ? err.message : String(err);
 
                 // eslint-disable-next-line no-console
-                console.error('Error loading visualizer:', err);
+                console.error('Error loading visualizer:', message);
                 displayWarning(`Error loading visualization: ${message}`);
             })
             .finally(() => {
