@@ -34,6 +34,7 @@ export interface ChemiscopeVisualizer {
     structure?: {
         onselect: SelectCallback;
         activeChanged?: ActiveChangedCallback;
+        activeIndex: number;
     };
     info?: {
         onchange: ((indexes: Indexes) => void) | null;
@@ -44,7 +45,13 @@ export interface ChemiscopeVisualizer {
     onSettingChange: (callback: (keys: string[], value: unknown) => void) => void;
 }
 
-export type VisualizerClass = typeof DefaultVisualizer | typeof StructureVisualizer | typeof MapVisualizer;
+export interface VisualizerClass {
+    load(
+        config: unknown,
+        dataset: Dataset,
+        warnings: Warnings
+    ): Promise<ChemiscopeVisualizer>;
+}
 
 export interface ChemiscopeGlobal {
     DefaultVisualizer: typeof DefaultVisualizer;

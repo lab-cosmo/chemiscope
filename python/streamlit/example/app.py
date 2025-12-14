@@ -71,9 +71,8 @@ def on_settings_change(new_settings):
         s_state.update({"palette": color["palette"], "opacity": color["opacity"]})
         s_state["size"] = new_settings["map"]["size"]["factor"]
 
-    if "structure" in new_settings and len(new_settings["structure"]) > 0:
-        # only update sidebar structure settings from the first structure viewer
-        struct = new_settings["structure"][0]
+    if "structure" in new_settings and isinstance(new_settings["structure"], dict):
+        struct = new_settings["structure"]
         s_state.update(
             {"show_bonds": struct["bonds"], "space_filling": struct["spaceFilling"]}
         )
@@ -99,16 +98,15 @@ def merge_viewer_settings(sidebar_settings):
     if not visualizer_settings:
         return merged
 
-    structures = visualizer_settings.get("structure")
-    if not structures:
-        return merged
+    struct_from_visualizer = visualizer_settings.get("structure")
+    sidebar_struct = sidebar_settings.get("structure")
 
-    merged["structure"] = structures
-
-    # overide only the first viewer with sidebar values
-    sidebar_structures = sidebar_settings.get("structure")
-    if sidebar_structures and len(structures) > 0:
-        merged["structure"][0] = sidebar_structures[0]
+    if struct_from_visualizer and sidebar_struct:
+        # merge sidebar settings with the active viewer's settings
+        if isinstance(sidebar_struct, list) and len(sidebar_struct) > 0:
+            merged["structure"] = sidebar_struct[0]
+        else:
+            merged["structure"] = sidebar_struct
 
     return merged
 
@@ -136,17 +134,9 @@ def create_sidebar_widgets(uploaded: bool):
 
     st.subheader("Structure Settings")
     is_map_only = mode == "map"
-    show_bonds = st.checkbox(
-        "Show Bonds",
-        value=s["show_bonds"],
-        disabled=is_map_only,
-        help="Applied to the first viewer only for simplicity",
-    )
+    show_bonds = st.checkbox("Show Bonds", value=s["show_bonds"], disabled=is_map_only)
     space_filling = st.checkbox(
-        "Space Filling",
-        value=s["space_filling"],
-        disabled=is_map_only,
-        help="Applied to the first viewer only for simplicity",
+        "Space Filling", value=s["space_filling"], disabled=is_map_only
     )
 
     viewer_settings = build_settings(palette, opacity, size, show_bonds, space_filling)

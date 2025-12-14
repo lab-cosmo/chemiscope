@@ -272,6 +272,13 @@ export class ViewersGrid {
     }
 
     /**
+     * Get the current active viewer index (position in the grid)
+     */
+    public get activeIndex(): number {
+        return this._getCurrentPositionInGrid(this._active);
+    }
+
+    /**
      * Get the current list of environments showed inside the different viewer
      */
     public pinned(): Indexes[] {

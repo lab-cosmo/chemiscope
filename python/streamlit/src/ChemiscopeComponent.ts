@@ -175,11 +175,39 @@ export class ChemiscopeComponent {
             this.state.settingsFromPython = true;
             try {
                 this.state.currentSettings = settingsStr;
-                this.state.visualizer.applySettings(settings);
+                const settingsToApply = this.convertStructureSettingsToArray(settings);
+                this.state.visualizer.applySettings(settingsToApply);
             } finally {
                 this.state.settingsFromPython = false;
             }
         }
+    }
+
+    private convertStructureSettingsToArray(settings: Partial<Settings>): Partial<Settings> {
+        // if structure is already an array or not present
+        if (!settings.structure || Array.isArray(settings.structure)) {
+            return settings;
+        }
+
+        const currentSettings = this.state.visualizer?.saveSettings() || {};
+        const currentStructures: Settings[] = Array.isArray(currentSettings.structure)
+            ? (currentSettings.structure as Settings[])
+            : [];
+
+        if (currentStructures.length === 0) {
+            return {
+                ...settings,
+                structure: [settings.structure as Settings],
+            };
+        }
+
+        const activeIndex = this.getActiveStructureIndex();
+        currentStructures[activeIndex] = settings.structure as Settings;
+
+        return {
+            ...settings,
+            structure: currentStructures,
+        };
     }
 
     private applySelection(selectedIndex: number | null | undefined): void {
@@ -217,34 +245,61 @@ export class ChemiscopeComponent {
         if (structureIdToSend !== this.state.currentSelection) {
             this.state.currentSelection = structureIdToSend;
 
-            // Get current settings
-            const currentSettings = this.state.visualizer?.saveSettings() || {};
-            const settingsStr = JSON.stringify(currentSettings);
+            // Get current settings with only the active structure's settings
+            const settingsToSend = this.getSettingsWithActiveStructure();
+            const settingsStr = JSON.stringify(settingsToSend);
             this.state.currentSettings = settingsStr;
 
             Streamlit.setComponentValue({
-                [StreamlitValue.SETTINGS]: currentSettings,
+                [StreamlitValue.SETTINGS]: settingsToSend,
                 [StreamlitValue.SELECTION]: structureIdToSend,
             });
         }
     }
 
-    private sendSettingsToStreamlit(settings: Settings): void {
+    private sendSettingsToStreamlit(): void {
         if (this.state.settingsFromPython) {
             return;
         }
 
-        const settingsStr = JSON.stringify(settings);
+        const settingsToSend = this.getSettingsWithActiveStructure();
+        const settingsStr = JSON.stringify(settingsToSend);
 
         // Only send if changed
         if (settingsStr !== this.state.currentSettings) {
             this.state.currentSettings = settingsStr;
 
             Streamlit.setComponentValue({
-                [StreamlitValue.SETTINGS]: settings,
+                [StreamlitValue.SETTINGS]: settingsToSend,
                 [StreamlitValue.SELECTION]: this.state.currentSelection,
             });
         }
+    }
+
+    private getSettingsWithActiveStructure(): Settings {
+        const currentSettings = this.state.visualizer?.saveSettings() || {};
+        const activeIndex = this.getActiveStructureIndex();
+
+        // if there are structure settings, extract only the active one
+        if (Array.isArray(currentSettings.structure) && currentSettings.structure.length > 0) {
+            const activeStructureSettings =
+                currentSettings.structure[activeIndex] || currentSettings.structure[0];
+            return {
+                ...currentSettings,
+                structure: activeStructureSettings,
+            };
+        }
+
+        return currentSettings;
+    }
+
+    private getActiveStructureIndex(): number {
+        const visualizer = this.state.visualizer;
+        if (!visualizer?.structure) {
+            return 0;
+        }
+
+        return visualizer.structure.activeIndex;
     }
 
     private installReverseSyncCallbacks(): void {
@@ -310,8 +365,7 @@ export class ChemiscopeComponent {
 
         // Settings change - from visualizer to Streamlit
         visualizer.onSettingChange(() => {
-            const currentSettings = visualizer.saveSettings();
-            this.sendSettingsToStreamlit(currentSettings);
+            this.sendSettingsToStreamlit();
         });
     }
 
@@ -329,7 +383,7 @@ export class ChemiscopeComponent {
             dataset.settings = Object.assign({}, dataset.settings, settings);
         } catch (e) {
             // eslint-disable-next-line no-console
-            console.warn('Could not attach settings to dataset:', e);
+            console.warn('Could not attach settings to dataset:', String(e));
         }
 
         const warnings = new Chemiscope.Warnings();
