@@ -385,7 +385,7 @@ export class ChemiscopeComponent {
             dataset.settings = Object.assign({}, dataset.settings, settings);
         } catch (e) {
             // eslint-disable-next-line no-console
-            console.warn('Could not attach settings to dataset:', String(e));
+            console.warn('Could not attach settings to dataset:', e as string);
         }
 
         const warnings = new Chemiscope.Warnings();
