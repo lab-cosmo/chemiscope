@@ -77,8 +77,6 @@ export class ChemiscopeComponent {
     }
 
     private onRender(data: RenderData): void {
-        // eslint-disable-next-line no-console
-        console.log('********* RENDERING STREAMLIT COMPONENT ************');
         const args = data.args as ChemiscopeArgs;
         const dataset = args.dataset;
 
@@ -149,17 +147,12 @@ export class ChemiscopeComponent {
     }
 
     private handleSelectionUpdate(selectedIndex: number | null | undefined): void {
-        // eslint-disable-next-line no-console
-        console.log('Handling selection update:', selectedIndex);
         if (selectedIndex === undefined) {
             return;
         }
 
         // Only process if selection actually changed
         if (selectedIndex !== this.state.currentSelection) {
-            // eslint-disable-next-line no-console
-            console.log('update selection');
-
             this.state.selectionFromPython = true;
             try {
                 this.state.currentSelection = selectedIndex;
@@ -171,8 +164,6 @@ export class ChemiscopeComponent {
     }
 
     private handleSettingsUpdate(settings: Partial<Settings> | undefined): void {
-        // eslint-disable-next-line no-console
-        console.log('Handling settings update');
         if (!settings || !this.state.visualizer) {
             return;
         }
@@ -181,9 +172,6 @@ export class ChemiscopeComponent {
 
         // Only process if settings actually changed
         if (settingsStr !== this.state.currentSettings) {
-            // eslint-disable-next-line no-console
-            console.log('update settings');
-
             this.state.settingsFromPython = true;
             try {
                 this.state.currentSettings = settingsStr;
@@ -195,13 +183,6 @@ export class ChemiscopeComponent {
     }
 
     private applySelection(selectedIndex: number | null | undefined): void {
-        // eslint-disable-next-line no-console
-        console.log(
-            'Applying selection:',
-            selectedIndex,
-            'from python',
-            this.state.selectionFromPython
-        );
         const { visualizer, indexer } = this.state;
         if (!visualizer || !indexer) {
             return;
@@ -219,14 +200,10 @@ export class ChemiscopeComponent {
             return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('calling originalselect, ', indexes);
         this.state.originalSelect?.(indexes);
     }
 
     private sendSelectionToStreamlit(indexes: Indexes | null): void {
-        // eslint-disable-next-line no-console
-        console.log('Sending selection to Streamlit:', indexes, this.state.selectionFromPython);
         if (this.state.selectionFromPython) {
             return;
         }
@@ -237,8 +214,6 @@ export class ChemiscopeComponent {
         }
 
         // Only send if changed
-        // eslint-disable-next-line no-console
-        console.log('send:', structureIdToSend, 'current ', this.state.currentSelection);
         if (structureIdToSend !== this.state.currentSelection) {
             this.state.currentSelection = structureIdToSend;
 
@@ -255,8 +230,6 @@ export class ChemiscopeComponent {
     }
 
     private sendSettingsToStreamlit(settings: Settings): void {
-        // eslint-disable-next-line no-console
-        console.log('Sending settings to Streamlit:', settings, this.state.settingsFromPython);
         if (this.state.settingsFromPython) {
             return;
         }
@@ -286,8 +259,6 @@ export class ChemiscopeComponent {
 
             this.state.originalMapOnselect = originalMapOnselect;
             visualizer.map.onselect = (indexes: Indexes) => {
-                // eslint-disable-next-line no-console
-                console.log('map.onselect');
                 originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -297,8 +268,6 @@ export class ChemiscopeComponent {
                 this.state.originalMapActiveChanged = originalActiveChanged;
 
                 visualizer.map.activeChanged = (guid: GUID, indexes: Indexes) => {
-                    // eslint-disable-next-line no-console
-                    console.log('map.activeChanged', guid, indexes);
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };
@@ -311,8 +280,6 @@ export class ChemiscopeComponent {
                 visualizer.structure.onselect?.bind(visualizer.structure) ?? null;
             this.state.originalStructOnselect = originalStructOnselect;
             visualizer.structure.onselect = (indexes: Indexes) => {
-                // eslint-disable-next-line no-console
-                console.log('structure.onselect');
                 originalStructOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -324,8 +291,6 @@ export class ChemiscopeComponent {
                 this.state.originalStructActiveChanged = originalActiveChanged;
 
                 visualizer.structure.activeChanged = (guid: GUID, indexes: Indexes) => {
-                    // eslint-disable-next-line no-console
-                    console.log('structure.activeChanged', guid, indexes);
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
                 };
@@ -338,9 +303,6 @@ export class ChemiscopeComponent {
             this.state.originalSelect = originalSelect;
 
             visualizer.select = (indexes: Indexes) => {
-                // eslint-disable-next-line no-console
-                console.log('visualizer.select');
-
                 originalSelect(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
@@ -348,8 +310,6 @@ export class ChemiscopeComponent {
 
         // Settings change - from visualizer to Streamlit
         visualizer.onSettingChange(() => {
-            // eslint-disable-next-line no-console
-            console.log('onsettingschange');
             const currentSettings = visualizer.saveSettings();
             this.sendSettingsToStreamlit(currentSettings);
         });
