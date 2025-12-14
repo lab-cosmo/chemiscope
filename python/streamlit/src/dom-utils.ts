@@ -50,7 +50,7 @@ export function toggleLoadingVisible(visible: boolean = true): void {
     }
 }
 
-export function displayWarning(message: unknown, timeout: number = 4000): void {
+export function displayWarning(message: string | Error, timeout = 4000): void {
     const display = document.getElementById(`${ROOT_ID}-warning-display`);
     if (!display) {
         // eslint-disable-next-line no-console
