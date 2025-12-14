@@ -378,14 +378,12 @@ export class ChemiscopeComponent {
         settings: Partial<Settings>,
         selectedIndex: number | null | undefined
     ): void {
-        const visualizerClass = getVisualizerClass(mode, Chemiscope);
-
         // Merge initial settings
         try {
             dataset.settings = Object.assign({}, dataset.settings, settings);
         } catch (e) {
             // eslint-disable-next-line no-console
-            console.warn('Could not attach settings to dataset:', e as string);
+            console.warn('Could not attach settings to dataset:', String(e));
         }
 
         const warnings = new Chemiscope.Warnings();
@@ -395,6 +393,7 @@ export class ChemiscopeComponent {
 
         toggleLoadingVisible(true);
 
+        const visualizerClass = getVisualizerClass(mode, Chemiscope);
         visualizerClass
             .load(CONFIG, dataset, warnings)
             .then((v: ChemiscopeVisualizer) => {
