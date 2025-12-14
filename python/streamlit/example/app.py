@@ -19,6 +19,21 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "space_filling": False,
 }
 
+
+WIDGET_DEFAULTS = {
+    "mode": DEFAULT_SETTINGS["mode"],
+    "height": DEFAULT_SETTINGS["height"],
+    "opacity": DEFAULT_SETTINGS["opacity"],
+    "size": DEFAULT_SETTINGS["size"],
+    "palette": DEFAULT_SETTINGS["palette"],
+    "show_bonds": DEFAULT_SETTINGS["show_bonds"],
+    "space_filling": DEFAULT_SETTINGS["space_filling"],
+}
+
+for k, v in WIDGET_DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
 if "settings" not in st.session_state:
     st.session_state.settings = DEFAULT_SETTINGS.copy()
 
@@ -64,18 +79,17 @@ def on_settings_change(new_settings):
         return
 
     st.session_state.visualizer_settings = new_settings
-    s_state = st.session_state.settings
 
     if "map" in new_settings:
         color = new_settings["map"]["color"]
-        s_state.update({"palette": color["palette"], "opacity": color["opacity"]})
-        s_state["size"] = new_settings["map"]["size"]["factor"]
+        st.session_state["palette"] = color["palette"]
+        st.session_state["opacity"] = int(color["opacity"])
+        st.session_state["size"] = int(new_settings["map"]["size"]["factor"])
 
     if "structure" in new_settings and isinstance(new_settings["structure"], dict):
         struct = new_settings["structure"]
-        s_state.update(
-            {"show_bonds": struct["bonds"], "space_filling": struct["spaceFilling"]}
-        )
+        st.session_state["show_bonds"] = bool(struct["bonds"])
+        st.session_state["space_filling"] = bool(struct["spaceFilling"])
 
 
 def display_selected_structure():
@@ -91,56 +105,38 @@ def display_selected_structure():
     st.code(str(frames[selected_index]))
 
 
-def merge_viewer_settings(sidebar_settings):
-    merged = sidebar_settings.copy()
-
-    visualizer_settings = st.session_state.get("visualizer_settings")
-    if not visualizer_settings:
-        return merged
-
-    struct_from_visualizer = visualizer_settings.get("structure")
-    sidebar_struct = sidebar_settings.get("structure")
-
-    if struct_from_visualizer and sidebar_struct:
-        # merge sidebar settings with the active viewer's settings
-        if isinstance(sidebar_struct, list) and len(sidebar_struct) > 0:
-            merged["structure"] = sidebar_struct[0]
-        else:
-            merged["structure"] = sidebar_struct
-
-    return merged
-
-
 def create_sidebar_widgets(uploaded: bool):
     st.header("Viewer Settings on Load")
-    s = st.session_state.settings
 
-    mode = st.radio("Viewer Mode", ["default", "structure", "map"], disabled=uploaded)
+    mode = st.radio(
+        "Viewer Mode", ["default", "structure", "map"], key="mode", disabled=uploaded
+    )
 
     st.subheader("Display Settings")
-    height = st.slider("Height", 100, 1200, s["height"], 50)
+    height = st.slider("Height", 100, 1200, step=50, key="height")
 
     st.subheader("Map Settings")
     is_structure_only = mode == "structure"
-    opacity = st.slider("Opacity", 0, 100, s["opacity"], 10, disabled=is_structure_only)
-    size = st.slider("Point size", 1, 100, s["size"], 10, disabled=is_structure_only)
+    opacity = st.slider(
+        "Opacity", 0, 100, step=10, key="opacity", disabled=is_structure_only
+    )
+    size = st.slider(
+        "Point size", 1, 100, step=10, key="size", disabled=is_structure_only
+    )
+
     palette_options = ["viridis", "magma", "plasma", "inferno", "cividis"]
     palette = st.selectbox(
-        "Palette",
-        palette_options,
-        index=palette_options.index(s["palette"]),
-        disabled=is_structure_only,
+        "Palette", palette_options, key="palette", disabled=is_structure_only
     )
 
     st.subheader("Structure Settings")
     is_map_only = mode == "map"
-    show_bonds = st.checkbox("Show Bonds", value=s["show_bonds"], disabled=is_map_only)
+    show_bonds = st.checkbox("Show Bonds", key="show_bonds", disabled=is_map_only)
     space_filling = st.checkbox(
-        "Space Filling", value=s["space_filling"], disabled=is_map_only
+        "Space Filling", key="space_filling", disabled=is_map_only
     )
 
     viewer_settings = build_settings(palette, opacity, size, show_bonds, space_filling)
-
     return viewer_settings, height, mode
 
 
@@ -165,13 +161,11 @@ if uploaded:
 
     st.slider("Select structure by index", 0, len(frames) - 1, key="selected_index")
 
-    viewer_settings = merge_viewer_settings(settings)
-
     viewer(
         dataset,
         height=height,
         mode=mode_display,
-        settings=viewer_settings,
+        settings=settings,
         key="chemiscope_viewer",
         selected_index=st.session_state.selected_index,
         on_select=on_structure_select,

@@ -324,6 +324,7 @@ export class ChemiscopeComponent {
 
                 visualizer.map.activeChanged = (guid: GUID, indexes: Indexes) => {
                     originalActiveChanged?.(guid, indexes);
+                    this.sendSettingsToStreamlit();
                     this.sendSelectionToStreamlit(indexes);
                 };
             }
@@ -347,6 +348,7 @@ export class ChemiscopeComponent {
 
                 visualizer.structure.activeChanged = (guid: GUID, indexes: Indexes) => {
                     originalActiveChanged?.(guid, indexes);
+                    this.sendSettingsToStreamlit();
                     this.sendSelectionToStreamlit(indexes);
                 };
             }
