@@ -8,48 +8,16 @@ import {
     getOrCreateRoot,
     toggleLoadingVisible,
 } from './dom-utils';
+import { Dataset, EnvironmentIndexer, GUID, Indexes, Settings } from '../../../src/index';
 import {
-    Dataset,
-    DefaultVisualizer,
-    EnvironmentIndexer,
-    GUID,
-    Indexes,
-    MapVisualizer,
-    Settings,
-    StructureVisualizer,
-    Warnings,
-} from '../../../src/index';
-
-type ChemiscopeMode = 'default' | 'structure' | 'map';
-
-interface ChemiscopeArgs {
-    dataset: Dataset;
-    height?: number;
-    width?: number | string;
-    selected_index?: number | undefined;
-    mode?: ChemiscopeMode;
-    settings?: Partial<Settings>;
-    no_info_panel?: boolean;
-}
-
-interface ChemiscopeVisualizer {
-    map?: {
-        select: (indexes: Indexes) => void;
-        onselect: ((indexes: Indexes) => void) | null;
-        activeChanged?: ((guid: GUID, indexes: Indexes) => void) | null;
-    };
-    structure?: {
-        onselect: ((indexes: Indexes) => void) | null;
-        activeChanged?: ((guid: GUID, indexes: Indexes) => void) | null;
-    };
-    info?: {
-        onchange: ((indexes: Indexes) => void) | null;
-    };
-    select: (indexes: Indexes) => void;
-    applySettings: (settings: Partial<Settings>) => void;
-    saveSettings: () => Partial<Settings>;
-    onSettingChange: (callback: (keys: string[], value: unknown) => void) => void;
-}
+    ActiveChangedCallback,
+    ChemiscopeArgs,
+    ChemiscopeGlobal,
+    ChemiscopeMode,
+    ChemiscopeVisualizer,
+    SelectCallback,
+    VisualizerClass,
+} from '../types/chemiscope';
 
 enum StreamlitValue {
     SELECTION = 'selected_id',
@@ -65,8 +33,6 @@ function getChemiscope(): ChemiscopeGlobal | null {
     return window.Chemiscope;
 }
 
-type VisualizerClass = typeof DefaultVisualizer | typeof StructureVisualizer | typeof MapVisualizer;
-
 function getVisualizerClass(mode: ChemiscopeMode, Chemiscope: ChemiscopeGlobal): VisualizerClass {
     switch (mode) {
         case 'structure':
@@ -77,9 +43,6 @@ function getVisualizerClass(mode: ChemiscopeMode, Chemiscope: ChemiscopeGlobal):
             return Chemiscope.DefaultVisualizer;
     }
 }
-
-type SelectCallback = ((indexes: Indexes) => void) | null;
-type ActiveChangedCallback = ((guid: GUID, indexes: Indexes) => void) | null;
 
 export class ChemiscopeComponent {
     private state = {
@@ -447,18 +410,4 @@ export class ChemiscopeComponent {
                 toggleLoadingVisible(false);
             });
     }
-}
-
-declare global {
-    interface Window {
-        Chemiscope?: ChemiscopeGlobal;
-    }
-}
-
-interface ChemiscopeGlobal {
-    DefaultVisualizer: typeof DefaultVisualizer;
-    StructureVisualizer: typeof StructureVisualizer;
-    MapVisualizer: typeof MapVisualizer;
-    EnvironmentIndexer: typeof EnvironmentIndexer;
-    Warnings: typeof Warnings;
 }

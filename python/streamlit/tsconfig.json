@@ -6,7 +6,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "outDir": "build"
+    "outDir": "build",
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src", "../../src/typing.d.ts"]
+  "include": ["src", "types", "../../src/typing.d.ts"]
 }
