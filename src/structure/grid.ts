@@ -449,6 +449,15 @@ export class ViewersGrid {
             return;
         }
 
+        // applies only to the active cell
+        if (settings.length === 1) {
+            const data = this._cellsData.get(this._active);
+            if (data !== undefined) {
+                data.viewer.applySettings(settings[0]);
+            }
+            return;
+        }
+
         assert(settings.length === this._cellsData.size);
         for (const [i, data] of enumerate(this._cellsData.values())) {
             data.viewer.applySettings(settings[i]);
