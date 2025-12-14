@@ -8,40 +8,46 @@ import {
     getOrCreateRoot,
     toggleLoadingVisible,
 } from './dom-utils';
+import {
+    Dataset,
+    DefaultVisualizer,
+    EnvironmentIndexer,
+    GUID,
+    Indexes,
+    MapVisualizer,
+    Settings,
+    StructureVisualizer,
+    Warnings,
+} from '../../../src/index';
 
 type ChemiscopeMode = 'default' | 'structure' | 'map';
 
 interface ChemiscopeArgs {
-    dataset: Record<string, any>;
+    dataset: Dataset;
     height?: number;
     width?: number | string;
     selected_index?: number | undefined;
     mode?: ChemiscopeMode;
-    settings?: Record<string, any>;
+    settings?: Partial<Settings>;
     no_info_panel?: boolean;
-}
-
-interface ChemiscopeWindow extends Window {
-    Chemiscope?: any;
 }
 
 interface ChemiscopeVisualizer {
     map?: {
-        select: (indexes: any) => void;
-        onselect: ((indexes: any) => void) | null;
-        activeChanged?: ((guid: any, indexes: any) => void) | null;
+        select: (indexes: Indexes) => void;
+        onselect: ((indexes: Indexes) => void) | null;
+        activeChanged?: ((guid: GUID, indexes: Indexes) => void) | null;
     };
     structure?: {
-        select: (indexes: any) => void;
-        onselect: ((indexes: any) => void) | null;
-        activeChanged?: ((guid: any, indexes: any) => void) | null;
+        onselect: ((indexes: Indexes) => void) | null;
+        activeChanged?: ((guid: GUID, indexes: Indexes) => void) | null;
     };
     info?: {
-        onchange: ((indexes: any) => void) | null;
+        onchange: ((indexes: Indexes) => void) | null;
     };
-    select: (indexes: any) => void;
-    applySettings: (settings: Record<string, any>) => void;
-    saveSettings: () => Record<string, any>;
+    select: (indexes: Indexes) => void;
+    applySettings: (settings: Partial<Settings>) => void;
+    saveSettings: () => Partial<Settings>;
     onSettingChange: (callback: (keys: string[], value: unknown) => void) => void;
 }
 
@@ -50,16 +56,18 @@ enum StreamlitValue {
     SETTINGS = 'settings',
 }
 
-function getChemiscope(): any | null {
-    const cs = (window as unknown as ChemiscopeWindow).Chemiscope;
-    if (!cs) {
-        console.error('window.Chemiscope not found. Did chemiscope.min.js load?');
+function getChemiscope(): ChemiscopeGlobal | null {
+    if (!window.Chemiscope) {
+        // eslint-disable-next-line no-console
+        console.error('window.Chemiscope not found.');
         return null;
     }
-    return cs;
+    return window.Chemiscope;
 }
 
-function getVisualizerClass(mode: string, Chemiscope: any): any {
+type VisualizerClass = typeof DefaultVisualizer | typeof StructureVisualizer | typeof MapVisualizer;
+
+function getVisualizerClass(mode: ChemiscopeMode, Chemiscope: ChemiscopeGlobal): VisualizerClass {
     switch (mode) {
         case 'structure':
             return Chemiscope.StructureVisualizer;
@@ -70,10 +78,13 @@ function getVisualizerClass(mode: string, Chemiscope: any): any {
     }
 }
 
+type SelectCallback = ((indexes: Indexes) => void) | null;
+type ActiveChangedCallback = ((guid: GUID, indexes: Indexes) => void) | null;
+
 export class ChemiscopeComponent {
     private state = {
         visualizer: null as ChemiscopeVisualizer | null,
-        indexer: null as any | null,
+        indexer: null as EnvironmentIndexer | null,
         loaded: false,
 
         // Track selections
@@ -88,11 +99,11 @@ export class ChemiscopeComponent {
         settingsFromPython: false,
 
         // Original callbacks
-        originalMapOnselect: null as any,
-        originalMapActiveChanged: null as any,
-        originalStructOnselect: null as any,
-        originalStructActiveChanged: null as any,
-        originalSelect: null as any,
+        originalMapOnselect: null as SelectCallback,
+        originalMapActiveChanged: null as ActiveChangedCallback,
+        originalStructOnselect: null as SelectCallback,
+        originalStructActiveChanged: null as ActiveChangedCallback,
+        originalSelect: null as SelectCallback,
     };
 
     constructor() {
@@ -103,6 +114,7 @@ export class ChemiscopeComponent {
     }
 
     private onRender(data: RenderData): void {
+        // eslint-disable-next-line no-console
         console.log('********* RENDERING STREAMLIT COMPONENT ************');
         const args = data.args as ChemiscopeArgs;
         const dataset = args.dataset;
@@ -111,7 +123,7 @@ export class ChemiscopeComponent {
             return;
         }
 
-        const mode = (typeof args.mode === 'string' ? args.mode : 'default') as ChemiscopeMode;
+        const mode = typeof args.mode === 'string' ? args.mode : 'default';
         const noInfo = typeof args.no_info_panel === 'boolean' ? args.no_info_panel : false;
         const widthArg = args.width ?? 'stretch';
         const heightArg = typeof args.height === 'number' ? args.height : 550;
@@ -139,10 +151,10 @@ export class ChemiscopeComponent {
     }
 
     private handleFirstRender(
-        Chemiscope: any,
-        dataset: Record<string, any>,
+        Chemiscope: ChemiscopeGlobal,
+        dataset: Dataset,
         mode: ChemiscopeMode,
-        settings: Record<string, any>,
+        settings: Partial<Settings>,
         selectedIndex: number | undefined,
         widthArg: string | number,
         heightArg: number,
@@ -160,7 +172,7 @@ export class ChemiscopeComponent {
         this.state.currentSelection = selectedIndex !== undefined ? selectedIndex : null;
         this.state.currentSettings = JSON.stringify(settings);
 
-        this.initializeVisualizer(Chemiscope, dataset, settings, selectedIndex);
+        this.initializeVisualizer(Chemiscope, dataset, mode, settings, selectedIndex);
     }
 
     private handleUpdate(args: ChemiscopeArgs, widthArg: string | number, heightArg: number): void {
@@ -168,17 +180,13 @@ export class ChemiscopeComponent {
         applyWidthPolicy(widthArg, root);
         applyHeightPolicy(heightArg, root);
 
-        /*if (this.state.currentActive !== null && this.state.currentActive !== undefined) {
-            console.log("setting attiva ", this.state.currentActive);
-            this.state.visualizer?.structure?.setActive?.(this.state.currentActive);
-        }*/
-
         // Handle traitlet-style updates
         this.handleSettingsUpdate(args.settings);
         this.handleSelectionUpdate(args.selected_index);
     }
 
     private handleSelectionUpdate(selectedIndex: number | null | undefined): void {
+        // eslint-disable-next-line no-console
         console.log('Handling selection update:', selectedIndex);
         if (selectedIndex === undefined) {
             return;
@@ -186,6 +194,7 @@ export class ChemiscopeComponent {
 
         // Only process if selection actually changed
         if (selectedIndex !== this.state.currentSelection) {
+            // eslint-disable-next-line no-console
             console.log('update selection');
 
             this.state.selectionFromPython = true;
@@ -198,7 +207,8 @@ export class ChemiscopeComponent {
         }
     }
 
-    private handleSettingsUpdate(settings: Record<string, any> | undefined): void {
+    private handleSettingsUpdate(settings: Partial<Settings> | undefined): void {
+        // eslint-disable-next-line no-console
         console.log('Handling settings update');
         if (!settings || !this.state.visualizer) {
             return;
@@ -208,6 +218,7 @@ export class ChemiscopeComponent {
 
         // Only process if settings actually changed
         if (settingsStr !== this.state.currentSettings) {
+            // eslint-disable-next-line no-console
             console.log('update settings');
 
             this.state.settingsFromPython = true;
@@ -221,6 +232,7 @@ export class ChemiscopeComponent {
     }
 
     private applySelection(selectedIndex: number | null | undefined): void {
+        // eslint-disable-next-line no-console
         console.log(
             'Applying selection:',
             selectedIndex,
@@ -232,22 +244,25 @@ export class ChemiscopeComponent {
             return;
         }
 
-        if (selectedIndex === null) {
+        if (selectedIndex === null || selectedIndex === undefined) {
             // Handle deselection if needed
             return;
         }
 
         const indexes = indexer.fromStructureAtom('structure', selectedIndex);
         if (!indexes) {
+            // eslint-disable-next-line no-console
             console.warn('No environment for structure index', selectedIndex);
             return;
         }
 
+        // eslint-disable-next-line no-console
         console.log('calling originalselect, ', indexes);
         this.state.originalSelect?.(indexes);
     }
 
-    private sendSelectionToStreamlit(indexes: any): void {
+    private sendSelectionToStreamlit(indexes: Indexes | null): void {
+        // eslint-disable-next-line no-console
         console.log('Sending selection to Streamlit:', indexes, this.state.selectionFromPython);
         if (this.state.selectionFromPython) {
             return;
@@ -258,8 +273,9 @@ export class ChemiscopeComponent {
             structureIdToSend = indexes.structure;
         }
 
-        console.log('send:', structureIdToSend, 'current ', this.state.currentSelection);
         // Only send if changed
+        // eslint-disable-next-line no-console
+        console.log('send:', structureIdToSend, 'current ', this.state.currentSelection);
         if (structureIdToSend !== this.state.currentSelection) {
             this.state.currentSelection = structureIdToSend;
 
@@ -275,7 +291,8 @@ export class ChemiscopeComponent {
         }
     }
 
-    private sendSettingsToStreamlit(settings: Record<string, any>): void {
+    private sendSettingsToStreamlit(settings: Settings): void {
+        // eslint-disable-next-line no-console
         console.log('Sending settings to Streamlit:', settings, this.state.settingsFromPython);
         if (this.state.settingsFromPython) {
             return;
@@ -302,22 +319,22 @@ export class ChemiscopeComponent {
 
         // Map onselect
         if (visualizer.map) {
-            const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map);
+            const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map) ?? null;
 
             this.state.originalMapOnselect = originalMapOnselect;
-            visualizer.map.onselect = (indexes: any) => {
+            visualizer.map.onselect = (indexes: Indexes) => {
+                // eslint-disable-next-line no-console
                 console.log('map.onselect');
                 originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
 
             if (typeof visualizer.map.activeChanged === 'function') {
-                const originalActiveChanged = visualizer.map.activeChanged.bind(
-                    visualizer.map
-                );
+                const originalActiveChanged = visualizer.map.activeChanged.bind(visualizer.map);
                 this.state.originalMapActiveChanged = originalActiveChanged;
 
-                visualizer.map.activeChanged = (guid: any, indexes: any) => {
+                visualizer.map.activeChanged = (guid: GUID, indexes: Indexes) => {
+                    // eslint-disable-next-line no-console
                     console.log('map.activeChanged', guid, indexes);
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
@@ -329,9 +346,10 @@ export class ChemiscopeComponent {
         if (visualizer.structure) {
             const originalStructOnselect = visualizer.structure.onselect?.bind(
                 visualizer.structure
-            );
+            ) ?? null;
             this.state.originalStructOnselect = originalStructOnselect;
-            visualizer.structure.onselect = (indexes: any) => {
+            visualizer.structure.onselect = (indexes: Indexes) => {
+                // eslint-disable-next-line no-console
                 console.log('structure.onselect');
                 originalStructOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
@@ -343,7 +361,8 @@ export class ChemiscopeComponent {
                 );
                 this.state.originalStructActiveChanged = originalActiveChanged;
 
-                visualizer.structure.activeChanged = (guid: any, indexes: any) => {
+                visualizer.structure.activeChanged = (guid: GUID, indexes: Indexes) => {
+                    // eslint-disable-next-line no-console
                     console.log('structure.activeChanged', guid, indexes);
                     originalActiveChanged?.(guid, indexes);
                     this.sendSelectionToStreamlit(indexes);
@@ -356,7 +375,8 @@ export class ChemiscopeComponent {
             const originalSelect = visualizer.select.bind(visualizer);
             this.state.originalSelect = originalSelect;
 
-            visualizer.select = (indexes: any) => {
+            visualizer.select = (indexes: Indexes) => {
+                // eslint-disable-next-line no-console
                 console.log('visualizer.select');
 
                 originalSelect(indexes);
@@ -365,7 +385,8 @@ export class ChemiscopeComponent {
         }
 
         // Settings change - from visualizer to Streamlit
-        visualizer.onSettingChange((_keys: string[], _value: unknown) => {
+        visualizer.onSettingChange(() => {
+            // eslint-disable-next-line no-console
             console.log('onsettingschange');
             const currentSettings = visualizer.saveSettings();
             this.sendSettingsToStreamlit(currentSettings);
@@ -373,18 +394,19 @@ export class ChemiscopeComponent {
     }
 
     private initializeVisualizer(
-        Chemiscope: any,
-        dataset: Record<string, any>,
-        settings: Record<string, any>,
+        Chemiscope: ChemiscopeGlobal,
+        dataset: Dataset,
+        mode: ChemiscopeMode,
+        settings: Partial<Settings>,
         selectedIndex: number | null | undefined
     ): void {
-        const mode = dataset.metadata?.mode || 'default';
         const visualizerClass = getVisualizerClass(mode, Chemiscope);
 
         // Merge initial settings
         try {
             dataset.settings = Object.assign({}, dataset.settings, settings);
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.warn('Could not attach settings to dataset:', e);
         }
 
@@ -418,6 +440,7 @@ export class ChemiscopeComponent {
                 }
             })
             .catch((err: unknown) => {
+                // eslint-disable-next-line no-console
                 console.error('Error loading visualizer:', err);
                 displayWarning('Error loading visualization: ' + String(err));
             })
@@ -425,4 +448,18 @@ export class ChemiscopeComponent {
                 toggleLoadingVisible(false);
             });
     }
+}
+
+declare global {
+    interface Window {
+        Chemiscope?: ChemiscopeGlobal;
+    }
+}
+
+interface ChemiscopeGlobal {
+    DefaultVisualizer: typeof DefaultVisualizer;
+    StructureVisualizer: typeof StructureVisualizer;
+    MapVisualizer: typeof MapVisualizer;
+    EnvironmentIndexer: typeof EnvironmentIndexer;
+    Warnings: typeof Warnings;
 }

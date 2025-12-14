@@ -8,5 +8,5 @@
     "moduleResolution": "node",
     "outDir": "build"
   },
-  "include": ["src"]
+  "include": ["src", "../../src/typing.d.ts"]
 }

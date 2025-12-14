@@ -1,26 +1,8 @@
 import os
-from copy import deepcopy
 from typing import Any, Callable, Mapping, Optional
 
 
 _component_func = None
-
-
-def _prepared_dataset(dataset: Mapping[str, Any], mode: str):
-    ds = deepcopy(dataset)
-    meta = ds.setdefault("metadata", {})
-    meta["mode"] = mode
-
-    if mode == "structure":
-        props = ds.setdefault("properties", {})
-        if "index" not in props:
-            structures = ds.get("structures", [])
-            props["index"] = {
-                "target": "structure",
-                "values": list(range(len(structures))),
-            }
-
-    return ds
 
 
 def viewer(
@@ -156,7 +138,7 @@ def viewer(
         current_state["last_update"] = None
 
     return _component_func(
-        dataset=_prepared_dataset(dataset, mode),
+        dataset=dataset,
         settings=current_state["settings"],
         mode=mode,
         no_info_panel=no_info_panel,

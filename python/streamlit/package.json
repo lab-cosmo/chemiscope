@@ -6,7 +6,8 @@
   "main": "build/main.js",
   "scripts": {
     "build": "webpack --mode=production --config webpack.config.js",
-    "start": "webpack serve --mode=development --config webpack.config.js"
+    "start": "webpack serve --mode=development --config webpack.config.js",
+    "pretty": "prettier --write src"
   },
   "dependencies": {
     "streamlit-component-lib": "^2.0.0"
