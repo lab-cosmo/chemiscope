@@ -29,12 +29,12 @@ interface ChemiscopeVisualizer {
     map?: {
         select: (indexes: any) => void;
         onselect: ((indexes: any) => void) | null;
+        activeChanged?: ((guid: any, indexes: any) => void) | null;
     };
     structure?: {
         select: (indexes: any) => void;
         onselect: ((indexes: any) => void) | null;
         activeChanged?: ((guid: any, indexes: any) => void) | null;
-        setActive?: (guid: any) => void;
     };
     info?: {
         onchange: ((indexes: any) => void) | null;
@@ -89,6 +89,7 @@ export class ChemiscopeComponent {
 
         // Original callbacks
         originalMapOnselect: null as any,
+        originalMapActiveChanged: null as any,
         originalStructOnselect: null as any,
         originalStructActiveChanged: null as any,
         originalSelect: null as any,
@@ -309,6 +310,19 @@ export class ChemiscopeComponent {
                 originalMapOnselect?.(indexes);
                 this.sendSelectionToStreamlit(indexes);
             };
+
+            if (typeof visualizer.map.activeChanged === 'function') {
+                const originalActiveChanged = visualizer.map.activeChanged.bind(
+                    visualizer.map
+                );
+                this.state.originalMapActiveChanged = originalActiveChanged;
+
+                visualizer.map.activeChanged = (guid: any, indexes: any) => {
+                    console.log('map.activeChanged', guid, indexes);
+                    originalActiveChanged?.(guid, indexes);
+                    this.sendSelectionToStreamlit(indexes);
+                };
+            }
         }
 
         // Structure onselect - selection from structure viewer to Streamlit

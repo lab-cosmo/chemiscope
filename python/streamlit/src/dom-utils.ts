@@ -34,12 +34,12 @@ export function applyWidthPolicy(widthArg: string | number, root: HTMLDivElement
     } else if (typeof widthArg === 'number') {
         root.style.width = '100%';
         root.style.justifyContent = 'center';
-        viewer.style.width = widthArg + 'px';
+        viewer.style.width = widthArg.toString() + 'px';
     }
 }
 
 export function applyHeightPolicy(heightArg: number, root: HTMLElement): void {
-    root.style.height = heightArg + 'px';
+    root.style.height = heightArg.toString() + 'px';
     Streamlit.setFrameHeight(heightArg);
 }
 
@@ -50,9 +50,10 @@ export function toggleLoadingVisible(visible: boolean = true): void {
     }
 }
 
-export function displayWarning(message: any, timeout: number = 4000): void {
+export function displayWarning(message: unknown, timeout: number = 4000): void {
     const display = document.getElementById(`${ROOT_ID}-warning-display`);
     if (!display) {
+        // eslint-disable-next-line no-console
         console.error('Warning display element not found:', `${ROOT_ID}-warning-display`);
         return;
     }
