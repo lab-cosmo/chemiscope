@@ -1,11 +1,14 @@
 import {
     Dataset,
+    DefaultConfig,
     DefaultVisualizer,
     EnvironmentIndexer,
     GUID,
     Indexes,
+    MapConfig,
     MapVisualizer,
     Settings,
+    StructureConfig,
     StructureVisualizer,
     Warnings,
 } from '../../../src/index';
@@ -47,9 +50,9 @@ export interface ChemiscopeVisualizer {
 
 export interface VisualizerClass {
     load(
-        config: unknown,
+        config: DefaultConfig & StructureConfig & MapConfig,
         dataset: Dataset,
-        warnings: Warnings
+        warnings?: Warnings
     ): Promise<ChemiscopeVisualizer>;
 }
 
