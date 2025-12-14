@@ -344,9 +344,8 @@ export class ChemiscopeComponent {
 
         // Structure onselect - selection from structure viewer to Streamlit
         if (visualizer.structure) {
-            const originalStructOnselect = visualizer.structure.onselect?.bind(
-                visualizer.structure
-            ) ?? null;
+            const originalStructOnselect =
+                visualizer.structure.onselect?.bind(visualizer.structure) ?? null;
             this.state.originalStructOnselect = originalStructOnselect;
             visualizer.structure.onselect = (indexes: Indexes) => {
                 // eslint-disable-next-line no-console
