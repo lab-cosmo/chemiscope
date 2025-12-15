@@ -22,8 +22,16 @@ export const WEBPACK_CONFIG = {
         rules: [
             { 
                 test: /\.ts$/, 
-                use: ['ts-loader', './utils/webpack-assert-message.js'],
-                exclude: /python\/streamlit/
+                use: [
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            onlyCompileBundledFiles: true,
+                        }
+                    },
+                    './utils/webpack-assert-message.js'
+                ],
+                exclude: [/node_modules/]
             },
             { test: /\.css$/, use: ['style-loader', 'css-loader'] },
             { test: /\.less$/, use: ['style-loader', 'css-loader', 'less-loader'] },
