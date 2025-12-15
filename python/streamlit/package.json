@@ -9,7 +9,8 @@
     "pretty": "prettier --write src"
   },
   "dependencies": {
-    "streamlit-component-lib": "^2.0.0"
+    "streamlit-component-lib": "^2.0.0",
+    "chemiscope": "file:../../"
   },
   "devDependencies": {
     "css-loader": "^6.8.1",

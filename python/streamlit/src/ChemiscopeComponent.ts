@@ -8,7 +8,7 @@ import {
     getOrCreateRoot,
     toggleLoadingVisible,
 } from './dom-utils';
-import { Dataset, EnvironmentIndexer, GUID, Indexes, Settings } from '../../../src/index';
+import { Dataset, EnvironmentIndexer, GUID, Indexes, Settings } from 'chemiscope';
 import {
     ActiveChangedCallback,
     ChemiscopeArgs,

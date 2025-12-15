@@ -11,7 +11,7 @@ import {
     StructureConfig,
     StructureVisualizer,
     Warnings,
-} from '../../../src/index';
+} from 'chemiscope';
 
 export type ChemiscopeMode = 'default' | 'structure' | 'map';
 

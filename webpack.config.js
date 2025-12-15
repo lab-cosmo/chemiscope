@@ -20,7 +20,11 @@ export const WEBPACK_CONFIG = {
     },
     module: {
         rules: [
-            { test: /\.ts$/, use: ['ts-loader', './utils/webpack-assert-message.js'] },
+            { 
+                test: /\.ts$/, 
+                use: ['ts-loader', './utils/webpack-assert-message.js'],
+                exclude: /python\/streamlit/
+            },
             { test: /\.css$/, use: ['style-loader', 'css-loader'] },
             { test: /\.less$/, use: ['style-loader', 'css-loader', 'less-loader'] },
             { test: /\.html\.in$/, loader: 'raw-loader' },
