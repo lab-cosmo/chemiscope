@@ -31,7 +31,10 @@ export const WEBPACK_CONFIG = {
                     },
                     './utils/webpack-assert-message.js'
                 ],
-                exclude: [/node_modules/]
+                exclude: [
+                    /node_modules/,
+                    /python\/streamlit/
+                ]
             },
             { test: /\.css$/, use: ['style-loader', 'css-loader'] },
             { test: /\.less$/, use: ['style-loader', 'css-loader', 'less-loader'] },
