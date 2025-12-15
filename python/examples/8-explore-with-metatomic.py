@@ -20,8 +20,6 @@ dependencies are required. You can install them with the following command:
 #
 # Firstly, we import necessary packages and read structures from the dataset.
 
-from typing import Dict, List, Optional
-
 import ase.io
 
 import chemiscope
@@ -80,6 +78,8 @@ chemiscope.explore(
 # Having computed these moments, the model will take a PCA of their values to
 # extract the three most relevant dimensions.
 
+from typing import Dict, List, Optional  # noqa: E402
+
 import torch  # noqa: E402
 from metatensor.torch import Labels, TensorBlock, TensorMap  # noqa: E402
 from metatomic.torch import (  # noqa: E402
@@ -113,34 +113,39 @@ class FeatureModel(torch.nn.Module):
         outputs: Dict[str, ModelOutput],
         selected_atoms: Optional[Labels] = None,
     ) -> Dict[str, TensorMap]:
-        if list(outputs.keys()) != ["features"]:
-            raise ValueError(
-                "this model can only compute 'features', but outputs contains other "
-                f"keys: {', '.join(outputs.keys())}"
-            )
+        results: Dict[str, TensorMap] = {}
 
-        if not outputs["features"].per_atom:
-            raise NotImplementedError("per structure features are not implemented")
+        for name, output in outputs.items():
+            # feature variant 1: moments + PCA
+            if name == "features":
+                results["features"] = self._compute_moment_features(systems, output)
 
-        results = {}
+            # feature variant 2: cos/sin features of positions
+            elif name == "features/cos_sin":
+                results["features/cos_sin"] = self._compute_cos_features(
+                    systems, output
+                )
 
-        # feature variant 1: moments + PCA
-        if "features" in outputs:
-            results["features"] = self._compute_moment_features(systems)
-
-        # feature variant 2: cos/sin features of positions
-        if "features/cos_sin" in outputs:
-            results["features/cos_sin"] = self._compute_cos_features(systems)
+            else:
+                raise ValueError(f"Unknown output '{name}' requested")
 
         return results
 
-    def _compute_moment_features(self, systems: List[System]) -> TensorMap:
+    def _compute_moment_features(
+        self, systems: List[System], output: ModelOutput
+    ) -> TensorMap:
+        if not output.per_atom:
+            raise NotImplementedError(
+                "per structure features are not implemented for variant 'features'"
+            )
+
         all_features = []
         all_samples = []
 
+        dtype = systems[0].positions.dtype
+        device = systems[0].positions.device
+
         for system_i, system in enumerate(systems):
-            dtype = system.positions.dtype
-            device = system.positions.device
             n_atoms = len(system.positions)
 
             # Initialize a tensor to store features for each atom
@@ -160,7 +165,7 @@ class FeatureModel(torch.nn.Module):
 
             # Create labels for each atom in the system
             system_atom_labels = torch.tensor(
-                [[system_i, atom_i] for atom_i in range(n_atoms)]
+                [[system_i, atom_i] for atom_i in range(n_atoms)], device=device
             )
             all_samples.append(system_atom_labels)
 
@@ -179,11 +184,12 @@ class FeatureModel(torch.nn.Module):
             components=[],
             properties=Labels(
                 names=["feature"],
-                values=torch.tensor([[0], [1], [2]]),
+                values=torch.tensor([[0], [1], [2]], device=device),
             ),
         )
         return TensorMap(
-            keys=Labels(names=["_"], values=torch.tensor([[0]])), blocks=[block]
+            keys=Labels(names=["_"], values=torch.tensor([[0]], device=device)),
+            blocks=[block],
         )
 
     def _compute_cos_features(
@@ -191,9 +197,9 @@ class FeatureModel(torch.nn.Module):
     ) -> TensorMap:
         all_features = []
 
-        for system in systems:
-            device = system.positions.device
+        device = systems[0].positions.device
 
+        for system in systems:
             # Compute the norm of each atomic position
             features = system.positions.norm(p=2, dim=1).unsqueeze(1).repeat(1, 2)
 
@@ -231,7 +237,7 @@ class FeatureModel(torch.nn.Module):
         )
 
         return TensorMap(
-            keys=Labels(["_"], torch.tensor([[0]])),
+            keys=Labels(["_"], torch.tensor([[0]], device=device)),
             blocks=[block],
         )
 
@@ -305,7 +311,7 @@ mta_model.save("model-exported.pt")
 # --------------------------
 #
 # The model we defined provides multiple feature outputs (variants). By default, the
-# ``metatomic_featurizer`` uses the main ``"features"``` output (the moments + PCA). You
+# ``metatomic_featurizer`` uses the main ``"features"`` output (the moments + PCA). You
 # can select a variant by passing the ``variant`` argument when creating the featurizer.
 #
 # For example, to use the ``"features/cos_sin"`` variant:
