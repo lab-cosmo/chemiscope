@@ -78,7 +78,7 @@ export function generateHTMLForMode(mode: string, noInfo: boolean = false): stri
 
     const mapStyle = mode === 'structure' ? 'display: none;' : '';
     const structureStyle = mode === 'map' ? 'display: none;' : '';
-    const infoStlye = noInfo ? 'display: none;' : '';
+    const infoStyle = noInfo ? 'display: none;' : '';
 
     if (mode === 'structure') {
         layout = `
@@ -86,7 +86,7 @@ export function generateHTMLForMode(mode: string, noInfo: boolean = false): stri
                 <div class="visualizer-column">
                     <div id="${CONFIG.meta}"></div>
                     <div id="${CONFIG.structure}" class="visualizer-item"></div>
-                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStlye}"></div>
+                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStyle}"></div>
                     <div id="${CONFIG.map}" style="${mapStyle}"></div> </div>
             </div>`;
     } else if (mode === 'map') {
@@ -95,7 +95,7 @@ export function generateHTMLForMode(mode: string, noInfo: boolean = false): stri
                 <div class="visualizer-column">
                     <div id="${CONFIG.meta}"></div>
                     <div id="${CONFIG.map}" class="visualizer-item"></div>
-                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStlye}"></div>
+                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStyle}"></div>
                     <div id="${CONFIG.structure}" style="${structureStyle}"></div> </div>
             </div>`;
     } else {
@@ -107,7 +107,7 @@ export function generateHTMLForMode(mode: string, noInfo: boolean = false): stri
                 </div>
                 <div class="visualizer-column">
                     <div id="${CONFIG.structure}" class="visualizer-item"></div>
-                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStlye}"></div>
+                    <div id="${CONFIG.info}" class="visualizer-info" style="${infoStyle}"></div>
                 </div>
             </div>`;
     }

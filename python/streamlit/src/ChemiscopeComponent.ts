@@ -302,7 +302,7 @@ export class ChemiscopeComponent {
         return visualizer.structure.activeIndex;
     }
 
-    private installReverseSyncCallbacks(): void {
+    private setupBidirectionalSync(): void {
         const visualizer = this.state.visualizer;
         if (!visualizer) {
             return;
@@ -405,7 +405,7 @@ export class ChemiscopeComponent {
                     dataset.environments
                 );
 
-                this.installReverseSyncCallbacks();
+                this.setupBidirectionalSync();
 
                 // Apply initial selection if provided
                 if (selectedIndex !== null && selectedIndex !== undefined) {

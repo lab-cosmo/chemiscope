@@ -57,6 +57,7 @@ to customize the viewer appearance and behavior:
         dataset,                      # Chemiscope dataset
         settings=settings,            # Custom settings dict
         mode="default",               # Visualization mode: "default", "map", or "structure"
+        no_info_panel=False,          # Hide the info panel
         key="my_viewer",              # Unique widget key
         width="stretch",              # Width: "stretch" or pixels
         height=600,                   # Height in pixels

@@ -45,46 +45,24 @@
     flex: 1 1 100%;
 }
 
-.chemiscope-hidden-item {
-    display: none !important;
-}
-
-.chemiscope-absolute-loading {
+.chemiscope-streamlit-loading {
     display: none;
-    position: absolute;
+    position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.8);
     z-index: 10;
-    display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.chemiscope-absolute-loading p {
+.chemiscope-streamlit-loading p {
     text-align: center;
     margin: 0;
     font-size: 1.2em;
     font-weight: bold;
-}
-
-.chemiscope-absolute-warning {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: orange;
-    padding: 5px;
-    color: white;
-    z-index: 15;
-    display: flex;
-}
-
-.chemiscope-absolute-warning p {
-    margin: 0;
 }
 
 .chemiscope-streamlit-warning {
@@ -111,17 +89,4 @@
     p {
         flex: 1;
     }
-}
-
-.chemiscope-streamlit-spinner {
-    position: fixed;
-    z-index: 999;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 5px;
-    font-size: 1.2em;
-    font-weight: bold;
 }
