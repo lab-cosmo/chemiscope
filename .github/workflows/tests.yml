@@ -24,8 +24,16 @@ jobs:
         run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
       - name: install npm dependencies
         run: npm ci
-      - run: npm run build
-      - run: npm test
+
+      - name: build root package
+        run: npm run build
+
+      - name: install streamlit dependencies
+        working-directory: python/streamlit
+        run: npm ci
+
+      - name: run linting and tests
+        run: npm test
 
   # Python unit tests
   python-test:
