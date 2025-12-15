@@ -259,8 +259,12 @@ metadata = ModelMetadata(
 
 capabilities = ModelCapabilities(
     outputs={
-        "features": ModelOutput(per_atom=True),
-        "features/cos_sin": ModelOutput(per_atom=True),
+        "features": ModelOutput(
+            per_atom=True, description="PCA of neighbor distance moments"
+        ),
+        "features/cos_sin": ModelOutput(
+            per_atom=True, description="Cosine and sin of atomic position norms"
+        ),
     },
     atomic_types=[6],
     length_unit="angstrom",
