@@ -120,7 +120,7 @@ export class ViewersGrid {
      * The callback gets two parameter: the structure index (0-based); and the
      * full {@link UserStructure}.
      */
-    public loadStructure: (index: number, structure: unknown) => Structure;
+    public loadStructure: (index: number, structure: unknown) => Promise<Structure>;
 
     public warnings: Warnings;
 
@@ -208,16 +208,19 @@ export class ViewersGrid {
         // Set the environments to synchronize with the modal and grid
         this._environments = this._calculatedEnvironments;
 
-        this.loadStructure = (_, s) => {
-            // check that the data does conform to the Structure interface
-            if (checkStructure(s as JsObject) !== '') {
-                throw Error(
-                    'got custom data for this structure, but no custom loadStructure callback\n' +
-                        `the object was ${JSON.stringify(s)}`
+        // Default structure loading function
+        this.loadStructure = (_: unknown, s: unknown): Promise<Structure> => {
+            const error = checkStructure(s as JsObject);
+            if (error !== '') {
+                return Promise.reject(
+                    new Error(
+                        'got custom data for this structure, but no custom loadStructure callback\n' +
+                            `the object was ${JSON.stringify(s)}`
+                    )
                 );
-            } else {
-                return s as Structure;
             }
+
+            return Promise.resolve(s as Structure);
         };
 
         this.warnings = warnings;
@@ -289,8 +292,8 @@ export class ViewersGrid {
      *
      * @param  indexes         structure / atom pair to display
      */
-    public show(indexes: Indexes): void {
-        this._showInViewer(this.active, indexes).catch((e: unknown) => {
+    public async show(indexes: Indexes): Promise<void> {
+        await this._showInViewer(this.active, indexes).catch((e: unknown) => {
             throw e;
         });
     }
@@ -539,6 +542,8 @@ export class ViewersGrid {
 
         // Load the viewer with the current indexes
         await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+        // Highlight the atom if needed. This also trigger a style update for the atoms
+        data.viewer.highlight(envView ? data.current.atom : undefined);
     }
 
     /**
@@ -573,17 +578,18 @@ export class ViewersGrid {
      * @param  index index of the structure
      * @return       a Structure instance
      */
-    private _structure(index: number): Structure {
+    private async _structure(index: number): Promise<Structure> {
         if (this._resolvedStructures[index] === undefined) {
-            const s = this.loadStructure(index, this._structures[index]);
-            const check = checkStructure(s as unknown as JsObject);
+            const structure = await this.loadStructure(index, this._structures[index]);
+
+            const check = checkStructure(structure as unknown as JsObject);
             if (check !== '') {
                 throw Error(
                     `got invalid object as structure: ${check}
-    the object was ${JSON.stringify(s)}`
+    the object was ${JSON.stringify(structure)}`
                 );
             }
-            this._resolvedStructures[index] = s;
+            this._resolvedStructures[index] = structure;
         }
         return this._resolvedStructures[index];
     }
@@ -652,37 +658,35 @@ export class ViewersGrid {
      * @param structureIndex index of the structure to be loaded
      * @param atomIndex optional index of the atom to highlight
      */
-    private _loadViewer(
+    private async _loadViewer(
         viewer: MoleculeViewer,
         structureIndex: number,
         atomIndex?: number
     ): Promise<void> {
-        return new Promise((resolve) => {
-            // Initialize load options with trajectory enabled
-            const options: Partial<LoadOptions> = {
-                trajectory: true,
-            };
+        const properties = this._propertiesForStructure(structureIndex);
+        // Initialize load options with trajectory enabled
+        const options: Partial<LoadOptions> = {
+            trajectory: true,
+        };
 
-            // If environments are defined, add them to the options
-            if (this._environments !== undefined) {
-                options.environments = this._environments[structureIndex];
+        // If environments are defined, add them to the options
+        if (this._environments !== undefined) {
+            options.environments = this._environments[structureIndex];
 
-                // If the target is per atom, add the atom index to the highlight
-                if (this._target === 'atom') {
-                    options.highlight = atomIndex;
-                }
+            // If the target is per atom, add the atom index to the highlight
+            if (this._target === 'atom') {
+                options.highlight = atomIndex;
             }
+        }
 
-            // Load the structure into the viewer
-            viewer.load(
-                this._structure(structureIndex),
-                this._propertiesForStructure(structureIndex),
-                options,
-                () => {
-                    // Resolve the Promise when the viewer has finished loading
-                    resolve();
-                }
-            );
+        const structure = await this._structure(structureIndex);
+
+        // Load the structure into the viewer
+        await new Promise<void>((resolve) => {
+            viewer.load(structure, properties, options, () => {
+                // Resolve the Promise when the viewer has finished loading
+                resolve();
+            });
         });
     }
 

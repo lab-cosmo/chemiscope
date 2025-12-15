@@ -3,12 +3,12 @@ Structure-property maps
 =======================
 
 This example demonstrates the visualization of structures (or environments) using
-data-driven descriptors of their geometry, to cluster together similar motifs. Here the
-geometric descriptors have been computed by PCA starting from SOAP representations, but
+data-driven descriptors of their geometry to cluster together similar motifs. Here, the
+geometric descriptors have been computed by PCA starting from SOAP representations but
 are provided as text files to avoid external dependencies for the example.
 
-The same parameters can be used with `chemiscope.show` to visualize an interactive
-widget in a Jupyter notebook.
+The same parameters demonstrated on this example can be used with
+:py:func:`chemiscope.show` to visualize an interactive widget in a Jupyter notebook.
 """
 
 # %%
@@ -21,22 +21,23 @@ import chemiscope
 
 
 # %%
-# Load structures
+# Load structures:
 
 frames = ase.io.read("data/trajectory.xyz", ":")
 
 # %%
 #
-# Load the SOAP-PCA descriptors. chemiscope does not provide analysis routines, but you
-# can look up for instance scikit-matter as a package to do dimensionality reduction
-# analyses.
+# Load the SOAP-PCA descriptors. To obtain them yourself, check the :ref:`examples
+# <explore-advanced-example>` of feature calculation and dimentionality reduction.
+# Chemiscope also provides :py:func:`chemiscope.explore` function to automatically
+# create the features using machine learning models.
 
 pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
 pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
 
 # %%
 #
-# When both environments and structure property are present, a toggle allows you to
+# When both environments and structure properties are present, a toggle allows you to
 # switch between both modes.
 #
 # .. note::
@@ -71,12 +72,13 @@ for frame_i, frame in enumerate(frames):
 
 # %%
 #
-# Create a visualization and save it as a file that can be viewed at chemiscope.org
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
 
 chemiscope.write_input(
     "trajectory-pca.json.gz",
-    # dataset metadata can also be included, to provide a self-contained description
-    # of the data, authors and references
+    # dataset metadata can also be included to provide a self-contained description
+    # of the data, authors, and references
     meta={
         "name": "Allyl alcohol PCA map",
         "description": (

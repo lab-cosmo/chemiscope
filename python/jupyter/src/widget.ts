@@ -1,4 +1,5 @@
 import { DOMWidgetView } from '@jupyter-widgets/base';
+import { JSONValue } from '@lumino/coreutils';
 import Plausible from 'plausible-tracker';
 
 import { Warnings, generateGUID, getByID } from '../../../src/utils';
@@ -6,14 +7,28 @@ import { Warnings, generateGUID, getByID } from '../../../src/utils';
 // Import the CSS
 import './widget.css';
 
-import { DefaultVisualizer, MapVisualizer, StructureVisualizer } from '../../../src/index';
-import { Dataset, Settings } from '../../../src/dataset';
+import {
+    DefaultConfig,
+    DefaultVisualizer,
+    MapVisualizer,
+    StructureConfig,
+    StructureVisualizer,
+} from '../../../src/index';
+import { Dataset, Settings, Structure, UserStructure } from '../../../src/dataset';
 
 const PlausibleTracker = Plausible({
     domain: 'jupyter.chemiscope.org',
     // jupyter typically runs on localhost
     trackLocalhost: true,
 });
+
+interface StructureRequest {
+    type: string;
+    requestId: number;
+    structure?: Structure | string;
+    data?: string;
+    error?: string;
+}
 
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
@@ -22,6 +37,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
     protected getClassName(): string {
         return 'base-view';
     }
+
+    // For async structure loading via Python
+    private _nextRequestId = 0;
+    private _pendingStructureRequests = new Map<
+        number,
+        { resolve: (s: Structure) => void; reject: (e: Error) => void }
+    >();
 
     public render(): void {
         PlausibleTracker.trackPageview({
@@ -92,6 +114,112 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.warnings.defaultTimeout = timeout;
         }
     }
+
+    /**
+     * Install a handler for custom messages coming from Python
+     */
+    protected _enableStructureMessages(): void {
+        this.model.on(
+            'msg:custom',
+            (content: StructureRequest, _buffers: unknown[]) => {
+                void _buffers; // explicitly mark as intentionally unused
+                if (!content || typeof content !== 'object') {
+                    return;
+                }
+
+                if (content.type === 'load-structure-result') {
+                    const requestId = content.requestId;
+                    const pending = this._pendingStructureRequests.get(requestId);
+                    if (pending) {
+                        this._pendingStructureRequests.delete(requestId);
+                        // python can send either a string (JSON-serialized) or an object
+                        const raw = content.structure;
+                        const structure: Structure =
+                            typeof raw === 'string'
+                                ? (JSON.parse(raw) as Structure)
+                                : (raw as Structure);
+                        pending.resolve(structure);
+                    }
+                } else if (content.type === 'load-structure-error') {
+                    const requestId = content.requestId;
+                    const pending = this._pendingStructureRequests.get(requestId);
+                    if (pending) {
+                        this._pendingStructureRequests.delete(requestId);
+                        pending.reject(
+                            new Error(content.error || 'unknown error while loading structure')
+                        );
+                    }
+                    if (content.error) {
+                        this.warnings.sendMessage(`Error loading structure: ${content.error}`);
+                    }
+                }
+            },
+            this
+        );
+    }
+
+    /**
+     * Ask Python to load one structure given the user-defined `data`.
+     * `data` is typically the filename or an object containing it.
+     */
+    protected _requestStructureFromPython(
+        index: number,
+        structure: UserStructure
+    ): Promise<Structure> {
+        const requestId = this._nextRequestId++;
+        return new Promise<Structure>((resolve, reject) => {
+            if (this._pendingStructureRequests.size > 0) {
+                // avoid piling up too many requests
+                // eslint-disable-next-line no-console
+                console.warn(
+                    `Skipping frame ${index} - ${structure.data}. Increase playback delay.`
+                );
+            } else {
+                // queue a request for the structure
+                this._pendingStructureRequests.set(requestId, { resolve, reject });
+
+                this.model.send({
+                    type: 'load-structure',
+                    requestId,
+                    index,
+                    data: structure.data as JSONValue,
+                });
+            }
+        });
+    }
+
+    /**
+     * If the dataset uses `UserStructure`, wrap the structure config so that
+     * chemiscope will ask Python to load each structure on demand.
+     */
+    protected _attachStructureLoaderToConfig(
+        config: DefaultConfig | StructureConfig,
+        data: Dataset
+    ): void {
+        const structures = data.structures;
+        if (!Array.isArray(structures) || structures.length === 0) {
+            return;
+        }
+
+        const structure = structures[0];
+        const hasUserData = structure && typeof structure === 'object' && 'data' in structure;
+        if (!hasUserData) {
+            // Normal (already-expanded) structures, nothing to do
+            return;
+        }
+
+        // We are in the dynamic UserStructure case.
+        // Make sure we listen for Python replies
+        this._enableStructureMessages();
+
+        // StructureConfig.loadStructure gets the full UserStructure as second arg
+        config.loadStructure = async (index: number, raw: unknown): Promise<Structure> => {
+            const wrapper = raw as UserStructure;
+
+            const promise = this._requestStructureFromPython(index, wrapper);
+            return promise;
+        };
+    }
 }
 
 /**
@@ -155,6 +283,11 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         this._bindPythonSettings();
 
         const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
+
+        // If `data.structures` is an array of `UserStructure`, this
+        // will wrap the structure config with a loader that calls Python.
+        this._attachStructureLoaderToConfig(config, data);
+
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
@@ -234,6 +367,11 @@ export class StructureView extends ChemiscopeBaseView {
         this._bindPythonSettings();
 
         const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
+
+        // If `data.structures` is an array of `UserStructure`, this
+        // will wrap the structure config with a loader that calls Python.
+        this._attachStructureLoaderToConfig(config, data);
+
         void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;

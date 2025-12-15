@@ -1,5 +1,10 @@
 from .explore import explore, get_featurizer, metatomic_featurizer  # noqa: F401
-from .input import create_input, quick_settings, write_input  # noqa: F401
+from .input import (  # noqa: F401
+    create_input,
+    quick_settings,
+    write_external_structures,
+    write_input,
+)
 from .jupyter import show, show_input  # noqa
 from .structures import (  # noqa: F401
     all_atomic_environments,

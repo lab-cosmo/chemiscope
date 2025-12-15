@@ -10,6 +10,8 @@ try:
 except ImportError:
     HAVE_MDA = False
 
+BIO_PROPERTIES = ["hetatom", "resids", "resnames", "chains"]
+
 
 def _mda_valid_structures(frames):
     if HAVE_MDA and isinstance(frames, mda.AtomGroup):
@@ -21,18 +23,20 @@ def _mda_valid_structures(frames):
 def _mda_to_json(ag):
     data = {}
     data["size"] = len(ag)
-    data["elements"] = [
-        atom.element if hasattr(atom, "element") else atom.type
-        for atom in ag
-        # `element` is better, but not always available, e.g. xyz file
-    ]
+    data["elements"] = (
+        ag.elements.tolist() if hasattr(ag, "elements") else ag.types.tolist()
+    )
+    # `element` is better, but not always available, e.g. xyz file
     if hasattr(ag, "names"):
-        data["names"] = [atom.name for atom in ag]
+        data["names"] = ag.names.tolist()
     else:
         data["names"] = data["elements"]
-    data["x"] = [float(value) for value in ag.positions[:, 0]]
-    data["y"] = [float(value) for value in ag.positions[:, 1]]
-    data["z"] = [float(value) for value in ag.positions[:, 2]]
+    x, y, z = ag.positions.T
+    data["x"] = x.tolist()
+    data["y"] = y.tolist()
+    data["z"] = z.tolist()
+    hetatom = np.full(ag.n_atoms, True)
+
     if ag.dimensions is not None:
         data["cell"] = list(
             np.concatenate(
@@ -41,19 +45,39 @@ def _mda_to_json(ag):
                 # should be np.float64 otherwise not serializable
             )
         )
-    data["hetatom"] = [True for _ in ag]
     if hasattr(ag, "chainIDs") and ag.chainIDs is not None:
-        data["chains"] = [atom.chainID for atom in ag]
+        data["chains"] = ag.chainIDs.tolist()
+    elif hasattr(ag, "segids") and ag.segids is not None:
+        # segids are sometimes abused to store chain ids in PDBs, so we use them here
+        data["chains"] = ag.segids.tolist()
+
     if hasattr(ag, "resnames") and ag.resnames is not None:
         data["resnames"] = [
-            atom.resname if atom.resname is not None and atom.resname != "" else "UNK"
-            for atom in ag
+            resname if resname is not None and resname != "" else "UNK"
+            for resname in ag.resnames
         ]
         # atom selection requires the `resname`
-        for idx in ag.select_atoms("protein or nucleic").indices:
-            data["hetatom"][idx] = False
+        hetatom[ag.select_atoms("protein or nucleic").indices] = False
+
     if hasattr(ag, "resids") and ag.resids is not None:
-        data["resids"] = [int(atom.resid) for atom in ag]
+        data["resids"] = ag.resids.view(dtype=int).tolist()
+
+    if hasattr(ag, "bonds") and ag.bonds is not None:
+        data["bonds"] = np.hstack(
+            (ag.bonds.indices, np.full((len(ag.bonds), 1), 1))
+        ).tolist()
+
+    data["hetatom"] = hetatom.tolist()
+
+    # remove bio-related properties if any of them are missing
+    existing_properties = []
+    for prop in BIO_PROPERTIES:
+        if prop in data:
+            existing_properties.append(prop)
+
+    if len(existing_properties) != len(BIO_PROPERTIES):
+        for prop in existing_properties:
+            del data[prop]
 
     return data
 
@@ -137,3 +161,12 @@ def _mda_extract_properties(ag, only=None, environments=None):
             properties[name] = values
 
     return properties
+
+
+def _mda_all_atomic_environments(ag, cutoff):
+    "Extract all atomic environments out of a set of MDAnalysis AtomGroup objects"
+    environments = []
+    for structure_i, frame in enumerate(ag.universe.trajectory):
+        for atom_i in range(len(frame)):
+            environments.append((structure_i, atom_i, cutoff))
+    return environments

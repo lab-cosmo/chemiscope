@@ -142,4 +142,4 @@ chemiscope.explore(
 
 # %%
 #
-# For more advanced examples, see the :ref:`next tutorial <advanced-explore-example>`.
+# For more advanced examples, see the :ref:`next tutorial <explore-advanced-example>`.
