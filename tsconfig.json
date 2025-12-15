@@ -13,13 +13,11 @@
   "include": [
     "src/**/*",
     "app/**/*",
-    "python/jupyter/src/**/*",
-    "python/streamlit/src/**/*"
+    "python/jupyter/src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "python/streamlit/node_modules",
-    "python/jupyter/node_modules"
+    "python/streamlit"
   ],
   "typedocOptions": {
     "entryPoints": ["src/index.ts"],
@@ -27,5 +25,5 @@
     "excludePrivate": true,
     "hideGenerator": true,
     "readme": "none"
-  }
+  },
 }
