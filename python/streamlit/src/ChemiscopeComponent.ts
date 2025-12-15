@@ -17,7 +17,7 @@ import {
     ChemiscopeVisualizer,
     SelectCallback,
     VisualizerClass,
-} from '../types/chemiscope';
+} from './types';
 
 enum StreamlitValue {
     SELECTION = 'selected_id',
