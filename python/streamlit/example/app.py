@@ -1,11 +1,24 @@
+"""
+Chemiscope Streamlit example app
+
+This app demonstrates an integration of the chemiscope viewer inside Streamlit-built web
+application. It provides a complete workflow for uploading and visualizing structures
+from XYZ files, and demonstrates a setup for bidirectional synchronization between the
+Python state (Streamlit widgets) and JavaScript state (chemiscope viewer).
+
+Run the application with: `streamlit run app.py`.
+"""
+
 import json
-from io import StringIO
 from typing import Any, Dict
 
-import ase.io
 import streamlit as st
+from ui import (
+    create_sidebar_widgets,
+    display_selected_structure,
+    process_uploaded_file,
+)
 
-import chemiscope
 from chemiscope.streamlit import viewer
 
 
@@ -20,6 +33,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
 }
 
 
+# Map specific widget keys to the main defaults. These keys must match the `key`
+# arguments in slider and checkpoint components in ui.py
 WIDGET_DEFAULTS = {
     "mode": DEFAULT_SETTINGS["mode"],
     "height": DEFAULT_SETTINGS["height"],
@@ -30,6 +45,40 @@ WIDGET_DEFAULTS = {
     "space_filling": DEFAULT_SETTINGS["space_filling"],
 }
 
+
+def on_structure_select(selected_id):
+    """Callback when a user clicks a point on the map or selects a structure"""
+    if selected_id is not None:
+        st.session_state.selected_index = selected_id
+
+
+def on_settings_change(new_settings):
+    """
+    Callback when settings are changed inside the chemiscope widget. We capture these
+    changes to update the streamlit sidebar sliders to match.
+    """
+    if not new_settings:
+        return
+
+    # update internal settings store
+    st.session_state.visualizer_settings = new_settings
+
+    # sync streamlit state with chemiscope map settings
+    if "map" in new_settings:
+        color = new_settings["map"]["color"]
+        st.session_state["palette"] = color["palette"]
+        st.session_state["opacity"] = int(color["opacity"])
+        st.session_state["size"] = int(new_settings["map"]["size"]["factor"])
+
+    # sync streamlit state with chemiscope structure settings
+    if "structure" in new_settings and isinstance(new_settings["structure"], dict):
+        struct = new_settings["structure"]
+        st.session_state["show_bonds"] = bool(struct["bonds"])
+        st.session_state["space_filling"] = bool(struct["spaceFilling"])
+
+
+# Initialize session state variables if they don't exist. Without this, widgets would
+# reset to default every time the user interacts with the app (triggering a re-run)
 for k, v in WIDGET_DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -38,113 +87,11 @@ if "settings" not in st.session_state:
     st.session_state.settings = DEFAULT_SETTINGS.copy()
 
 
-def build_settings(
-    palette: str, opacity: int, size: int, show_bonds: bool, space_filling: bool
-):
-    settings = {}
-    s_state = st.session_state.settings
-
-    if s_state["mode"] in ["default", "map"]:
-        settings["map"] = {
-            "color": {"palette": palette, "opacity": opacity},
-            "size": {"factor": size},
-        }
-
-    if s_state["mode"] in ["default", "structure"]:
-        settings["structure"] = [{"bonds": show_bonds, "spaceFilling": space_filling}]
-
-    return settings
-
-
-@st.cache_data(show_spinner="Loading and processing structures...")
-def process_uploaded_file(file_bytes: bytes, file_name: str):
-    text = file_bytes.decode("utf-8")
-    frames = ase.io.read(StringIO(text), ":", format="extxyz")
-    properties = chemiscope.extract_properties(frames)
-
-    dataset = chemiscope.create_input(
-        frames=frames, properties=properties, meta={"name": file_name}
-    )
-
-    return dataset, frames
-
-
-def on_structure_select(selected_id):
-    if selected_id is not None:
-        st.session_state.selected_index = selected_id
-
-
-def on_settings_change(new_settings):
-    if not new_settings:
-        return
-
-    st.session_state.visualizer_settings = new_settings
-
-    if "map" in new_settings:
-        color = new_settings["map"]["color"]
-        st.session_state["palette"] = color["palette"]
-        st.session_state["opacity"] = int(color["opacity"])
-        st.session_state["size"] = int(new_settings["map"]["size"]["factor"])
-
-    if "structure" in new_settings and isinstance(new_settings["structure"], dict):
-        struct = new_settings["structure"]
-        st.session_state["show_bonds"] = bool(struct["bonds"])
-        st.session_state["space_filling"] = bool(struct["spaceFilling"])
-
-
-def display_selected_structure():
-    selected_index = st.session_state.get("selected_index")
-    st.subheader("Selected Structure")
-
-    if selected_index is None:
-        st.text("No structure selected")
-        return
-
-    frames = st.session_state.get("uploaded_frames")
-    st.text(f"Index: {selected_index}")
-    st.code(str(frames[selected_index]))
-
-
-def create_sidebar_widgets(uploaded: bool):
-    st.header("Viewer Settings on Load")
-
-    mode = st.radio(
-        "Viewer Mode", ["default", "structure", "map"], key="mode", disabled=uploaded
-    )
-
-    st.subheader("Display Settings")
-    height = st.slider("Height", 100, 1200, step=50, key="height")
-
-    st.subheader("Map Settings")
-    is_structure_only = mode == "structure"
-    opacity = st.slider(
-        "Opacity", 0, 100, step=10, key="opacity", disabled=is_structure_only
-    )
-    size = st.slider(
-        "Point size", 1, 100, step=10, key="size", disabled=is_structure_only
-    )
-
-    palette_options = ["viridis", "magma", "plasma", "inferno", "cividis"]
-    palette = st.selectbox(
-        "Palette", palette_options, key="palette", disabled=is_structure_only
-    )
-
-    st.subheader("Structure Settings")
-    is_map_only = mode == "map"
-    show_bonds = st.checkbox("Show Bonds", key="show_bonds", disabled=is_map_only)
-    space_filling = st.checkbox(
-        "Space Filling", key="space_filling", disabled=is_map_only
-    )
-
-    viewer_settings = build_settings(palette, opacity, size, show_bonds, space_filling)
-    return viewer_settings, height, mode
-
-
 st.set_page_config(page_title="Chemiscope + Streamlit", layout="wide")
 st.title("Chemiscope inside Streamlit")
 
 uploaded = st.file_uploader(
-    "Upload extended XYZ file", type=["xyz", "extxyz"], key="static_uploader_key"
+    "Upload XYZ file", type=["xyz", "extxyz"], key="static_uploader_key"
 )
 
 with st.sidebar:
@@ -154,7 +101,6 @@ if uploaded:
     uploaded_bytes = uploaded.getvalue()
     file_name = uploaded.name
     dataset, frames = process_uploaded_file(uploaded_bytes, file_name)
-    st.session_state["uploaded_frames"] = frames
 
     if "selected_index" not in st.session_state:
         st.session_state.selected_index = 0
@@ -167,13 +113,13 @@ if uploaded:
         mode=mode_display,
         settings=settings,
         key="chemiscope_viewer",
-        selected_index=st.session_state.selected_index,
-        on_select=on_structure_select,
-        on_settings_change=on_settings_change,
+        selected_index=st.session_state.selected_index,  # bind python selection
+        on_select=on_structure_select,  # sync js selection -> python
+        on_settings_change=on_settings_change,  # sync js settings -> python
     )
 
     st.markdown("---")
-    display_selected_structure()
+    display_selected_structure(frames)
 
     st.subheader("Export")
     download_dataset = dataset.copy()
