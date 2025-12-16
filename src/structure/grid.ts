@@ -451,7 +451,8 @@ export class ViewersGrid {
      * of settings contains only one item, then it is applied to
      * the active viewer.
      *
-     * @param settings settings for all viewers in the grid
+     * @param settings settings for either the active, or all
+     *      viewers in the grid
      */
     public applySettings(settings: Settings[]): void {
         if (settings.length === 0) {
