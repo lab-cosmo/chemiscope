@@ -8,45 +8,49 @@ import {
     getOrCreateRoot,
     toggleLoadingVisible,
 } from './dom-utils';
-import { Dataset, EnvironmentIndexer, GUID, Indexes, Settings } from 'chemiscope';
 import {
-    ActiveChangedCallback,
-    ChemiscopeArgs,
-    ChemiscopeGlobal,
-    ChemiscopeMode,
-    ChemiscopeVisualizer,
-    SelectCallback,
-    VisualizerClass,
-} from './types';
+    Dataset,
+    DefaultVisualizer,
+    EnvironmentIndexer,
+    GUID,
+    Indexes,
+    MapVisualizer,
+    Settings,
+    StructureVisualizer,
+    Warnings,
+} from 'chemiscope';
+
+type ChemiscopeMode = 'default' | 'structure' | 'map';
+
+interface ChemiscopeArgs {
+    dataset: Dataset;
+    height?: number;
+    width?: number | string;
+    selected_index?: number | undefined;
+    mode?: ChemiscopeMode;
+    settings?: Partial<Settings>;
+    no_info_panel?: boolean;
+}
 
 enum StreamlitValue {
     SELECTION = 'selected_id',
     SETTINGS = 'settings',
 }
 
-function getChemiscope(): ChemiscopeGlobal | null {
-    if (!window.Chemiscope) {
-        // eslint-disable-next-line no-console
-        console.error('window.Chemiscope not found.');
-        return null;
-    }
-    return window.Chemiscope;
-}
-
-function getVisualizerClass(mode: ChemiscopeMode, Chemiscope: ChemiscopeGlobal): VisualizerClass {
+function getVisualizerClass(mode: ChemiscopeMode) {
     switch (mode) {
         case 'structure':
-            return Chemiscope.StructureVisualizer;
+            return StructureVisualizer;
         case 'map':
-            return Chemiscope.MapVisualizer;
+            return MapVisualizer;
         default:
-            return Chemiscope.DefaultVisualizer;
+            return DefaultVisualizer;
     }
 }
 
 export class ChemiscopeComponent {
     private state = {
-        visualizer: null as ChemiscopeVisualizer | null,
+        visualizer: null as DefaultVisualizer | StructureVisualizer | MapVisualizer | null,
         indexer: null as EnvironmentIndexer | null,
         loaded: false,
 
@@ -62,11 +66,11 @@ export class ChemiscopeComponent {
         settingsFromPython: false,
 
         // Original callbacks
-        originalMapOnselect: null as SelectCallback,
-        originalMapActiveChanged: null as ActiveChangedCallback,
-        originalStructOnselect: null as SelectCallback,
-        originalStructActiveChanged: null as ActiveChangedCallback,
-        originalSelect: null as SelectCallback,
+        originalMapOnselect: null as ((indexes: Indexes) => void) | null,
+        originalMapActiveChanged: null as ((guid: GUID, indexes: Indexes) => void) | null,
+        originalStructOnselect: null as ((indexes: Indexes) => void) | null,
+        originalStructActiveChanged: null as ((guid: GUID, indexes: Indexes) => void) | null,
+        originalSelect: null as ((indexes: Indexes) => void) | null,
     };
 
     constructor() {
@@ -89,15 +93,8 @@ export class ChemiscopeComponent {
         const widthArg = args.width ?? 'stretch';
         const heightArg = typeof args.height === 'number' ? args.height : 550;
 
-        const Chemiscope = getChemiscope();
-        if (!Chemiscope) {
-            displayWarning('Chemiscope library not loaded. Check script imports.', 0);
-            return;
-        }
-
         if (!this.state.loaded) {
             this.handleFirstRender(
-                Chemiscope,
                 dataset,
                 mode,
                 args.settings || {},
@@ -112,7 +109,6 @@ export class ChemiscopeComponent {
     }
 
     private handleFirstRender(
-        Chemiscope: ChemiscopeGlobal,
         dataset: Dataset,
         mode: ChemiscopeMode,
         settings: Partial<Settings>,
@@ -133,7 +129,7 @@ export class ChemiscopeComponent {
         this.state.currentSelection = selectedIndex !== undefined ? selectedIndex : null;
         this.state.currentSettings = JSON.stringify(settings);
 
-        this.initializeVisualizer(Chemiscope, dataset, mode, settings, selectedIndex);
+        this.initializeVisualizer(dataset, mode, settings, selectedIndex);
     }
 
     private handleUpdate(args: ChemiscopeArgs, widthArg: string | number, heightArg: number): void {
@@ -295,7 +291,7 @@ export class ChemiscopeComponent {
 
     private getActiveStructureIndex(): number {
         const visualizer = this.state.visualizer;
-        if (!visualizer?.structure) {
+        if (!visualizer || !('structure' in visualizer) || !visualizer.structure) {
             return 0;
         }
 
@@ -309,7 +305,7 @@ export class ChemiscopeComponent {
         }
 
         // Map onselect
-        if (visualizer.map) {
+        if ('map' in visualizer && visualizer.map) {
             const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map) ?? null;
 
             this.state.originalMapOnselect = originalMapOnselect;
@@ -331,7 +327,7 @@ export class ChemiscopeComponent {
         }
 
         // Structure onselect - selection from structure viewer to Streamlit
-        if (visualizer.structure) {
+        if ('structure' in visualizer && visualizer.structure) {
             const originalStructOnselect =
                 visualizer.structure.onselect?.bind(visualizer.structure) ?? null;
             this.state.originalStructOnselect = originalStructOnselect;
@@ -355,7 +351,7 @@ export class ChemiscopeComponent {
         }
 
         // Info onchange
-        if (visualizer.info) {
+        if ('info' in visualizer && visualizer.info) {
             const originalSelect = visualizer.select.bind(visualizer);
             this.state.originalSelect = originalSelect;
 
@@ -372,7 +368,6 @@ export class ChemiscopeComponent {
     }
 
     private initializeVisualizer(
-        Chemiscope: ChemiscopeGlobal,
         dataset: Dataset,
         mode: ChemiscopeMode,
         settings: Partial<Settings>,
@@ -386,21 +381,21 @@ export class ChemiscopeComponent {
             console.warn('Could not attach settings to dataset:', String(e));
         }
 
-        const warnings = new Chemiscope.Warnings();
+        const warnings = new Warnings();
         warnings.addHandler((message: string, timeout: number = 4000) => {
             displayWarning(message, timeout);
         });
 
         toggleLoadingVisible(true);
 
-        const visualizerClass = getVisualizerClass(mode, Chemiscope);
+        const visualizerClass = getVisualizerClass(mode);
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         visualizerClass
             .load(CONFIG, dataset, warnings)
-            .then((v: ChemiscopeVisualizer) => {
+            .then((v) => {
                 this.state.visualizer = v;
-                this.state.indexer = new Chemiscope.EnvironmentIndexer(
+                this.state.indexer = new EnvironmentIndexer(
                     dataset.structures,
                     dataset.environments
                 );
