@@ -447,7 +447,9 @@ export class ViewersGrid {
     /**
      * Apply the given saved setting to all viewers in the grid.
      *
-     * The settings must be in viewer creation order.
+     * The settings must be in viewer creation order. If the list
+     * of settings contains only one item, then it is applied to
+     * the active viewer.
      *
      * @param settings settings for all viewers in the grid
      */
