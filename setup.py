@@ -49,9 +49,9 @@ NPM_BUILD_OUTPUT = [
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
     # streamlit component
-    "python/chemiscope/stcomponent/main.js",
-    "python/chemiscope/stcomponent/chemiscope.min.js",
-    "python/chemiscope/stcomponent/index.html",
+    "python/chemiscope/streamlit/main.js",
+    "python/chemiscope/streamlit/chemiscope.min.js",
+    "python/chemiscope/streamlit/index.html",
 ]
 
 
@@ -97,7 +97,7 @@ def build_streamlit_component(root):
     subprocess.run(["npm", "ci"], check=True, cwd=streamlit_dir)
     subprocess.run(["npm", "run", "build"], check=True, cwd=streamlit_dir)
 
-    stcomponent_dir = os.path.join(root, "python", "chemiscope", "stcomponent")
+    stcomponent_dir = os.path.join(root, "python", "chemiscope", "streamlit")
     os.makedirs(stcomponent_dir, exist_ok=True)
 
     for file in ["main.js", "index.html"]:
@@ -178,8 +178,7 @@ if __name__ == "__main__":
         package_data={
             "chemiscope": [
                 "sphinx/static/*",
-                "stcomponent/*",
-                "stcomponent/**/*",
+                "streamlit/**/*",
             ]
         },
         data_files=[

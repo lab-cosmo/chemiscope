@@ -1,3 +1,4 @@
+from . import streamlit  # noqa: F401
 from .explore import explore, get_featurizer, metatomic_featurizer  # noqa: F401
 from .input import (  # noqa: F401
     create_input,
@@ -6,7 +7,6 @@ from .input import (  # noqa: F401
     write_input,
 )
 from .jupyter import show, show_input  # noqa
-from .streamlit import viewer  # noqa: F401
 from .structures import (  # noqa: F401
     all_atomic_environments,
     arrow_from_vector,
