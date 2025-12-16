@@ -390,7 +390,6 @@ export class ChemiscopeComponent {
 
         const visualizerClass = getVisualizerClass(mode);
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         visualizerClass
             .load(CONFIG, dataset, warnings)
             .then((v) => {
