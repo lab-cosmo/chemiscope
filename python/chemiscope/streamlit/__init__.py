@@ -53,9 +53,9 @@ def viewer(
         )
 
     if _component_func is None:
-        build_path = os.path.join(os.path.dirname(__file__), "streamlit")
         _component_func = components.declare_component(
-            "chemiscope_viewer", path=build_path
+            "chemiscope_viewer",
+            path=os.path.relpath(os.path.dirname(__file__)),
         )
 
     if mode not in ("default", "structure", "map"):

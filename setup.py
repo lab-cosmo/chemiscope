@@ -39,7 +39,6 @@ NPM_BUILD_INPUT = [
     "webpack.config.ts",
     # streamlit component
     *glob.glob("python/streamlit/src/**/*", recursive=True),
-    *glob.glob("python/streamlit/*.*"),
 ]
 
 NPM_BUILD_OUTPUT = [
@@ -49,9 +48,8 @@ NPM_BUILD_OUTPUT = [
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
     # streamlit component
-    "python/chemiscope/streamlit/main.js",
-    "python/chemiscope/streamlit/chemiscope.min.js",
     "python/chemiscope/streamlit/index.html",
+    "python/chemiscope/streamlit/chemiscope-streamlit.min.js",
 ]
 
 
@@ -80,37 +78,6 @@ def needs_npm_build():
         # contains the pre-built extensions
 
     return last_output_modification_time < last_input_modification_time
-
-
-def build_streamlit_component(root):
-    streamlit_dir = os.path.join(root, "python", "streamlit")
-    streamlit_build_dir = os.path.join(streamlit_dir, "build")
-    os.makedirs(streamlit_build_dir, exist_ok=True)
-
-    src_lib = os.path.join(root, "dist", "chemiscope.min.js")
-    dst_lib = os.path.join(streamlit_build_dir, "chemiscope.min.js")
-    if os.path.exists(src_lib):
-        shutil.copyfile(src_lib, dst_lib)
-    else:
-        raise FileNotFoundError(f"Missing {src_lib}, cannot continue Streamlit build")
-
-    subprocess.run(["npm", "ci"], check=True, cwd=streamlit_dir)
-    subprocess.run(["npm", "run", "build"], check=True, cwd=streamlit_dir)
-
-    stcomponent_dir = os.path.join(root, "python", "chemiscope", "streamlit")
-    os.makedirs(stcomponent_dir, exist_ok=True)
-
-    for file in ["main.js", "index.html"]:
-        src_file = os.path.join(streamlit_build_dir, file)
-        dst_file = os.path.join(stcomponent_dir, file)
-        if os.path.exists(src_file):
-            shutil.copyfile(src_file, dst_file)
-        else:
-            warnings.warn(
-                f"Expected Streamlit build file not found: {src_file}", stacklevel=1
-            )
-
-    shutil.copyfile(src_lib, os.path.join(stcomponent_dir, "chemiscope.min.js"))
 
 
 def run_npm_build():
@@ -158,7 +125,19 @@ def run_npm_build():
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
 
-        build_streamlit_component(root)
+        subprocess.run("npm run build:streamlit", check=True, shell=True)
+
+        streamlit_output_dir = os.path.join("python", "chemiscope", "streamlit")
+        os.makedirs(streamlit_output_dir, exist_ok=True)
+        shutil.copyfile(
+            os.path.join("python", "streamlit", "build", "chemiscope-streamlit.min.js"),
+            os.path.join(streamlit_output_dir, "chemiscope-streamlit.min.js"),
+        )
+
+        shutil.copyfile(
+            os.path.join("python", "streamlit", "src", "index.html"),
+            os.path.join(streamlit_output_dir, "index.html"),
+        )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { WEBPACK_CONFIG } from '../webpack.config.js';
+import { WEBPACK_CONFIG } from '../webpack.config.mjs';
 
 const config = {
     ...WEBPACK_CONFIG,

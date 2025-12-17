@@ -8,6 +8,7 @@ import {
     getOrCreateRoot,
     toggleLoadingVisible,
 } from './dom-utils';
+
 import {
     Dataset,
     DefaultVisualizer,
@@ -18,7 +19,7 @@ import {
     Settings,
     StructureVisualizer,
     Warnings,
-} from 'chemiscope';
+} from '../../../src/index';
 
 type ChemiscopeMode = 'default' | 'structure' | 'map';
 

@@ -2,7 +2,6 @@ node_modules/
 dist/
 build/
 chemiscope_standalone.html
-python/chemiscope/streamlit
 
 .tox/
 __pycache__/
