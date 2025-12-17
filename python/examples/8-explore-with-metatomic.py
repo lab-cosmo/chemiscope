@@ -20,8 +20,6 @@ dependencies are required. You can install them with the following command:
 #
 # Firstly, we import necessary packages and read structures from the dataset.
 
-from typing import Dict, List, Optional
-
 import ase.io
 
 import chemiscope
@@ -80,6 +78,8 @@ chemiscope.explore(
 # Having computed these moments, the model will take a PCA of their values to
 # extract the three most relevant dimensions.
 
+from typing import Dict, List, Optional  # noqa: E402
+
 import torch  # noqa: E402
 from metatensor.torch import Labels, TensorBlock, TensorMap  # noqa: E402
 from metatomic.torch import (  # noqa: E402
@@ -113,21 +113,39 @@ class FeatureModel(torch.nn.Module):
         outputs: Dict[str, ModelOutput],
         selected_atoms: Optional[Labels] = None,
     ) -> Dict[str, TensorMap]:
-        if list(outputs.keys()) != ["features"]:
-            raise ValueError(
-                "this model can only compute 'features', but outputs contains other "
-                f"keys: {', '.join(outputs.keys())}"
-            )
+        results: Dict[str, TensorMap] = {}
 
-        if not outputs["features"].per_atom:
-            raise NotImplementedError("per structure features are not implemented")
+        for name, output in outputs.items():
+            # feature variant 1: moments + PCA
+            if name == "features":
+                results["features"] = self._compute_moment_features(systems, output)
+
+            # feature variant 2: cos/sin features of positions
+            elif name == "features/cos_sin":
+                results["features/cos_sin"] = self._compute_cos_features(
+                    systems, output
+                )
+
+            else:
+                raise ValueError(f"Unknown output '{name}' requested")
+
+        return results
+
+    def _compute_moment_features(
+        self, systems: List[System], output: ModelOutput
+    ) -> TensorMap:
+        if not output.per_atom:
+            raise NotImplementedError(
+                "per structure features are not implemented for variant 'features'"
+            )
 
         all_features = []
         all_samples = []
 
+        dtype = systems[0].positions.dtype
+        device = systems[0].positions.device
+
         for system_i, system in enumerate(systems):
-            dtype = system.positions.dtype
-            device = system.positions.device
             n_atoms = len(system.positions)
 
             # Initialize a tensor to store features for each atom
@@ -147,7 +165,7 @@ class FeatureModel(torch.nn.Module):
 
             # Create labels for each atom in the system
             system_atom_labels = torch.tensor(
-                [[system_i, atom_i] for atom_i in range(n_atoms)]
+                [[system_i, atom_i] for atom_i in range(n_atoms)], device=device
             )
             all_samples.append(system_atom_labels)
 
@@ -166,14 +184,62 @@ class FeatureModel(torch.nn.Module):
             components=[],
             properties=Labels(
                 names=["feature"],
-                values=torch.tensor([[0], [1], [2]]),
+                values=torch.tensor([[0], [1], [2]], device=device),
             ),
         )
-        return {
-            "features": TensorMap(
-                keys=Labels(names=["_"], values=torch.tensor([[0]])), blocks=[block]
+        return TensorMap(
+            keys=Labels(names=["_"], values=torch.tensor([[0]], device=device)),
+            blocks=[block],
+        )
+
+    def _compute_cos_features(
+        self, systems: List[System], output: ModelOutput
+    ) -> TensorMap:
+        all_features = []
+
+        device = systems[0].positions.device
+
+        for system in systems:
+            # Compute the norm of each atomic position
+            features = system.positions.norm(p=2, dim=1).unsqueeze(1).repeat(1, 2)
+
+            features[:, 0] = torch.cos(features[:, 0])
+            features[:, 1] = torch.sin(features[:, 1])
+
+            if not output.per_atom:
+                features = features.sum(dim=0, keepdim=True)
+
+            all_features.append(features)
+
+        if output.per_atom:
+            samples_list: List[List[int]] = []
+            for s, system in enumerate(systems):
+                for a in range(len(system)):
+                    samples_list.append([s, a])
+
+            samples = Labels(
+                ["system", "atom"],
+                torch.tensor(samples_list, device=device),
             )
-        }
+        else:
+            samples = Labels(
+                ["system"], torch.arange(len(systems), device=device).unsqueeze(1)
+            )
+
+        # Add metadata to the output
+        block = TensorBlock(
+            values=torch.cat(all_features, dim=0),
+            samples=samples.to(device),
+            components=[],
+            properties=Labels(
+                ["cos", "sin"], torch.tensor([[1, 0], [0, 1]], device=device)
+            ),
+        )
+
+        return TensorMap(
+            keys=Labels(["_"], torch.tensor([[0]], device=device)),
+            blocks=[block],
+        )
 
 
 # %%
@@ -199,7 +265,12 @@ metadata = ModelMetadata(
 
 capabilities = ModelCapabilities(
     outputs={
-        "features": ModelOutput(per_atom=True),
+        "features": ModelOutput(
+            per_atom=True, description="PCA of neighbor distance moments"
+        ),
+        "features/cos_sin": ModelOutput(
+            per_atom=True, description="Cosine and sin of atomic position norms"
+        ),
     },
     atomic_types=[6],
     length_unit="angstrom",
@@ -233,4 +304,25 @@ chemiscope.explore(
 # use in their visualization workflows
 
 mta_model.save("model-exported.pt")
+
 # %%
+#
+# Using variants of features
+# --------------------------
+#
+# The model we defined provides several feature outputs (variants). By default,
+# ``metatomic_featurizer`` uses the main ``"features"`` output. To use a different
+# variant, simply pass the desired variant name with the ``variant`` argument when
+# creating the featurizer.
+#
+# For example, to use the ``"features/cos_sin"`` variant:
+
+cos_sin_featurizer = chemiscope.metatomic_featurizer(
+    mta_model, variant="cos_sin", check_consistency=True
+)
+
+chemiscope.explore(
+    frames=frames,
+    featurizer=cos_sin_featurizer,
+    environments=chemiscope.all_atomic_environments(frames),
+)

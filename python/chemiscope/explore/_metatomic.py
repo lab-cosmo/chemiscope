@@ -21,7 +21,11 @@ class metatomic_featurizer:
         defaults to False.
     :param device: a torch device to use for the calculation. If ``None``, the function
         will use the options in model's ``supported_device`` attribute.
-    :param length_unit: Unit of length used in the structures
+    :param length_unit: Unit of length used in the structures.
+    :param variant: selects which feature output variant to use. By default, the main
+        ``"features"`` output is used. To choose another variant, provide its name
+        (e.g., ``"cos_sin"``), which will select the corresponding
+        ``"features/<variant>"`` output.
 
     :returns: a function that takes a list of frames and returns the features.
 
@@ -66,6 +70,7 @@ class metatomic_featurizer:
         check_consistency=None,
         device=None,
         length_unit="Angstrom",
+        variant=None,
     ):
         # Check if dependencies were installed
         global mta, mts, torch, vesin_metatomic
@@ -92,8 +97,10 @@ class metatomic_featurizer:
         self.check_consistency = check_consistency
 
         capabilities = self.model.capabilities()
-        if "features" not in capabilities.outputs:
-            raise ValueError("this model does not have a 'features' output")
+
+        self.feature_output_name = mta.pick_output(
+            "features", capabilities.outputs, variant
+        )
 
         if capabilities.dtype == "float32":
             self.dtype = torch.float32
@@ -115,9 +122,12 @@ class metatomic_featurizer:
 
         if environments is not None:
             capabilities = self.model.capabilities()
-            if not capabilities.outputs["features"].per_atom:
+            if not capabilities.outputs[self.feature_output_name].per_atom:
                 raise ValueError(
-                    "this model does not support per-atom features calculation"
+                    (
+                        "this model does not support per-atom features calculation for "
+                        f"'{self.feature_output_name}' output"
+                    )
                 )
 
             selected_atoms = mts.Labels(
@@ -131,7 +141,11 @@ class metatomic_featurizer:
 
         options = mta.ModelEvaluationOptions(
             length_unit=self.length_unit,
-            outputs={"features": mta.ModelOutput(per_atom=environments is not None)},
+            outputs={
+                self.feature_output_name: mta.ModelOutput(
+                    per_atom=environments is not None
+                )
+            },
             selected_atoms=selected_atoms,
         )
 
@@ -141,7 +155,9 @@ class metatomic_featurizer:
             check_consistency=self.check_consistency,
         )
 
-        return outputs["features"].block().values.detach().cpu().numpy()
+        # outputs should already be in the correct order because we passed
+        # `selected_atoms` to the model
+        return outputs[self.feature_output_name].block().values.detach().cpu().numpy()
 
 
 def _find_best_device(supported_devices, requested_device):
