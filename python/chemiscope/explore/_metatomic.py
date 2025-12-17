@@ -22,9 +22,10 @@ class metatomic_featurizer:
     :param device: a torch device to use for the calculation. If ``None``, the function
         will use the options in model's ``supported_device`` attribute.
     :param length_unit: Unit of length used in the structures.
-    :param variant: which variant of the feature output should be used. Variants are
-        identified by appending ``"features/<variant>"``. By default, ``"features"`` is
-        used.
+    :param variant: selects which feature output variant to use. By default, the main
+        ``"features"`` output is used. To choose another variant, provide its name
+        (e.g., ``"cos_sin"``), which will select the corresponding
+        ``"features/<variant>"`` output.
 
     :returns: a function that takes a list of frames and returns the features.
 
@@ -69,7 +70,7 @@ class metatomic_featurizer:
         check_consistency=None,
         device=None,
         length_unit="Angstrom",
-        variant="",
+        variant=None,
     ):
         # Check if dependencies were installed
         global mta, mts, torch, vesin_metatomic
@@ -94,15 +95,12 @@ class metatomic_featurizer:
 
         self.length_unit = length_unit
         self.check_consistency = check_consistency
-        self.feature_output_name = (
-            "features" if variant == "" else f"features/{variant}"
-        )
 
         capabilities = self.model.capabilities()
-        if self.feature_output_name not in capabilities.outputs:
-            raise ValueError(
-                f"this model does not have a '{self.feature_output_name}' output"
-            )
+
+        self.feature_output_name = mta.pick_output(
+            "features", capabilities.outputs, variant
+        )
 
         if capabilities.dtype == "float32":
             self.dtype = torch.float32
@@ -157,6 +155,8 @@ class metatomic_featurizer:
             check_consistency=self.check_consistency,
         )
 
+        # outputs should already be in the correct order because we passed
+        # `selected_atoms` to the model
         return outputs[self.feature_output_name].block().values.detach().cpu().numpy()
 
 
