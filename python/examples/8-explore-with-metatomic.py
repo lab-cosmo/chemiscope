@@ -310,9 +310,10 @@ mta_model.save("model-exported.pt")
 # Using variants of features
 # --------------------------
 #
-# The model we defined provides multiple feature outputs (variants). By default, the
-# ``metatomic_featurizer`` uses the main ``"features"`` output (the moments + PCA). You
-# can select a variant by passing the ``variant`` argument when creating the featurizer.
+# The model we defined provides several feature outputs (variants). By default,
+# ``metatomic_featurizer`` uses the main ``"features"`` output. To use a different
+# variant, simply pass the desired variant name with the ``variant`` argument when
+# creating the featurizer.
 #
 # For example, to use the ``"features/cos_sin"`` variant:
 
