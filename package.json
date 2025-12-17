@@ -26,10 +26,11 @@
     "url": "git+https://github.com/lab-cosmo/chemiscope.git"
   },
   "scripts": {
-    "test": "eslint src python/jupyter/src && prettier --check src python/jupyter/src",
-    "build": "rimraf dist && webpack --mode production --config webpack.config.js && npm run merge-dts",
+    "test": "eslint src python/jupyter/src python/streamlit/src && prettier --check src python/jupyter/src python/streamlit/src",
+    "build": "rimraf dist && webpack --mode production --config webpack.config.mjs && npm run merge-dts",
     "build:nbextension": "webpack --mode production --config python/webpack.config.nbextension.js",
     "build:labextension": "npm run build && jupyter labextension build .",
+    "build:streamlit": "webpack --mode production --config python/webpack.config.streamlit.mjs",
     "download-examples": "ts-node ./utils/download-examples.ts",
     "api-docs": "typedoc",
     "start": "npm run download-examples && webpack serve --mode development --static ./app",
@@ -75,6 +76,7 @@
     "raw-loader": "^4",
     "rimraf": "^6",
     "style-loader": "^4",
+    "streamlit-component-lib": "^2",
     "tmp": "^0.2",
     "ts-loader": "^9",
     "ts-node": "^10",

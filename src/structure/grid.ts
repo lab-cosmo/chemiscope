@@ -272,6 +272,13 @@ export class ViewersGrid {
     }
 
     /**
+     * Get the current active viewer index (position in the grid)
+     */
+    public get activeIndex(): number {
+        return this._getCurrentPositionInGrid(this._active);
+    }
+
+    /**
      * Get the current list of environments showed inside the different viewer
      */
     public pinned(): Indexes[] {
@@ -347,7 +354,13 @@ export class ViewersGrid {
 
         // If we removed the active marker, change the active one
         if (this._active === guid) {
-            this.setActive(getFirstKey(this._cellsData, guid));
+            const newActive = getFirstKey(this._cellsData, guid);
+
+            this.setActive(newActive);
+
+            const data = this._cellsData.get(newActive);
+            assert(data !== undefined);
+            this.activeChanged(newActive, data.current);
         }
 
         // remove HTML inserted by the viewer
@@ -434,12 +447,24 @@ export class ViewersGrid {
     /**
      * Apply the given saved setting to all viewers in the grid.
      *
-     * The settings must be in viewer creation order.
+     * The settings must be in viewer creation order. If the list
+     * of settings contains only one item, then it is applied to
+     * the active viewer.
      *
-     * @param settings settings for all viewers in the grid
+     * @param settings settings for either the active, or all
+     *      viewers in the grid
      */
     public applySettings(settings: Settings[]): void {
         if (settings.length === 0) {
+            return;
+        }
+
+        // applies only to the active cell
+        if (settings.length === 1) {
+            const data = this._cellsData.get(this._active);
+            if (data !== undefined) {
+                data.viewer.applySettings(settings[0]);
+            }
             return;
         }
 
@@ -568,6 +593,7 @@ export class ViewersGrid {
         await this._showInViewer(newGUID, data.current);
         newData.viewer.applySettings(data.viewer.saveSettings());
         this.setActive(newGUID);
+
         return newData;
     }
 
@@ -780,6 +806,7 @@ export class ViewersGrid {
                     return;
                 }
                 this.oncreate(this.active, data.color, data.current);
+                this.activeChanged(this.active, data.current);
             };
             cell.appendChild(duplicate);
 

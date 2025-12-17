@@ -10,6 +10,15 @@
     "lib": ["dom", "dom.iterable", "es6"],
     "skipLibCheck": true /* Skip type checking of declaration files */
   },
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "python/jupyter/src/**/*",
+    "python/streamlit/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+  ],
   "typedocOptions": {
     "entryPoints": ["src/index.ts"],
     "out": "docs/build/html/api/",
