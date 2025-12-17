@@ -102,6 +102,24 @@ need to install the required dependencies with:
 pip install chemiscope[explore]
 ```
 
+## streamlit component
+
+If you need more tight integration of the viewer and data processing in a web
+app settings, you can try a [streamlit](https://streamlit.io/) component based
+on chemiscope. Install the dependencies with
+
+```bash
+pip install chemiscope[streamlit]
+```
+
+and try a demo by cloning the repository and running the example
+
+```bash
+streamlit run python/streamlit/example/app.py
+```
+
+which should automatically launch a browser open at the page served on localhost.
+
 ## sphinx and sphinx-gallery integration
 
 Chemiscope provides also extensions for `sphinx` and `sphinx-gallery` to
