@@ -27,7 +27,7 @@ interface ChemiscopeArgs {
     dataset: Dataset;
     height?: number;
     width?: number | string;
-    selected_index?: number | undefined;
+    selected_index?: number;
     mode?: ChemiscopeMode;
     settings?: Partial<Settings>;
     no_info_panel?: boolean;
@@ -49,29 +49,52 @@ function getVisualizerClass(mode: ChemiscopeMode) {
     }
 }
 
+interface ChemiscopeComponentState {
+    visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
+    indexer?: EnvironmentIndexer;
+    loaded: boolean;
+
+    // Track selections
+    currentSelection?: number;
+    currentActive?: string;
+
+    // Track settings
+    currentSettings?: string;
+
+    // Track source of the selection events to avoid loops
+    selectionFromPython: boolean;
+    settingsFromPython: boolean;
+
+    // Original callbacks
+    originalMapOnselect?: (indexes: Indexes) => void;
+    originalMapActiveChanged?: (guid: GUID, indexes: Indexes) => void;
+    originalStructOnselect?: (indexes: Indexes) => void;
+    originalStructActiveChanged?: (guid: GUID, indexes: Indexes) => void;
+    originalSelect?: (indexes: Indexes) => void;
+}
+
 export class ChemiscopeComponent {
-    private state = {
-        visualizer: null as DefaultVisualizer | StructureVisualizer | MapVisualizer | null,
-        indexer: null as EnvironmentIndexer | null,
+    private state: ChemiscopeComponentState = {
+        visualizer: undefined,
+        indexer: undefined,
         loaded: false,
 
         // Track selections
-        currentSelection: null as number | null,
-        currentActive: null as string | null,
+        currentSelection: undefined,
+        currentActive: undefined,
 
         // Track settings
-        currentSettings: null as string | null,
-
+        currentSettings: undefined,
         // Track source of the selection events to avoid loops
         selectionFromPython: false,
         settingsFromPython: false,
 
         // Original callbacks
-        originalMapOnselect: null as ((indexes: Indexes) => void) | null,
-        originalMapActiveChanged: null as ((guid: GUID, indexes: Indexes) => void) | null,
-        originalStructOnselect: null as ((indexes: Indexes) => void) | null,
-        originalStructActiveChanged: null as ((guid: GUID, indexes: Indexes) => void) | null,
-        originalSelect: null as ((indexes: Indexes) => void) | null,
+        originalMapOnselect: undefined,
+        originalMapActiveChanged: undefined,
+        originalStructOnselect: undefined,
+        originalStructActiveChanged: undefined,
+        originalSelect: undefined,
     };
 
     constructor() {
@@ -127,7 +150,7 @@ export class ChemiscopeComponent {
         applyHeightPolicy(heightArg, root);
 
         // Store initial received values
-        this.state.currentSelection = selectedIndex !== undefined ? selectedIndex : null;
+        this.state.currentSelection = selectedIndex;
         this.state.currentSettings = JSON.stringify(settings);
 
         this.initializeVisualizer(dataset, mode, settings, selectedIndex);
@@ -143,7 +166,7 @@ export class ChemiscopeComponent {
         this.handleSelectionUpdate(args.selected_index);
     }
 
-    private handleSelectionUpdate(selectedIndex: number | null | undefined): void {
+    private handleSelectionUpdate(selectedIndex?: number): void {
         if (selectedIndex === undefined) {
             return;
         }
@@ -207,13 +230,13 @@ export class ChemiscopeComponent {
         };
     }
 
-    private applySelection(selectedIndex: number | null | undefined): void {
+    private applySelection(selectedIndex?: number): void {
         const { visualizer, indexer } = this.state;
         if (!visualizer || !indexer) {
             return;
         }
 
-        if (selectedIndex === null || selectedIndex === undefined) {
+        if (selectedIndex === undefined) {
             // Handle deselection if needed
             return;
         }
@@ -228,12 +251,12 @@ export class ChemiscopeComponent {
         this.state.originalSelect?.(indexes);
     }
 
-    private sendSelectionToStreamlit(indexes: Indexes | null): void {
+    private sendSelectionToStreamlit(indexes?: Indexes): void {
         if (this.state.selectionFromPython) {
             return;
         }
 
-        let structureIdToSend: number | null = null;
+        let structureIdToSend = undefined;
         if (indexes && typeof indexes.structure === 'number') {
             structureIdToSend = indexes.structure;
         }
@@ -307,7 +330,7 @@ export class ChemiscopeComponent {
 
         // Map onselect
         if ('map' in visualizer && visualizer.map) {
-            const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map) ?? null;
+            const originalMapOnselect = visualizer.map.onselect?.bind(visualizer.map) ?? undefined;
 
             this.state.originalMapOnselect = originalMapOnselect;
             visualizer.map.onselect = (indexes: Indexes) => {
@@ -330,7 +353,7 @@ export class ChemiscopeComponent {
         // Structure onselect - selection from structure viewer to Streamlit
         if ('structure' in visualizer && visualizer.structure) {
             const originalStructOnselect =
-                visualizer.structure.onselect?.bind(visualizer.structure) ?? null;
+                visualizer.structure.onselect?.bind(visualizer.structure) ?? undefined;
             this.state.originalStructOnselect = originalStructOnselect;
             visualizer.structure.onselect = (indexes: Indexes) => {
                 originalStructOnselect?.(indexes);
@@ -372,7 +395,7 @@ export class ChemiscopeComponent {
         dataset: Dataset,
         mode: ChemiscopeMode,
         settings: Partial<Settings>,
-        selectedIndex: number | null | undefined
+        selectedIndex?: number
     ): void {
         // Merge initial settings
         try {
@@ -403,7 +426,7 @@ export class ChemiscopeComponent {
                 this.setupBidirectionalSync();
 
                 // Apply initial selection if provided
-                if (selectedIndex !== null && selectedIndex !== undefined) {
+                if (selectedIndex !== undefined) {
                     this.state.selectionFromPython = true;
                     try {
                         this.state.currentSelection = selectedIndex;
