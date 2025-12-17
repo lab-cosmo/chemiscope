@@ -34,7 +34,7 @@ jobs:
       matrix:
         python-version: ['3.10', '3.13']
     env:
-        PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+      PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
     steps:
       - uses: actions/checkout@v4
         # we need the full history to be able to get the chemiscope version with

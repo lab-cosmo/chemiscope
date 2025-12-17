@@ -285,15 +285,20 @@ class DefaultVisualizer {
             this.warnings
         );
         this.info.onchange = (indexes) => {
-            this.map.select(indexes);
-            this.structure.show(indexes).catch((err: unknown) => {
-                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
-            });
+            this.select(indexes);
         };
 
         this.structure.delayChanged = (delay) => {
             this.info.playbackDelay = delay;
         };
+    }
+
+    public select(indexes: Indexes): void {
+        this.info.show(indexes);
+        this.map.select(indexes);
+        this.structure.show(indexes).catch((err: unknown) => {
+            this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+        });
     }
 
     private async _loadInitial(dataset: Dataset): Promise<void> {
@@ -625,14 +630,19 @@ class StructureVisualizer {
             this.warnings
         );
         this.info.onchange = (indexes) => {
-            this.structure.show(indexes).catch((err: unknown) => {
-                this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
-            });
+            this.select(indexes);
         };
 
         this.structure.delayChanged = (delay) => {
             this.info.playbackDelay = delay;
         };
+    }
+
+    public select(indexes: Indexes): void {
+        this.info.show(indexes);
+        this.structure.show(indexes).catch((err: unknown) => {
+            this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
+        });
     }
 
     private async _loadInitial(dataset: Dataset): Promise<void> {
@@ -841,8 +851,13 @@ class MapVisualizer {
             (warnings = this.warnings)
         );
         this.info.onchange = (indexes) => {
-            this.map.select(indexes);
+            this.select(indexes);
         };
+    }
+
+    public select(indexes: Indexes): void {
+        this.info.show(indexes);
+        this.map.select(indexes);
     }
 
     private _loadInitial(dataset: Dataset): void {

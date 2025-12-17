@@ -37,12 +37,19 @@ NPM_BUILD_INPUT = [
     # build configuration
     "tsconfig.json",
     "webpack.config.ts",
+    # streamlit component
+    *glob.glob("python/streamlit/src/**/*", recursive=True),
 ]
 
 NPM_BUILD_OUTPUT = [
+    # jupyter extensions
     "python/jupyter/nbextension/chemiscope.min.js",
     "python/jupyter/labextension/package.json",
+    # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
+    # streamlit component
+    "python/chemiscope/streamlit/index.html",
+    "python/chemiscope/streamlit/chemiscope-streamlit.min.js",
 ]
 
 
@@ -118,6 +125,20 @@ def run_npm_build():
 
         subprocess.run("npm run build:nbextension", check=True, shell=True)
 
+        subprocess.run("npm run build:streamlit", check=True, shell=True)
+
+        streamlit_output_dir = os.path.join("python", "chemiscope", "streamlit")
+        os.makedirs(streamlit_output_dir, exist_ok=True)
+        shutil.copyfile(
+            os.path.join("python", "streamlit", "build", "chemiscope-streamlit.min.js"),
+            os.path.join(streamlit_output_dir, "chemiscope-streamlit.min.js"),
+        )
+
+        shutil.copyfile(
+            os.path.join("python", "streamlit", "src", "index.html"),
+            os.path.join(streamlit_output_dir, "index.html"),
+        )
+
 
 if __name__ == "__main__":
     # we need to run npm build outside of the call to setup to be able to get
@@ -133,7 +154,12 @@ if __name__ == "__main__":
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
         },
-        package_data={"chemiscope": ["chemiscope/sphinx/static/*"]},
+        package_data={
+            "chemiscope": [
+                "sphinx/static/*",
+                "streamlit/**/*",
+            ]
+        },
         data_files=[
             # this is what `jupyter nbextension install --sys-prefix` does
             (
