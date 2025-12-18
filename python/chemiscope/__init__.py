@@ -13,7 +13,6 @@ from .structures import (  # noqa: F401
     ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
-    convert_stk_bonds_as_shapes,
     ellipsoid_from_tensor,
     extract_properties,
 )
