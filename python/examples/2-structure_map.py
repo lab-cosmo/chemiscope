@@ -79,7 +79,7 @@ chemiscope.write_input(
     "trajectory-pca.json.gz",
     # dataset metadata can also be included to provide a self-contained description
     # of the data, authors, and references
-    meta={
+    metadata={
         "name": "Allyl alcohol PCA map",
         "description": (
             "This dataset contains a PCA map of the C and O environments "

@@ -143,7 +143,7 @@ def main():
         structures=structures,
         properties=properties,
         environments=environments,
-        meta={
+        metadata={
             "name": args.name,
             "description": args.description,
             "authors": args.authors,

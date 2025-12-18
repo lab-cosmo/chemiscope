@@ -166,9 +166,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         class_name = self.__class__.__name__
         string_repr = ""
 
-        for key, value in json.loads(
-            self.value
-        ).items():  # loops over meta, structures, settings, ...
+        # loops over metadata, structures, settings, ...
+        for key, value in json.loads(self.value).items():
             value_repr = repr(value)
             truncated_repr = (
                 (value_repr[:max_length] + "...}")
@@ -273,9 +272,9 @@ def show_input(path, mode="default", warning_timeout=10000, cache_structures=Tru
         dict_input = json.load(path)
 
     try:
-        meta = dict_input["meta"]
+        metadata = dict_input["meta"]
 
-        if meta == {"name": " "}:
+        if metadata == {"name": " "}:
             has_metadata = False
         else:
             has_metadata = True
@@ -294,7 +293,7 @@ def show_input(path, mode="default", warning_timeout=10000, cache_structures=Tru
 def show(
     structures=None,
     properties=None,
-    meta=None,
+    metadata=None,
     environments=None,
     shapes=None,
     settings=None,
@@ -303,10 +302,11 @@ def show(
     cache_structures=True,
     *,
     frames=None,
+    meta=None,
 ):
     """
     Show the dataset defined by the given ``structures`` and ``properties`` (optionally
-    ``meta``, ``environments`` and ``shapes`` as well) using an embedded chemiscope
+    ``metadata``, ``environments`` and ``shapes`` as well) using an embedded chemiscope
     visualizer inside a Jupyter notebook. These parameters have the same meaning as in
     the :py:func:`chemiscope.create_input` function.
 
@@ -369,15 +369,25 @@ def show(
 
         structures = frames
 
+    if meta is not None:
+        warnings.warn(
+            "`meta` argument is deprecated, use `metadata` instead",
+            stacklevel=2,
+        )
+        if metadata is not None:
+            raise ValueError("cannot use both `metadata` and `meta` arguments")
+
+        metadata = meta
+
     if not (_is_running_in_notebook() or _is_running_in_sphinx_gallery()):
         warnings.warn(
             "chemiscope.show only works in a jupyter notebook or a sphinx build",
             stacklevel=2,
         )
 
-    has_metadata = meta is not None
+    has_metadata = metadata is not None
     if not has_metadata:
-        meta = {"name": " "}
+        metadata = {"name": " "}
 
     if mode == "default":
         widget_class = ChemiscopeWidget
@@ -403,7 +413,7 @@ def show(
     dict_input = create_input(
         structures=structures,
         properties=properties,
-        meta=meta,
+        metadata=metadata,
         environments=environments,
         shapes=shapes,
         settings=settings,

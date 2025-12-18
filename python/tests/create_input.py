@@ -15,36 +15,36 @@ TEST_STRUCTURE_STK = [stk.BuildingBlock("O=C=O")]
 class TestCreateInputMeta(unittest.TestCase):
     def test_meta(self):
         for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
-            meta = {}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "<unknown>")
             self.assertEqual(len(data["meta"].keys()), 1)
 
-            meta = {"name": ""}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": ""}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "<unknown>")
             self.assertEqual(len(data["meta"].keys()), 1)
 
-            meta = {"name": "foo"}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo"}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"].keys()), 1)
 
-            meta = {"name": "foo", "description": "bar"}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo", "description": "bar"}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(data["meta"]["description"], "bar")
             self.assertEqual(len(data["meta"].keys()), 2)
 
-            meta = {"name": "foo", "references": ["bar"]}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo", "references": ["bar"]}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["references"]), 1)
             self.assertEqual(data["meta"]["references"][0], "bar")
             self.assertEqual(len(data["meta"].keys()), 2)
 
-            meta = {"name": "foo", "authors": ["bar"]}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo", "authors": ["bar"]}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["authors"]), 1)
             self.assertEqual(data["meta"]["authors"][0], "bar")
@@ -52,9 +52,9 @@ class TestCreateInputMeta(unittest.TestCase):
 
     def test_meta_unknown_keys_warning(self):
         for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
-            meta = {"name": "foo", "what_is_this": "I don't know"}
+            metadata = {"name": "foo", "what_is_this": "I don't know"}
             with self.assertWarns(UserWarning) as cm:
-                data = create_input(structures=structure, meta=meta)
+                data = create_input(structures=structure, metadata=metadata)
 
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"].keys()), 1)
@@ -65,27 +65,27 @@ class TestCreateInputMeta(unittest.TestCase):
 
     def test_meta_conversions(self):
         for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
-            meta = {"name": 33}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": 33}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "33")
             self.assertEqual(len(data["meta"].keys()), 1)
 
-            meta = {"name": ["foo", "bar"], "description": False}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": ["foo", "bar"], "description": False}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "['foo', 'bar']")
             self.assertEqual(data["meta"]["description"], "False")
             self.assertEqual(len(data["meta"].keys()), 2)
 
-            meta = {"name": "foo", "references": (3, False)}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo", "references": (3, False)}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["references"]), 2)
             self.assertEqual(data["meta"]["references"][0], "3")
             self.assertEqual(data["meta"]["references"][1], "False")
             self.assertEqual(len(data["meta"].keys()), 2)
 
-            meta = {"name": "foo", "authors": (3, False)}
-            data = create_input(structures=structure, meta=meta)
+            metadata = {"name": "foo", "authors": (3, False)}
+            data = create_input(structures=structure, metadata=metadata)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["authors"]), 2)
             self.assertEqual(data["meta"]["authors"][0], "3")
