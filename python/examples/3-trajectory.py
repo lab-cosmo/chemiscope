@@ -46,7 +46,7 @@ chemiscope.write_input(
     "trajectory-md.json.gz",
     # dataset metadata can also be included, to provide a self-contained description
     # of the data, authors and references
-    meta={
+    metadata={
         "name": "Allyl alcohol MD trajectory.",
         "description": (
             "This dataset contains data from a DFTB+ trajectory of allyl alcohol."

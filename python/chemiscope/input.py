@@ -17,7 +17,7 @@ from .structures import structures_to_json
 
 def create_input(
     structures=None,
-    meta=None,
+    metadata=None,
     properties=None,
     environments=None,
     settings=None,
@@ -25,6 +25,7 @@ def create_input(
     parameters=None,
     *,
     frames=None,
+    meta=None,
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by the default
@@ -34,7 +35,7 @@ def create_input(
         compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
         `MDAnalysis.AtomGroup`_ objects.
 
-    :param dict meta: optional metadata of the dataset, see below
+    :param dict metadata: optional metadata of the dataset, see below
 
     :param dict properties: optional dictionary of properties, see below
 
@@ -60,12 +61,12 @@ def create_input(
     Dataset metadata
     ----------------
 
-    The dataset metadata should be given in the ``meta`` dictionary, the possible keys
-    are:
+    The dataset metadata should be given in the ``metadata`` dictionary, the possible
+    keys are:
 
     .. code-block:: python
 
-        meta = {
+        metadata = {
             # str, dataset name
             "name": "...",
             # str, dataset description
@@ -276,8 +277,18 @@ def create_input(
 
         structures = frames
 
+    if meta is not None:
+        warnings.warn(
+            "`meta` argument is deprecated, use `metadata` instead",
+            stacklevel=2,
+        )
+        if metadata is not None:
+            raise ValueError("cannot use both `metadata` and `meta` arguments")
+
+        metadata = meta
+
     data = {
-        "meta": _normalize_metadata(meta if meta is not None else {}),
+        "meta": _normalize_metadata(metadata if metadata is not None else {}),
     }
 
     if settings is not None:
@@ -454,7 +465,7 @@ def write_external_structures(
 def write_input(
     path,
     structures=None,
-    meta=None,
+    metadata=None,
     properties=None,
     environments=None,
     shapes=None,
@@ -462,6 +473,7 @@ def write_input(
     parameters=None,
     *,
     frames=None,
+    meta=None,
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and save it to
@@ -472,7 +484,7 @@ def write_input(
 
     :param list structures: list of atomic structures.
 
-    :param dict meta: optional metadata of the dataset
+    :param dict metadata: optional metadata of the dataset
 
     :param dict properties: optional dictionary of additional properties
 
@@ -585,12 +597,22 @@ def write_input(
 
         structures = frames
 
+    if meta is not None:
+        warnings.warn(
+            "`meta` argument is deprecated, use `metadata` instead",
+            stacklevel=2,
+        )
+        if metadata is not None:
+            raise ValueError("cannot use both `metadata` and `meta` arguments")
+
+        metadata = meta
+
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
     data = create_input(
         structures=structures,
-        meta=meta,
+        metadata=metadata,
         properties=properties,
         environments=environments,
         shapes=shapes,
@@ -772,23 +794,23 @@ def quick_settings(
     }
 
 
-def _normalize_metadata(meta):
+def _normalize_metadata(metadata):
     cleaned = {}
-    if "name" in meta and str(meta["name"]) != "":
-        cleaned["name"] = str(meta["name"])
+    if "name" in metadata and str(metadata["name"]) != "":
+        cleaned["name"] = str(metadata["name"])
     else:
         cleaned["name"] = "<unknown>"
 
-    if "description" in meta:
-        cleaned["description"] = str(meta["description"])
+    if "description" in metadata:
+        cleaned["description"] = str(metadata["description"])
 
-    if "authors" in meta:
-        cleaned["authors"] = list(map(str, meta["authors"]))
+    if "authors" in metadata:
+        cleaned["authors"] = list(map(str, metadata["authors"]))
 
-    if "references" in meta:
-        cleaned["references"] = list(map(str, meta["references"]))
+    if "references" in metadata:
+        cleaned["references"] = list(map(str, metadata["references"]))
 
-    for key in meta.keys():
+    for key in metadata.keys():
         if key not in ["name", "description", "authors", "references"]:
             warnings.warn(f"ignoring unexpected metadata: {key}", stacklevel=2)
 

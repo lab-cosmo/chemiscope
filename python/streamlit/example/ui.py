@@ -94,7 +94,9 @@ def process_uploaded_file(file_bytes: bytes, file_name: str):
     properties = chemiscope.extract_properties(structures)
 
     dataset = chemiscope.create_input(
-        structures=structures, properties=properties, meta={"name": file_name}
+        structures=structures,
+        properties=properties,
+        metadata={"name": file_name},
     )
 
     return dataset, structures

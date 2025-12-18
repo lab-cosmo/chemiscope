@@ -123,7 +123,7 @@ external_structures = chemiscope.write_external_structures(complx.atoms, "protei
 
 chemiscope.show(
     structures=external_structures,
-    meta={
+    metadata={
         "name": "Protein-Lipid Complex",
         "description": (
             "Conformational space of a protein-lipid complex featurized "

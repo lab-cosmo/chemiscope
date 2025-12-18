@@ -166,7 +166,7 @@ chemiscope.write_input(
     path="noshape_example.json.gz",
     structures=structures,
     properties=properties,
-    meta=dict(name="Standard stk bonding."),
+    metadata=dict(name="Standard stk bonding."),
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
@@ -367,7 +367,7 @@ chemiscope.write_input(
     path="shape_example.json.gz",
     structures=structures,
     properties=properties,
-    meta=dict(name="Added Pd-Pd bonds overlaid with the stk molecule."),
+    metadata=dict(name="Added Pd-Pd bonds overlaid with the stk molecule."),
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
