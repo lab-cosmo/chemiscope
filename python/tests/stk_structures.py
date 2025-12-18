@@ -5,14 +5,14 @@ import stk
 import chemiscope
 
 
-BASE_FRAME = stk.BuildingBlock("N#CC")
+BASE_STRUCTURE = stk.BuildingBlock("N#CC")
 
 
 class TestStructures(unittest.TestCase):
     """Conversion of structure data to chemiscope JSON"""
 
     def test_structures(self):
-        data = chemiscope.create_input(BASE_FRAME)
+        data = chemiscope.create_input(BASE_STRUCTURE)
         self.assertEqual(len(data["structures"]), 1)
         self.assertEqual(data["structures"][0]["size"], 6)
         self.assertEqual(
@@ -26,8 +26,8 @@ class TestStructures(unittest.TestCase):
 
         # Not testing cell because stk implementation does not have that yet.
 
-        frame = BASE_FRAME.clone()
-        data = chemiscope.create_input([frame])
+        structure = BASE_STRUCTURE.clone()
+        data = chemiscope.create_input([structure])
         self.assertEqual(len(data["structures"]), 1)
         self.assertEqual(data["structures"][0]["size"], 6)
         self.assertEqual(
@@ -45,7 +45,7 @@ class TestExtractProperties(unittest.TestCase):
 
     def test_exception(self):
         with self.assertRaises(RuntimeError):
-            chemiscope.extract_properties(BASE_FRAME)
+            chemiscope.extract_properties(BASE_STRUCTURE)
 
 
 if __name__ == "__main__":

@@ -51,22 +51,23 @@ def get_featurizer(name):
 
 
 def explore(
-    frames,
+    structures=None,
     featurizer=None,
     properties=None,
     environments=None,
     settings=None,
     mode="default",
     write_input=None,
-    **kwargs,
+    *,
+    frames=None,
 ):
     """
     Automatically generate an interactive Chemiscope visualization of atomic structures.
 
-    This function creates a low-dimensional representation of the input ``frames`` and
-    displays them using a Chemiscope widget. It supports automatic featurization with
-    `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom featurization
-    function.
+    This function creates a low-dimensional representation of the input ``structures``
+    and displays them using a Chemiscope widget. It supports automatic featurization
+    with `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom
+    featurization function.
 
     The default ``PETMADFeaturizer`` computes `PET-MAD
     <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
@@ -78,29 +79,29 @@ def explore(
     will be displayed on the map visualizer panel, as long as there are at least two of
     them.
 
-    Overall, the visualization can include: properties extracted from the frames,
+    Overall, the visualization can include: properties extracted from the structures,
     additional user-provided properties, features from either the built-in PET-MAD
     featurizer, with dimensionality reduction, or a custom user-provided featurization
     functions.
 
-    :param list frames: list of frames
+    :param list structures: list of structures
 
     :param featurizer: either string specifying a featurizer version (currently only
         'pet-mad-1.0'), a custom callable function, or None. Used to compute features
-        and perform dimensionality reduction on the ``frames``. For automatic default
-        option, use ``pet-mad-1.0``. The callable should take ``frames`` as the first
-        argument and ``environments`` as the second argument. The return value must be a
-        features array of shape ``(n_frames, n_features)`` if ``environments`` is
-        ``None``, or ``(n_environments, n_features)`` otherwise.
+        and perform dimensionality reduction on the ``structures``. For automatic
+        default option, use ``pet-mad-1.0``. The callable should take ``structures`` as
+        the first argument and ``environments`` as the second argument. The return value
+        must be a features array of shape ``(n_structures, n_features)`` if
+        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
-        with the atomic structures. Properties can be extracted from frames with
+        with the atomic structures. Properties can be extracted from structures with
         :py:func:`extract_properties` or manually defined by the user.
 
     :param environments: optional. List of environments (described as ``(structure id,
         center id, cutoff)``) to include when extracting the atomic properties. Can be
-        extracted from frames with :py:func:`all_atomic_environments` or manually
+        extracted from structures with :py:func:`all_atomic_environments` or manually
         defined.
 
     :param dict settings: optional dictionary of settings to use when displaying the
@@ -121,10 +122,6 @@ def explore(
         created by this function. Afterwards, the file can be loaded using
         :py:func:`chemiscope.read_input`
 
-    :param kwargs: additional keyword arguments passed to support backward
-        compatibility. Currently, only the deprecated ``featurize`` argument is
-        supported, which was renamed to ``featurizer``
-
     :return: a chemiscope widget for interactive visualization
 
     To use this function, additional dependencies are required, specifically, `pet_mad`_
@@ -140,9 +137,9 @@ def explore(
         pip install chemiscope[explore]
 
     Here is an example using this function with and without a featurizer function. The
-    frames are obtained by reading the structures from a file that `ase <ase-io_>`_ can
-    read, and performing Kernel PCA using `sklearn`_ on a descriptor computed with SOAP
-    using the `dscribe`_ library.
+    structures are obtained by reading the structures from a file that `ase <ase-io_>`_
+    can read, and performing Kernel PCA using `sklearn`_ on a descriptor computed with
+    SOAP using the `dscribe`_ library.
 
     .. code-block:: python
 
@@ -152,18 +149,18 @@ def explore(
         import sklearn.decomposition
 
         # Read the structures from the dataset
-        frames = ase.io.read("trajectory.xyz", ":")
+        structures = ase.io.read("trajectory.xyz", ":")
 
         # 1) Basic usage with default featurizer (PET-MAD featurization + Sketch-Map)
-        chemiscope.explore(frames, featurizer="pet-mad-1.0")
+        chemiscope.explore(structures, featurizer="pet-mad-1.0")
 
         # or
         featurizer = chemiscope.get_featurizer("pet-mad-1.0")
-        chemiscope.explore(frames, featurizer=featurizer)
+        chemiscope.explore(structures, featurizer=featurizer)
 
 
         # Define a function for dimensionality reduction
-        def soap_kpca_featurize(frames, environments):
+        def soap_kpca_featurize(structures, environments):
             if environments is not None:
                 raise ValueError("'environments' are not supported by this featurizer")
             # Compute descriptors
@@ -174,7 +171,7 @@ def explore(
                 l_max=6,
                 periodic=True,
             )
-            descriptors = soap.create(frames)
+            descriptors = soap.create(structures)
 
             # Apply KPCA
             kpca = sklearn.decomposition.KernelPCA(n_components=2, gamma=0.05)
@@ -184,7 +181,7 @@ def explore(
 
 
         # 2) Example with a custom featurizer function
-        chemiscope.explore(frames, featurizer=soap_kpca_featurize)
+        chemiscope.explore(structures, featurizer=soap_kpca_featurize)
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
@@ -195,27 +192,25 @@ def explore(
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html
     """
 
-    if "featurize" in kwargs:
-        if featurizer is not None:
-            raise ValueError(
-                "Both 'featurizer' and deprecated 'featurize' are provided"
-            )
-        featurizer = kwargs.pop("featurize")
+    if frames is not None:
         warnings.warn(
-            "'featurize' was deprecated and renamed to 'featurizer'. Explicitly set "
-            "this parameter to silence this warning",
-            stacklevel=1,
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
         )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
 
     merged_properties = {}
 
     if isinstance(featurizer, str):
         featurizer_instance = get_featurizer(featurizer)
-        merged_properties["features"] = featurizer_instance(frames, environments)
+        merged_properties["features"] = featurizer_instance(structures, environments)
     elif callable(featurizer):
-        merged_properties["features"] = featurizer(frames, environments)
+        merged_properties["features"] = featurizer(structures, environments)
 
-    merged_properties.update(extract_properties(frames, environments))
+    merged_properties.update(extract_properties(structures, environments))
 
     if properties is not None:
         merged_properties.update(properties)
@@ -230,7 +225,7 @@ def explore(
             )
 
     widget = show(
-        frames=frames,
+        structures=structures,
         properties=merged_properties,
         shapes=None,
         environments=environments,

@@ -27,7 +27,7 @@ class metatomic_featurizer:
         (e.g., ``"cos_sin"``), which will select the corresponding
         ``"features/<variant>"`` output.
 
-    :returns: a function that takes a list of frames and returns the features.
+    :returns: a function that takes a list of structures and returns the features.
 
     To use this function, additional dependencies are required. They can be installed
     with the following command:
@@ -38,7 +38,7 @@ class metatomic_featurizer:
 
     Here is an example using a pre-trained `metatomic`_ model, stored as a ``model.pt``
     file with the compiled extensions stored in the ``extensions/`` directory. The
-    frames are obtained by reading structures from a file that `ase <ase-io_>`_ can
+    structures are obtained by reading structures from a file that `ase <ase-io_>`_ can
     read.
 
     .. code-block:: python
@@ -46,15 +46,15 @@ class metatomic_featurizer:
         import chemiscope
         import ase.io
 
-        # Read the structures from the dataset frames =
-        ase.io.read("data/explore_c-gap-20u.xyz", ":")
+        # Read the structures from the dataset
+        structures = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
         # Provide model file ("model.pt") to `metatensor_featurizer`
         featurizer = chemiscope.metatensor_featurizer(
             "model.pt", extensions_directory="extensions"
         )
 
-        chemiscope.explore(frames, featurizer=featurizer)
+        chemiscope.explore(structures, featurizer=featurizer)
 
     For more examples, see the related :ref:`documentation
     <chemiscope-explore-metatomic>`.
@@ -110,8 +110,8 @@ class metatomic_featurizer:
 
         self.device = _find_best_device(capabilities.supported_devices, device)
 
-    def __call__(self, frames, environments):
-        systems = mta.systems_to_torch(frames)
+    def __call__(self, structures, environments):
+        systems = mta.systems_to_torch(structures)
         vesin_metatomic.compute_requested_neighbors(
             systems,
             self.length_unit,

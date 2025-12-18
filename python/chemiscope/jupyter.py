@@ -63,7 +63,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         structure_refs = []
         for i, structure in enumerate(structures):
             if "data" in structure:
-                raise ValueError("Mixed explicit and external structures in frames")
+                raise ValueError("Got a mix of explicit and external structures")
 
             cache_key = f"structure-{i}"
             self._structures_cache[cache_key] = structure
@@ -292,7 +292,7 @@ def show_input(path, mode="default", warning_timeout=10000, cache_structures=Tru
 
 
 def show(
-    frames=None,
+    structures=None,
     properties=None,
     meta=None,
     environments=None,
@@ -301,9 +301,11 @@ def show(
     mode="default",
     warning_timeout=10000,
     cache_structures=True,
+    *,
+    frames=None,
 ):
     """
-    Show the dataset defined by the given ``frames`` and ``properties`` (optionally
+    Show the dataset defined by the given ``structures`` and ``properties`` (optionally
     ``meta``, ``environments`` and ``shapes`` as well) using an embedded chemiscope
     visualizer inside a Jupyter notebook. These parameters have the same meaning as in
     the :py:func:`chemiscope.create_input` function.
@@ -311,11 +313,11 @@ def show(
     The ``mode`` keyword also allows overriding the default two-panels visualization to
     show only a structure panel (``mode = "structure"``) or the map panel (``mode =
     "map"``). These modes also make it possible to view a dataset for which properties
-    (or frames) are not available. The widget displays warning messages, that disappear
-    after the specified ``warning_timeout`` (in ms). Set to a negative value to disable
-    warnings, and to zero to make them persistent.
-    ``cache_structures`` is a flag determining whether to cache structure data on the
-    Python side to reduce the JScript memory footprint.
+    (or structures) are not available. The widget displays warning messages, that
+    disappear after the specified ``warning_timeout`` (in ms). Set to a negative value
+    to disable warnings, and to zero to make them persistent. ``cache_structures`` is a
+    flag determining whether to cache structure data on the Python side to reduce the
+    JScript memory footprint.
 
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
@@ -336,12 +338,12 @@ def show(
 
         pca = PCA(n_components=3)
 
-        frames = ase.io.read(...)
+        structures = ase.io.read(...)
         properties = {
             "PCA": pca.fit_transform(some_data),
         }
 
-        widget = chemiscope.show(frames, properties)
+        widget = chemiscope.show(structures, properties)
         # display the dataset in a chemiscope visualizer inside the notebook
         widget
         # ...
@@ -357,6 +359,16 @@ def show(
 
     .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
+
     if not (_is_running_in_notebook() or _is_running_in_sphinx_gallery()):
         warnings.warn(
             "chemiscope.show only works in a jupyter notebook or a sphinx build",
@@ -389,7 +401,7 @@ def show(
         )
 
     dict_input = create_input(
-        frames=frames,
+        structures=structures,
         properties=properties,
         meta=meta,
         environments=environments,

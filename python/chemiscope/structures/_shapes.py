@@ -21,38 +21,16 @@ def center_shape(shape):
     return new_shape
 
 
-def _oriented_circle(radius, vec, n_points=20):
-    """
-    Generates a circle in 3D centered at the origin ands oriented according to the
-    given vector
-    """
-    # makes sure the normal is unit
-    nvec = vec / np.linalg.norm(vec)
-
-    # Generate an arbitrary vector not collinear with n
-    if nvec[0] or nvec[1]:
-        vx = np.array([0, 0, 1])
-    else:
-        vx = np.array([0, 1, 0])
-
-    # generate orthogonal vectors in the plane defined by nvec
-    u = vx - np.dot(vx, nvec) * nvec
-    u = u / np.linalg.norm(u)
-    v = np.cross(nvec, u)
-
-    # generate n_points in the plane defined by nvec, centered at vec
-    angles = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
-    circle_points = radius * np.outer(np.cos(angles), u) + np.outer(np.sin(angles), v)
-
-    return circle_points
-
-
 def arrow_from_vector(
-    vec, scale=1.0, radius=0.1, head_radius_scale=1.75, head_length_scale=2.0
+    position,
+    scale=1.0,
+    radius=0.1,
+    head_radius_scale=1.75,
+    head_length_scale=2.0,
 ):
     """
-    Draws an arrow from the origin to the specified 3D position. Returns a custom shape
-    in the form required by the chemiscope input. Use `None` for the arrow shape
+    Draws an arrow from the origin to the specified 3D ``position``. Returns a custom
+    shape in the form required by the chemiscope input. Use ``None`` for the arrow shape
     parameters to leave them undefined (so that they can be specified in the global
     parameters).
 
@@ -64,7 +42,7 @@ def arrow_from_vector(
     :param head_length_scale: length of the arrow tip, relative to the stem radius
     """
 
-    data = {"vector": [v * scale for v in vec]}
+    data = {"vector": [v * scale for v in position]}
     if radius is not None:
         data["baseRadius"] = radius
     if head_radius_scale is not None:

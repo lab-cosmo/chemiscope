@@ -12,29 +12,27 @@ from pathlib import Path
 
 import numpy as np
 
-from .structures import frames_to_json
+from .structures import structures_to_json
 
 
 def create_input(
-    frames=None,
+    structures=None,
     meta=None,
     properties=None,
     environments=None,
     settings=None,
     shapes=None,
     parameters=None,
+    *,
+    frames=None,
 ):
     """
     Create a dictionary that can be saved to JSON using the format used by the default
     chemiscope visualizer.
 
-    :param list frames: list of atomic structures. These can be either `chemiscope`
+    :param list structures: list of atomic structures. These can be either `chemiscope`
         compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
-        `MDAnalysis.AtomGroup`_ objects. It is also possible to provide a list of
-        ``{"size": <n-atoms>, "data": <structure-path.json>}`` dictionaries,
-        referencing external `.json` files that will be loaded dynamically when
-        the dataset is opened in a chemiscope widget, as long as the files are
-        accessible from the viewer environment.
+        `MDAnalysis.AtomGroup`_ objects.
 
     :param dict meta: optional metadata of the dataset, see below
 
@@ -268,6 +266,16 @@ def create_input(
     .. _`MDAnalysis.AtomGroup`: https://docs.mdanalysis.org/2.9.0/documentation_pages/core/groups.html#MDAnalysis.core.groups.AtomGroup
     """
 
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
+
     data = {
         "meta": _normalize_metadata(meta if meta is not None else {}),
     }
@@ -285,15 +293,15 @@ def create_input(
     data["structures"] = []
     n_structures = None
 
-    if frames is not None:
-        data["structures"] = frames_to_json(frames)
+    if structures is not None:
+        data["structures"] = structures_to_json(structures)
         n_structures = len(data["structures"])
         n_atoms = sum(s["size"] for s in data["structures"])
 
     else:
         n_atoms = 0
 
-        # if frames are not given, we create a dataset with only properties.
+        # if structures are not given, we create a dataset with only properties.
         # In that case, all properties should be structure properties
         for name, value in properties.items():
             if not isinstance(value, dict):
@@ -310,7 +318,7 @@ def create_input(
                 if value["target"] != "structure":
                     raise ValueError(
                         f"property '{name}' has a non-structure target, "
-                        "which is not allowed if frames are not provided"
+                        "which is not allowed if structures are not provided"
                     )
 
                 n_structures = len(value["values"])
@@ -384,66 +392,76 @@ def create_input(
     return data
 
 
-def write_external_structures(frames, prefix="structure", compresslevel=5):
+def write_external_structures(
+    structures=None, prefix="structure", compresslevel=5, *, frames=None
+):
     """
-    Export a list of frames to external JSON structure files,
-    and returns a list of dictionaries that can be used to
-    create a chemiscope dataset that references them.
+    Export a list of structures to external JSON files, and returns a list of
+    dictionaries that can be used to create a chemiscope dataset that references them.
 
     .. code-block:: python
 
-        frames = ase.io.read("trajectory.xyz", ":")
-        user_frames = chemiscope.write_external_structures(
-            frames, prefix="my_structure"
+        structures = ase.io.read("trajectory.xyz", ":")
+
+        user_structures = chemiscope.write_external_structures(
+            structures, prefix="my_structure"
         )
-        write_input("chemiscope.json", frames=user_frames)
+
+        write_input("chemiscope.json", structures=user_structures)
 
 
-    :param list frames: list of atomic structures in a format that can
-            be understood by `chemiscope`.
-    :param str prefix: prefix to use for each generated JSON filename.
-        Files will be named like `{prefix}-0.json`, `{prefix}-1.json` etc.
-    :param str compresslevel: if zero, structures are saved
-        as uncompressed `.json` files, otherwise they are compressed
-        and saved as `.json.gz` files, according to the desired
-        compression level (1:fast, large file; 9: slow, small file).
+    :param list structures: list of atomic structures in a format that can be understood
+            by ``chemiscope``.
+    :param str prefix: prefix to use for each generated JSON filename. Files will be
+        named like ``{prefix}-0.json``, ``{prefix}-1.json`` etc.
+    :param str compresslevel: if zero, structures are saved as uncompressed ``.json``
+        files, otherwise they are compressed and saved as ``.json.gz`` files, according
+        to the desired compression level (1:fast, large file; 9: slow, small file).
 
-    :return: list of paths to JSON file as a list of
-        {"size":<natoms>, "data":<filename>} records that can be
-        used to create a concise chemiscope file that references
-        external files as structures
+    :return: list of paths to JSON file as a list of ``{"size":<natoms>,
+        "data":<filename>}`` records that can be used to create a concise chemiscope
+        file that references external files as structures
     """
-
-    json_frames = frames_to_json(frames)
-
-    if "data" in json_frames[0]:
-        raise ValueError(
-            "frames should be valid structures, but got external links instead"
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
         )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
 
-    user_frames = []
-    for i, frame in enumerate(json_frames):
+        structures = frames
+
+    json_structures = structures_to_json(structures)
+
+    if "data" in json_structures[0]:
+        raise ValueError("`structures` should contain data, got external links instead")
+
+    user_structures = []
+    for i, structure in enumerate(json_structures):
         if compresslevel > 0:
             path = f"{prefix}-{i}.json.gz"
             with gzip.open(path, "w", compresslevel) as file:
-                file.write(json.dumps(frame, indent=2).encode("utf8"))
+                file.write(json.dumps(structure, indent=2).encode("utf8"))
         else:
             path = f"{prefix}-{i}.json"
-            json.dump(frame, open(path, "w"), indent=2)
-        user_frames.append({"size": frame["size"], "data": path})
+            json.dump(structure, open(path, "w"), indent=2)
+        user_structures.append({"size": structure["size"], "data": path})
 
-    return user_frames
+    return user_structures
 
 
 def write_input(
     path,
-    frames,
+    structures=None,
     meta=None,
     properties=None,
     environments=None,
     shapes=None,
     settings=None,
     parameters=None,
+    *,
+    frames=None,
 ):
     """
     Create the input JSON file used by the default chemiscope visualizer, and save it to
@@ -452,8 +470,7 @@ def write_input(
     :param str | Path | file-like path: name of the file to use to save the json data.
         If it ends with '.gz', a gzip compressed file will be written
 
-    :param list frames: list of atomic structures. For now, only `ase.Atoms`_ objects
-        are supported
+    :param list structures: list of atomic structures.
 
     :param dict meta: optional metadata of the dataset
 
@@ -491,7 +508,7 @@ def write_input(
 
         import chemiscope
 
-        frames = ase.io.read("trajectory.xyz", ":")
+        structures = ase.io.read("trajectory.xyz", ":")
 
         # example property 1: list containing the energy of each structure,
         # from calculations performed beforehand
@@ -502,10 +519,10 @@ def write_input(
         X = np.array(...)
         pca = sklearn.decomposition.PCA(n_components=3).fit_transform(X)
 
-        # if the ASE frames also contain additional data, they can be easily
+        # if the ASE structures also contain additional data, they can be easily
         # extracted as a dictionary using a simple utility function
-        frame_properties = chemiscope.extract_properties(
-            frames,
+        structures_properties = chemiscope.extract_properties(
+            structures,
             only=["temperature", "classification"],
         )
 
@@ -542,15 +559,15 @@ def write_input(
         }
 
         # merge all properties together
-        properties.extend(frame_properties)
+        properties.extend(structures_properties)
         properties.extend(multidimensional_properties)
 
         chemiscope.write_input(
             path="chemiscope.json.gz",
-            frames=frames,
+            structures=structures,
             properties=properties,
             # This is required to display properties with `target: "atom"`
-            environments=chemiscope.all_atomic_environments(frames),
+            environments=chemiscope.all_atomic_environments(structures),
             # this is necessary to plot the multidimensional data
             parameters=multidimensional_parameters,
         )
@@ -558,12 +575,21 @@ def write_input(
     .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     """
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
 
     if not (path.endswith(".json") or path.endswith(".json.gz")):
         raise Exception("path should end with .json or .json.gz")
 
     data = create_input(
-        frames=frames,
+        structures=structures,
         meta=meta,
         properties=properties,
         environments=environments,

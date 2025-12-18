@@ -144,7 +144,7 @@ properties = {
 # bonding topology in stk.
 
 chemiscope.show(
-    frames=structures,
+    structures=structures,
     properties=properties,
     settings=chemiscope.quick_settings(
         x="aspheriticty",
@@ -164,7 +164,7 @@ chemiscope.show(
 
 chemiscope.write_input(
     path="noshape_example.json.gz",
-    frames=structures,
+    structures=structures,
     properties=properties,
     meta=dict(name="Standard stk bonding."),
     settings=chemiscope.quick_settings(
@@ -189,7 +189,7 @@ chemiscope.write_input(
 with tempfile.NamedTemporaryFile(suffix=".xyz") as tmpfile:
     structures[0].write(tmpfile.name)
     chemiscope.show(
-        frames=[ase.io.read(tmpfile.name)],
+        structures=[ase.io.read(tmpfile.name)],
         properties={i: [properties[i][0]] for i in properties},
         settings=chemiscope.quick_settings(
             x="aspheriticty",
@@ -328,7 +328,7 @@ structures_with_pd_pd_bonds = [
 # and radius of the bonds.
 
 shape_dict = chemiscope.convert_stk_bonds_as_shapes(
-    frames=structures_with_pd_pd_bonds,
+    structures=structures_with_pd_pd_bonds,
     bond_color="#fc5500",
     bond_radius=0.2,
 )
@@ -343,7 +343,7 @@ shape_string = ",".join(shape_dict.keys())
 # (`bonds` and `shape` on).
 
 chemiscope.show(
-    frames=structures,
+    structures=structures,
     properties=properties,
     shapes=shape_dict,
     settings=chemiscope.quick_settings(
@@ -365,7 +365,7 @@ chemiscope.show(
 
 chemiscope.write_input(
     path="shape_example.json.gz",
-    frames=structures,
+    structures=structures,
     properties=properties,
     meta=dict(name="Added Pd-Pd bonds overlaid with the stk molecule."),
     settings=chemiscope.quick_settings(

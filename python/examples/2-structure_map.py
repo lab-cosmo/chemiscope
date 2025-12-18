@@ -23,7 +23,7 @@ import chemiscope
 # %%
 # Load structures:
 
-frames = ase.io.read("data/trajectory.xyz", ":")
+structures = ase.io.read("data/trajectory.xyz", ":")
 
 # %%
 #
@@ -42,8 +42,8 @@ pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
 #
 # .. note::
 #
-#     if there are properties stored in the ASE frames, you can extract them with
-#     chemiscope.extract_properties(frames)
+#     if there are properties stored in the ASE structures, you can extract them with
+#     :py:func:`chemiscope.extract_properties`
 
 properties = {
     # concise definition of a property, with just an array and the type
@@ -53,7 +53,7 @@ properties = {
     # an example of the verbose definition
     "energy": {
         "target": "structure",
-        "values": [frame.info["dftb_energy_eV"] for frame in frames],
+        "values": [s.info["dftb_energy_eV"] for s in structures],
         "units": "eV",
         "description": "potential energy, computed with DFTB+",
     },
@@ -64,10 +64,10 @@ properties = {
 # Environment descriptors have only been computed for C and O atoms.
 environments = []
 cutoff = 4.0
-for frame_i, frame in enumerate(frames):
-    for atom_i, atom in enumerate(frame.numbers):
+for structure_i, structure in enumerate(structures):
+    for atom_i, atom in enumerate(structure.numbers):
         if atom == 6 or atom == 8:
-            environments.append((frame_i, atom_i, cutoff))
+            environments.append((structure_i, atom_i, cutoff))
 
 
 # %%
@@ -83,7 +83,7 @@ chemiscope.write_input(
         "name": "Allyl alcohol PCA map",
         "description": (
             "This dataset contains a PCA map of the C and O environments "
-            "from a few frames out of a MD simulation of allyl alcohol, C3H5OH."
+            "from a few structures out of a MD simulation of allyl alcohol, C3H5OH."
         ),
         "authors": ["The chemiscope developers"],
         "references": [
@@ -94,7 +94,7 @@ chemiscope.write_input(
             )
         ],
     },
-    frames=frames,
+    structures=structures,
     properties=properties,
     environments=environments,
     settings={  # these are reasonable settings for trajectory visualization

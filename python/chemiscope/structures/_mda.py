@@ -13,9 +13,9 @@ except ImportError:
 BIO_PROPERTIES = ["hetatom", "resids", "resnames", "chains"]
 
 
-def _mda_valid_structures(frames):
-    if HAVE_MDA and isinstance(frames, mda.AtomGroup):
-        return frames, True
+def _mda_valid_structures(structures):
+    if HAVE_MDA and isinstance(structures, mda.AtomGroup):
+        return structures, True
     else:
         return [], False
 
@@ -104,7 +104,7 @@ def _mda_get_atom_properties(ag) -> dict:
     if len(extra) != 0:
         warnings.warn(
             "the following per-atom properties are only defined for a subset "
-            f"of frames: {list(sorted(extra))}; they will be ignored",
+            f"of structures: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
 
@@ -166,7 +166,7 @@ def _mda_extract_properties(ag, only=None, environments=None):
 def _mda_all_atomic_environments(ag, cutoff):
     "Extract all atomic environments out of a set of MDAnalysis AtomGroup objects"
     environments = []
-    for structure_i, frame in enumerate(ag.universe.trajectory):
-        for atom_i in range(len(frame)):
+    for structure_i, structure in enumerate(ag.universe.trajectory):
+        for atom_i in range(len(structure)):
             environments.append((structure_i, atom_i, cutoff))
     return environments
