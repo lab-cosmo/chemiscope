@@ -41,10 +41,6 @@ which contains references to
 - `Chemiscope.EnvironmentInfo <EnvironmentInfo_>`_
 - `Chemiscope.EnvironmentIndexer <EnvironmentIndexer_>`_
 
-Partial builds are also available, in particular ``molecule-viewer.min.js``
-which only contains code related to `Chemiscope.MoleculeViewer
-<MoleculeViewer_>`_, making the minified JavaScript file much smaller. Other
-partial builds containing only part of chemiscope can be added upon request.
 
 .. _DefaultVisualizer: api/classes/DefaultVisualizer.html
 .. _addWarningHandler: api/index.html#addWarningHandler

@@ -43,7 +43,6 @@ const config = (env, argv) => {
         entry: {
             chemiscope: './src/index.ts',
             'chemiscope-app': './app/app.ts',
-            'molecule-viewer': './src/structure/viewer.ts',
         },
         output: {
             filename: '[name].min.js',

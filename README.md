@@ -81,8 +81,7 @@ cd chemiscope
 npm install
 npm run build
 
-# Include dist/chemiscope.min.js or dist/molecule-viewer.min.js
-# in your own web page
+# Include dist/chemiscope.min.js in your own web page
 ```
 
 See [app/] or the [documentation](https://chemiscope.org/docs/embedding.html)

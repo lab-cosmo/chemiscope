@@ -12,7 +12,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     env:
-        PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+      PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
     steps:
       - uses: actions/checkout@v4
         # we need the full history to be able to get the chemiscope version with
@@ -61,6 +61,5 @@ jobs:
           files: |
             dist/chemiscope.d.ts
             dist/chemiscope.min.js
-            dist/molecule-viewer.min.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
