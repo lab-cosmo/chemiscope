@@ -149,7 +149,6 @@ chemiscope.show(
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
-        color="",
         structure_settings={
             "atoms": True,
             "bonds": True,
@@ -170,7 +169,6 @@ chemiscope.write_input(
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
-        color="",
         structure_settings={
             "atoms": True,
             "bonds": True,
@@ -194,7 +192,6 @@ with tempfile.NamedTemporaryFile(suffix=".xyz") as tmpfile:
         settings=chemiscope.quick_settings(
             x="aspheriticty",
             y="uffenergy",
-            color="",
             structure_settings={
                 "atoms": True,
                 "bonds": True,
@@ -349,7 +346,6 @@ chemiscope.show(
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
-        color="",
         structure_settings={
             "shape": shape_string,
             "atoms": True,
@@ -371,7 +367,6 @@ chemiscope.write_input(
     settings=chemiscope.quick_settings(
         x="aspheriticty",
         y="uffenergy",
-        color="",
         structure_settings={
             "shape": shape_string,
             "atoms": True,

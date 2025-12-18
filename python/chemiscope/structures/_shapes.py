@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 
@@ -23,10 +25,11 @@ def center_shape(shape):
 
 def arrow_from_vector(
     position,
-    scale=1.0,
-    radius=0.1,
-    head_radius_scale=1.75,
-    head_length_scale=2.0,
+    *,
+    scale: Optional[float] = 1.0,
+    radius: Optional[float] = 0.1,
+    head_radius_scale: Optional[float] = 1.75,
+    head_length_scale: Optional[float] = 2.0,
 ):
     """
     Draws an arrow from the origin to the specified 3D ``position``. Returns a custom
@@ -53,7 +56,12 @@ def arrow_from_vector(
     return data
 
 
-def ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False):
+def ellipsoid_from_tensor(
+    tensor,
+    *,
+    scale=1.0,
+    force_positive=False,
+):
     """
     Returns an ellipsoid (semiaxes + quaternion) representation of a positive definite
     tensor (e.g. a polarizability), in the form required by the chemiscope input.
