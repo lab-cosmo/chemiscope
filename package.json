@@ -14,9 +14,6 @@
     "dist/chemiscope.d.ts",
     "dist/chemiscope.min.js",
     "dist/chemiscope.min.js.LICENSE.txt",
-    "dist/molecule-viewer.d.ts",
-    "dist/molecule-viewer.min.js",
-    "dist/molecule-viewer.min.js.LICENSE.txt",
     "src",
     "webpack.config.ts",
     "tsconfig.json"
@@ -34,9 +31,7 @@
     "download-examples": "ts-node ./utils/download-examples.ts",
     "api-docs": "typedoc",
     "start": "npm run download-examples && webpack serve --mode development --static ./app",
-    "chemiscope-dts": "dts-bundle-generator --no-check -o dist/chemiscope.d.ts dist/src/index.d.ts",
-    "molecule-viewer-dts": "dts-bundle-generator --no-check -o dist/molecule-viewer.d.ts dist/src/structure/viewer.d.ts",
-    "merge-dts": "npm run chemiscope-dts && npm run molecule-viewer-dts",
+    "merge-dts": "dts-bundle-generator --no-check -o dist/chemiscope.d.ts dist/src/index.d.ts",
     "prepublishOnly": "npm run build",
     "pretty": "prettier --write src"
   },
