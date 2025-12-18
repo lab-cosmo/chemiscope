@@ -1,14 +1,14 @@
 import os
 
-from .directive import ChemiscopeDirective
-from .nodes import (
+from ._directive import ChemiscopeDirective
+from ._nodes import (
     chemiscope,
     depart_chemiscope_html,
     depart_chemiscope_latex,
     visit_chemiscope_html,
     visit_chemiscope_latex,
 )
-from .scraper import ChemiscopeScraper  # noqa: F401
+from ._scraper import ChemiscopeScraper  # noqa: F401
 
 
 def setup(app):

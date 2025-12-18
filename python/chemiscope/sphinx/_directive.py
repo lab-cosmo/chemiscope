@@ -3,8 +3,8 @@ import os
 
 from docutils.parsers.rst import Directive
 
-from .nodes import chemiscope
-from .utils import copy_external_structures, copy_file
+from ._nodes import chemiscope
+from ._utils import copy_external_structures, copy_file
 
 
 class ChemiscopeDirective(Directive):

@@ -3,8 +3,8 @@ import warnings
 
 from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
 
-from .file_path_iterator import FilePathIterator
-from .utils import copy_external_structures
+from ._file_path_iterator import FilePathIterator
+from ._utils import copy_external_structures
 
 
 warnings.filterwarnings(
