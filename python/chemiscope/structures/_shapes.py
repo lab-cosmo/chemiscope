@@ -3,26 +3,6 @@ from typing import Optional
 import numpy as np
 
 
-def center_shape(shape):
-    """
-    Takes a dictionary that describes a custom shape, and centers it, subtracting the
-    mean of the vertex positions. Returns a shallow copy, with a new list for the
-    vertices.
-
-    :param shape: A dictionary describing a custom shape
-    """
-
-    if shape["kind"] != "custom":
-        raise ValueError("Only `custom` shapes can be centered")
-
-    new_shape = {k: shape[k] for k in shape}
-    points = np.array(shape["vertices"])
-    points -= points.mean(axis=0)
-    new_shape["vertices"] = points.tolist()
-
-    return new_shape
-
-
 def arrow_from_vector(
     position,
     *,
