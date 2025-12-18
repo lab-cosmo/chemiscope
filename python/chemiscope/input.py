@@ -17,13 +17,14 @@ from .structures import structures_to_json
 
 def create_input(
     structures=None,
+    *,
     metadata=None,
     properties=None,
     environments=None,
     settings=None,
     shapes=None,
     parameters=None,
-    *,
+    # for backward compatibility
     frames=None,
     meta=None,
 ):
@@ -404,7 +405,12 @@ def create_input(
 
 
 def write_external_structures(
-    structures=None, prefix="structure", compresslevel=5, *, frames=None
+    structures=None,
+    *,
+    prefix="structure",
+    compresslevel=5,
+    # for backward compatibility
+    frames=None,
 ):
     """
     Export a list of structures to external JSON files, and returns a list of
@@ -465,13 +471,14 @@ def write_external_structures(
 def write_input(
     path,
     structures=None,
+    *,
     metadata=None,
     properties=None,
     environments=None,
     shapes=None,
     settings=None,
     parameters=None,
-    *,
+    # for backward compatibility
     frames=None,
     meta=None,
 ):
@@ -677,6 +684,7 @@ def _normalize_environments(environments, structures):
 
 
 def quick_settings(
+    *,
     x=None,
     y=None,
     z=None,
@@ -689,7 +697,6 @@ def quick_settings(
     target="structure",
     map_settings=None,
     structure_settings=None,
-    **kwargs,
 ):
     """A utility function to return a ``settings`` dictionary with the most basic
     options for a chemiscope viewer (e.g. what to show on the axes).
@@ -732,8 +739,6 @@ def quick_settings(
     :param dict structure_settings: Additional settings for the structure viewer
         (following the chemiscope settings schema). It will override the settings
         specied from other parameters, e.g., ``structure_color``
-
-    :param kwargs: for backward compatibility to accept deprecated ``color`` property
     """
 
     if target not in ["atom", "structure"]:
@@ -746,13 +751,6 @@ def quick_settings(
         raise TypeError("map_settings must be a dict if specified")
     if structure_settings is not None and not isinstance(structure_settings, dict):
         raise TypeError("structure_settings must be a dict if specified")
-
-    if "color" in kwargs:
-        warnings.warn(
-            "'color' property is deprecated and replaced with 'map_color'",
-            stacklevel=1,
-        )
-        map_color = kwargs["color"]
 
     computed_map_settings = {"joinPoints": trajectory}
 

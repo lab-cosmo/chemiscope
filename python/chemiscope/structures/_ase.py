@@ -1,5 +1,4 @@
 import warnings
-from inspect import signature
 
 import numpy as np
 
@@ -340,7 +339,17 @@ def _extract_key_from_ase(structure, key, target=None):
     return values, target
 
 
-def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
+def ase_vectors_to_arrows(
+    structures=None,
+    key=None,
+    target=None,
+    *,
+    scale=1.0,
+    radius=0.1,
+    head_radius_scale=1.75,
+    head_length_scale=2.0,
+    frames=None,
+):
     """
     Extract a vectorial atom property from a list of ``ase.Atoms``, and returns
     a list of arrow shapes. Besides the specific parameters it also accepts the same
@@ -353,7 +362,6 @@ def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
     """
-    frames = kwargs.pop("frames", None)
     if frames is not None:
         warnings.warn(
             "`frames` parameter is deprecated, please use `structures` instead",
@@ -374,20 +382,9 @@ def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
 
     # set shape parameters globally to reduce size of the arrow list
     globs = {}
-    defaults = signature(arrow_from_vector).parameters
-    globs["baseRadius"] = (
-        kwargs.pop("radius") if ("radius" in kwargs) else defaults["radius"].default
-    )
-    globs["headRadius"] = globs["baseRadius"] * (
-        kwargs.pop("head_radius_scale")
-        if ("head_radius_scale" in kwargs)
-        else defaults["head_radius_scale"].default
-    )
-    globs["headLength"] = globs["baseRadius"] * (
-        kwargs.pop("head_length_scale")
-        if ("head_length_scale" in kwargs)
-        else defaults["head_length_scale"].default
-    )
+    globs["baseRadius"] = radius
+    globs["headRadius"] = globs["baseRadius"] * head_radius_scale
+    globs["headLength"] = globs["baseRadius"] * head_length_scale
 
     for structure in structures:
         values, target = _extract_key_from_ase(structure, key, target)
@@ -401,7 +398,11 @@ def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
         # makes a list of arrows to visualize the property
         vectors = vectors + [
             arrow_from_vector(
-                v, radius=None, head_radius_scale=None, head_length_scale=None, **kwargs
+                v,
+                scale=scale,
+                radius=None,
+                head_radius_scale=None,
+                head_length_scale=None,
             )
             for v in values
         ]
@@ -412,7 +413,15 @@ def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
         return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def ase_tensors_to_ellipsoids(structures=None, key=None, target=None, **kwargs):
+def ase_tensors_to_ellipsoids(
+    structures=None,
+    key=None,
+    target=None,
+    *,
+    scale=1.0,
+    force_positive=False,
+    frames=None,
+):
     """
     Extract a 2-tensor atom property from a list of ``ase.Atoms``, and returns a list of
     ellipsoids shapes. Besides the specific parameters it also accepts the same
@@ -424,9 +433,11 @@ def ase_tensors_to_ellipsoids(structures=None, key=None, target=None, **kwargs):
        xx,yy,zz,xy,xz,yz
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
+
+    :param scale: see :py:func:`ellipsoid_from_tensor`
+    :param force_positive: see :py:func:`ellipsoid_from_tensor`
     """
 
-    frames = kwargs.pop("frames", None)
     if frames is not None:
         warnings.warn(
             "`frames` parameter is deprecated, please use `structures` instead",
@@ -455,7 +466,10 @@ def ase_tensors_to_ellipsoids(structures=None, key=None, target=None, **kwargs):
             )
 
         # makes a list of ellipsoids to visualize the property
-        tensors = tensors + [ellipsoid_from_tensor(v, **kwargs) for v in values]
+        tensors = tensors + [
+            ellipsoid_from_tensor(v, scale=scale, force_positive=force_positive)
+            for v in values
+        ]
 
     if target == "atom":
         return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})

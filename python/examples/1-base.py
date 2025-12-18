@@ -46,7 +46,7 @@ chemiscope.show(
     # it is possible to set all visualization parameters with a dictionary format.
     # this is a shortcut for the most basic ones
     settings=chemiscope.quick_settings(
-        x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
+        x="ccsd_pol[1]", y="ccsd_pol[2]", map_color="dipole_ccsd[1]"
     ),
 )
 
@@ -68,7 +68,7 @@ chemiscope.write_input(
     ),
     metadata=dict(name="Dipole and polarizability"),
     settings=chemiscope.quick_settings(
-        x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
+        x="ccsd_pol[1]", y="ccsd_pol[2]", map_color="dipole_ccsd[1]"
     ),
 )
 

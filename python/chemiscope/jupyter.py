@@ -209,7 +209,7 @@ class MapWidget(ChemiscopeWidgetBase):
         super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
-def show_input(path, mode="default", warning_timeout=10000, cache_structures=True):
+def show_input(path, *, mode="default", warning_timeout=10000, cache_structures=True):
     """
     Loads and shows the chemiscope input in ``path``.
 
@@ -291,6 +291,7 @@ def show_input(path, mode="default", warning_timeout=10000, cache_structures=Tru
 
 
 def show(
+    *,
     structures=None,
     properties=None,
     metadata=None,
@@ -300,7 +301,7 @@ def show(
     mode="default",
     warning_timeout=10000,
     cache_structures=True,
-    *,
+    # for backward compatibility
     frames=None,
     meta=None,
 ):

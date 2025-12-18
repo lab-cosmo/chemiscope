@@ -118,7 +118,7 @@ def structures_to_json(structures):
     return json_data
 
 
-def extract_properties(structures=None, only=None, environments=None, *, frames=None):
+def extract_properties(structures=None, only=None, *, environments=None, frames=None):
     """
     Extract properties defined in the ``structures`` in a chemiscope-compatible format.
 
