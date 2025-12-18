@@ -102,10 +102,8 @@ structures = [
                     ],
                 ),
             ),
-            # Ensure that bonds between the
-            # GenericFunctionalGroups of the ligand and the
-            # SingleAtom functional groups of the metal are
-            # dative.
+            # Ensure that bonds between the GenericFunctionalGroups of the ligand and
+            # the SingleAtom functional groups of the metal are dative.
             reaction_factory=stk.DativeReactionFactory(
                 stk.GenericReactionFactory(
                     bond_orders={
@@ -202,16 +200,14 @@ with tempfile.NamedTemporaryFile(suffix=".xyz") as tmpfile:
 
 # %%
 #
-# Showing custom bonds beyond the existing topology
-# ++++++++++++++++++++++++++++++++++++++++++++++++++
+# Showing custom bonds beyond the existing topology using shapes
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-# With the custom bond features, we can now overlay connections of interest on
-# the structure and existing topology by using, the
-# `convert_stk_bonds_to_shapes` function.
-# For example, here, we show the cage topology graph of metal-organic cages
-# as defined by the metal atoms only. We start by building a series of
-# Pd_nL_n2 metal-organic cages, with n=2,3,4,6 and the same organic ligand,
-# using stk.
+# It is also possible to use chemiscope shapes to show custom bonds defined by the user,
+# independently of the bonding topology defined in stk. For example, we'll show the
+# cage topology graph of metal-organic cages as defined by the metal atoms only. We
+# start by building a series of Pd_nL_n2 metal-organic cages, with n=2,3,4,6 and the
+# same organic ligand, using stk.
 
 
 structures = [
@@ -291,44 +287,37 @@ metal_atoms = [
 
 fake_bonds = [
     # Combinations of those atoms, this does not filter for nearest neighbors.
-    [(a1id, a2id) for a1id, a2id in it.combinations(metal_atoms[i], 2)]
-    for i, molecule in enumerate(structures)
+    [(a1id, a2id) for a1id, a2id in it.combinations(atoms, 2)]
+    for atoms in metal_atoms
 ]
+max_bonds = max(len(bonds) for bonds in fake_bonds)
 
-# %%
-#
-# With these fake bonds, we can create a new list of stk structures only having
-# the fake bonds, to extract the shape dictionary defined by only the fake
-# bonds. Note that these fake bonds could be arbitrarily defined, as long as
-# they map to the atoms in the original structure.
+shape_dict = {}
+for bond_i in range(max_bonds):
+    shape_dict[f"bond-{bond_i}"] = {
+        "kind": "cylinder",
+        "parameters": {
+            "global": {"color": "#fc5500", "radius": 0.2},
+            "structure": [],
+        },
+    }
 
-structures_with_pd_pd_bonds = [
-    stk.BuildingBlock.init(
-        atoms=struct.get_atoms(),
-        # Only including fake bonds.
-        bonds=tuple(
-            stk.Bond(
-                atom1=next(struct.get_atoms(a1id)),
-                atom2=next(struct.get_atoms(a2id)),
-                order=1,
-            )
-            for a1id, a2id in fake_bonds[i]
-        ),
-        position_matrix=struct.get_position_matrix(),
-    )
-    for i, struct in enumerate(structures)
-]
+for i, molecule in enumerate(structures):
+    positions = molecule.get_position_matrix()
+    for bond_i, (atom_i, atom_j) in enumerate(fake_bonds[i]):
+        vector = positions[atom_j] - positions[atom_i]
+        shape_dict[f"bond-{bond_i}"]["parameters"]["structure"].append(
+            {
+                "position": positions[atom_i].tolist(),
+                "vector": vector.tolist(),
+            }
+        )
 
-# %%
-#
-# Another feature of the shape dictionary is that the user can alter the color
-# and radius of the bonds.
-
-shape_dict = chemiscope.convert_stk_bonds_as_shapes(
-    structures=structures_with_pd_pd_bonds,
-    bond_color="#fc5500",
-    bond_radius=0.2,
-)
+    # Add empty bonds if needed to have the same number of bonds for each structure.
+    for bond_i in range(len(fake_bonds[i]), max_bonds):
+        shape_dict[f"bond-{bond_i}"]["parameters"]["structure"].append(
+            {"position": [0.0, 0.0, 0.0], "vector": [0.0, 0.0, 0.0]}
+        )
 
 # Write the shape string for settings to turn them on automatically.
 shape_string = ",".join(shape_dict.keys())

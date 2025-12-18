@@ -24,7 +24,6 @@ from ._stk import (  # noqa: F401
     _stk_all_atomic_environments,
     _stk_to_json,
     _stk_valid_structures,
-    convert_stk_bonds_as_shapes,
 )
 
 
