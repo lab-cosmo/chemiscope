@@ -18,7 +18,6 @@ from ._mda import (  # noqa: F401
 )
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
-    center_shape,
     ellipsoid_from_tensor,
 )
 from ._stk import (  # noqa: F401
