@@ -60,15 +60,15 @@ class TestStructures(unittest.TestCase):
         self.assertTrue(np.allclose(data["structures"][1]["y"], [0, 1.1, 2]))
         self.assertTrue(np.allclose(data["structures"][1]["z"], [0, 1, 5.1]))
         self.assertEqual(data["structures"][0].get("cell"), None)
-        frame = u.copy()
-        frame.dimensions = [23, 22, 11, 90, 90, 90]
-        data = chemiscope.create_input(frame.atoms)
+        structure = u.copy()
+        structure.dimensions = [23, 22, 11, 90, 90, 90]
+        data = chemiscope.create_input(structure.atoms)
         self.assertEqual(len(data["structures"]), 2)
         self.assertEqual(data["structures"][0]["cell"], [23, 0, 0, 0, 22, 0, 0, 0, 11])
 
-        frame = u.copy()
-        frame.dimensions = [23, 22, 11, 120, 90, 70]
-        data = chemiscope.create_input(frame.atoms)
+        structure = u.copy()
+        structure.dimensions = [23, 22, 11, 120, 90, 70]
+        data = chemiscope.create_input(structure.atoms)
         self.assertEqual(len(data["structures"]), 2)
 
         cell = [

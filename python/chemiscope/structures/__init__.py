@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import warnings
+
 from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
     _ase_extract_properties,
@@ -27,114 +29,122 @@ from ._stk import (  # noqa: F401
 )
 
 
-def _chemiscope_valid_structures(frames):
+def _chemiscope_valid_structures(structures):
     """
-    Check if the given frames are already in chemiscope format.
+    Check if the given structures are already in chemiscope format.
 
-    :param frames: iterable over structures (typically a list of frames)
-    :return: tuple (frames as list, boolean indicating if frames are valid)
+    :param structures: iterable over structures
+    :return: tuple (structures as list, boolean indicating if structures are valid)
     """
 
-    if not hasattr(frames, "__iter__"):
-        return frames, False
+    if not hasattr(structures, "__iter__"):
+        return structures, False
 
-    first_frame = frames[0]
-    if not isinstance(first_frame, dict):
-        return frames, False
+    first_structure = structures[0]
+    if not isinstance(first_structure, dict):
+        return structures, False
 
     required_keys = {"size", "names", "x", "y", "z"}
-    if "size" not in first_frame:
-        return frames, False
+    if "size" not in first_structure:
+        return structures, False
 
-    for frame in frames:
-        assert isinstance(frame, dict), (
-            "inconsistent frame types: "
-            f"expected dict but got {frame.__class__.__name__}"
+    for s in structures:
+        assert isinstance(s, dict), (
+            "inconsistent structure types: "
+            f"expected dict but got {s.__class__.__name__}"
         )
 
-        # this is an external frame, so we skip the detailed checks
-        if "data" not in frame:
-            assert required_keys.issubset(set(frame.keys())), (
-                "invalid chemiscope frame: "
-                f"missing keys {required_keys - set(frame.keys())}"
+        # this is an external structure, so we skip the detailed checks
+        if "data" not in s:
+            assert required_keys.issubset(set(s.keys())), (
+                "invalid chemiscope structure: "
+                f"missing keys {required_keys - set(s.keys())}"
             )
 
-    return frames, True
+    return structures, True
 
 
-def _guess_adapter(frames):
+def _guess_adapter(structures):
     """
-    Guess which adapter to use for the given frames. This function return the
-    frames as a list and a string describing which adapter should be used.
+    Guess which adapter to use for the given structures. This function return the
+    structures as a list and a string describing which adapter should be used.
     """
 
-    chemiscope_frames, use_chemiscope = _chemiscope_valid_structures(frames)
+    chemiscope_structures, use_chemiscope = _chemiscope_valid_structures(structures)
     if use_chemiscope:
-        return chemiscope_frames, "chemiscope"
+        return chemiscope_structures, "chemiscope"
 
-    ase_frames, use_ase = _ase_valid_structures(frames)
+    ase_structures, use_ase = _ase_valid_structures(structures)
     if use_ase:
-        return ase_frames, "ASE"
+        return ase_structures, "ASE"
 
-    stk_frames, use_stk = _stk_valid_structures(frames)
+    stk_structures, use_stk = _stk_valid_structures(structures)
     if use_stk:
-        return stk_frames, "stk"
+        return stk_structures, "stk"
 
-    mda_frames, use_mda = _mda_valid_structures(frames)
+    mda_structures, use_mda = _mda_valid_structures(structures)
     if use_mda:
-        return mda_frames, "mda"
+        return mda_structures, "mda"
 
-    raise Exception(f"unknown frame type: '{frames[0].__class__.__name__}'")
+    raise Exception(f"unknown structure type: '{structures[0].__class__.__name__}'")
 
 
-def frames_to_json(frames):
+def structures_to_json(structures):
     """
-    Convert the given ``frames`` to the JSON structure used by chemiscope.
+    Convert the given ``structures`` to the JSON structure used by chemiscope.
 
     This function is a shim calling specialized implementations for all the
-    supported frame types. Currently supported frames types include
-    chemiscope-compatible dicts, `ase.Atoms`, `stk.BuildingBlocks`_, and
-    `MDAnalysis.AtomGroup`_ objects.
+    supported structure types. Currently supported structures types include
+    chemiscope-compatible dicts, ``ase.Atoms``, ``stk.BuildingBlocks``, and
+    ``MDAnalysis.AtomGroup`` objects.
 
-    :param frames: iterable over structures (typically a list of frames)
+    :param structures: iterable over structures
     """
-    frames, adapter = _guess_adapter(frames)
+    structures, adapter = _guess_adapter(structures)
 
     if adapter == "chemiscope":
-        json_frames = frames
+        json_data = structures
     elif adapter == "ASE":
-        json_frames = [_ase_to_json(frame) for frame in frames]
+        json_data = [_ase_to_json(s) for s in structures]
     elif adapter == "stk":
-        json_frames = [_stk_to_json(frame) for frame in frames]
+        json_data = [_stk_to_json(s) for s in structures]
     elif adapter == "mda":
-        # Be careful of the lazy loading of `frames.atoms`, which is updated during the
-        # iteration of the trajectory
-        json_frames = [_mda_to_json(frames) for _ in frames.universe.trajectory]
+        # Be careful of the lazy loading of `structures.atoms`, which is updated during
+        # the iteration of the trajectory
+        json_data = [_mda_to_json(structures) for _ in structures.universe.trajectory]
     else:
         raise Exception("reached unreachable code")
 
-    return json_frames
+    return json_data
 
 
-def extract_properties(frames, only=None, environments=None):
+def extract_properties(structures=None, only=None, environments=None, *, frames=None):
     """
-    Extract properties defined in the ``frames`` in a chemiscope-compatible
-    format.
+    Extract properties defined in the ``structures`` in a chemiscope-compatible format.
 
-    :param frames: iterable over structures (typically a list of frames)
-    :param only: optional, list of strings. If not ``None``, only properties
-                with a name from this list are included in the output.
-    :param environments: optional, list of environments (described as
-        ``(structure id, center id, cutoff)``) to include when extracting the
-        atomic properties.
+    :param structures: iterable over structures
+    :param only: optional, list of strings. If not ``None``, only properties with a name
+                from this list are included in the output.
+    :param environments: optional, list of environments (described as ``(structure id,
+        center id, cutoff)``) to include when extracting the atomic properties.
     """
-    frames, adapter = _guess_adapter(frames)
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
+
+    structures, adapter = _guess_adapter(structures)
 
     if adapter == "ASE":
-        return _ase_extract_properties(frames, only, environments)
+        return _ase_extract_properties(structures, only, environments)
 
     elif adapter == "mda":
-        return _mda_extract_properties(frames, only, environments)
+        return _mda_extract_properties(structures, only, environments)
 
     elif adapter == "stk":
         raise RuntimeError(
@@ -145,23 +155,35 @@ def extract_properties(frames, only=None, environments=None):
         raise Exception("reached unreachable code")
 
 
-def all_atomic_environments(frames, cutoff=3.5):
+def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None):
     """
     Generate a list of environments containing all the atoms in the given
-    ``frames``. The optional spherical ``cutoff`` radius is used to display the
+    ``structures``. The optional spherical ``cutoff`` radius is used to display the
     environments in chemiscope.
 
-    :param frames: iterable over structures (typically a list of frames)
+    :param structures: iterable over structures
     :param float cutoff: spherical cutoff radius used when displaying the
                          environments
     """
-    frames, adapter = _guess_adapter(frames)
+    if frames is not None:
+        import warnings
+
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
+
+    structures, adapter = _guess_adapter(structures)
 
     if adapter == "ASE":
-        return _ase_all_atomic_environments(frames, cutoff)
+        return _ase_all_atomic_environments(structures, cutoff)
     elif adapter == "stk":
-        return _stk_all_atomic_environments(frames, cutoff)
+        return _stk_all_atomic_environments(structures, cutoff)
     elif adapter == "mda":
-        return _mda_all_atomic_environments(frames, cutoff)
+        return _mda_all_atomic_environments(structures, cutoff)
     else:
         raise Exception("reached unreachable code")

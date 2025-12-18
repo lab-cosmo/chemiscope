@@ -63,10 +63,10 @@ def viewer(
             f"Invalid mode '{mode}', expected 'default', 'structure', or 'map'"
         )
 
-    has_frames = "structures" in dataset and len(dataset["structures"]) > 0
+    has_structures = "structures" in dataset and len(dataset["structures"]) > 0
     has_properties = "properties" in dataset and len(dataset["properties"]) > 0
-    if mode == "structure" and not has_frames:
-        raise ValueError("Cannot show structure: dataset has no frames")
+    if mode == "structure" and not has_structures:
+        raise ValueError("Cannot show structure: dataset has no structures")
     if mode == "map" and (not has_properties or len(dataset["properties"]) < 2):
         raise ValueError("Map mode requires at least two properties")
 

@@ -32,7 +32,7 @@ CUBE_SIMPLICES = [
     [3, 6, 7],
 ]
 
-DEFAULT_FRAME = ase.Atoms(
+DEFAULT_STRUCTURE = ase.Atoms(
     numbers=[1, 1, 1], positions=[[0, 0, 0], [1, 1, 1], [2, 2, 5]]
 )
 SHAPE_DEFAULTS = {
@@ -156,7 +156,9 @@ INVALID_SHAPES = [
 
 class TestShapes(unittest.TestCase):
     def test_custom_shapes(self):
-        data = chemiscope.create_input(frames=[DEFAULT_FRAME], shapes=SHAPE_DEFAULTS)
+        data = chemiscope.create_input(
+            structures=[DEFAULT_STRUCTURE], shapes=SHAPE_DEFAULTS
+        )
 
         result = data["shapes"]
         self.assertEqual(
@@ -176,7 +178,9 @@ class TestShapes(unittest.TestCase):
     def test_shape_errors(self):
         for shape, errortype, message in INVALID_SHAPES:
             with self.assertRaises(errortype) as cm:
-                chemiscope.create_input(frames=[DEFAULT_FRAME], shapes={"shape": shape})
+                chemiscope.create_input(
+                    structures=[DEFAULT_STRUCTURE], shapes={"shape": shape}
+                )
                 self.assertEqual(cm.message, message)
 
 

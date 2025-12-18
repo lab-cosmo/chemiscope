@@ -21,16 +21,16 @@ import chemiscope
 # %%
 #
 # Load structures and properties
-frames = ase.io.read("data/trajectory.xyz", ":")
+structures = ase.io.read("data/trajectory.xyz", ":")
 
 properties = {
     # concise definition of a property, with just an array and the type
     # inferred by the size
-    "index": np.arange(len(frames)),
+    "index": np.arange(len(structures)),
     # an example of the verbose definition
     "energy": {
         "target": "structure",
-        "values": [frame.info["dftb_energy_eV"] for frame in frames],
+        "values": [structure.info["dftb_energy_eV"] for structure in structures],
         "units": "eV",
         "description": "potential energy, computed with DFTB+",
     },
@@ -60,12 +60,12 @@ chemiscope.write_input(
             )
         ],
     },
-    frames=frames,
+    structures=structures,
     properties=properties,
     # visualize forces as vectors
     shapes={
         "forces": chemiscope.ase_vectors_to_arrows(
-            frames, "dftb_forces_eV_per_Ang", scale=1, radius=0.15
+            structures, "dftb_forces_eV_per_Ang", scale=1, radius=0.15
         )
     },
     settings={  # these are reasonable settings for trajectory visualization

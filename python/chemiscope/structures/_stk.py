@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, List, Tuple, Union
 
 
@@ -14,21 +15,25 @@ except ImportError:
 
 
 def _stk_valid_structures(
-    frames: Union[Molecule, List[Molecule]],
+    structures: Union[Molecule, List[Molecule]],
 ) -> Tuple[List[Molecule], bool]:
-    if HAVE_STK and isinstance(frames, Molecule):
-        # deal with the user passing a single frame
-        return [frames], True
-    elif HAVE_STK and isinstance(frames, list) and isinstance(frames[0], Molecule):
-        for frame in frames:
-            assert isinstance(frame, Molecule)
-        return frames, True
+    if HAVE_STK and isinstance(structures, Molecule):
+        # deal with the user passing a single structure
+        return [structures], True
+    elif (
+        HAVE_STK
+        and isinstance(structures, list)
+        and isinstance(structures[0], Molecule)
+    ):
+        for structure in structures:
+            assert isinstance(structure, Molecule)
+        return structures, True
     else:
-        return frames, False
+        return structures, False
 
 
 def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
-    """Implementation of frame_to_json for stk's ``Molecule``.
+    """Implementation of structures_to_json for stk's ``Molecule``.
 
     The current implementation assumes no periodic information, which is safe
     for the majority of stk molecules. If necessary, we can add cell information
@@ -69,43 +74,45 @@ def _stk_to_json(molecule: Molecule) -> Dict[str, Union[int, list]]:
 
 
 def _stk_all_atomic_environments(
-    frames: List[Molecule],
+    structures: List[Molecule],
     cutoff: float,
 ) -> List[Tuple[int, int, float]]:
     "Extract all atomic environments out of a set of stk Molecule objects"
     environments = []
-    for structure_i, frame in enumerate(frames):
-        for atom in frame.get_atoms():
+    for structure_i, structure in enumerate(structures):
+        for atom in structure.get_atoms():
             environments.append((structure_i, atom.get_id(), cutoff))
 
     return environments
 
 
 def convert_stk_bonds_as_shapes(
-    frames: List[Molecule],
+    structures: List[Molecule],
     bond_color: str,
     bond_radius: float,
+    *,
+    frames=None,
 ) -> Dict[str, Dict]:
     """Convert connections between atom ids in each structure to shapes.
 
-    Parameters:
-
-        frames:
-            List of Molecule objects, which each are structures in
-            chemiscope.
-
-        bond_color:
-            How to color the bonds added.
-
-        bond_radius:
-            Radius of bonds to add.
-
-
+    :param structures: List of stk Molecule objects.
+    :param bond_color: How to color the bonds added.
+    :param bond_radius: Radius of bonds to add.
     """
+
+    if frames is not None:
+        warnings.warn(
+            "`frames` argument is deprecated, use `structures` instead",
+            stacklevel=2,
+        )
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` arguments")
+
+        structures = frames
 
     shape_dict: Dict[str, dict] = {}
     max_length = 0
-    for molecule in frames:
+    for molecule in structures:
         bonds_to_add = tuple(
             (bond.get_atom1().get_id(), bond.get_atom2().get_id())
             for bond in molecule.get_bonds()

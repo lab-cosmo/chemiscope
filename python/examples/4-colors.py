@@ -22,7 +22,7 @@ import chemiscope
 #
 # Load a dataset of structures containing polarizability and dipole data
 
-frames = ase.io.read("data/alpha-mu.xyz", ":")
+structures = ase.io.read("data/alpha-mu.xyz", ":")
 
 # %%
 #
@@ -32,16 +32,16 @@ polarizability = []
 alpha_eigenvalues = []
 anisotropy = []
 
-for frame in frames:
+for structure in structures:
     # center molecule in the box
-    frame.positions += frame.cell.diagonal() * 0.5
+    structure.positions += structure.cell.diagonal() * 0.5
     for axx, ayy, azz, axy, axz, ayz in zip(
-        frame.arrays["axx"],
-        frame.arrays["ayy"],
-        frame.arrays["azz"],
-        frame.arrays["axy"],
-        frame.arrays["axz"],
-        frame.arrays["ayz"],
+        structure.arrays["axx"],
+        structure.arrays["ayy"],
+        structure.arrays["azz"],
+        structure.arrays["axy"],
+        structure.arrays["axz"],
+        structure.arrays["ayz"],
         strict=True,
     ):
         polarizability.append((axx + ayy + azz) / 3)
@@ -61,8 +61,8 @@ for frame in frames:
 
 chemiscope.write_input(
     "colors-example.json.gz",
-    frames=frames,
-    # properties can also be extracted from the ASE.Atoms frames
+    structures=structures,
+    # properties can also be extracted from the ASE.Atoms structures
     properties={
         "polarizability": np.vstack(polarizability),
         "anisotropy": np.vstack(anisotropy),
@@ -88,7 +88,7 @@ chemiscope.write_input(
     },
     # the properties we want to visualise are atomic properties - in order to view them
     # in map panel we must indicate the list of environments (all atoms in this case)
-    environments=chemiscope.all_atomic_environments(frames),
+    environments=chemiscope.all_atomic_environments(structures),
 )
 
 

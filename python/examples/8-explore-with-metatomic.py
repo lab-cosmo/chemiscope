@@ -25,7 +25,7 @@ import ase.io
 import chemiscope
 
 
-frames = ase.io.read("data/explore_c-gap-20u.xyz", ":")
+structures = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
 # %%
 #
@@ -45,13 +45,14 @@ featurizer = chemiscope.metatomic_featurizer(model="model.pt")
 # %%
 #
 # From here, you can use :py:func:`chemiscope.explore` to visualize the features
-# computed from the structures. For this, we are passing the frames, the ``featurizer``
-# function, and — as the model computes per-atom properties — environments.
+# computed from the structures. For this, we are passing the structures, the
+# ``featurizer`` function, and — as the model computes per-atom properties — the list of
+# environments.
 
 chemiscope.explore(
-    frames=frames,
+    structures=structures,
     featurizer=featurizer,
-    environments=chemiscope.all_atomic_environments(frames),
+    environments=chemiscope.all_atomic_environments(structures),
 )
 
 # %%
@@ -293,9 +294,9 @@ mta_model = AtomisticModel(model.eval(), metadata, capabilities)
 
 featurizer = chemiscope.metatomic_featurizer(mta_model, check_consistency=True)
 chemiscope.explore(
-    frames=frames,
+    structures=structures,
     featurizer=featurizer,
-    environments=chemiscope.all_atomic_environments(frames),
+    environments=chemiscope.all_atomic_environments(structures),
 )
 
 # %%
@@ -322,7 +323,7 @@ cos_sin_featurizer = chemiscope.metatomic_featurizer(
 )
 
 chemiscope.explore(
-    frames=frames,
+    structures=structures,
     featurizer=cos_sin_featurizer,
-    environments=chemiscope.all_atomic_environments(frames),
+    environments=chemiscope.all_atomic_environments(structures),
 )

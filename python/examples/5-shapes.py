@@ -25,34 +25,34 @@ import chemiscope
 #
 # Loads a dataset of structures
 
-frames = ase.io.read("data/alpha-mu.xyz", ":")
+structures = ase.io.read("data/alpha-mu.xyz", ":")
 
 quaternions = []
 # converts the arrays from the format they are stored in to an array
 # format that can be processed by the ASE utilities
-for a in frames:
-    a.positions += a.cell.diagonal() * 0.5
-    a.arrays["alpha"] = np.array(
+for structure in structures:
+    structure.positions += structure.cell.diagonal() * 0.5
+    structure.arrays["alpha"] = np.array(
         [
             [axx, ayy, azz, axy, axz, ayz]
             for (axx, ayy, azz, axy, axz, ayz) in zip(
-                a.arrays["axx"],
-                a.arrays["ayy"],
-                a.arrays["azz"],
-                a.arrays["axy"],
-                a.arrays["axz"],
-                a.arrays["ayz"],
+                structure.arrays["axx"],
+                structure.arrays["ayy"],
+                structure.arrays["azz"],
+                structure.arrays["axy"],
+                structure.arrays["axz"],
+                structure.arrays["ayz"],
                 strict=True,
             )
         ]
     )
 
     # interatomic separations (used to orient "stuff" later on)
-    dists = a.get_all_distances(mic=True)
+    dists = structure.get_all_distances(mic=True)
     np.fill_diagonal(dists, np.max(dists))
-    for i in range(len(a)):
+    for i in range(len(structure)):
         nneigh = dists[i].argmin()
-        vec = a.get_distance(i, nneigh, vector=True, mic=True)
+        vec = structure.get_distance(i, nneigh, vector=True, mic=True)
         vec /= np.linalg.norm(vec)
         quat = Rotation.align_vectors([np.array([0, 0, 1])], [vec])[0].as_quat()
         quaternions.append(quat)
@@ -106,7 +106,7 @@ smooth_cubes = dict(
         # the cube is used at each atomic position, only difference being the scaling
         "atom": [
             {"scale": atom_sizes[label]}
-            for label in (list(frames[0].symbols) + list(frames[1].symbols))
+            for label in (list(structures[0].symbols) + list(structures[1].symbols))
         ],
     },
 )
@@ -191,7 +191,7 @@ irreverent_shape = dict(
         },
         "atom": [
             {"orientation": quaternions[i].tolist()}
-            for i in range(len(frames[0]) + len(frames[1]))
+            for i in range(len(structures[0]) + len(structures[1]))
         ],
     },
 )
@@ -213,11 +213,11 @@ dipoles_manual = (
             "structure": [
                 {
                     "position": [12, 12, 12],
-                    "vector": frames[0].info["dipole_ccsd"].tolist(),
+                    "vector": structures[0].info["dipole_ccsd"].tolist(),
                 },
                 {
                     "position": [12, 12, 12],
-                    "vector": frames[1].info["dipole_ccsd"].tolist(),
+                    "vector": structures[1].info["dipole_ccsd"].tolist(),
                 },
             ],
         },
@@ -225,7 +225,7 @@ dipoles_manual = (
 )
 
 
-dipoles_auto = chemiscope.ase_vectors_to_arrows(frames, "dipole_ccsd", scale=0.5)
+dipoles_auto = chemiscope.ase_vectors_to_arrows(structures, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
 dipoles_auto["parameters"]["global"] = {
     "baseRadius": 0.2,
@@ -245,8 +245,8 @@ for d in dipoles_auto["parameters"][
 
 chemiscope.write_input(
     "shapes-example.json.gz",
-    frames=frames,
-    properties=chemiscope.extract_properties(frames, only=["alpha"]),
+    structures=structures,
+    properties=chemiscope.extract_properties(structures, only=["alpha"]),
     shapes={
         # cubes with smooth shading, centered on atoms
         "smooth_cubes": smooth_cubes,
@@ -255,9 +255,9 @@ chemiscope.write_input(
         # (molecular) electric dipole
         "dipole": dipoles_auto,
         # atomic decomposition of the polarizability as ellipsoids. use utility to
-        # extract from the ASE frames
+        # extract from the ASE structures
         "alpha": chemiscope.ase_tensors_to_ellipsoids(
-            frames, "alpha", force_positive=True, scale=0.2
+            structures, "alpha", force_positive=True, scale=0.2
         ),
         # shapes with a bit of flair
         "irreverence": irreverent_shape,
@@ -290,7 +290,7 @@ chemiscope.write_input(
             }
         ],
     },
-    environments=chemiscope.all_atomic_environments(frames),
+    environments=chemiscope.all_atomic_environments(structures),
 )
 
 

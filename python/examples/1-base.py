@@ -24,7 +24,7 @@ import chemiscope
 #
 # Load structures from an extended xyz file:
 
-frames = ase.io.read("data/showcase.xyz", ":")
+structures = ase.io.read("data/showcase.xyz", ":")
 
 # %%
 #
@@ -33,10 +33,13 @@ frames = ase.io.read("data/showcase.xyz", ":")
 # widget when executed in a Jupyter notebook.
 
 chemiscope.show(
-    frames=frames,
-    # quickly extract properties from the ASE frames. nb: if you're doing this for
-    # sharing, don't forget to also include metadata such as units and description
-    properties=chemiscope.extract_properties(frames, only=["dipole_ccsd", "ccsd_pol"]),
+    structures=structures,
+    # quickly extract properties from the ASE structures. If you are sharing the
+    # resulting dataset, don't forget to also include metadata such as units and
+    # description
+    properties=chemiscope.extract_properties(
+        structures, only=["dipole_ccsd", "ccsd_pol"]
+    ),
     # it's always good to set some metadata to explain what the dataset - title is bare
     # minimum
     meta=dict(name="Dipole and polarizability"),
@@ -59,8 +62,10 @@ chemiscope.show(
 
 chemiscope.write_input(
     "showcase.json.gz",
-    frames=frames,
-    properties=chemiscope.extract_properties(frames, only=["dipole_ccsd", "ccsd_pol"]),
+    structures=structures,
+    properties=chemiscope.extract_properties(
+        structures, only=["dipole_ccsd", "ccsd_pol"]
+    ),
     meta=dict(name="Dipole and polarizability"),
     settings=chemiscope.quick_settings(
         x="ccsd_pol[1]", y="ccsd_pol[2]", color="dipole_ccsd[1]"
@@ -83,18 +88,20 @@ chemiscope.show_input("showcase.json.gz")
 # at `chemiscope.org`, as it requires all data to be included in the JSON file.
 
 # This will write the external structures as separate files `structure-*.json`
-external_frames = chemiscope.write_external_structures(frames, prefix="structure")
+external_structures = chemiscope.write_external_structures(
+    structures, prefix="structure"
+)
 
 # We also use this to demonstrate the 'structure' mode of chemiscope
 chemiscope.show(
-    frames=external_frames,
+    structures=external_structures,
     mode="structure",
 )
 
 # The dataset file is smaller and will take up less browser memory when loaded
 chemiscope.write_input(
     "showcase-nostructures.json.gz",
-    frames=external_frames,
+    structures=external_structures,
 )
 
 print("\nCompressed dataset files:")

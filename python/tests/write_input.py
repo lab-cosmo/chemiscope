@@ -9,8 +9,8 @@ import stk
 from chemiscope import write_input
 
 
-TEST_FRAMES = [ase.Atoms("CO2")]
-TEST_FRAMES_STK = [stk.BuildingBlock("NCCN")]
+TEST_STRUCTURES = [ase.Atoms("CO2")]
+TEST_STRUCTURES_STK = [stk.BuildingBlock("NCCN")]
 
 
 def is_gz_file(filepath):
@@ -21,10 +21,10 @@ def is_gz_file(filepath):
 
 class TestWriteInput(unittest.TestCase):
     def test_file_path_as_dataset_name(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURES, TEST_STRUCTURES_STK):
             with tempfile.TemporaryDirectory() as dirname:
                 path = os.path.join(dirname, "test.json")
-                write_input(path, TF)
+                write_input(path, structure)
 
                 with open(path) as fd:
                     data = json.load(fd)
@@ -32,23 +32,22 @@ class TestWriteInput(unittest.TestCase):
                 self.assertEqual(data["meta"]["name"], "test")
 
     def test_create_gz_file(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURES, TEST_STRUCTURES_STK):
             with tempfile.TemporaryDirectory() as dirname:
                 path = os.path.join(dirname, "test.json")
-                write_input(path, TF)
+                write_input(path, structure)
                 self.assertFalse(is_gz_file(path))
 
                 path = os.path.join(dirname, "test.json.gz")
-                write_input(path, TF)
+                write_input(path, structure)
                 self.assertTrue(is_gz_file(path))
 
     def test_wrong_path(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURES, TEST_STRUCTURES_STK):
             with tempfile.TemporaryDirectory() as dirname:
                 path = os.path.join(dirname, "test.tmp")
                 with self.assertRaises(Exception) as cm:
-                    write_input(path, TF)
-
+                    write_input(path, structure)
                 self.assertEqual(
                     str(cm.exception), "path should end with .json or .json.gz"
                 )

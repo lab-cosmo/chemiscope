@@ -100,12 +100,12 @@ with st.sidebar:
 if uploaded:
     uploaded_bytes = uploaded.getvalue()
     file_name = uploaded.name
-    dataset, frames = process_uploaded_file(uploaded_bytes, file_name)
+    dataset, structures = process_uploaded_file(uploaded_bytes, file_name)
 
     if "selected_index" not in st.session_state:
         st.session_state.selected_index = 0
 
-    st.slider("Select structure by index", 0, len(frames) - 1, key="selected_index")
+    st.slider("Select structure by index", 0, len(structures) - 1, key="selected_index")
 
     viewer(
         dataset,
@@ -119,7 +119,7 @@ if uploaded:
     )
 
     st.markdown("---")
-    display_selected_structure(frames)
+    display_selected_structure(structures)
 
     st.subheader("Export")
     download_dataset = dataset.copy()

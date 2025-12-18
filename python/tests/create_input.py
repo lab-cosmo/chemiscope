@@ -8,53 +8,53 @@ from chemiscope import all_atomic_environments, create_input
 
 
 # These should be the same molecule!
-TEST_FRAMES = [ase.Atoms("CO2")]
-TEST_FRAMES_STK = [stk.BuildingBlock("O=C=O")]
+TEST_STRUCTURE = [ase.Atoms("CO2")]
+TEST_STRUCTURE_STK = [stk.BuildingBlock("O=C=O")]
 
 
 class TestCreateInputMeta(unittest.TestCase):
     def test_meta(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             meta = {}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "<unknown>")
             self.assertEqual(len(data["meta"].keys()), 1)
 
             meta = {"name": ""}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "<unknown>")
             self.assertEqual(len(data["meta"].keys()), 1)
 
             meta = {"name": "foo"}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"].keys()), 1)
 
             meta = {"name": "foo", "description": "bar"}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(data["meta"]["description"], "bar")
             self.assertEqual(len(data["meta"].keys()), 2)
 
             meta = {"name": "foo", "references": ["bar"]}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["references"]), 1)
             self.assertEqual(data["meta"]["references"][0], "bar")
             self.assertEqual(len(data["meta"].keys()), 2)
 
             meta = {"name": "foo", "authors": ["bar"]}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["authors"]), 1)
             self.assertEqual(data["meta"]["authors"][0], "bar")
             self.assertEqual(len(data["meta"].keys()), 2)
 
     def test_meta_unknown_keys_warning(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             meta = {"name": "foo", "what_is_this": "I don't know"}
             with self.assertWarns(UserWarning) as cm:
-                data = create_input(frames=TF, meta=meta)
+                data = create_input(structures=structure, meta=meta)
 
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"].keys()), 1)
@@ -64,20 +64,20 @@ class TestCreateInputMeta(unittest.TestCase):
             )
 
     def test_meta_conversions(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             meta = {"name": 33}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "33")
             self.assertEqual(len(data["meta"].keys()), 1)
 
             meta = {"name": ["foo", "bar"], "description": False}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "['foo', 'bar']")
             self.assertEqual(data["meta"]["description"], "False")
             self.assertEqual(len(data["meta"].keys()), 2)
 
             meta = {"name": "foo", "references": (3, False)}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["references"]), 2)
             self.assertEqual(data["meta"]["references"][0], "3")
@@ -85,7 +85,7 @@ class TestCreateInputMeta(unittest.TestCase):
             self.assertEqual(len(data["meta"].keys()), 2)
 
             meta = {"name": "foo", "authors": (3, False)}
-            data = create_input(frames=TF, meta=meta)
+            data = create_input(structures=structure, meta=meta)
             self.assertEqual(data["meta"]["name"], "foo")
             self.assertEqual(len(data["meta"]["authors"]), 2)
             self.assertEqual(data["meta"]["authors"][0], "3")
@@ -95,17 +95,17 @@ class TestCreateInputMeta(unittest.TestCase):
 
 class TestCreateInputProperties(unittest.TestCase):
     def test_properties(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             # values are numbers
             properties = {"name": {"target": "atom", "values": [2, 3, 4]}}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"]["name"].keys()), 2)
 
             # values are strings
             properties = {"name": {"target": "atom", "values": ["2", "3", "4"]}}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
             self.assertEqual(len(data["properties"]["name"].keys()), 2)
@@ -117,7 +117,7 @@ class TestCreateInputProperties(unittest.TestCase):
                     "description": "foo",
                 },
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["description"], "foo")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
@@ -130,17 +130,17 @@ class TestCreateInputProperties(unittest.TestCase):
                     "units": "foo",
                 },
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["units"], "foo")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"]["name"].keys()), 3)
 
     def test_ndarray_properties(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             # shape N, float
             properties = {"name": {"target": "atom", "values": np.array([2, 3, 4])}}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"].keys()), 1)
@@ -153,7 +153,7 @@ class TestCreateInputProperties(unittest.TestCase):
                 }
             }
             self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
             self.assertEqual(len(data["properties"].keys()), 1)
@@ -162,7 +162,7 @@ class TestCreateInputProperties(unittest.TestCase):
             properties = {
                 "name": {"target": "atom", "values": np.array([[2], [3], [4]])}
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"].keys()), 1)
@@ -175,7 +175,7 @@ class TestCreateInputProperties(unittest.TestCase):
                 }
             }
             self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], ["2", "3", "4"])
             self.assertEqual(len(data["properties"].keys()), 1)
@@ -187,7 +187,7 @@ class TestCreateInputProperties(unittest.TestCase):
                     "values": np.array([[1, 2, 4], [1, 2, 4], [1, 2, 4]]),
                 }
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name[1]"]["target"], "atom")
             self.assertEqual(data["properties"]["name[1]"]["values"], [1, 1, 1])
             self.assertEqual(data["properties"]["name[2]"]["target"], "atom")
@@ -206,7 +206,7 @@ class TestCreateInputProperties(unittest.TestCase):
                 }
             }
             self.assertTrue(np.issubdtype(properties["name"]["values"].dtype, np.str_))
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name[1]"]["target"], "atom")
             self.assertEqual(data["properties"]["name[1]"]["values"], ["1", "1", "1"])
             self.assertEqual(data["properties"]["name[2]"]["target"], "atom")
@@ -216,24 +216,24 @@ class TestCreateInputProperties(unittest.TestCase):
             self.assertEqual(len(data["properties"].keys()), 3)
 
     def test_shortened_properties(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             # atom property
             properties = {"name": [2, 3, 4]}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "atom")
             self.assertEqual(data["properties"]["name"]["values"], [2, 3, 4])
             self.assertEqual(len(data["properties"]["name"].keys()), 2)
 
-            # frame property
+            # structure property
             properties = {"name": [2]}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["target"], "structure")
             self.assertEqual(data["properties"]["name"]["values"], [2])
             self.assertEqual(len(data["properties"]["name"].keys()), 2)
 
-            # ndarray frame property
+            # ndarray structure property
             properties = {"name": np.array([[2, 4]])}
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name[1]"]["target"], "structure")
             self.assertEqual(data["properties"]["name[1]"]["values"], [2])
             self.assertEqual(len(data["properties"]["name[1]"].keys()), 2)
@@ -246,10 +246,10 @@ class TestCreateInputProperties(unittest.TestCase):
             self.assertEqual(type(properties["name"]), np.ndarray)
 
     def test_shortened_properties_errors(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {"name": ["2", "3"]}
             with self.assertRaises(ValueError) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "The length of property values is different from the number of "
@@ -260,7 +260,7 @@ class TestCreateInputProperties(unittest.TestCase):
 
             properties = {"name": ase.Atoms("CO2")}
             with self.assertRaises(ValueError) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "Property values should be either list or numpy array, got "
@@ -268,9 +268,11 @@ class TestCreateInputProperties(unittest.TestCase):
             )
 
             properties = {"name": ["2", "3"]}
-            frames_single_atoms = [ase.Atoms("C"), ase.Atoms("H")]
+            structures_single_atoms = [ase.Atoms("C"), ase.Atoms("H")]
             with self.assertWarns(UserWarning) as cm:
-                data = create_input(frames=frames_single_atoms, properties=properties)
+                data = create_input(
+                    structures=structures_single_atoms, properties=properties
+                )
 
             self.assertEqual(data["properties"]["name"]["target"], "structure")
 
@@ -282,10 +284,10 @@ class TestCreateInputProperties(unittest.TestCase):
             )
 
     def test_invalid_name(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {"": {"target": "atom", "values": [2, 3, 4]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "the name of a property can not be the empty string",
@@ -293,7 +295,7 @@ class TestCreateInputProperties(unittest.TestCase):
 
             properties = {False: {"target": "atom", "values": [2, 3, 4]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "the name of a property name must be a string, "
@@ -301,64 +303,64 @@ class TestCreateInputProperties(unittest.TestCase):
             )
 
     def test_invalid_target(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {"name": {"values": [2, 3, 4]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception), "missing 'target' for the 'name' property"
             )
 
             properties = {"name": {"target": "atoms", "values": [2, 3, 4]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "the target must be 'atom' or 'structure' for the 'name' property",
             )
 
     def test_invalid_types_metadata(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {
                 "name": {"target": "atom", "values": [2, 3, 4], "units": False}
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["units"], "False")
 
             properties = {
                 "name": {"target": "atom", "values": [2, 3, 4], "description": False}
             }
-            data = create_input(frames=TF, properties=properties)
+            data = create_input(structures=structure, properties=properties)
             self.assertEqual(data["properties"]["name"]["description"], "False")
 
     def test_property_unknown_keys_warning(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {
                 "name": {"target": "atom", "values": [2, 3, 4], "what": False}
             }
             with self.assertWarns(UserWarning) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(str(cm.warning), "ignoring unexpected property key: what")
 
     def test_invalid_values_types(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {"name": {"target": "atom", "values": 3}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception), "unknown type (<class 'int'>) for property 'name'"
             )
 
             properties = {"name": {"target": "atom", "values": {"test": "bad"}}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception), "unknown type (<class 'dict'>) for property 'name'"
             )
 
             properties = {"name": {"target": "atom", "values": [{}, {}, {}]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "unsupported type in property 'name' values: should be string"
@@ -366,12 +368,14 @@ class TestCreateInputProperties(unittest.TestCase):
             )
 
     def test_wrong_number_of_values(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             properties = {"name": {"target": "atom", "values": [2, 3]}}
             environments = [(0, 0, 3), (0, 1, 3), (0, 2, 3)]
             with self.assertRaises(Exception) as cm:
                 create_input(
-                    frames=TF, properties=properties, environments=environments
+                    structures=structure,
+                    properties=properties,
+                    environments=environments,
                 )
             self.assertEqual(
                 str(cm.exception),
@@ -381,7 +385,7 @@ class TestCreateInputProperties(unittest.TestCase):
 
             properties = {"name": {"target": "structure", "values": [2, 3, 5]}}
             with self.assertRaises(Exception) as cm:
-                create_input(frames=TF, properties=properties)
+                create_input(structures=structure, properties=properties)
             self.assertEqual(
                 str(cm.exception),
                 "wrong size for the property 'name' with target=='structure': "
@@ -420,7 +424,7 @@ class TestCreateInputProperties(unittest.TestCase):
         self.assertEqual(
             str(cm.exception),
             "property 'name' has a non-structure target, which is not allowed "
-            "if frames are not provided",
+            "if structures are not provided",
         )
 
     def test_nan(self):
@@ -438,13 +442,15 @@ class TestCreateInputProperties(unittest.TestCase):
 
 class TestCreateInputEnvironments(unittest.TestCase):
     def test_manual_environments_list(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
             environments = [
                 (0, 0, 3.5),
                 (1, 1, 2.5),
                 (1, 2, 3),
             ]
-            data = create_input(frames=TF + TF, environments=environments)
+            data = create_input(
+                structures=structure + structure, environments=environments
+            )
             self.assertEqual(len(data["environments"]), 3)
 
             for i, env in enumerate(data["environments"]):
@@ -453,8 +459,8 @@ class TestCreateInputEnvironments(unittest.TestCase):
                 self.assertEqual(env["cutoff"], environments[i][2])
 
     def test_all_environments(self):
-        for TF in (TEST_FRAMES, TEST_FRAMES_STK):
-            environments = all_atomic_environments(TF, cutoff=6)
+        for structure in (TEST_STRUCTURE, TEST_STRUCTURE_STK):
+            environments = all_atomic_environments(structure, cutoff=6)
             for i, (structure, center, cutoff) in enumerate(environments):
                 self.assertEqual(structure, 0)
                 self.assertEqual(center, i)

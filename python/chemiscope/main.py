@@ -76,13 +76,12 @@ def _chemiscope_input_parser():
 def main():
     """
     Command-line utility to generate an input for chemiscope — the interactive
-    structure-property explorer. Parses an input file containing atomic
-    structures using the ASE I/O module, and converts it into a JSON file that
-    can be loaded in chemiscope. Frame and environment properties must be
-    written in the same file containing atomic structures: we recommend the
-    extended xyz format, which is flexible and simple. In all cases, this
-    utility will simply write to the JSON file anything that is readable by
-    ASE.
+    structure-property explorer. Parses an input file containing atomic structures using
+    the ASE I/O module, and converts it into a JSON file that can be loaded in
+    chemiscope. Structure and environment properties must be written in the same file
+    containing atomic structures: we recommend the extended xyz format, which is
+    flexible and simple. In all cases, this utility will simply write to the JSON file
+    anything that is readable by ASE.
     """
 
     try:
@@ -102,17 +101,17 @@ def main():
         raise Exception("--only-structure can not be given with --cutoff")
 
     # read file with ASE and remove extraneous properties
-    frames = ase_io.read(args.input, ":")
+    structures = ase_io.read(args.input, ":")
     if args.only_structures:
-        for frame in frames:
-            for key in list(frame.arrays.keys()):
+        for structure in structures:
+            for key in list(structure.arrays.keys()):
                 if key not in ["positions", "numbers", "momenta"]:
-                    del frame.arrays[key]
+                    del structure.arrays[key]
         environments = None
     elif args.only_atoms:
-        for frame in frames:
-            frame.info = {}
-        environments = all_atomic_environments(frames, cutoff=args.cutoff)
+        for structure in structures:
+            structure.info = {}
+        environments = all_atomic_environments(structures, cutoff=args.cutoff)
 
     if args.properties == "":
         filter_properties = None
@@ -121,7 +120,7 @@ def main():
 
     # determine output file name automatically if missing
     output = args.output or args.input + "_chemiscope.json.gz"
-    properties = extract_properties(frames, only=filter_properties)
+    properties = extract_properties(structures, only=filter_properties)
     has_environment_property = False
     for prop in properties.values():
         if prop["target"] == "atom":
@@ -129,7 +128,7 @@ def main():
             break
     if has_environment_property:
         # assumes properties are associated with all atomic environments
-        environments = all_atomic_environments(frames, cutoff=args.cutoff)
+        environments = all_atomic_environments(structures, cutoff=args.cutoff)
     else:
         environments = None
 
@@ -141,7 +140,7 @@ def main():
 
     write_input(
         path=output,
-        frames=frames,
+        structures=structures,
         properties=properties,
         environments=environments,
         meta={

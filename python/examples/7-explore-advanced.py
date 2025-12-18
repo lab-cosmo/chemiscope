@@ -57,15 +57,16 @@ from sklearn.manifold import TSNE  # noqa
 #
 # Load the dataset, in our example we are reading the organic molecules.
 
-qm9_frames = ase.io.read("data/explore_qm9.xyz", ":")
+qm9_structures = ase.io.read("data/explore_qm9.xyz", ":")
 
 # %%
 #
 # Now, we are defining a ``featurize`` function. As on the previous example, it should
-# take ``frames`` and ``environments`` as the inputs and return an array of features.
+# take ``structures`` and ``environments`` as the inputs and return an array of
+# features.
 
 
-def mace_off_tsne(frames, environments):
+def mace_off_tsne(structures, environments):
     if environments is not None:
         raise ValueError("'environments' are not supported by this featurizer")
 
@@ -73,19 +74,19 @@ def mace_off_tsne(frames, environments):
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_off(**descriptor_opt)
 
-    # Calculate MACE features for each frame
+    # Calculate MACE features for each structures
     descriptors = []
-    for frame in frames:
+    for structure in structures:
         structure_avg = np.mean(
             # Only use invariant descriptors (no rotational components)
-            (calculator.get_descriptors(frame, invariants_only=True)),
-            axis=0,  # Average the descriptors over all atoms in the frame
+            (calculator.get_descriptors(structure, invariants_only=True)),
+            axis=0,  # Average the descriptors over all atoms in the structure
         )
         descriptors.append(structure_avg)
     descriptors = np.array(descriptors)
 
     # Get number of jobs for parallelisation
-    n_jobs = min(len(frames), os.cpu_count())
+    n_jobs = min(len(structures), os.cpu_count())
 
     # Apply t-SNE
     perplexity = min(30, descriptors.shape[0] - 1)
@@ -97,13 +98,13 @@ def mace_off_tsne(frames, environments):
 #
 # We can also extract the additional properties, for example, dipole moment.
 
-properties = chemiscope.extract_properties(qm9_frames, only=["mu"])
+properties = chemiscope.extract_properties(qm9_structures, only=["mu"])
 
 # %%
 #
 # Provide the created featurizer and the properties to :py:func:`chemiscope.explore`.
 
-cs = chemiscope.explore(qm9_frames, featurizer=mace_off_tsne, properties=properties)
+cs = chemiscope.explore(qm9_structures, featurizer=mace_off_tsne, properties=properties)
 
 # %%
 #
@@ -121,7 +122,7 @@ chemiscope.show_input("data/mace-off-tsne-qm9.json.gz")
 # +++++++++++++++++++++++++++++++++++++++++++++
 #
 # This example demonstrates how to compute descriptors using the MACE-MP0 and t-SNE with
-# ``environments`` parameter specifying which atoms in the frames are used for
+# ``environments`` parameter specifying which atoms in the structures are used for
 # calculating the descriptors.
 #
 # Firstly, import mace library.
@@ -130,9 +131,9 @@ from mace.calculators import mace_mp  # noqa
 
 # %%
 #
-# Load the frames. In this example we are loading the reduced MC3D dataset.
+# Load the structures. In this example we are loading the reduced MC3D dataset.
 
-mc3d_frames = ase.io.read("data/explore_mc3d.xyz", ":")
+mc3d_structures = ase.io.read("data/explore_mc3d.xyz", ":")
 
 
 # %%
@@ -141,7 +142,7 @@ mc3d_frames = ase.io.read("data/explore_mc3d.xyz", ":")
 # previous example but using different MACE calculator.
 
 
-def mace_mp0_tsne(frames, environments):
+def mace_mp0_tsne(structures, environments):
     # Initialize a mace-mp0 calculator
     descriptor_opt = {"model": "small", "device": "cpu", "default_dtype": "float64"}
     calculator = mace_mp(**descriptor_opt)
@@ -149,9 +150,9 @@ def mace_mp0_tsne(frames, environments):
     # Calculate the features
     if environments is None:
         descriptors = []
-        for frame in frames:
+        for structure in structures:
             structure_avg = np.mean(
-                (calculator.get_descriptors(frame, invariants_only=True)),
+                (calculator.get_descriptors(structure, invariants_only=True)),
                 axis=0,
             )
             descriptors.append(structure_avg)
@@ -169,7 +170,7 @@ def mace_mp0_tsne(frames, environments):
         # Compute descriptors per specified atom
         descriptors = []
         for structure_index in sorted(grouped_envs):
-            atoms = frames[structure_index]
+            atoms = structures[structure_index]
             atom_indices = grouped_envs[structure_index]
 
             full_descriptors = calculator.get_descriptors(atoms, invariants_only=True)
@@ -193,5 +194,5 @@ def mace_mp0_tsne(frames, environments):
 # of atom, cutoff]``.
 
 chemiscope.explore(
-    mc3d_frames, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
+    mc3d_structures, featurizer=mace_mp0_tsne, environments=[(1, 2, 3.5), (2, 0, 3.5)]
 )

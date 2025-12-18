@@ -55,7 +55,7 @@ universe = mda.Universe(f"./{pdb_id}.pdb")
 
 ag = universe.atoms
 chemiscope.show(
-    frames=ag,
+    structures=ag,
     mode="structure",
     settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
 )
@@ -70,7 +70,7 @@ chemiscope.show(
 
 sol = universe.select_atoms("not water")
 chemiscope.show(
-    frames=sol,
+    structures=sol,
     mode="structure",
     settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
 )
@@ -117,12 +117,12 @@ rmsd = R.results.rmsd.T[2]
 #
 # We can then use the map mode to visualize the sampled conformational space.
 
-# Given that trajectories can be very large, we load the frames on disk to
+# Given that trajectories can be very large, we load the structures on disk to
 # reduce the memory usage of the viewer
-external_frames = chemiscope.write_external_structures(complx.atoms, "protein-rmsd")
+external_structures = chemiscope.write_external_structures(complx.atoms, "protein-rmsd")
 
 chemiscope.show(
-    frames=external_frames,
+    structures=external_structures,
     meta={
         "name": "Protein-Lipid Complex",
         "description": (

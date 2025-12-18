@@ -23,10 +23,9 @@ To create a new chemiscope input file:
 import chemiscope
 import ase.io
 
-# read frames using ase
-# frames can also be stk objets, e.g.
-# frames = [stk.BuildingBlock(smiles="NCCN")]
-frames = ase.io.read("structures.xyz", ":")
+# read structures using ase. You can also use other structure providers such as
+# stk, MDAnalysis, …
+structures = ase.io.read("structures.xyz", ":")
 
 # add additional properties to display
 properties = {
@@ -36,7 +35,9 @@ properties = {
     }
 }
 
-chemiscope.write_input("my-input.json.gz", frames=frames, properties=properties)
+chemiscope.write_input(
+    "my-input.json.gz", structures=structures, properties=properties
+)
 ```
 
 To display a chemiscope widget inside a jupyter notebook:
@@ -45,15 +46,11 @@ To display a chemiscope widget inside a jupyter notebook:
 import chemiscope
 import ase.io
 
-# read frames using ase
-# frames can also be stk objets, e.g.
-# frames = [stk.BuildingBlock(smiles="NCCN")]
-frames = ase.io.read("structures.xyz", ":")
+structures = ase.io.read("structures.xyz", ":")
 
-# add additional properties to display
 properties = {
     "<property name>": [3, 4, 2, 8, 9, 10],
 }
 
-chemiscope.show(frames=frames, properties=properties)
+chemiscope.show(structures=structures, properties=properties)
 ```

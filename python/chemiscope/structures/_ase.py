@@ -14,21 +14,21 @@ except ImportError:
     HAVE_ASE = False
 
 
-def _ase_valid_structures(frames):
+def _ase_valid_structures(structures):
     try:
-        frames_list = list(frames)
+        structures_list = list(structures)
     except TypeError:
         return [], False
 
-    if HAVE_ASE and isinstance(frames_list[0], ase.Atoms):
-        for frame in frames_list:
-            assert isinstance(frame, ase.Atoms)
-        return frames, True
-    elif HAVE_ASE and isinstance(frames_list[0], ase.Atom):
-        # deal with the user passing a single frame
-        return [frames], True
+    if HAVE_ASE and isinstance(structures_list[0], ase.Atoms):
+        for structure in structures_list:
+            assert isinstance(structure, ase.Atoms)
+        return structures_list, True
+    elif HAVE_ASE and isinstance(structures_list[0], ase.Atom):
+        # deal with the user passing a single structure
+        return [structures], True
     else:
-        return frames, False
+        return structures_list, False
 
 
 def _ase_normalize_value(value):
@@ -42,27 +42,27 @@ def _ase_normalize_value(value):
         return value
 
 
-def _ase_get_atom_properties(frames):
+def _ase_get_atom_properties(structures):
     IGNORED_ASE_ARRAYS = ["positions", "numbers", "center_atoms_mask"]
-    # extract the set of common properties between all frames
+    # extract the set of common properties between all structures
     all_properties = {}
     extra = set()
 
-    arrays = frames[0].arrays.copy()
+    arrays = structures[0].arrays.copy()
     # workaround for ase >= 3.23
-    if frames[0].calc is not None and "forces" in frames[0].calc.results:
-        arrays["forces"] = frames[0].calc.results["forces"]
+    if structures[0].calc is not None and "forces" in structures[0].calc.results:
+        arrays["forces"] = structures[0].calc.results["forces"]
 
     for name in arrays.keys():
         if name in IGNORED_ASE_ARRAYS:
             continue
         all_properties[name] = [arrays[name]]
 
-    for frame in frames[1:]:
-        arrays = frame.arrays.copy()
+    for structure in structures[1:]:
+        arrays = structure.arrays.copy()
         # workaround for ase >= 3.23
-        if frame.calc is not None and "forces" in frame.calc.results:
-            arrays["forces"] = frame.calc.results["forces"]
+        if structure.calc is not None and "forces" in structure.calc.results:
+            arrays["forces"] = structure.calc.results["forces"]
 
         for name in arrays.keys():
             if name in IGNORED_ASE_ARRAYS:
@@ -81,31 +81,31 @@ def _ase_get_atom_properties(frames):
     if len(extra) != 0:
         warnings.warn(
             "the following atomic properties are only defined for a subset "
-            f"of frames: {list(sorted(extra))}; they will be ignored",
+            f"of structures: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
 
     return all_properties
 
 
-def _ase_get_structure_properties(frames):
-    # extract the set of common properties between all frames
+def _ase_get_structure_properties(structures):
+    # extract the set of common properties between all structures
     all_properties = {}
     extra = set()
 
-    info = frames[0].info.copy()
+    info = structures[0].info.copy()
     # workaround for ase >= 3.23
-    if frames[0].calc is not None and "energy" in frames[0].calc.results:
-        info["energy"] = frames[0].calc.results["energy"]
+    if structures[0].calc is not None and "energy" in structures[0].calc.results:
+        info["energy"] = structures[0].calc.results["energy"]
 
     for name in info.keys():
         all_properties[name] = [_ase_normalize_value(info[name])]
 
-    for frame in frames[1:]:
-        info = frame.info.copy()
+    for structure in structures[1:]:
+        info = structure.info.copy()
         # workaround for ase >= 3.23
-        if frame.calc is not None and "energy" in frame.calc.results:
-            info["energy"] = frame.calc.results["energy"]
+        if structure.calc is not None and "energy" in structure.calc.results:
+            info["energy"] = structure.calc.results["energy"]
 
         for name in info.keys():
             if name in all_properties:
@@ -121,7 +121,7 @@ def _ase_get_structure_properties(frames):
     if len(extra) != 0:
         warnings.warn(
             "the following structure properties are only defined for a subset "
-            f"of frames: {list(sorted(extra))}; they will be ignored",
+            f"of structures: {list(sorted(extra))}; they will be ignored",
             stacklevel=2,
         )
 
@@ -135,8 +135,8 @@ def _ase_get_structure_properties(frames):
     return all_properties
 
 
-def _ase_atom_properties(frames, only=None, atoms_mask=None):
-    all_properties = _ase_get_atom_properties(frames)
+def _ase_atom_properties(structures, only=None, atoms_mask=None):
+    all_properties = _ase_get_atom_properties(structures)
     if only is None:
         selected = all_properties
     else:
@@ -161,8 +161,8 @@ def _ase_atom_properties(frames, only=None, atoms_mask=None):
     return properties
 
 
-def _ase_structure_properties(frames, only=None):
-    all_properties = _ase_get_structure_properties(frames)
+def _ase_structure_properties(structures, only=None):
+    all_properties = _ase_get_structure_properties(structures)
     if only is None:
         selected = all_properties
     else:
@@ -182,13 +182,12 @@ def _ase_structure_properties(frames, only=None):
     return properties
 
 
-def _ase_extract_properties(frames, only=None, environments=None):
+def _ase_extract_properties(structures, only=None, environments=None):
     """implementation of ``extract_properties`` for ASE"""
-
-    properties = _ase_structure_properties(frames, only)
+    properties = _ase_structure_properties(structures, only)
 
     if environments is not None:
-        atoms_mask = [[False] * len(f) for f in frames]
+        atoms_mask = [[False] * len(f) for f in structures]
         for structure, center, _ in environments:
             atoms_mask[structure][center] = True
 
@@ -196,7 +195,7 @@ def _ase_extract_properties(frames, only=None, environments=None):
     else:
         atoms_mask = None
 
-    atom_properties = _ase_atom_properties(frames, only, atoms_mask)
+    atom_properties = _ase_atom_properties(structures, only, atoms_mask)
 
     for name, values in atom_properties.items():
         if name in properties:
@@ -211,26 +210,26 @@ def _ase_extract_properties(frames, only=None, environments=None):
     return properties
 
 
-def _ase_all_atomic_environments(frames, cutoff):
+def _ase_all_atomic_environments(structures, cutoff):
     "Extract all atomic environments out of a set of ASE Atoms objects"
     environments = []
-    for structure_i, frame in enumerate(frames):
-        for atom_i in range(len(frame)):
+    for structure_i, structure in enumerate(structures):
+        for atom_i in range(len(structure)):
             environments.append((structure_i, atom_i, cutoff))
     return environments
 
 
-def _ase_to_json(frame):
-    """Implementation of frame_to_json for ase.Atoms"""
+def _ase_to_json(structure):
+    """Implementation of structures_to_json for ase.Atoms"""
     data = {}
-    data["size"] = len(frame)
-    data["names"] = list(frame.symbols)
-    data["x"] = frame.positions[:, 0].tolist()
-    data["y"] = frame.positions[:, 1].tolist()
-    data["z"] = frame.positions[:, 2].tolist()
+    data["size"] = len(structure)
+    data["names"] = list(structure.symbols)
+    data["x"] = structure.positions[:, 0].tolist()
+    data["y"] = structure.positions[:, 1].tolist()
+    data["z"] = structure.positions[:, 2].tolist()
 
-    if (frame.cell.lengths() != [0.0, 0.0, 0.0]).all():
-        data["cell"] = list(np.concatenate(frame.cell))
+    if (structure.cell.lengths() != [0.0, 0.0, 0.0]).all():
+        data["cell"] = list(np.concatenate(structure.cell))
 
     return data
 
@@ -302,20 +301,20 @@ def _is_convertible_to_property(value):
                 return False
 
 
-def _extract_key_from_ase(frame, key, target=None):
+def _extract_key_from_ase(structure, key, target=None):
     """
-    Extract a property from either the atomic array of info fields
-    of an ase.Atoms frame. Defaults to atoms if no target is specified,
-    and also returns the actual target it picked the key from.
+    Extract a property from either the atomic array of info fields of an ``ase.Atoms``
+    structure. Defaults to atoms if no target is specified, and also returns the actual
+    target it picked the key from.
     """
 
-    arrays = frame.arrays.copy()
-    info = frame.info.copy()
+    arrays = structure.arrays.copy()
+    info = structure.info.copy()
     # ase >= 3.23 workaround
-    if frame.calc is not None and "forces" in frame.calc.results:
-        arrays["forces"] = frame.calc.results["forces"]
-    if frame.calc is not None and "energy" in frame.calc.results:
-        info["energy"] = frame.calc.results["energy"]
+    if structure.calc is not None and "forces" in structure.calc.results:
+        arrays["forces"] = structure.calc.results["forces"]
+    if structure.calc is not None and "energy" in structure.calc.results:
+        info["energy"] = structure.calc.results["energy"]
 
     if target is None:
         if key in arrays:  # defaults to atom target
@@ -341,21 +340,35 @@ def _extract_key_from_ase(frame, key, target=None):
     return values, target
 
 
-def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
+def ase_vectors_to_arrows(structures=None, key=None, target=None, **kwargs):
     """
-    Extract a vectorial atom property from a list of ase.Atoms
-    objects, and returns a list of arrow shapes. Besides the specific
-    parameters it also accepts the same parameters as
-    :py:func:`arrow_from_vector`, which are used to define the
-    style of the arrows.
+    Extract a vectorial atom property from a list of ``ase.Atoms``, and returns
+    a list of arrow shapes. Besides the specific parameters it also accepts the same
+    parameters as :py:func:`arrow_from_vector`, which are used to define the style of
+    the arrows.
 
-    :param frames: list of ASE Atoms objects
-    :param key: name of the ASE atom property. Should contain
-       three components corresponding to x,y,z
-    :param target: whether the properties should be associated with
-       the entire structure, or each atom (`structure` or `atom`).
-       defaults to autodetection
+    :param structures: list of ASE Atoms
+    :param key: name of the ASE atom property. Should contain three components
+       corresponding to x,y,z
+    :param target: whether the properties should be associated with the entire
+       structure, or each atom (``structure`` or ``atom``). defaults to autodetection
     """
+    frames = kwargs.pop("frames", None)
+    if frames is not None:
+        warnings.warn(
+            "`frames` parameter is deprecated, please use `structures` instead",
+            stacklevel=2,
+        )
+
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` parameters")
+
+        structures = frames
+
+    if key is None:
+        # this is only required while we keep support for the deprecated `frames`
+        # parameter. We can remove the default None key when we remove `frames`
+        raise ValueError("`key` parameter must be provided")
 
     vectors = []
 
@@ -376,8 +389,8 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
         else defaults["head_length_scale"].default
     )
 
-    for f in frames:
-        values, target = _extract_key_from_ase(f, key, target)
+    for structure in structures:
+        values, target = _extract_key_from_ase(structure, key, target)
         if target == "structure":
             values = values.reshape(1, -1)
         if len(values.shape) != 2 or values.shape[1] != 3:
@@ -399,26 +412,41 @@ def ase_vectors_to_arrows(frames, key="forces", target=None, **kwargs):
         return {"kind": "arrow", "parameters": {"global": globs, "structure": vectors}}
 
 
-def ase_tensors_to_ellipsoids(frames, key, target=None, **kwargs):
+def ase_tensors_to_ellipsoids(structures=None, key=None, target=None, **kwargs):
     """
-    Extract a 2-tensor atom property from a list of ase.Atoms
-    objects, and returns a list of ellipsoids shapes. Besides the specific
-    parameters it also accepts the same parameters as
-    `ellipsoid_from_tensor`, which are used to draw the shapes
+    Extract a 2-tensor atom property from a list of ``ase.Atoms``, and returns a list of
+    ellipsoids shapes. Besides the specific parameters it also accepts the same
+    parameters as :py:func:`ellipsoid_from_tensor`, which are used to draw the shapes
 
-    :param frames: list of ASE Atoms objects
-    :param key: name of the ASE atom property. Should contain
-       nine components corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or
-       six components corresponding to xx,yy,zz,xy,xz,yz
-    :param target: whether the properties should be associated with
-       the entire structure, or each atom (`structure` or `atom`).
-       defaults to autodetection
+    :param structures: list of ASE Atoms
+    :param key: name of the ASE atom property. Should contain nine components
+       corresponding to xx,xy,xz,yx,yy,yz,zx,zy,zz or six components corresponding to
+       xx,yy,zz,xy,xz,yz
+    :param target: whether the properties should be associated with the entire
+       structure, or each atom (``structure`` or ``atom``). defaults to autodetection
     """
+
+    frames = kwargs.pop("frames", None)
+    if frames is not None:
+        warnings.warn(
+            "`frames` parameter is deprecated, please use `structures` instead",
+            stacklevel=2,
+        )
+
+        if structures is not None:
+            raise ValueError("cannot use both `structures` and `frames` parameters")
+
+        structures = frames
+
+    if key is None:
+        # this is only required while we keep support for the deprecated `frames`
+        # parameter. We can remove the default None key when we remove `frames`
+        raise ValueError("`key` parameter must be provided")
 
     tensors = []
 
-    for f in frames:
-        values, target = _extract_key_from_ase(f, key, target)
+    for structure in structures:
+        values, target = _extract_key_from_ase(structure, key, target)
         if target == "structure":
             values = values.reshape(1, -1)
         if len(values.shape) != 2 or (values.shape[1] != 6 and values.shape[1] != 9):
@@ -442,28 +470,28 @@ SHAPE_PARAMETERS = {
 }
 
 
-def _extract_lammps_shapes(frame, key):
-    if key in frame.info:
-        if frame.info[key] not in SHAPE_PARAMETERS:
+def _extract_lammps_shapes(structure, key):
+    if key in structure.info:
+        if structure.info[key] not in SHAPE_PARAMETERS:
             raise KeyError(
                 "The currently-supported shape in `extract_lammps_shapes_from_ase` are "
-                f"{list(SHAPE_PARAMETERS.keys())}, received '{frame.info[key]}'"
+                f"{list(SHAPE_PARAMETERS.keys())}, received '{structure.info[key]}'"
             )
 
-        shape = _get_shape_params(key, frame.info[key], frame.info)
-        if "orientation" in frame.arrays:
+        shape = _get_shape_params(key, structure.info[key], structure.info)
+        if "orientation" in structure.arrays:
             return {
                 key: [
                     {**shape, "orientation": list(o)}
-                    for o in frame.arrays["orientation"]
+                    for o in structure.arrays["orientation"]
                 ]
             }
         else:
-            return {key: [shape for _ in frame]}
+            return {key: [shape for _ in structure]}
 
-    elif key in frame.arrays:
+    elif key in structure.arrays:
         shapes = []
-        for atom_i, shape_key in enumerate(frame.arrays[key]):
+        for atom_i, shape_key in enumerate(structure.arrays[key]):
             if shape_key not in SHAPE_PARAMETERS:
                 raise KeyError(
                     "The currently-supported shape types are {}, received {}.".format(
@@ -473,12 +501,12 @@ def _extract_lammps_shapes(frame, key):
             shape = _get_shape_params_atom(
                 key,
                 shape_key,
-                frame.arrays,
+                structure.arrays,
                 atom_i,
             )
 
-            if "orientation" in frame.arrays:
-                shape["orientation"] = list(frame.arrays["orientation"][atom_i])
+            if "orientation" in structure.arrays:
+                shape["orientation"] = list(structure.arrays["orientation"][atom_i])
 
             shapes.append(shape)
 

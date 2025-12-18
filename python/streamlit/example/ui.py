@@ -6,7 +6,7 @@ import streamlit as st
 import chemiscope
 
 
-def display_selected_structure(frames):
+def display_selected_structure(structures):
     """Displays raw info about the currently selected structure"""
     selected_index = st.session_state.get("selected_index")
     st.subheader("Selected Structure")
@@ -16,7 +16,7 @@ def display_selected_structure(frames):
         return
 
     st.text(f"Index: {selected_index}")
-    st.code(str(frames[selected_index]))
+    st.code(str(structures[selected_index]))
 
 
 def build_settings(
@@ -90,11 +90,11 @@ def process_uploaded_file(file_bytes: bytes, file_name: str):
     every time a slider is moved.
     """
     text = file_bytes.decode("utf-8")
-    frames = ase.io.read(StringIO(text), ":", format="extxyz")
-    properties = chemiscope.extract_properties(frames)
+    structures = ase.io.read(StringIO(text), ":", format="extxyz")
+    properties = chemiscope.extract_properties(structures)
 
     dataset = chemiscope.create_input(
-        frames=frames, properties=properties, meta={"name": file_name}
+        structures=structures, properties=properties, meta={"name": file_name}
     )
 
-    return dataset, frames
+    return dataset, structures
