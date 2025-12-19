@@ -291,8 +291,8 @@ def show_input(path, *, mode="default", warning_timeout=10000, cache_structures=
 
 
 def show(
-    *,
     structures=None,
+    *,
     properties=None,
     metadata=None,
     environments=None,
