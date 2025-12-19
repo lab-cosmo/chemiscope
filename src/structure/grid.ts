@@ -615,6 +615,21 @@ export class ViewersGrid {
     the object was ${JSON.stringify(structure)}`
                 );
             }
+
+            // re-attach the shapes data to the loaded structure, in case these have
+            // not been provided by the loader
+            const placeholder = this._structures[index] as unknown as {
+                shapes?: Structure['shapes'];
+            };
+            if (placeholder && placeholder.shapes !== undefined) {
+                if (structure.shapes === undefined) {
+                    structure.shapes = placeholder.shapes;
+                } else {
+                    // keep loader-provided shapes, fill missing from placeholder
+                    structure.shapes = { ...placeholder.shapes, ...structure.shapes };
+                }
+            }
+
             this._resolvedStructures[index] = structure;
         }
         return this._resolvedStructures[index];
