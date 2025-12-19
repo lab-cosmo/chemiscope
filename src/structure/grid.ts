@@ -615,6 +615,12 @@ export class ViewersGrid {
     the object was ${JSON.stringify(structure)}`
                 );
             }
+
+            // copy the shapes from the structures, if any
+            if ('shapes' in this._structures[index]) {
+                structure.shapes = this._structures[index].shapes;
+            }
+
             this._resolvedStructures[index] = structure;
         }
         return this._resolvedStructures[index];

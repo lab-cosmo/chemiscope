@@ -127,8 +127,10 @@ export interface Structure {
      */
     bonds?: Array<[number, number, number]>;
     /**
+     * @private
+     *
      * possible shapes to display, multiple groups of shapes with different
-     * names are allowed
+     * names are allowed. This is set by `assignShapes` when loading the dataset.
      */
     shapes?: {
         /**
@@ -176,6 +178,15 @@ export interface UserStructure {
      * data.
      */
     data: unknown;
+
+    /**
+     * @private
+     * Dictionary containing shape data, set by `assignShapes` when loading the
+     * dataset.
+     */
+    shapes?: {
+        [name: string]: ShapeParameters;
+    };
 }
 
 /** Possible types of properties: full structure property, or atomic property */
@@ -407,14 +418,13 @@ function checkStructures(o: JsObject[]): [number, number] {
     return [o.length, atomsCount];
 }
 
+// checks only that the shape and naming of shape options is correct.
+// validity of the actual options is assessed in assignShapes
 function checkShapes(
     shapes: Record<string, JsObject> | null,
     structureCount: number,
     envCount: number
 ): string {
-    // checks only that the shape and naming of shape options is correct.
-    // validity of the actual options is assessed in assignShapes
-
     if (typeof shapes !== 'object' || shapes === null) {
         return "'shapes' must be an object";
     }
@@ -478,14 +488,13 @@ function validateShape(kind: string, parameters: Record<string, unknown>): strin
     return '';
 }
 
+// creates shapes associated with actual structures by picking slices of the full
+// arrays. it also tests the shape validity, and for that it builds (but does not store)
+// the fully expanded parameters for each shape
 function assignShapes(
     shapes: { [name: string]: ShapeParameters },
     structures: Structure[]
 ): string {
-    // creates shapes associated with actual structures by picking slices of the full
-    // arrays. it also tests the shape validity, and for that it builds (but does not store)
-    // the fully expanded parameters for each shape
-
     let atomsCount = 0;
     for (let i_structure = 0; i_structure < structures.length; i_structure++) {
         const structure = structures[i_structure];
