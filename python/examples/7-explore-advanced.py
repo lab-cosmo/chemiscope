@@ -24,6 +24,12 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/
     local_path = "data/" + filename
     if not os.path.isfile(local_path):
         response = requests.get(base_url + filename)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Failed to download {filename} from {base_url}: "
+                f"HTTP code {response.status_code}"
+            )
+
         with open(local_path, "wb") as file:
             file.write(response.content)
 
