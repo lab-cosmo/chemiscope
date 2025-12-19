@@ -6,7 +6,6 @@ from ._ase import (  # noqa: F401
     _ase_extract_properties,
     _ase_to_json,
     _ase_valid_structures,
-    ase_merge_pi_frames,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
 )
