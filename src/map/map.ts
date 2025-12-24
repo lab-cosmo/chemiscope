@@ -234,6 +234,187 @@ export class PropertiesMap {
     /// Plotly fix instance
     private _plotFix!: ReturnType<typeof fixPlot>;
 
+    private _lodEnabled = true;
+    private _lodMaxPoints = 30000; // tune 20000–50000
+    private _lodMap: number[] = []; // display index -> environment index
+    private _lodDirty = true;
+    private _lodTimer: number | undefined;
+
+    private _lodCache:
+    | {
+          x: number[];
+          y: number[];
+          color: Array<string | number>;
+          size: Array<number>;
+          symbol: string[] | number[] | string; // depends on your symbol mode
+      }
+    | undefined;
+
+    private _pickScreenBinnedIndices(
+        x: number[],
+        y: number[],
+        maxPoints: number
+    ): number[] {
+        // Plotly internal axis objects (works in your code already via _pixelCoordinate usage)
+        const xaxis = (this._plot as any)._fullLayout?.xaxis;
+        const yaxis = (this._plot as any)._fullLayout?.yaxis;
+        if (!xaxis || !yaxis) {
+            // fallback: first maxPoints points
+            const n = Math.min(x.length, maxPoints);
+            return Array.from({ length: n }, (_, i) => i);
+        }
+
+        const w: number = xaxis._length; // pixels
+        const h: number = yaxis._length; // pixels
+        if (!w || !h) return [];
+
+        // Choose a pixel bin size so total bins ≈ maxPoints
+        const binPx = Math.max(2, Math.round(Math.sqrt((w * h) / maxPoints)));
+        const binsX = Math.max(1, Math.floor(w / binPx));
+        const binsY = Math.max(1, Math.floor(h / binPx));
+        const binsN = binsX * binsY;
+
+        // store chosen point per bin, and optionally choose the point closest to bin center
+        const chosen = new Int32Array(binsN);
+        chosen.fill(-1);
+        const best = new Float32Array(binsN);
+        best.fill(Number.POSITIVE_INFINITY);
+
+        for (let i = 0; i < x.length; i++) {
+            const xi = x[i];
+            const yi = y[i];
+
+            // l2p returns pixel coordinate in plot area coordinates for linear axes
+            // (this is what your code already relies on)
+            const px = xaxis.l2p(xi);
+            const py = yaxis.l2p(yi);
+            if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
+            if (px < 0 || px > w || py < 0 || py > h) continue;
+
+            const bx = Math.min(binsX - 1, Math.max(0, (px / binPx) | 0));
+            const by = Math.min(binsY - 1, Math.max(0, (py / binPx) | 0));
+            const b = bx + by * binsX;
+
+            // keep the point closest to the bin center for nicer visuals
+            const cx = (bx + 0.5) * binPx;
+            const cy = (by + 0.5) * binPx;
+            const d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+            if (d2 < best[b]) {
+                best[b] = d2;
+                chosen[b] = i;
+            }
+        }
+
+        const out: number[] = [];
+        for (let b = 0; b < binsN; b++) {
+            const i = chosen[b];
+            if (i >= 0) out.push(i);
+        }
+        return out;
+    }
+
+    private _sliceNumberArray(full: number[], idx: number[]): number[] {
+        const out = new Array<number>(idx.length);
+        for (let i = 0; i < idx.length; i++) out[i] = full[idx[i]];
+        return out;
+    }
+
+    private _sliceColorArray(
+        full: Array<string | number>,
+        idx: number[]
+    ): Array<string | number> {
+        const out = new Array<string | number>(idx.length);
+        for (let i = 0; i < idx.length; i++) out[i] = full[idx[i]];
+        return out;
+    }
+
+    private _sliceSymbolArray(
+        full: string[] | number[] | string,
+        idx: number[]
+    ): string[] | number[] | string {
+        // If symbol is a scalar (e.g. 'circle'), keep it scalar
+        if (typeof full === 'string') return full;
+
+        const out = new Array<any>(idx.length);
+        for (let i = 0; i < idx.length; i++) out[i] = (full as any)[idx[i]];
+        return out as any;
+    }
+
+    private _rebuildLodCache(): void {
+        // FULL arrays for trace 0 (main)
+        const x = this._coordinates(this._options.x, 0)[0] as number[];
+        const y = this._coordinates(this._options.y, 0)[0] as number[];
+
+        const color = this._colors(0)[0]; // full marker.color array
+        const size = this._sizes(0)[0] as number[]; // full marker.size array
+        const symbol = this._symbols(0)[0]; // can be scalar or array
+
+        this._lodCache = { x, y, color, size, symbol };
+        this._lodDirty = false;
+    }    
+
+    private _scheduleLodUpdate(): void {
+        if (!this._lodEnabled) return;
+        if (this._options.joinPoints.value) return; // LOD + lines is usually wrong
+
+        if (this._lodTimer !== undefined) {
+            window.clearTimeout(this._lodTimer);
+        }
+        this._lodTimer = window.setTimeout(() => this._applyLodFromView(), 0);
+    }
+
+    private _applyLodFromView(): void {
+        if (this._is3D()) return;
+        if (!this._lodEnabled) return;
+        if (this._options.joinPoints.value) return;
+
+        if (this._lodDirty || !this._lodCache) {
+            this._rebuildLodCache();
+        }
+        const cache = this._lodCache!;
+        const n = cache.x.length;
+
+        // if small enough, just show everything (and clear mapping)
+        if (n <= this._lodMaxPoints) {
+            this._lodMap = [];
+            // ensure trace 0 is full if we previously downsampled
+            Plotly.restyle(
+                this._plot,
+                {
+                    x: [cache.x],
+                    y: [cache.y],
+                    'marker.color': [cache.color],
+                    'marker.size': [cache.size],
+                    'marker.symbol': [cache.symbol],
+                },
+                [0]
+            ).catch(() => {});
+            return;
+        }
+
+        const idx = this._pickScreenBinnedIndices(cache.x, cache.y, this._lodMaxPoints);
+        this._lodMap = idx; // display->original
+
+        const xs = this._sliceNumberArray(cache.x, idx);
+        const ys = this._sliceNumberArray(cache.y, idx);
+        const cs = this._sliceColorArray(cache.color, idx);
+        const ss = this._sliceNumberArray(cache.size, idx);
+        const sy = this._sliceSymbolArray(cache.symbol, idx);
+
+        Plotly.restyle(
+            this._plot,
+            {
+                x: [xs],
+                y: [ys],
+                'marker.color': [cs],
+                'marker.size': [ss],
+                'marker.symbol': [sy],
+            },
+            [0]
+        ).catch(() => {});
+    }
+
+
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
@@ -1237,6 +1418,11 @@ export class PropertiesMap {
             }
 
             let environment = event.points[0].pointNumber;
+            // If clicking on main trace (curveNumber 0) in 2D and LOD is active, remap:
+            if (!this._is3D() && event.points[0].curveNumber === 0 && this._lodMap.length) {
+                environment = this._lodMap[environment] ?? environment;
+            }
+
             if (this._is3D() && event.points[0].data.name === 'selected') {
                 // if someone has clicked on a selection marker, set to active
                 // this is only used in 3D mode, since in 2D the HTML marker
@@ -1262,6 +1448,7 @@ export class PropertiesMap {
             this.onselect(indexes);
         });
 
+        this._plot.on('plotly_relayout', () => this._scheduleLodUpdate());
         this._plot.on('plotly_afterplot', () => this._afterplot());
         this._updateMarkers();
 
