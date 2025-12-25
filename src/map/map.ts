@@ -104,6 +104,8 @@ const DEFAULT_CONFIG = {
     displayModeBar: true,
     displaylogo: false,
     responsive: true,
+    doubleClick: 'reset',
+    doubleClickDelay: 600,
     scrollZoom: true,
 
     modeBarButtonsToRemove: [
