@@ -1,5 +1,3 @@
-import assert from 'assert';
-
 import './plotly-scatter'; // Necessary for Plotly to add a <style> element
 import type { PlotlyScatterElement } from './plotly-scatter';
 
@@ -19,8 +17,12 @@ document.adoptedStyleSheets = [...document.adoptedStyleSheets, getDocumentStyleS
 
 function getStyleSheet(name: string): CSSStyleSheet {
     const style = document.getElementById(`plotly.js-style-${name}`);
-    assert(style instanceof HTMLStyleElement);
-    assert(style.sheet);
+
+    // If the style element is missing (common in v3),
+    // return an empty stylesheet instead of crashing.
+    if (!style || !(style instanceof HTMLStyleElement) || !style.sheet) {
+        return new CSSStyleSheet();
+    }
 
     const sheet = new CSSStyleSheet();
 
