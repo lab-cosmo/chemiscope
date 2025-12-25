@@ -736,31 +736,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Helper to trigger a full update of the main trace and selected trace when LOD changes.
-     */
-    private async _restyleLOD() {
-        const fullUpdate: Record<string, unknown> = {};
-
-        // Helper to merge coordinates into the update object
-        const merge = (key: string, axis: AxisOptions) => {
-            const coords = this._coordinates(axis);
-            fullUpdate[key] = coords;
-        };
-
-        merge('x', this._options.x);
-        merge('y', this._options.y);
-        merge('z', this._options.z);
-        fullUpdate['marker.color'] = this._colors();
-        fullUpdate['marker.size'] = this._sizes();
-        fullUpdate['marker.symbol'] = this._symbols();
-
-        // Update both main trace (0) and selected trace (1)
-        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
-        // while keeping the _restyle wrapper synchronous for legacy calls.
-        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
-    }
-
-    /**
      * Forward to Plotly.relayout
      * Updates the layout properties of the plot
      *
@@ -1706,6 +1681,31 @@ export class PropertiesMap {
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
         } as unknown as Layout);
+    }
+
+    /**
+     * Helper to trigger a full update of the main trace and selected trace when LOD changes.
+     */
+    private async _restyleLOD() {
+        const fullUpdate: Record<string, unknown> = {};
+
+        // Helper to merge coordinates into the update object
+        const merge = (key: string, axis: AxisOptions) => {
+            const coords = this._coordinates(axis);
+            fullUpdate[key] = coords;
+        };
+
+        merge('x', this._options.x);
+        merge('y', this._options.y);
+        merge('z', this._options.z);
+        fullUpdate['marker.color'] = this._colors();
+        fullUpdate['marker.size'] = this._sizes();
+        fullUpdate['marker.symbol'] = this._symbols();
+
+        // Update both main trace (0) and selected trace (1)
+        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
+        // while keeping the _restyle wrapper synchronous for legacy calls.
+        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
     }
 
     /**
