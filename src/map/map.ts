@@ -1986,19 +1986,19 @@ export class PropertiesMap {
 
     // Get the current boundaries on x/y/z axis
     private _getBounds(): { x: [number, number]; y: [number, number]; z?: [number, number] } {
-        const fullLayout = this._plot._fullLayout;
-
         if (this._is3D()) {
-            const scene = fullLayout.scene;
+            // HACK: `_fullLayout` is not public, so it might break
+            const layout = this._plot._fullLayout.scene;
             return {
-                x: scene.xaxis.range,
-                y: scene.yaxis.range,
-                z: scene.zaxis.range,
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
+                z: layout.zaxis.range as [number, number],
             };
         } else {
+            const layout = this._plot._fullLayout;
             return {
-                x: fullLayout.xaxis.range,
-                y: fullLayout.yaxis.range,
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
             };
         }
     }
