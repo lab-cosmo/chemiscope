@@ -20,6 +20,7 @@ import { enumerate, getElement, getFirstKey } from '../utils';
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
+import { computeLODIndices } from './lod';
 import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
@@ -1719,16 +1720,16 @@ export class PropertiesMap {
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
 
+        // 1. Data Preparation
         if (!xProp || !yProp) {
             this._lodIndices = null;
             return;
         }
 
         const xValues = this._property(xProp).values;
-        const nPoints = xValues.length;
 
-        // If dataset is small, disable LOD
-        if (nPoints <= PropertiesMap.LOD_THRESHOLD) {
+        // Check threshold
+        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
             this._lodIndices = null;
             return;
         }
@@ -1737,82 +1738,15 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // Determine the range we are binning over
-        let xMin, xMax, yMin, yMax, zMin, zMax;
-
-        if (bounds) {
-            // DYNAMIC: Use the current zoom level
-            [xMin, xMax] = bounds.x;
-            [yMin, yMax] = bounds.y;
-            if (is3D && bounds.z) {
-                [zMin, zMax] = bounds.z;
-            } else {
-                zMin = 0;
-                zMax = 1;
-            }
-        } else {
-            // STATIC: Use the full data range (initial load)
-            ({ min: xMin, max: xMax } = arrayMaxMin(xValues));
-            ({ min: yMin, max: yMax } = arrayMaxMin(yValues));
-            if (is3D && zValues) {
-                ({ min: zMin, max: zMax } = arrayMaxMin(zValues));
-            } else {
-                zMin = 0;
-                zMax = 1;
-            }
-        }
-
-        const xRange = xMax - xMin || 1;
-        const yRange = yMax - yMin || 1;
-        const zRange = zMax - zMin || 1;
-
-        const bins = is3D ? PropertiesMap.GRID_BINS_3D : PropertiesMap.GRID_BINS_2D;
-        const grid = new Map<string, number>();
-
-        // Re-use loop variables for performance
-        let xi, yi, zi, key;
-
-        for (let i = 0; i < nPoints; i++) {
-            const xVal = xValues[i];
-            const yVal = yValues[i];
-
-            // Clipping: If we are zoomed in, strictly ignore points outside the view
-            if (bounds) {
-                if (xVal < xMin || xVal > xMax || yVal < yMin || yVal > yMax) {
-                    continue;
-                }
-                if (is3D && zValues) {
-                    const zVal = zValues[i];
-                    if (zVal < zMin || zVal > zMax) {
-                        continue;
-                    }
-                }
-            }
-
-            // Calculate grid coordinates relative to the current View/Range
-            xi = Math.floor(((xVal - xMin) / xRange) * bins);
-            yi = Math.floor(((yVal - yMin) / yRange) * bins);
-
-            if (is3D && zValues) {
-                zi = Math.floor(((zValues[i] - zMin) / zRange) * bins);
-                key = `${xi}_${yi}_${zi}`;
-            } else {
-                key = `${xi}_${yi}`;
-            }
-
-            if (!grid.has(key)) {
-                grid.set(key, i);
-            }
-        }
-
-        // Convert Map to sorted Int32Array
-        const indices = new Int32Array(grid.size);
-        let ptr = 0;
-        for (const idx of grid.values()) {
-            indices[ptr++] = idx;
-        }
-        indices.sort();
-        this._lodIndices = indices;
+        // 2. Delegate Calculation to External Function
+        this._lodIndices = computeLODIndices(
+            xValues,
+            yValues,
+            zValues,
+            bounds,
+            PropertiesMap.GRID_BINS_2D,
+            PropertiesMap.GRID_BINS_3D
+        );
     }
 
     /**
