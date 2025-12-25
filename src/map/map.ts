@@ -252,10 +252,10 @@ export class PropertiesMap {
      * `id`
      *
      * @param element    HTML element or string 'id' of the element where
-     * the map should live
+     *                   the map should live
      * @param settings   settings for all panels
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
-     * environments index to structure/atom indexes
+     *                   environments index to structure/atom indexes
      * @param target       widget display target, either stucture or atom
      * @param properties properties to be displayed
      */
@@ -474,7 +474,7 @@ export class PropertiesMap {
         data.activate();
 
         if (this._is3D()) {
-            this._restyle({ 'marker.size': this._sizes(1) }, 1);
+            this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
         }
     }
 
@@ -726,14 +726,14 @@ export class PropertiesMap {
      * @param data properties to update
      * @param traces optional, indices of traces or a single trace index to update
      */
-    private _restyle(data: Record<string, unknown>, traces?: number | number[]): Promise<void> {
-        return Plotly.restyle(this._plot, data as unknown as Data, traces)
-            .then(() => {})
-            .catch((e: unknown) => {
-                setTimeout(() => { throw e; });
-            });
+    private _restyle(data: Partial<Data>, traces?: number | number[]) {
+        Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
     }
-     
+
     /**
      * Helper to trigger a full update of the main trace and selected trace when LOD changes.
      */
@@ -754,7 +754,9 @@ export class PropertiesMap {
         fullUpdate['marker.symbol'] = this._symbols();
 
         // Update both main trace (0) and selected trace (1)
-        await this._restyle(fullUpdate, [0, 1]);
+        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
+        // while keeping the _restyle wrapper synchronous for legacy calls.
+        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
     }
 
     /**
@@ -763,12 +765,12 @@ export class PropertiesMap {
      *
      * @param layout layout properties to update
      */
-    private _relayout(layout: Partial<Layout>): Promise<void> {
-        return Plotly.relayout(this._plot, layout)
-            .then(() => {})
-            .catch((e: unknown) => {
-                setTimeout(() => { throw e; });
-            });
+    private _relayout(layout: Partial<Layout>) {
+        Plotly.relayout(this._plot, layout).catch((e: unknown) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
     }
 
     /**
@@ -815,7 +817,8 @@ export class PropertiesMap {
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
             this._computeLOD();
-            this._restyleLOD();
+            // Fire and forget
+            void this._restyleLOD();
 
             this._relayout({
                 'scene.xaxis.title': this._title(this._options.x.property.value),
@@ -874,7 +877,7 @@ export class PropertiesMap {
 
             // LOD: Y changed, recompute spatial binning
             this._computeLOD();
-            this._restyleLOD();
+            void this._restyleLOD();
 
             this._relayout({
                 'scene.yaxis.title': this._title(this._options.y.property.value),
@@ -921,7 +924,7 @@ export class PropertiesMap {
 
             // LOD: Z changed, recompute binning
             this._computeLOD();
-            this._restyleLOD();
+            void this._restyleLOD();
 
             this._relayout({
                 'scene.zaxis.title': this._title(this._options.z.property.value),
@@ -1216,7 +1219,7 @@ export class PropertiesMap {
 
         this._options.markerOutline.onchange.push(() => {
             const width = this._options.markerOutline.value ? 0.5 : 0;
-            this._restyle({ 'marker.line.width': width }, [0]);
+            this._restyle({ 'marker.line.width': width } as Data, [0]);
         });
 
         this._options.joinPoints.onchange.push(() => {
@@ -1292,19 +1295,20 @@ export class PropertiesMap {
             this.onselect(indexes);
         });
 
-        this._plot.on('plotly_afterplot', () => this._afterplot());
+        this._plot.on('plotly_afterplot', () => {
+            void this._afterplot();
+        });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this._plot.on('plotly_relayout', (event: any) => {
+        this._plot.on('plotly_relayout', () => {
             // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
             // But if it's a camera move, we force an LOD check here.
-            this._afterplot();
+            void this._afterplot();
         });
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            this._resetToGlobalView();
+            void this._resetToGlobalView();
             return false;
         });
 
@@ -1425,11 +1429,7 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace<number[]>(
-            mainValues as number[],
-            selected,
-            trace
-        );
+        return this._selectTrace<number[]>(mainValues as number[], selected, trace);
     }
 
     private _title(name: string): string {
@@ -1485,11 +1485,7 @@ export class PropertiesMap {
             selected.push(data.color);
         }
 
-        return this._selectTrace<Array<string | number>>(
-            mainValues as Array<string | number>,
-            selected,
-            trace
-        );
+        return this._selectTrace<Array<string | number>>(mainValues, selected, trace);
     }
 
     /**
@@ -1657,7 +1653,7 @@ export class PropertiesMap {
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
                 'marker.sizemode': 'area',
-            },
+            } as Data,
             [0, 1]
         );
 
@@ -1698,7 +1694,7 @@ export class PropertiesMap {
                 'marker.line.width': marker_line,
                 // size change from 3D to 2D
                 'marker.size': this._sizes(),
-            },
+            } as Data,
             [0, 1]
         );
 
@@ -1827,7 +1823,7 @@ export class PropertiesMap {
             return values;
         }
 
-        const result = new Array(this._lodIndices.length);
+        const result = new Array<number | string>(this._lodIndices.length);
         for (let i = 0; i < this._lodIndices.length; i++) {
             result[i] = values[this._lodIndices[i]];
         }
@@ -1847,8 +1843,7 @@ export class PropertiesMap {
         await this._restyleLOD();
 
         // 3. Prepare Layout Update
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const layoutUpdate: any = {};
+        const layoutUpdate: Record<string, boolean> = {};
 
         if (this._is3D()) {
             // In 3D, 'autorange: true' resets camera AND axes.
@@ -1862,7 +1857,7 @@ export class PropertiesMap {
         }
 
         // 4. Force the view reset
-        await this._relayout(layoutUpdate);
+        this._relayout(layoutUpdate);
     }
 
     /**
@@ -1937,7 +1932,7 @@ export class PropertiesMap {
                     x: this._coordinates(this._options.x, 1),
                     y: this._coordinates(this._options.y, 1),
                     z: this._coordinates(this._options.z, 1),
-                },
+                } as Data,
                 1
             );
         } else {
@@ -1991,20 +1986,19 @@ export class PropertiesMap {
 
     // Get the current boundaries on x/y/z axis
     private _getBounds(): { x: [number, number]; y: [number, number]; z?: [number, number] } {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fullLayout = (this._plot as any)._fullLayout;
+        const fullLayout = this._plot._fullLayout;
 
         if (this._is3D()) {
             const scene = fullLayout.scene;
             return {
-                x: scene.xaxis.range as [number, number],
-                y: scene.yaxis.range as [number, number],
-                z: scene.zaxis.range as [number, number],
+                x: scene.xaxis.range,
+                y: scene.yaxis.range,
+                z: scene.zaxis.range,
             };
         } else {
             return {
-                x: fullLayout.xaxis.range as [number, number],
-                y: fullLayout.yaxis.range as [number, number],
+                x: fullLayout.xaxis.range,
+                y: fullLayout.yaxis.range,
             };
         }
     }
