@@ -234,196 +234,28 @@ export class PropertiesMap {
     /// Plotly fix instance
     private _plotFix!: ReturnType<typeof fixPlot>;
 
-    private _lodEnabled = true;
-    private _lodMaxPoints = 30000; // tune 20000–50000
-    private _lodMap: number[] = []; // display index -> environment index
-    private _lodDirty = true;
-    private _lodTimer: number | undefined;
-
-    private _lodCache:
-    | {
-          x: number[];
-          y: number[];
-          color: Array<string | number>;
-          size: Array<number>;
-          symbol: string[] | number[] | string; // depends on your symbol mode
-      }
-    | undefined;
-
-    private _pickScreenBinnedIndices(
-        x: number[],
-        y: number[],
-        maxPoints: number
-    ): number[] {
-        // Plotly internal axis objects (works in your code already via _pixelCoordinate usage)
-        const xaxis = (this._plot as any)._fullLayout?.xaxis;
-        const yaxis = (this._plot as any)._fullLayout?.yaxis;
-        if (!xaxis || !yaxis) {
-            // fallback: first maxPoints points
-            const n = Math.min(x.length, maxPoints);
-            return Array.from({ length: n }, (_, i) => i);
-        }
-
-        const w: number = xaxis._length; // pixels
-        const h: number = yaxis._length; // pixels
-        if (!w || !h) return [];
-
-        // Choose a pixel bin size so total bins ≈ maxPoints
-        const binPx = Math.max(2, Math.round(Math.sqrt((w * h) / maxPoints)));
-        const binsX = Math.max(1, Math.floor(w / binPx));
-        const binsY = Math.max(1, Math.floor(h / binPx));
-        const binsN = binsX * binsY;
-
-        // store chosen point per bin, and optionally choose the point closest to bin center
-        const chosen = new Int32Array(binsN);
-        chosen.fill(-1);
-        const best = new Float32Array(binsN);
-        best.fill(Number.POSITIVE_INFINITY);
-
-        for (let i = 0; i < x.length; i++) {
-            const xi = x[i];
-            const yi = y[i];
-
-            // l2p returns pixel coordinate in plot area coordinates for linear axes
-            // (this is what your code already relies on)
-            const px = xaxis.l2p(xi);
-            const py = yaxis.l2p(yi);
-            if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
-            if (px < 0 || px > w || py < 0 || py > h) continue;
-
-            const bx = Math.min(binsX - 1, Math.max(0, (px / binPx) | 0));
-            const by = Math.min(binsY - 1, Math.max(0, (py / binPx) | 0));
-            const b = bx + by * binsX;
-
-            // keep the point closest to the bin center for nicer visuals
-            const cx = (bx + 0.5) * binPx;
-            const cy = (by + 0.5) * binPx;
-            const d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
-            if (d2 < best[b]) {
-                best[b] = d2;
-                chosen[b] = i;
-            }
-        }
-
-        const out: number[] = [];
-        for (let b = 0; b < binsN; b++) {
-            const i = chosen[b];
-            if (i >= 0) out.push(i);
-        }
-        return out;
-    }
-
-    private _sliceNumberArray(full: number[], idx: number[]): number[] {
-        const out = new Array<number>(idx.length);
-        for (let i = 0; i < idx.length; i++) out[i] = full[idx[i]];
-        return out;
-    }
-
-    private _sliceColorArray(
-        full: Array<string | number>,
-        idx: number[]
-    ): Array<string | number> {
-        const out = new Array<string | number>(idx.length);
-        for (let i = 0; i < idx.length; i++) out[i] = full[idx[i]];
-        return out;
-    }
-
-    private _sliceSymbolArray(
-        full: string[] | number[] | string,
-        idx: number[]
-    ): string[] | number[] | string {
-        // If symbol is a scalar (e.g. 'circle'), keep it scalar
-        if (typeof full === 'string') return full;
-
-        const out = new Array<any>(idx.length);
-        for (let i = 0; i < idx.length; i++) out[i] = (full as any)[idx[i]];
-        return out as any;
-    }
-
-    private _rebuildLodCache(): void {
-        // FULL arrays for trace 0 (main)
-        const x = this._coordinates(this._options.x, 0)[0] as number[];
-        const y = this._coordinates(this._options.y, 0)[0] as number[];
-
-        const color = this._colors(0)[0]; // full marker.color array
-        const size = this._sizes(0)[0] as number[]; // full marker.size array
-        const symbol = this._symbols(0)[0]; // can be scalar or array
-
-        this._lodCache = { x, y, color, size, symbol };
-        this._lodDirty = false;
-    }    
-
-    private _scheduleLodUpdate(): void {
-        if (!this._lodEnabled) return;
-        if (this._options.joinPoints.value) return; // LOD + lines is usually wrong
-
-        if (this._lodTimer !== undefined) {
-            window.clearTimeout(this._lodTimer);
-        }
-        this._lodTimer = window.setTimeout(() => this._applyLodFromView(), 0);
-    }
-
-    private _applyLodFromView(): void {
-        if (this._is3D()) return;
-        if (!this._lodEnabled) return;
-        if (this._options.joinPoints.value) return;
-
-        if (this._lodDirty || !this._lodCache) {
-            this._rebuildLodCache();
-        }
-        const cache = this._lodCache!;
-        const n = cache.x.length;
-
-        // if small enough, just show everything (and clear mapping)
-        if (n <= this._lodMaxPoints) {
-            this._lodMap = [];
-            // ensure trace 0 is full if we previously downsampled
-            Plotly.restyle(
-                this._plot,
-                {
-                    x: [cache.x],
-                    y: [cache.y],
-                    'marker.color': [cache.color],
-                    'marker.size': [cache.size],
-                    'marker.symbol': [cache.symbol],
-                },
-                [0]
-            ).catch(() => {});
-            return;
-        }
-
-        const idx = this._pickScreenBinnedIndices(cache.x, cache.y, this._lodMaxPoints);
-        this._lodMap = idx; // display->original
-
-        const xs = this._sliceNumberArray(cache.x, idx);
-        const ys = this._sliceNumberArray(cache.y, idx);
-        const cs = this._sliceColorArray(cache.color, idx);
-        const ss = this._sliceNumberArray(cache.size, idx);
-        const sy = this._sliceSymbolArray(cache.symbol, idx);
-
-        Plotly.restyle(
-            this._plot,
-            {
-                x: [xs],
-                y: [ys],
-                'marker.color': [cs],
-                'marker.size': [ss],
-                'marker.symbol': [sy],
-            },
-            [0]
-        ).catch(() => {});
-    }
-
+    // ========================================================================
+    // LOD (Level of Detail) Configuration
+    // ========================================================================
+    private static readonly LOD_THRESHOLD = 50000;
+    // Grid resolution ~ sqrt(50000) -> 220. We use 250 for 2D.
+    private static readonly GRID_BINS_2D = 250;
+    // Grid resolution for 3D ~ cbrt(50000) -> 37. We use 40.
+    private static readonly GRID_BINS_3D = 40;
+    /// Stores the subset of point indices to display when LOD is active
+    private _lodIndices: Int32Array | null = null;
+    /// Guard to prevent infinite recursion in afterplot loops
+    private _updatingLOD = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
      *
      * @param element    HTML element or string 'id' of the element where
-     *                   the map should live
+     * the map should live
      * @param settings   settings for all panels
      * @param indexer    {@link EnvironmentIndexer} used to translate indexes from
-     *                   environments index to structure/atom indexes
+     * environments index to structure/atom indexes
      * @param target       widget display target, either stucture or atom
      * @param properties properties to be displayed
      */
@@ -487,6 +319,9 @@ export class PropertiesMap {
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
+        // Initial LOD computation
+        this._computeLOD();
+
         // Connect the settings to event listeners or handlers
         this._connectSettings();
 
@@ -522,6 +357,8 @@ export class PropertiesMap {
         if (target !== this._target) {
             // Set new widget target
             this._target = target;
+            // Reset LOD
+            this._lodIndices = null;
 
             // Process markers to correctly set then to the updated map
             this._handleMarkers();
@@ -536,6 +373,9 @@ export class PropertiesMap {
 
             // Update the map options based on the chosen target
             this._setupMapOptions();
+
+            // Recompute LOD with new options
+            this._computeLOD();
 
             // Append the callbacks to the new options
             this._connectSettings();
@@ -634,7 +474,7 @@ export class PropertiesMap {
         data.activate();
 
         if (this._is3D()) {
-            this._restyle({ 'marker.size': this._sizes(1) } as Data, 1);
+            this._restyle({ 'marker.size': this._sizes(1) }, 1);
         }
     }
 
@@ -886,12 +726,35 @@ export class PropertiesMap {
      * @param data properties to update
      * @param traces optional, indices of traces or a single trace index to update
      */
-    private _restyle(data: Partial<Data>, traces?: number | number[]) {
-        Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
-            setTimeout(() => {
-                throw e;
-            })
-        );
+    private _restyle(data: Record<string, unknown>, traces?: number | number[]): Promise<void> {
+        return Plotly.restyle(this._plot, data as unknown as Data, traces)
+            .then(() => {})
+            .catch((e: unknown) => {
+                setTimeout(() => { throw e; });
+            });
+    }
+     
+    /**
+     * Helper to trigger a full update of the main trace and selected trace when LOD changes.
+     */
+    private async _restyleLOD() {
+        const fullUpdate: Record<string, unknown> = {};
+
+        // Helper to merge coordinates into the update object
+        const merge = (key: string, axis: AxisOptions) => {
+            const coords = this._coordinates(axis);
+            fullUpdate[key] = coords;
+        };
+
+        merge('x', this._options.x);
+        merge('y', this._options.y);
+        merge('z', this._options.z);
+        fullUpdate['marker.color'] = this._colors();
+        fullUpdate['marker.size'] = this._sizes();
+        fullUpdate['marker.symbol'] = this._symbols();
+
+        // Update both main trace (0) and selected trace (1)
+        await this._restyle(fullUpdate, [0, 1]);
     }
 
     /**
@@ -900,12 +763,12 @@ export class PropertiesMap {
      *
      * @param layout layout properties to update
      */
-    private _relayout(layout: Partial<Layout>) {
-        Plotly.relayout(this._plot, layout).catch((e: unknown) =>
-            setTimeout(() => {
-                throw e;
-            })
-        );
+    private _relayout(layout: Partial<Layout>): Promise<void> {
+        return Plotly.relayout(this._plot, layout)
+            .then(() => {})
+            .catch((e: unknown) => {
+                setTimeout(() => { throw e; });
+            });
     }
 
     /**
@@ -949,35 +812,26 @@ export class PropertiesMap {
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
             negativeLogWarning(this._options.x);
-            const values = this._coordinates(this._options.x) as number[][];
-            this._restyle({ x: values }, [0, 1]);
+
+            // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
+            this._computeLOD();
+            this._restyleLOD();
+
             this._relayout({
                 'scene.xaxis.title': this._title(this._options.x.property.value),
                 'xaxis.title': this._title(this._options.x.property.value),
+                // Force autorange when changing properties to reset view
+                [this._is3D() ? 'scene.xaxis.autorange' : 'xaxis.autorange']: true,
             } as unknown as Layout);
-
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.xaxis.autorange': true,
-                } as unknown as Layout);
-            } else {
-                this._relayout({
-                    'xaxis.autorange': true,
-                } as unknown as Layout);
-            }
             this._setScaleStep(this._getBounds().x, 'x');
         });
 
         this._options.x.scale.onchange.push(() => {
             negativeLogWarning(this._options.x);
             this._options.setLogLabel(this._options.x, 'x');
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.xaxis.type': this._options.x.scale.value,
-                } as unknown as Layout);
-            } else {
-                this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
-            }
+            this._relayout({
+                [this._is3D() ? 'scene.xaxis.type' : 'xaxis.type']: this._options.x.scale.value,
+            } as unknown as Layout);
         });
 
         // function creating a function to be used as onchange callback
@@ -1005,13 +859,9 @@ export class PropertiesMap {
 
                 negativeLogWarning(axis);
 
-                if (this._is3D()) {
-                    this._relayout({
-                        [`scene.${name}.range`]: [min, max],
-                    } as unknown as Layout);
-                } else {
-                    this._relayout({ [`${name}.range`]: [min, max] });
-                }
+                this._relayout({
+                    [this._is3D() ? `scene.${name}.range` : `${name}.range`]: [min, max],
+                } as unknown as Layout);
             };
         };
 
@@ -1021,35 +871,26 @@ export class PropertiesMap {
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
             negativeLogWarning(this._options.y);
-            const values = this._coordinates(this._options.y) as number[][];
-            this._restyle({ y: values }, [0, 1]);
+
+            // LOD: Y changed, recompute spatial binning
+            this._computeLOD();
+            this._restyleLOD();
+
             this._relayout({
                 'scene.yaxis.title': this._title(this._options.y.property.value),
                 'yaxis.title': this._title(this._options.y.property.value),
+                // Force autorange
+                [this._is3D() ? 'scene.yaxis.autorange' : 'yaxis.autorange']: true,
             } as unknown as Layout);
-
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.yaxis.autorange': true,
-                } as unknown as Layout);
-            } else {
-                this._relayout({
-                    'yaxis.autorange': true,
-                } as unknown as Layout);
-            }
             this._setScaleStep(this._getBounds().y, 'y');
         });
 
         this._options.y.scale.onchange.push(() => {
             negativeLogWarning(this._options.y);
             this._options.setLogLabel(this._options.y, 'y');
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.yaxis.type': this._options.y.scale.value,
-                } as unknown as Layout);
-            } else {
-                this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
-            }
+            this._relayout({
+                [this._is3D() ? 'scene.yaxis.type' : 'yaxis.type']: this._options.y.scale.value,
+            } as unknown as Layout);
         });
 
         this._options.y.min.onchange.push(rangeChange('yaxis', this._options.y, 'min'));
@@ -1078,8 +919,10 @@ export class PropertiesMap {
                 }
             }
 
-            const values = this._coordinates(this._options.z);
-            this._restyle({ z: values } as Data, [0, 1]);
+            // LOD: Z changed, recompute binning
+            this._computeLOD();
+            this._restyleLOD();
+
             this._relayout({
                 'scene.zaxis.title': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
@@ -1373,7 +1216,7 @@ export class PropertiesMap {
 
         this._options.markerOutline.onchange.push(() => {
             const width = this._options.markerOutline.value ? 0.5 : 0;
-            this._restyle({ 'marker.line.width': width } as Data, [0]);
+            this._restyle({ 'marker.line.width': width }, [0]);
         });
 
         this._options.joinPoints.onchange.push(() => {
@@ -1418,9 +1261,10 @@ export class PropertiesMap {
             }
 
             let environment = event.points[0].pointNumber;
-            // If clicking on main trace (curveNumber 0) in 2D and LOD is active, remap:
-            if (!this._is3D() && event.points[0].curveNumber === 0 && this._lodMap.length) {
-                environment = this._lodMap[environment] ?? environment;
+
+            // LOD: Map the clicked point back to real environment index if LOD is active on main trace
+            if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
+                environment = this._lodIndices[environment];
             }
 
             if (this._is3D() && event.points[0].data.name === 'selected') {
@@ -1448,8 +1292,22 @@ export class PropertiesMap {
             this.onselect(indexes);
         });
 
-        this._plot.on('plotly_relayout', () => this._scheduleLodUpdate());
         this._plot.on('plotly_afterplot', () => this._afterplot());
+
+        // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this._plot.on('plotly_relayout', (event: any) => {
+            // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
+            // But if it's a camera move, we force an LOD check here.
+            this._afterplot();
+        });
+
+        // Handle double-click to reset view (global LOD)
+        this._plot.on('plotly_doubleclick', () => {
+            this._resetToGlobalView();
+            return false;
+        });
+
         this._updateMarkers();
 
         // set step of min/max select arrows based on the plot range
@@ -1553,6 +1411,10 @@ export class PropertiesMap {
         }
 
         const values = this._property(axis.property.value).values;
+        // LOD: Apply binning filter for main trace (trace 0)
+        // If trace is undefined (both), _selectTrace distributes the first argument to main trace
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+
         // in 2d mode, set all selected markers coordinates to NaN since we are
         // using HTML markers instead.
         const selected = [];
@@ -1563,7 +1425,11 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace<number[]>(values, selected, trace);
+        return this._selectTrace<number[]>(
+            mainValues as number[],
+            selected,
+            trace
+        );
     }
 
     private _title(name: string): string {
@@ -1611,12 +1477,19 @@ export class PropertiesMap {
             ) as number[];
         }
         const values = this._options.calculateColors(colors);
+        // LOD: Apply filter to main trace values
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+
         const selected = [];
         for (const data of this._selected.values()) {
             selected.push(data.color);
         }
 
-        return this._selectTrace<Array<string | number>>(values, selected, trace);
+        return this._selectTrace<Array<string | number>>(
+            mainValues as Array<string | number>,
+            selected,
+            trace
+        );
     }
 
     /**
@@ -1633,6 +1506,9 @@ export class PropertiesMap {
             ) as number[];
         }
         const values = this._options.calculateSizes(sizes);
+        // LOD: Apply filter to main trace values
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+
         const selected = [];
         if (this._is3D()) {
             for (const guid of this._selected.keys()) {
@@ -1643,7 +1519,11 @@ export class PropertiesMap {
                 }
             }
         }
-        return this._selectTrace<number | number[]>(values, selected, trace);
+        return this._selectTrace<number | number[]>(
+            mainValues as number | number[],
+            selected,
+            trace
+        );
     }
 
     /**
@@ -1658,11 +1538,18 @@ export class PropertiesMap {
 
         const property = this._property(this._options.symbol.value);
         const symbols = this._options.getSymbols(property);
+        // LOD: Apply filter to main trace values
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(symbols) : symbols;
+
         const selected = [];
         for (const data of this._selected.values()) {
             selected.push(symbols[data.current]);
         }
-        return this._selectTrace<typeof symbols>(symbols, selected as typeof symbols, trace);
+        return this._selectTrace<typeof symbols>(
+            mainValues as typeof symbols,
+            selected as typeof symbols,
+            trace
+        );
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -1770,7 +1657,7 @@ export class PropertiesMap {
                 // size change from 2D to 3D
                 'marker.size': this._sizes(),
                 'marker.sizemode': 'area',
-            } as Data,
+            },
             [0, 1]
         );
 
@@ -1811,7 +1698,7 @@ export class PropertiesMap {
                 'marker.line.width': marker_line,
                 // size change from 3D to 2D
                 'marker.size': this._sizes(),
-            } as Data,
+            },
             [0, 1]
         );
 
@@ -1825,21 +1712,204 @@ export class PropertiesMap {
     }
 
     /**
+     * Computes the subset of points to display based on spatial grid binning (LOD).
+     */
+    private _computeLOD(bounds?: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        const xProp = this._options.x.property.value;
+        const yProp = this._options.y.property.value;
+        const zProp = this._options.z.property.value;
+
+        if (!xProp || !yProp) {
+            this._lodIndices = null;
+            return;
+        }
+
+        const xValues = this._property(xProp).values;
+        const nPoints = xValues.length;
+
+        // If dataset is small, disable LOD
+        if (nPoints <= PropertiesMap.LOD_THRESHOLD) {
+            this._lodIndices = null;
+            return;
+        }
+
+        const yValues = this._property(yProp).values;
+        const is3D = this._is3D() && zProp !== '';
+        const zValues = is3D ? this._property(zProp).values : null;
+
+        // Determine the range we are binning over
+        let xMin, xMax, yMin, yMax, zMin, zMax;
+
+        if (bounds) {
+            // DYNAMIC: Use the current zoom level
+            [xMin, xMax] = bounds.x;
+            [yMin, yMax] = bounds.y;
+            if (is3D && bounds.z) {
+                [zMin, zMax] = bounds.z;
+            } else {
+                zMin = 0;
+                zMax = 1;
+            }
+        } else {
+            // STATIC: Use the full data range (initial load)
+            ({ min: xMin, max: xMax } = arrayMaxMin(xValues));
+            ({ min: yMin, max: yMax } = arrayMaxMin(yValues));
+            if (is3D && zValues) {
+                ({ min: zMin, max: zMax } = arrayMaxMin(zValues));
+            } else {
+                zMin = 0;
+                zMax = 1;
+            }
+        }
+
+        const xRange = xMax - xMin || 1;
+        const yRange = yMax - yMin || 1;
+        const zRange = zMax - zMin || 1;
+
+        const bins = is3D ? PropertiesMap.GRID_BINS_3D : PropertiesMap.GRID_BINS_2D;
+        const grid = new Map<string, number>();
+
+        // Re-use loop variables for performance
+        let xi, yi, zi, key;
+
+        for (let i = 0; i < nPoints; i++) {
+            const xVal = xValues[i];
+            const yVal = yValues[i];
+
+            // Clipping: If we are zoomed in, strictly ignore points outside the view
+            if (bounds) {
+                if (xVal < xMin || xVal > xMax || yVal < yMin || yVal > yMax) {
+                    continue;
+                }
+                if (is3D && zValues) {
+                    const zVal = zValues[i];
+                    if (zVal < zMin || zVal > zMax) {
+                        continue;
+                    }
+                }
+            }
+
+            // Calculate grid coordinates relative to the current View/Range
+            xi = Math.floor(((xVal - xMin) / xRange) * bins);
+            yi = Math.floor(((yVal - yMin) / yRange) * bins);
+
+            if (is3D && zValues) {
+                zi = Math.floor(((zValues[i] - zMin) / zRange) * bins);
+                key = `${xi}_${yi}_${zi}`;
+            } else {
+                key = `${xi}_${yi}`;
+            }
+
+            if (!grid.has(key)) {
+                grid.set(key, i);
+            }
+        }
+
+        // Convert Map to sorted Int32Array
+        const indices = new Int32Array(grid.size);
+        let ptr = 0;
+        for (const idx of grid.values()) {
+            indices[ptr++] = idx;
+        }
+        indices.sort();
+        this._lodIndices = indices;
+    }
+
+    /**
+     * Helper to filter data arrays using the computed LOD indices.
+     */
+    private _applyLOD(values: (number | string)[]): (number | string)[] {
+        if (this._lodIndices === null) {
+            return values;
+        }
+
+        const result = new Array(this._lodIndices.length);
+        for (let i = 0; i < this._lodIndices.length; i++) {
+            result[i] = values[this._lodIndices[i]];
+        }
+        return result;
+    }
+
+    /**
+     * Resets the view to global bounds and recomputes LOD on the full dataset.
+     * Used for double-click and autoscale events.
+     */
+    private async _resetToGlobalView() {
+        // 1. Force global LOD computation
+        this._computeLOD();
+
+        // 2. Update data traces first (re-render points with global LOD)
+        // We do this BEFORE relayout so that 'autorange' calculates bounds based on the full dataset, not the sliced one.
+        await this._restyleLOD();
+
+        // 3. Prepare Layout Update
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const layoutUpdate: any = {};
+
+        if (this._is3D()) {
+            // In 3D, 'autorange: true' resets camera AND axes.
+            layoutUpdate['scene.xaxis.autorange'] = true;
+            layoutUpdate['scene.yaxis.autorange'] = true;
+            layoutUpdate['scene.zaxis.autorange'] = true;
+        } else {
+            // In 2D, we trigger autorange on standard axes
+            layoutUpdate['xaxis.autorange'] = true;
+            layoutUpdate['yaxis.autorange'] = true;
+        }
+
+        // 4. Force the view reset
+        await this._relayout(layoutUpdate);
+    }
+
+    /**
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private _afterplot(): void {
+    private async _afterplot(): Promise<void> {
+        // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
+        if (this._updatingLOD) {
+            return;
+        }
+
         const bounds = this._getBounds();
         const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
-            axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
-            axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+            // Only update if values are valid numbers
+            if (boundMin !== undefined && boundMax !== undefined) {
+                axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
+                axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+            }
         };
 
-        // Set calculated value to the range if axis bound value was not provided by user
+        // Update settings modal values based on current view
         updateAxisValues(this._options.x, bounds.x);
         updateAxisValues(this._options.y, bounds.y);
         if (bounds.z !== undefined) {
             updateAxisValues(this._options.z, bounds.z);
+        }
+
+        // LOD CHECK
+        const hasPoints = this._options.x.property.value !== '';
+        if (
+            hasPoints &&
+            this._property(this._options.x.property.value).values.length >
+                PropertiesMap.LOD_THRESHOLD
+        ) {
+            this._updatingLOD = true;
+
+            // 1. Recompute indices based on new visible bounds
+            this._computeLOD(bounds);
+
+            // 2. Push new data to Plotly
+            await this._restyleLOD();
+
+            // Release lock after event loop settles to allow subsequent updates
+            setTimeout(() => {
+                this._updatingLOD = false;
+            }, 0);
         }
 
         if (!this._is3D()) {
@@ -1867,12 +1937,14 @@ export class PropertiesMap {
                     x: this._coordinates(this._options.x, 1),
                     y: this._coordinates(this._options.y, 1),
                     z: this._coordinates(this._options.z, 1),
-                } as Data,
+                },
                 1
             );
         } else {
-            const allX = this._coordinates(this._options.x, 0)[0] as number[];
-            const allY = this._coordinates(this._options.y, 0)[0] as number[];
+            // LOD: Retrieve raw values for marker positioning, skipping _coordinates
+            // because _coordinates applies LOD filtering which might hide the marker's index
+            const allX = this._property(this._options.x.property.value).values;
+            const allY = this._property(this._options.y.property.value).values;
             const plotWidth = this._plot.getBoundingClientRect().width;
 
             for (const marker of markers) {
@@ -1919,19 +1991,20 @@ export class PropertiesMap {
 
     // Get the current boundaries on x/y/z axis
     private _getBounds(): { x: [number, number]; y: [number, number]; z?: [number, number] } {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fullLayout = (this._plot as any)._fullLayout;
+
         if (this._is3D()) {
-            // HACK: `_fullLayout` is not public, so it might break
-            const layout = this._plot._fullLayout.scene;
+            const scene = fullLayout.scene;
             return {
-                x: layout.xaxis.range as [number, number],
-                y: layout.yaxis.range as [number, number],
-                z: layout.zaxis.range as [number, number],
+                x: scene.xaxis.range as [number, number],
+                y: scene.yaxis.range as [number, number],
+                z: scene.zaxis.range as [number, number],
             };
         } else {
-            const layout = this._plot._fullLayout;
             return {
-                x: layout.xaxis.range as [number, number],
-                y: layout.yaxis.range as [number, number],
+                x: fullLayout.xaxis.range as [number, number],
+                y: fullLayout.yaxis.range as [number, number],
             };
         }
     }
