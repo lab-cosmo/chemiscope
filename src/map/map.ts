@@ -8,7 +8,6 @@ import assert from 'assert';
 import Plotly from './plotly/plotly-scatter';
 import { Config, Data, Layout, PlotlyScatterElement } from './plotly/plotly-scatter';
 import * as plotlyStyles from './plotly/plotly-styles';
-import fixPlot from './plotly/fix-plot';
 
 import { Property, Settings } from '../dataset';
 
@@ -231,8 +230,6 @@ export class PropertiesMap {
     private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
-    /// Plotly fix instance
-    private _plotFix!: ReturnType<typeof fixPlot>;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -396,9 +393,6 @@ export class PropertiesMap {
 
         // remove SVG element created by Plotly
         document.getElementById('js-plotly-tester')?.remove();
-
-        // Remove listeners on the document caused by the plot fix
-        this._plotFix.disable();
     }
 
     /**
@@ -1227,7 +1221,6 @@ export class PropertiesMap {
                 })
             );
         this._plot.classList.add('chsp-map');
-        this._plotFix = fixPlot(this._plot);
 
         this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
             // don't update selected env on double click, since it is bound to
