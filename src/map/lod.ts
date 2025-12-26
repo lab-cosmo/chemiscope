@@ -21,9 +21,8 @@ export function computeLODIndices(
     yValues: number[],
     zValues: number[] | null,
     bounds?: { x: [number, number]; y: [number, number]; z?: [number, number] },
-    bins2D = 250,
-    bins3D = 40
-): Int32Array {
+    threshLOD: number = 50000
+): number[] {
     const nPoints = xValues.length;
     const is3D = zValues !== null;
 
@@ -68,8 +67,10 @@ export function computeLODIndices(
     const yRange = yMax - yMin || 1;
     const zRange = zMax - zMin || 1;
 
-    const bins = is3D ? bins3D : bins2D;
+    // Grid resolution, determined so that for a dense dataset we get roughly threshLOD points
+    const bins = is3D ? Math.ceil(Math.cbrt(threshLOD)) : Math.ceil(Math.sqrt(threshLOD));
     const grid = new Map<string, number>();
+    const clip = Array<number>(0);
 
     // Re-use loop variables for performance
     let xi: number, yi: number, zi: number, key: string;
@@ -90,6 +91,7 @@ export function computeLODIndices(
                 }
             }
         }
+        clip.push(i); // Keep track of points inside the bounds
 
         // Calculate grid coordinates relative to the current View/Range
         xi = Math.floor(((xVal - xMin) / xRange) * bins);
@@ -108,13 +110,15 @@ export function computeLODIndices(
         }
     }
 
-    // Convert Map to sorted Int32Array
-    const indices = new Int32Array(grid.size);
-    let ptr = 0;
-    for (const idx of grid.values()) {
-        indices[ptr++] = idx;
+    if (clip.length < threshLOD) {
+        // If the number of points inside the bounds is already below the threshold,
+        // return all those points without further downsampling.
+        return clip;
     }
-    indices.sort();
+
+    // Convert map to sorted array of indices
+    const indices = Array.from(grid.values());
+    indices.sort((a, b) => a - b);
 
     return indices;
 }

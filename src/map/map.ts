@@ -234,16 +234,15 @@ export class PropertiesMap {
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
 
-    // ========================================================================
-    // LOD (Level of Detail) Configuration
-    // ========================================================================
+    /**
+     * LOD (Level of Detail) Configuration
+     *
+     * Speeds up rendering of large datasets by downsampling points
+     * when zoomed out.
+     */
     private static readonly LOD_THRESHOLD = 50000;
-    // Grid resolution ~ sqrt(50000) -> 220. We use 250 for 2D.
-    private static readonly GRID_BINS_2D = 250;
-    // Grid resolution for 3D ~ cbrt(50000) -> 37. We use 40.
-    private static readonly GRID_BINS_3D = 40;
     /// Stores the subset of point indices to display when LOD is active
-    private _lodIndices: Int32Array | null = null;
+    private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
 
@@ -1739,8 +1738,7 @@ export class PropertiesMap {
             yValues,
             zValues,
             bounds,
-            PropertiesMap.GRID_BINS_2D,
-            PropertiesMap.GRID_BINS_3D
+            PropertiesMap.LOD_THRESHOLD
         );
     }
 
