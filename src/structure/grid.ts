@@ -631,8 +631,11 @@ export class ViewersGrid {
     ): Record<string, (number | undefined)[]> | undefined {
         const properties: Record<string, (number | undefined)[]> = {};
 
-        if (this._environments !== undefined) {
-            const environments = this._environments[structure];
+        // Use _calculatedEnvironments instead of _environments.
+        // _environments is undefined when target is 'structure' (to disable environment UI),
+        // but we still want to be able to access atomic properties for coloring.
+        if (this._calculatedEnvironments !== undefined) {
+            const environments = this._calculatedEnvironments[structure];
             for (const name in this._properties) {
                 const values = this._properties[name];
 

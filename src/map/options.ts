@@ -82,6 +82,7 @@ export class MapOptions extends OptionsGroup {
     };
     public markerOutline: HTMLOption<'boolean'>;
     public joinPoints: HTMLOption<'boolean'>;
+    public useLOD: HTMLOption<'boolean'>;
 
     /// The HTML button to open the settings modal
     private _openModal: HTMLElement;
@@ -157,6 +158,8 @@ export class MapOptions extends OptionsGroup {
         // outline and line
         this.markerOutline = new HTMLOption('boolean', true);
         this.joinPoints = new HTMLOption('boolean', false);
+        // adaptive resolution for large datasets
+        this.useLOD = new HTMLOption('boolean', true);
 
         // Setup default values
         this.x.property.value = propertiesNames[0];
@@ -567,6 +570,8 @@ export class MapOptions extends OptionsGroup {
         // ====== marker outline and line trace
         this.markerOutline.bind(this.getModalElement('map-marker-outline'), 'checked');
         this.joinPoints.bind(this.getModalElement('map-join-points'), 'checked');
+        // ====== use LOD for large datasets
+        this.useLOD.bind(this.getModalElement('map-lod'), 'checked');
     }
 
     /** Get the colorscale to use for markers in the main plotly trace */
@@ -586,5 +591,11 @@ export class MapOptions extends OptionsGroup {
             minInputLabel.innerHTML = 'min:';
             maxInputLabel.innerHTML = 'max:';
         }
+    }
+
+    /** Show or hide the LOD toggle based on dataset size */
+    public showLODOption(show: boolean): void {
+        const el = this.getModalElement('map-lod-div');
+        el.style.display = show ? 'flex' : 'none';
     }
 }
