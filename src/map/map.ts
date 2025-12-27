@@ -68,33 +68,33 @@ const DEFAULT_LAYOUT = {
         },
         xaxis: {
             showspikes: false,
-            title: '',
+            title: { text: '' },
         },
         yaxis: {
             showspikes: false,
-            title: '',
+            title: { text: '' },
         },
         zaxis: {
             showspikes: false,
-            title: '' as undefined | string,
+            title: { text: '' as undefined | string },
         },
     },
     showlegend: true,
     xaxis: {
         range: undefined as (number | undefined)[] | undefined,
-        title: '',
+        title: { text: '' },
         type: 'linear',
         zeroline: false,
     },
     yaxis: {
         range: undefined as (number | undefined)[] | undefined,
-        title: '',
+        title: { text: '' },
         type: 'linear',
         zeroline: false,
     },
     zaxis: {
         range: undefined as (number | undefined)[] | undefined,
-        title: '',
+        title: { text: '' },
         type: 'linear',
         zeroline: false,
     },
@@ -790,22 +790,33 @@ export class PropertiesMap {
             this._computeLOD();
             // Fire and forget
             void this._restyleLOD();
-
             this._relayout({
-                'scene.xaxis.title': this._title(this._options.x.property.value),
-                'xaxis.title': this._title(this._options.x.property.value),
-                // Force autorange when changing properties to reset view
-                [this._is3D() ? 'scene.xaxis.autorange' : 'xaxis.autorange']: true,
+                'scene.xaxis.title.text': this._title(this._options.x.property.value),
+                'xaxis.title.text': this._title(this._options.x.property.value),
             } as unknown as Layout);
+
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.xaxis.autorange': true,
+                } as unknown as Layout);
+            } else {
+                this._relayout({
+                    'xaxis.autorange': true,
+                } as unknown as Layout);
+            }
             this._setScaleStep(this._getBounds().x, 'x');
         });
 
         this._options.x.scale.onchange.push(() => {
             negativeLogWarning(this._options.x);
             this._options.setLogLabel(this._options.x, 'x');
-            this._relayout({
-                [this._is3D() ? 'scene.xaxis.type' : 'xaxis.type']: this._options.x.scale.value,
-            } as unknown as Layout);
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.xaxis.type': this._options.x.scale.value,
+                } as unknown as Layout);
+            } else {
+                this._relayout({ 'xaxis.type': this._options.x.scale.value as Plotly.AxisType });
+            }
         });
 
         // function creating a function to be used as onchange callback
@@ -833,9 +844,13 @@ export class PropertiesMap {
 
                 negativeLogWarning(axis);
 
-                this._relayout({
-                    [this._is3D() ? `scene.${name}.range` : `${name}.range`]: [min, max],
-                } as unknown as Layout);
+                if (this._is3D()) {
+                    this._relayout({
+                        [`scene.${name}.range`]: [min, max],
+                    } as unknown as Layout);
+                } else {
+                    this._relayout({ [`${name}.range`]: [min, max] });
+                }
             };
         };
 
@@ -851,20 +866,32 @@ export class PropertiesMap {
             void this._restyleLOD();
 
             this._relayout({
-                'scene.yaxis.title': this._title(this._options.y.property.value),
-                'yaxis.title': this._title(this._options.y.property.value),
-                // Force autorange
-                [this._is3D() ? 'scene.yaxis.autorange' : 'yaxis.autorange']: true,
+                'scene.yaxis.title.text': this._title(this._options.y.property.value),
+                'yaxis.title.text': this._title(this._options.y.property.value),
             } as unknown as Layout);
+
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.yaxis.autorange': true,
+                } as unknown as Layout);
+            } else {
+                this._relayout({
+                    'yaxis.autorange': true,
+                } as unknown as Layout);
+            }
             this._setScaleStep(this._getBounds().y, 'y');
         });
 
         this._options.y.scale.onchange.push(() => {
             negativeLogWarning(this._options.y);
             this._options.setLogLabel(this._options.y, 'y');
-            this._relayout({
-                [this._is3D() ? 'scene.yaxis.type' : 'yaxis.type']: this._options.y.scale.value,
-            } as unknown as Layout);
+            if (this._is3D()) {
+                this._relayout({
+                    'scene.yaxis.type': this._options.y.scale.value,
+                } as unknown as Layout);
+            } else {
+                this._relayout({ 'yaxis.type': this._options.y.scale.value as Plotly.AxisType });
+            }
         });
 
         this._options.y.min.onchange.push(rangeChange('yaxis', this._options.y, 'min'));
@@ -898,7 +925,7 @@ export class PropertiesMap {
             void this._restyleLOD();
 
             this._relayout({
-                'scene.zaxis.title': this._title(this._options.z.property.value),
+                'scene.zaxis.title.text': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
             } as unknown as Layout);
             if (this._is3D()) {
@@ -1303,13 +1330,13 @@ export class PropertiesMap {
         // make a copy of the default layout
         const layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as typeof DEFAULT_LAYOUT;
         // and set values specific to the displayed dataset
-        layout.xaxis.title = this._title(this._options.x.property.value);
-        layout.yaxis.title = this._title(this._options.y.property.value);
+        layout.xaxis.title.text = this._title(this._options.x.property.value);
+        layout.yaxis.title.text = this._title(this._options.y.property.value);
         layout.xaxis.type = this._options.x.scale.value;
         layout.yaxis.type = this._options.y.scale.value;
-        layout.scene.xaxis.title = this._title(this._options.x.property.value);
-        layout.scene.yaxis.title = this._title(this._options.y.property.value);
-        layout.scene.zaxis.title = this._title(this._options.z.property.value);
+        layout.scene.xaxis.title.text = this._title(this._options.x.property.value);
+        layout.scene.yaxis.title.text = this._title(this._options.y.property.value);
+        layout.scene.zaxis.title.text = this._title(this._options.z.property.value);
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
