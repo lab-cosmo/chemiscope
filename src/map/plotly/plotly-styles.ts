@@ -18,8 +18,7 @@ document.adoptedStyleSheets = [...document.adoptedStyleSheets, getDocumentStyleS
 function getStyleSheet(name: string): CSSStyleSheet {
     const style = document.getElementById(`plotly.js-style-${name}`);
 
-    // If the style element is missing (common in v3),
-    // return an empty stylesheet instead of crashing.
+    // If the style element is missing return an empty stylesheet
     if (!style || !(style instanceof HTMLStyleElement) || !style.sheet) {
         return new CSSStyleSheet();
     }

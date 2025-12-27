@@ -1828,29 +1828,39 @@ export class PropertiesMap {
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
-        // 1. Force global LOD computation
-        this._computeLOD();
+        this._updatingLOD = true;
 
-        // 2. Update data traces first (re-render points with global LOD)
-        // We do this BEFORE relayout so that 'autorange' calculates bounds based on the full dataset, not the sliced one.
-        await this._restyleLOD();
+        try {
+            // 1. Force global LOD computation
+            this._computeLOD();
 
-        // 3. Prepare Layout Update
-        const layoutUpdate: Record<string, boolean> = {};
+            // 2. Update data traces first (re-render points with global LOD)
+            // We do this BEFORE relayout so that 'autorange' calculates bounds
+            // based on the full dataset, not the sliced one.
+            await this._restyleLOD();
 
-        if (this._is3D()) {
-            // In 3D, 'autorange: true' resets camera AND axes.
-            layoutUpdate['scene.xaxis.autorange'] = true;
-            layoutUpdate['scene.yaxis.autorange'] = true;
-            layoutUpdate['scene.zaxis.autorange'] = true;
-        } else {
-            // In 2D, we trigger autorange on standard axes
-            layoutUpdate['xaxis.autorange'] = true;
-            layoutUpdate['yaxis.autorange'] = true;
+            // 3. Prepare Layout Update
+            const layoutUpdate: Record<string, boolean> = {};
+
+            if (this._is3D()) {
+                // In 3D, 'autorange: true' resets camera AND axes.
+                layoutUpdate['scene.xaxis.autorange'] = true;
+                layoutUpdate['scene.yaxis.autorange'] = true;
+                layoutUpdate['scene.zaxis.autorange'] = true;
+            } else {
+                // In 2D, we trigger autorange on standard axes
+                layoutUpdate['xaxis.autorange'] = true;
+                layoutUpdate['yaxis.autorange'] = true;
+            }
+
+            // 4. Force the view reset
+            await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
+        } finally {
+            // This ensures any trailing events from the relayout are also ignored.
+            setTimeout(() => {
+                this._updatingLOD = false;
+            }, 0);
         }
-
-        // 4. Force the view reset
-        this._relayout(layoutUpdate);
     }
 
     /**
