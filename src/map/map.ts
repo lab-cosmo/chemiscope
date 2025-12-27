@@ -1260,10 +1260,19 @@ export class PropertiesMap {
                 return;
             }
 
+            // don't intercept clicks while the subsampling is updating
+            if (this._updatingLOD) {
+                return;
+            }
+
             let environment = event.points[0].pointNumber;
 
             // LOD: Map the clicked point back to real environment index if LOD is active on main trace
             if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
+                if (environment >= this._lodIndices.length) {
+                    // ignore stray clicks that happen during redrawing
+                    return;
+                }
                 environment = this._lodIndices[environment];
             }
 
