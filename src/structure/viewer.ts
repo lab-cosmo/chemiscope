@@ -536,14 +536,13 @@ export class MoleculeViewer {
             this._trajectoryOptions.style.display = 'block';
         }
 
-        if (this._options.unitCell.value && this._current !== undefined) {
-            this._viewer.removeUnitCell(this._current.model);
-        }
-
         // unload previous structure
         this._viewer.removeAllModels();
         if (this._current !== undefined) {
             this._viewer.removeAllLabels();
+            this._viewer.removeAllShapes();
+            this._viewer.removeUnitCell(this._current.model);
+            this._axes = undefined;
         }
 
         if (this._highlighted !== undefined) {
@@ -1275,11 +1274,12 @@ export class MoleculeViewer {
         }
 
         this._viewer.removeAllShapes();
+        this._axes = undefined;
 
         // removeAllShapes also removes the unit cell, so let's add it back
         if (this._options.unitCell.value) {
             this._viewer.addUnitCell(this._current.model, {
-                box: { color: 'black' },
+                box: { color: 'black', linewidth: 4 },
                 astyle: { hidden: true },
                 bstyle: { hidden: true },
                 cstyle: { hidden: true },
