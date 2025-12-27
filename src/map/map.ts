@@ -318,6 +318,12 @@ export class PropertiesMap {
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
+        // Determine whether to show the LOD option based on dataset size
+        const nPoints = Object.values(currentProperties)[0].values.length;
+        if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+            this._options.showLODOption(true);
+        }
+
         // Initial LOD computation
         this._computeLOD();
 
@@ -675,6 +681,16 @@ export class PropertiesMap {
                     {},
                     this.warnings
                 );
+
+                // Update reference to the color reset button, as the old one was removed from DOM
+                this._colorReset =
+                    this._options.getModalElement<HTMLButtonElement>('map-color-reset');
+
+                // Update LOD toggle visibility based on the new target's dataset size.
+                const nPoints = Object.values(properties)[0].values.length;
+                if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+                    this._options.showLODOption(true);
+                }
             }
         };
 
@@ -1224,6 +1240,14 @@ export class PropertiesMap {
             const mode = this._options.joinPoints.value ? 'lines+markers' : 'markers';
             this._restyle({ mode: mode } as Data, [0]);
         });
+
+        // ======= Level of Detail settings
+        this._options.useLOD.onchange.push(() => {
+            this._computeLOD();
+            // Force a full restyle. Since _lodIndices will be null if disabled,
+            // this will render all points.
+            void this._restyleLOD();
+        });
     }
 
     /** Actually create the Plotly plot */
@@ -1746,6 +1770,12 @@ export class PropertiesMap {
         y: [number, number];
         z?: [number, number];
     }): void {
+        // check if LOD is enabled
+        if (!this._options.useLOD.value) {
+            this._lodIndices = null;
+            return;
+        }
+
         const xProp = this._options.x.property.value;
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;

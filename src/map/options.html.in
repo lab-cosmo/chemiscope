@@ -96,6 +96,13 @@
                      <input id="map-z-max" class="form-control" type="number" step="any" disabled />
                   </div>
                </div>
+               
+               <div class="input-group chsp-map-extra-options" id="map-lod-div" style="grid-column: 1 / -1; display: none; margin-top: 1em;">
+                  <div class="form-check form-switch">
+                     <input class="form-check-input" id="map-lod" type="checkbox" checked />
+                     <label class="form-check-label" for="map-lod" title="Enable adaptive resolution (Level of Detail) for large datasets">adaptive resolution</label>
+                  </div>
+               </div>
             </div>
 
             <div style="margin-bottom: 1.5em"></div>
