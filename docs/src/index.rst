@@ -24,6 +24,39 @@ different manners to create visualization adapted to different kinds of data. Th
 code and use it in your own website to create new interfaces.
 
 
+Features and capabilities
+-------------------------
+
+Chemiscope is designed to visualize chemical structures (using a viewer
+based on `3dmol.js <https://3dmol.csb.pitt.edu/>`_) together with an interactive
+scatter plot (using `plotly.js <https://plotly.com/javascript/>`_) that visualizes
+the properties associated with each configuration. Properties can be associated
+with structures (e.g. total energy, band gap, etc.) or with atoms (e.g. atomic
+charges, coordination numbers, etc.). 
+
+The scatter plot can be configured to
+show different properties on each axis, in two or three dimensions, and further
+properties can be used to color the points and size them. The user can
+interactively select points in the scatter plot to visualize the corresponding
+structures in the viewer, and vice versa. The structure viewer also supports 
+coloring atoms according to atomic properties, and to display additional data 
+in terms of "shapes" (e.g. vectors for forces, ellipsoid for tensorial quantities, 
+etc.). 
+
+The code is designed to handle large databases (up to hundreds of thousands
+of structures) by using optimized data structures and rendering techniques.
+Structures can be loaded dynamically from external files to reduce the
+initial loading time, and the scatter plot rendering is optimized to handle
+large numbers of points, dynamically resampling the data to provide fast interaction
+at different levels of detail.
+
+Chemiscope can be used as a web-based application, as a 
+:ref:`jupyter widget <jupyter>`, as 
+a visualization component embedded in 
+:ref:`sphinx <sphinx>` or :ref:`sphinx-gallery <gallery>` documentation,
+as well as a :ref:`streamlit component <streamlit>`. 
+
+
 Getting and citing chemiscope
 -----------------------------
 
