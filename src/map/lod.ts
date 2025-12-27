@@ -12,9 +12,8 @@ import { arrayMaxMin } from '../utils';
  * @param yValues Array of Y coordinates
  * @param zValues Array of Z coordinates (or null for 2D)
  * @param bounds  Optional boundaries to clip the data (Zoom level)
- * @param bins2D  Grid resolution for 2D mode (default: 250)
- * @param bins3D  Grid resolution for 3D mode (default: 40)
- * @returns Sorted Int32Array of indices to display
+ * @param threshLOD  Maximum number of points to display (default: 50000)
+ * @returns Sorted array of indices to display
  */
 export function computeLODIndices(
     xValues: number[],
