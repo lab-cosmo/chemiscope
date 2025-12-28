@@ -384,6 +384,9 @@ export class MoleculeViewer {
      * @param propertiesName property names used as the options in the modal
      */
     public refreshOptions(envView: boolean, propertiesName?: string[]): void {
+        // This prevents the "flicker" where settings revert to defaults after a refresh
+        const previousSettings = this._options.saveSettings();
+
         // Save the current adopted styles
         const adoptedStyleSheets = this._options.modal.shadow.adoptedStyleSheets;
 
@@ -420,6 +423,8 @@ export class MoleculeViewer {
         } else {
             this._options.environments.activated.disable();
         }
+
+        this._options.applySettings(previousSettings);
     }
 
     /**
@@ -985,6 +990,10 @@ export class MoleculeViewer {
         // ======= color settings
         // setup state when the property changes
         const colorPropertyChanged = () => {
+            if (this._properties === undefined) {
+                return;
+            }
+
             const property = this._options.color.property.value;
 
             if (property !== 'element') {
@@ -1059,6 +1068,10 @@ export class MoleculeViewer {
 
         // ======= color transform
         this._options.color.transform.onchange.push(() => {
+            if (this._properties === undefined) {
+                return;
+            }
+
             const property = this._options.color.property.value;
             assert(property !== 'element');
             const transform = this._options.color.transform.value;
@@ -1091,6 +1104,10 @@ export class MoleculeViewer {
 
         // ======= color reset
         this._colorReset.addEventListener('click', () => {
+            if (this._properties === undefined) {
+                return;
+            }
+
             const properties = JSON.parse(JSON.stringify(this._properties)) as Record<
                 string,
                 (number | undefined)[]
