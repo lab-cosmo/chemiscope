@@ -1855,6 +1855,11 @@ export class PropertiesMap {
 
             // 4. Force the view reset
             await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
+
+            // Manually trigger marker update for 2D mode.
+            if (!this._is3D()) {
+                this._updateMarkers();
+            }
         } finally {
             // This ensures any trailing events from the relayout are also ignored.
             setTimeout(() => {
