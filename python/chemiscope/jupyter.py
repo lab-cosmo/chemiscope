@@ -209,7 +209,9 @@ class MapWidget(ChemiscopeWidgetBase):
         super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
-def show_input(path, *, mode="default", warning_timeout=10000, cache_structures=True):
+def show_input(
+    path, *, settings=None, mode="default", warning_timeout=10000, cache_structures=True
+):
     """
     Loads and shows the chemiscope input in ``path``.
 
@@ -219,6 +221,7 @@ def show_input(path, *, mode="default", warning_timeout=10000, cache_structures=
     :param str | Path | file-like path: load the chemiscope input from this path or
         file-like object
 
+    :param dict settings: override the default settings in the input
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
     :param float warning_timeout: timeout (in ms) for warnings. Set to a negative value
         to disable warnings, and to zero to make them persistent.
@@ -281,6 +284,15 @@ def show_input(path, *, mode="default", warning_timeout=10000, cache_structures=
 
     except KeyError:
         raise ValueError("missing metadata in chemiscope.load")
+
+    if settings is not None:
+        if not isinstance(settings, dict):
+            raise ValueError(
+                f"expected 'settings' to be a dict, got {type(settings)} instead"
+            )
+        if "settings" not in dict_input:
+            dict_input["settings"] = {}
+        dict_input["settings"].update(settings)
 
     return widget_class(
         dict_input,
