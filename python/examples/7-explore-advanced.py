@@ -31,7 +31,7 @@ def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/
         total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]
     )
     session = requests.Session()
-    session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=retry_strategy))
 
     # Fetch with automatic retry and error raising
     response = session.get(base_url + filename)
