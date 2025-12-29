@@ -22,6 +22,7 @@ import chemiscope
 
 def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/"):
     """Helper function to load the pre-computed examples"""
+    
     local_path = "data/" + filename
     if os.path.isfile(local_path):
         return
