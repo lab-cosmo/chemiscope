@@ -286,6 +286,10 @@ def show_input(
         raise ValueError("missing metadata in chemiscope.load")
 
     if settings is not None:
+        if not isinstance(settings, dict):
+            raise ValueError(f"expected 'settings' to be a dict, got {type(settings)} instead")
+        if "settings" not in dict_input:
+            dict_input["settings"] = {}
         dict_input["settings"].update(settings)
 
     return widget_class(
