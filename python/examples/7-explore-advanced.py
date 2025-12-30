@@ -15,26 +15,36 @@ import os
 import ase.io
 import numpy as np
 import requests
+from urllib3.util.retry import Retry
 
 import chemiscope
 
 
-def fetch_dataset(filename, base_url="https://zenodo.org/records/12748925/files/"):
+def fetch_dataset(filename, base_url, local_path=""):
     """Helper function to load the pre-computed examples"""
-    local_path = "data/" + filename
-    if not os.path.isfile(local_path):
-        response = requests.get(base_url + filename)
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Failed to download {filename} from {base_url}: "
-                f"HTTP code {response.status_code}"
-            )
 
-        with open(local_path, "wb") as file:
-            file.write(response.content)
+    local_file = local_path + filename
+    if os.path.isfile(local_file):
+        return
+
+    # Retry strategy: wait 1s, 2s, 4s, 8s, 16s on 429/5xx errors
+    retry_strategy = Retry(
+        total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]
+    )
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=retry_strategy))
+
+    # Fetch with automatic retry and error raising
+    response = session.get(base_url + filename)
+    response.raise_for_status()
+
+    with open(local_file, "wb") as file:
+        file.write(response.content)
 
 
-fetch_dataset("mace-off-tsne-qm9.json.gz")
+fetch_dataset(
+    "mace-off-tsne-qm9.json.gz", "https://zenodo.org/records/12748925/files/", "data/"
+)
 
 # %%
 #
