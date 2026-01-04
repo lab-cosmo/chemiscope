@@ -383,11 +383,6 @@ export class MoleculeViewer {
      * @param envView display target, true if per environments
      * @param propertiesName property names used as the options in the modal
      */
-    /**
-     * Recreates structure options
-     * @param envView display target, true if per environments
-     * @param propertiesName property names used as the options in the modal
-     */
     public refreshOptions(envView: boolean, propertiesName?: string[]): void {
         // This prevents the "flicker" where settings revert to defaults after a refresh
         const previousSettings = this._options.saveSettings();
