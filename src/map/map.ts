@@ -47,7 +47,6 @@ const DEFAULT_LAYOUT = {
         showscale: true,
     },
     hovermode: 'closest',
-    dragmode: 'zoom' as string | boolean,
     legend: {
         itemclick: false,
         itemdoubleclick: false,
@@ -119,6 +118,7 @@ const DEFAULT_CONFIG = {
         'select2d',
         'lasso2d',
         'hoverClosest3d',
+        'zoom3d',
         'tableRotation',
         'resetCameraLastSave3d',
         'toImage',
@@ -767,15 +767,10 @@ export class PropertiesMap {
      *
      * @param traces array of data traces to update
      * @param layout layout properties to update
-     * @param config configuration for the plot
      */
-    private _react(
-        traces: Plotly.Data[],
-        layout: Partial<Layout>,
-        config?: Partial<Config>
-    ): Promise<void> {
+    private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            Plotly.react(this._plot, traces, layout, config)
+            Plotly.react(this._plot, traces, layout)
                 .then(() => {
                     resolve();
                 })
@@ -786,19 +781,6 @@ export class PropertiesMap {
                     });
                 });
         });
-    }
-
-    /**
-     * Get the configuration for the plot, removing 'zoom3d' button in 3D mode.
-     */
-    private _getPlotlyConfig(): Partial<Config> {
-        const config = { ...DEFAULT_CONFIG };
-        config.modeBarButtonsToRemove = [...DEFAULT_CONFIG.modeBarButtonsToRemove];
-
-        if (this._is3D()) {
-            config.modeBarButtonsToRemove.push('zoom3d');
-        }
-        return config as unknown as Partial<Config>;
     }
 
     /** Add all the required callback to the settings */
@@ -946,13 +928,12 @@ export class PropertiesMap {
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
                 if (was3D) {
-                    void this._switch2D();
+                    this._switch2D();
                 }
                 return;
             } else {
                 if (!was3D) {
-                    void this._switch3D();
-                    return;
+                    this._switch3D();
                 }
             }
 
@@ -1281,7 +1262,7 @@ export class PropertiesMap {
         const layout = this._getLayout();
 
         // Create an empty plot and fill it below
-        Plotly.newPlot(this._plot, traces, layout, this._getPlotlyConfig() as unknown as Config)
+        Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
@@ -1396,13 +1377,6 @@ export class PropertiesMap {
         layout.coloraxis.colorbar.title.text = this._colorTitle();
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
-
-        // Explicitly set dragmode to ensure the correct button is highlighted
-        if (this._is3D()) {
-            layout.dragmode = 'orbit';
-        } else {
-            layout.dragmode = 'zoom';
-        }
 
         // Set ranges for the axes
         layout.xaxis.range = this._getAxisRange(
@@ -1682,47 +1656,88 @@ export class PropertiesMap {
     }
 
     /** Switch current plot from 2D to 3D */
-    private async _switch3D(): Promise<void> {
+    private _switch3D(): void {
         assert(this._is3D());
         this._options.z.enable();
 
-        this._computeLOD();
+        const symbols = this._symbols();
+        for (let s = 0; s < this._data.maxSymbols; s++) {
+            symbols.push([get3DSymbol(s)]);
+        }
 
-        // Switch to 3D mode by recreating the plot. This ensures that the mode bar
-        // buttons are updated correctly (e.g. replacing 'zoom2d' with 'zoom3d').
-        const layout = this._getLayout();
-        layout.scene!.xaxis.autorange = true;
-        layout.scene!.yaxis.autorange = true;
-        layout.scene!.zaxis.autorange = true;
-
-        await this._react(this._getTraces(), layout, this._getPlotlyConfig());
+        // switch all traces to 3D mode
+        this._restyle({
+            'marker.symbol': symbols,
+            type: 'scatter3d',
+        } as unknown as Data);
 
         for (const data of this._selected.values()) {
             data.toggleVisible(false);
         }
         this._updateMarkers();
+
+        // Change the data that vary between 2D and 3D mode
+        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
+        this._restyle(
+            {
+                'marker.line.width': marker_line,
+                // size change from 2D to 3D
+                'marker.size': this._sizes(),
+                'marker.sizemode': 'area',
+            } as Data,
+            [0, 1]
+        );
+
+        this._relayout({
+            // change colorbar length to accommodate for symbols legend
+            'coloraxis.colorbar.len': this._colorbarLen(),
+            // Carry over axis types
+            'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
+            'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
+            'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
+            dragmode: 'orbit',
+        } as unknown as Layout);
     }
 
     /** Switch current plot from 3D back to 2D */
-    private async _switch2D(): Promise<void> {
+    private _switch2D(): void {
         assert(!this._is3D());
         this._options.z.disable();
 
-        this._computeLOD();
+        const symbols = this._symbols();
+        for (let sym = 0; sym < this._data.maxSymbols; sym++) {
+            symbols.push([sym]);
+        }
 
-        // Switch back to 2D mode by recreating the plot.
-        const layout = this._getLayout();
-        layout.xaxis!.autorange = true;
-        layout.yaxis!.autorange = true;
-
-        await this._react(this._getTraces(), layout, this._getPlotlyConfig());
+        // switch all traces to 2D mode
+        this._restyle({
+            'marker.symbol': symbols,
+            type: 'scattergl',
+        } as unknown as Data);
 
         // show selected environments markers
         for (const data of this._selected.values()) {
             data.toggleVisible(true);
         }
 
-        this._updateMarkers();
+        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
+        this._restyle(
+            {
+                'marker.line.width': marker_line,
+                // size change from 3D to 2D
+                'marker.size': this._sizes(),
+            } as Data,
+            [0, 1]
+        );
+
+        this._relayout({
+            // change colorbar length to accommodate for symbols legend
+            'coloraxis.colorbar.len': this._colorbarLen(),
+            // Carry over axis types
+            'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
+            'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
+            dragmode: 'zoom',
+        } as unknown as Layout);
     }
 
     /**
