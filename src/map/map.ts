@@ -25,6 +25,49 @@ import * as styles from '../styles';
 import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
 
+/**
+ * Export the plot as a PNG or SVG image, hiding the "selected" trace (index 1)
+ * during the export.
+ *
+ * @param gd Plotly plot element
+ * @param format format of the image
+ */
+function exportImage(gd: PlotlyScatterElement, format: 'png' | 'svg') {
+    const width = Math.max(gd._fullLayout.width, 600);
+    const ratio = gd._fullLayout.height / gd._fullLayout.width;
+
+    const opts: Plotly.DownloadImgopts = {
+        filename: 'chemiscope-map',
+        format: format,
+        width: width,
+        height: format === 'png' ? width * ratio : Math.max(gd._fullLayout.height, 600),
+    };
+
+    if (format === 'png') {
+        // scale is not part of `DownloadImgopts`, but accepted
+        // by the function anyway
+        (opts as unknown as { scale: number }).scale = 3;
+    }
+
+    // Hide the "selected" trace (index 1) for the export.
+    // In 2D mode, this trace is already empty (using NaNs), but in 3D mode
+    // it contains the markers for selected environments.
+    Plotly.restyle(gd, { visible: false }, [1])
+        .then(() => {
+            return Plotly.downloadImage(gd, opts);
+        })
+        .then(() => {
+            return Plotly.restyle(gd, { visible: true }, [1]);
+        })
+        .catch((e: unknown) => {
+            // make sure we show the trace again even if download failed
+            void Plotly.restyle(gd, { visible: true }, [1]);
+            setTimeout(() => {
+                throw e;
+            });
+        });
+}
+
 const DEFAULT_LAYOUT = {
     // coloraxis is used for the markers
     coloraxis: {
@@ -133,23 +176,7 @@ const DEFAULT_CONFIG = {
                     path: extractSvgPath(PNG_SVG),
                 },
                 click: function (gd: PlotlyScatterElement) {
-                    const width = Math.max(gd._fullLayout.width, 600);
-                    const ratio = gd._fullLayout.height / gd._fullLayout.width;
-                    const height = width * ratio;
-
-                    Plotly.downloadImage(gd, {
-                        filename: 'chemiscope-map',
-                        format: 'png',
-                        width: width,
-                        height: height,
-                        // scale is not part of `DownloadImgopts`, but accepted
-                        // by the function anyway
-                        scale: 3,
-                    } as unknown as Plotly.DownloadImgopts).catch((e: unknown) =>
-                        setTimeout(() => {
-                            throw e;
-                        })
-                    );
+                    exportImage(gd, 'png');
                 },
             },
         ],
@@ -162,16 +189,7 @@ const DEFAULT_CONFIG = {
                     path: extractSvgPath(SVG_SVG),
                 },
                 click: function (gd: PlotlyScatterElement) {
-                    Plotly.downloadImage(gd, {
-                        filename: 'chemiscope-map',
-                        format: 'svg',
-                        width: Math.max(gd._fullLayout.width, 600),
-                        height: Math.max(gd._fullLayout.height, 600),
-                    }).catch((e: unknown) =>
-                        setTimeout(() => {
-                            throw e;
-                        })
-                    );
+                    exportImage(gd, 'svg');
                 },
             },
         ],
