@@ -215,7 +215,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
             };
         }
 
-        // Python -> JS
+        // Python -> JS (selection)
         this.model.on(
             'change:selected_ids',
             () => {
@@ -248,6 +248,30 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     if (indexes !== undefined) {
                         this.visualizer.select(indexes);
                     }
+                } finally {
+                    this._updatingFromPython = false;
+                }
+            },
+            this
+        );
+
+        // Python -> JS (active viewer)
+        this.model.on(
+            'change:active_viewer',
+            () => {
+                if (!this.visualizer || !('structure' in this.visualizer)) {
+                    return;
+                }
+
+                if (this._updatingFromPython) {
+                    return;
+                }
+
+                const activeViewer = this.model.get('active_viewer') as number;
+
+                this._updatingFromPython = true;
+                try {
+                    this.visualizer.structure.activeIndex = activeViewer;
                 } finally {
                     this._updatingFromPython = false;
                 }
