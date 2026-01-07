@@ -363,15 +363,23 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
-            // queue a request for the structure
-            this._pendingStructureRequests.set(requestId, { resolve, reject });
+            if (this._pendingStructureRequests.size >= 10) {
+                // avoid piling up too many requests
+                // eslint-disable-next-line no-console
+                console.warn(
+                    `Skipping structure ${index} - ${structure.data}. Increase playback delay.`
+                );
+            } else {
+                // queue a request for the structure
+                this._pendingStructureRequests.set(requestId, { resolve, reject });
 
-            this.model.send({
-                type: 'load-structure',
-                requestId,
-                index,
-                data: structure.data as JSONValue,
-            });
+                this.model.send({
+                    type: 'load-structure',
+                    requestId,
+                    index,
+                    data: structure.data as JSONValue,
+                });
+            }
         });
     }
 
