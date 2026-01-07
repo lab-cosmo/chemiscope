@@ -178,6 +178,17 @@ class ChemiscopeBaseView extends DOMWidgetView {
             },
             this
         );
+
+        // Initialize Python state if needed
+        const currentPython = this.model.get('selected_ids') as {
+            structure?: number;
+        };
+
+        if (!currentPython || currentPython.structure === undefined) {
+            // we use the info panel as the source of truth for the current selection
+            const indexes = this.visualizer.info.indexes;
+            updatePython(indexes);
+        }
     }
 
     protected _updatePythonSettings(): void {

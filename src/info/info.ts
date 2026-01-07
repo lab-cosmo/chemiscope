@@ -490,6 +490,11 @@ export class EnvironmentInfo {
     }
 
     /** Get the currently selected structure/atom/environment */
+    public get indexes(): Indexes {
+        return this._indexes();
+    }
+
+    /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
         const structure = this._structure.slider.value();
         let indexes;
