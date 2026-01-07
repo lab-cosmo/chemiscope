@@ -111,7 +111,14 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 this._updatingFromPython = true;
                 try {
                     this.visualizer?.applySettings(settings);
+                    // sync back the full settings to Python, so that they are available
+                    // for saving
                     this._updatePythonSettings();
+
+                    // also sync back the selection, which might have changed if pinned changed
+                    if (this.visualizer) {
+                        this._updatePythonSelection(this.visualizer.info.indexes);
+                    }
                 } finally {
                     this._updatingFromPython = false;
                 }
@@ -120,45 +127,47 @@ class ChemiscopeBaseView extends DOMWidgetView {
         );
     }
 
+    protected _updatePythonSelection(indexes: Indexes): void {
+        if (this._updatingFromPython) {
+            return;
+        }
+
+        const currentSelected = this.model.get('selected_ids') as
+            | {
+                  structure: number;
+                  atom?: number;
+              }
+            | undefined;
+
+        const selectedChanged =
+            !currentSelected ||
+            currentSelected.structure !== indexes.structure ||
+            currentSelected.atom !== indexes.atom;
+
+        if (selectedChanged) {
+            this.model.set('selected_ids', {
+                structure: indexes.structure,
+                atom: indexes.atom,
+            });
+        }
+
+        if (this.visualizer && 'structure' in this.visualizer) {
+            const activeViewer = this.visualizer.structure.activeIndex;
+            if (this.model.get('active_viewer') !== activeViewer) {
+                this.model.set('active_viewer', activeViewer);
+            }
+        }
+
+        this.model.save_changes();
+    }
+
     protected _bindSelection(): void {
         if (!this.visualizer) {
             return;
         }
 
         // JS -> Python
-        const updatePython = (indexes: Indexes) => {
-            if (this._updatingFromPython) {
-                return;
-            }
-
-            const currentSelected = this.model.get('selected_ids') as
-                | {
-                      structure: number;
-                      atom?: number;
-                  }
-                | undefined;
-
-            const selectedChanged =
-                !currentSelected ||
-                currentSelected.structure !== indexes.structure ||
-                currentSelected.atom !== indexes.atom;
-
-            if (selectedChanged) {
-                this.model.set('selected_ids', {
-                    structure: indexes.structure,
-                    atom: indexes.atom,
-                });
-            }
-
-            if (this.visualizer && 'structure' in this.visualizer) {
-                const activeViewer = this.visualizer.structure.activeIndex;
-                if (this.model.get('active_viewer') !== activeViewer) {
-                    this.model.set('active_viewer', activeViewer);
-                }
-            }
-
-            this.model.save_changes();
-        };
+        const updatePython = (indexes: Indexes) => this._updatePythonSelection(indexes);
 
         if ('structure' in this.visualizer) {
             const originalOnSelect = this.visualizer.structure.onselect;
