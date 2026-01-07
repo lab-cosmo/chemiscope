@@ -87,6 +87,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 this._updatingFromPython = true;
                 try {
                     this.visualizer?.applySettings(settings);
+                    this._updatePythonSettings();
                 } finally {
                     this._updatingFromPython = false;
                 }
