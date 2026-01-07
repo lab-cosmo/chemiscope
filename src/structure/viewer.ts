@@ -971,14 +971,16 @@ export class MoleculeViewer {
                 const previousDefaultCutoff = this._defaultCutoff(center);
                 this._changeHighlighted(center, previousDefaultCutoff);
             } else {
-                assert(this._highlighted !== undefined);
-                // remove the 3DMol model for highlighted environment
-                this._viewer.removeModel(this._highlighted.model);
-                // keep information about the last highlighted point around
-                this._lastHighlighted = {
-                    center: this._highlighted.center,
-                    cutoff: this._options.environments.cutoff.value,
-                };
+                if (this._highlighted !== undefined) {
+                    // remove the 3DMol model for highlighted environment
+                    this._viewer.removeModel(this._highlighted.model);
+                    // keep information about the last highlighted point around
+                    this._lastHighlighted = {
+                        center: this._highlighted.center,
+                        cutoff: this._options.environments.cutoff.value,
+                    };
+                    this._highlighted = undefined;
+                }
             }
 
             if (!this._disableStyleUpdates) {
