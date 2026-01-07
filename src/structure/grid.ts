@@ -838,10 +838,10 @@ export class ViewersGrid {
                     const atomID = data.current.atom;
                     downloadURI(
                         viewer.exportPNG(),
-                        `chemiscope-structure-${structID + 1}-atom-${atomID + 1}.png`
+                        `chemiscope-structure-${structID}-atom-${atomID}.png`
                     );
                 } else {
-                    downloadURI(viewer.exportPNG(), `chemiscope-structure-${structID + 1}.png`);
+                    downloadURI(viewer.exportPNG(), `chemiscope-structure-${structID}.png`);
                 }
             };
 

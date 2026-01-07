@@ -141,13 +141,13 @@ export class EnvironmentInfo {
     /** Show properties for the given `indexes`, and update the sliders values */
     public show(indexes: Indexes): void {
         const previousStructure = this._indexes().structure;
-        this._structure.number.value = `${indexes.structure + 1}`;
+        this._structure.number.value = `${indexes.structure}`;
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
 
         if (indexes.structure !== previousStructure && this._atom !== undefined) {
             const activeAtoms = this._indexer.activeAtoms(indexes.structure);
-            this._atom.number.value = `${activeAtoms[0] + 1}`;
+            this._atom.number.value = `${activeAtoms[0]}`;
             this._atom.slider.reset(activeAtoms);
         }
 
@@ -159,7 +159,7 @@ export class EnvironmentInfo {
                     );
                 }
             } else {
-                this._atom.number.value = `${indexes.atom + 1}`;
+                this._atom.number.value = `${indexes.atom}`;
                 this._atom.slider.update(indexes.atom);
                 this._atom.table.show(indexes);
             }
@@ -204,7 +204,7 @@ export class EnvironmentInfo {
                 ? `
             <div class='btn btn-sm chsp-info-atom-btn' data-bs-toggle='collapse' data-bs-target='#atom' aria-expanded='false' aria-controls='atom'>
                 <div class="chsp-info-btns-svg">${INFO_SVG}</div>
-                atom <input class='chsp-info-number' type=number value=1 min=1></input>
+                atom <input class='chsp-info-number' type=number value=0 min=0></input>
             </div>`
                 : '<div></div>';
         return `
@@ -212,7 +212,7 @@ export class EnvironmentInfo {
             <div class='chsp-info-btns'>
                 <div class='btn btn-sm chsp-info-structure-btn' data-bs-toggle='collapse' data-bs-target='#structure' aria-expanded='false' aria-controls='structure'>
                     <div class="chsp-info-btns-svg">${INFO_SVG}</div>
-                    structure <input class='chsp-info-number' type=number value=1 min=1></input>
+                    structure <input class='chsp-info-number' type=number value=0 min=0></input>
                 </div>
                 ${atomButton}
             </div>`;
@@ -265,14 +265,14 @@ export class EnvironmentInfo {
                 if (activeAtoms.length === 0) {
                     this.warnings.sendMessage(
                         `Cannot change to structure ${
-                            structure + 1
+                            structure
                         }, which does not contain any active atoms`
                     );
                     return;
                 }
 
                 // Update atom number and slider
-                this._atom.number.value = `${activeAtoms[0] + 1}`;
+                this._atom.number.value = `${activeAtoms[0]}`;
                 this._atom.number.max = `${activeAtoms.length}`;
                 this._atom.slider.reset(activeAtoms);
             }
@@ -283,7 +283,7 @@ export class EnvironmentInfo {
 
             // Update structure and atom tables
             this._structure.table.show(indexes);
-            this._structure.number.value = `${indexes.structure + 1}`;
+            this._structure.number.value = `${indexes.structure}`;
             if (this._atom !== undefined) {
                 this._atom.table.show(indexes);
             }
@@ -308,12 +308,12 @@ export class EnvironmentInfo {
             (value) => {
                 // Invalid value -> reset
                 if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
-                    number.value = `${this._structure.slider.value() + 1}`;
+                    number.value = `${this._structure.slider.value()}`;
                 }
 
                 // Not an active structure -> reset
                 else if (binarySearch(this._indexer.activeStructures(), value) === -1) {
-                    number.value = `${this._structure.slider.value() + 1}`;
+                    number.value = `${this._structure.slider.value()}`;
                 }
 
                 // Proceed with the new value
@@ -323,7 +323,7 @@ export class EnvironmentInfo {
                     // If atom is present, update its related properties
                     if (this._atom !== undefined) {
                         const activeAtoms = this._indexer.activeAtoms(value);
-                        this._atom.number.value = `${activeAtoms[0] + 1}`;
+                        this._atom.number.value = `${activeAtoms[0]}`;
                         this._atom.number.max = `${activeAtoms.length}`;
                         this._atom.slider.reset(activeAtoms);
                     }
@@ -406,7 +406,7 @@ export class EnvironmentInfo {
             // Update the atom table and number input with the new indexes
             assert(indexes.atom !== undefined);
             this._atom.table.show(indexes);
-            this._atom.number.value = `${indexes.atom + 1}`;
+            this._atom.number.value = `${indexes.atom}`;
 
             // Trigger callback with the updated indexes
             this.onchange(indexes);
@@ -432,12 +432,12 @@ export class EnvironmentInfo {
                 // Invalid value -> reset
                 if (isNaN(value) || value < 0 || value >= parseInt(number.max, 10)) {
                     // reset to the current slider value if we got an invalid value
-                    number.value = `${this._atom.slider.value() + 1}`;
+                    number.value = `${this._atom.slider.value()}`;
                 }
 
                 // Not an active structure -> reset
                 else if (binarySearch(activeAtoms, value) === -1) {
-                    number.value = `${this._atom.slider.value() + 1}`;
+                    number.value = `${this._atom.slider.value()}`;
                 }
 
                 // Proceed with the new value
@@ -483,7 +483,7 @@ export class EnvironmentInfo {
     ): HTMLInputElement {
         const number = this._root.querySelector(selector) as HTMLInputElement;
         number.max = max;
-        number.onchange = () => handler(parseInt(number.value, 10) - 1);
+        number.onchange = () => handler(parseInt(number.value, 10));
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
         return number;
