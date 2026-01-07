@@ -82,9 +82,31 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 const settingsRef = this.model.get('settings') as Partial<Settings>;
                 const settings = { ...settingsRef };
 
-                // ignore pinned setting in jupyter, otherwise the pinned is changed
-                // by JS and then overwritten the first time by Python
-                delete settings.pinned;
+                // Handle pinned: only apply if different from current state.
+                // This prevents the destructive reset loop while allowing explicit updates.
+                if (
+                    this.visualizer &&
+                    'structure' in this.visualizer &&
+                    Array.isArray(settings.pinned)
+                ) {
+                    const target = this.visualizer.saveSettings().target as DisplayTarget;
+                    const currentPinned = this.visualizer.structure
+                        .pinned()
+                        .map((value) =>
+                            target === 'atom' ? value.environment : value.structure
+                        );
+
+                    const pinned = settings.pinned as number[];
+                    const pinnedChanged =
+                        pinned.length !== currentPinned.length ||
+                        pinned.some((val, idx) => val !== currentPinned[idx]);
+
+                    if (!pinnedChanged) {
+                        delete settings.pinned;
+                    }
+                } else {
+                    delete settings.pinned;
+                }
 
                 this._updatingFromPython = true;
                 try {
@@ -109,23 +131,32 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 return;
             }
 
-            const current = this.model.get('selected_ids') as {
-                structure: number;
-                atom?: number;
-            };
+            const currentSelected = this.model.get('selected_ids') as
+                | {
+                      structure: number;
+                      atom?: number;
+                  }
+                | undefined;
 
-            if (
-                current &&
-                current.structure === indexes.structure &&
-                current.atom === indexes.atom
-            ) {
-                return;
+            const selectedChanged =
+                !currentSelected ||
+                currentSelected.structure !== indexes.structure ||
+                currentSelected.atom !== indexes.atom;
+
+            if (selectedChanged) {
+                this.model.set('selected_ids', {
+                    structure: indexes.structure,
+                    atom: indexes.atom,
+                });
             }
 
-            this.model.set('selected_ids', {
-                structure: indexes.structure,
-                atom: indexes.atom,
-            });
+            if (this.visualizer && 'structure' in this.visualizer) {
+                const activeViewer = this.visualizer.structure.activeIndex;
+                if (this.model.get('active_viewer') !== activeViewer) {
+                    this.model.set('active_viewer', activeViewer);
+                }
+            }
+
             this.model.save_changes();
         };
 
