@@ -45,6 +45,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
         { resolve: (s: Structure) => void; reject: (e: Error) => void }
     >();
 
+    // Flag to prevent infinite loops when updating settings from Python
+    protected _updatingFromPython = false;
+
     public render(): void {
         PlausibleTracker.trackPageview({
             url: (location.pathname.split('/')[1] || '') + '/' + this.getClassName(),
@@ -70,17 +73,23 @@ class ChemiscopeBaseView extends DOMWidgetView {
             () => {
                 // only trigger a visualizer update if required.
                 // this is also used to avoid an infinite loop when settings are changed JS-side
-                if (!this.model.get('_settings_sync')) {
+                if (this._updatingFromPython) {
                     return;
                 }
 
-                const settings = this.model.get('settings') as Partial<Settings>;
+                const settingsRef = this.model.get('settings') as Partial<Settings>;
+                const settings = { ...settingsRef };
 
                 // ignore pinned setting in jupyter, otherwise the pinned is changed
                 // by JS and then overwritten the first time by Python
                 delete settings.pinned;
-                this.model.set('settings', settings);
-                this.visualizer?.applySettings(settings);
+
+                this._updatingFromPython = true;
+                try {
+                    this.visualizer?.applySettings(settings);
+                } finally {
+                    this._updatingFromPython = false;
+                }
             },
             this
         );
@@ -93,20 +102,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
             // by JS and then overwritten the first time by Python
             delete settings.pinned;
 
-            // save current settings of settings_sync
-            let sync_state = this.model.get('_settings_sync') as boolean | undefined;
-            if (sync_state === undefined) {
-                sync_state = true;
-            }
-
-            // signals that updating the Python state shouldn't trigger a re-update.
-            // this is a workaround because it seems that settings:change doesn't know
-            // if it's triggered from JS or from Python, so we need an extra flag to avoid a loop
-            this.model.set('_settings_sync', false);
-            this.model.save_changes();
             this.model.set('settings', settings);
-            this.model.save_changes();
-            this.model.set('_settings_sync', sync_state);
             this.model.save_changes();
         }
     }
@@ -295,7 +291,11 @@ export class ChemiscopeView extends ChemiscopeBaseView {
             .then((visualizer) => {
                 this.visualizer = visualizer;
                 // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                this.visualizer.onSettingChange(() => {
+                    if (!this._updatingFromPython) {
+                        this._updatePythonSettings();
+                    }
+                });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
@@ -380,7 +380,11 @@ export class StructureView extends ChemiscopeBaseView {
                 this.visualizer = visualizer;
 
                 // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                this.visualizer.onSettingChange(() => {
+                    if (!this._updatingFromPython) {
+                        this._updatePythonSettings();
+                    }
+                });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
@@ -460,7 +464,11 @@ export class MapView extends ChemiscopeBaseView {
                 this.visualizer = visualizer;
 
                 // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => this._updatePythonSettings());
+                this.visualizer.onSettingChange(() => {
+                    if (!this._updatingFromPython) {
+                        this._updatePythonSettings();
+                    }
+                });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
             })
