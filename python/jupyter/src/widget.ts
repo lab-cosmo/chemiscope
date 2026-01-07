@@ -10,11 +10,11 @@ import './widget.css';
 import {
     DefaultConfig,
     DefaultVisualizer,
+    DisplayTarget,
+    Indexes,
     MapVisualizer,
     StructureConfig,
     StructureVisualizer,
-    Indexes,
-    DisplayTarget,
 } from '../../../src/index';
 import { Dataset, Settings, Structure, UserStructure } from '../../../src/dataset';
 
@@ -116,7 +116,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
         };
 
         if ('structure' in this.visualizer) {
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalOnSelect = this.visualizer.structure.onselect;
             this.visualizer.structure.onselect = (indexes) => {
                 if (originalOnSelect) {
@@ -125,7 +124,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 updatePython(indexes);
             };
 
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalActiveChanged = this.visualizer.structure.activeChanged;
             this.visualizer.structure.activeChanged = (guid, indexes) => {
                 if (originalActiveChanged) {
@@ -136,7 +134,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
         }
 
         if ('map' in this.visualizer) {
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalOnSelect = this.visualizer.map.onselect;
             this.visualizer.map.onselect = (indexes) => {
                 if (originalOnSelect) {
@@ -145,7 +142,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 updatePython(indexes);
             };
 
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalActiveChanged = this.visualizer.map.activeChanged;
             this.visualizer.map.activeChanged = (guid, indexes) => {
                 if (originalActiveChanged) {
@@ -156,7 +152,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
         }
 
         if (this.visualizer.info) {
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalOnChange = this.visualizer.info.onchange;
             this.visualizer.info.onchange = (indexes) => {
                 if (originalOnChange) {
