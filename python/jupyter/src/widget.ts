@@ -272,6 +272,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 this._updatingFromPython = true;
                 try {
                     this.visualizer.structure.activeIndex = activeViewer;
+                    if ('map' in this.visualizer) {
+                        this.visualizer.map.setActive(this.visualizer.structure.active);
+                    }
                 } finally {
                     this._updatingFromPython = false;
                 }
