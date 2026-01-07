@@ -10,6 +10,8 @@ import './widget.css';
 import {
     DefaultConfig,
     DefaultVisualizer,
+    DisplayTarget,
+    Indexes,
     MapVisualizer,
     StructureConfig,
     StructureVisualizer,
@@ -94,6 +96,135 @@ class ChemiscopeBaseView extends DOMWidgetView {
             },
             this
         );
+    }
+
+    protected _bindSelection(): void {
+        if (!this.visualizer) {
+            return;
+        }
+
+        // JS -> Python
+        const updatePython = (indexes: Indexes) => {
+            if (this._updatingFromPython) {
+                return;
+            }
+
+            const current = this.model.get('selected_ids') as {
+                structure: number;
+                atom?: number;
+            };
+
+            if (
+                current &&
+                current.structure === indexes.structure &&
+                current.atom === indexes.atom
+            ) {
+                return;
+            }
+
+            this.model.set('selected_ids', {
+                structure: indexes.structure,
+                atom: indexes.atom,
+            });
+            this.model.save_changes();
+        };
+
+        if ('structure' in this.visualizer) {
+            const originalOnSelect = this.visualizer.structure.onselect;
+            this.visualizer.structure.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+
+            const originalActiveChanged = this.visualizer.structure.activeChanged;
+            this.visualizer.structure.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        if ('map' in this.visualizer) {
+            const originalOnSelect = this.visualizer.map.onselect;
+            this.visualizer.map.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+
+            const originalActiveChanged = this.visualizer.map.activeChanged;
+            this.visualizer.map.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        if (this.visualizer.info) {
+            const originalOnChange = this.visualizer.info.onchange;
+            this.visualizer.info.onchange = (indexes) => {
+                if (originalOnChange) {
+                    originalOnChange(indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        // Python -> JS
+        this.model.on(
+            'change:selected_ids',
+            () => {
+                if (!this.visualizer) {
+                    return;
+                }
+
+                if (this._updatingFromPython) {
+                    return;
+                }
+
+                const selected = this.model.get('selected_ids') as {
+                    structure: number;
+                    atom?: number;
+                };
+
+                if (!selected || selected.structure === undefined) {
+                    return;
+                }
+
+                this._updatingFromPython = true;
+                try {
+                    const target = this.visualizer.saveSettings().target as DisplayTarget;
+                    const indexes = this.visualizer.indexer.fromStructureAtom(
+                        target,
+                        selected.structure,
+                        selected.atom
+                    );
+
+                    if (indexes !== undefined) {
+                        this.visualizer.select(indexes);
+                    }
+                } finally {
+                    this._updatingFromPython = false;
+                }
+            },
+            this
+        );
+
+        // Initialize Python state if needed
+        const currentPython = this.model.get('selected_ids') as {
+            structure?: number;
+        };
+
+        if (!currentPython || currentPython.structure === undefined) {
+            // we use the info panel as the source of truth for the current selection
+            const indexes = this.visualizer.info.indexes;
+            updatePython(indexes);
+        }
     }
 
     protected _updatePythonSettings(): void {
@@ -299,6 +430,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -388,6 +520,7 @@ export class StructureView extends ChemiscopeBaseView {
                 });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -472,6 +605,7 @@ export class MapView extends ChemiscopeBaseView {
                 });
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
