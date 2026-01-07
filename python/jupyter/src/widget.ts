@@ -94,7 +94,10 @@ class ChemiscopeBaseView extends DOMWidgetView {
             delete settings.pinned;
 
             // save current settings of settings_sync
-            const sync_state = this.model.get('_settings_sync') as unknown;
+            let sync_state = this.model.get('_settings_sync') as boolean | undefined;
+            if (sync_state === undefined) {
+                sync_state = true;
+            }
 
             // signals that updating the Python state shouldn't trigger a re-update.
             // this is a workaround because it seems that settings:change doesn't know
