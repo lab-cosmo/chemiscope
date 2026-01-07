@@ -28,8 +28,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     # dictionary (`widget.settings["map"]["x"]["property"] = "foo"` will not
     # work, but `widget.settings = updated_settings` will).
     settings = Dict().tag(sync=True)
-    # switch to disable automatic update of settings
-    _settings_sync = Bool().tag(sync=True)
     # timeout for warning messages
     warning_timeout = Int(10000).tag(sync=True)
     # currently selected environment/structure/atom
