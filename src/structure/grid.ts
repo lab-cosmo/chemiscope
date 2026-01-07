@@ -279,6 +279,21 @@ export class ViewersGrid {
     }
 
     /**
+     * Set the current active viewer by index (position in the grid)
+     */
+    public set activeIndex(index: number) {
+        let i = 0;
+        for (const guid of this._cellsData.keys()) {
+            if (i === index) {
+                this.setActive(guid);
+                return;
+            }
+            i++;
+        }
+        throw Error(`invalid viewer index ${index}`);
+    }
+
+    /**
      * Get the current list of environments showed inside the different viewer
      */
     public pinned(): Indexes[] {

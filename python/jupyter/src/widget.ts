@@ -117,7 +117,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
                     // also sync back the selection, which might have changed if pinned changed
                     if (this.visualizer) {
-                        this._updatePythonSelection(this.visualizer.info.indexes);
+                        this._updatePythonSelection(this.visualizer.info.indexes, true);
                     }
                 } finally {
                     this._updatingFromPython = false;
@@ -127,8 +127,8 @@ class ChemiscopeBaseView extends DOMWidgetView {
         );
     }
 
-    protected _updatePythonSelection(indexes: Indexes): void {
-        if (this._updatingFromPython) {
+    protected _updatePythonSelection(indexes: Indexes, force = false): void {
+        if (this._updatingFromPython && !force) {
             return;
         }
 
