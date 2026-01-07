@@ -161,6 +161,7 @@ const DEFAULT_CONFIG = {
         'select2d',
         'lasso2d',
         'hoverClosest3d',
+        'zoom3d',
         'tableRotation',
         'resetCameraLastSave3d',
         'toImage',
@@ -1712,6 +1713,7 @@ export class PropertiesMap {
             'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
+            dragmode: 'orbit',
         } as unknown as Layout);
     }
 
@@ -1752,6 +1754,7 @@ export class PropertiesMap {
             // Carry over axis types
             'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
             'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
+            dragmode: 'zoom',
         } as unknown as Layout);
     }
 
