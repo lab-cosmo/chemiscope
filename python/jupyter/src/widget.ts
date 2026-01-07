@@ -13,6 +13,8 @@ import {
     MapVisualizer,
     StructureConfig,
     StructureVisualizer,
+    Indexes,
+    DisplayTarget,
 } from '../../../src/index';
 import { Dataset, Settings, Structure, UserStructure } from '../../../src/dataset';
 
@@ -81,6 +83,98 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 delete settings.pinned;
                 this.model.set('settings', settings);
                 this.visualizer?.applySettings(settings);
+            },
+            this
+        );
+    }
+
+    protected _bindSelection(): void {
+        if (!this.visualizer) {
+            return;
+        }
+
+        // JS -> Python
+        const updatePython = (indexes: Indexes) => {
+            const current = this.model.get('selected_ids') as {
+                structure: number;
+                atom?: number;
+            };
+
+            if (
+                current &&
+                current.structure === indexes.structure &&
+                current.atom === indexes.atom
+            ) {
+                return;
+            }
+
+            this.model.set('selected_ids', {
+                structure: indexes.structure,
+                atom: indexes.atom,
+            });
+            this.model.save_changes();
+        };
+
+        if ('structure' in this.visualizer) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const originalOnSelect = this.visualizer.structure.onselect;
+            this.visualizer.structure.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        if ('map' in this.visualizer) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const originalOnSelect = this.visualizer.map.onselect;
+            this.visualizer.map.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        if (this.visualizer.info) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const originalOnChange = this.visualizer.info.onchange;
+            this.visualizer.info.onchange = (indexes) => {
+                if (originalOnChange) {
+                    originalOnChange(indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        // Python -> JS
+        this.model.on(
+            'change:selected_ids',
+            () => {
+                if (!this.visualizer) {
+                    return;
+                }
+
+                const selected = this.model.get('selected_ids') as {
+                    structure: number;
+                    atom?: number;
+                };
+
+                if (!selected) {
+                    return;
+                }
+
+                const target = this.visualizer.saveSettings().target as DisplayTarget;
+                const indexes = this.visualizer.indexer.fromStructureAtom(
+                    target,
+                    selected.structure,
+                    selected.atom
+                );
+
+                if (indexes !== undefined) {
+                    this.visualizer.select(indexes);
+                }
             },
             this
         );
@@ -295,6 +389,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
                 this.visualizer.onSettingChange(() => this._updatePythonSettings());
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -380,6 +475,7 @@ export class StructureView extends ChemiscopeBaseView {
                 this.visualizer.onSettingChange(() => this._updatePythonSettings());
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -460,6 +556,7 @@ export class MapView extends ChemiscopeBaseView {
                 this.visualizer.onSettingChange(() => this._updatePythonSettings());
                 // and set them to the initial value right now
                 this._updatePythonSettings();
+                this._bindSelection();
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {

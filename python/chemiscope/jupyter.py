@@ -32,6 +32,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     _settings_sync = Bool().tag(sync=True)
     # timeout for warning messages
     warning_timeout = Int(10000).tag(sync=True)
+    # currently selected environment/structure/atom
+    selected_ids = Dict().tag(sync=True)
 
     def __init__(
         self, data, has_metadata, warning_timeout=10000, cache_structures=True

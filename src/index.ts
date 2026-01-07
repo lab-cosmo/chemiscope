@@ -176,6 +176,13 @@ class DefaultVisualizer {
 
     public warnings: Warnings;
 
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
+
     private _indexer: EnvironmentIndexer;
     // Display target of the widgets, structure par default
     private _target: DisplayTarget = 'structure';
@@ -577,6 +584,13 @@ class StructureVisualizer {
 
     public warnings: Warnings;
 
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
+
     private _indexer: EnvironmentIndexer;
     private _target: DisplayTarget;
 
@@ -764,6 +778,13 @@ class MapVisualizer {
     public meta: MetadataPanel;
 
     public warnings: Warnings;
+
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
 
     private _indexer: EnvironmentIndexer;
 
