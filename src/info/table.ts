@@ -188,12 +188,12 @@ export class Table {
         this._currentIndexes = indexes;
 
         if (this._target === 'structure') {
-            displayId = indexes.structure + 1;
+            displayId = indexes.structure;
             index = indexes.structure;
         } else {
             assert(this._target === 'atom');
             assert(indexes.atom !== undefined);
-            displayId = indexes.atom + 1;
+            displayId = indexes.atom;
             index = indexes.environment;
         }
 
