@@ -124,6 +124,15 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 }
                 updatePython(indexes);
             };
+
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const originalActiveChanged = this.visualizer.structure.activeChanged;
+            this.visualizer.structure.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
+                }
+                updatePython(indexes);
+            };
         }
 
         if ('map' in this.visualizer) {
@@ -132,6 +141,15 @@ class ChemiscopeBaseView extends DOMWidgetView {
             this.visualizer.map.onselect = (indexes) => {
                 if (originalOnSelect) {
                     originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const originalActiveChanged = this.visualizer.map.activeChanged;
+            this.visualizer.map.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
                 }
                 updatePython(indexes);
             };
