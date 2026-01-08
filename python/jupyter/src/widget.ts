@@ -68,6 +68,27 @@ class ChemiscopeBaseView extends DOMWidgetView {
         return super.remove();
     }
 
+    protected _initializeVisualizer(
+        visualizer: DefaultVisualizer | StructureVisualizer | MapVisualizer
+    ): void {
+        this.visualizer = visualizer;
+
+        const settings = this.model.get('settings') as Partial<Settings>;
+        if (settings) {
+            this.visualizer.applySettings(settings);
+        }
+
+        // update the Python side settings whenever a setting changes
+        this.visualizer.onSettingChange(() => {
+            if (!this._updatingFromPython) {
+                this._updatePythonSettings();
+            }
+        });
+        // and set them to the initial value right now
+        this._updatePythonSettings();
+        this._bindSelection();
+    }
+
     protected _bindPythonSettings(): void {
         // update settings on the JS side when they are changed in Python
         this.model.on(
@@ -489,22 +510,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-
-                const settings = this.model.get('settings') as Partial<Settings>;
-                if (settings) {
-                    this.visualizer.applySettings(settings);
-                }
-
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
-                this._bindSelection();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -584,22 +590,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-
-                const settings = this.model.get('settings') as Partial<Settings>;
-                if (settings) {
-                    this.visualizer.applySettings(settings);
-                }
-
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
-                this._bindSelection();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -674,22 +665,7 @@ export class MapView extends ChemiscopeBaseView {
         const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
         void MapVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-
-                const settings = this.model.get('settings') as Partial<Settings>;
-                if (settings) {
-                    this.visualizer.applySettings(settings);
-                }
-
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
-                this._bindSelection();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
