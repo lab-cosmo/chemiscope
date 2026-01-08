@@ -117,6 +117,8 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     if (this.visualizer) {
                         this._updatePythonSelection(this.visualizer.info.indexes, true);
                     }
+                } catch (e) {
+                    this.warnings.sendMessage(`Error setting state: ${e}`);
                 } finally {
                     this._updatingFromPython = false;
                 }
@@ -156,6 +158,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
             }
         }
 
+        this._updatePythonSettings();
         this.model.save_changes();
     }
 
