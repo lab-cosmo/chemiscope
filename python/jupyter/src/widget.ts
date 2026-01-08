@@ -2,7 +2,7 @@ import { DOMWidgetView } from '@jupyter-widgets/base';
 import { JSONValue } from '@lumino/coreutils';
 import Plausible from 'plausible-tracker';
 
-import { Warnings, generateGUID, getByID } from '../../../src/utils';
+import { Warnings, binarySearch, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -247,7 +247,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
             };
         }
 
-        // Python -> JS (selection)
+        // Python -> JS
         this.model.on(
             'change:selected_ids',
             () => {
@@ -259,22 +259,52 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     return;
                 }
 
-                const selected = this.model.get('selected_ids') as {
-                    structure: number;
-                    atom?: number;
-                };
+                const selected = this.model.get('selected_ids') as
+                    | {
+                          structure?: number;
+                          atom?: number;
+                      }
+                    | undefined;
 
-                if (!selected || selected.structure === undefined) {
+                if (!selected) {
                     return;
                 }
 
                 this._updatingFromPython = true;
                 try {
+                    const currentIndexes = this.visualizer.info.indexes;
+                    let structure = selected.structure;
+                    let atom = selected.atom;
+
+                    if (structure === undefined) {
+                        structure = currentIndexes.structure;
+                    }
+
+                    if (atom === undefined) {
+                        atom = currentIndexes.atom;
+                    }
+
+                    // Validate atom index
+                    if (atom !== undefined) {
+                        const activeAtoms =
+                            this.visualizer.indexer.activeAtoms(structure);
+                        if (activeAtoms.length > 0) {
+                            if (binarySearch(activeAtoms, atom) === -1) {
+                                // Reset to 0 if valid, else first active
+                                if (binarySearch(activeAtoms, 0) !== -1) {
+                                    atom = 0;
+                                } else {
+                                    atom = activeAtoms[0];
+                                }
+                            }
+                        }
+                    }
+
                     const target = this.visualizer.saveSettings().target as DisplayTarget;
                     const indexes = this.visualizer.indexer.fromStructureAtom(
                         target,
-                        selected.structure,
-                        selected.atom
+                        structure,
+                        atom
                     );
 
                     if (indexes !== undefined) {
