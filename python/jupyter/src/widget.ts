@@ -207,6 +207,16 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 }
                 updatePython(indexes);
             };
+
+            const originalOnRemove = this.visualizer.structure.onremove;
+            this.visualizer.structure.onremove = (guid) => {
+                if (originalOnRemove) {
+                    originalOnRemove(guid);
+                }
+                if (this.visualizer) {
+                    updatePython(this.visualizer.info.indexes);
+                }
+            };
         }
 
         if ('map' in this.visualizer) {
