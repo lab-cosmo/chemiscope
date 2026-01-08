@@ -256,14 +256,6 @@ export class EnvironmentInfo {
                             this.onchange(this._indexes());
                             slider.startPlayback(advance);
                         }
-
-                        /* Update the display with the details of the found structure
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.show(this._indexer.fromStructure(structure, this._target)!);
-                        this.onchange(this._indexes());
-
-                        // Recursively call startPlayback to continue playback
-                        slider.startPlayback(advance); */
                     }
                 }
             }, this.playbackDelay);

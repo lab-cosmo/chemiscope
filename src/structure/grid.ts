@@ -576,9 +576,19 @@ export class ViewersGrid {
      */
     private async _refreshCell(guid: GUID, data: ViewerGridData, envView: boolean): Promise<void> {
         // Set/remove atom from indexes based on target
-        data.current.atom = envView
-            ? this._indexer.fromEnvironment(data.current.environment, this._target).atom
-            : undefined;
+        if (envView) {
+            // Check if environment is valid before accessing indexer
+            if (data.current.environment >= 0) {
+                data.current.atom = this._indexer.fromEnvironment(
+                    data.current.environment,
+                    this._target
+                ).atom;
+            } else {
+                data.current.atom = undefined;
+            }
+        } else {
+            data.current.atom = undefined;
+        }
         this._cellsData.set(guid, data);
 
         // Recreate stucture settings modal
