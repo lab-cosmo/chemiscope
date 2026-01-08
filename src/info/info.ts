@@ -145,20 +145,15 @@ export class EnvironmentInfo {
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
 
-        if (indexes.structure !== previousStructure && this._atom !== undefined) {
-            const activeAtoms = this._indexer.activeAtoms(indexes.structure);
-            this._atom.number.value = `${activeAtoms[0]}`;
-            this._atom.slider.reset(activeAtoms);
-        }
+        if (this._atom !== undefined) {
+            // Only reset the slider range if the structure actually changed
+            if (indexes.structure !== previousStructure) {
+                const activeAtoms = this._indexer.activeAtoms(indexes.structure);
+                this._atom.slider.reset(activeAtoms);
+            }
 
-        if (indexes.atom !== undefined) {
-            if (this._atom === undefined) {
-                if (indexes.atom !== 0) {
-                    throw Error(
-                        'Invalid state: got an atomic number to update, but I am displaying only structures'
-                    );
-                }
-            } else {
+            // Use the atom index provided in 'indexes'
+            if (indexes.atom !== undefined) {
                 this._atom.number.value = `${indexes.atom}`;
                 this._atom.slider.update(indexes.atom);
                 this._atom.table.show(indexes);
@@ -231,7 +226,8 @@ export class EnvironmentInfo {
             setTimeout(() => {
                 if (advance()) {
                     // Find the next valid structure index
-                    const structure = this._findNextValidIndex(
+                    const currentAtom = this._indexes().atom;
+                    const nextStructure = this._findNextValidIndex(
                         // Get current structure index
                         this._indexes().structure,
 
@@ -243,14 +239,31 @@ export class EnvironmentInfo {
                     );
 
                     // Valid structure was found
-                    if (structure !== undefined) {
-                        // Update the display with the details of the found structure
+                    if (nextStructure !== undefined) {
+                        let indexes = this._indexer.fromStructureAtom(
+                            this._target,
+                            nextStructure,
+                            currentAtom
+                        );
+
+                        // Fallback to the first available atom if the current one doesn't exist
+                        if (indexes === undefined) {
+                            indexes = this._indexer.fromStructure(nextStructure, this._target);
+                        }
+
+                        if (indexes !== undefined) {
+                            this.show(indexes);
+                            this.onchange(this._indexes());
+                            slider.startPlayback(advance);
+                        }
+
+                        /* Update the display with the details of the found structure
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this.show(this._indexer.fromStructure(structure, this._target)!);
                         this.onchange(this._indexes());
 
                         // Recursively call startPlayback to continue playback
-                        slider.startPlayback(advance);
+                        slider.startPlayback(advance); */
                     }
                 }
             }, this.playbackDelay);
