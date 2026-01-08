@@ -286,8 +286,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
                     // Validate atom index
                     if (atom !== undefined) {
-                        const activeAtoms =
-                            this.visualizer.indexer.activeAtoms(structure);
+                        const activeAtoms = this.visualizer.indexer.activeAtoms(structure);
                         if (activeAtoms.length > 0) {
                             if (binarySearch(activeAtoms, atom) === -1) {
                                 // Reset to 0 if valid, else first active
