@@ -309,8 +309,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     if (indexes !== undefined) {
                         this.visualizer.select(indexes);
                     } else {
-                        // eslint-disable-next-line no-console
-                        console.warn(
+                        this.warnings.sendMessage(
                             `Invalid selection request: structure=${selected.structure}, atom=${selected.atom}`
                         );
                     }
