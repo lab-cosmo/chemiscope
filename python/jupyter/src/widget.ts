@@ -284,17 +284,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
                         atom = currentIndexes.atom;
                     }
 
-                                        // Validate atom index
+                    // Validate atom index
 
-                                        if (atom !== undefined) {
+                    if (atom !== undefined) {
+                        const activeAtoms = this.visualizer.indexer.activeAtoms(structure);
 
-                                            const activeAtoms =
-
-                                                this.visualizer.indexer.activeAtoms(structure);
-
-                                            if (activeAtoms && activeAtoms.length > 0) {
-
-                                                if (binarySearch(activeAtoms, atom) === -1) {
+                        if (activeAtoms && activeAtoms.length > 0) {
+                            if (binarySearch(activeAtoms, atom) === -1) {
                                 // Reset to 0 if valid, else first active
                                 if (binarySearch(activeAtoms, 0) !== -1) {
                                     atom = 0;
