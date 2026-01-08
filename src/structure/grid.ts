@@ -483,7 +483,12 @@ export class ViewersGrid {
             return;
         }
 
-        assert(settings.length === this._cellsData.size);
+        if (settings.length !== this._cellsData.size) {
+            throw Error(
+                `The number of viewers (${this._cellsData.size}) is different from the structure settings specified (${settings.length})`
+            );
+        }
+
         for (const [i, data] of enumerate(this._cellsData.values())) {
             data.viewer.applySettings(settings[i]);
         }
