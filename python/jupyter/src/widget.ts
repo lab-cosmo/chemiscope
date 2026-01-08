@@ -208,7 +208,6 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 updatePython(indexes);
             };
 
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             const originalRemoveViewer = this.visualizer.structure.removeViewer.bind(
                 this.visualizer.structure
             );
