@@ -272,9 +272,16 @@ export class EnvironmentInfo {
                 }
 
                 // Update atom number and slider
-                this._atom.number.value = `${activeAtoms[0]}`;
+                const currentAtom = this._atom.slider.value();
+                let nextAtom = activeAtoms[0];
+                if (binarySearch(activeAtoms, currentAtom) !== -1) {
+                    nextAtom = currentAtom;
+                }
+
+                this._atom.number.value = `${nextAtom}`;
                 this._atom.number.max = `${activeAtoms.length}`;
                 this._atom.slider.reset(activeAtoms);
+                this._atom.slider.update(nextAtom);
             }
 
             // Get and validate indexes for the current structure
@@ -323,9 +330,16 @@ export class EnvironmentInfo {
                     // If atom is present, update its related properties
                     if (this._atom !== undefined) {
                         const activeAtoms = this._indexer.activeAtoms(value);
-                        this._atom.number.value = `${activeAtoms[0]}`;
+                        const currentAtom = this._atom.slider.value();
+                        let nextAtom = activeAtoms[0];
+                        if (binarySearch(activeAtoms, currentAtom) !== -1) {
+                            nextAtom = currentAtom;
+                        }
+
+                        this._atom.number.value = `${nextAtom}`;
                         this._atom.number.max = `${activeAtoms.length}`;
                         this._atom.slider.reset(activeAtoms);
+                        this._atom.slider.update(nextAtom);
                     }
 
                     // Show the updated structure table
