@@ -468,10 +468,11 @@ class DefaultVisualizer {
                     this.warnings.sendMessage(`Could not update structure viewer: ${err}`);
                 });
             }
-        }
-
         if (settings.structure !== undefined) {
-            this.structure.applySettings(settings.structure as Settings[]);
+            const nViewers = this.structure.pinned().length;
+            const structureSettings = settings.structure as Settings[];
+            const safeSettings = structureSettings.slice(0, nViewers);
+            this.structure.applySettings(safeSettings);
         }
     }
 

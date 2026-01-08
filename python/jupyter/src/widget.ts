@@ -489,6 +489,12 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+
+                const settings = this.model.get('settings') as Partial<Settings>;
+                if (settings) {
+                    this.visualizer.applySettings(settings);
+                }
+
                 // update the Python side settings whenever a setting changes
                 this.visualizer.onSettingChange(() => {
                     if (!this._updatingFromPython) {
@@ -579,6 +585,11 @@ export class StructureView extends ChemiscopeBaseView {
             .then((visualizer) => {
                 this.visualizer = visualizer;
 
+                const settings = this.model.get('settings') as Partial<Settings>;
+                if (settings) {
+                    this.visualizer.applySettings(settings);
+                }
+
                 // update the Python side settings whenever a setting changes
                 this.visualizer.onSettingChange(() => {
                     if (!this._updatingFromPython) {
@@ -663,6 +674,11 @@ export class MapView extends ChemiscopeBaseView {
         void MapVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
                 this.visualizer = visualizer;
+
+                const settings = this.model.get('settings') as Partial<Settings>;
+                if (settings) {
+                    this.visualizer.applySettings(settings);
+                }
 
                 // update the Python side settings whenever a setting changes
                 this.visualizer.onSettingChange(() => {
