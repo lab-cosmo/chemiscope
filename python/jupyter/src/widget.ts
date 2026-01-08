@@ -92,9 +92,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     const target = this.visualizer.saveSettings().target as DisplayTarget;
                     const currentPinned = this.visualizer.structure
                         .pinned()
-                        .map((value) =>
-                            target === 'atom' ? value.environment : value.structure
-                        );
+                        .map((value) => (target === 'atom' ? value.environment : value.structure));
 
                     const pinned = settings.pinned as number[];
                     const pinnedChanged =
