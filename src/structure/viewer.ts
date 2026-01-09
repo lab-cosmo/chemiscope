@@ -782,7 +782,11 @@ export class MoleculeViewer {
     public applySettings(settings: Settings): void {
         // prevent multiple (time consuming) style updates during application
         this._disableStyleUpdates = true;
-        this._options.applySettings(settings);
+
+        // Remove camera from settings passed to options to avoid "unknown setting" warning
+        const optionsSettings = { ...settings };
+        delete optionsSettings.camera;
+        this._options.applySettings(optionsSettings);
 
         if (settings.camera) {
             const view = cameraToView(settings.camera as unknown as CameraState);
