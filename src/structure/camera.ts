@@ -12,7 +12,7 @@ export interface CameraState {
     zoom: number;
 }
 
-// 3Dmol view: [cx, cy, cz, qx, qy, qz, qw, zoom]
+// 3Dmol view: [cx, cy, cz, distance, qx, qy, qz, qw]
 export type ViewState = [number, number, number, number, number, number, number, number];
 
 function applyQuat(v: Vector3D, q: [number, number, number, number]): Vector3D {
@@ -35,13 +35,10 @@ function applyQuat(v: Vector3D, q: [number, number, number, number]): Vector3D {
 
 /**
  * Converts 3Dmol view array to Plotly-style camera object.
- * Assumes 3Dmol rotation q transforms the default camera (looking down -Z, up +Y)
- * to the current orientation.
  */
 export function viewToCamera(view: ViewState): CameraState {
     const center = { x: view[0], y: view[1], z: view[2] };
-    // Based on user observation: view[3] is distance/zoom, view[4-7] is quaternion [x, y, z, w].
-    // This deviates from 3Dmol documentation but matches observed data format.
+    // Observed layout: [cx, cy, cz, distance, x, y, z, w]
     const dist = view[3];
     const q: [number, number, number, number] = [view[4], view[5], view[6], view[7]];
 
@@ -56,7 +53,6 @@ export function viewToCamera(view: ViewState): CameraState {
         q[3] = 1; // Identity
     }
 
-    // In 3Dmol (and many GL apps), default camera is often at +Z looking at -Z.
     // Rotating (0, 1, 0) by q gives up vector.
     const upVec = applyQuat([0, 1, 0], q);
 
@@ -71,7 +67,7 @@ export function viewToCamera(view: ViewState): CameraState {
             z: center.z + eyeVec[2] * dist,
         },
         up: { x: upVec[0], y: upVec[1], z: upVec[2] },
-        zoom: dist, // Store the distance as zoom
+        zoom: dist,
     };
 }
 
@@ -82,9 +78,6 @@ export function cameraToView(camera: CameraState): ViewState {
     const center = camera.center;
     const eye = camera.eye;
     const up = camera.up;
-    // zoom property is redundant if we use eye distance, but we keep it for reference
-    // or if we need to force a specific scale factor independent of geometry.
-    // However, 3Dmol seems to use index 3 for distance.
 
     // Vector from center to eye
     const zAxis: Vector3D = [eye.x - center.x, eye.y - center.y, eye.z - center.z];
@@ -123,9 +116,6 @@ export function cameraToView(camera: CameraState): ViewState {
     ];
 
     // Rotation Matrix [X Y Z]
-    // m00 m01 m02
-    // m10 m11 m12
-    // m20 m21 m22
     const m00 = xAxis[0], m01 = yAxis[0], m02 = zAxis[0];
     const m10 = xAxis[1], m11 = yAxis[1], m12 = zAxis[1];
     const m20 = xAxis[2], m21 = yAxis[2], m22 = zAxis[2];
@@ -162,6 +152,5 @@ export function cameraToView(camera: CameraState): ViewState {
         }
     }
 
-    // Return [cx, cy, cz, distance, qx, qy, qz, qw]
     return [center.x, center.y, center.z, zLen, qx, qy, qz, qw];
 }
