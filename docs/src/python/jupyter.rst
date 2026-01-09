@@ -68,6 +68,74 @@ as a standalone JSON viewer that can be opened in the web app
 
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save
 
+Exporting images
+~~~~~~~~~~~~~~~~
+
+The chemiscope widget provides methods to capture snapshots of the map and 
+structure panels programmatically. These methods are asynchronous, as they 
+require communication with the browser's JavaScript engine to render and 
+capture the data.
+
+There are two types of methods: ``save_*`` methods, which write the image data 
+directly to a file given the path, and ``get_*`` methods, which return the raw 
+image bytes (PNG formatted).
+
+.. note::
+    These methods return ``asyncio.Future`` objects. Depending on the environment,
+    environments, you may be able to ``await`` directly in a cell to wait for the 
+    result. If ``await`` hangs in your environment, you can use 
+    catch the ``get_*`` return value, and then in a separate cell get `.result()` 
+    to access the actual return value.
+
+Basic usage example:
+
+.. code-block:: python
+
+    # Cell 1: Create and display the widget
+    import chemiscope
+    widget = chemiscope.show(structures, properties)
+    widget
+
+.. code-block:: python
+
+    # Cell 2: Save a snapshot of the current map to a file
+    await widget.save_map_image("current_map.png")
+
+.. code-block:: python
+
+    # Cell 3: Capture structure image data and display it in the notebook
+    from IPython.display import Image
+    
+    # Get raw PNG data for the active structure viewer
+    img_data = await widget.get_structure_image()
+    
+    # Display using IPython
+    display(Image(img_data))
+
+Capturing sequences
+~~~~~~~~~~~~~~~~~~~
+
+You can also capture a sequence of structure snapshots (e.g., for a trajectory 
+animation). The ``indices`` parameter can be a list of structure indices or 
+a list of dictionaries specifying both structure and atom indices. 
+An optional ``settings`` parameter allows applying specific visualization 
+settings to each frame.
+
+.. code-block:: python
+
+    indices = [0, 10, 20]
+    paths = ["frame_0.png", "frame_10.png", "frame_20.png"]
+    
+    # Capture and save a sequence of frames
+    await widget.save_structure_sequence(indices, paths)
+
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_map_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_map_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_sequence
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_sequence
+
 Dataset exploration
 -------------------
 
