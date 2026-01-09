@@ -14,6 +14,8 @@ import { Environment, Settings, Structure } from '../dataset';
 
 import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
 
+import { CameraState, ViewState, cameraToView, viewToCamera } from './camera';
+
 import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
@@ -369,6 +371,25 @@ export class MoleculeViewer {
             },
             { capture: true }
         );
+
+        // Detect camera changes to update settings
+        const checkCameraChange = () => {
+            if (this._settingChangeCallbacks.length > 0) {
+                const view = this._viewer.getView() as ViewState;
+                const camera = viewToCamera(view);
+                for (const callback of this._settingChangeCallbacks) {
+                    callback(['camera'], camera);
+                }
+            }
+        };
+
+        this._root.addEventListener('mouseup', checkCameraChange);
+        this._root.addEventListener('touchend', checkCameraChange);
+        this._root.addEventListener('wheel', (e) => {
+            if (!e.isTrusted) {
+                checkCameraChange();
+            }
+        });
 
         window.addEventListener('resize', () => this.resize());
         // waits for loading of widget, then triggers a redraw. fixes some glitches on the Jupyter side
@@ -762,6 +783,12 @@ export class MoleculeViewer {
         // prevent multiple (time consuming) style updates during application
         this._disableStyleUpdates = true;
         this._options.applySettings(settings);
+
+        if (settings.camera) {
+            const view = cameraToView(settings.camera as unknown as CameraState);
+            this._viewer.setView(view);
+        }
+
         this._disableStyleUpdates = false;
         this._updateStyle();
     }
@@ -771,7 +798,10 @@ export class MoleculeViewer {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        return this._options.saveSettings();
+        const settings = this._options.saveSettings();
+        const view = this._viewer.getView() as ViewState;
+        settings.camera = viewToCamera(view) as unknown as Settings;
+        return settings;
     }
 
     /**
