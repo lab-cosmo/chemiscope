@@ -99,18 +99,20 @@ Basic usage example:
 .. code-block:: python
 
     # Cell 2: Save a snapshot of the current map to a file
-    await widget.save_map_image("current_map.png")
+    widget.save_map_image("current_map.png")
 
 .. code-block:: python
 
-    # Cell 3: Capture structure image data and display it in the notebook
+    # Cell 3: Capture structure image data as raw PNG bytes
+    img_future = widget.get_structure_image()
+    
+.. code-block:: python
+
+    # Display image
     from IPython.display import Image
-    
-    # Get raw PNG data for the active structure viewer
-    img_data = await widget.get_structure_image()
-    
-    # Display using IPython
+    img_data = img_future.result()
     display(Image(img_data))
+
 
 Capturing sequences
 ~~~~~~~~~~~~~~~~~~~
@@ -127,7 +129,7 @@ settings to each frame.
     paths = ["frame_0.png", "frame_10.png", "frame_20.png"]
     
     # Capture and save a sequence of frames
-    await widget.save_structure_sequence(indices, paths)
+    widget.save_structure_sequence(indices, paths)
 
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_map_image
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_image
