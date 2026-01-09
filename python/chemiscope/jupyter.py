@@ -101,6 +101,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         """
         return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
 
+    def get_structure_sequence(self, indices):
+        """
+        Request a sequence of structure snapshots. Returns a Future that resolves to a list of image data (bytes).
+        """
+        return asyncio.ensure_future(self._process_structure_sequence(indices, None))
+
     def save_structure_sequence(self, indices, paths):
         """
         Save a sequence of structure snapshots to files.
@@ -141,7 +147,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         self._pending_requests[request_id] = {
             "future": future,
-            "paths": dict(zip(indices, paths)),
+            "paths": paths,
+            "results": [None] * len(indices),
             "type": "sequence",
         }
 
@@ -209,22 +216,30 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         elif msg_type == "save-structure-sequence-result":
             pending = self._pending_requests.get(request_id)
             if pending and isinstance(pending, dict):
-                index = content.get("index")
+                step = content.get("step")
                 data = content.get("data")
                 paths = pending["paths"]
-                if index in paths:
-                    try:
-                        header, encoded = data.split(",", 1)
-                        data = base64.b64decode(encoded)
-                        with open(paths[index], "wb") as f:
-                            f.write(data)
-                    except Exception as e:
-                        print(f"Error saving frame {index}: {e}")
+                results = pending["results"]
+
+                try:
+                    header, encoded = data.split(",", 1)
+                    decoded = base64.b64decode(encoded)
+
+                    if paths is not None:
+                        with open(paths[step], "wb") as f:
+                            f.write(decoded)
+                    else:
+                        results[step] = decoded
+                except Exception as e:
+                    print(f"Error saving frame {step}: {e}")
 
         elif msg_type == "save-structure-sequence-done":
             pending = self._pending_requests.pop(request_id, None)
             if pending and isinstance(pending, dict):
-                pending["future"].set_result(None)
+                if pending["paths"] is not None:
+                    pending["future"].set_result(None)
+                else:
+                    pending["future"].set_result(pending["results"])
 
         elif msg_type == "save-structure-sequence-error":
             pending = self._pending_requests.pop(request_id, None)

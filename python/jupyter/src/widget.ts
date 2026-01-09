@@ -41,7 +41,7 @@ interface ScreenshotRequest {
 interface StructureSequenceRequest {
     type: string;
     requestId: number;
-    indices: number[];
+    indices: (number | { structure: number; atom?: number })[];
 }
 
 class ChemiscopeBaseView extends DOMWidgetView {
@@ -489,10 +489,17 @@ class ChemiscopeBaseView extends DOMWidgetView {
         const indexer = this.visualizer.indexer;
         const structureViewer = this.visualizer.structure;
 
-        for (const index of indices) {
+        for (let i = 0; i < indices.length; i++) {
+            const item = indices[i];
             try {
+                let indexes: Indexes | undefined;
                 const target = this.visualizer.saveSettings().target as DisplayTarget;
-                const indexes = indexer.fromStructure(index, target);
+
+                if (typeof item === 'number') {
+                    indexes = indexer.fromStructure(item, target);
+                } else {
+                    indexes = indexer.fromStructureAtom(target, item.structure, item.atom);
+                }
 
                 if (indexes) {
                     await structureViewer.show(indexes);
@@ -502,13 +509,13 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     this.model.send({
                         type: 'save-structure-sequence-result',
                         requestId: requestId,
-                        index: index,
+                        step: i,
                         data: data,
                     });
                 }
             } catch (e) {
                 // eslint-disable-next-line no-console
-                console.error(`Failed to save frame ${index}`, e);
+                console.error(`Failed to save frame ${i}`, e);
             }
         }
 
