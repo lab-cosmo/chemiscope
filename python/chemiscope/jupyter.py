@@ -105,7 +105,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         """
         Request a sequence of structure snapshots. Returns a Future that resolves to a list of image data (bytes).
         """
-        return asyncio.ensure_future(self._process_structure_sequence(indices, None))
+        return asyncio.ensure_future(self._process_structure_sequence(indices))
 
     def save_structure_sequence(self, indices, paths):
         """
@@ -114,7 +114,13 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         if len(indices) != len(paths):
             raise ValueError("indices and paths must have the same length")
 
-        return asyncio.ensure_future(self._process_structure_sequence(indices, paths))
+        async def _save_impl():
+            data_list = await self.get_structure_sequence(indices)
+            for path, data in zip(paths, data_list):
+                with open(path, "wb") as f:
+                    f.write(data)
+
+        return asyncio.ensure_future(_save_impl())
 
     def _request_screenshot(self, target):
         import time
@@ -135,7 +141,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         with open(path, "wb") as f:
             f.write(data)
 
-    async def _process_structure_sequence(self, indices, paths):
+    async def _process_structure_sequence(self, indices):
         import time
 
         request_id = int(time.time() * 1000)
@@ -147,7 +153,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         self._pending_requests[request_id] = {
             "future": future,
-            "paths": paths,
             "results": [None] * len(indices),
             "type": "sequence",
         }
@@ -218,28 +223,19 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             if pending and isinstance(pending, dict):
                 step = content.get("step")
                 data = content.get("data")
-                paths = pending["paths"]
                 results = pending["results"]
 
                 try:
                     header, encoded = data.split(",", 1)
                     decoded = base64.b64decode(encoded)
-
-                    if paths is not None:
-                        with open(paths[step], "wb") as f:
-                            f.write(decoded)
-                    else:
-                        results[step] = decoded
+                    results[step] = decoded
                 except Exception as e:
-                    print(f"Error saving frame {step}: {e}")
+                    print(f"Error decoding frame {step}: {e}")
 
         elif msg_type == "save-structure-sequence-done":
             pending = self._pending_requests.pop(request_id, None)
             if pending and isinstance(pending, dict):
-                if pending["paths"] is not None:
-                    pending["future"].set_result(None)
-                else:
-                    pending["future"].set_result(pending["results"])
+                pending["future"].set_result(pending["results"])
 
         elif msg_type == "save-structure-sequence-error":
             pending = self._pending_requests.pop(request_id, None)
