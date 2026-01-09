@@ -279,15 +279,6 @@ export class ViewersGrid {
     }
 
     /**
-     * Get the PNG data for the active viewer
-     */
-    public exportActivePNG(): string {
-        const data = this._cellsData.get(this._active);
-        assert(data !== undefined);
-        return data.viewer.exportPNG();
-    }
-
-    /**
      * Set the current active viewer by index (position in the grid)
      */
     public set activeIndex(index: number) {
@@ -300,6 +291,15 @@ export class ViewersGrid {
             i++;
         }
         throw Error(`invalid viewer index ${index}`);
+    }
+
+    /**
+     * Get the PNG data for the active viewer
+     */
+    public exportActivePNG(): string {
+        const data = this._cellsData.get(this._active);
+        assert(data !== undefined);
+        return data.viewer.exportPNG();
     }
 
     /**

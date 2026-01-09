@@ -406,6 +406,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         this.model.on(
             'msg:custom',
             (content: ScreenshotRequest | StructureSequenceRequest, _buffers: unknown[]) => {
+                void _buffers;
                 if (!content) {
                     return;
                 }
@@ -452,7 +453,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 this.visualizer.map
                     .exportPNG()
                     .then(sendResult)
-                    .catch((e: Error) => sendError(e.toString()));
+                    .catch((e: unknown) => sendError(`${e}`));
             } else {
                 sendError('no map in this visualizer');
             }
