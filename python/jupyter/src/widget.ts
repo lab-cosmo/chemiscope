@@ -497,14 +497,14 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
         // Settings for the active viewer to use as base for per-frame overrides
         const activeIndex = structureViewer.activeIndex;
-        const baseSettings = initialSettings[activeIndex];
+        const baseSettings = JSON.stringify(initialSettings[activeIndex]);
 
         for (let i = 0; i < indices.length; i++) {
             const item = indices[i];
             try {
                 if (settings) {
                     // Deep copy initial settings and update with frame-specific partial settings.
-                    const frameSettings = JSON.parse(JSON.stringify(baseSettings)) as Settings;
+                    const frameSettings = JSON.parse(baseSettings) as Settings;
                     if (settings[i]) {
                         Object.assign(frameSettings, settings[i]);
                     }
