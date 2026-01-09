@@ -433,7 +433,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
-            if (this._pendingStructureRequests.size >= 10) {
+            if (this._pendingStructureRequests.size >= 4) {
                 // avoid piling up too many requests
                 // eslint-disable-next-line no-console
                 console.warn(
