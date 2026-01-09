@@ -176,6 +176,13 @@ class DefaultVisualizer {
 
     public warnings: Warnings;
 
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
+
     private _indexer: EnvironmentIndexer;
     // Display target of the widgets, structure par default
     private _target: DisplayTarget = 'structure';
@@ -464,7 +471,10 @@ class DefaultVisualizer {
         }
 
         if (settings.structure !== undefined) {
-            this.structure.applySettings(settings.structure as Settings[]);
+            const nViewers = this.structure.pinned().length;
+            const structureSettings = settings.structure as Settings[];
+            const safeSettings = structureSettings.slice(0, nViewers);
+            this.structure.applySettings(safeSettings);
         }
     }
 
@@ -576,6 +586,13 @@ class StructureVisualizer {
     public structure: ViewersGrid;
 
     public warnings: Warnings;
+
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
 
     private _indexer: EnvironmentIndexer;
     private _target: DisplayTarget;
@@ -764,6 +781,13 @@ class MapVisualizer {
     public meta: MetadataPanel;
 
     public warnings: Warnings;
+
+    /**
+     * Get the indexer used by this visualizer
+     */
+    public get indexer(): EnvironmentIndexer {
+        return this._indexer;
+    }
 
     private _indexer: EnvironmentIndexer;
 

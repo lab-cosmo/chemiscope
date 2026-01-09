@@ -2,7 +2,7 @@ import { DOMWidgetView } from '@jupyter-widgets/base';
 import { JSONValue } from '@lumino/coreutils';
 import Plausible from 'plausible-tracker';
 
-import { Warnings, generateGUID, getByID } from '../../../src/utils';
+import { Warnings, binarySearch, generateGUID, getByID } from '../../../src/utils';
 
 // Import the CSS
 import './widget.css';
@@ -10,6 +10,8 @@ import './widget.css';
 import {
     DefaultConfig,
     DefaultVisualizer,
+    DisplayTarget,
+    Indexes,
     MapVisualizer,
     StructureConfig,
     StructureVisualizer,
@@ -66,6 +68,27 @@ class ChemiscopeBaseView extends DOMWidgetView {
         return super.remove();
     }
 
+    protected _initializeVisualizer(
+        visualizer: DefaultVisualizer | StructureVisualizer | MapVisualizer
+    ): void {
+        this.visualizer = visualizer;
+
+        const settings = this.model.get('settings') as Partial<Settings>;
+        if (settings) {
+            this.visualizer.applySettings(settings);
+        }
+
+        // update the Python side settings whenever a setting changes
+        this.visualizer.onSettingChange(() => {
+            if (!this._updatingFromPython) {
+                this._updatePythonSettings();
+            }
+        });
+        // and set them to the initial value right now
+        this._updatePythonSettings();
+        this._bindSelection();
+    }
+
     protected _bindPythonSettings(): void {
         // update settings on the JS side when they are changed in Python
         this.model.on(
@@ -80,20 +103,268 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 const settingsRef = this.model.get('settings') as Partial<Settings>;
                 const settings = { ...settingsRef };
 
-                // ignore pinned setting in jupyter, otherwise the pinned is changed
-                // by JS and then overwritten the first time by Python
-                delete settings.pinned;
+                // Handle pinned: only apply if different from current state.
+                // This prevents the destructive reset loop while allowing explicit updates.
+                if (
+                    this.visualizer &&
+                    'structure' in this.visualizer &&
+                    Array.isArray(settings.pinned)
+                ) {
+                    const target = this.visualizer.saveSettings().target as DisplayTarget;
+                    const currentPinned = this.visualizer.structure
+                        .pinned()
+                        .map((value) => (target === 'atom' ? value.environment : value.structure));
+
+                    const pinned = settings.pinned as number[];
+                    const pinnedChanged =
+                        pinned.length !== currentPinned.length ||
+                        pinned.some((val, idx) => val !== currentPinned[idx]);
+
+                    if (!pinnedChanged) {
+                        delete settings.pinned;
+                    }
+                } else {
+                    delete settings.pinned;
+                }
 
                 this._updatingFromPython = true;
                 try {
                     this.visualizer?.applySettings(settings);
+                    // sync back the full settings to Python, so that they are available
+                    // for saving
                     this._updatePythonSettings();
+
+                    // also sync back the selection, which might have changed if pinned changed
+                    if (this.visualizer) {
+                        this._updatePythonSelection(this.visualizer.info.indexes, true);
+                    }
+                } catch (e) {
+                    this.warnings.sendMessage(`Error setting state: ${e}`);
                 } finally {
                     this._updatingFromPython = false;
                 }
             },
             this
         );
+    }
+
+    protected _updatePythonSelection(indexes: Indexes, force = false): void {
+        if (this._updatingFromPython && !force) {
+            return;
+        }
+
+        const wasUpdating = this._updatingFromPython;
+        this._updatingFromPython = true;
+        try {
+            const currentSelected = this.model.get('selected_ids') as
+                | {
+                      structure: number;
+                      atom?: number;
+                  }
+                | undefined;
+
+            const selectedChanged =
+                !currentSelected ||
+                currentSelected.structure !== indexes.structure ||
+                currentSelected.atom !== indexes.atom;
+
+            if (selectedChanged) {
+                this.model.set('selected_ids', {
+                    structure: indexes.structure,
+                    atom: indexes.atom,
+                });
+            }
+
+            if (this.visualizer && 'structure' in this.visualizer) {
+                const activeViewer = this.visualizer.structure.activeIndex;
+                if (this.model.get('active_viewer') !== activeViewer) {
+                    this.model.set('active_viewer', activeViewer);
+                }
+            }
+
+            this._updatePythonSettings();
+            this.model.save_changes();
+        } finally {
+            this._updatingFromPython = wasUpdating;
+        }
+    }
+
+    protected _bindSelection(): void {
+        if (!this.visualizer) {
+            return;
+        }
+
+        // JS -> Python
+        const updatePython = (indexes: Indexes) => this._updatePythonSelection(indexes);
+
+        if ('structure' in this.visualizer) {
+            const originalOnSelect = this.visualizer.structure.onselect;
+            this.visualizer.structure.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+
+            const originalActiveChanged = this.visualizer.structure.activeChanged;
+            this.visualizer.structure.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
+                }
+                updatePython(indexes);
+            };
+
+            const originalRemoveViewer = this.visualizer.structure.removeViewer.bind(
+                this.visualizer.structure
+            );
+            this.visualizer.structure.removeViewer = (guid) => {
+                originalRemoveViewer(guid);
+                if (this.visualizer) {
+                    updatePython(this.visualizer.info.indexes);
+                }
+            };
+        }
+
+        if ('map' in this.visualizer) {
+            const originalOnSelect = this.visualizer.map.onselect;
+            this.visualizer.map.onselect = (indexes) => {
+                if (originalOnSelect) {
+                    originalOnSelect(indexes);
+                }
+                updatePython(indexes);
+            };
+
+            const originalActiveChanged = this.visualizer.map.activeChanged;
+            this.visualizer.map.activeChanged = (guid, indexes) => {
+                if (originalActiveChanged) {
+                    originalActiveChanged(guid, indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        if (this.visualizer.info) {
+            const originalOnChange = this.visualizer.info.onchange;
+            this.visualizer.info.onchange = (indexes) => {
+                if (originalOnChange) {
+                    originalOnChange(indexes);
+                }
+                updatePython(indexes);
+            };
+        }
+
+        // Python -> JS
+        this.model.on(
+            'change:selected_ids',
+            () => {
+                if (!this.visualizer) {
+                    return;
+                }
+
+                if (this._updatingFromPython) {
+                    return;
+                }
+
+                const selected = this.model.get('selected_ids') as
+                    | {
+                          structure?: number;
+                          atom?: number;
+                      }
+                    | undefined;
+
+                if (!selected) {
+                    return;
+                }
+
+                this._updatingFromPython = true;
+                try {
+                    const currentIndexes = this.visualizer.info.indexes;
+                    let structure = selected.structure;
+                    let atom = selected.atom;
+
+                    if (structure === undefined) {
+                        structure = currentIndexes.structure;
+                    }
+
+                    if (atom === undefined) {
+                        atom = currentIndexes.atom;
+                    }
+
+                    // Validate atom index
+
+                    if (atom !== undefined) {
+                        const activeAtoms = this.visualizer.indexer.activeAtoms(structure);
+
+                        if (activeAtoms && activeAtoms.length > 0) {
+                            if (binarySearch(activeAtoms, atom) === -1) {
+                                // Reset to 0 if valid, else first active
+                                if (binarySearch(activeAtoms, 0) !== -1) {
+                                    atom = 0;
+                                } else {
+                                    atom = activeAtoms[0];
+                                }
+                            }
+                        }
+                    }
+
+                    const target = this.visualizer.saveSettings().target as DisplayTarget;
+                    const indexes = this.visualizer.indexer.fromStructureAtom(
+                        target,
+                        structure,
+                        atom
+                    );
+
+                    if (indexes !== undefined) {
+                        this.visualizer.select(indexes);
+                    } else {
+                        this.warnings.sendMessage(
+                            `Invalid selection request: structure=${selected.structure}, atom=${selected.atom}`
+                        );
+                    }
+                } finally {
+                    this._updatingFromPython = false;
+                }
+            },
+            this
+        );
+
+        // Python -> JS (active viewer)
+        this.model.on(
+            'change:active_viewer',
+            () => {
+                if (!this.visualizer || !('structure' in this.visualizer)) {
+                    return;
+                }
+
+                if (this._updatingFromPython) {
+                    return;
+                }
+
+                const activeViewer = this.model.get('active_viewer') as number;
+
+                this._updatingFromPython = true;
+                try {
+                    this.visualizer.structure.activeIndex = activeViewer;
+                    if ('map' in this.visualizer) {
+                        this.visualizer.map.setActive(this.visualizer.structure.active);
+                    }
+                } finally {
+                    this._updatingFromPython = false;
+                }
+            },
+            this
+        );
+
+        // Initialize Python state if needed
+        const currentPython = this.model.get('selected_ids') as {
+            structure?: number;
+        };
+
+        if (!currentPython || currentPython.structure === undefined) {
+            // we use the info panel as the source of truth for the current selection
+            const indexes = this.visualizer.info.indexes;
+            updatePython(indexes);
+        }
     }
 
     protected _updatePythonSettings(): void {
@@ -168,8 +439,17 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
-            if (this._pendingStructureRequests.size > 0) {
-                // avoid piling up too many requests
+            let limit = 16;
+
+            // Limit concurrency during playback to prevent flooding
+
+            if (this.visualizer && 'info' in this.visualizer && this.visualizer.info.isPlaying) {
+                limit = 1;
+            }
+
+            // avoid piling up too many requests during traj. playback
+
+            if (this._pendingStructureRequests.size >= limit) {
                 // eslint-disable-next-line no-console
                 console.warn(
                     `Skipping structure ${index} - ${structure.data}. Increase playback delay.`
@@ -290,15 +570,7 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         void DefaultVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -378,16 +650,7 @@ export class StructureView extends ChemiscopeBaseView {
 
         void StructureVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {
@@ -462,16 +725,7 @@ export class MapView extends ChemiscopeBaseView {
         const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
         void MapVisualizer.load(config, data, this.warnings)
             .then((visualizer) => {
-                this.visualizer = visualizer;
-
-                // update the Python side settings whenever a setting changes
-                this.visualizer.onSettingChange(() => {
-                    if (!this._updatingFromPython) {
-                        this._updatePythonSettings();
-                    }
-                });
-                // and set them to the initial value right now
-                this._updatePythonSettings();
+                this._initializeVisualizer(visualizer);
             })
             // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             .catch((e: Error) => {

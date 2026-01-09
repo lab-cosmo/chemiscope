@@ -131,6 +131,12 @@ export class EnvironmentInfo {
      * @param target display target
      */
     public switchTarget(target: DisplayTarget) {
+        // Stop any active playback before switching
+        this._structure.slider.stop();
+        if (this._atom) {
+            this._atom.slider.stop();
+        }
+
         // Update widget target
         this._target = target;
 
@@ -145,20 +151,15 @@ export class EnvironmentInfo {
         this._structure.slider.update(indexes.structure);
         this._structure.table.show(indexes);
 
-        if (indexes.structure !== previousStructure && this._atom !== undefined) {
-            const activeAtoms = this._indexer.activeAtoms(indexes.structure);
-            this._atom.number.value = `${activeAtoms[0]}`;
-            this._atom.slider.reset(activeAtoms);
-        }
+        if (this._atom !== undefined) {
+            // Only reset the slider range if the structure actually changed
+            if (indexes.structure !== previousStructure) {
+                const activeAtoms = this._indexer.activeAtoms(indexes.structure);
+                this._atom.slider.reset(activeAtoms);
+            }
 
-        if (indexes.atom !== undefined) {
-            if (this._atom === undefined) {
-                if (indexes.atom !== 0) {
-                    throw Error(
-                        'Invalid state: got an atomic number to update, but I am displaying only structures'
-                    );
-                }
-            } else {
+            // Use the atom index provided in 'indexes'
+            if (indexes.atom !== undefined) {
                 this._atom.number.value = `${indexes.atom}`;
                 this._atom.slider.update(indexes.atom);
                 this._atom.table.show(indexes);
@@ -170,6 +171,10 @@ export class EnvironmentInfo {
      * Remove all HTML added by this {@link EnvironmentInfo} in the current document
      */
     public remove(): void {
+        this._structure.slider.stop();
+        if (this._atom) {
+            this._atom.slider.stop();
+        }
         this._shadow.host.remove();
     }
 
@@ -231,7 +236,8 @@ export class EnvironmentInfo {
             setTimeout(() => {
                 if (advance()) {
                     // Find the next valid structure index
-                    const structure = this._findNextValidIndex(
+                    const currentAtom = this._indexes().atom;
+                    const nextStructure = this._findNextValidIndex(
                         // Get current structure index
                         this._indexes().structure,
 
@@ -243,14 +249,23 @@ export class EnvironmentInfo {
                     );
 
                     // Valid structure was found
-                    if (structure !== undefined) {
-                        // Update the display with the details of the found structure
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.show(this._indexer.fromStructure(structure, this._target)!);
-                        this.onchange(this._indexes());
+                    if (nextStructure !== undefined) {
+                        let indexes = this._indexer.fromStructureAtom(
+                            this._target,
+                            nextStructure,
+                            currentAtom
+                        );
 
-                        // Recursively call startPlayback to continue playback
-                        slider.startPlayback(advance);
+                        // Fallback to the first available atom if the current one doesn't exist
+                        if (indexes === undefined) {
+                            indexes = this._indexer.fromStructure(nextStructure, this._target);
+                        }
+
+                        if (indexes !== undefined) {
+                            this.show(indexes);
+                            this.onchange(this._indexes());
+                            slider.startPlayback(advance);
+                        }
                     }
                 }
             }, this.playbackDelay);
@@ -272,9 +287,16 @@ export class EnvironmentInfo {
                 }
 
                 // Update atom number and slider
-                this._atom.number.value = `${activeAtoms[0]}`;
+                const currentAtom = this._atom.slider.value();
+                let nextAtom = activeAtoms[0];
+                if (binarySearch(activeAtoms, currentAtom) !== -1) {
+                    nextAtom = currentAtom;
+                }
+
+                this._atom.number.value = `${nextAtom}`;
                 this._atom.number.max = `${activeAtoms.length}`;
                 this._atom.slider.reset(activeAtoms);
+                this._atom.slider.update(nextAtom);
             }
 
             // Get and validate indexes for the current structure
@@ -323,9 +345,16 @@ export class EnvironmentInfo {
                     // If atom is present, update its related properties
                     if (this._atom !== undefined) {
                         const activeAtoms = this._indexer.activeAtoms(value);
-                        this._atom.number.value = `${activeAtoms[0]}`;
+                        const currentAtom = this._atom.slider.value();
+                        let nextAtom = activeAtoms[0];
+                        if (binarySearch(activeAtoms, currentAtom) !== -1) {
+                            nextAtom = currentAtom;
+                        }
+
+                        this._atom.number.value = `${nextAtom}`;
                         this._atom.number.max = `${activeAtoms.length}`;
                         this._atom.slider.reset(activeAtoms);
+                        this._atom.slider.update(nextAtom);
                     }
 
                     // Show the updated structure table
@@ -487,6 +516,19 @@ export class EnvironmentInfo {
         // Don't collapse the info table when clicking on the input field
         number.onclick = (event) => event.stopPropagation();
         return number;
+    }
+
+    /** Get the currently selected structure/atom/environment */
+    public get indexes(): Indexes {
+        return this._indexes();
+    }
+
+    /** Is the playback currently active? */
+    public get isPlaying(): boolean {
+        return (
+            this._structure.slider.isPlaying ||
+            (this._atom !== undefined && this._atom.slider.isPlaying)
+        );
     }
 
     /** Get the currently selected structure/atom/environment */

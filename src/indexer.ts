@@ -151,6 +151,9 @@ export class EnvironmentIndexer {
     ): Indexes | undefined {
         // Structure target
         if (target === 'structure') {
+            if (structure < 0 || structure >= this._structures.length) {
+                return undefined;
+            }
             assert(atom === undefined || atom === 0);
             return {
                 environment: structure,

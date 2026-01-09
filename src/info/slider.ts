@@ -79,4 +79,18 @@ export class Slider {
     public value(): number {
         return this._valid[parseInt(this._slider.value, 10)];
     }
+
+    /**
+     * Is the slider currently playing?
+     */
+    public get isPlaying(): boolean {
+        return this._play.classList.contains('chsp-playing');
+    }
+
+    /**
+     * Stop playback
+     */
+    public stop(): void {
+        this._play.classList.remove('chsp-playing');
+    }
 }

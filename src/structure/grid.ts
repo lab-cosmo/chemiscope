@@ -279,6 +279,21 @@ export class ViewersGrid {
     }
 
     /**
+     * Set the current active viewer by index (position in the grid)
+     */
+    public set activeIndex(index: number) {
+        let i = 0;
+        for (const guid of this._cellsData.keys()) {
+            if (i === index) {
+                this.setActive(guid);
+                return;
+            }
+            i++;
+        }
+        throw Error(`invalid viewer index ${index}`);
+    }
+
+    /**
      * Get the current list of environments showed inside the different viewer
      */
     public pinned(): Indexes[] {
@@ -416,11 +431,6 @@ export class ViewersGrid {
         const newData = this._cellsData.get(this._active);
         assert(newData !== undefined);
 
-        // links playback delay options
-        newData.viewer._options.playbackDelay.onchange.push((value) => {
-            this.delayChanged(value);
-        });
-
         // set the right initial value for playback delay
         this.delayChanged(newData.viewer._options.playbackDelay.value);
 
@@ -468,7 +478,12 @@ export class ViewersGrid {
             return;
         }
 
-        assert(settings.length === this._cellsData.size);
+        if (settings.length !== this._cellsData.size) {
+            throw Error(
+                `The number of viewers (${this._cellsData.size}) is different from the structure settings specified (${settings.length})`
+            );
+        }
+
         for (const [i, data] of enumerate(this._cellsData.values())) {
             data.viewer.applySettings(settings[i]);
         }
@@ -556,9 +571,19 @@ export class ViewersGrid {
      */
     private async _refreshCell(guid: GUID, data: ViewerGridData, envView: boolean): Promise<void> {
         // Set/remove atom from indexes based on target
-        data.current.atom = envView
-            ? this._indexer.fromEnvironment(data.current.environment, this._target).atom
-            : undefined;
+        if (envView) {
+            // Check if environment is valid before accessing indexer
+            if (data.current.environment >= 0) {
+                data.current.atom = this._indexer.fromEnvironment(
+                    data.current.environment,
+                    this._target
+                ).atom;
+            } else {
+                data.current.atom = undefined;
+            }
+        } else {
+            data.current.atom = undefined;
+        }
         this._cellsData.set(guid, data);
 
         // Recreate stucture settings modal
@@ -566,7 +591,9 @@ export class ViewersGrid {
         data.viewer.refreshOptions(envView, propertyNames);
 
         // Load the viewer with the current indexes
-        await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+        if (data.current.structure >= 0) {
+            await this._loadViewer(data.viewer, data.current.structure, data.current.atom);
+        }
         // Highlight the atom if needed. This also trigger a style update for the atoms
         data.viewer.highlight(envView ? data.current.atom : undefined);
     }
@@ -920,6 +947,12 @@ export class ViewersGrid {
                     propertiesName,
                     this.warnings
                 );
+
+                viewer.onSettingChange((keys, value) => {
+                    if (keys[0] === 'playbackDelay' && this._active === cellGUID) {
+                        this.delayChanged(value as number);
+                    }
+                });
 
                 viewer.onselect = (atom: number) => {
                     if (this._target !== 'atom' || this._active !== cellGUID) {

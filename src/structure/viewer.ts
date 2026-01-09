@@ -170,6 +170,8 @@ export class MoleculeViewer {
 
     /// Representation options from the HTML side
     public _options: StructureOptions;
+    // List of external callbacks for setting changes
+    private _settingChangeCallbacks: ((keys: string[], value: unknown) => void)[] = [];
     /// The supercell used to initialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
@@ -416,6 +418,11 @@ export class MoleculeViewer {
 
         // Connect event handlers for the new options
         this._connectOptions();
+
+        // Re-bind external callbacks
+        for (const callback of this._settingChangeCallbacks) {
+            this._options.onSettingChange(callback);
+        }
 
         // Adapt settings to the display target
         if (envView) {
@@ -775,6 +782,7 @@ export class MoleculeViewer {
      * There is currently no way to remove a callback.
      */
     public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this._settingChangeCallbacks.push(callback);
         this._options.onSettingChange(callback);
     }
 
