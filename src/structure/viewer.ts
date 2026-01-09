@@ -125,8 +125,6 @@ export interface LoadOptions {
 export class MoleculeViewer {
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
-    /** callback called when playback delay changes */
-    public playbackDelayChanged: (delay: number) => void;
     /**
      * Callback to get the initial positioning of the settings modal.
      *
@@ -172,6 +170,8 @@ export class MoleculeViewer {
 
     /// Representation options from the HTML side
     public _options: StructureOptions;
+    // List of external callbacks for setting changes
+    private _settingChangeCallbacks: ((keys: string[], value: unknown) => void)[] = [];
     /// The supercell used to initialize the viewer
     private _initialSupercell?: [number, number, number];
     // button to reset the environment cutoff to its original value
@@ -262,7 +262,6 @@ export class MoleculeViewer {
 
         this._viewer = viewer;
         this.onselect = () => {};
-        this.playbackDelayChanged = () => {};
 
         this._cellInfo = document.createElement('span');
         this._cellInfo.classList.add(
@@ -419,6 +418,11 @@ export class MoleculeViewer {
 
         // Connect event handlers for the new options
         this._connectOptions();
+
+        // Re-bind external callbacks
+        for (const callback of this._settingChangeCallbacks) {
+            this._options.onSettingChange(callback);
+        }
 
         // Adapt settings to the display target
         if (envView) {
@@ -778,6 +782,7 @@ export class MoleculeViewer {
      * There is currently no way to remove a callback.
      */
     public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this._settingChangeCallbacks.push(callback);
         this._options.onSettingChange(callback);
     }
 
@@ -849,10 +854,6 @@ export class MoleculeViewer {
                 this._viewer.render();
             }
         };
-
-        this._options.playbackDelay.onchange.push((value) => {
-            this.playbackDelayChanged(value);
-        });
 
         this._options.cartoon.onchange.push(restyleAndRender);
         this._options.spaceFilling.onchange.push(restyleAndRender);

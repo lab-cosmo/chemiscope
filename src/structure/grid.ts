@@ -431,11 +431,6 @@ export class ViewersGrid {
         const newData = this._cellsData.get(this._active);
         assert(newData !== undefined);
 
-        // links playback delay options
-        newData.viewer.playbackDelayChanged = (value) => {
-            this.delayChanged(value);
-        };
-
         // set the right initial value for playback delay
         this.delayChanged(newData.viewer._options.playbackDelay.value);
 
@@ -952,6 +947,12 @@ export class ViewersGrid {
                     propertiesName,
                     this.warnings
                 );
+
+                viewer.onSettingChange((keys, value) => {
+                    if (keys[0] === 'playbackDelay' && this._active === cellGUID) {
+                        this.delayChanged(value as number);
+                    }
+                });
 
                 viewer.onselect = (atom: number) => {
                     if (this._target !== 'atom' || this._active !== cellGUID) {
