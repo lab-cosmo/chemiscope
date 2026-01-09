@@ -433,13 +433,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
     ): Promise<Structure> {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
-            let limit = 10;
+            let limit = 16;
             // Limit concurrency during playback to prevent flooding
-            if (
-                this.visualizer &&
-                'info' in this.visualizer &&
-                this.visualizer.info.isPlaying
-            ) {
+            if (this.visualizer && 'info' in this.visualizer && this.visualizer.info.isPlaying) {
                 limit = 1;
             }
 
