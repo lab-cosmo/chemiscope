@@ -153,34 +153,40 @@ class ChemiscopeBaseView extends DOMWidgetView {
             return;
         }
 
-        const currentSelected = this.model.get('selected_ids') as
-            | {
-                  structure: number;
-                  atom?: number;
-              }
-            | undefined;
+        const wasUpdating = this._updatingFromPython;
+        this._updatingFromPython = true;
+        try {
+            const currentSelected = this.model.get('selected_ids') as
+                | {
+                      structure: number;
+                      atom?: number;
+                  }
+                | undefined;
 
-        const selectedChanged =
-            !currentSelected ||
-            currentSelected.structure !== indexes.structure ||
-            currentSelected.atom !== indexes.atom;
+            const selectedChanged =
+                !currentSelected ||
+                currentSelected.structure !== indexes.structure ||
+                currentSelected.atom !== indexes.atom;
 
-        if (selectedChanged) {
-            this.model.set('selected_ids', {
-                structure: indexes.structure,
-                atom: indexes.atom,
-            });
-        }
-
-        if (this.visualizer && 'structure' in this.visualizer) {
-            const activeViewer = this.visualizer.structure.activeIndex;
-            if (this.model.get('active_viewer') !== activeViewer) {
-                this.model.set('active_viewer', activeViewer);
+            if (selectedChanged) {
+                this.model.set('selected_ids', {
+                    structure: indexes.structure,
+                    atom: indexes.atom,
+                });
             }
-        }
 
-        this._updatePythonSettings();
-        this.model.save_changes();
+            if (this.visualizer && 'structure' in this.visualizer) {
+                const activeViewer = this.visualizer.structure.activeIndex;
+                if (this.model.get('active_viewer') !== activeViewer) {
+                    this.model.set('active_viewer', activeViewer);
+                }
+            }
+
+            this._updatePythonSettings();
+            this.model.save_changes();
+        } finally {
+            this._updatingFromPython = wasUpdating;
+        }
     }
 
     protected _bindSelection(): void {
