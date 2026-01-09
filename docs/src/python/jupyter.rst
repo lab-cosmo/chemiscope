@@ -20,9 +20,11 @@ Creating a chemiscope widget
 Widget properties and methods
 -----------------------------
 
-The widget object returned by :func:`chemiscope.show` and 
-:func:`chemiscope.show_input` provides traitlets 
-to interact with the visualization state programmatically.
+The widget object returned by :func:`chemiscope.show` provides traitlets to
+interact with the visualization state programmatically. For more information
+on using traitlets and widget events (like ``observe``), please refer to 
+the `ipywidgets documentation
+<https://ipywidgets.readthedocs.io/en/stable/examples/Widget%20Events.html>`_.
 
 .. py:attribute:: settings
 
