@@ -42,6 +42,7 @@ interface StructureSequenceRequest {
     type: string;
     requestId: number;
     indices: (number | { structure: number; atom?: number })[];
+    settings?: Partial<Settings>[];
 }
 
 class ChemiscopeBaseView extends DOMWidgetView {
@@ -476,6 +477,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
     private async _handleStructureSequence(content: StructureSequenceRequest) {
         const requestId = content.requestId;
         const indices = content.indices;
+        const settings = content.settings;
 
         if (!this.visualizer || !('structure' in this.visualizer)) {
             this.model.send({
@@ -491,10 +493,15 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
         // Capture current state to restore it later
         const initialState = this.visualizer.info.indexes;
+        const initialSettings = structureViewer.saveSettings();
 
         for (let i = 0; i < indices.length; i++) {
             const item = indices[i];
             try {
+                if (settings && settings[i]) {
+                    structureViewer.applySettings([settings[i] as Settings]);
+                }
+
                 let indexes: Indexes | undefined;
                 const target = this.visualizer.saveSettings().target as DisplayTarget;
 
@@ -525,6 +532,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         // Restore initial state
         try {
             await structureViewer.show(initialState);
+            structureViewer.applySettings(initialSettings);
         } catch (e) {
             // eslint-disable-next-line no-console
             console.error('Failed to restore initial state after sequence export', e);

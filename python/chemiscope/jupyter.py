@@ -101,21 +101,23 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         """
         return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
 
-    def get_structure_sequence(self, indices):
+    def get_structure_sequence(self, indices, settings=None):
         """
         Request a sequence of structure snapshots. Returns a Future that resolves to a list of image data (bytes).
         """
-        return asyncio.ensure_future(self._process_structure_sequence(indices))
+        return asyncio.ensure_future(self._process_structure_sequence(indices, settings))
 
-    def save_structure_sequence(self, indices, paths):
+    def save_structure_sequence(self, indices, paths, settings=None):
         """
         Save a sequence of structure snapshots to files.
         """
         if len(indices) != len(paths):
             raise ValueError("indices and paths must have the same length")
+        if settings is not None and len(indices) != len(settings):
+            raise ValueError("indices and settings must have the same length")
 
         async def _save_impl():
-            data_list = await self.get_structure_sequence(indices)
+            data_list = await self.get_structure_sequence(indices, settings)
             for path, data in zip(paths, data_list):
                 with open(path, "wb") as f:
                     f.write(data)
@@ -141,7 +143,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         with open(path, "wb") as f:
             f.write(data)
 
-    async def _process_structure_sequence(self, indices):
+    async def _process_structure_sequence(self, indices, settings=None):
         import time
 
         request_id = int(time.time() * 1000)
@@ -157,13 +159,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             "type": "sequence",
         }
 
-        self.send(
-            {
-                "type": "save-structure-sequence",
-                "indices": indices,
-                "requestId": request_id,
-            }
-        )
+        msg = {
+            "type": "save-structure-sequence",
+            "indices": indices,
+            "requestId": request_id,
+        }
+        if settings is not None:
+            msg["settings"] = settings
+
+        self.send(msg)
 
         return await future
 
