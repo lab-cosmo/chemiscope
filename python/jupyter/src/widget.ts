@@ -489,6 +489,9 @@ class ChemiscopeBaseView extends DOMWidgetView {
         const indexer = this.visualizer.indexer;
         const structureViewer = this.visualizer.structure;
 
+        // Capture current state to restore it later
+        const initialState = this.visualizer.info.indexes;
+
         for (let i = 0; i < indices.length; i++) {
             const item = indices[i];
             try {
@@ -517,6 +520,14 @@ class ChemiscopeBaseView extends DOMWidgetView {
                 // eslint-disable-next-line no-console
                 console.error(`Failed to save frame ${i}`, e);
             }
+        }
+
+        // Restore initial state
+        try {
+            await structureViewer.show(initialState);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to restore initial state after sequence export', e);
         }
 
         this.model.send({
