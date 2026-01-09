@@ -432,9 +432,9 @@ export class ViewersGrid {
         assert(newData !== undefined);
 
         // links playback delay options
-        newData.viewer._options.playbackDelay.onchange.push((value) => {
+        newData.viewer.playbackDelayChanged = (value) => {
             this.delayChanged(value);
-        });
+        };
 
         // set the right initial value for playback delay
         this.delayChanged(newData.viewer._options.playbackDelay.value);

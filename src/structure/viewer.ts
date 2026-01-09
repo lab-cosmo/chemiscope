@@ -125,6 +125,8 @@ export interface LoadOptions {
 export class MoleculeViewer {
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
+    /** callback called when playback delay changes */
+    public playbackDelayChanged: (delay: number) => void;
     /**
      * Callback to get the initial positioning of the settings modal.
      *
@@ -260,6 +262,7 @@ export class MoleculeViewer {
 
         this._viewer = viewer;
         this.onselect = () => {};
+        this.playbackDelayChanged = () => {};
 
         this._cellInfo = document.createElement('span');
         this._cellInfo.classList.add(
@@ -846,6 +849,10 @@ export class MoleculeViewer {
                 this._viewer.render();
             }
         };
+
+        this._options.playbackDelay.onchange.push((value) => {
+            this.playbackDelayChanged(value);
+        });
 
         this._options.cartoon.onchange.push(restyleAndRender);
         this._options.spaceFilling.onchange.push(restyleAndRender);
