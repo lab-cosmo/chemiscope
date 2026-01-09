@@ -62,11 +62,15 @@ the `ipywidgets documentation
     in the grid (0-based).
 
 
+Saving the widget state as a standalone dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The "save" method allows exporting the current state of the widget 
 as a standalone JSON viewer that can be opened in the web app 
 (or loaded with :func:`chemiscope.show_input`).
 
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save
+
 
 Exporting images
 ~~~~~~~~~~~~~~~~
