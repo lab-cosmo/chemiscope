@@ -2,6 +2,8 @@
 import gzip
 import json
 import warnings
+import asyncio
+import base64
 from pathlib import Path
 
 import ipywidgets
@@ -46,6 +48,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
 
+        self._pending_requests = {}
+
         # hold structures on the python side to save js memory
         self._structures_cache = {}
         if cache_structures:
@@ -72,6 +76,84 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             structure_refs.append({"size": structure["size"], "data": cache_key})
 
         return structure_refs
+
+    def get_map_image(self):
+        """
+        Request a snapshot of the map. Returns a Future that resolves to the image data (bytes).
+        """
+        return self._request_screenshot("map")
+
+    def get_structure_image(self):
+        """
+        Request a snapshot of the active structure viewer. Returns a Future that resolves to the image data (bytes).
+        """
+        return self._request_screenshot("structure")
+
+    def save_map_image(self, path):
+        """
+        Save a snapshot of the map to a file.
+        """
+        return asyncio.ensure_future(self._save_image_to_file(path, "map"))
+
+    def save_structure_image(self, path):
+        """
+        Save a snapshot of the active structure viewer to a file.
+        """
+        return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
+
+    def save_structure_sequence(self, indices, paths):
+        """
+        Save a sequence of structure snapshots to files.
+        """
+        if len(indices) != len(paths):
+            raise ValueError("indices and paths must have the same length")
+
+        return asyncio.ensure_future(self._process_structure_sequence(indices, paths))
+
+    def _request_screenshot(self, target):
+        import time
+
+        request_id = int(time.time() * 1000)
+        while request_id in self._pending_requests:
+            request_id += 1
+
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        self._pending_requests[request_id] = future
+
+        self.send({"type": "save-image", "target": target, "requestId": request_id})
+        return future
+
+    async def _save_image_to_file(self, path, target):
+        data = await self._request_screenshot(target)
+        with open(path, "wb") as f:
+            f.write(data)
+
+    async def _process_structure_sequence(self, indices, paths):
+        import time
+
+        request_id = int(time.time() * 1000)
+        while request_id in self._pending_requests:
+            request_id += 1
+
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
+        self._pending_requests[request_id] = {
+            "future": future,
+            "paths": dict(zip(indices, paths)),
+            "type": "sequence",
+        }
+
+        self.send(
+            {
+                "type": "save-structure-sequence",
+                "indices": indices,
+                "requestId": request_id,
+            }
+        )
+
+        return await future
 
     def save(self, path):
         """
@@ -106,10 +188,51 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
            "filename": "relative/path.json[.gz]"}
         """
         msg_type = content.get("type", None)
+        request_id = content.get("requestId")
+
+        if msg_type == "save-image-result":
+            pending = self._pending_requests.pop(request_id, None)
+            if pending and isinstance(pending, asyncio.Future):
+                data = content.get("data")
+                try:
+                    header, encoded = data.split(",", 1)
+                    data = base64.b64decode(encoded)
+                    pending.set_result(data)
+                except Exception as e:
+                    pending.set_exception(e)
+
+        elif msg_type == "save-image-error":
+            pending = self._pending_requests.pop(request_id, None)
+            if pending and isinstance(pending, asyncio.Future):
+                pending.set_exception(RuntimeError(content.get("error")))
+
+        elif msg_type == "save-structure-sequence-result":
+            pending = self._pending_requests.get(request_id)
+            if pending and isinstance(pending, dict):
+                index = content.get("index")
+                data = content.get("data")
+                paths = pending["paths"]
+                if index in paths:
+                    try:
+                        header, encoded = data.split(",", 1)
+                        data = base64.b64decode(encoded)
+                        with open(paths[index], "wb") as f:
+                            f.write(data)
+                    except Exception as e:
+                        print(f"Error saving frame {index}: {e}")
+
+        elif msg_type == "save-structure-sequence-done":
+            pending = self._pending_requests.pop(request_id, None)
+            if pending and isinstance(pending, dict):
+                pending["future"].set_result(None)
+
+        elif msg_type == "save-structure-sequence-error":
+            pending = self._pending_requests.pop(request_id, None)
+            if pending and isinstance(pending, dict):
+                pending["future"].set_exception(RuntimeError(content.get("error")))
 
         if msg_type == "load-structure":
             # Reads a structure file and sends it back to the JS side
-            request_id = content.get("requestId")
             data = content.get("data")
 
             if data is None:
