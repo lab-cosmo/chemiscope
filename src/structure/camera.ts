@@ -43,15 +43,26 @@ export function viewToCamera(view: ViewState): CameraState {
     const q: [number, number, number, number] = [view[3], view[4], view[5], view[6]];
     const zoom = view[7];
 
+    // Normalize quaternion to avoid scaling issues
+    const qLen = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+    if (qLen > 0) {
+        q[0] /= qLen;
+        q[1] /= qLen;
+        q[2] /= qLen;
+        q[3] /= qLen;
+    } else {
+        q[3] = 1; // Identity
+    }
+
     // In 3Dmol (and many GL apps), default camera is often at +Z looking at -Z.
     // Or at -Z looking at +Z?
     // Let's assume standard GL: Camera at origin looking down -Z.
     // So 'eye' vector relative to center is (0, 0, 1) (if we consider eye -> center direction is -Z).
     // So center -> eye is +Z.
-    
+
     // Rotating (0, 1, 0) by q gives up vector.
     const upVec = applyQuat([0, 1, 0], q);
-    
+
     // Rotating (0, 0, 1) by q gives vector pointing towards eye from center.
     const eyeVec = applyQuat([0, 0, 1], q);
 
