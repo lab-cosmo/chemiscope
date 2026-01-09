@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import asyncio
+import base64
 import gzip
 import json
 import warnings
-import asyncio
-import base64
 from pathlib import Path
 
 import ipywidgets
@@ -79,37 +79,127 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def get_map_image(self):
         """
-        Request a snapshot of the map. Returns a Future that resolves to the image data (bytes).
+        Request a snapshot of the map. Returns a Future that resolves to the
+        image data (PNG formatted).
+
+        This method is asynchronous. In a Jupyter notebook, you should ``await``
+        it to get the data.
+
+        .. code-block:: python
+
+            # Get raw image data
+            data = await widget.get_map_image()
+
+            # Display it
+            from IPython.display import Image
+
+            display(Image(data))
+
+        :return: A Future that resolves to the image data as bytes.
         """
         return self._request_screenshot("map")
 
     def get_structure_image(self):
         """
-        Request a snapshot of the active structure viewer. Returns a Future that resolves to the image data (bytes).
+        Request a snapshot of the active structure viewer.
+        Returns a Future that resolves to the image data (PNG formatted).
+
+        This method is asynchronous. In a Jupyter notebook,
+        you should ``await`` it to get the data.
+
+        .. code-block:: python
+
+            data = await widget.get_structure_image()
+
+        :return: A Future that resolves to the image data as bytes.
         """
         return self._request_screenshot("structure")
 
     def save_map_image(self, path):
         """
         Save a snapshot of the map to a file.
+
+        This method starts a background task to save the
+        image. You can ``await`` it if you need to ensure the
+        file is written before proceeding.
+
+        .. code-block:: python
+
+            widget.save_map_image("map.png")
+
+        :param str path: Path where the image will be saved.
+        :return: A Future that resolves when the file is written.
         """
         return asyncio.ensure_future(self._save_image_to_file(path, "map"))
 
     def save_structure_image(self, path):
         """
         Save a snapshot of the active structure viewer to a file.
+
+        This method starts a background task to save the image.
+        You can ``await`` it if you need to ensure the file is
+        written before proceeding.
+
+        .. code-block:: python
+
+            widget.save_structure_image("structure.png")
+
+        :param str path: Path where the image will be saved.
+        :return: A Future that resolves when the file is written.
         """
         return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
 
     def get_structure_sequence(self, indices, settings=None):
         """
-        Request a sequence of structure snapshots. Returns a Future that resolves to a list of image data (bytes).
+        Request a sequence of structure snapshots. Returns a Future that
+        resolves to a list of image data (PNG formatted).
+
+        This allows rendering multiple frames efficiently without blocking
+        the UI. The sequence is processed in the browser.
+
+        The ``indices`` list can contain integers (structure index) or
+        dictionaries specifying ``structure`` and ``atom`` indices
+        (for environments).
+
+        The ``settings`` list, if provided, must have the same length
+        as ``indices``. Each element is a dictionary of structure
+        settings (e.g. ``{"spaceFilling": True}``) to apply for
+        that specific frame.
+
+        .. code-block:: python
+
+            indices = [0, 1, 2]
+            settings = [{"spaceFilling": True}, {}, {"spaceFilling": False}]
+            data_list = await widget.get_structure_sequence(indices, settings)
+
+        :param list indices: List of indices (int or dict) to render.
+        :param list settings: Optional list of settings dicts to apply
+            for each frame.
+        :return: A Future that resolves to a list of image data bytes.
         """
-        return asyncio.ensure_future(self._process_structure_sequence(indices, settings))
+        return asyncio.ensure_future(
+            self._process_structure_sequence(indices, settings)
+        )
 
     def save_structure_sequence(self, indices, paths, settings=None):
         """
         Save a sequence of structure snapshots to files.
+
+        This method acts as a wrapper around :meth:`get_structure_sequence`
+        and writes the results to files.
+
+        .. code-block:: python
+
+            indices = [0, 10, 20]
+            paths = ["frame_0.png", "frame_10.png", "frame_20.png"]
+            await widget.save_structure_sequence(indices, paths)
+
+        :param list indices: List of indices (int or dict) to render.
+        :param list paths: List of file paths where images will be saved.
+            Must match length of ``indices``.
+        :param list settings: Optional list of settings dicts to apply
+            to each frame.
+        :return: A Future that resolves when all files are written.
         """
         if len(indices) != len(paths):
             raise ValueError("indices and paths must have the same length")
