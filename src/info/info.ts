@@ -513,6 +513,14 @@ export class EnvironmentInfo {
         return this._indexes();
     }
 
+    /** Is the playback currently active? */
+    public get isPlaying(): boolean {
+        return (
+            this._structure.slider.isPlaying ||
+            (this._atom !== undefined && this._atom.slider.isPlaying)
+        );
+    }
+
     /** Get the currently selected structure/atom/environment */
     private _indexes(): Indexes {
         const structure = this._structure.slider.value();
