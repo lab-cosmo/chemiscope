@@ -40,7 +40,9 @@ function applyQuat(v: Vector3D, q: [number, number, number, number]): Vector3D {
  */
 export function viewToCamera(view: ViewState): CameraState {
     const center = { x: view[0], y: view[1], z: view[2] };
-    const q: [number, number, number, number] = [view[3], view[4], view[5], view[6]];
+    // 3Dmol uses [w, x, y, z] order in returned array if index 3 is w.
+    // This contradicts documentation but matches observed data (large value at index 3 for identity-ish view).
+    const q: [number, number, number, number] = [view[4], view[5], view[6], view[3]];
     const zoom = view[7];
 
     // Normalize quaternion to avoid scaling issues
@@ -166,5 +168,5 @@ export function cameraToView(camera: CameraState): ViewState {
         }
     }
 
-    return [center.x, center.y, center.z, qx, qy, qz, qw, zoom];
+    return [center.x, center.y, center.z, qw, qx, qy, qz, zoom];
 }
