@@ -45,6 +45,31 @@ interface StructureSequenceRequest {
     settings?: Partial<Settings>[];
 }
 
+/**
+ * Deep merge source into target settings.
+ */
+function mergeSettings(target: Settings, source: Partial<Settings>): Settings {
+    const result: Settings = JSON.parse(JSON.stringify(target)) as Settings;
+    for (const key in source) {
+        const value = source[key];
+        if (
+            value !== undefined &&
+            typeof value === 'object' &&
+            !Array.isArray(value) &&
+            value !== null
+        ) {
+            result[key] = mergeSettings(
+                (result[key] || {}) as Settings,
+                value as Partial<Settings>
+            );
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            result[key] = value as any;
+        }
+    }
+    return result;
+}
+
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
@@ -495,11 +520,20 @@ class ChemiscopeBaseView extends DOMWidgetView {
         const initialState = this.visualizer.info.indexes;
         const initialSettings = structureViewer.saveSettings();
 
+        // Settings for the active viewer to use as base for per-frame overrides
+        const activeIndex = structureViewer.activeIndex;
+        const baseSettings = initialSettings[activeIndex];
+
         for (let i = 0; i < indices.length; i++) {
             const item = indices[i];
             try {
-                if (settings && settings[i]) {
-                    structureViewer.applySettings([settings[i] as Settings]);
+                if (settings) {
+                    // Merge initial settings with frame-specific partial settings
+                    // to ensure isolation between frames.
+                    const frameSettings = settings[i]
+                        ? mergeSettings(baseSettings, settings[i])
+                        : baseSettings;
+                    structureViewer.applySettings([frameSettings]);
                 }
 
                 let indexes: Indexes | undefined;
