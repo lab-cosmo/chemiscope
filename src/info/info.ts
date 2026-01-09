@@ -131,6 +131,12 @@ export class EnvironmentInfo {
      * @param target display target
      */
     public switchTarget(target: DisplayTarget) {
+        // Stop any active playback before switching
+        this._structure.slider.stop();
+        if (this._atom) {
+            this._atom.slider.stop();
+        }
+
         // Update widget target
         this._target = target;
 
@@ -165,6 +171,10 @@ export class EnvironmentInfo {
      * Remove all HTML added by this {@link EnvironmentInfo} in the current document
      */
     public remove(): void {
+        this._structure.slider.stop();
+        if (this._atom) {
+            this._atom.slider.stop();
+        }
         this._shadow.host.remove();
     }
 

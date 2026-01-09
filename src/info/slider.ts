@@ -86,4 +86,11 @@ export class Slider {
     public get isPlaying(): boolean {
         return this._play.classList.contains('chsp-playing');
     }
+
+    /**
+     * Stop playback
+     */
+    public stop(): void {
+        this._play.classList.remove('chsp-playing');
+    }
 }

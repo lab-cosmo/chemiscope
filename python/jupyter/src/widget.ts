@@ -440,28 +440,16 @@ class ChemiscopeBaseView extends DOMWidgetView {
         const requestId = this._nextRequestId++;
         return new Promise<Structure>((resolve, reject) => {
             let limit = 16;
-            
-                        // Limit concurrency during playback to prevent flooding
-            
-                        if (
-            
-                            this.visualizer &&
-            
-                            'info' in this.visualizer &&
-            
-                            this.visualizer.info.isPlaying
-            
-                        ) {
-            
-                            limit = 1;
-            
-                        }
-            
-            
-            
-                        // avoid piling up too many requests during traj. playback
-            
-                        if (this._pendingStructureRequests.size >= limit) {
+
+            // Limit concurrency during playback to prevent flooding
+
+            if (this.visualizer && 'info' in this.visualizer && this.visualizer.info.isPlaying) {
+                limit = 1;
+            }
+
+            // avoid piling up too many requests during traj. playback
+
+            if (this._pendingStructureRequests.size >= limit) {
                 // eslint-disable-next-line no-console
                 console.warn(
                     `Skipping structure ${index} - ${structure.data}. Increase playback delay.`
