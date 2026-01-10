@@ -4,10 +4,10 @@
  * respective camera representations.
  * 
  * @packageDocumentation
- * @module structure
+ * @module utils
  */
 
-import { Vector3D, norm } from './linalg';
+import { Vector3D, norm } from '../structure/linalg';
 
 export interface CameraState {
     eye: { x: number; y: number; z: number };
@@ -157,4 +157,28 @@ export function cameraToView(camera: CameraState): ViewState {
     }
 
     return [center.x, center.y, center.z, zLen, qx, qy, qz, qw];
+}
+
+/** Convert internal camera settings to Plotly format */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function cameraToPlotly(camera: any): any {
+    const plotlyCamera = { ...camera };
+    if (plotlyCamera.zoom !== undefined) {
+        plotlyCamera.projection = { type: 'orthographic', scale: plotlyCamera.zoom };
+        delete plotlyCamera.zoom;
+    } else {
+        plotlyCamera.projection = { type: 'orthographic' };
+    }
+    return plotlyCamera;
+}
+
+/** Convert Plotly camera format to internal settings */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function plotlyToCamera(plotlyCamera: any): any {
+    const camera = { ...plotlyCamera };
+    if (camera.projection && camera.projection.scale !== undefined) {
+        camera.zoom = camera.projection.scale;
+    }
+    delete camera.projection;
+    return camera;
 }

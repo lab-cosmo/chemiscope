@@ -14,6 +14,7 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
+import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -340,15 +341,7 @@ export class PropertiesMap {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (optionsSettings as any).camera;
         if (camera) {
-            // Convert 'zoom' back to 'projection.scale' for internal use
-            const internalCamera = { ...camera };
-            if (internalCamera.zoom !== undefined) {
-                internalCamera.projection = { type: 'orthographic', scale: internalCamera.zoom };
-                delete internalCamera.zoom;
-            } else {
-                internalCamera.projection = { type: 'orthographic' };
-            }
-            this._savedCamera = internalCamera;
+            this._savedCamera = camera;
         }
 
         this._options = new MapOptions(
@@ -572,28 +565,20 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
-        console.log("apply settings:", settings);
         const optionsSettings = { ...settings };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cameraSettings = (settings as any).camera;
+        const camera = (settings as any).camera;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (optionsSettings as any).camera;
 
         this._options.applySettings(optionsSettings);
 
-        if (cameraSettings) {
-            // Convert 'zoom' back to 'projection.scale'
-            const camera = { ...cameraSettings };
-            if (camera.zoom !== undefined) {
-                camera.projection = { type: 'orthographic', scale: camera.zoom };
-                delete camera.zoom;
-            } else {
-                camera.projection = { type: 'orthographic' };
-            }
-            console.log("apply camera:", camera);
+        if (camera) {
             this._savedCamera = camera;
             if (this._is3D()) {
-                this._relayout({ 'scene.camera': camera } as unknown as Layout);
+                this._relayout({
+                    'scene.camera': cameraToPlotly(camera),
+                } as unknown as Layout);
             }
         }
     }
@@ -604,23 +589,16 @@ export class PropertiesMap {
      */
     public saveSettings(): Settings {
         const settings = this._options.saveSettings();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let camera = this._savedCamera as any;
-
-        if (!camera && this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            camera = (this._plot as any).layout.scene?.camera;
-        }
-
-        if (camera) {
-            // Convert 'projection.scale' to 'zoom' for settings
-            const settingsCamera = { ...camera };
-            if (settingsCamera.projection && settingsCamera.projection.scale !== undefined) {
-                settingsCamera.zoom = settingsCamera.projection.scale;
-            }
-            delete settingsCamera.projection;
+        if (this._savedCamera) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (settings as any).camera = settingsCamera;
+            (settings as any).camera = this._savedCamera;
+        } else if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            const camera = (this._plot as any).layout.scene?.camera;
+            if (camera) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (settings as any).camera = plotlyToCamera(camera);
+            }
         }
         return settings;
     }
@@ -1429,18 +1407,12 @@ export class PropertiesMap {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (event['scene.camera']) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                this._savedCamera = (this._plot as any).layout.scene.camera;
+                const plotlyCamera = (this._plot as any).layout.scene.camera;
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const settingsCamera = { ...(this._savedCamera as any) };
-                if (settingsCamera.projection && settingsCamera.projection.scale !== undefined) {
-                    settingsCamera.zoom = settingsCamera.projection.scale;
-                }
-                delete settingsCamera.projection;
-                console.log('camera change detected', settingsCamera);
-                
+                this._savedCamera = plotlyToCamera(plotlyCamera);
+
                 for (const callback of this._settingChangeCallbacks) {
-                    callback(['map', 'camera'], settingsCamera);
+                    callback(['map', 'camera'], this._savedCamera);
                 }
             }
 
@@ -1510,7 +1482,7 @@ export class PropertiesMap {
         // Apply saved camera if available (and in 3D mode)
         if (this._savedCamera && this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            (layout.scene as any).camera = this._savedCamera;
+            (layout.scene as any).camera = cameraToPlotly(this._savedCamera);
         }
 
         return layout as Partial<Layout>;
@@ -1819,7 +1791,7 @@ export class PropertiesMap {
 
         if (this._savedCamera) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            (layoutUpdate as any)['scene.camera'] = this._savedCamera;
+            (layoutUpdate as any)['scene.camera'] = cameraToPlotly(this._savedCamera);
         }
 
         this._relayout(layoutUpdate);
@@ -2166,7 +2138,6 @@ export class PropertiesMap {
             const minElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-min`);
             const maxElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-max`);
             minElement.step = `${step}`;
-            maxElement.step = `${step}`;
         }
     }
 }
