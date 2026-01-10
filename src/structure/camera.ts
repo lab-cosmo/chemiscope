@@ -1,4 +1,8 @@
 /**
+ * This module contains utility functions to handle the camera settings
+ * for Plotly.js and 3dmol.js viewers, including conversions between their
+ * respective camera representations.
+ * 
  * @packageDocumentation
  * @module structure
  */
