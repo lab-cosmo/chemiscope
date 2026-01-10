@@ -294,6 +294,15 @@ export class ViewersGrid {
     }
 
     /**
+     * Get the PNG data for the active viewer
+     */
+    public exportActivePNG(): string {
+        const data = this._cellsData.get(this._active);
+        assert(data !== undefined);
+        return data.viewer.exportPNG();
+    }
+
+    /**
      * Get the current list of environments showed inside the different viewer
      */
     public pinned(): Indexes[] {

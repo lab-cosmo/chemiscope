@@ -32,6 +32,19 @@ interface StructureRequest {
     error?: string;
 }
 
+interface ScreenshotRequest {
+    type: string;
+    requestId: number;
+    target: 'map' | 'structure';
+}
+
+interface StructureSequenceRequest {
+    type: string;
+    requestId: number;
+    indices: (number | { structure: number; atom?: number })[];
+    settings?: Partial<Settings>[];
+}
+
 class ChemiscopeBaseView extends DOMWidgetView {
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
@@ -58,6 +71,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
         this.guid = `chsp-${generateGUID()}`;
 
         this.model.on('change:warning_timeout', () => this._updateWarningTimeout());
+        this._enableScreenshotMessages();
     }
 
     public remove(): unknown {
@@ -384,6 +398,159 @@ class ChemiscopeBaseView extends DOMWidgetView {
         if (typeof timeout === 'number') {
             this.warnings.defaultTimeout = timeout;
         }
+    }
+
+    /**
+     * Install a handler for custom messages coming from Python
+     */
+    protected _enableScreenshotMessages(): void {
+        this.model.on(
+            'msg:custom',
+            (content: ScreenshotRequest | StructureSequenceRequest, _buffers: unknown[]) => {
+                void _buffers;
+                if (!content) {
+                    return;
+                }
+
+                if (content.type === 'save-image') {
+                    const req = content as ScreenshotRequest;
+                    this._handleSaveImage(req);
+                } else if (content.type === 'save-structure-sequence') {
+                    const req = content as StructureSequenceRequest;
+                    void this._handleStructureSequence(req);
+                }
+            },
+            this
+        );
+    }
+
+    private _handleSaveImage(content: ScreenshotRequest) {
+        const requestId = content.requestId;
+        const target = content.target;
+
+        const sendResult = (data: string) => {
+            this.model.send({
+                type: 'save-image-result',
+                requestId: requestId,
+                data: data,
+            });
+        };
+
+        const sendError = (error: string) => {
+            this.model.send({
+                type: 'save-image-error',
+                requestId: requestId,
+                error: error,
+            });
+        };
+
+        if (!this.visualizer) {
+            sendError('visualizer not loaded');
+            return;
+        }
+
+        if (target === 'map') {
+            if ('map' in this.visualizer) {
+                this.visualizer.map
+                    .exportPNG()
+                    .then(sendResult)
+                    .catch((e: unknown) => sendError(`${e}`));
+            } else {
+                sendError('no map in this visualizer');
+            }
+        } else if (target === 'structure') {
+            if ('structure' in this.visualizer) {
+                try {
+                    const data = this.visualizer.structure.exportActivePNG();
+                    sendResult(data);
+                } catch (e) {
+                    sendError((e as Error).toString());
+                }
+            } else {
+                sendError('no structure in this visualizer');
+            }
+        } else {
+            sendError(`unknown target ${target}`);
+        }
+    }
+
+    private async _handleStructureSequence(content: StructureSequenceRequest) {
+        const requestId = content.requestId;
+        const indices = content.indices;
+        const settings = content.settings;
+
+        if (!this.visualizer || !('structure' in this.visualizer)) {
+            this.model.send({
+                type: 'save-structure-sequence-error',
+                requestId: requestId,
+                error: 'no structure visualizer available',
+            });
+            return;
+        }
+
+        const indexer = this.visualizer.indexer;
+        const structureViewer = this.visualizer.structure;
+
+        // Capture current state to restore it later
+        const initialState = this.visualizer.info.indexes;
+        const initialSettings = structureViewer.saveSettings();
+
+        // Settings for the active viewer to use as base for per-frame overrides
+        const activeIndex = structureViewer.activeIndex;
+        const baseSettings = JSON.stringify(initialSettings[activeIndex]);
+
+        for (let i = 0; i < indices.length; i++) {
+            const item = indices[i];
+            try {
+                if (settings) {
+                    // Deep copy initial settings and update with frame-specific partial settings.
+                    const frameSettings = JSON.parse(baseSettings) as Settings;
+                    if (settings[i]) {
+                        Object.assign(frameSettings, settings[i]);
+                    }
+                    structureViewer.applySettings([frameSettings]);
+                }
+
+                let indexes: Indexes | undefined;
+                const target = this.visualizer.saveSettings().target as DisplayTarget;
+
+                if (typeof item === 'number') {
+                    indexes = indexer.fromStructure(item, target);
+                } else {
+                    indexes = indexer.fromStructureAtom(target, item.structure, item.atom);
+                }
+
+                if (indexes) {
+                    await structureViewer.show(indexes);
+                    await new Promise((r) => requestAnimationFrame(r));
+
+                    const data = structureViewer.exportActivePNG();
+                    this.model.send({
+                        type: 'save-structure-sequence-result',
+                        requestId: requestId,
+                        step: i,
+                        data: data,
+                    });
+                }
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.error(`Failed to save frame ${i}`, e);
+            }
+        }
+
+        // Restore initial state
+        try {
+            await structureViewer.show(initialState);
+            structureViewer.applySettings(initialSettings);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to restore initial state after sequence export', e);
+        }
+
+        this.model.send({
+            type: 'save-structure-sequence-done',
+            requestId: requestId,
+        });
     }
 
     /**
