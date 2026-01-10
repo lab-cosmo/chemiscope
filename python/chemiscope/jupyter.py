@@ -208,7 +208,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         async def _save_impl():
             data_list = await self.get_structure_sequence(indices, settings)
-            for path, data in zip(paths, data_list):
+            for path, data in zip(paths, data_list, strict=True):
                 with open(path, "wb") as f:
                     f.write(data)
 
