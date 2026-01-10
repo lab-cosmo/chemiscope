@@ -346,8 +346,7 @@ export class PropertiesMap {
             this._savedCamera = camera;
             console.log('found saved camera in settings', this._savedCamera);
         }
-        console.log("constructor sith settings ", settings);
-        console.log('current properties for options', optionsSettings);
+
         this._options = new MapOptions(
             this._root,
             currentProperties,
@@ -356,7 +355,7 @@ export class PropertiesMap {
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
-        console.log("x here 1 ", this._options.x)
+
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
         if (nPoints > PropertiesMap.LOD_THRESHOLD) {
@@ -369,7 +368,6 @@ export class PropertiesMap {
         // Connect the settings to event listeners or handlers
         this._connectSettings();
 
-        console.log("x here 2 ", this._options.x)
         // Define the default position for the settings modal on top of the plot,
         // centered horizontally
         this.positionSettingsModal = (rect: DOMRect) => {
@@ -382,7 +380,7 @@ export class PropertiesMap {
 
         // Create the Plotly plot within the plot element
         this._createPlot();
-        console.log("x here 3 ", this._options.x)
+
         // Adopt styles with the plot stylesheets as last one because the plot
         // needs to be created to obtain it
         this._shadow.adoptedStyleSheets = [
@@ -570,7 +568,6 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
-        console.log("applying map settings:", settings);
         const optionsSettings = { ...settings };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const camera: CameraState = (settings as any).camera;
@@ -1363,6 +1360,8 @@ export class PropertiesMap {
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
+                this._initializing = false;
+
                 // Restore camera again to ensure zoom/scale is applied after auto-scaling
                 if (this._savedCamera && this._is3D()) {
                     void Plotly.relayout(this._plot, {
@@ -1434,12 +1433,6 @@ export class PropertiesMap {
 
         this._plot.on('plotly_afterplot', () => {
             void this._afterplot();
-        });
-
-        // Clear initialization flag after the first plot update is fully processed
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        (this._plot as any).once('plotly_afterplot', () => {
-            this._initializing = false;
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
@@ -1548,7 +1541,6 @@ export class PropertiesMap {
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
 
-        console.log('Layout before ranges', layout.xaxis, this._options.x);
         // Set ranges for the axes
         layout.xaxis.range = this._getAxisRange(
             this._options.x.min.value,
@@ -2019,7 +2011,6 @@ export class PropertiesMap {
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
-        console.log('Resetting to global view');
         this._updatingLOD = true;
 
         // Reset settings to Auto (NaN)
@@ -2075,7 +2066,6 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private async _afterplot(): Promise<void> {
-        console.log('Afterplot called');
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD || this._initializing) {
             return;
@@ -2093,8 +2083,6 @@ export class PropertiesMap {
                 axis.max.value = boundMax;
             }
         };
-
-        console.log('New bounds:', bounds);
 
         if (this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
