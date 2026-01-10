@@ -808,12 +808,7 @@ export class PropertiesMap {
         // Range reset button
         const resetRanges = this._options.getModalElement<HTMLButtonElement>('map-range-reset');
         resetRanges.onclick = () => {
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
+            void this._resetToGlobalView();
         };
 
         // Send a warning if a property contains negative values, that will be
