@@ -1415,10 +1415,17 @@ export class PropertiesMap {
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this._plot.on('plotly_relayout', (event: any) => {
-            // Check for camera updates
-            let hasUpdate = false;
+            // Guard against 2D mode or missing scene
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const scene = (this._plot as any)._fullLayout.scene;
+            if (!scene) {
+                // If no scene, ignore (we assume 2D)
+                void this._afterplot();
+                return;
+            }
+
+            // Check for camera updates
+            let hasUpdate = false;
             const tempCamera = JSON.parse(JSON.stringify(scene.camera));
             const tempAspect = JSON.parse(JSON.stringify(scene.aspectratio || {}));
 
