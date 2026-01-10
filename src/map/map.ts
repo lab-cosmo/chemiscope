@@ -884,6 +884,8 @@ export class PropertiesMap {
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
             this._savedCamera = undefined;
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
@@ -960,6 +962,8 @@ export class PropertiesMap {
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
             this._savedCamera = undefined;
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
 
             // LOD: Y changed, recompute spatial binning
@@ -1008,6 +1012,8 @@ export class PropertiesMap {
 
         this._options.z.property.onchange.push(() => {
             this._savedCamera = undefined;
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -2053,24 +2059,10 @@ export class PropertiesMap {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         const layout = (this._plot as any)._fullLayout;
 
-        const updateAxisValues = (
-            axis: AxisOptions,
-            [boundMin, boundMax]: [number, number],
-            plotlyAxis: { autorange: boolean | 'reversed' }
-        ) => {
-            // If autorange is active, keep settings as NaN (Auto).
-            // Only update explicit settings if autorange is false (user interaction).
-            if (plotlyAxis.autorange === true || plotlyAxis.autorange === 'reversed') {
-                // If the setting was explicit, reset it to NaN to reflect Auto state
-                if (!isNaN(axis.min.value)) axis.min.value = NaN;
-                if (!isNaN(axis.max.value)) axis.max.value = NaN;
-                return;
-            }
-
+        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
                 // Update explicit values
-                // Check if values actually changed to avoid spurious updates (NaN check handled by InputOption)
                 axis.min.value = boundMin;
                 axis.max.value = boundMax;
             }
@@ -2079,20 +2071,15 @@ export class PropertiesMap {
         if (this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (layout.scene) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                updateAxisValues(this._options.x, bounds.x, layout.scene.xaxis);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                updateAxisValues(this._options.y, bounds.y, layout.scene.yaxis);
+                updateAxisValues(this._options.x, bounds.x);
+                updateAxisValues(this._options.y, bounds.y);
                 if (bounds.z !== undefined) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    updateAxisValues(this._options.z, bounds.z, layout.scene.zaxis);
+                    updateAxisValues(this._options.z, bounds.z);
                 }
             }
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            updateAxisValues(this._options.x, bounds.x, layout.xaxis);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            updateAxisValues(this._options.y, bounds.y, layout.yaxis);
+            updateAxisValues(this._options.x, bounds.x);
+            updateAxisValues(this._options.y, bounds.y);
         }
 
         // LOD CHECK
