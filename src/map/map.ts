@@ -1414,9 +1414,11 @@ export class PropertiesMap {
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this._plot.on('plotly_relayout', (event: any) => {
-            // Check for camera updates
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (event['scene.camera']) {
+            // Check for camera updates (full 'scene.camera' or partial keys like 'scene.camera.eye')
+            const hasCameraUpdate = Object.keys(event).some((k) => k.startsWith('scene.camera'));
+
+            if (hasCameraUpdate) {
+                // Read from _fullLayout which contains the updated state
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 const plotlyCamera = (this._plot as any)._fullLayout.scene.camera;
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
