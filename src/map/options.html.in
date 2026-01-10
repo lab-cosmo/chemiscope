@@ -6,7 +6,10 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
          </div>
          <div class="modal-body">
-            <h5 class="chsp-settings-section-title">Data</h5>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+               <h5 class="chsp-settings-section-title mb-0">Data</h5>
+               <button class="btn btn-sm btn-outline-secondary" type="button" id="map-range-reset">reset ranges</button>
+            </div>
             <div class="chsp-map-options">
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="map-x-property">x axis:</label>

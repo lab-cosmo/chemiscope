@@ -264,6 +264,8 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
+    /// Guard to prevent overwriting settings during initialization
+    private _initializing = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -803,6 +805,17 @@ export class PropertiesMap {
 
     /** Add all the required callback to the settings */
     private _connectSettings() {
+        // Range reset button
+        const resetRanges = this._options.getModalElement<HTMLButtonElement>('map-range-reset');
+        resetRanges.onclick = () => {
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
+        };
+
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
@@ -819,6 +832,8 @@ export class PropertiesMap {
 
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
@@ -894,6 +909,8 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
 
             // LOD: Y changed, recompute spatial binning
@@ -941,6 +958,8 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -1279,6 +1298,8 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
+        this._initializing = true;
+
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
@@ -1346,6 +1367,12 @@ export class PropertiesMap {
 
         this._plot.on('plotly_afterplot', () => {
             void this._afterplot();
+        });
+
+        // Clear initialization flag after the first plot update is fully processed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        (this._plot as any).once('plotly_afterplot', () => {
+            this._initializing = false;
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
@@ -1851,6 +1878,14 @@ export class PropertiesMap {
     private async _resetToGlobalView() {
         this._updatingLOD = true;
 
+        // Reset settings to Auto (NaN)
+        this._options.x.min.value = NaN;
+        this._options.x.max.value = NaN;
+        this._options.y.min.value = NaN;
+        this._options.y.max.value = NaN;
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
+
         try {
             // 1. Force global LOD computation
             this._computeLOD();
@@ -1895,7 +1930,7 @@ export class PropertiesMap {
      */
     private async _afterplot(): Promise<void> {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
-        if (this._updatingLOD) {
+        if (this._updatingLOD || this._initializing) {
             return;
         }
 
@@ -1903,8 +1938,9 @@ export class PropertiesMap {
         const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
-                axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
-                axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+                // Update explicit values
+                axis.min.value = boundMin;
+                axis.max.value = boundMax;
             }
         };
 
