@@ -574,13 +574,16 @@ export class PropertiesMap {
 
         this._options.applySettings(optionsSettings);
 
-        console.log('settings applied to map', camera);
         if (camera) {
             this._savedCamera = camera;
             if (this._is3D()) {
-                this._relayout({
-                    'scene.camera': cameraToPlotly(camera),
-                } as unknown as Layout);
+                const sceneUpdate = cameraToPlotly(camera);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const relayoutUpdate: any = {};
+                for (const key in sceneUpdate) {
+                    relayoutUpdate[`scene.${key}`] = sceneUpdate[key];
+                }
+                this._relayout(relayoutUpdate as unknown as Layout);
             }
         }
     }
@@ -596,12 +599,10 @@ export class PropertiesMap {
             (settings as any).camera = this._savedCamera;
         } else if (this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            const camera = (this._plot as any)._fullLayout.scene?.camera;
-            if (camera) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-                const scale = (this._plot as any)._fullLayout.scene?.camera?.projection?.scale;
+            const scene = (this._plot as any)._fullLayout.scene;
+            if (scene?.camera) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (settings as any).camera = plotlyToCamera(camera, scale);
+                (settings as any).camera = plotlyToCamera(scene.camera, scene.aspectratio);
             }
         }
         return settings;
@@ -1416,15 +1417,14 @@ export class PropertiesMap {
         this._plot.on('plotly_relayout', (event: any) => {
             // Check for camera updates (full 'scene.camera' or partial keys like 'scene.camera.eye')
             const hasCameraUpdate = Object.keys(event).some((k) => k.startsWith('scene.camera'));
+            const hasAspectUpdate = Object.keys(event).some((k) => k.startsWith('scene.aspectratio'));
 
-            if (hasCameraUpdate) {
+            if (hasCameraUpdate || hasAspectUpdate) {
                 // Read from _fullLayout which contains the updated state
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const plotlyCamera = (this._plot as any)._fullLayout.scene.camera;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const scale = (this._plot as any)._fullLayout.scene.camera?.projection?.scale;
+                const scene = (this._plot as any)._fullLayout.scene;
 
-                this._savedCamera = plotlyToCamera(plotlyCamera, scale);
+                this._savedCamera = plotlyToCamera(scene.camera, scene.aspectratio);
 
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
@@ -1496,8 +1496,8 @@ export class PropertiesMap {
 
         // Apply saved camera if available (and in 3D mode)
         if (this._savedCamera && this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            (layout.scene as any).camera = cameraToPlotly(this._savedCamera);
+            const sceneUpdate = cameraToPlotly(this._savedCamera);
+            Object.assign(layout.scene, sceneUpdate);
         }
 
         return layout as Partial<Layout>;
@@ -1805,8 +1805,11 @@ export class PropertiesMap {
         } as unknown as Layout;
 
         if (this._savedCamera) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            (layoutUpdate as any)['scene.camera'] = cameraToPlotly(this._savedCamera);
+            const sceneUpdate = cameraToPlotly(this._savedCamera);
+            for (const key in sceneUpdate) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (layoutUpdate as any)[`scene.${key}`] = (sceneUpdate as any)[key];
+            }
         }
 
         this._relayout(layoutUpdate);

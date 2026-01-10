@@ -162,29 +162,31 @@ export function cameraToView(camera: CameraState): ViewState {
 /** Convert internal camera settings to Plotly format */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cameraToPlotly(camera: any): any {
-    const plotlyCamera = { ...camera };
-    if (plotlyCamera.zoom !== undefined) {
-        plotlyCamera.projection = { type: 'orthographic', scale: plotlyCamera.zoom };
-        delete plotlyCamera.zoom;
-    } else {
-        plotlyCamera.projection = { type: 'orthographic' };
+    const plotlyUpdate: any = {
+        camera: { ...camera },
+    };
+
+    if (plotlyUpdate.camera.zoom !== undefined) {
+        plotlyUpdate.aspectratio = {
+            x: plotlyUpdate.camera.zoom,
+            y: plotlyUpdate.camera.zoom,
+            z: plotlyUpdate.camera.zoom,
+        };
+        plotlyUpdate.aspectmode = 'manual';
+        delete plotlyUpdate.camera.zoom;
     }
-    return plotlyCamera;
+
+    plotlyUpdate.camera.projection = { type: 'orthographic' };
+    return plotlyUpdate;
 }
 
-/** Convert Plotly camera format to internal settings */
+/** Convert Plotly scene format to internal settings */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function plotlyToCamera(plotlyCamera: any, scale?: number): any {
+export function plotlyToCamera(plotlyCamera: any, aspectratio?: any): any {
     const camera = { ...plotlyCamera };
 
-    // Use provided scale or try to find it in projection
-    let zoom = scale;
-    if (zoom === undefined && camera.projection && camera.projection.scale !== undefined) {
-        zoom = camera.projection.scale;
-    }
-
-    if (zoom !== undefined) {
-        camera.zoom = zoom;
+    if (aspectratio && aspectratio.x !== undefined) {
+        camera.zoom = aspectratio.x;
     }
 
     delete camera.projection;
