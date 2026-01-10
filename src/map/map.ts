@@ -14,7 +14,6 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
-import { cameraToPlotly, plotlyToCamera, PlotlyState, CameraState } from '../utils/camera';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -251,10 +250,6 @@ export class PropertiesMap {
     private _target: DisplayTarget;
     /// Settings of the map
     private _options: MapOptions;
-    /// Saved 3D camera state
-    private _savedCamera: CameraState | undefined;
-    // List of external callbacks for setting changes
-    private _settingChangeCallbacks: ((keys: string[], value: unknown) => void)[] = [];
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
 
@@ -269,8 +264,6 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
-    /// Guard to prevent overwriting settings during initialization
-    private _initializing = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -335,23 +328,11 @@ export class PropertiesMap {
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
-
-        // Strip camera from settings
-        const optionsSettings = { ...settings };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const camera = (settings as any).camera;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (optionsSettings as any).camera;
-        if (camera) {
-            this._savedCamera = camera;
-            console.log('found saved camera in settings', this._savedCamera);
-        }
-
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            optionsSettings,
+            settings,
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
@@ -568,23 +549,7 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
-        const optionsSettings = { ...settings };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const camera: CameraState = (settings as any).camera;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (optionsSettings as any).camera;
-
-        this._options.applySettings(optionsSettings);
-
-        if (camera) {
-            this._savedCamera = camera;
-            if (this._is3D()) {
-                const sceneUpdate : PlotlyState = cameraToPlotly(camera);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                
-                this._relayout(sceneUpdate as unknown as Layout);
-            }
-        }
+        this._options.applySettings(settings);
     }
 
     /**
@@ -592,20 +557,7 @@ export class PropertiesMap {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        const settings = this._options.saveSettings();
-        if (this._savedCamera) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (settings as any).camera = this._savedCamera;
-        } /* else if (this._is3D()) {
-            console.log('saving camera from plotly scene');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            const scene = (this._plot as any)._fullLayout.scene;
-            if (scene?.camera) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (settings as any).camera = plotlyToCamera(scene.camera);
-            }
-        }*/
-        return settings;
+        return this._options.saveSettings();
     }
 
     /**
@@ -616,7 +568,6 @@ export class PropertiesMap {
      * There is currently no way to remove a callback.
      */
     public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
-        this._settingChangeCallbacks.push(callback);
         this._options.onSettingChange(callback);
     }
 
@@ -750,11 +701,6 @@ export class PropertiesMap {
                     this.warnings
                 );
 
-                // Re-bind callbacks
-                for (const callback of this._settingChangeCallbacks) {
-                    this._options.onSettingChange(callback);
-                }
-
                 // Update reference to the color reset button, as the old one was removed from DOM
                 this._colorReset =
                     this._options.getModalElement<HTMLButtonElement>('map-color-reset');
@@ -826,7 +772,6 @@ export class PropertiesMap {
      * @param layout layout properties to update
      */
     private _relayout(layout: Partial<Layout>) {
-        console.log("layout-ing", layout);
         Plotly.relayout(this._plot, layout).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
@@ -858,17 +803,6 @@ export class PropertiesMap {
 
     /** Add all the required callback to the settings */
     private _connectSettings() {
-        // Range reset button
-        const resetRanges = this._options.getModalElement<HTMLButtonElement>('map-range-reset');
-        resetRanges.onclick = () => {
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
-        };
-
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
@@ -885,9 +819,6 @@ export class PropertiesMap {
 
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
-            this._savedCamera = undefined;
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
@@ -963,9 +894,6 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
-            this._savedCamera = undefined;
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
 
             // LOD: Y changed, recompute spatial binning
@@ -1013,9 +941,6 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
-            this._savedCamera = undefined;
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -1354,21 +1279,9 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
-        // Guard initialization
-        this._initializing = true;
-
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
-                this._initializing = false;
-
-                // Restore camera again to ensure zoom/scale is applied after auto-scaling
-                if (this._savedCamera && this._is3D()) {
-                    void Plotly.relayout(this._plot, {
-                        'scene.camera': cameraToPlotly(this._savedCamera),
-                    } as unknown as Layout);
-                }
-
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
                 // event _after_ it has loaded. This triggers the event.
@@ -1436,67 +1349,9 @@ export class PropertiesMap {
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this._plot.on('plotly_relayout', (event: any) => {
-            // Guard against 2D mode or missing scene
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            const scene = (this._plot as any)._fullLayout.scene;
-            if (!scene) {
-                // If no scene, ignore (we assume 2D)
-                void this._afterplot();
-                return;
-            }
-
-            const hasCameraUpdate = Object.keys(event).some((k) => k.startsWith('scene.camera'));
-            const hasAspectUpdate = Object.keys(event).some((k) => k.startsWith('scene.aspectratio'));
-
-            if (hasCameraUpdate || hasAspectUpdate) {
-                // Determine base state: use _savedCamera if available as source of truth
-                let baseCamera;
-                let baseAspect;
-
-                console.log('Previous camera', this._savedCamera);
-
-                let currentState : PlotlyState;
-                if (this._savedCamera) {
-                    // Convert Settings format -> Plotly format
-                    currentState = cameraToPlotly(this._savedCamera);                    
-                } else {
-                    // Fallback to current Plotly state (defaults)
-                    currentState = {
-                        camera: JSON.parse(JSON.stringify(scene.camera)),
-                        aspectratio: JSON.parse(JSON.stringify(scene.aspectratio || {})),
-                    };
-                };
-
-                // Apply updates from event
-                for (const key in event) {
-                    if (key.startsWith('scene.camera')) {
-                        const relPath = key.substring('scene.camera'.length);
-                        if (relPath === '' || relPath === '.') {
-                            Object.assign(currentState.camera, event[key]);
-                        } else {
-                            // relPath starts with '.', e.g. '.eye.x'
-                            applyUpdate(currentState.camera, relPath.substring(1), event[key]);
-                        }
-                    } else if (key.startsWith('scene.aspectratio')) {
-                        const relPath = key.substring('scene.aspectratio'.length);
-                        if (relPath === '' || relPath === '.') {
-                            Object.assign(currentState.aspectratio, event[key]);
-                        } else {
-                            applyUpdate(currentState.aspectratio, relPath.substring(1), event[key]);
-                        }
-                    }
-                }
-
-                // Convert back to Settings format and save
-                this._savedCamera = plotlyToCamera(currentState);
-                console.log('Saving new camera', this._savedCamera);
-                for (const callback of this._settingChangeCallbacks) {
-                    callback(['map', 'camera'], this._savedCamera);
-                }
-            }
-
+        this._plot.on('plotly_relayout', () => {
+            // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
+            // But if it's a camera move, we force an LOD check here.
             void this._afterplot();
         });
 
@@ -1557,13 +1412,6 @@ export class PropertiesMap {
             this._options.z.max.value,
             'map.z'
         );
-
-        // Apply saved camera if available (and in 3D mode)
-        if (this._savedCamera && this._is3D()) {
-            const sceneUpdate = cameraToPlotly(this._savedCamera);
-            Object.assign(layout.scene, sceneUpdate);
-        }
-
         return layout as Partial<Layout>;
     }
 
@@ -1858,7 +1706,7 @@ export class PropertiesMap {
             [0, 1]
         );
 
-        const layoutUpdate = {
+        this._relayout({
             // change colorbar length to accommodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
@@ -1866,17 +1714,7 @@ export class PropertiesMap {
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
             dragmode: 'orbit',
-        } as unknown as Layout;
-
-        if (this._savedCamera) {
-            const sceneUpdate = cameraToPlotly(this._savedCamera);
-            for (const key in sceneUpdate) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (layoutUpdate as any)[`scene.${key}`] = (sceneUpdate as any)[key];
-            }
-        }
-
-        this._relayout(layoutUpdate);
+        } as unknown as Layout);
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -2013,14 +1851,6 @@ export class PropertiesMap {
     private async _resetToGlobalView() {
         this._updatingLOD = true;
 
-        // Reset settings to Auto (NaN)
-        this._options.x.min.value = NaN;
-        this._options.x.max.value = NaN;
-        this._options.y.min.value = NaN;
-        this._options.y.max.value = NaN;
-        this._options.z.min.value = NaN;
-        this._options.z.max.value = NaN;
-
         try {
             // 1. Force global LOD computation
             this._computeLOD();
@@ -2053,10 +1883,8 @@ export class PropertiesMap {
             }
         } finally {
             // This ensures any trailing events from the relayout are also ignored.
-            setTimeout(async () => {
+            setTimeout(() => {
                 this._updatingLOD = false;
-                // Bake in the newly computed global ranges into the settings
-                await this._afterplot();
             }, 0);
         }
     }
@@ -2067,35 +1895,24 @@ export class PropertiesMap {
      */
     private async _afterplot(): Promise<void> {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
-        if (this._updatingLOD || this._initializing) {
+        if (this._updatingLOD) {
             return;
         }
 
         const bounds = this._getBounds();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        const layout = (this._plot as any)._fullLayout;
-
         const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
-                // Update explicit values
-                axis.min.value = boundMin;
-                axis.max.value = boundMax;
+                axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
+                axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
             }
         };
 
-        if (this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (layout.scene) {
-                updateAxisValues(this._options.x, bounds.x);
-                updateAxisValues(this._options.y, bounds.y);
-                if (bounds.z !== undefined) {
-                    updateAxisValues(this._options.z, bounds.z);
-                }
-            }
-        } else {
-            updateAxisValues(this._options.x, bounds.x);
-            updateAxisValues(this._options.y, bounds.y);
+        // Update settings modal values based on current view
+        updateAxisValues(this._options.x, bounds.x);
+        updateAxisValues(this._options.y, bounds.y);
+        if (bounds.z !== undefined) {
+            updateAxisValues(this._options.z, bounds.z);
         }
 
         // LOD CHECK
@@ -2240,6 +2057,7 @@ export class PropertiesMap {
             const minElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-min`);
             const maxElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-max`);
             minElement.step = `${step}`;
+            maxElement.step = `${step}`;
         }
     }
 }
@@ -2249,19 +2067,4 @@ function extractSvgPath(svg: string) {
     const doc = document.createElement('div');
     doc.innerHTML = svg;
     return doc.getElementsByTagName('path')[0].getAttribute('d');
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyUpdate(root: any, path: string, value: any) {
-    const parts = path.split('.');
-    let current = root;
-    for (let i = 0; i < parts.length - 1; i++) {
-        const part = parts[i];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (!current[part]) current[part] = {};
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-        current = current[part];
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    current[parts[parts.length - 1]] = value;
 }
