@@ -342,6 +342,7 @@ export class PropertiesMap {
         delete (optionsSettings as any).camera;
         if (camera) {
             this._savedCamera = camera;
+            console.log('found saved camera in settings', this._savedCamera);
         }
 
         this._options = new MapOptions(
@@ -573,6 +574,7 @@ export class PropertiesMap {
 
         this._options.applySettings(optionsSettings);
 
+        console.log('settings applied to map', camera);
         if (camera) {
             this._savedCamera = camera;
             if (this._is3D()) {
@@ -600,6 +602,7 @@ export class PropertiesMap {
                 (settings as any).camera = plotlyToCamera(camera);
             }
         }
+        console.log('saving camera settings', settings.camera)
         return settings;
     }
 
@@ -1334,6 +1337,13 @@ export class PropertiesMap {
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
+                // Restore camera again to ensure zoom/scale is applied after auto-scaling
+                if (this._savedCamera && this._is3D()) {
+                    void Plotly.relayout(this._plot, {
+                        'scene.camera': cameraToPlotly(this._savedCamera),
+                    } as unknown as Layout);
+                }
+
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
                 // event _after_ it has loaded. This triggers the event.
