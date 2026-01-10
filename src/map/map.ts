@@ -598,8 +598,10 @@ export class PropertiesMap {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             const camera = (this._plot as any)._fullLayout.scene?.camera;
             if (camera) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+                const scale = (this._plot as any)._fullLayout.scene?.camera?.projection?.scale;
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (settings as any).camera = plotlyToCamera(camera);
+                (settings as any).camera = plotlyToCamera(camera, scale);
             }
         }
         return settings;
@@ -1417,9 +1419,11 @@ export class PropertiesMap {
             if (event['scene.camera']) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 const plotlyCamera = (this._plot as any)._fullLayout.scene.camera;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                const scale = (this._plot as any)._fullLayout.scene.camera?.projection?.scale;
 
-                this._savedCamera = plotlyToCamera(plotlyCamera);
-                    console.log("saved camera ",this._savedCamera ,plotlyCamera)
+                this._savedCamera = plotlyToCamera(plotlyCamera, scale);
+
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
                 }

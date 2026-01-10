@@ -174,11 +174,19 @@ export function cameraToPlotly(camera: any): any {
 
 /** Convert Plotly camera format to internal settings */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function plotlyToCamera(plotlyCamera: any): any {
+export function plotlyToCamera(plotlyCamera: any, scale?: number): any {
     const camera = { ...plotlyCamera };
-    if (camera.projection && camera.projection.scale !== undefined) {
-        camera.zoom = camera.projection.scale;
+
+    // Use provided scale or try to find it in projection
+    let zoom = scale;
+    if (zoom === undefined && camera.projection && camera.projection.scale !== undefined) {
+        zoom = camera.projection.scale;
     }
+
+    if (zoom !== undefined) {
+        camera.zoom = zoom;
+    }
+
     delete camera.projection;
     return camera;
 }
