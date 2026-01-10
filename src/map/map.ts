@@ -269,6 +269,8 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
+    /// Guard to prevent overwriting settings during initialization
+    private _initializing = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -1352,9 +1354,14 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
+        // Guard initialization
+        this._initializing = true;
+
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
+                this._initializing = false;
+
                 // Restore camera again to ensure zoom/scale is applied after auto-scaling
                 if (this._savedCamera && this._is3D()) {
                     void Plotly.relayout(this._plot, {
@@ -2051,7 +2058,7 @@ export class PropertiesMap {
      */
     private async _afterplot(): Promise<void> {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
-        if (this._updatingLOD) {
+        if (this._updatingLOD || this._initializing) {
             return;
         }
 
