@@ -566,17 +566,24 @@ export class PropertiesMap {
     public applySettings(settings: Settings): void {
         const optionsSettings = { ...settings };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const camera = (settings as any).camera;
+        const cameraSettings = (settings as any).camera;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (optionsSettings as any).camera;
 
         this._options.applySettings(optionsSettings);
 
-        if (camera) {
+        if (cameraSettings) {
+            // Convert 'zoom' back to 'projection.scale'
+            const camera = { ...cameraSettings };
+            if (camera.zoom !== undefined) {
+                camera.projection = { type: 'orthographic', scale: camera.zoom };
+                delete camera.zoom;
+            } else {
+                camera.projection = { type: 'orthographic' };
+            }
+
             this._savedCamera = camera;
-            console.log("saved viewpoint:", camera);
             if (this._is3D()) {
-                console.log("apply saved viewpoint:", camera);
                 this._relayout({ 'scene.camera': camera } as unknown as Layout);
             }
         }
@@ -588,16 +595,23 @@ export class PropertiesMap {
      */
     public saveSettings(): Settings {
         const settings = this._options.saveSettings();
-        if (this._savedCamera) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (settings as any).camera = this._savedCamera;
-        } else if (this._is3D()) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let camera = this._savedCamera as any;
+
+        if (!camera && this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            const camera = (this._plot as any).layout.scene?.camera;
-            if (camera) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (settings as any).camera = camera;
+            camera = (this._plot as any).layout.scene?.camera;
+        }
+
+        if (camera) {
+            // Convert 'projection.scale' to 'zoom' for settings
+            const settingsCamera = { ...camera };
+            if (settingsCamera.projection && settingsCamera.projection.scale !== undefined) {
+                settingsCamera.zoom = settingsCamera.projection.scale;
             }
+            delete settingsCamera.projection;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (settings as any).camera = settingsCamera;
         }
         return settings;
     }
@@ -1407,8 +1421,16 @@ export class PropertiesMap {
             if (event['scene.camera']) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 this._savedCamera = (this._plot as any).layout.scene.camera;
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const settingsCamera = { ...(this._savedCamera as any) };
+                if (settingsCamera.projection && settingsCamera.projection.scale !== undefined) {
+                    settingsCamera.zoom = settingsCamera.projection.scale;
+                }
+                delete settingsCamera.projection;
+
                 for (const callback of this._settingChangeCallbacks) {
-                    callback(['map', 'camera'], this._savedCamera);
+                    callback(['map', 'camera'], settingsCamera);
                 }
             }
 
