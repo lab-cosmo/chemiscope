@@ -332,11 +332,22 @@ export class PropertiesMap {
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
+
+        // Strip camera from settings
+        const optionsSettings = { ...settings };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const camera = (settings as any).camera;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (optionsSettings as any).camera;
+        if (camera) {
+            this._savedCamera = camera;
+        }
+
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            settings,
+            optionsSettings,
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
