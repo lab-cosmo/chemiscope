@@ -1424,41 +1424,53 @@ export class PropertiesMap {
                 return;
             }
 
-            // Check for camera updates
-            let hasUpdate = false;
-            const tempCamera = JSON.parse(JSON.stringify(scene.camera));
-            const tempAspect = JSON.parse(JSON.stringify(scene.aspectratio || {}));
+            const hasCameraUpdate = Object.keys(event).some((k) => k.startsWith('scene.camera'));
+            const hasAspectUpdate = Object.keys(event).some((k) => k.startsWith('scene.aspectratio'));
 
-            for (const key in event) {
-                if (key.startsWith('scene.camera')) {
-                    const relPath = key.substring('scene.camera'.length);
-                    if (relPath === '' || relPath === '.') {
-                        Object.assign(tempCamera, event[key]);
-                    } else {
-                        // relPath starts with '.', e.g. '.eye.x'
-                        applyUpdate(tempCamera, relPath.substring(1), event[key]);
-                    }
-                    hasUpdate = true;
-                } else if (key.startsWith('scene.aspectratio')) {
-                    const relPath = key.substring('scene.aspectratio'.length);
-                    if (relPath === '' || relPath === '.') {
-                        Object.assign(tempAspect, event[key]);
-                    } else {
-                        applyUpdate(tempAspect, relPath.substring(1), event[key]);
-                    }
-                    hasUpdate = true;
+            if (hasCameraUpdate || hasAspectUpdate) {
+                // Determine base state: use _savedCamera if available as source of truth
+                let baseCamera;
+                let baseAspect;
+
+                if (this._savedCamera) {
+                    // Convert Settings format -> Plotly format
+                    const plotlyState = cameraToPlotly(this._savedCamera);
+                    baseCamera = plotlyState.camera;
+                    baseAspect = plotlyState.aspectratio || {};
+                } else {
+                    // Fallback to current Plotly state (defaults)
+                    baseCamera = JSON.parse(JSON.stringify(scene.camera));
+                    baseAspect = JSON.parse(JSON.stringify(scene.aspectratio || {}));
                 }
-            }
 
-            if (hasUpdate) {
-                this._savedCamera = plotlyToCamera(tempCamera, tempAspect);
+                // Apply updates from event
+                for (const key in event) {
+                    if (key.startsWith('scene.camera')) {
+                        const relPath = key.substring('scene.camera'.length);
+                        if (relPath === '' || relPath === '.') {
+                            Object.assign(baseCamera, event[key]);
+                        } else {
+                            // relPath starts with '.', e.g. '.eye.x'
+                            applyUpdate(baseCamera, relPath.substring(1), event[key]);
+                        }
+                    } else if (key.startsWith('scene.aspectratio')) {
+                        const relPath = key.substring('scene.aspectratio'.length);
+                        if (relPath === '' || relPath === '.') {
+                            Object.assign(baseAspect, event[key]);
+                        } else {
+                            applyUpdate(baseAspect, relPath.substring(1), event[key]);
+                        }
+                    }
+                }
+
+                // Convert back to Settings format and save
+                this._savedCamera = plotlyToCamera(baseCamera, baseAspect);
+
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
                 }
             }
 
-            // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
-            // But if it's a camera move, we force an LOD check here.
             void this._afterplot();
         });
 
