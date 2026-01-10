@@ -340,7 +340,15 @@ export class PropertiesMap {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (optionsSettings as any).camera;
         if (camera) {
-            this._savedCamera = camera;
+            // Convert 'zoom' back to 'projection.scale' for internal use
+            const internalCamera = { ...camera };
+            if (internalCamera.zoom !== undefined) {
+                internalCamera.projection = { type: 'orthographic', scale: internalCamera.zoom };
+                delete internalCamera.zoom;
+            } else {
+                internalCamera.projection = { type: 'orthographic' };
+            }
+            this._savedCamera = internalCamera;
         }
 
         this._options = new MapOptions(
@@ -564,6 +572,7 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
+        console.log("apply settings:", settings);
         const optionsSettings = { ...settings };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cameraSettings = (settings as any).camera;
@@ -581,7 +590,7 @@ export class PropertiesMap {
             } else {
                 camera.projection = { type: 'orthographic' };
             }
-
+            console.log("apply camera:", camera);
             this._savedCamera = camera;
             if (this._is3D()) {
                 this._relayout({ 'scene.camera': camera } as unknown as Layout);
@@ -1428,7 +1437,8 @@ export class PropertiesMap {
                     settingsCamera.zoom = settingsCamera.projection.scale;
                 }
                 delete settingsCamera.projection;
-
+                console.log('camera change detected', settingsCamera);
+                
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], settingsCamera);
                 }
@@ -1973,6 +1983,7 @@ export class PropertiesMap {
             }
 
             // 4. Force the view reset
+            console.log('relayout', layoutUpdate);
             await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
 
             // Manually trigger marker update for 2D mode.
