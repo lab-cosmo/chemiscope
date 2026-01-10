@@ -596,13 +596,12 @@ export class PropertiesMap {
             (settings as any).camera = this._savedCamera;
         } else if (this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            const camera = (this._plot as any).layout.scene?.camera;
+            const camera = (this._plot as any)._fullLayout.scene?.camera;
             if (camera) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (settings as any).camera = plotlyToCamera(camera);
             }
         }
-        console.log('saving camera settings', settings.camera)
         return settings;
     }
 
@@ -1417,10 +1416,10 @@ export class PropertiesMap {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (event['scene.camera']) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const plotlyCamera = (this._plot as any).layout.scene.camera;
+                const plotlyCamera = (this._plot as any)._fullLayout.scene.camera;
 
                 this._savedCamera = plotlyToCamera(plotlyCamera);
-
+                    console.log("saved camera ",this._savedCamera ,plotlyCamera)
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
                 }
