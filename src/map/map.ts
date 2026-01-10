@@ -1415,17 +1415,36 @@ export class PropertiesMap {
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this._plot.on('plotly_relayout', (event: any) => {
-            // Check for camera updates (full 'scene.camera' or partial keys like 'scene.camera.eye')
-            const hasCameraUpdate = Object.keys(event).some((k) => k.startsWith('scene.camera'));
-            const hasAspectUpdate = Object.keys(event).some((k) => k.startsWith('scene.aspectratio'));
+            // Check for camera updates
+            let hasUpdate = false;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            const scene = (this._plot as any)._fullLayout.scene;
+            const tempCamera = JSON.parse(JSON.stringify(scene.camera));
+            const tempAspect = JSON.parse(JSON.stringify(scene.aspectratio || {}));
 
-            if (hasCameraUpdate || hasAspectUpdate) {
-                // Read from _fullLayout which contains the updated state
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const scene = (this._plot as any)._fullLayout.scene;
+            for (const key in event) {
+                if (key.startsWith('scene.camera')) {
+                    const relPath = key.substring('scene.camera'.length);
+                    if (relPath === '' || relPath === '.') {
+                        Object.assign(tempCamera, event[key]);
+                    } else {
+                        // relPath starts with '.', e.g. '.eye.x'
+                        applyUpdate(tempCamera, relPath.substring(1), event[key]);
+                    }
+                    hasUpdate = true;
+                } else if (key.startsWith('scene.aspectratio')) {
+                    const relPath = key.substring('scene.aspectratio'.length);
+                    if (relPath === '' || relPath === '.') {
+                        Object.assign(tempAspect, event[key]);
+                    } else {
+                        applyUpdate(tempAspect, relPath.substring(1), event[key]);
+                    }
+                    hasUpdate = true;
+                }
+            }
 
-                this._savedCamera = plotlyToCamera(scene.camera, scene.aspectratio);
-
+            if (hasUpdate) {
+                this._savedCamera = plotlyToCamera(tempCamera, tempAspect);
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
                 }
@@ -2165,4 +2184,19 @@ function extractSvgPath(svg: string) {
     const doc = document.createElement('div');
     doc.innerHTML = svg;
     return doc.getElementsByTagName('path')[0].getAttribute('d');
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyUpdate(root: any, path: string, value: any) {
+    const parts = path.split('.');
+    let current = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (!current[part]) current[part] = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        current = current[part];
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    current[parts[parts.length - 1]] = value;
 }
