@@ -154,8 +154,14 @@ export class HTMLOption<T extends OptionsType> {
                     option.selected = values.includes(option.value);
                 }
             } else {
+                let value = this._value;
+                // Special handling for NaN in number inputs to avoid browser warnings
+                if (typeof value === 'number' && Number.isNaN(value)) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    value = '' as any;
+                }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (bound.element as any)[bound.attribute] = this._value;
+                (bound.element as any)[bound.attribute] = value;
             }
         }
 
@@ -208,8 +214,14 @@ export class HTMLOption<T extends OptionsType> {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
                 this._update((event.target as any)[attribute].toString(), 'DOM');
             };
+            let value = this._value;
+            // Special handling for NaN in number inputs to avoid browser warnings
+            if (typeof value === 'number' && Number.isNaN(value)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                value = '' as any;
+            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (element as any)[attribute] = this._value;
+            (element as any)[attribute] = value;
         }
         element.addEventListener('change', listener);
 
