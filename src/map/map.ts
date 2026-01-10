@@ -250,6 +250,10 @@ export class PropertiesMap {
     private _target: DisplayTarget;
     /// Settings of the map
     private _options: MapOptions;
+    /// Saved 3D camera state
+    private _savedCamera: unknown;
+    // List of external callbacks for setting changes
+    private _settingChangeCallbacks: ((keys: string[], value: unknown) => void)[] = [];
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
 
@@ -549,7 +553,20 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
-        this._options.applySettings(settings);
+        const optionsSettings = { ...settings };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const camera = (settings as any).camera;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (optionsSettings as any).camera;
+
+        this._options.applySettings(optionsSettings);
+
+        if (camera) {
+            this._savedCamera = camera;
+            if (this._is3D()) {
+                this._relayout({ 'scene.camera': camera } as unknown as Layout);
+            }
+        }
     }
 
     /**
@@ -557,7 +574,19 @@ export class PropertiesMap {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        return this._options.saveSettings();
+        const settings = this._options.saveSettings();
+        if (this._savedCamera) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (settings as any).camera = this._savedCamera;
+        } else if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            const camera = (this._plot as any).layout.scene?.camera;
+            if (camera) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (settings as any).camera = camera;
+            }
+        }
+        return settings;
     }
 
     /**
@@ -568,6 +597,7 @@ export class PropertiesMap {
      * There is currently no way to remove a callback.
      */
     public onSettingChange(callback: (keys: string[], value: unknown) => void): void {
+        this._settingChangeCallbacks.push(callback);
         this._options.onSettingChange(callback);
     }
 
@@ -701,6 +731,11 @@ export class PropertiesMap {
                     this.warnings
                 );
 
+                // Re-bind callbacks
+                for (const callback of this._settingChangeCallbacks) {
+                    this._options.onSettingChange(callback);
+                }
+
                 // Update reference to the color reset button, as the old one was removed from DOM
                 this._colorReset =
                     this._options.getModalElement<HTMLButtonElement>('map-color-reset');
@@ -819,6 +854,7 @@ export class PropertiesMap {
 
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
+            this._savedCamera = undefined;
             negativeLogWarning(this._options.x);
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
@@ -894,6 +930,7 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
+            this._savedCamera = undefined;
             negativeLogWarning(this._options.y);
 
             // LOD: Y changed, recompute spatial binning
@@ -941,6 +978,7 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
+            this._savedCamera = undefined;
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -1349,7 +1387,18 @@ export class PropertiesMap {
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        this._plot.on('plotly_relayout', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this._plot.on('plotly_relayout', (event: any) => {
+            // Check for camera updates
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (event['scene.camera']) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                this._savedCamera = (this._plot as any).layout.scene.camera;
+                for (const callback of this._settingChangeCallbacks) {
+                    callback(['map', 'camera'], this._savedCamera);
+                }
+            }
+
             // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
             // But if it's a camera move, we force an LOD check here.
             void this._afterplot();
@@ -1706,7 +1755,7 @@ export class PropertiesMap {
             [0, 1]
         );
 
-        this._relayout({
+        const layoutUpdate = {
             // change colorbar length to accommodate for symbols legend
             'coloraxis.colorbar.len': this._colorbarLen(),
             // Carry over axis types
@@ -1714,7 +1763,14 @@ export class PropertiesMap {
             'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
             'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
             dragmode: 'orbit',
-        } as unknown as Layout);
+        } as unknown as Layout;
+
+        if (this._savedCamera) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            (layoutUpdate as any)['scene.camera'] = this._savedCamera;
+        }
+
+        this._relayout(layoutUpdate);
     }
 
     /** Switch current plot from 3D back to 2D */
