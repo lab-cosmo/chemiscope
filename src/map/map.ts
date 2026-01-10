@@ -2050,19 +2050,49 @@ export class PropertiesMap {
         }
 
         const bounds = this._getBounds();
-        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        const layout = (this._plot as any)._fullLayout;
+
+        const updateAxisValues = (
+            axis: AxisOptions,
+            [boundMin, boundMax]: [number, number],
+            plotlyAxis: { autorange: boolean | 'reversed' }
+        ) => {
+            // If autorange is active, keep settings as NaN (Auto).
+            // Only update explicit settings if autorange is false (user interaction).
+            if (plotlyAxis.autorange === true || plotlyAxis.autorange === 'reversed') {
+                // If the setting was explicit, reset it to NaN to reflect Auto state
+                if (!isNaN(axis.min.value)) axis.min.value = NaN;
+                if (!isNaN(axis.max.value)) axis.max.value = NaN;
+                return;
+            }
+
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
-                axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
-                axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+                // Update explicit values
+                // Check if values actually changed to avoid spurious updates (NaN check handled by InputOption)
+                axis.min.value = boundMin;
+                axis.max.value = boundMax;
             }
         };
 
-        // Update settings modal values based on current view
-        updateAxisValues(this._options.x, bounds.x);
-        updateAxisValues(this._options.y, bounds.y);
-        if (bounds.z !== undefined) {
-            updateAxisValues(this._options.z, bounds.z);
+        if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (layout.scene) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                updateAxisValues(this._options.x, bounds.x, layout.scene.xaxis);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                updateAxisValues(this._options.y, bounds.y, layout.scene.yaxis);
+                if (bounds.z !== undefined) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    updateAxisValues(this._options.z, bounds.z, layout.scene.zaxis);
+                }
+            }
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            updateAxisValues(this._options.x, bounds.x, layout.xaxis);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            updateAxisValues(this._options.y, bounds.y, layout.yaxis);
         }
 
         // LOD CHECK
