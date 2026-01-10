@@ -574,7 +574,9 @@ export class PropertiesMap {
 
         if (camera) {
             this._savedCamera = camera;
+            console.log("saved viewpoint:", camera);
             if (this._is3D()) {
+                console.log("apply saved viewpoint:", camera);
                 this._relayout({ 'scene.camera': camera } as unknown as Layout);
             }
         }
@@ -1472,6 +1474,13 @@ export class PropertiesMap {
             this._options.z.max.value,
             'map.z'
         );
+
+        // Apply saved camera if available (and in 3D mode)
+        if (this._savedCamera && this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            (layout.scene as any).camera = this._savedCamera;
+        }
+
         return layout as Partial<Layout>;
     }
 
