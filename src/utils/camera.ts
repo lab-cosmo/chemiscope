@@ -16,6 +16,16 @@ export interface CameraState {
     zoom: number;
 }
 
+export interface PlotlyState {
+    camera: {
+        eye: { x: number; y: number; z: number };
+        center: { x: number; y: number; z: number };
+        up: { x: number; y: number; z: number };
+        projection: { type: string } | undefined; 
+    }
+    aspectratio: { x: number; y: number; z: number };
+}
+
 // 3Dmol view: [cx, cy, cz, distance, qx, qy, qz, qw]
 export type ViewState = [number, number, number, number, number, number, number, number];
 
@@ -161,34 +171,31 @@ export function cameraToView(camera: CameraState): ViewState {
 
 /** Convert internal camera settings to Plotly format */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function cameraToPlotly(camera: any): any {
-    const plotlyUpdate: any = {
-        camera: { ...camera },
+export function cameraToPlotly(camera: CameraState): PlotlyState {
+    console.log("state to convert", camera);
+    const plotlyUpdate: PlotlyState = {
+        camera: { 
+            eye: camera.eye,
+            center: camera.center,
+            up: camera.up,
+            projection: { type: "orthographic", },
+        },
+        aspectratio: {x: camera.zoom, y: camera.zoom, z: camera.zoom },
     };
 
-    if (plotlyUpdate.camera.zoom !== undefined) {
-        plotlyUpdate.aspectratio = {
-            x: plotlyUpdate.camera.zoom,
-            y: plotlyUpdate.camera.zoom,
-            z: plotlyUpdate.camera.zoom,
-        };
-        plotlyUpdate.aspectmode = 'manual';
-        delete plotlyUpdate.camera.zoom;
-    }
-
-    plotlyUpdate.camera.projection = { type: 'orthographic' };
+    console.log('Converted camera to plotly format:', plotlyUpdate);
     return plotlyUpdate;
 }
 
 /** Convert Plotly scene format to internal settings */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function plotlyToCamera(plotlyCamera: any, aspectratio?: any): any {
-    const camera = { ...plotlyCamera };
+export function plotlyToCamera(plotlyUpdate: any): CameraState {
+    const camera: CameraState = {
+        eye: plotlyUpdate.camera.eye,
+        center: plotlyUpdate.camera.center,
+        up: plotlyUpdate.camera.up,
+        zoom: (plotlyUpdate.aspectratio.x + plotlyUpdate.aspectratio.y + plotlyUpdate.aspectratio.z) / 3,
+    }; 
 
-    if (aspectratio && aspectratio.x !== undefined) {
-        camera.zoom = aspectratio.x;
-    }
-
-    delete camera.projection;
     return camera;
 }

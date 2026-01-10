@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
-import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
+import { cameraToPlotly, plotlyToCamera, PlotlyState, CameraState } from '../utils/camera';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -252,7 +252,7 @@ export class PropertiesMap {
     /// Settings of the map
     private _options: MapOptions;
     /// Saved 3D camera state
-    private _savedCamera: unknown;
+    private _savedCamera: CameraState | undefined;
     // List of external callbacks for setting changes
     private _settingChangeCallbacks: ((keys: string[], value: unknown) => void)[] = [];
     /// Button used to reset the range of color axis
@@ -568,7 +568,7 @@ export class PropertiesMap {
     public applySettings(settings: Settings): void {
         const optionsSettings = { ...settings };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const camera = (settings as any).camera;
+        const camera: CameraState = (settings as any).camera;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (optionsSettings as any).camera;
 
@@ -577,13 +577,10 @@ export class PropertiesMap {
         if (camera) {
             this._savedCamera = camera;
             if (this._is3D()) {
-                const sceneUpdate = cameraToPlotly(camera);
+                const sceneUpdate : PlotlyState = cameraToPlotly(camera);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const relayoutUpdate: any = {};
-                for (const key in sceneUpdate) {
-                    relayoutUpdate[`scene.${key}`] = sceneUpdate[key];
-                }
-                this._relayout(relayoutUpdate as unknown as Layout);
+                
+                this._relayout(sceneUpdate as unknown as Layout);
             }
         }
     }
@@ -597,14 +594,15 @@ export class PropertiesMap {
         if (this._savedCamera) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (settings as any).camera = this._savedCamera;
-        } else if (this._is3D()) {
+        } /* else if (this._is3D()) {
+            console.log('saving camera from plotly scene');
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             const scene = (this._plot as any)._fullLayout.scene;
             if (scene?.camera) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (settings as any).camera = plotlyToCamera(scene.camera, scene.aspectratio);
+                (settings as any).camera = plotlyToCamera(scene.camera);
             }
-        }
+        }*/
         return settings;
     }
 
@@ -826,6 +824,7 @@ export class PropertiesMap {
      * @param layout layout properties to update
      */
     private _relayout(layout: Partial<Layout>) {
+        console.log("layout-ing", layout);
         Plotly.relayout(this._plot, layout).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
@@ -1432,40 +1431,43 @@ export class PropertiesMap {
                 let baseCamera;
                 let baseAspect;
 
+                console.log('Previous camera', this._savedCamera);
+
+                let currentState : PlotlyState;
                 if (this._savedCamera) {
                     // Convert Settings format -> Plotly format
-                    const plotlyState = cameraToPlotly(this._savedCamera);
-                    baseCamera = plotlyState.camera;
-                    baseAspect = plotlyState.aspectratio || {};
+                    currentState = cameraToPlotly(this._savedCamera);                    
                 } else {
                     // Fallback to current Plotly state (defaults)
-                    baseCamera = JSON.parse(JSON.stringify(scene.camera));
-                    baseAspect = JSON.parse(JSON.stringify(scene.aspectratio || {}));
-                }
+                    currentState = {
+                        camera: JSON.parse(JSON.stringify(scene.camera)),
+                        aspectratio: JSON.parse(JSON.stringify(scene.aspectratio || {})),
+                    };
+                };
 
                 // Apply updates from event
                 for (const key in event) {
                     if (key.startsWith('scene.camera')) {
                         const relPath = key.substring('scene.camera'.length);
                         if (relPath === '' || relPath === '.') {
-                            Object.assign(baseCamera, event[key]);
+                            Object.assign(currentState.camera, event[key]);
                         } else {
                             // relPath starts with '.', e.g. '.eye.x'
-                            applyUpdate(baseCamera, relPath.substring(1), event[key]);
+                            applyUpdate(currentState.camera, relPath.substring(1), event[key]);
                         }
                     } else if (key.startsWith('scene.aspectratio')) {
                         const relPath = key.substring('scene.aspectratio'.length);
                         if (relPath === '' || relPath === '.') {
-                            Object.assign(baseAspect, event[key]);
+                            Object.assign(currentState.aspectratio, event[key]);
                         } else {
-                            applyUpdate(baseAspect, relPath.substring(1), event[key]);
+                            applyUpdate(currentState.aspectratio, relPath.substring(1), event[key]);
                         }
                     }
                 }
 
                 // Convert back to Settings format and save
-                this._savedCamera = plotlyToCamera(baseCamera, baseAspect);
-
+                this._savedCamera = plotlyToCamera(currentState);
+                console.log('Saving new camera', this._savedCamera);
                 for (const callback of this._settingChangeCallbacks) {
                     callback(['map', 'camera'], this._savedCamera);
                 }
