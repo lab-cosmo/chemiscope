@@ -2013,6 +2013,14 @@ export class PropertiesMap {
     private async _resetToGlobalView() {
         this._updatingLOD = true;
 
+        // Reset settings to Auto (NaN)
+        this._options.x.min.value = NaN;
+        this._options.x.max.value = NaN;
+        this._options.y.min.value = NaN;
+        this._options.y.max.value = NaN;
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
+
         try {
             // 1. Force global LOD computation
             this._computeLOD();
@@ -2037,7 +2045,6 @@ export class PropertiesMap {
             }
 
             // 4. Force the view reset
-            console.log('relayout', layoutUpdate);
             await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
 
             // Manually trigger marker update for 2D mode.
@@ -2046,8 +2053,10 @@ export class PropertiesMap {
             }
         } finally {
             // This ensures any trailing events from the relayout are also ignored.
-            setTimeout(() => {
+            setTimeout(async () => {
                 this._updatingLOD = false;
+                // Bake in the newly computed global ranges into the settings
+                await this._afterplot();
             }, 0);
         }
     }
