@@ -111,14 +111,20 @@ const DEFAULT_LAYOUT = {
         },
         xaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
         },
         yaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
         },
         zaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' as undefined | string },
         },
     },
@@ -264,8 +270,6 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
-    /// Guard to prevent overwriting settings during initialization
-    private _initializing = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -1293,8 +1297,6 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
-        this._initializing = true;
-
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
@@ -1364,12 +1366,6 @@ export class PropertiesMap {
             void this._afterplot();
         });
 
-        // Clear initialization flag after the first plot update is fully processed
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        (this._plot as any).once('plotly_afterplot', () => {
-            this._initializing = false;
-        });
-
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', () => {
             // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
@@ -1434,6 +1430,39 @@ export class PropertiesMap {
             this._options.z.max.value,
             'map.z'
         );
+
+        // Also set ranges for 3D scene axes        
+        layout.scene.xaxis.range = this._getAxisRange(
+            this._options.x.min.value,
+            this._options.x.max.value,
+            'map.x'
+        );
+        layout.scene.xaxis.autorange = this._getAxisAutoRange(
+            this._options.x.min.value,
+            this._options.x.max.value,
+            'map.x'
+        );
+        layout.scene.yaxis.range = this._getAxisRange(
+            this._options.y.min.value,
+            this._options.y.max.value,
+            'map.y'
+        );
+        layout.scene.yaxis.autorange = this._getAxisAutoRange(
+            this._options.y.min.value,
+            this._options.y.max.value,
+            'map.y'
+        );
+        layout.scene.zaxis.range = this._getAxisRange(
+            this._options.z.min.value,
+            this._options.z.max.value,
+            'map.z'
+        );
+        layout.scene.zaxis.autorange = this._getAxisAutoRange(
+            this._options.z.min.value,
+            this._options.z.max.value,
+            'map.z'
+        );
+        
         return layout as Partial<Layout>;
     }
 
@@ -1462,6 +1491,23 @@ export class PropertiesMap {
         return [minProvided ? min : undefined, maxProvided ? max : undefined];
     };
 
+    private _getAxisAutoRange = (
+        min: number,
+        max: number,
+        axisName: string
+    ): boolean => {
+        const minProvided = !isNaN(min);
+        const maxProvided = !isNaN(max);
+
+        // At least one range value is specified. By default, zeros are set
+        if (minProvided && maxProvided) {
+            if (min <= max) {
+                return false;
+            }
+        }
+        return true;
+    };
+    
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
         const result = this._data[this._target][name];
@@ -1913,8 +1959,10 @@ export class PropertiesMap {
             }
         } finally {
             // This ensures any trailing events from the relayout are also ignored.
-            setTimeout(() => {
+            setTimeout(async () => {
                 this._updatingLOD = false;
+                // Bake in the newly computed global ranges into the settings
+                await this._afterplot();
             }, 0);
         }
     }
@@ -1925,7 +1973,7 @@ export class PropertiesMap {
      */
     private async _afterplot(): Promise<void> {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
-        if (this._updatingLOD || this._initializing) {
+        if (this._updatingLOD) {
             return;
         }
 
