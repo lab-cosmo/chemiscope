@@ -832,10 +832,15 @@ export class PropertiesMap {
      *
      * @param traces array of data traces to update
      * @param layout layout properties to update
+     * @param config optional plot configuration
      */
-    private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
+    private _react(
+        traces: Plotly.Data[],
+        layout: Partial<Layout>,
+        config?: Partial<Config>
+    ): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            Plotly.react(this._plot, traces, layout)
+            Plotly.react(this._plot, traces, layout, config as Config)
                 .then(() => {
                     resolve();
                 })
@@ -1342,8 +1347,11 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
+        // Get config
+        const config = this._getConfig();
+
         // Create an empty plot and fill it below
-        Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
+        Plotly.newPlot(this._plot, traces, layout, config)
             .then(() => {
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
@@ -1804,43 +1812,20 @@ export class PropertiesMap {
         assert(this._is3D());
         this._options.z.enable();
 
-        const symbols = this._symbols();
-        for (let s = 0; s < this._data.maxSymbols; s++) {
-            symbols.push([get3DSymbol(s)]);
-        }
+        // Ensure 3D traces are prepared
+        // Show selected environments markers is handled by _getTraces logic for 3D
 
-        // switch all traces to 3D mode
-        this._restyle({
-            'marker.symbol': symbols,
-            type: 'scatter3d',
-        } as unknown as Data);
-
+        // _switch3D logic for markers:
         for (const data of this._selected.values()) {
             data.toggleVisible(false);
         }
         this._updateMarkers();
 
-        // Change the data that vary between 2D and 3D mode
-        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
-        this._restyle(
-            {
-                'marker.line.width': marker_line,
-                // size change from 2D to 3D
-                'marker.size': this._sizes(),
-                'marker.sizemode': 'area',
-            } as Data,
-            [0, 1]
-        );
+        // We do a full react to update config (modebar)
+        // Settings (like markers) are applied in _getTraces/_getLayout
+        // which rely on _options and internal state. _options.z is enabled above.
 
-        this._relayout({
-            // change colorbar length to accommodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
-            // Carry over axis types
-            'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
-            'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-            'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
-            dragmode: 'orbit',
-        } as unknown as Layout);
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -1848,40 +1833,49 @@ export class PropertiesMap {
         assert(!this._is3D());
         this._options.z.disable();
 
-        const symbols = this._symbols();
-        for (let sym = 0; sym < this._data.maxSymbols; sym++) {
-            symbols.push([sym]);
-        }
-
-        // switch all traces to 2D mode
-        this._restyle({
-            'marker.symbol': symbols,
-            type: 'scattergl',
-        } as unknown as Data);
-
-        // show selected environments markers
+        // Show selected environments markers
         for (const data of this._selected.values()) {
             data.toggleVisible(true);
         }
 
-        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
-        this._restyle(
-            {
-                'marker.line.width': marker_line,
-                // size change from 3D to 2D
-                'marker.size': this._sizes(),
-            } as Data,
-            [0, 1]
-        );
+        // We do a full react to update config (modebar)
+        // _getTraces uses _sizes() and options to set marker line width and size
+        // consistently in 2D and 3D
 
-        this._relayout({
-            // change colorbar length to accommodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
-            // Carry over axis types
-            'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
-            'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-            dragmode: 'zoom',
-        } as unknown as Layout);
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+    }
+
+    /**
+     * Get the Plotly configuration based on current mode (2D/3D)
+     */
+    private _getConfig(): Config {
+        // Clone default config
+        const config = { ...DEFAULT_CONFIG };
+        config.modeBarButtonsToRemove = [...DEFAULT_CONFIG.modeBarButtonsToRemove];
+        config.modeBarButtonsToAdd = [...DEFAULT_CONFIG.modeBarButtonsToAdd];
+
+        if (this._is3D()) {
+            config.modeBarButtonsToRemove.push('resetCameraDefault3d');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            config.modeBarButtonsToAdd = [
+                [
+                    {
+                        name: 'Reset View',
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        icon: (Plotly as any).Icons.home,
+                        click: () => {
+                            void (async () => {
+                                await this._resetToGlobalView();
+                            })();
+                        },
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ] as any,
+                ...config.modeBarButtonsToAdd,
+            ];
+        }
+
+        return config as unknown as Config;
     }
 
     /**
@@ -2003,6 +1997,12 @@ export class PropertiesMap {
                 layoutUpdate['scene.yaxis.autorange'] = true;
                 layoutUpdate['scene.zaxis.autorange'] = true;
                 layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+                layoutUpdate['scene.camera'] = {
+                    center: { x: 0, y: 0, z: 0 },
+                    eye: { x: 1.25, y: 1.25, z: 1.25 },
+                    projection: { type: 'orthographic' },
+                    up: { x: 0, y: 0, z: 1 },
+                };
             } else {
                 // In 2D, we trigger autorange on standard axes
                 layoutUpdate['xaxis.autorange'] = true;
