@@ -1976,33 +1976,55 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private async _afterplot(): Promise<void> {        
+    private async _afterplot(): Promise<void> {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;
         }
 
         const bounds = this._getBounds();
-        if (this._is3D()) {
-        console.log("afterplot called", 
-            this._plot._fullLayout.scene.xaxis.range[1],
-            this._plot._fullLayout.scene.xaxis.autorange,
-            this._options.x.max.value);
-        }
-        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        const layout = (this._plot as any)._fullLayout;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const layoutUpdate: any = {};
+        let needRelayout = false;
+
+        const updateAxisValues = (
+            axis: AxisOptions,
+            [boundMin, boundMax]: [number, number],
+            plotlyAxisName: string
+        ) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
-                // Update explicit values
+                // Update explicit values in settings
                 axis.min.value = boundMin;
                 axis.max.value = boundMax;
+
+                // Check if we need to bake in Plotly
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                const plotlyAxis = this._is3D()
+                    ? layout.scene[plotlyAxisName]
+                    : layout[plotlyAxisName];
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                if (plotlyAxis.autorange) {
+                    const keyPrefix = this._is3D() ? `scene.${plotlyAxisName}` : plotlyAxisName;
+                    layoutUpdate[`${keyPrefix}.range`] = [boundMin, boundMax];
+                    layoutUpdate[`${keyPrefix}.autorange`] = false;
+                    needRelayout = true;
+                }
             }
         };
 
         // Update settings modal values based on current view
-        updateAxisValues(this._options.x, bounds.x);
-        updateAxisValues(this._options.y, bounds.y);
+        updateAxisValues(this._options.x, bounds.x, 'xaxis');
+        updateAxisValues(this._options.y, bounds.y, 'yaxis');
         if (bounds.z !== undefined) {
-            updateAxisValues(this._options.z, bounds.z);
+            updateAxisValues(this._options.z, bounds.z, 'zaxis');
+        }
+
+        if (needRelayout) {
+            // Force Plotly to disable autorange and use the baked values
+            this._relayout(layoutUpdate as unknown as Layout);
         }
 
         // LOD CHECK
