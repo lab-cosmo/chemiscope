@@ -191,22 +191,13 @@ export function cameraToPlotly(camera: CameraState): PlotlyState {
 }
 
 /** Convert Plotly scene format to internal settings */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function plotlyToCamera(plotlyUpdate: any): CameraState {
+export function plotlyToCamera(plotlyUpdate: PlotlyState): CameraState {
     const camera: CameraState = {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         eye: plotlyUpdate.camera.eye,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         center: plotlyUpdate.camera.center,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         up: plotlyUpdate.camera.up,
         zoom:
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
-            (plotlyUpdate.aspectratio.x +
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
-                plotlyUpdate.aspectratio.y +
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
-                plotlyUpdate.aspectratio.z) /
+            (plotlyUpdate.aspectratio.x + plotlyUpdate.aspectratio.y + plotlyUpdate.aspectratio.z) /
             3,
     };
 
