@@ -831,6 +831,7 @@ export class PropertiesMap {
 
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
             this._options.x.min.value = NaN;
             this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
@@ -894,7 +895,6 @@ export class PropertiesMap {
                 negativeLogWarning(axis);
 
                 if (this._is3D()) {
-                    console.log("RangeChange 3D", name, min, max);
                     this._relayout({                        
                         [`scene.${name}.range`]: [min, max],
                         [`scene.${name}.autorange`]: false,
@@ -910,6 +910,7 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
             this._options.y.min.value = NaN;
             this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
@@ -959,6 +960,7 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
             this._options.z.min.value = NaN;
             this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
@@ -1309,8 +1311,6 @@ export class PropertiesMap {
                 window.requestAnimationFrame(() => {
                     window.dispatchEvent(new Event('resize'));
                 });
-                setTimeout(() => {console.log("newplot ended", this._plot._fullLayout);
-                     this._afterplot();}, 2000);
             })
             .catch((e: unknown) =>
                 setTimeout(() => {
@@ -1436,7 +1436,7 @@ export class PropertiesMap {
             'map.z'
         );
 
-        // Also set ranges for 3D scene axes        
+        // 3D scenes have a separate axis configuration      
         layout.scene.xaxis.range = this._getAxisRange(
             this._options.x.min.value,
             this._options.x.max.value,
@@ -1983,16 +1983,14 @@ export class PropertiesMap {
         }
 
         const bounds = this._getBounds();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-        const layout = (this._plot as any)._fullLayout;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const layoutUpdate: any = {};
+        const layout = this._plot._fullLayout;
+        const layoutUpdate: Record<string, unknown> = {};
         let needRelayout = false;
 
         const updateAxisValues = (
             axis: AxisOptions,
             [boundMin, boundMax]: [number, number],
-            plotlyAxisName: string
+            plotlyAxisName: 'xaxis' | 'yaxis' | 'zaxis'
         ) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
@@ -2000,13 +1998,19 @@ export class PropertiesMap {
                 axis.min.value = boundMin;
                 axis.max.value = boundMax;
 
-                // Check if we need to bake in Plotly
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const plotlyAxis = this._is3D()
-                    ? layout.scene[plotlyAxisName]
-                    : layout[plotlyAxisName];
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (plotlyAxis.autorange) {
+                // Check if we need to update the plot to disable autorange
+                let plotlyAxis;
+                if (this._is3D()) {
+                    plotlyAxis = layout.scene[plotlyAxisName];
+                } else {
+                    if (plotlyAxisName === 'xaxis') {
+                        plotlyAxis = layout.xaxis;
+                    } else if (plotlyAxisName === 'yaxis') {
+                        plotlyAxis = layout.yaxis;
+                    }
+                }
+
+                if (plotlyAxis && plotlyAxis.autorange) {
                     const keyPrefix = this._is3D() ? `scene.${plotlyAxisName}` : plotlyAxisName;
                     layoutUpdate[`${keyPrefix}.range`] = [boundMin, boundMax];
                     layoutUpdate[`${keyPrefix}.autorange`] = false;
