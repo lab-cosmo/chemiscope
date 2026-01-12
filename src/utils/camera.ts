@@ -176,7 +176,6 @@ export function cameraToView(camera: CameraState): ViewState {
 }
 
 /** Convert internal camera settings to Plotly format */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cameraToPlotly(camera: CameraState): PlotlyState {
     const plotlyUpdate: PlotlyState = {
         camera: {
@@ -195,11 +194,19 @@ export function cameraToPlotly(camera: CameraState): PlotlyState {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function plotlyToCamera(plotlyUpdate: any): CameraState {
     const camera: CameraState = {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         eye: plotlyUpdate.camera.eye,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         center: plotlyUpdate.camera.center,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         up: plotlyUpdate.camera.up,
         zoom:
-            (plotlyUpdate.aspectratio.x + plotlyUpdate.aspectratio.y + plotlyUpdate.aspectratio.z) /
+            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
+            (plotlyUpdate.aspectratio.x +
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
+                plotlyUpdate.aspectratio.y +
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
+                plotlyUpdate.aspectratio.z) /
             3,
     };
 
