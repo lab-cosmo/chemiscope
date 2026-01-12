@@ -802,7 +802,7 @@ export class MoleculeViewer {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        const settings= this._options.saveSettings();
+        const settings = this._options.saveSettings();
         const view = this._viewer.getView() as ViewState;
         settings.camera = viewToCamera(view) as unknown as Settings;
         return settings;
@@ -2066,7 +2066,6 @@ export class MoleculeViewer {
         viewpoint[5] = quaternion[1];
         viewpoint[6] = quaternion[2];
         viewpoint[7] = quaternion[3];
-        console.log("inferred viewpoint:", viewpoint);
         this._viewer.setView(viewpoint);
     }
 

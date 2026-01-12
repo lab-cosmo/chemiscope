@@ -2,7 +2,7 @@
  * This module contains utility functions to handle the camera settings
  * for Plotly.js and 3dmol.js viewers, including conversions between their
  * respective camera representations.
- * 
+ *
  * @packageDocumentation
  * @module utils
  */
@@ -21,8 +21,8 @@ export interface PlotlyState {
         eye: { x: number; y: number; z: number };
         center: { x: number; y: number; z: number };
         up: { x: number; y: number; z: number };
-        projection: { type: string } | undefined; 
-    }
+        projection: { type: string } | undefined;
+    };
     aspectratio: { x: number; y: number; z: number };
 }
 
@@ -130,9 +130,15 @@ export function cameraToView(camera: CameraState): ViewState {
     ];
 
     // Rotation Matrix [X Y Z]
-    const m00 = xAxis[0], m01 = yAxis[0], m02 = zAxis[0];
-    const m10 = xAxis[1], m11 = yAxis[1], m12 = zAxis[1];
-    const m20 = xAxis[2], m21 = yAxis[2], m22 = zAxis[2];
+    const m00 = xAxis[0],
+        m01 = yAxis[0],
+        m02 = zAxis[0];
+    const m10 = xAxis[1],
+        m11 = yAxis[1],
+        m12 = zAxis[1];
+    const m20 = xAxis[2],
+        m21 = yAxis[2],
+        m22 = zAxis[2];
 
     // Convert Matrix to Quaternion
     const trace = m00 + m11 + m22;
@@ -173,13 +179,13 @@ export function cameraToView(camera: CameraState): ViewState {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cameraToPlotly(camera: CameraState): PlotlyState {
     const plotlyUpdate: PlotlyState = {
-        camera: { 
+        camera: {
             eye: camera.eye,
             center: camera.center,
             up: camera.up,
-            projection: { type: "orthographic", },
+            projection: { type: 'orthographic' },
         },
-        aspectratio: {x: camera.zoom, y: camera.zoom, z: camera.zoom },
+        aspectratio: { x: camera.zoom, y: camera.zoom, z: camera.zoom },
     };
 
     return plotlyUpdate;
@@ -192,8 +198,10 @@ export function plotlyToCamera(plotlyUpdate: any): CameraState {
         eye: plotlyUpdate.camera.eye,
         center: plotlyUpdate.camera.center,
         up: plotlyUpdate.camera.up,
-        zoom: (plotlyUpdate.aspectratio.x + plotlyUpdate.aspectratio.y + plotlyUpdate.aspectratio.z) / 3,
-    }; 
+        zoom:
+            (plotlyUpdate.aspectratio.x + plotlyUpdate.aspectratio.y + plotlyUpdate.aspectratio.z) /
+            3,
+    };
 
     return camera;
 }

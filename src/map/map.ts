@@ -840,7 +840,7 @@ export class PropertiesMap {
             this._computeLOD();
             // Fire and forget
             void this._restyleLOD();
-            this._relayout({                
+            this._relayout({
                 'scene.xaxis.title.text': this._title(this._options.x.property.value),
                 'xaxis.title.text': this._title(this._options.x.property.value),
             } as unknown as Layout);
@@ -895,7 +895,7 @@ export class PropertiesMap {
                 negativeLogWarning(axis);
 
                 if (this._is3D()) {
-                    this._relayout({                        
+                    this._relayout({
                         [`scene.${name}.range`]: [min, max],
                         [`scene.${name}.autorange`]: false,
                     } as unknown as Layout);
@@ -1301,7 +1301,6 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
-
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
@@ -1436,7 +1435,7 @@ export class PropertiesMap {
             'map.z'
         );
 
-        // 3D scenes have a separate axis configuration      
+        // 3D scenes have a separate axis configuration
         layout.scene.xaxis.range = this._getAxisRange(
             this._options.x.min.value,
             this._options.x.max.value,
@@ -1467,7 +1466,7 @@ export class PropertiesMap {
             this._options.z.max.value,
             'map.z'
         );
-        
+
         return layout as Partial<Layout>;
     }
 
@@ -1496,11 +1495,7 @@ export class PropertiesMap {
         return [minProvided ? min : undefined, maxProvided ? max : undefined];
     };
 
-    private _getAxisAutoRange = (
-        min: number,
-        max: number,
-        axisName: string
-    ): boolean => {
+    private _getAxisAutoRange = (min: number, max: number, axisName: string): boolean => {
         const minProvided = !isNaN(min);
         const maxProvided = !isNaN(max);
 
@@ -1512,7 +1507,7 @@ export class PropertiesMap {
         }
         return true;
     };
-    
+
     /** Get the property with the given name */
     private _property(name: string): NumericProperty {
         const result = this._data[this._target][name];
@@ -2027,7 +2022,7 @@ export class PropertiesMap {
         }
 
         if (needRelayout) {
-            // Force Plotly to disable autorange and use the baked values
+            // Force Plotly to disable autorange and use the explicit ranges
             this._relayout(layoutUpdate as unknown as Layout);
         }
 
