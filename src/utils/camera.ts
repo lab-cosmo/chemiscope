@@ -172,7 +172,6 @@ export function cameraToView(camera: CameraState): ViewState {
 /** Convert internal camera settings to Plotly format */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cameraToPlotly(camera: CameraState): PlotlyState {
-    console.log("state to convert", camera);
     const plotlyUpdate: PlotlyState = {
         camera: { 
             eye: camera.eye,
@@ -183,7 +182,6 @@ export function cameraToPlotly(camera: CameraState): PlotlyState {
         aspectratio: {x: camera.zoom, y: camera.zoom, z: camera.zoom },
     };
 
-    console.log('Converted camera to plotly format:', plotlyUpdate);
     return plotlyUpdate;
 }
 

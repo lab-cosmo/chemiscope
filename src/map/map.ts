@@ -839,7 +839,7 @@ export class PropertiesMap {
             this._computeLOD();
             // Fire and forget
             void this._restyleLOD();
-            this._relayout({
+            this._relayout({                
                 'scene.xaxis.title.text': this._title(this._options.x.property.value),
                 'xaxis.title.text': this._title(this._options.x.property.value),
             } as unknown as Layout);
@@ -894,8 +894,10 @@ export class PropertiesMap {
                 negativeLogWarning(axis);
 
                 if (this._is3D()) {
-                    this._relayout({
+                    console.log("RangeChange 3D", name, min, max);
+                    this._relayout({                        
                         [`scene.${name}.range`]: [min, max],
+                        [`scene.${name}.autorange`]: false,
                     } as unknown as Layout);
                 } else {
                     this._relayout({ [`${name}.range`]: [min, max] });
@@ -1297,6 +1299,7 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
+
         // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
             .then(() => {
@@ -1306,6 +1309,8 @@ export class PropertiesMap {
                 window.requestAnimationFrame(() => {
                     window.dispatchEvent(new Event('resize'));
                 });
+                setTimeout(() => {console.log("newplot ended", this._plot._fullLayout);
+                     this._afterplot();}, 2000);
             })
             .catch((e: unknown) =>
                 setTimeout(() => {
@@ -1961,7 +1966,7 @@ export class PropertiesMap {
             // This ensures any trailing events from the relayout are also ignored.
             setTimeout(async () => {
                 this._updatingLOD = false;
-                // Bake in the newly computed global ranges into the settings
+                // Store the newly computed global ranges into the settings
                 await this._afterplot();
             }, 0);
         }
@@ -1971,13 +1976,19 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private async _afterplot(): Promise<void> {
+    private async _afterplot(): Promise<void> {        
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;
         }
 
         const bounds = this._getBounds();
+        if (this._is3D()) {
+        console.log("afterplot called", 
+            this._plot._fullLayout.scene.xaxis.range[1],
+            this._plot._fullLayout.scene.xaxis.autorange,
+            this._options.x.max.value);
+        }
         const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {

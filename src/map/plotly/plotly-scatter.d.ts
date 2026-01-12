@@ -6,6 +6,10 @@ interface ScatterAxis extends LayoutAxis {
     _offset: number;
 }
 
+interface SceneAxis extends LayoutAxis {
+    autorange: boolean;
+}
+
 interface ScatterLayout {
     _modeBar: {
         _uid: string;
@@ -14,9 +18,9 @@ interface ScatterLayout {
     xaxis: ScatterAxis;
     yaxis: ScatterAxis;
     scene: {
-        xaxis: LayoutAxis;
-        yaxis: LayoutAxis;
-        zaxis: LayoutAxis;
+        xaxis: SceneAxis;
+        yaxis: SceneAxis;
+        zaxis: SceneAxis;
     };
     width: number;
     height: number;
