@@ -2,6 +2,7 @@
 import asyncio
 import base64
 import gzip
+import itertools
 import json
 import warnings
 from pathlib import Path
@@ -47,7 +48,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
-
+        
+        self._request_counter = itertools.count()
         self._pending_requests = {}
 
         # hold structures on the python side to save js memory
@@ -215,11 +217,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         return asyncio.ensure_future(_save_impl())
 
     def _request_screenshot(self, target):
-        import time
-
-        request_id = int(time.time() * 1000)
-        while request_id in self._pending_requests:
-            request_id += 1
+        request_id = next(self._request_counter)
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -234,11 +232,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             f.write(data)
 
     async def _process_structure_sequence(self, indices, settings=None):
-        import time
-
-        request_id = int(time.time() * 1000)
-        while request_id in self._pending_requests:
-            request_id += 1
+        request_id = next(self._request_counter)
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
