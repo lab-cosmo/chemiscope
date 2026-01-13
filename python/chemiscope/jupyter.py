@@ -99,6 +99,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         :return: A Future that resolves to the image data as bytes.
         """
+
+        if target == "map" and self._view_name == "StructureView":
+            raise RuntimeError(
+                "Cannot retrieve map image: this widget is a structure-only viewer."
+            )
+
         return self._request_screenshot("map")
 
     def get_structure_image(self):
@@ -115,6 +121,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         :return: A Future that resolves to the image data as bytes.
         """
+
+        if target == "structure" and self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot retrieve structure image: this widget is a map-only viewer."
+            )
+
         return self._request_screenshot("structure")
 
     def save_map_image(self, path):
@@ -132,6 +144,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :param str path: Path where the image will be saved.
         :return: A Future that resolves when the file is written.
         """
+
+        if target == "map" and self._view_name == "StructureView":
+            raise RuntimeError(
+                "Cannot retrieve map image: this widget is a structure-only viewer."
+            )
+
         return asyncio.ensure_future(self._save_image_to_file(path, "map"))
 
     def save_structure_image(self, path):
@@ -149,6 +167,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :param str path: Path where the image will be saved.
         :return: A Future that resolves when the file is written.
         """
+
+        if target == "structure" and self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
+
         return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
 
     def get_structure_sequence(self, indices, settings=None):
@@ -179,6 +203,12 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             for each frame.
         :return: A Future that resolves to a list of image data bytes.
         """
+
+        if target == "structure" and self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
+
         return asyncio.ensure_future(
             self._process_structure_sequence(indices, settings)
         )
@@ -207,6 +237,10 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             raise ValueError("indices and paths must have the same length")
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
+        if target == "structure" and self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
 
         async def _save_impl():
             data_list = await self.get_structure_sequence(indices, settings)
@@ -218,16 +252,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def _request_screenshot(self, target):
         request_id = next(self._request_counter)
-
-        if target == "map" and self._view_name == "StructureView":
-            raise RuntimeError(
-                "Cannot save map image: this widget is a structure-only viewer."
-            )
-
-        if target == "structure" and self._view_name == "MapView":
-            raise RuntimeError(
-                "Cannot save structure image: this widget is a map-only viewer."
-            )
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -242,11 +266,6 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             f.write(data)
 
     async def _process_structure_sequence(self, indices, settings=None):
-        if self._view_name == "MapView":
-            raise RuntimeError(
-                "Cannot save structure sequence: this widget is a map-only viewer."
-            )
-
         request_id = next(self._request_counter)
 
         loop = asyncio.get_running_loop()
