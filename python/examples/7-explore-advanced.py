@@ -44,7 +44,7 @@ def fetch_dataset(filename, base_url, local_path=""):
 
 fetch_dataset(
     "mace-off-tsne-qm9.json.gz",
-    "https://huggingface.co/datasets/sofiia-chorna/chemiscope-visualization/resolve/main/",
+    "https://huggingface.co/datasets/lab-cosmo/chemiscope-visualization/resolve/main/",
     "data/",
 )
 
