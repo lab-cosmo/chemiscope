@@ -62,8 +62,8 @@ the `ipywidgets documentation
     in the grid (0-based).
 
 
-Saving the widget state as a standalone dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Saving the dataset and settings as a standalone file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The "save" method allows exporting the current state of the widget 
 as a standalone JSON viewer that can be opened in the web app 
