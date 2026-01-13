@@ -91,6 +91,7 @@ const DEFAULT_LAYOUT = {
         showscale: true,
     },
     hovermode: 'closest',
+    dragmode: 'zoom',
     legend: {
         itemclick: false,
         itemdoubleclick: false,
@@ -1484,42 +1485,45 @@ export class PropertiesMap {
         );
 
         // 3D scenes have a separate axis configuration
-        layout.scene.xaxis.range = this._getAxisRange(
-            this._options.x.min.value,
-            this._options.x.max.value,
-            'map.x'
-        );
-        layout.scene.xaxis.autorange = this._getAxisAutoRange(
-            this._options.x.min.value,
-            this._options.x.max.value
-        );
-        layout.scene.yaxis.range = this._getAxisRange(
-            this._options.y.min.value,
-            this._options.y.max.value,
-            'map.y'
-        );
-        layout.scene.yaxis.autorange = this._getAxisAutoRange(
-            this._options.y.min.value,
-            this._options.y.max.value
-        );
-        layout.scene.zaxis.range = this._getAxisRange(
-            this._options.z.min.value,
-            this._options.z.max.value,
-            'map.z'
-        );
-        layout.scene.zaxis.autorange = this._getAxisAutoRange(
-            this._options.z.min.value,
-            this._options.z.max.value
-        );
+        if (this._is3D()) {
+            layout.scene.xaxis.range = this._getAxisRange(
+                this._options.x.min.value,
+                this._options.x.max.value,
+                'map.x'
+            );
+            layout.scene.xaxis.autorange = this._getAxisAutoRange(
+                this._options.x.min.value,
+                this._options.x.max.value
+            );
+            layout.scene.yaxis.range = this._getAxisRange(
+                this._options.y.min.value,
+                this._options.y.max.value,
+                'map.y'
+            );
+            layout.scene.yaxis.autorange = this._getAxisAutoRange(
+                this._options.y.min.value,
+                this._options.y.max.value
+            );
+            layout.scene.zaxis.range = this._getAxisRange(
+                this._options.z.min.value,
+                this._options.z.max.value,
+                'map.z'
+            );
+            layout.scene.zaxis.autorange = this._getAxisAutoRange(
+                this._options.z.min.value,
+                this._options.z.max.value
+            );
+            layout.dragmode = 'orbit';
 
-        if (this._is3D() && this._cameraState) {
-            const update = cameraToPlotly(this._cameraState);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const scene = (layout as any).scene;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            Object.assign(scene.camera, update.camera);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            scene.aspectratio = update.aspectratio;
+            if (this._cameraState) {
+                const update = cameraToPlotly(this._cameraState);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                const scene = (layout as any).scene;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                Object.assign(scene.camera, update.camera);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                scene.aspectratio = update.aspectratio;
+            }
         }
 
         return layout as Partial<Layout>;
