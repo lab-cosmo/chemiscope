@@ -1417,23 +1417,17 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void (async () => {
-                await this._afterplot();
-            })();
+            void this._afterplot();
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', () => {
-            void (async () => {
-                await this._afterplot();
-            })();
+            void this._afterplot();
         });
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            void (async () => {
-                await this._resetToGlobalView();
-            })();
+            void this._resetToGlobalView();
             return false;
         });
 
@@ -1497,8 +1491,7 @@ export class PropertiesMap {
         );
         layout.scene.xaxis.autorange = this._getAxisAutoRange(
             this._options.x.min.value,
-            this._options.x.max.value,
-            'map.x'
+            this._options.x.max.value
         );
         layout.scene.yaxis.range = this._getAxisRange(
             this._options.y.min.value,
@@ -1507,8 +1500,7 @@ export class PropertiesMap {
         );
         layout.scene.yaxis.autorange = this._getAxisAutoRange(
             this._options.y.min.value,
-            this._options.y.max.value,
-            'map.y'
+            this._options.y.max.value
         );
         layout.scene.zaxis.range = this._getAxisRange(
             this._options.z.min.value,
@@ -1517,8 +1509,7 @@ export class PropertiesMap {
         );
         layout.scene.zaxis.autorange = this._getAxisAutoRange(
             this._options.z.min.value,
-            this._options.z.max.value,
-            'map.z'
+            this._options.z.max.value
         );
 
         if (this._is3D() && this._cameraState) {
@@ -1541,7 +1532,7 @@ export class PropertiesMap {
     private _getAxisRange = (
         min: number,
         max: number,
-        _axisName: string
+        axisName: string
     ): [number | undefined, number | undefined] => {
         const minProvided = !isNaN(min);
         const maxProvided = !isNaN(max);
@@ -1552,26 +1543,19 @@ export class PropertiesMap {
                 return [min, max];
             }
             this.warnings.sendMessage(
-                `The inserted min and max values in ${_axisName} are such that min > max!` +
+                `The inserted min and max values in ${axisName} are such that min > max!` +
                     `The default values will be used.`
             );
         }
         return [minProvided ? min : undefined, maxProvided ? max : undefined];
     };
 
-    private _getAxisAutoRange = (min: number, max: number, _axisName: string): boolean => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const __axisName = _axisName;
+    private _getAxisAutoRange = (min: number, max: number): boolean => {
         const minProvided = !isNaN(min);
         const maxProvided = !isNaN(max);
 
-        // At least one range value is specified. By default, zeros are set
-        if (minProvided && maxProvided) {
-            if (min <= max) {
-                return false;
-            }
-        }
-        return true;
+        // Both ranges are provided
+        return !(minProvided && maxProvided);
     };
 
     /** Get the property with the given name */
@@ -2019,11 +2003,9 @@ export class PropertiesMap {
         } finally {
             // This ensures any trailing events from the relayout are also ignored.
             setTimeout(() => {
-                void (async () => {
-                    this._updatingLOD = false;
-                    // Store the newly computed global ranges into the settings
-                    await this._afterplot();
-                })();
+                this._updatingLOD = false;
+                // Store the newly computed global ranges into the settings
+                void this._afterplot();
             }, 0);
         }
     }
