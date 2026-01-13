@@ -62,11 +62,11 @@ the `ipywidgets documentation
     in the grid (0-based).
 
 
-Saving the widget state as a standalone dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Saving the dataset and settings as a standalone file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The "save" method allows exporting the current state of the widget 
-as a standalone JSON viewer that can be opened in the web app 
+as a standalone JSON file that can be opened in the web app 
 (or loaded with :func:`chemiscope.show_input`).
 
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save
@@ -86,7 +86,7 @@ image bytes (PNG formatted).
 
 .. note::
     These methods return ``asyncio.Future`` objects. Depending on the environment,
-    environments, you may be able to ``await`` directly in a cell to wait for the 
+    you may be able to ``await`` directly in a cell to wait for the 
     result. If ``await`` hangs in your environment, you can use 
     catch the ``get_*`` return value, and then in a separate cell get `.result()` 
     to access the actual return value.

@@ -295,7 +295,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             if pending and isinstance(pending, asyncio.Future):
                 data = content.get("data")
                 try:
-                    header, encoded = data.split(",", 1)
+                    _header, encoded = data.split(",", 1)
                     data = base64.b64decode(encoded)
                     pending.set_result(data)
                 except Exception as e:
@@ -314,7 +314,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 results = pending["results"]
 
                 try:
-                    header, encoded = data.split(",", 1)
+                    _header, encoded = data.split(",", 1)
                     decoded = base64.b64decode(encoded)
                     results[step] = decoded
                 except Exception as e:
