@@ -100,7 +100,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to the image data as bytes.
         """
 
-        if target == "map" and self._view_name == "StructureView":
+        if self._view_name == "StructureView":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
@@ -122,7 +122,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to the image data as bytes.
         """
 
-        if target == "structure" and self._view_name == "MapView":
+        if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot retrieve structure image: this widget is a map-only viewer."
             )
@@ -145,7 +145,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves when the file is written.
         """
 
-        if target == "map" and self._view_name == "StructureView":
+        if self._view_name == "StructureView":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
@@ -168,7 +168,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves when the file is written.
         """
 
-        if target == "structure" and self._view_name == "MapView":
+        if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
@@ -204,7 +204,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to a list of image data bytes.
         """
 
-        if target == "structure" and self._view_name == "MapView":
+        if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
@@ -237,7 +237,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             raise ValueError("indices and paths must have the same length")
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
-        if target == "structure" and self._view_name == "MapView":
+        if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
