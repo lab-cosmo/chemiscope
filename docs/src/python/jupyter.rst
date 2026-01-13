@@ -88,7 +88,7 @@ image bytes (PNG formatted).
     These methods return ``asyncio.Future`` objects. Depending on the environment,
     environments, you may be able to ``await`` directly in a cell to wait for the 
     result. If ``await`` hangs in your environment, you can use 
-    catch the ``get_*`` return value, and then in a separate cell get `.result()` 
+    the ``get_*`` return value, and then in a separate cell get `.result()` 
     to access the actual return value.
 
 Basic usage example:
