@@ -320,7 +320,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 results = pending["results"]
 
                 try:
-                    header, encoded = data.split(",", 1)
+                    _header, encoded = data.split(",", 1)
                     decoded = base64.b64decode(encoded)
                     results[step] = decoded
                 except Exception as e:
