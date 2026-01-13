@@ -282,7 +282,7 @@ export class PropertiesMap {
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
     /// Saved camera state for 3D plot
-    private _cameraState: CameraState | undefined;
+    private _cameraState?: CameraState;
 
     /**
      * LOD (Level of Detail) Configuration
