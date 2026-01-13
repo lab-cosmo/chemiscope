@@ -48,7 +48,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
-        
+
         self._request_counter = itertools.count()
         self._pending_requests = {}
 
@@ -219,6 +219,16 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
     def _request_screenshot(self, target):
         request_id = next(self._request_counter)
 
+        if target == "map" and self._view_name == "StructureView":
+            raise RuntimeError(
+                "Cannot save map image: this widget is a structure-only viewer."
+            )
+
+        if target == "structure" and self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
+
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         self._pending_requests[request_id] = future
@@ -232,6 +242,11 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             f.write(data)
 
     async def _process_structure_sequence(self, indices, settings=None):
+        if self._view_name == "MapView":
+            raise RuntimeError(
+                "Cannot save structure sequence: this widget is a map-only viewer."
+            )
+
         request_id = next(self._request_counter)
 
         loop = asyncio.get_running_loop()
