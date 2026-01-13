@@ -66,7 +66,7 @@ Saving the dataset and settings as a standalone file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The "save" method allows exporting the current state of the widget 
-as a standalone JSON viewer that can be opened in the web app 
+as a standalone JSON file that can be opened in the web app 
 (or loaded with :func:`chemiscope.show_input`).
 
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save
