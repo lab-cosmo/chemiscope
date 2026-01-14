@@ -14,7 +14,7 @@ import { Environment, Settings, Structure } from '../dataset';
 
 import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
 
-import { CameraState, ViewState, cameraToView, viewToCamera } from '../utils/camera';
+import { ViewState, cameraToView, viewToCamera } from '../utils/camera';
 
 import { StructureOptions } from './options';
 
