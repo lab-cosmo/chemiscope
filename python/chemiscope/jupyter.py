@@ -314,6 +314,39 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
     def _handle_js_msg(self, _, content, buffers):
         """Handle custom messages sent from the JS widget.
+        The pattern is that a message is sent from another
+        function, and the response is collected here, handling
+        a successful response (`msg_type="base-mst-result"`)
+        or and error (`msg_type="base-mst-result"`). See below
+        for a brief explanation of the different types of messages.
+
+        Currently implemented messages:
+
+        * "load-structure": Initiated on the JS side, used to
+            retrieve an atomic geometry from disk or from a
+            python-side cache.
+
+            {"type": "load-structure",
+             "requestId": int,
+             "data": "filename-or-id"}
+
+        * "save-image": Initiated on the Python side, used to get
+            a snapshot of the map or of the active structure
+
+            {"type": "save-image",
+             "requestId": int,
+             "target": "map" | "structure"}
+
+        * "save-structure-sequence": Initiated on the Python side, used to
+            generate snapshots for several atomic configurations.
+            Should provide indices (in the same format as for `selected_ids`)
+            and optionally structure settings as a list of dicts.
+
+            {"type": "save-structure-sequence",
+             "requestId": int,
+             "indices": [{"structure": id1[, "atom": id2]}, ...],
+             ["settings": [settings_1_dict, ...]]
+             }
 
         Expected messages:
 
