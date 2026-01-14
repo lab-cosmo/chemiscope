@@ -1030,6 +1030,7 @@ export class PropertiesMap {
             this._options.z.min.value = NaN;
             this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
+            
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
@@ -1043,17 +1044,31 @@ export class PropertiesMap {
                 }
             }
 
-            // LOD: Z changed, recompute binning
+            // LOD: Z changed, compute a first downsampling if necessary
             this._computeLOD();
-            void this._restyleLOD();
 
-            this._relayout({
-                'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                'scene.zaxis.autorange': true,
-            } as unknown as Layout);
-            if (this._is3D()) {
-                this._setScaleStep(this._getBounds().z as number[], 'z');
-            }
+            // This has to run asynchronously to ensure that the z axis is scaled properly
+            void (async () => {
+                await this._restyleLOD();
+                                
+                await Plotly.relayout(this._plot, {
+                    'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                    'scene.zaxis.autorange': true,
+                } as unknown as Layout).then(
+                    // The zrange is now known, and we can trigger a proper subsampling
+                    () => {                        
+                        const zRange=this._plot._fullLayout.scene.zaxis.range;
+                        this._options.z.min.value = zRange[0];
+                        this._options.z.max.value = zRange[1];
+                        this._computeLOD(this._getBounds());
+                        this._restyleLOD();
+                    }
+                );
+
+                if (this._is3D()) {
+                    this._setScaleStep(this._getBounds().z as number[], 'z');
+                }
+            })();
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1437,9 +1452,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void (async () => {
-                await this._afterplot();
-            })();
+            void this._afterplot();
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
@@ -1449,9 +1462,7 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            void (async () => {
-                await this._resetToGlobalView();
-            })();
+            void this._resetToGlobalView();
             return false;
         });
 
@@ -1559,7 +1570,7 @@ export class PropertiesMap {
     private _getAxisRange = (
         min: number,
         max: number,
-        _axisName: string
+        axisName: string
     ): [number | undefined, number | undefined] => {
         const minProvided = !isNaN(min);
         const maxProvided = !isNaN(max);
@@ -1570,7 +1581,7 @@ export class PropertiesMap {
                 return [min, max];
             }
             this.warnings.sendMessage(
-                `The inserted min and max values in ${_axisName} are such that min > max!` +
+                `The inserted min and max values in ${axisName} are such that min > max!` +
                     `The default values will be used.`
             );
         }
@@ -1922,6 +1933,7 @@ export class PropertiesMap {
         y: [number, number];
         z?: [number, number];
     }): void {
+        console.log("computing LOD", bounds);
         // check if LOD is enabled
         if (!this._options.useLOD.value) {
             this._lodIndices = null;
@@ -1950,25 +1962,41 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
+        // compute a sparse "global" grid of points to show "something" 
+        // when we rotate, pan or zoom
+        const lodIndices = computeLODIndices(
+            xValues,
+            yValues,
+            zValues,
+            undefined,
+            PropertiesMap.LOD_THRESHOLD / 10
+        );
+        console.log("base points ", lodIndices.length);
         if (is3D && zValues && this._options.camera.value && bounds) {
-            this._lodIndices = computeScreenSpaceLOD(
+            console.log("screen space LOD");
+            
+            lodIndices.push(...computeScreenSpaceLOD(
                 xValues,
                 yValues,
                 zValues,
                 this._options.camera.value,
                 bounds,
                 PropertiesMap.LOD_THRESHOLD
-            );
+            ));
         } else {
-            // 2. Delegate Calculation to External Function
-            this._lodIndices = computeLODIndices(
+            console.log("standard LOD");
+            lodIndices.push(...computeLODIndices(
                 xValues,
                 yValues,
                 zValues,
                 bounds,
                 PropertiesMap.LOD_THRESHOLD
-            );
+            ));
         }
+
+        console.log("n points ", lodIndices.length);
+        // remove duplicates, and sort
+        this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
 
     /**
@@ -2053,6 +2081,7 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private async _afterplot(): Promise<void> {
+        console.log("afterplot ", this._updatingLOD);
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;

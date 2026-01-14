@@ -22,9 +22,19 @@ export function computeScreenSpaceLOD(
     yValues: number[],
     zValues: number[],
     camera: CameraState,
-    bounds: { x: [number, number]; y: [number, number]; z?: [number, number] },
+    bounds?: { x: [number, number]; y: [number, number]; z?: [number, number] },
     threshLOD: number = 50000
 ): number[] {
+
+    if (bounds === undefined) {
+        // STATIC: Use the full data range (calculate from data)
+        const xRange = arrayMaxMin(xValues);
+        const yRange = arrayMaxMin(yValues);
+        const zRange = arrayMaxMin(zValues);
+
+        bounds = {x: [xRange.min, xRange.max], y: [yRange.min, yRange.max], z: [zRange.min, zRange.max]}
+    }
+
     const nPoints = xValues.length;
     console.log(camera, bounds);
     // Calculate View Matrix once
