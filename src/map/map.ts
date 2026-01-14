@@ -620,6 +620,36 @@ export class PropertiesMap {
     }
 
     /**
+     * Export the plot as a PNG data URI, hiding the "selected" trace (index 1)
+     * during the export.
+     */
+    public async exportPNG(): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        const fullLayout = (this._plot as any)._fullLayout as Layout;
+        const width = Math.max(fullLayout.width, 600);
+        const ratio = fullLayout.height / fullLayout.width;
+        const height = width * ratio;
+
+        const opts: Plotly.ToImgopts = {
+            format: 'png',
+            width: width,
+            height: height,
+            scale: 3,
+        };
+
+        // Hide the "selected" trace (index 1) for the export.
+        try {
+            await Plotly.restyle(this._plot, { visible: false }, [1]);
+            const dataUrl = await Plotly.toImage(this._plot, opts);
+            await Plotly.restyle(this._plot, { visible: true }, [1]);
+            return dataUrl;
+        } catch (e) {
+            void Plotly.restyle(this._plot, { visible: true }, [1]);
+            throw e;
+        }
+    }
+
+    /**
      * Build the traces from the options data
      */
     private _getTraces(): Plotly.Data[] {

@@ -43,7 +43,9 @@ def fetch_dataset(filename, base_url, local_path=""):
 
 
 fetch_dataset(
-    "mace-off-tsne-qm9.json.gz", "https://zenodo.org/records/12748925/files/", "data/"
+    "mace-off-tsne-qm9.json.gz",
+    "https://huggingface.co/datasets/lab-cosmo/chemiscope-visualization/resolve/main/",
+    "data/",
 )
 
 # %%

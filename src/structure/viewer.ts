@@ -824,6 +824,7 @@ export class MoleculeViewer {
      * Returns a PNG screenshot of the viewer as a URI string
      */
     public exportPNG(): string {
+        this._viewer.render();
         return this._viewer.pngURI();
     }
 
