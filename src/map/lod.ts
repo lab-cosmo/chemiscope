@@ -4,7 +4,7 @@
  */
 
 import { arrayMaxMin } from '../utils';
-import { CameraState, getLookAtMatrix, projectPoints } from '../utils/camera';
+import { CameraState, projectPoints } from '../utils/camera';
 
 /**
  * Computes the subset of points to display based on 2D screen-space projection.
@@ -26,8 +26,8 @@ export function computeScreenSpaceLOD(
     threshLOD: number = 50000
 ): number[] {
     const nPoints = xValues.length;
+    console.log(camera, bounds);
     // Calculate View Matrix once
-    const viewMatrix = getLookAtMatrix(camera);
     const projections = projectPoints(xValues, yValues, zValues, camera, bounds);
 
     // Grid resolution: we want roughly threshLOD points on screen.
@@ -35,7 +35,7 @@ export function computeScreenSpaceLOD(
     const grid = new Map<string, number>();
 
     // this is the range we use to bin points
-    const viewSize = 2.0;    
+    const viewSize = 2.0;
     const uStep = viewSize / bins;
     const vStep = viewSize / bins;
 
@@ -63,7 +63,7 @@ export function computeScreenSpaceLOD(
 
     const indices = Array.from(grid.values());
     indices.sort((a, b) => a - b);
-    console.log("selected pooints: ", indices.length)
+    console.log('selected pooints: ', indices.length);
     return indices;
 }
 

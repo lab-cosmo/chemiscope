@@ -9,7 +9,6 @@ import assert from 'assert';
  * @module utils
  */
 
-import { Camera } from '3dmol/build/types/WebGL';
 import { Vector3D, norm } from '../structure/linalg';
 
 export interface CameraState {
@@ -195,9 +194,8 @@ export type Matrix4 = [
     number,
     number,
     number,
-    number
+    number,
 ];
-
 
 /**
  * Computes the View Matrix from Camera State.
@@ -240,12 +238,7 @@ export function getLookAtMatrix(camera: CameraState): Matrix4 {
     const dotZ = -(z0 * eye.x + z1 * eye.y + z2 * eye.z);
 
     // Matrix 4x4
-    return [
-        x0, y0, z0, 0,
-        x1, y1, z1, 0,
-        x2, y2, z2, 0,
-        dotX, dotY, dotZ, 1
-    ];
+    return [x0, y0, z0, 0, x1, y1, z1, 0, x2, y2, z2, 0, dotX, dotY, dotZ, 1];
 }
 
 /**
@@ -263,7 +256,7 @@ export function projectPoints(
         z?: [number, number];
     }
 ): { x: number[]; y: number[] } {
-    assert(bounds.z !== undefined)
+    assert(bounds.z !== undefined);
 
     const viewMatrix = getLookAtMatrix(camera);
     const zoomFactor = camera.zoom;
@@ -278,23 +271,21 @@ export function projectPoints(
 
     const xProj: number[] = [];
     const yProj: number[] = [];
-    
+
     for (let i = 0; i < xValues.length; i++) {
         // Scale and refer to camera center
-        const x = (xValues[i]-mx)/dx-camera.center.x;
-        const y = (yValues[i]-my)/dy-camera.center.y;
-        const z = (zValues[i]-mz)/dz-camera.center.z;
+        const x = (xValues[i] - mx) / dx - camera.center.x;
+        const y = (yValues[i] - my) / dy - camera.center.y;
+        const z = (zValues[i] - mz) / dz - camera.center.z;
 
         // Apply view matrix (vZ is not needed)
-        const vX =
-            viewMatrix[0] * x + viewMatrix[4] * y + viewMatrix[8] * z + viewMatrix[12];
-        const vY =
-            viewMatrix[1] * x + viewMatrix[5] * y + viewMatrix[9] * z + viewMatrix[13];
+        const vX = viewMatrix[0] * x + viewMatrix[4] * y + viewMatrix[8] * z + viewMatrix[12];
+        const vY = viewMatrix[1] * x + viewMatrix[5] * y + viewMatrix[9] * z + viewMatrix[13];
 
         xProj.push(vX);
         yProj.push(vY);
     }
-    
+
     return { x: xProj, y: yProj };
 }
 

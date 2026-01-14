@@ -282,8 +282,6 @@ export class PropertiesMap {
     private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
-    /// Saved camera state for 3D plot
-    private _cameraState: CameraState | undefined;
 
     /**
      * LOD (Level of Detail) Configuration
@@ -291,7 +289,7 @@ export class PropertiesMap {
      * Speeds up rendering of large datasets by downsampling points
      * when zoomed out.
      */
-    private static readonly LOD_THRESHOLD = 40000;
+    private static readonly LOD_THRESHOLD = 1000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
@@ -370,10 +368,6 @@ export class PropertiesMap {
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
-
-        if (settings.camera) {
-            this._cameraState = settings.camera as unknown as CameraState;
-        }
 
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
@@ -600,9 +594,6 @@ export class PropertiesMap {
      */
     public saveSettings(): Settings {
         const settings = this._options.saveSettings();
-        if (this._cameraState) {
-            settings.camera = this._cameraState as unknown as Settings;
-        }
         return settings;
     }
 
@@ -1959,13 +1950,13 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        if (is3D && zValues && this._cameraState && bounds) {
+        if (is3D && zValues && this._options.camera.value && bounds) {
             this._lodIndices = computeScreenSpaceLOD(
                 xValues,
                 yValues,
                 zValues,
-                this._cameraState,
-                bounds as { x: [number, number]; y: [number, number]; z: [number, number] },
+                this._options.camera.value,
+                bounds,
                 PropertiesMap.LOD_THRESHOLD
             );
         } else {
