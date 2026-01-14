@@ -289,7 +289,7 @@ export class PropertiesMap {
      * Speeds up rendering of large datasets by downsampling points
      * when zoomed out.
      */
-    private static readonly LOD_THRESHOLD = 1000;
+    private static readonly LOD_THRESHOLD = 50000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
@@ -358,13 +358,11 @@ export class PropertiesMap {
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
-        const optionsSettings = { ...settings };
-        delete optionsSettings.camera;
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            optionsSettings,
+            settings,
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
@@ -593,8 +591,7 @@ export class PropertiesMap {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        const settings = this._options.saveSettings();
-        return settings;
+        return this._options.saveSettings();
     }
 
     /**
@@ -1456,8 +1453,16 @@ export class PropertiesMap {
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
+        let relayoutTimer: number;
         this._plot.on('plotly_relayout', () => {
-            void this._afterplot();
+            // adds a small delay to avoid too frequent re-calculation 
+            // of the subsampling
+            if (relayoutTimer) {
+                window.clearTimeout(relayoutTimer);
+            }
+            relayoutTimer = window.setTimeout(() => {
+                void this._afterplot();
+            }, 50);
         });
 
         // Handle double-click to reset view (global LOD)
@@ -1933,7 +1938,6 @@ export class PropertiesMap {
         y: [number, number];
         z?: [number, number];
     }): void {
-        console.log("computing LOD", bounds);
         // check if LOD is enabled
         if (!this._options.useLOD.value) {
             this._lodIndices = null;
@@ -1971,9 +1975,7 @@ export class PropertiesMap {
             undefined,
             PropertiesMap.LOD_THRESHOLD / 10
         );
-        console.log("base points ", lodIndices.length);
         if (is3D && zValues && this._options.camera.value && bounds) {
-            console.log("screen space LOD");
             
             lodIndices.push(...computeScreenSpaceLOD(
                 xValues,
@@ -1984,7 +1986,6 @@ export class PropertiesMap {
                 PropertiesMap.LOD_THRESHOLD
             ));
         } else {
-            console.log("standard LOD");
             lodIndices.push(...computeLODIndices(
                 xValues,
                 yValues,
@@ -1994,7 +1995,6 @@ export class PropertiesMap {
             ));
         }
 
-        console.log("n points ", lodIndices.length);
         // remove duplicates, and sort
         this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
@@ -2081,7 +2081,6 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private async _afterplot(): Promise<void> {
-        console.log("afterplot ", this._updatingLOD);
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;

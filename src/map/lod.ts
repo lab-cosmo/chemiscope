@@ -36,7 +36,6 @@ export function computeScreenSpaceLOD(
     }
 
     const nPoints = xValues.length;
-    console.log(camera, bounds);
     // Calculate View Matrix once
     const projections = projectPoints(xValues, yValues, zValues, camera, bounds);
 
@@ -73,7 +72,6 @@ export function computeScreenSpaceLOD(
 
     const indices = Array.from(grid.values());
     indices.sort((a, b) => a - b);
-    console.log('selected pooints: ', indices.length);
     return indices;
 }
 
