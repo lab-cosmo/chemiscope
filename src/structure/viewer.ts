@@ -374,13 +374,9 @@ export class MoleculeViewer {
 
         // Detect camera changes to update settings
         const checkCameraChange = () => {
-            if (this._settingChangeCallbacks.length > 0) {
-                const view = this._viewer.getView() as ViewState;
-                const camera = viewToCamera(view);
-                for (const callback of this._settingChangeCallbacks) {
-                    callback(['camera'], camera);
-                }
-            }
+            const view = this._viewer.getView() as ViewState;
+            const camera = viewToCamera(view);
+            this._options.camera.setValue(camera, 'DOM');
         };
 
         this._root.addEventListener('mouseup', checkCameraChange);
@@ -783,15 +779,7 @@ export class MoleculeViewer {
         // prevent multiple (time consuming) style updates during application
         this._disableStyleUpdates = true;
 
-        // Remove camera from settings passed to options to avoid "unknown setting" warning
-        const optionsSettings = { ...settings };
-        delete optionsSettings.camera;
-        this._options.applySettings(optionsSettings);
-
-        if (settings.camera) {
-            const view = cameraToView(settings.camera as unknown as CameraState);
-            this._viewer.setView(view);
-        }
+        this._options.applySettings(settings);
 
         this._disableStyleUpdates = false;
         this._updateStyle();
@@ -802,10 +790,7 @@ export class MoleculeViewer {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        const settings = this._options.saveSettings();
-        const view = this._viewer.getView() as ViewState;
-        settings.camera = viewToCamera(view) as unknown as Settings;
-        return settings;
+        return this._options.saveSettings();
     }
 
     /**
@@ -1000,6 +985,12 @@ export class MoleculeViewer {
             }
 
             this._viewer.render();
+        });
+
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined) {
+                this._viewer.setView(cameraToView(camera));
+            }
         });
 
         // Deal with activation/de-activation of environments

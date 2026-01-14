@@ -229,7 +229,7 @@ export class PropertiesMap {
      * Get the current camera state of the map
      */
     public getCameraState(): CameraState | undefined {
-        return this._cameraState;
+        return this._options.camera.value;
     }
 
     /**
@@ -237,7 +237,7 @@ export class PropertiesMap {
      * @param state the new camera state
      */
     public setCameraState(state: CameraState): void {
-        this._cameraState = state;
+        this._options.camera.value = state;
         if (this._is3D()) {
             const update = cameraToPlotly(state);
             this._relayout({
@@ -282,8 +282,6 @@ export class PropertiesMap {
     private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
-    /// Saved camera state for 3D plot
-    private _cameraState?: CameraState;
 
     /**
      * LOD (Level of Detail) Configuration
@@ -360,20 +358,14 @@ export class PropertiesMap {
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
-        const optionsSettings = { ...settings };
-        delete optionsSettings.camera;
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            optionsSettings,
+            settings,
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
-
-        if (settings.camera) {
-            this._cameraState = settings.camera as unknown as CameraState;
-        }
 
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
@@ -587,9 +579,7 @@ export class PropertiesMap {
      * Apply saved settings to the map.
      */
     public applySettings(settings: Settings): void {
-        const optionsSettings = { ...settings };
-        delete optionsSettings.camera;
-        this._options.applySettings(optionsSettings);
+        this._options.applySettings(settings);
 
         if (settings.camera) {
             this.setCameraState(settings.camera as unknown as CameraState);
@@ -601,11 +591,7 @@ export class PropertiesMap {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        const settings = this._options.saveSettings();
-        if (this._cameraState) {
-            settings.camera = this._cameraState as unknown as Settings;
-        }
-        return settings;
+        return this._options.saveSettings();
     }
 
     /**
@@ -1545,8 +1531,8 @@ export class PropertiesMap {
             );
             layout.dragmode = 'orbit';
 
-            if (this._cameraState) {
-                const update = cameraToPlotly(this._cameraState);
+            if (this._options.camera.value) {
+                const update = cameraToPlotly(this._options.camera.value);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 const scene = (layout as any).scene;
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -2058,7 +2044,7 @@ export class PropertiesMap {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const scene = (this._plot as any)._fullLayout.scene;
             if (scene) {
-                this._cameraState = plotlyToCamera({
+                this._options.camera.value = plotlyToCamera({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     camera: scene.camera,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

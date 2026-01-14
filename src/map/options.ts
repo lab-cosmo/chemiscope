@@ -8,9 +8,10 @@ import assert from 'assert';
 import Collapse from '../collapse';
 import Modal from '../modal';
 import { Settings } from '../dataset';
-import { HTMLOption, OptionsGroup } from '../options';
+import { HTMLOption, JSOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
+import { CameraState } from '../utils/camera';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 
@@ -83,6 +84,7 @@ export class MapOptions extends OptionsGroup {
     public markerOutline: HTMLOption<'boolean'>;
     public joinPoints: HTMLOption<'boolean'>;
     public useLOD: HTMLOption<'boolean'>;
+    public camera: JSOption<CameraState | undefined>;
 
     /// The HTML button to open the settings modal
     private _openModal: HTMLElement;
@@ -160,6 +162,7 @@ export class MapOptions extends OptionsGroup {
         this.joinPoints = new HTMLOption('boolean', false);
         // adaptive resolution for large datasets
         this.useLOD = new HTMLOption('boolean', true);
+        this.camera = new JSOption<CameraState | undefined>(undefined);
 
         // Setup default values
         this.x.property.value = propertiesNames[0];

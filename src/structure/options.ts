@@ -8,9 +8,10 @@ import assert from 'assert';
 import Collapse from '../collapse';
 import Modal from '../modal';
 import { Settings } from '../dataset';
-import { HTMLOption, OptionsGroup } from '../options';
+import { HTMLOption, JSOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback, Warnings, getByID, makeDraggable } from '../utils';
+import { CameraState } from '../utils/camera';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';
@@ -66,6 +67,7 @@ export class StructureOptions extends OptionsGroup {
     };
     // options related to atom labeling
     public labelsProperty: HTMLOption<'string'>;
+    public camera: JSOption<CameraState | undefined>;
 
     /// The Modal instance
     private _modal: Modal;
@@ -143,6 +145,7 @@ export class StructureOptions extends OptionsGroup {
         this.color.palette.validate = optionValidator(Object.keys(COLOR_MAPS), 'palette');
 
         this.labelsProperty = new HTMLOption('string', 'element');
+        this.camera = new JSOption<CameraState | undefined>(undefined);
 
         // validate atom properties for labels
         if (propertiesName.includes('element')) {
