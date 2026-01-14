@@ -49,7 +49,10 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         # timeout for warning messages (ms). 0 to make persistent, -1 to disable
         self.warning_timeout = warning_timeout
 
+<<<<<<< HEAD
         self._request_counter = itertools.count()
+=======
+>>>>>>> adaptive_3d
         self._pending_requests = {}
 
         # hold structures on the python side to save js memory
@@ -99,12 +102,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         :return: A Future that resolves to the image data as bytes.
         """
+<<<<<<< HEAD
 
         if self._view_name == "StructureView":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
 
+=======
+>>>>>>> adaptive_3d
         return self._request_screenshot("map")
 
     def get_structure_image(self):
@@ -121,12 +127,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
 
         :return: A Future that resolves to the image data as bytes.
         """
+<<<<<<< HEAD
 
         if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot retrieve structure image: this widget is a map-only viewer."
             )
 
+=======
+>>>>>>> adaptive_3d
         return self._request_screenshot("structure")
 
     def save_map_image(self, path):
@@ -144,12 +153,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :param str path: Path where the image will be saved.
         :return: A Future that resolves when the file is written.
         """
+<<<<<<< HEAD
 
         if self._view_name == "StructureView":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
 
+=======
+>>>>>>> adaptive_3d
         return asyncio.ensure_future(self._save_image_to_file(path, "map"))
 
     def save_structure_image(self, path):
@@ -167,12 +179,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :param str path: Path where the image will be saved.
         :return: A Future that resolves when the file is written.
         """
+<<<<<<< HEAD
 
         if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
 
+=======
+>>>>>>> adaptive_3d
         return asyncio.ensure_future(self._save_image_to_file(path, "structure"))
 
     def get_structure_sequence(self, indices, settings=None):
@@ -203,12 +218,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             for each frame.
         :return: A Future that resolves to a list of image data bytes.
         """
+<<<<<<< HEAD
 
         if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
 
+=======
+>>>>>>> adaptive_3d
         return asyncio.ensure_future(
             self._process_structure_sequence(indices, settings)
         )
@@ -237,6 +255,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             raise ValueError("indices and paths must have the same length")
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
+<<<<<<< HEAD
         if self._view_name == "MapView":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
@@ -245,13 +264,27 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         async def _save_impl():
             data_list = await self.get_structure_sequence(indices, settings)
             for path, data in zip(paths, data_list, strict=True):
+=======
+
+        async def _save_impl():
+            data_list = await self.get_structure_sequence(indices, settings)
+            for path, data in zip(paths, data_list):
+>>>>>>> adaptive_3d
                 with open(path, "wb") as f:
                     f.write(data)
 
         return asyncio.ensure_future(_save_impl())
 
     def _request_screenshot(self, target):
+<<<<<<< HEAD
         request_id = next(self._request_counter)
+=======
+        import time
+
+        request_id = int(time.time() * 1000)
+        while request_id in self._pending_requests:
+            request_id += 1
+>>>>>>> adaptive_3d
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -266,7 +299,15 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             f.write(data)
 
     async def _process_structure_sequence(self, indices, settings=None):
+<<<<<<< HEAD
         request_id = next(self._request_counter)
+=======
+        import time
+
+        request_id = int(time.time() * 1000)
+        while request_id in self._pending_requests:
+            request_id += 1
+>>>>>>> adaptive_3d
 
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -362,7 +403,11 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             if pending and isinstance(pending, asyncio.Future):
                 data = content.get("data")
                 try:
+<<<<<<< HEAD
                     _header, encoded = data.split(",", 1)
+=======
+                    header, encoded = data.split(",", 1)
+>>>>>>> adaptive_3d
                     data = base64.b64decode(encoded)
                     pending.set_result(data)
                 except Exception as e:
@@ -381,7 +426,11 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
                 results = pending["results"]
 
                 try:
+<<<<<<< HEAD
                     _header, encoded = data.split(",", 1)
+=======
+                    header, encoded = data.split(",", 1)
+>>>>>>> adaptive_3d
                     decoded = base64.b64decode(encoded)
                     results[step] = decoded
                 except Exception as e:

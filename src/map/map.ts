@@ -20,7 +20,7 @@ import { enumerate, getElement, getFirstKey } from '../utils';
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices } from './lod';
+import { computeLODIndices, computeScreenSpaceLOD } from './lod';
 import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
@@ -282,6 +282,8 @@ export class PropertiesMap {
     private _options: MapOptions;
     /// Button used to reset the range of color axis
     private _colorReset: HTMLButtonElement;
+    /// Saved camera state for 3D plot
+    private _cameraState: CameraState | undefined;
 
     /**
      * LOD (Level of Detail) Configuration
@@ -289,7 +291,7 @@ export class PropertiesMap {
      * Speeds up rendering of large datasets by downsampling points
      * when zoomed out.
      */
-    private static readonly LOD_THRESHOLD = 50000;
+    private static readonly LOD_THRESHOLD = 40000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
@@ -358,14 +360,20 @@ export class PropertiesMap {
 
         // Initialize options used in the modal
         const currentProperties = this._getCurrentProperties();
+        const optionsSettings = { ...settings };
+        delete optionsSettings.camera;
         this._options = new MapOptions(
             this._root,
             currentProperties,
             (rect) => this.positionSettingsModal(rect),
-            settings,
+            optionsSettings,
             this.warnings
         );
         this._colorReset = this._options.getModalElement<HTMLButtonElement>('map-color-reset');
+
+        if (settings.camera) {
+            this._cameraState = settings.camera as unknown as CameraState;
+        }
 
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
@@ -591,7 +599,11 @@ export class PropertiesMap {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        return this._options.saveSettings();
+        const settings = this._options.saveSettings();
+        if (this._cameraState) {
+            settings.camera = this._cameraState as unknown as Settings;
+        }
+        return settings;
     }
 
     /**
@@ -1434,7 +1446,9 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void this._afterplot();
+            void (async () => {
+                await this._afterplot();
+            })();
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
@@ -1444,7 +1458,9 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            void this._resetToGlobalView();
+            void (async () => {
+                await this._resetToGlobalView();
+            })();
             return false;
         });
 
@@ -1552,7 +1568,7 @@ export class PropertiesMap {
     private _getAxisRange = (
         min: number,
         max: number,
-        axisName: string
+        _axisName: string
     ): [number | undefined, number | undefined] => {
         const minProvided = !isNaN(min);
         const maxProvided = !isNaN(max);
@@ -1563,7 +1579,7 @@ export class PropertiesMap {
                 return [min, max];
             }
             this.warnings.sendMessage(
-                `The inserted min and max values in ${axisName} are such that min > max!` +
+                `The inserted min and max values in ${_axisName} are such that min > max!` +
                     `The default values will be used.`
             );
         }
@@ -1943,14 +1959,25 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // 2. Delegate Calculation to External Function
-        this._lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
-            bounds,
-            PropertiesMap.LOD_THRESHOLD
-        );
+        if (is3D && zValues && this._cameraState && bounds) {
+            this._lodIndices = computeScreenSpaceLOD(
+                xValues,
+                yValues,
+                zValues,
+                this._cameraState,
+                bounds as { x: [number, number]; y: [number, number]; z: [number, number] },
+                PropertiesMap.LOD_THRESHOLD
+            );
+        } else {
+            // 2. Delegate Calculation to External Function
+            this._lodIndices = computeLODIndices(
+                xValues,
+                yValues,
+                zValues,
+                bounds,
+                PropertiesMap.LOD_THRESHOLD
+            );
+        }
     }
 
     /**

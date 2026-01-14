@@ -790,7 +790,10 @@ export class MoleculeViewer {
      * {@link applySettings} or saved to JSON.
      */
     public saveSettings(): Settings {
-        return this._options.saveSettings();
+        const settings = this._options.saveSettings();
+        const view = this._viewer.getView() as ViewState;
+        settings.camera = viewToCamera(view) as unknown as Settings;
+        return settings;
     }
 
     /**
