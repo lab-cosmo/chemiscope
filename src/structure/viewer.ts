@@ -14,6 +14,8 @@ import { Environment, Settings, Structure } from '../dataset';
 
 import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
 
+import { ViewState, cameraToView, viewToCamera } from '../utils/camera';
+
 import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
@@ -369,6 +371,21 @@ export class MoleculeViewer {
             },
             { capture: true }
         );
+
+        // Detect camera changes to update settings
+        const checkCameraChange = () => {
+            const view = this._viewer.getView() as ViewState;
+            const camera = viewToCamera(view);
+            this._options.camera.setValue(camera, 'DOM');
+        };
+
+        this._root.addEventListener('mouseup', checkCameraChange);
+        this._root.addEventListener('touchend', checkCameraChange);
+        this._root.addEventListener('wheel', (e) => {
+            if (!e.isTrusted) {
+                checkCameraChange();
+            }
+        });
 
         window.addEventListener('resize', () => this.resize());
         // waits for loading of widget, then triggers a redraw. fixes some glitches on the Jupyter side
@@ -761,7 +778,9 @@ export class MoleculeViewer {
     public applySettings(settings: Settings): void {
         // prevent multiple (time consuming) style updates during application
         this._disableStyleUpdates = true;
+
         this._options.applySettings(settings);
+
         this._disableStyleUpdates = false;
         this._updateStyle();
     }
@@ -966,6 +985,12 @@ export class MoleculeViewer {
             }
 
             this._viewer.render();
+        });
+
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined) {
+                this._viewer.setView(cameraToView(camera));
+            }
         });
 
         // Deal with activation/de-activation of environments

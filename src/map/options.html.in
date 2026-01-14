@@ -6,8 +6,13 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
          </div>
          <div class="modal-body">
-            <h5 class="chsp-settings-section-title">Data</h5>
             <div class="chsp-map-options">
+               <h5 class="chsp-settings-section-title mb-0">Data</h5>
+
+               <button class="btn btn-sm btn-outline-secondary chsp-extra-options-btn" type="button" id="map-range-reset">
+                  reset ranges
+               </button>
+
                <div class="input-group input-group-sm">
                   <label class="input-group-text" for="map-x-property">x axis:</label>
                   <select id="map-x-property" class="form-select"></select>
@@ -136,8 +141,7 @@
                   more options
                </button>
 
-               <div class="collapse" id="map-color-extra" style="grid-column: auto / span 2; margin-top: 0.3em">
-                  <div class="chsp-map-extra-options">
+               <div class="collapse chsp-map-extra-options" id="map-color-extra" style="grid-column: auto / span 2;">
                      <div class="input-group input-group-sm">
                         <label class="input-group-text" for="map-color-transform">transform:</label>
                         <select id="map-color-transform" class="form-select" disabled>
@@ -157,21 +161,18 @@
                         <label id="map-color-max-label" class="input-group-text" for="map-color-max"> max: </label>
                         <input id="map-color-max" class="form-control" type="number" step="any" />
                      </div>
-                  </div>
-
-                  <div class="chsp-map-extra-options" style="grid-template-columns: 1fr 1fr">
+                  
                      <div class="input-group input-group-sm">
                         <label class="input-group-text" for="map-color-palette"> palette: </label>
                         <select id="map-color-palette" class="form-select"></select>
                      </div>
 
-                     <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%">reset min/max</button>
-                  </div>
-
-                  <div class="input-group input-group-sm" style="grid-column: auto / span 2">
-                     <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
-                     <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
-                  </div>
+                     <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%; grid-column: auto / span 2">reset min/max</button>
+                  
+                     <div class="input-group input-group-sm" style="grid-column: auto / span 3">
+                        <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
+                        <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
+                     </div>
                </div>
 
                <div class="input-group input-group-sm">

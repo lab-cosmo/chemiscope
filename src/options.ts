@@ -154,8 +154,14 @@ export class HTMLOption<T extends OptionsType> {
                     option.selected = values.includes(option.value);
                 }
             } else {
+                let value = this._value;
+                // Special handling for NaN in number inputs to avoid browser warnings
+                if (typeof value === 'number' && Number.isNaN(value)) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    value = '' as any;
+                }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (bound.element as any)[bound.attribute] = this._value;
+                (bound.element as any)[bound.attribute] = value;
             }
         }
 
@@ -208,8 +214,14 @@ export class HTMLOption<T extends OptionsType> {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
                 this._update((event.target as any)[attribute].toString(), 'DOM');
             };
+            let value = this._value;
+            // Special handling for NaN in number inputs to avoid browser warnings
+            if (typeof value === 'number' && Number.isNaN(value)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                value = '' as any;
+            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (element as any)[attribute] = this._value;
+            (element as any)[attribute] = value;
         }
         element.addEventListener('change', listener);
 
@@ -272,10 +284,47 @@ export class HTMLOption<T extends OptionsType> {
 }
 
 /**
+ * A setting option that is not bound to any HTML element, but can be saved and
+ * loaded with the rest of the settings.
+ */
+export class JSOption<T> {
+    /** Callback to validate the new value before propagating changes. */
+    public validate: (value: T) => void;
+    /** Additional callbacks to run whenever the setting value changes */
+    public onchange: Array<(value: T, origin: OptionModificationOrigin) => void>;
+
+    private _value: T;
+
+    constructor(value: T) {
+        this._value = value;
+        this.validate = () => {};
+        this.onchange = [];
+        Object.preventExtensions(this);
+    }
+
+    public get value(): T {
+        return this._value;
+    }
+
+    public set value(v: T) {
+        this.setValue(v, 'JS');
+    }
+
+    public setValue(v: T, origin: OptionModificationOrigin) {
+        // We can not check for equality here since T can be an object/array
+        this.validate(v);
+        this._value = v;
+        for (const callback of this.onchange) {
+            callback(this._value, origin);
+        }
+    }
+}
+
+/**
  * Callback function to use with {@link OptionsGroup.foreachSetting}
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type OptionsCallback = (keys: string[], setting: HTMLOption<any>) => void;
+export type OptionsCallback = (keys: string[], setting: HTMLOption<any> | JSOption<any>) => void;
 
 /**
  * Abstract base class to use for a group of settings.
@@ -463,7 +512,7 @@ function foreachOptionImpl(
 
         const currentKeys = keys.concat([key]);
         const element = options[key];
-        if (element instanceof HTMLOption) {
+        if (element instanceof HTMLOption || element instanceof JSOption) {
             callback(currentKeys, element);
         } else if (typeof element === 'object' && element !== null) {
             foreachOptionImpl(element as Record<string, unknown>, callback, currentKeys);

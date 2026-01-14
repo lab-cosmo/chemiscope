@@ -13,6 +13,7 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
+import { CameraState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
@@ -90,6 +91,7 @@ const DEFAULT_LAYOUT = {
         showscale: true,
     },
     hovermode: 'closest',
+    dragmode: 'zoom',
     legend: {
         itemclick: false,
         itemdoubleclick: false,
@@ -111,14 +113,20 @@ const DEFAULT_LAYOUT = {
         },
         xaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
         },
         yaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
         },
         zaxis: {
             showspikes: false,
+            autorange: true,
+            range: undefined as (number | undefined)[] | undefined,
             title: { text: '' as undefined | string },
         },
     },
@@ -216,6 +224,28 @@ export class PropertiesMap {
      * @param indexes index of the environment the new active marker is showing
      */
     public activeChanged: (guid: GUID, indexes: Indexes) => void;
+
+    /**
+     * Get the current camera state of the map
+     */
+    public getCameraState(): CameraState | undefined {
+        return this._options.camera.value;
+    }
+
+    /**
+     * Set the camera state of the map
+     * @param state the new camera state
+     */
+    public setCameraState(state: CameraState): void {
+        this._options.camera.value = state;
+        if (this._is3D()) {
+            const update = cameraToPlotly(state);
+            this._relayout({
+                'scene.camera': update.camera,
+                'scene.aspectratio': update.aspectratio,
+            } as unknown as Layout);
+        }
+    }
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -550,6 +580,10 @@ export class PropertiesMap {
      */
     public applySettings(settings: Settings): void {
         this._options.applySettings(settings);
+
+        if (settings.camera) {
+            this.setCameraState(settings.camera as unknown as CameraState);
+        }
     }
 
     /**
@@ -815,10 +849,15 @@ export class PropertiesMap {
      *
      * @param traces array of data traces to update
      * @param layout layout properties to update
+     * @param config optional plot configuration
      */
-    private _react(traces: Plotly.Data[], layout: Partial<Layout>): Promise<void> {
+    private _react(
+        traces: Plotly.Data[],
+        layout: Partial<Layout>,
+        config?: Partial<Config>
+    ): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            Plotly.react(this._plot, traces, layout)
+            Plotly.react(this._plot, traces, layout, config as Config)
                 .then(() => {
                     resolve();
                 })
@@ -833,6 +872,12 @@ export class PropertiesMap {
 
     /** Add all the required callback to the settings */
     private _connectSettings() {
+        // Range reset button
+        const resetRanges = this._options.getModalElement<HTMLButtonElement>('map-range-reset');
+        resetRanges.onclick = () => {
+            void this._resetToGlobalView();
+        };
+
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
@@ -849,6 +894,9 @@ export class PropertiesMap {
 
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
 
             // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
@@ -912,6 +960,7 @@ export class PropertiesMap {
                 if (this._is3D()) {
                     this._relayout({
                         [`scene.${name}.range`]: [min, max],
+                        [`scene.${name}.autorange`]: false,
                     } as unknown as Layout);
                 } else {
                     this._relayout({ [`${name}.range`]: [min, max] });
@@ -924,6 +973,9 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
 
             // LOD: Y changed, recompute spatial binning
@@ -971,6 +1023,9 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
@@ -1309,8 +1364,11 @@ export class PropertiesMap {
         // Build layout from the options of the settings
         const layout = this._getLayout();
 
+        // Get config
+        const config = this._getConfig();
+
         // Create an empty plot and fill it below
-        Plotly.newPlot(this._plot, traces, layout, DEFAULT_CONFIG as unknown as Config)
+        Plotly.newPlot(this._plot, traces, layout, config)
             .then(() => {
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
                 // with the dimensions of its container unless it receives a resize
@@ -1326,7 +1384,8 @@ export class PropertiesMap {
             );
         this._plot.classList.add('chsp-map');
 
-        this._plot.on('plotly_click', (event: Plotly.PlotMouseEvent) => {
+        this._plot.on('plotly_click', (eventData: Plotly.PlotMouseEvent) => {
+            const event = eventData;
             // don't update selected env on double click, since it is bound to
             // 'reset zoom level' in 2D mode.
             if (event.event && event.event.detail === 2) {
@@ -1380,8 +1439,6 @@ export class PropertiesMap {
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', () => {
-            // If it's an autoscale event, we handle it in doubleclick or afterplot loop.
-            // But if it's a camera move, we force an LOD check here.
             void this._afterplot();
         });
 
@@ -1442,6 +1499,49 @@ export class PropertiesMap {
             this._options.z.max.value,
             'map.z'
         );
+
+        // 3D scenes have a separate axis configuration
+        if (this._is3D()) {
+            layout.scene.xaxis.range = this._getAxisRange(
+                this._options.x.min.value,
+                this._options.x.max.value,
+                'map.x'
+            );
+            layout.scene.xaxis.autorange = this._getAxisAutoRange(
+                this._options.x.min.value,
+                this._options.x.max.value
+            );
+            layout.scene.yaxis.range = this._getAxisRange(
+                this._options.y.min.value,
+                this._options.y.max.value,
+                'map.y'
+            );
+            layout.scene.yaxis.autorange = this._getAxisAutoRange(
+                this._options.y.min.value,
+                this._options.y.max.value
+            );
+            layout.scene.zaxis.range = this._getAxisRange(
+                this._options.z.min.value,
+                this._options.z.max.value,
+                'map.z'
+            );
+            layout.scene.zaxis.autorange = this._getAxisAutoRange(
+                this._options.z.min.value,
+                this._options.z.max.value
+            );
+            layout.dragmode = 'orbit';
+
+            if (this._options.camera.value) {
+                const update = cameraToPlotly(this._options.camera.value);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                const scene = (layout as any).scene;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                Object.assign(scene.camera, update.camera);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                scene.aspectratio = update.aspectratio;
+            }
+        }
+
         return layout as Partial<Layout>;
     }
 
@@ -1468,6 +1568,14 @@ export class PropertiesMap {
             );
         }
         return [minProvided ? min : undefined, maxProvided ? max : undefined];
+    };
+
+    private _getAxisAutoRange = (min: number, max: number): boolean => {
+        const minProvided = !isNaN(min);
+        const maxProvided = !isNaN(max);
+
+        // Both ranges are provided
+        return !(minProvided && maxProvided);
     };
 
     /** Get the property with the given name */
@@ -1708,43 +1816,20 @@ export class PropertiesMap {
         assert(this._is3D());
         this._options.z.enable();
 
-        const symbols = this._symbols();
-        for (let s = 0; s < this._data.maxSymbols; s++) {
-            symbols.push([get3DSymbol(s)]);
-        }
+        // Ensure 3D traces are prepared
+        // Show selected environments markers is handled by _getTraces logic for 3D
 
-        // switch all traces to 3D mode
-        this._restyle({
-            'marker.symbol': symbols,
-            type: 'scatter3d',
-        } as unknown as Data);
-
+        // _switch3D logic for markers:
         for (const data of this._selected.values()) {
             data.toggleVisible(false);
         }
         this._updateMarkers();
 
-        // Change the data that vary between 2D and 3D mode
-        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
-        this._restyle(
-            {
-                'marker.line.width': marker_line,
-                // size change from 2D to 3D
-                'marker.size': this._sizes(),
-                'marker.sizemode': 'area',
-            } as Data,
-            [0, 1]
-        );
+        // We do a full react to update config (modebar)
+        // Settings (like markers) are applied in _getTraces/_getLayout
+        // which rely on _options and internal state. _options.z is enabled above.
 
-        this._relayout({
-            // change colorbar length to accommodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
-            // Carry over axis types
-            'scene.xaxis.type': this._options.x.scale.value as Plotly.AxisType,
-            'scene.yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-            'scene.zaxis.type': this._options.z.scale.value as Plotly.AxisType,
-            dragmode: 'orbit',
-        } as unknown as Layout);
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
     }
 
     /** Switch current plot from 3D back to 2D */
@@ -1752,40 +1837,49 @@ export class PropertiesMap {
         assert(!this._is3D());
         this._options.z.disable();
 
-        const symbols = this._symbols();
-        for (let sym = 0; sym < this._data.maxSymbols; sym++) {
-            symbols.push([sym]);
-        }
-
-        // switch all traces to 2D mode
-        this._restyle({
-            'marker.symbol': symbols,
-            type: 'scattergl',
-        } as unknown as Data);
-
-        // show selected environments markers
+        // Show selected environments markers
         for (const data of this._selected.values()) {
             data.toggleVisible(true);
         }
 
-        const marker_line = this._options.markerOutline.value ? 0.5 : 0.0;
-        this._restyle(
-            {
-                'marker.line.width': marker_line,
-                // size change from 3D to 2D
-                'marker.size': this._sizes(),
-            } as Data,
-            [0, 1]
-        );
+        // We do a full react to update config (modebar)
+        // _getTraces uses _sizes() and options to set marker line width and size
+        // consistently in 2D and 3D
 
-        this._relayout({
-            // change colorbar length to accommodate for symbols legend
-            'coloraxis.colorbar.len': this._colorbarLen(),
-            // Carry over axis types
-            'xaxis.type': this._options.x.scale.value as Plotly.AxisType,
-            'yaxis.type': this._options.y.scale.value as Plotly.AxisType,
-            dragmode: 'zoom',
-        } as unknown as Layout);
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+    }
+
+    /**
+     * Get the Plotly configuration based on current mode (2D/3D)
+     */
+    private _getConfig(): Config {
+        // Clone default config
+        const config = { ...DEFAULT_CONFIG };
+        config.modeBarButtonsToRemove = [...DEFAULT_CONFIG.modeBarButtonsToRemove];
+        config.modeBarButtonsToAdd = [...DEFAULT_CONFIG.modeBarButtonsToAdd];
+
+        if (this._is3D()) {
+            config.modeBarButtonsToRemove.push('resetCameraDefault3d');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            config.modeBarButtonsToAdd = [
+                [
+                    {
+                        name: 'Reset View',
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        icon: (Plotly as any).Icons.home,
+                        click: () => {
+                            void (async () => {
+                                await this._resetToGlobalView();
+                            })();
+                        },
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ] as any,
+                ...config.modeBarButtonsToAdd,
+            ];
+        }
+
+        return config as unknown as Config;
     }
 
     /**
@@ -1881,6 +1975,14 @@ export class PropertiesMap {
     private async _resetToGlobalView() {
         this._updatingLOD = true;
 
+        // Reset settings to Auto (NaN)
+        this._options.x.min.value = NaN;
+        this._options.x.max.value = NaN;
+        this._options.y.min.value = NaN;
+        this._options.y.max.value = NaN;
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
+
         try {
             // 1. Force global LOD computation
             this._computeLOD();
@@ -1891,13 +1993,20 @@ export class PropertiesMap {
             await this._restyleLOD();
 
             // 3. Prepare Layout Update
-            const layoutUpdate: Record<string, boolean> = {};
+            const layoutUpdate: Record<string, unknown> = {};
 
             if (this._is3D()) {
                 // In 3D, 'autorange: true' resets camera AND axes.
                 layoutUpdate['scene.xaxis.autorange'] = true;
                 layoutUpdate['scene.yaxis.autorange'] = true;
                 layoutUpdate['scene.zaxis.autorange'] = true;
+                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+                layoutUpdate['scene.camera'] = {
+                    center: { x: 0, y: 0, z: 0 },
+                    eye: { x: 1.25, y: 1.25, z: 1.25 },
+                    projection: { type: 'orthographic' },
+                    up: { x: 0, y: 0, z: 1 },
+                };
             } else {
                 // In 2D, we trigger autorange on standard axes
                 layoutUpdate['xaxis.autorange'] = true;
@@ -1915,6 +2024,8 @@ export class PropertiesMap {
             // This ensures any trailing events from the relayout are also ignored.
             setTimeout(() => {
                 this._updatingLOD = false;
+                // Store the newly computed global ranges into the settings
+                void this._afterplot();
             }, 0);
         }
     }
@@ -1929,20 +2040,66 @@ export class PropertiesMap {
             return;
         }
 
+        if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const scene = (this._plot as any)._fullLayout.scene;
+            if (scene) {
+                this._options.camera.value = plotlyToCamera({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    camera: scene.camera,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    aspectratio: scene.aspectratio,
+                });
+            }
+        }
+
         const bounds = this._getBounds();
-        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
+        const layout = this._plot._fullLayout;
+        const layoutUpdate: Record<string, unknown> = {};
+        let needRelayout = false;
+
+        const updateAxisValues = (
+            axis: AxisOptions,
+            [boundMin, boundMax]: [number, number],
+            plotlyAxisName: 'xaxis' | 'yaxis' | 'zaxis'
+        ) => {
             // Only update if values are valid numbers
             if (boundMin !== undefined && boundMax !== undefined) {
-                axis.min.value = isNaN(axis.min.value) ? boundMin : axis.min.value;
-                axis.max.value = isNaN(axis.max.value) ? boundMax : axis.max.value;
+                // Update explicit values in settings
+                axis.min.value = boundMin;
+                axis.max.value = boundMax;
+
+                // Check if we need to update the plot to disable autorange
+                let plotlyAxis;
+                if (this._is3D()) {
+                    plotlyAxis = layout.scene[plotlyAxisName];
+                } else {
+                    if (plotlyAxisName === 'xaxis') {
+                        plotlyAxis = layout.xaxis;
+                    } else if (plotlyAxisName === 'yaxis') {
+                        plotlyAxis = layout.yaxis;
+                    }
+                }
+
+                if (plotlyAxis && plotlyAxis.autorange) {
+                    const keyPrefix = this._is3D() ? `scene.${plotlyAxisName}` : plotlyAxisName;
+                    layoutUpdate[`${keyPrefix}.range`] = [boundMin, boundMax];
+                    layoutUpdate[`${keyPrefix}.autorange`] = false;
+                    needRelayout = true;
+                }
             }
         };
 
         // Update settings modal values based on current view
-        updateAxisValues(this._options.x, bounds.x);
-        updateAxisValues(this._options.y, bounds.y);
+        updateAxisValues(this._options.x, bounds.x, 'xaxis');
+        updateAxisValues(this._options.y, bounds.y, 'yaxis');
         if (bounds.z !== undefined) {
-            updateAxisValues(this._options.z, bounds.z);
+            updateAxisValues(this._options.z, bounds.z, 'zaxis');
+        }
+
+        if (needRelayout) {
+            // Force Plotly to disable autorange and use the explicit ranges
+            this._relayout(layoutUpdate as unknown as Layout);
         }
 
         // LOD CHECK

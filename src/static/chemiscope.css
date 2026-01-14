@@ -175,7 +175,7 @@
 }
 
 .chsp-map-options > :nth-child(n + 3):not(.chsp-map-extra-options) {
-    margin-top: 1.3rem;
+    margin-top: 1rem;
 }
 
 .chsp-map-extra-options {
@@ -187,7 +187,7 @@
 }
 
 .chsp-map-extra-options > * {
-    margin: 0.5em 0;
+    margin: 0.4em 0 0 0;
 }
 
 .chsp-map-extra-options label {
