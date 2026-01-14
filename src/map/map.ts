@@ -1027,7 +1027,7 @@ export class PropertiesMap {
             this._options.z.min.value = NaN;
             this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
-            
+
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
@@ -1047,18 +1047,18 @@ export class PropertiesMap {
             // This has to run asynchronously to ensure that the z axis is scaled properly
             void (async () => {
                 await this._restyleLOD();
-                                
+
                 await Plotly.relayout(this._plot, {
                     'scene.zaxis.title.text': this._title(this._options.z.property.value),
                     'scene.zaxis.autorange': true,
                 } as unknown as Layout).then(
                     // The zrange is now known, and we can trigger a proper subsampling
-                    () => {                        
-                        const zRange=this._plot._fullLayout.scene.zaxis.range;
+                    () => {
+                        const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
                         this._options.z.min.value = zRange[0];
                         this._options.z.max.value = zRange[1];
                         this._computeLOD(this._getBounds());
-                        this._restyleLOD();
+                        void this._restyleLOD();
                     }
                 );
 
@@ -1455,7 +1455,7 @@ export class PropertiesMap {
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         let relayoutTimer: number;
         this._plot.on('plotly_relayout', () => {
-            // adds a small delay to avoid too frequent re-calculation 
+            // adds a small delay to avoid too frequent re-calculation
             // of the subsampling
             if (relayoutTimer) {
                 window.clearTimeout(relayoutTimer);
@@ -1966,7 +1966,7 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // compute a sparse "global" grid of points to show "something" 
+        // compute a sparse "global" grid of points to show "something"
         // when we rotate, pan or zoom
         const lodIndices = computeLODIndices(
             xValues,
@@ -1976,23 +1976,20 @@ export class PropertiesMap {
             PropertiesMap.LOD_THRESHOLD / 10
         );
         if (is3D && zValues && this._options.camera.value && bounds) {
-            
-            lodIndices.push(...computeScreenSpaceLOD(
-                xValues,
-                yValues,
-                zValues,
-                this._options.camera.value,
-                bounds,
-                PropertiesMap.LOD_THRESHOLD
-            ));
+            lodIndices.push(
+                ...computeScreenSpaceLOD(
+                    xValues,
+                    yValues,
+                    zValues,
+                    this._options.camera.value,
+                    bounds,
+                    PropertiesMap.LOD_THRESHOLD
+                )
+            );
         } else {
-            lodIndices.push(...computeLODIndices(
-                xValues,
-                yValues,
-                zValues,
-                bounds,
-                PropertiesMap.LOD_THRESHOLD
-            ));
+            lodIndices.push(
+                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
+            );
         }
 
         // remove duplicates, and sort
