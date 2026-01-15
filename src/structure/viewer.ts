@@ -983,7 +983,7 @@ export class MoleculeViewer {
             this._viewer.render();
         });
 
-        this._options.camera.onchange.push((camera, origin) => { 
+        this._options.camera.onchange.push((camera, origin) => {
             if (origin === 'JS' && camera !== undefined) {
                 this._viewer.setView(cameraToView(camera));
             }

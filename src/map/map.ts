@@ -229,7 +229,6 @@ export class PropertiesMap {
      * Get the current camera state of the map
      */
     public getCameraState(): CameraState | undefined {
-        console.log("getting camera state", this._options.camera.value)
         return this._options.camera.value;
     }
 
@@ -238,7 +237,6 @@ export class PropertiesMap {
      * @param state the new camera state
      */
     public setCameraState(state: CameraState): void {
-        console.log("setting camera state", state);
         this._options.camera.value = state;
         if (this._is3D()) {
             const update = cameraToPlotly(state);
@@ -608,8 +606,7 @@ export class PropertiesMap {
      * during the export.
      */
     public async exportPNG(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        const fullLayout = (this._plot as any)._fullLayout as Layout;
+        const fullLayout = this._plot._fullLayout;
         const width = Math.max(fullLayout.width, 600);
         const ratio = fullLayout.height / fullLayout.width;
         const height = width * ratio;
@@ -1026,8 +1023,7 @@ export class PropertiesMap {
             this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
+            const was3D = this._plot._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
                 if (was3D) {
                     this._switch2D();
@@ -1486,17 +1482,17 @@ export class PropertiesMap {
         // which seems to be necessary to ensure _fullLayout actually contains
         // the state of the plotly viewer in 3D
         setTimeout(() => {
-                if (this._active !== undefined) {
-                        this.setActive(this._active);
-                        const data = this._selected.get(this._active);
-                        if (data !== undefined) {
-                            this.activeChanged(
-                                this._active,
-                                this._indexer.fromEnvironment(data.current, this._target)
-                            );
-                        }
-                    }
-        }, 500);
+            if (this._active !== undefined) {
+                this.setActive(this._active);
+                const data = this._selected.get(this._active);
+                if (data !== undefined) {
+                    this.activeChanged(
+                        this._active,
+                        this._indexer.fromEnvironment(data.current, this._target)
+                    );
+                }
+            }
+        }, 1000);
     }
 
     /**
@@ -1570,12 +1566,9 @@ export class PropertiesMap {
 
             if (this._options.camera.value) {
                 const update = cameraToPlotly(this._options.camera.value);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                const scene = (layout as any).scene;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                const scene = layout.scene;
                 Object.assign(scene.camera, update.camera);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                scene.aspectratio = update.aspectratio;
+                Object.assign(scene, { aspectratio: update.aspectratio });
             }
         }
 
@@ -2156,7 +2149,6 @@ export class PropertiesMap {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     aspectratio: scene.aspectratio,
                 });
-                console.log ("camera in options camera", scene.camera.eye, this._options.camera.value.eye, this._options.camera.value.zoom);
             }
         }
 
