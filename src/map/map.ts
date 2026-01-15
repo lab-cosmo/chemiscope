@@ -229,6 +229,7 @@ export class PropertiesMap {
      * Get the current camera state of the map
      */
     public getCameraState(): CameraState | undefined {
+        console.log("getting camera state", this._options.camera.value)
         return this._options.camera.value;
     }
 
@@ -237,6 +238,7 @@ export class PropertiesMap {
      * @param state the new camera state
      */
     public setCameraState(state: CameraState): void {
+        console.log("setting camera state", state);
         this._options.camera.value = state;
         if (this._is3D()) {
             const update = cameraToPlotly(state);
@@ -580,10 +582,6 @@ export class PropertiesMap {
      */
     public applySettings(settings: Settings): void {
         this._options.applySettings(settings);
-
-        if (settings.camera) {
-            this.setCameraState(settings.camera as unknown as CameraState);
-        }
     }
 
     /**
@@ -1483,6 +1481,22 @@ export class PropertiesMap {
 
         // Hack to fix a Plotly bug preventing zooming on Safari
         this._plot.addEventListener('wheel', () => {});
+
+        // Hack to ensure that the active trace is selected AFTER the plot is drawn
+        // which seems to be necessary to ensure _fullLayout actually contains
+        // the state of the plotly viewer in 3D
+        setTimeout(() => {
+                if (this._active !== undefined) {
+                        this.setActive(this._active);
+                        const data = this._selected.get(this._active);
+                        if (data !== undefined) {
+                            this.activeChanged(
+                                this._active,
+                                this._indexer.fromEnvironment(data.current, this._target)
+                            );
+                        }
+                    }
+        }, 500);
     }
 
     /**
@@ -2083,19 +2097,6 @@ export class PropertiesMap {
             return;
         }
 
-        if (this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const scene = (this._plot as any)._fullLayout.scene;
-            if (scene) {
-                this._options.camera.value = plotlyToCamera({
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    camera: scene.camera,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    aspectratio: scene.aspectratio,
-                });
-            }
-        }
-
         const bounds = this._getBounds();
         const layout = this._plot._fullLayout;
         const layoutUpdate: Record<string, unknown> = {};
@@ -2143,6 +2144,20 @@ export class PropertiesMap {
         if (needRelayout) {
             // Force Plotly to disable autorange and use the explicit ranges
             this._relayout(layoutUpdate as unknown as Layout);
+        }
+
+        if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const scene = (this._plot as any)._fullLayout.scene;
+            if (scene) {
+                this._options.camera.value = plotlyToCamera({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    camera: scene.camera,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    aspectratio: scene.aspectratio,
+                });
+                console.log ("camera in options camera", scene.camera.eye, this._options.camera.value.eye, this._options.camera.value.zoom);
+            }
         }
 
         // LOD CHECK
