@@ -1601,14 +1601,34 @@ export class MoleculeViewer {
      * Get a function computing the atom color, that can be used as 3Dmol
      * `colorfunc`
      */
-    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
-        if (this._properties === undefined) {
-            return undefined;
-        }
-
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => $3Dmol.ColorSpec) | undefined {
         const property = this._options.color.property.value;
-        if (property === 'element') {
-            return undefined;
+
+        if (this._properties === undefined || property === 'element') {
+            const tab20Palette = COLOR_MAPS['tab20'];
+            const nonStandardElemIndex = new Map<string, number>();
+            let nextIndex = 0;
+            return (atom: $3Dmol.AtomSpec) => {
+                if (atom.elem !== undefined) {
+                    const nonStandardElementNames: string[] = [];
+                    const value = $3Dmol.elementColors.Jmol[atom.elem];
+                    if (value !== undefined) {  // standard element names
+                        return value;
+                    } else {
+                        let index = nonStandardElemIndex.get(atom.elem);
+                        if (index === undefined) {
+                            index = nextIndex % tab20Palette.length;
+                            nonStandardElemIndex.set(atom.elem, index);
+                            nonStandardElementNames.push(atom.elem);
+                            nextIndex++;
+                        }
+                        return tab20Palette[index * 2][1];
+                    }
+                } else {
+                    // missing values
+                    return 0xdddddd;
+                }
+            };
         }
 
         const transform = this._options.color.transform.value;
