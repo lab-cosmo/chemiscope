@@ -707,6 +707,10 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
      - string
      - Property name for categorical symbols (string values)
      - ``"phase"``
+   * - ``useLOD``
+     - bool
+     - Use level-of-detail rendering for large datasets (improves performance)
+     - ``true``
    * - ``markerOutline``
      - bool
      - Thin black outline on markers
@@ -748,6 +752,10 @@ Array of objects (one per viewer).
      - bool
      - Use space-filling representation
      - false
+  * - ``shape``
+    - string
+    - Default shape group name(s) to display in the structure viewer (comma-separated)
+    - ``"alpha,dipole"``
    * - ``atomLabels``
      - bool
      - Show atom labels
