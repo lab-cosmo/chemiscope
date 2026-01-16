@@ -2,8 +2,11 @@ import path from 'path';
 
 import { WEBPACK_CONFIG } from '../webpack.config.mjs';
 
+const mode = process.env.CHEMISCOPE_WEBPACK_MODE || 'production';
+
 const config = {
     ...WEBPACK_CONFIG,
+    mode: mode,
     target: 'web',
     entry: {
         chemiscope: './python/jupyter/src/nbextension.ts',
