@@ -81,6 +81,17 @@ npm test
 tox
 ```
 
+You can build `chemiscope.min.js` with
+```bash
+npm run build
+```
+and the Python package, including the Jupyter widget,
+```bash
+python -m build
+```
+When developing, build time can be reduced by setting the
+environment variable `CHEMISCOPE_WEBPACK_MODE=development`. 
+
 We suggest that you configure your code editor to automatically re-format the
 code when you save the files. There are prettier plugins for most editors, see
 the "Editor Support" section of the [prettier] website. If you want to manually
