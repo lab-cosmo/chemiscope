@@ -4,6 +4,80 @@
  */
 
 import { arrayMaxMin } from '../utils';
+import { CameraState, projectPoints } from '../utils/camera';
+
+/**
+ * Computes the subset of points to display based on 2D screen-space projection.
+ * This is used for 3D plots where the visible density depends on camera rotation/zoom.
+ *
+ * @param xValues Array of X coordinates
+ * @param yValues Array of Y coordinates
+ * @param zValues Array of Z coordinates
+ * @param camera  Current camera state (eye, center, up, zoom)
+ * @param bounds  Optional boundaries to clip the data (Zoom level)
+ * @param threshLOD Maximum number of points to display (default: 50000)
+ * @returns Sorted array of indices to display
+ */
+export function computeScreenSpaceLOD(
+    xValues: number[],
+    yValues: number[],
+    zValues: number[],
+    camera: CameraState,
+    bounds?: { x: [number, number]; y: [number, number]; z?: [number, number] },
+    threshLOD: number = 50000
+): number[] {
+    if (bounds === undefined) {
+        // STATIC: Use the full data range (calculate from data)
+        const xRange = arrayMaxMin(xValues);
+        const yRange = arrayMaxMin(yValues);
+        const zRange = arrayMaxMin(zValues);
+
+        bounds = {
+            x: [xRange.min, xRange.max],
+            y: [yRange.min, yRange.max],
+            z: [zRange.min, zRange.max],
+        };
+    }
+
+    const nPoints = xValues.length;
+    // Calculate View Matrix once
+    const projections = projectPoints(xValues, yValues, zValues, camera, bounds);
+
+    // Grid resolution: we want roughly threshLOD points on screen.
+    const bins = Math.ceil(Math.sqrt(threshLOD));
+    const grid = new Map<string, number>();
+
+    // this is the range we use to bin points
+    const viewSize = 2.0;
+    const uStep = viewSize / bins;
+    const vStep = viewSize / bins;
+
+    // Use a slightly larger clip bound to avoid popping at edges
+    const clipSize = viewSize * 1.1;
+
+    for (let i = 0; i < nPoints; i++) {
+        const u = projections.x[i];
+        const v = projections.y[i];
+
+        // Clip points well outside the view
+        if (Math.abs(u) > clipSize || Math.abs(v) > clipSize) {
+            continue;
+        }
+
+        // Center the grid around 0
+        const ui = Math.floor(u / uStep);
+        const vi = Math.floor(v / vStep);
+
+        const key = `${ui}_${vi}`;
+        if (!grid.has(key)) {
+            grid.set(key, i);
+        }
+    }
+
+    const indices = Array.from(grid.values());
+    indices.sort((a, b) => a - b);
+    return indices;
+}
 
 /**
  * Computes the subset of points to display based on spatial grid binning.
