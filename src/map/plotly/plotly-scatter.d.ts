@@ -36,7 +36,6 @@ interface ScatterLayout {
 export interface PlotlyScatterElement extends PlotlyHTMLElement {
     _fullData: {
         type: 'scatter3d' | 'scattergl';
-        uid: string;
     }[];
     _fullLayout: ScatterLayout;
 }
