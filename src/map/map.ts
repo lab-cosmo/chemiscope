@@ -13,7 +13,7 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { CameraState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
+import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
@@ -1343,7 +1343,7 @@ export class PropertiesMap {
         // ======= camera state update
         this._options.camera.onchange.push((camera, origin) => {
             if (origin === 'JS' && camera !== undefined && this._is3D()) {
-                const update = cameraToPlotly(camera as CameraState);
+                const update = cameraToPlotly(camera);
                 this._relayout({
                     'scene.camera': update.camera,
                     'scene.aspectratio': update.aspectratio,
