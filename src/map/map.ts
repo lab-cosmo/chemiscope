@@ -2019,51 +2019,45 @@ export class PropertiesMap {
         this._options.z.min.value = NaN;
         this._options.z.max.value = NaN;
 
-        try {
-            // 1. Force global LOD computation
-            this._computeLOD();
+        // 1. Force global LOD computation
+        this._computeLOD();
 
-            // 2. Update data traces first (re-render points with global LOD)
-            // We do this BEFORE relayout so that 'autorange' calculates bounds
-            // based on the full dataset, not the sliced one.
-            await this._restyleLOD();
+        // 2. Update data traces first (re-render points with global LOD)
+        // We do this BEFORE relayout so that 'autorange' calculates bounds
+        // based on the full dataset, not the sliced one.
+        await this._restyleLOD();
 
-            // 3. Prepare Layout Update
-            const layoutUpdate: Record<string, unknown> = {};
+        // 3. Prepare Layout Update
+        const layoutUpdate: Record<string, unknown> = {};
 
-            if (this._is3D()) {
-                // In 3D, 'autorange: true' resets camera AND axes.
-                layoutUpdate['scene.xaxis.autorange'] = true;
-                layoutUpdate['scene.yaxis.autorange'] = true;
-                layoutUpdate['scene.zaxis.autorange'] = true;
-                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
-                layoutUpdate['scene.camera'] = {
-                    center: { x: 0, y: 0, z: 0 },
-                    eye: { x: 1.25, y: 1.25, z: 1.25 },
-                    projection: { type: 'orthographic' },
-                    up: { x: 0, y: 0, z: 1 },
-                };
-            } else {
-                // In 2D, we trigger autorange on standard axes
-                layoutUpdate['xaxis.autorange'] = true;
-                layoutUpdate['yaxis.autorange'] = true;
-            }
-
-            // 4. Force the view reset
-            await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
-
-            // Manually trigger marker update for 2D mode.
-            if (!this._is3D()) {
-                this._updateMarkers();
-            }
-        } finally {
-            // This ensures any trailing events from the relayout are also ignored.
-            setTimeout(() => {
-                this._updatingLOD = false;
-                // Store the newly computed global ranges into the settings
-                void this._afterplot();
-            }, 0);
+        if (this._is3D()) {
+            // In 3D, 'autorange: true' resets camera AND axes.
+            layoutUpdate['scene.xaxis.autorange'] = true;
+            layoutUpdate['scene.yaxis.autorange'] = true;
+            layoutUpdate['scene.zaxis.autorange'] = true;
+            layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+            layoutUpdate['scene.camera'] = {
+                center: { x: 0, y: 0, z: 0 },
+                eye: { x: 1.25, y: 1.25, z: 1.25 },
+                projection: { type: 'orthographic' },
+                up: { x: 0, y: 0, z: 1 },
+            };
+        } else {
+            // In 2D, we trigger autorange on standard axes
+            layoutUpdate['xaxis.autorange'] = true;
+            layoutUpdate['yaxis.autorange'] = true;
         }
+
+        // 4. Force the view reset
+        this._relayout(layoutUpdate);
+
+        // Manually trigger marker update for 2D mode.
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
+
+        this._updatingLOD = false;
+        await this._afterplot();
     }
 
     /**
@@ -2074,6 +2068,21 @@ export class PropertiesMap {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;
+        }
+
+        // Set camera
+        if (this._is3D()) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const scene = (this._plot as any)._fullLayout.scene;
+            if (scene) {
+                const camera = plotlyToCamera({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    camera: scene.camera,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    aspectratio: scene.aspectratio,
+                });
+                this._options.camera.setValue(camera, 'DOM');
+            }
         }
 
         const bounds = this._getBounds();
@@ -2123,20 +2132,6 @@ export class PropertiesMap {
         if (needRelayout) {
             // Force Plotly to disable autorange and use the explicit ranges
             this._relayout(layoutUpdate as unknown as Layout);
-        }
-
-        if (this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const scene = (this._plot as any)._fullLayout.scene;
-            if (scene) {
-                const camera = plotlyToCamera({
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    camera: scene.camera,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    aspectratio: scene.aspectratio,
-                });
-                this._options.camera.setValue(camera, 'DOM');
-            }
         }
 
         // LOD CHECK
