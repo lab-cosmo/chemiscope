@@ -1612,7 +1612,8 @@ export class MoleculeViewer {
                 if (atom.elem !== undefined) {
                     const nonStandardElementNames: string[] = [];
                     const value = $3Dmol.elementColors.Jmol[atom.elem];
-                    if (value !== undefined) {  // standard element names
+                    if (value !== undefined) {
+                        // standard element names
                         return value;
                     } else {
                         let index = nonStandardElemIndex.get(atom.elem);
