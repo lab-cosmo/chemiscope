@@ -24,10 +24,10 @@
   },
   "scripts": {
     "test": "eslint src python/jupyter/src python/streamlit/src && prettier --check src python/jupyter/src python/streamlit/src",
-    "build": "rimraf dist && webpack --mode production --config webpack.config.mjs && npm run merge-dts",
-    "build:nbextension": "webpack --mode production --config python/webpack.config.nbextension.js",
+    "build": "rimraf dist && webpack --config webpack.config.mjs && npm run merge-dts",
+    "build:nbextension": "webpack --config python/webpack.config.nbextension.js",
     "build:labextension": "npm run build && jupyter labextension build .",
-    "build:streamlit": "webpack --mode production --config python/webpack.config.streamlit.mjs",
+    "build:streamlit": "webpack --config python/webpack.config.streamlit.mjs",
     "download-examples": "ts-node ./utils/download-examples.ts",
     "api-docs": "typedoc",
     "start": "npm run download-examples && webpack serve --mode development --static ./app",

@@ -32,14 +32,13 @@ export const WEBPACK_CONFIG = {
 };
 
 const config = (env, argv) => {
-    if (!('mode' in argv)) {
-        throw Error('please specify the build mode');
-    }
+    const mode = argv.mode || process.env.CHEMISCOPE_WEBPACK_MODE || 'production';
     return {
         ...WEBPACK_CONFIG,
+        mode: mode,
         target: 'web',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        devtool: argv.mode === 'development' ? 'inline-source-map' : undefined,
+        devtool: mode === 'development' ? 'inline-source-map' : undefined,
         entry: {
             chemiscope: './src/index.ts',
             'chemiscope-app': './app/app.ts',
