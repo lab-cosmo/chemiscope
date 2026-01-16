@@ -174,7 +174,7 @@ export function cameraToView(camera: CameraState): ViewState {
         }
     }
 
-    return [center.x, center.y, center.z, zLen, qx, qy, qz, qw];
+    return [center.x, center.y, center.z, camera.zoom, qx, qy, qz, qw];
 }
 
 /** 4x4 Matrix for 3D projection */

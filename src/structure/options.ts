@@ -146,11 +146,8 @@ export class StructureOptions extends OptionsGroup {
 
         this.labelsProperty = new HTMLOption('string', 'element');
         this.camera = new JSOption<CameraState | undefined>(undefined);
-        this.camera.validate = (value: CameraState | undefined) => {
-            if (value && value.zoom <= 0) {
-                throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
-            }
-        };
+        // as long as the type matches, camera state is valid (zoom<is acceptable for 3dmol)
+        this.camera.validate = (value: CameraState | undefined) => {};
 
         // validate atom properties for labels
         if (propertiesName.includes('element')) {

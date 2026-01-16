@@ -226,28 +226,6 @@ export class PropertiesMap {
     public activeChanged: (guid: GUID, indexes: Indexes) => void;
 
     /**
-     * Get the current camera state of the map
-     */
-    public getCameraState(): CameraState | undefined {
-        return this._options.camera.value;
-    }
-
-    /**
-     * Set the camera state of the map
-     * @param state the new camera state
-     */
-    public setCameraState(state: CameraState): void {
-        this._options.camera.value = state;
-        if (this._is3D()) {
-            const update = cameraToPlotly(state);
-            this._relayout({
-                'scene.camera': update.camera,
-                'scene.aspectratio': update.aspectratio,
-            } as unknown as Layout);
-        }
-    }
-
-    /**
      * Callback to get the initial positioning of the settings modal.
      *
      * The callback gets the current placement of the settings as a
@@ -1361,6 +1339,17 @@ export class PropertiesMap {
             // this will render all points.
             void this._restyleLOD();
         });
+
+        // ======= camera state update
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined && this._is3D()) {
+                const update = cameraToPlotly(camera as CameraState);
+                this._relayout({
+                    'scene.camera': update.camera,
+                    'scene.aspectratio': update.aspectratio,
+                } as unknown as Layout);
+            }
+        });
     }
 
     /** Actually create the Plotly plot */
@@ -2140,12 +2129,13 @@ export class PropertiesMap {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const scene = (this._plot as any)._fullLayout.scene;
             if (scene) {
-                this._options.camera.value = plotlyToCamera({
+                const camera = plotlyToCamera({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     camera: scene.camera,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     aspectratio: scene.aspectratio,
                 });
+                this._options.camera.setValue(camera, 'DOM');
             }
         }
 
