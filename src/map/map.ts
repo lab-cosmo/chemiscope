@@ -1967,7 +1967,7 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // compute a sparser "global" grid of points for the full range 
+        // compute a sparser "global" grid of points for the full range
         // of the dataset to show "something" when we rotate, pan or zoom
         const lodIndices = computeLODIndices(
             xValues,
@@ -1977,7 +1977,7 @@ export class PropertiesMap {
             PropertiesMap.LOD_THRESHOLD / 10
         );
 
-        // ... and then do a higher resolution subsampling for the 
+        // ... and then do a higher resolution subsampling for the
         // points that are actually visiblt
         if (is3D && zValues && this._options.camera.value && bounds) {
             lodIndices.push(
@@ -1992,8 +1992,7 @@ export class PropertiesMap {
             );
         } else {
             lodIndices.push(
-                ...computeLODIndices(xValues, yValues, zValues, bounds, 
-                    PropertiesMap.LOD_THRESHOLD)
+                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
             );
         }
 

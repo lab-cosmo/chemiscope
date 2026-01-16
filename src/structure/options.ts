@@ -148,7 +148,7 @@ export class StructureOptions extends OptionsGroup {
         this.camera = new JSOption<CameraState | undefined>(undefined);
         this.camera.validate = (value: CameraState | undefined) => {
             if (value && value.zoom <= 0) {
-                 throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
+                throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
             }
         };
 
