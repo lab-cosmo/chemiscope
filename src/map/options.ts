@@ -164,10 +164,8 @@ export class MapOptions extends OptionsGroup {
         this.useLOD = new HTMLOption('boolean', true);
         this.camera = new JSOption<CameraState | undefined>(undefined);
         this.camera.validate = (value: CameraState | undefined) => {
-            if (value) {
-                if (value.zoom <= 0) {
-                    throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
-                }
+            if (value && value.zoom <= 0) {
+                 throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
             }
         };
 
