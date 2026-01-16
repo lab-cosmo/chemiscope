@@ -14,6 +14,7 @@ import { CameraState, projectPoints } from '../utils/camera';
  * @param yValues Array of Y coordinates
  * @param zValues Array of Z coordinates
  * @param camera  Current camera state (eye, center, up, zoom)
+ * @param bounds  Optional boundaries to clip the data (Zoom level)
  * @param threshLOD Maximum number of points to display (default: 50000)
  * @returns Sorted array of indices to display
  */

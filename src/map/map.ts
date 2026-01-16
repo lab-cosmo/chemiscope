@@ -1955,12 +1955,6 @@ export class PropertiesMap {
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
 
-        // 1. Data Preparation
-        if (!xProp || !yProp) {
-            this._lodIndices = null;
-            return;
-        }
-
         const xValues = this._property(xProp).values;
 
         // Check threshold
@@ -1973,8 +1967,8 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // compute a sparse "global" grid of points to show "something"
-        // when we rotate, pan or zoom
+        // compute a sparser "global" grid of points for the full range 
+        // of the dataset to show "something" when we rotate, pan or zoom
         const lodIndices = computeLODIndices(
             xValues,
             yValues,
@@ -1982,6 +1976,9 @@ export class PropertiesMap {
             undefined,
             PropertiesMap.LOD_THRESHOLD / 10
         );
+
+        // ... and then do a higher resolution subsampling for the 
+        // points that are actually visiblt
         if (is3D && zValues && this._options.camera.value && bounds) {
             lodIndices.push(
                 ...computeScreenSpaceLOD(
@@ -1995,7 +1992,8 @@ export class PropertiesMap {
             );
         } else {
             lodIndices.push(
-                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
+                ...computeLODIndices(xValues, yValues, zValues, bounds, 
+                    PropertiesMap.LOD_THRESHOLD)
             );
         }
 
