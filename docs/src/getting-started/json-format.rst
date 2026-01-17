@@ -752,10 +752,10 @@ Array of objects (one per viewer).
      - bool
      - Use space-filling representation
      - false
-  * - ``shape``
-    - string
-    - Default shape group name(s) to display in the structure viewer (comma-separated)
-    - ``"alpha,dipole"``
+   * - ``shape``
+     - string
+     - Default shape group name(s) to display in the structure viewer (comma-separated)
+     - ``"alpha,dipole"``
    * - ``atomLabels``
      - bool
      - Show atom labels
@@ -786,9 +786,9 @@ Array of objects (one per viewer).
      - true
    * - ``camera``
      - object
-     - Camera orientation for the viewer: 
+     - Camera orientation for the viewer:
        ``{"eye": [x, y, z], "center": [x, y, z], "up": [x, y, z], "zoom": number}``
-     - ``{"eye": [1.5, 1.5, 1.5], "center": [0, 0, 0], "up": [0, 0, 1], "zoom": 1}``     
+     - ``{"eye": [1.5, 1.5, 1.5], "center": [0, 0, 0], "up": [0, 0, 1], "zoom": 1}``
    * - ``playbackDelay``
      - integer
      - Delay between frames in milliseconds when playing back structures
