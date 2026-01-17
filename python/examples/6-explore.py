@@ -65,7 +65,7 @@ chemiscope.explore(structures, featurizer="pet-mad-1.0")
 # %%
 #
 # We can also save the visualization to send it to colloborators or reopen
-# separatelly with :py:func:`chemiscope.show_input`:
+# separately with :py:func:`chemiscope.show_input`:
 chemiscope.explore(
     structures,
     featurizer="pet-mad-1.0",
