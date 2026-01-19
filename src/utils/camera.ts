@@ -18,6 +18,13 @@ export interface CameraState {
     zoom: number;
 }
 
+export const CameraStateTemplate: CameraState = {
+    eye: { x: 0, y: 0, z: 0 },
+    center: { x: 0, y: 0, z: 0 },
+    up: { x: 0, y: 0, z: 0 },
+    zoom: 1,
+};
+
 export interface PlotlyState {
     camera: {
         eye: { x: number; y: number; z: number };
@@ -177,7 +184,7 @@ export function cameraToView(camera: CameraState): ViewState {
     return [center.x, center.y, center.z, camera.zoom, qx, qy, qz, qw];
 }
 
-/** 4x4 Matrix for 3D projection */
+/** 4x4 Matrix for 3D projection, row-major */
 export type Matrix4 = [
     number,
     number,

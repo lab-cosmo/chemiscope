@@ -9,9 +9,9 @@ import Collapse from '../collapse';
 import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, JSOption, OptionsGroup } from '../options';
-import { optionValidator } from '../options';
+import { objectValidator, optionValidator } from '../options';
 import { PositioningCallback, Warnings, getByID, makeDraggable } from '../utils';
-import { CameraState } from '../utils/camera';
+import { CameraState, CameraStateTemplate } from '../utils/camera';
 
 // share colormaps with the map widget
 import { COLOR_MAPS } from '../map/colorscales';
@@ -146,9 +146,12 @@ export class StructureOptions extends OptionsGroup {
 
         this.labelsProperty = new HTMLOption('string', 'element');
         this.camera = new JSOption<CameraState | undefined>(undefined);
+        const validator = objectValidator(CameraStateTemplate, 'camera');
         // as long as the type matches, camera state is valid (zoom<is acceptable for 3dmol)
         this.camera.validate = (value: CameraState | undefined) => {
-            void value;
+            if (value !== undefined) {
+                validator(value);
+            }
         };
 
         // validate atom properties for labels
