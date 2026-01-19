@@ -535,7 +535,7 @@ def show_input(
 
     if mode not in ["default", "structure", "map"]:
         raise ValueError(
-            f"invalid mode '{mode}' in chemiscope.load, expected one of "
+            f"invalid mode '{mode}' in chemiscope.show_input, expected one of "
             "'default', 'structure' or 'map'"
         )
 
@@ -560,7 +560,8 @@ def show_input(
                 dict_input = json.load(f)
         else:
             raise ValueError(
-                "invalid file format in chemiscope.load, expected .json or .json.gz"
+                "invalid file format in chemiscope.show_input, expected .json or "
+                ".json.gz"
             )
     else:
         dict_input = json.load(path)
@@ -574,7 +575,7 @@ def show_input(
             has_metadata = True
 
     except KeyError:
-        raise ValueError("missing metadata in chemiscope.load")
+        raise ValueError("missing metadata in chemiscope.show_input")
 
     if settings is not None:
         if not isinstance(settings, dict):
