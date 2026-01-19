@@ -125,7 +125,6 @@ export interface LoadOptions {
 
 /** */
 export class MoleculeViewer {
-    
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
     /**
@@ -1618,10 +1617,16 @@ export class MoleculeViewer {
                     } else {
                         let value = this._nonStandardElemColors.get(atom.elem);
                         if (value === undefined) {
-                            this._nonStandardElemColors.set(atom.elem, tab20Palette[this._nonStandardElemColors.size % (tab20Palette.length / 2) * 2][1]);  // each color is repeated twice
+                            this._nonStandardElemColors.set(
+                                atom.elem,
+                                tab20Palette[
+                                    (this._nonStandardElemColors.size % (tab20Palette.length / 2)) *
+                                        2
+                                ][1]
+                            ); // each color is repeated twice
                             value = this._nonStandardElemColors.get(atom.elem);
                         }
-                        assert (value !== undefined);
+                        assert(value !== undefined);
                         return value;
                     }
                 } else {
