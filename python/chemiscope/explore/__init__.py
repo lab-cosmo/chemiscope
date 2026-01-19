@@ -120,7 +120,7 @@ def explore(
 
     :param string write_input: optional. A path to save the chemiscope input file
         created by this function. Afterwards, the file can be loaded using
-        :py:func:`chemiscope.read_input`
+        :py:func:`chemiscope.show_input`
 
     :return: a chemiscope widget for interactive visualization
 
