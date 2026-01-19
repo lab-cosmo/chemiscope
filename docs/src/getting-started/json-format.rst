@@ -149,6 +149,13 @@ represented as an object with the following fields:
      - List of bonds as ``[[i, j, order], ...]`` (0-based atom indices).
      - No
      - ``[[0, 1, 1], [1, 2, 1]]``
+   * - ``data``
+     - string
+     - Path to an external structure file to load the full structure (relative to
+       the main JSON file). When present, the structure is read from that file
+       instead of being defined inline with the coordinate arrays.
+     - No
+     - ``"structures/frame-0.json"``
    * - ``elements``
      - string[]
      - Optional alternative to ``names`` for element symbols
@@ -692,7 +699,7 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
    * - ``color``
      - object
      - Color config: like axis, plus ``"palette"`` option for colormap selection, and
-       ```"opacity"`` to make traces transparent.
+       ``"opacity"`` to make traces transparent.
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
