@@ -125,6 +125,7 @@ export interface LoadOptions {
 
 /** */
 export class MoleculeViewer {
+    
     /** callback called when a new atom is clicked on */
     public onselect: (atom: number) => void;
     /**
@@ -1597,6 +1598,8 @@ export class MoleculeViewer {
         return currentProperty;
     }
 
+    private _nonStandardElemColors = new Map<string, string>();
+
     /**
      * Get a function computing the atom color, that can be used as 3Dmol
      * `colorfunc`
@@ -1606,24 +1609,20 @@ export class MoleculeViewer {
 
         if (this._properties === undefined || property === 'element') {
             const tab20Palette = COLOR_MAPS['tab20'];
-            const nonStandardElemIndex = new Map<string, number>();
-            let nextIndex = 0;
             return (atom: $3Dmol.AtomSpec) => {
                 if (atom.elem !== undefined) {
-                    const nonStandardElementNames: string[] = [];
                     const value = $3Dmol.elementColors.Jmol[atom.elem];
                     if (value !== undefined) {
                         // standard element names
                         return value;
                     } else {
-                        let index = nonStandardElemIndex.get(atom.elem);
-                        if (index === undefined) {
-                            index = nextIndex % tab20Palette.length;
-                            nonStandardElemIndex.set(atom.elem, index);
-                            nonStandardElementNames.push(atom.elem);
-                            nextIndex++;
+                        let value = this._nonStandardElemColors.get(atom.elem);
+                        if (value === undefined) {
+                            this._nonStandardElemColors.set(atom.elem, tab20Palette[this._nonStandardElemColors.size % (tab20Palette.length / 2) * 2][1]);  // each color is repeated twice
+                            value = this._nonStandardElemColors.get(atom.elem);
                         }
-                        return tab20Palette[index * 2][1];
+                        assert (value !== undefined);
+                        return value;
                     }
                 } else {
                     // missing values
