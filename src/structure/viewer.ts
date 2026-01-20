@@ -1593,18 +1593,43 @@ export class MoleculeViewer {
         return currentProperty;
     }
 
+    private _nonStandardElemColors = new Map<string, string>();
+
     /**
      * Get a function computing the atom color, that can be used as 3Dmol
      * `colorfunc`
      */
-    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => number) | undefined {
-        if (this._properties === undefined) {
-            return undefined;
-        }
-
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => $3Dmol.ColorSpec) | undefined {
         const property = this._options.color.property.value;
-        if (property === 'element') {
-            return undefined;
+
+        if (this._properties === undefined || property === 'element') {
+            const tab20Palette = COLOR_MAPS['tab20'];
+            return (atom: $3Dmol.AtomSpec) => {
+                if (atom.elem !== undefined) {
+                    const value = $3Dmol.elementColors.Jmol[atom.elem];
+                    if (value !== undefined) {
+                        // standard element names
+                        return value;
+                    } else {
+                        let value = this._nonStandardElemColors.get(atom.elem);
+                        if (value === undefined) {
+                            this._nonStandardElemColors.set(
+                                atom.elem,
+                                tab20Palette[
+                                    (this._nonStandardElemColors.size % (tab20Palette.length / 2)) *
+                                        2
+                                ][1]
+                            ); // each color is repeated twice
+                            value = this._nonStandardElemColors.get(atom.elem);
+                        }
+                        assert(value !== undefined);
+                        return value;
+                    }
+                } else {
+                    // missing values
+                    return 0xdddddd;
+                }
+            };
         }
 
         const transform = this._options.color.transform.value;
