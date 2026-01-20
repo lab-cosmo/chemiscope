@@ -268,10 +268,13 @@ export class PropertiesMap {
      * when zoomed out.
      */
     private static readonly LOD_THRESHOLD = 50000;
+    private static readonly LOD_DEBOUNCE_MS = 300;
+    private static readonly LOD_SETTLE_MS = 200;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
-    private _updatingLOD = false;
+    private _lodUpdateLock = false;
+    private _lodDebounceTimer: number | undefined;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -868,29 +871,8 @@ export class PropertiesMap {
         // ======= x axis settings
         this._options.x.property.onchange.push(() => {
             // Reset min/max when changing property to trigger autoscale
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
             negativeLogWarning(this._options.x);
-
-            // LOD: Spatial binning depends on axes. If X changes, LOD indices change.
-            this._computeLOD();
-            // Fire and forget
-            void this._restyleLOD();
-            this._relayout({
-                'scene.xaxis.title.text': this._title(this._options.x.property.value),
-                'xaxis.title.text': this._title(this._options.x.property.value),
-            } as unknown as Layout);
-
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.xaxis.autorange': true,
-                } as unknown as Layout);
-            } else {
-                this._relayout({
-                    'xaxis.autorange': true,
-                } as unknown as Layout);
-            }
-            this._setScaleStep(this._getBounds().x, 'x');
+            this._handleAxisPropertyChange('x');
         });
 
         this._options.x.scale.onchange.push(() => {
@@ -946,30 +928,8 @@ export class PropertiesMap {
 
         // ======= y axis settings
         this._options.y.property.onchange.push(() => {
-            // Reset min/max when changing property to trigger autoscale
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
             negativeLogWarning(this._options.y);
-
-            // LOD: Y changed, recompute spatial binning
-            this._computeLOD();
-            void this._restyleLOD();
-
-            this._relayout({
-                'scene.yaxis.title.text': this._title(this._options.y.property.value),
-                'yaxis.title.text': this._title(this._options.y.property.value),
-            } as unknown as Layout);
-
-            if (this._is3D()) {
-                this._relayout({
-                    'scene.yaxis.autorange': true,
-                } as unknown as Layout);
-            } else {
-                this._relayout({
-                    'yaxis.autorange': true,
-                } as unknown as Layout);
-            }
-            this._setScaleStep(this._getBounds().y, 'y');
+            this._handleAxisPropertyChange('y');
         });
 
         this._options.y.scale.onchange.push(() => {
@@ -996,48 +956,8 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
-            // Reset min/max when changing property to trigger autoscale
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
-
-            const was3D = this._plot._fullData[0].type === 'scatter3d';
-            if (this._options.z.property.value === '') {
-                if (was3D) {
-                    this._switch2D();
-                }
-                return;
-            } else {
-                if (!was3D) {
-                    this._switch3D();
-                }
-            }
-
-            // LOD: Z changed, compute a first downsampling if necessary
-            this._computeLOD();
-
-            // This has to run asynchronously to ensure that the z axis is scaled properly
-            void (async () => {
-                await this._restyleLOD();
-
-                await Plotly.relayout(this._plot, {
-                    'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                    'scene.zaxis.autorange': true,
-                } as unknown as Layout).then(
-                    // The zrange is now known, and we can trigger a proper subsampling
-                    () => {
-                        const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
-                        this._options.z.min.value = zRange[0];
-                        this._options.z.max.value = zRange[1];
-                        this._computeLOD(this._getBounds());
-                        void this._restyleLOD();
-                    }
-                );
-
-                if (this._is3D()) {
-                    this._setScaleStep(this._getBounds().z as number[], 'z');
-                }
-            })();
+            this._handleZAxisPropertyChange();
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1391,10 +1311,9 @@ export class PropertiesMap {
             }
 
             // don't intercept clicks while the subsampling is updating
-            if (this._updatingLOD) {
+            if (this._lodUpdateLock) {
                 return;
             }
-
             let environment = event.points[0].pointNumber;
 
             // LOD: Map the clicked point back to real environment index if LOD is active on main trace
@@ -1432,29 +1351,23 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            // Check BOTH flags
-            if (!this._updatingLOD && !this._lodUpdateInProgress) {
-                void this._afterplot();
-            }
+            void this._afterplot();
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         let relayoutTimer: number | undefined;
         this._plot.on('plotly_relayout', () => {
-            // Clear any pending timer
+            if (this._lodUpdateLock) {
+                return;
+            }
+
             if (relayoutTimer !== undefined) {
                 window.clearTimeout(relayoutTimer);
             }
 
-            // Check BOTH flags
-            if (this._updatingLOD || this._lodUpdateInProgress) {
-                return;
-            }
-
-            // Schedule the update with a delay
             relayoutTimer = window.setTimeout(() => {
                 relayoutTimer = undefined;
-                if (!this._updatingLOD && !this._lodUpdateInProgress) {
+                if (!this._lodUpdateLock) {
                     void this._afterplot();
                 }
             }, 100);
@@ -1462,7 +1375,7 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            if (!this._updatingLOD) {
+            if (!this._lodUpdateLock) {
                 void this._resetToGlobalView();
             }
             return false;
@@ -1496,6 +1409,81 @@ export class PropertiesMap {
                 }
             }
         }, 1000);
+    }
+
+    private _handleAxisPropertyChange(axis: 'x' | 'y'): void {
+        const axisOptions = this._options[axis];
+        axisOptions.min.value = NaN;
+        axisOptions.max.value = NaN;
+
+        this._computeLOD();
+
+        void this._restyleLOD();
+
+        this._relayout({
+            [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
+            [`${axis}axis.title.text`]: this._title(axisOptions.property.value),
+        } as unknown as Layout);
+
+        if (this._is3D()) {
+            this._relayout({
+                [`scene.${axis}axis.autorange`]: true,
+            } as unknown as Layout);
+        } else {
+            this._relayout({
+                [`${axis}axis.autorange`]: true,
+            } as unknown as Layout);
+        }
+
+        const bounds = this._getBounds();
+        this._setScaleStep(bounds[axis], axis);
+    }
+
+    private _handleZAxisPropertyChange(): void {
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
+
+        const was3D = this._plot._fullData[0].type === 'scatter3d';
+
+        if (this._options.z.property.value === '') {
+            if (was3D) {
+                this._switch2D();
+            }
+            return;
+        } else {
+            if (!was3D) {
+                this._switch3D();
+            }
+        }
+
+        this._computeLOD();
+
+        void (async () => {
+            if (this._lodUpdateLock) return;
+            this._lodUpdateLock = true;
+
+            try {
+                await this._restyleLOD();
+
+                await Plotly.relayout(this._plot, {
+                    'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                    'scene.zaxis.autorange': true,
+                } as unknown as Layout);
+
+                const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
+                this._options.z.min.value = zRange[0];
+                this._options.z.max.value = zRange[1];
+
+                this._computeLOD(this._getBounds());
+                await this._restyleLOD();
+
+                if (this._is3D()) {
+                    this._setScaleStep(this._getBounds().z as number[], 'z');
+                }
+            } finally {
+                this._lodUpdateLock = false;
+            }
+        })();
     }
 
     /**
@@ -1754,18 +1742,30 @@ export class PropertiesMap {
 
         const property = this._property(this._options.symbol.value);
         const symbols = this._options.getSymbols(property);
-        // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(symbols) : symbols;
 
-        const selected = [];
-        for (const data of this._selected.values()) {
-            selected.push(symbols[data.current]);
+        if (this._is3D()) {
+            const symbols3 = symbols as string[];
+            const mainValues =
+                trace === 0 || trace === undefined ? this._applyLOD(symbols3) : symbols3;
+            const selected: string[] = [];
+            for (const data of this._selected.values()) {
+                selected.push(symbols3[data.current]);
+            }
+            return this._selectTrace<string[]>(mainValues, selected, trace) as Array<
+                string | string[] | number[]
+            >;
+        } else {
+            const symbols2 = symbols as number[];
+            const mainValues =
+                trace === 0 || trace === undefined ? this._applyLOD(symbols2) : symbols2;
+            const selected: number[] = [];
+            for (const data of this._selected.values()) {
+                selected.push(symbols2[data.current]);
+            }
+            return this._selectTrace<number[]>(mainValues, selected, trace) as Array<
+                string | string[] | number[]
+            >;
         }
-        return this._selectTrace<typeof symbols>(
-            mainValues as typeof symbols,
-            selected as typeof symbols,
-            trace
-        );
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -1918,26 +1918,32 @@ export class PropertiesMap {
     /**
      * Helper to trigger a full update of the main trace and selected trace when LOD changes.
      */
-    private async _restyleLOD() {
-        const fullUpdate: Record<string, unknown> = {};
-
-        // Helper to merge coordinates into the update object
-        const merge = (key: string, axis: AxisOptions) => {
-            const coords = this._coordinates(axis);
-            fullUpdate[key] = coords;
+    private async _restyleLOD(): Promise<void> {
+        const fullUpdate: Record<string, unknown> = {
+            x: this._coordinates(this._options.x),
+            y: this._coordinates(this._options.y),
+            z: this._coordinates(this._options.z),
+            'marker.color': this._colors(),
+            'marker.size': this._sizes(),
+            'marker.symbol': this._symbols(),
         };
 
-        merge('x', this._options.x);
-        merge('y', this._options.y);
-        merge('z', this._options.z);
-        fullUpdate['marker.color'] = this._colors();
-        fullUpdate['marker.size'] = this._sizes();
-        fullUpdate['marker.symbol'] = this._symbols();
-
-        // Update both main trace (0) and selected trace (1)
-        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
-        // while keeping the _restyle wrapper synchronous for legacy calls.
         await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
+    }
+
+    private _scheduleLODUpdate(bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        if (this._lodDebounceTimer !== undefined) {
+            window.clearTimeout(this._lodDebounceTimer);
+        }
+
+        this._lodDebounceTimer = window.setTimeout(() => {
+            this._lodDebounceTimer = undefined;
+            void this._performLODUpdate(bounds);
+        }, PropertiesMap.LOD_DEBOUNCE_MS);
     }
 
     /**
@@ -2006,12 +2012,12 @@ export class PropertiesMap {
     /**
      * Helper to filter data arrays using the computed LOD indices.
      */
-    private _applyLOD(values: (number | string)[]): (number | string)[] {
+    private _applyLOD<T>(values: T[]): T[] {
         if (this._lodIndices === null) {
             return values;
         }
 
-        const result = new Array<number | string>(this._lodIndices.length);
+        const result = new Array<T>(this._lodIndices.length);
         for (let i = 0; i < this._lodIndices.length; i++) {
             result[i] = values[this._lodIndices[i]];
         }
@@ -2024,11 +2030,11 @@ export class PropertiesMap {
      */
     private async _resetToGlobalView() {
         // Prevent recursion
-        if (this._updatingLOD) {
+        if (this._lodUpdateLock) {
             return;
         }
 
-        this._updatingLOD = true;
+        this._lodUpdateLock = true;
 
         try {
             // Reset settings to Auto (NaN)
@@ -2076,7 +2082,7 @@ export class PropertiesMap {
             await new Promise((resolve) => setTimeout(resolve, 100));
         } finally {
             // Release lock
-            this._updatingLOD = false;
+            this._lodUpdateLock = false;
         }
     }
 
@@ -2084,12 +2090,8 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    // Add these properties to the class (around line 283):
-    private _afterplotDebounceTimer: number | undefined;
-    private _lodUpdateInProgress = false;
-
     private async _afterplot(): Promise<void> {
-        if (this._updatingLOD || this._lodUpdateInProgress) {
+        if (this._lodUpdateLock) {
             return;
         }
 
@@ -2107,72 +2109,70 @@ export class PropertiesMap {
 
         const bounds = this._getBounds();
 
-        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
-            if (boundMin !== undefined && boundMax !== undefined) {
-                axis.min.value = boundMin;
-                axis.max.value = boundMax;
-            }
-        };
-
-        updateAxisValues(this._options.x, bounds.x);
-        updateAxisValues(this._options.y, bounds.y);
-        if (bounds.z !== undefined) {
-            updateAxisValues(this._options.z, bounds.z);
-        }
+        this._updateAxisSettings(bounds);
 
         // Update markers for 2D mode
         if (!this._is3D()) {
             this._updateMarkers();
         }
 
-        const hasPoints = this._options.x.property.value !== '';
-        if (
-            hasPoints &&
-            this._property(this._options.x.property.value).values.length >
-                PropertiesMap.LOD_THRESHOLD
-        ) {
-            if (this._afterplotDebounceTimer !== undefined) {
-                window.clearTimeout(this._afterplotDebounceTimer);
-            }
-
-            // Schedule a new LOD update after events settle
-            this._afterplotDebounceTimer = window.setTimeout(() => {
-                this._afterplotDebounceTimer = undefined;
-                this._performLODUpdate(bounds);
-            }, 300);
+        if (this._shouldUseLOD()) {
+            this._scheduleLODUpdate(bounds);
         }
     }
 
-    private _performLODUpdate(bounds: {
+    private _updateAxisSettings(bounds: {
         x: [number, number];
         y: [number, number];
         z?: [number, number];
     }): void {
-        if (this._updatingLOD || this._lodUpdateInProgress) {
+        this._options.x.min.value = bounds.x[0];
+        this._options.x.max.value = bounds.x[1];
+        this._options.y.min.value = bounds.y[0];
+        this._options.y.max.value = bounds.y[1];
+
+        if (bounds.z !== undefined) {
+            this._options.z.min.value = bounds.z[0];
+            this._options.z.max.value = bounds.z[1];
+        }
+    }
+
+    private _shouldUseLOD(): boolean {
+        const xProp = this._options.x.property.value;
+        if (xProp === '') {
+            return false;
+        }
+
+        const nPoints = this._property(xProp).values.length;
+        return nPoints > PropertiesMap.LOD_THRESHOLD;
+    }
+
+    private async _performLODUpdate(bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): Promise<void> {
+        // Prevent concurrent updates
+        if (this._lodUpdateLock) {
             return;
         }
 
-        this._updatingLOD = true;
-        this._lodUpdateInProgress = true;
+        this._lodUpdateLock = true;
 
-        void (async () => {
-            try {
-                // 1. Recompute indices based on new visible bounds
-                this._computeLOD(bounds);
+        try {
+            // 1. Recompute indices based on new visible bounds
+            this._computeLOD(bounds);
 
-                // 2. Push new data to Plotly and wait for completion
-                await this._restyleLOD();
+            // 2. Update Plotly
+            await this._restyleLOD();
 
-                // 3. Wait longer for Plotly to fully process with large datasets
-                await new Promise((resolve) => setTimeout(resolve, 200));
-            } catch (error) {
-                console.error('LOD update failed:', error);
-            } finally {
-                // Release BOTH flags
-                this._lodUpdateInProgress = false;
-                this._updatingLOD = false;
-            }
-        })();
+            // 3. Wait longer for Plotly to fully process with large datasets
+            await new Promise((resolve) => setTimeout(resolve, PropertiesMap.LOD_SETTLE_MS));
+        } catch (error) {
+            console.error('LOD update failed:', error);
+        } finally {
+            this._lodUpdateLock = false;
+        }
     }
 
     /**
