@@ -1432,25 +1432,39 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void this._afterplot();
+            // Check BOTH flags
+            if (!this._updatingLOD && !this._lodUpdateInProgress) {
+                void this._afterplot();
+            }
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        let relayoutTimer: number;
+        let relayoutTimer: number | undefined;
         this._plot.on('plotly_relayout', () => {
-            // adds a small delay to avoid too frequent re-calculation
-            // of the subsampling
-            if (relayoutTimer) {
+            // Clear any pending timer
+            if (relayoutTimer !== undefined) {
                 window.clearTimeout(relayoutTimer);
             }
+
+            // Check BOTH flags
+            if (this._updatingLOD || this._lodUpdateInProgress) {
+                return;
+            }
+
+            // Schedule the update with a delay
             relayoutTimer = window.setTimeout(() => {
-                void this._afterplot();
-            }, 50);
+                relayoutTimer = undefined;
+                if (!this._updatingLOD && !this._lodUpdateInProgress) {
+                    void this._afterplot();
+                }
+            }, 100);
         });
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            void this._resetToGlobalView();
+            if (!this._updatingLOD) {
+                void this._resetToGlobalView();
+            }
             return false;
         });
 
@@ -2009,76 +2023,82 @@ export class PropertiesMap {
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
+        // Prevent recursion
+        if (this._updatingLOD) {
+            return;
+        }
+
         this._updatingLOD = true;
 
-        // Reset settings to Auto (NaN)
-        this._options.x.min.value = NaN;
-        this._options.x.max.value = NaN;
-        this._options.y.min.value = NaN;
-        this._options.y.max.value = NaN;
-        this._options.z.min.value = NaN;
-        this._options.z.max.value = NaN;
+        try {
+            // Reset settings to Auto (NaN)
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
 
-        // 1. Force global LOD computation
-        this._computeLOD();
+            // 1. Force global LOD computation
+            this._computeLOD();
 
-        // 2. Update data traces first (re-render points with global LOD)
-        // We do this BEFORE relayout so that 'autorange' calculates bounds
-        // based on the full dataset, not the sliced one.
-        await this._restyleLOD();
+            // 2. Update data traces first
+            await this._restyleLOD();
 
-        // 3. Prepare Layout Update
-        const layoutUpdate: Record<string, unknown> = {};
+            // 3. Prepare Layout Update
+            const layoutUpdate: Record<string, unknown> = {};
 
-        if (this._is3D()) {
-            // In 3D, 'autorange: true' resets camera AND axes.
-            layoutUpdate['scene.xaxis.autorange'] = true;
-            layoutUpdate['scene.yaxis.autorange'] = true;
-            layoutUpdate['scene.zaxis.autorange'] = true;
-            layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
-            layoutUpdate['scene.camera'] = {
-                center: { x: 0, y: 0, z: 0 },
-                eye: { x: 1.25, y: 1.25, z: 1.25 },
-                projection: { type: 'orthographic' },
-                up: { x: 0, y: 0, z: 1 },
-            };
-        } else {
-            // In 2D, we trigger autorange on standard axes
-            layoutUpdate['xaxis.autorange'] = true;
-            layoutUpdate['yaxis.autorange'] = true;
+            if (this._is3D()) {
+                layoutUpdate['scene.xaxis.autorange'] = true;
+                layoutUpdate['scene.yaxis.autorange'] = true;
+                layoutUpdate['scene.zaxis.autorange'] = true;
+                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+                layoutUpdate['scene.camera'] = {
+                    center: { x: 0, y: 0, z: 0 },
+                    eye: { x: 1.25, y: 1.25, z: 1.25 },
+                    projection: { type: 'orthographic' },
+                    up: { x: 0, y: 0, z: 1 },
+                };
+            } else {
+                layoutUpdate['xaxis.autorange'] = true;
+                layoutUpdate['yaxis.autorange'] = true;
+            }
+
+            // 4. Force the view reset
+            this._relayout(layoutUpdate);
+
+            // Manually trigger marker update for 2D mode
+            if (!this._is3D()) {
+                this._updateMarkers();
+            }
+
+            // Wait for Plotly to process everything
+            await new Promise((resolve) => setTimeout(resolve, 100));
+        } finally {
+            // Release lock
+            this._updatingLOD = false;
         }
-
-        // 4. Force the view reset
-        this._relayout(layoutUpdate);
-
-        // Manually trigger marker update for 2D mode.
-        if (!this._is3D()) {
-            this._updateMarkers();
-        }
-
-        this._updatingLOD = false;
-        await this._afterplot();
     }
 
     /**
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
+    // Add these properties to the class (around line 283):
+    private _afterplotDebounceTimer: number | undefined;
+    private _lodUpdateInProgress = false;
+
     private async _afterplot(): Promise<void> {
-        // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
-        if (this._updatingLOD) {
+        if (this._updatingLOD || this._lodUpdateInProgress) {
             return;
         }
 
         // Set camera
         if (this._is3D()) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const scene = (this._plot as any)._fullLayout.scene;
             if (scene) {
                 const camera = plotlyToCamera({
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     camera: scene.camera,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     aspectratio: scene.aspectratio,
                 });
                 this._options.camera.setValue(camera, 'DOM');
@@ -2086,78 +2106,73 @@ export class PropertiesMap {
         }
 
         const bounds = this._getBounds();
-        const layout = this._plot._fullLayout;
-        const layoutUpdate: Record<string, unknown> = {};
-        let needRelayout = false;
 
-        const updateAxisValues = (
-            axis: AxisOptions,
-            [boundMin, boundMax]: [number, number],
-            plotlyAxisName: 'xaxis' | 'yaxis' | 'zaxis'
-        ) => {
-            // Only update if values are valid numbers
+        const updateAxisValues = (axis: AxisOptions, [boundMin, boundMax]: [number, number]) => {
             if (boundMin !== undefined && boundMax !== undefined) {
-                // Update explicit values in settings
                 axis.min.value = boundMin;
                 axis.max.value = boundMax;
-
-                // Check if we need to update the plot to disable autorange
-                let plotlyAxis;
-                if (this._is3D()) {
-                    plotlyAxis = layout.scene[plotlyAxisName];
-                } else {
-                    if (plotlyAxisName === 'xaxis') {
-                        plotlyAxis = layout.xaxis;
-                    } else if (plotlyAxisName === 'yaxis') {
-                        plotlyAxis = layout.yaxis;
-                    }
-                }
-
-                if (plotlyAxis && plotlyAxis.autorange) {
-                    const keyPrefix = this._is3D() ? `scene.${plotlyAxisName}` : plotlyAxisName;
-                    layoutUpdate[`${keyPrefix}.range`] = [boundMin, boundMax];
-                    layoutUpdate[`${keyPrefix}.autorange`] = false;
-                    needRelayout = true;
-                }
             }
         };
 
-        // Update settings modal values based on current view
-        updateAxisValues(this._options.x, bounds.x, 'xaxis');
-        updateAxisValues(this._options.y, bounds.y, 'yaxis');
+        updateAxisValues(this._options.x, bounds.x);
+        updateAxisValues(this._options.y, bounds.y);
         if (bounds.z !== undefined) {
-            updateAxisValues(this._options.z, bounds.z, 'zaxis');
+            updateAxisValues(this._options.z, bounds.z);
         }
 
-        if (needRelayout) {
-            // Force Plotly to disable autorange and use the explicit ranges
-            this._relayout(layoutUpdate as unknown as Layout);
+        // Update markers for 2D mode
+        if (!this._is3D()) {
+            this._updateMarkers();
         }
 
-        // LOD CHECK
         const hasPoints = this._options.x.property.value !== '';
         if (
             hasPoints &&
             this._property(this._options.x.property.value).values.length >
                 PropertiesMap.LOD_THRESHOLD
         ) {
-            this._updatingLOD = true;
+            if (this._afterplotDebounceTimer !== undefined) {
+                window.clearTimeout(this._afterplotDebounceTimer);
+            }
 
-            // 1. Recompute indices based on new visible bounds
-            this._computeLOD(bounds);
+            // Schedule a new LOD update after events settle
+            this._afterplotDebounceTimer = window.setTimeout(() => {
+                this._afterplotDebounceTimer = undefined;
+                this._performLODUpdate(bounds);
+            }, 300);
+        }
+    }
 
-            // 2. Push new data to Plotly
-            await this._restyleLOD();
+    private _performLODUpdate(bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        if (this._updatingLOD || this._lodUpdateInProgress) {
+            return;
+        }
 
-            // Release lock after event loop settles to allow subsequent updates
-            setTimeout(() => {
+        this._updatingLOD = true;
+        this._lodUpdateInProgress = true;
+
+        void (async () => {
+            try {
+                // 1. Recompute indices based on new visible bounds
+                this._computeLOD(bounds);
+
+                // 2. Push new data to Plotly and wait for completion
+                await this._restyleLOD();
+
+                // 3. Wait longer for Plotly to fully process with large datasets
+                await new Promise((resolve) => setTimeout(resolve, 200));
+            } catch (error) {
+                console.error('LOD update failed:', error);
+            } finally {
+                // Release BOTH flags
+                this._lodUpdateInProgress = false;
                 this._updatingLOD = false;
-            }, 0);
-        }
-
-        if (!this._is3D()) {
-            this._updateMarkers();
-        }
+            }
+        })();
     }
 
     /**
