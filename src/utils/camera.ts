@@ -18,13 +18,6 @@ export interface CameraState {
     zoom: number;
 }
 
-export const CameraStateTemplate: CameraState = {
-    eye: { x: 0, y: 0, z: 0 },
-    center: { x: 0, y: 0, z: 0 },
-    up: { x: 0, y: 0, z: 0 },
-    zoom: 1,
-};
-
 export interface PlotlyState {
     camera: {
         eye: { x: number; y: number; z: number };
@@ -323,4 +316,42 @@ export function plotlyToCamera(plotlyUpdate: PlotlyState): CameraState {
     };
 
     return camera;
+}
+
+/**
+ * Validates that the input object matches the CameraState interface.
+ * Throws an error if the validation fails.
+ */
+export function validateCamera(camera: CameraState): void {
+    const data = camera as unknown as Record<string, unknown>;
+
+    if (typeof data !== 'object' || data === null) {
+        throw Error('invalid type for camera, expected object');
+    }
+
+    // Check top level keys
+    for (const key of ['eye', 'center', 'up']) {
+        if (!(key in data)) {
+            throw Error(`missing key '${key}' in camera`);
+        }
+        const vec = data[key] as Record<string, unknown>;
+        if (typeof vec !== 'object' || vec === null) {
+            throw Error(`invalid type for camera.${key}, expected object`);
+        }
+        for (const subkey of ['x', 'y', 'z']) {
+            if (!(subkey in vec)) {
+                throw Error(`missing key '${subkey}' in camera.${key}`);
+            }
+            if (typeof vec[subkey] !== 'number') {
+                throw Error(`invalid type for camera.${key}.${subkey}, expected number`);
+            }
+        }
+    }
+
+    if (!('zoom' in data)) {
+        throw Error("missing key 'zoom' in camera");
+    }
+    if (typeof data.zoom !== 'number') {
+        throw Error('invalid type for camera.zoom, expected number');
+    }
 }

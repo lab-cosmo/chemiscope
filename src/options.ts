@@ -88,50 +88,6 @@ export function optionValidator(valid: string[], name = ''): (value: string) => 
 }
 
 /**
- * Creates a validating function that checks that the value has the same
- * properties and types as the template.
- *
- * @param  template  template object defining the expected structure
- * @param  name      name of the setting for better error messages
- * @return           a function that can be used to validate a new setting value
- */
-export function objectValidator<T>(template: T, name = ''): (value: T) => void {
-    return (value: T) => {
-        validateObject(value, template, name);
-    };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function validateObject(value: any, template: any, name: string) {
-    if (typeof value !== typeof template) {
-        throw Error(`invalid type for ${name}, expected ${typeof template}, got ${typeof value}`);
-    }
-
-    if (typeof template === 'object' && template !== null) {
-        if (value === null) {
-            throw Error(`invalid value for ${name}, expected object, got null`);
-        }
-
-        if (Array.isArray(template) !== Array.isArray(value)) {
-            throw Error(
-                `invalid type for ${name}, expected ${
-                    Array.isArray(template) ? 'array' : 'object'
-                }, got ${Array.isArray(value) ? 'array' : 'object'}`
-            );
-        }
-
-        for (const key in template) {
-            if (Object.prototype.hasOwnProperty.call(template, key)) {
-                if (!Object.prototype.hasOwnProperty.call(value, key)) {
-                    throw Error(`missing key '${key}' in ${name}`);
-                }
-                validateObject(value[key], template[key], `${name}.${key}`);
-            }
-        }
-    }
-}
-
-/**
  * Simple two-way data binding implementation to store settings in chemiscope.
  *
  * This class manages a setting single value, and bind it to HTML elements.

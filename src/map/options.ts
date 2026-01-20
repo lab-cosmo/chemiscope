@@ -9,9 +9,9 @@ import Collapse from '../collapse';
 import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, JSOption, OptionsGroup } from '../options';
-import { objectValidator, optionValidator } from '../options';
+import { optionValidator } from '../options';
 import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
-import { CameraState, CameraStateTemplate } from '../utils/camera';
+import { CameraState, validateCamera } from '../utils/camera';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 
@@ -165,7 +165,7 @@ export class MapOptions extends OptionsGroup {
         this.camera = new JSOption<CameraState | undefined>(undefined);
         this.camera.validate = (value: CameraState | undefined) => {
             if (value !== undefined) {
-                objectValidator(CameraStateTemplate, 'camera')(value);
+                validateCamera(value);
                 if (value.zoom <= 0) {
                     throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
                 }
