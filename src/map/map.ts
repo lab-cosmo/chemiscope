@@ -13,14 +13,14 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
+import { PlotlyState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices, computeScreenSpaceLOD } from './lod';
+import { LODManager } from './lod';
 import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
@@ -270,11 +270,8 @@ export class PropertiesMap {
     private static readonly LOD_THRESHOLD = 50000;
     private static readonly LOD_DEBOUNCE_MS = 300;
     private static readonly LOD_SETTLE_MS = 200;
-    /// Stores the subset of point indices to display when LOD is active
-    private _lodIndices: number[] | null = null;
-    /// Guard to prevent infinite recursion in afterplot loops
-    private _lodUpdateLock = false;
-    private _lodDebounceTimer: number | undefined;
+    /// LOD manager
+    private _lod!: LODManager;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -354,8 +351,29 @@ export class PropertiesMap {
             this._options.showLODOption(true);
         }
 
+        // Initialize LOD manager and perform initial computation
+        this._lod = new LODManager(
+            this._options,
+            () => this._is3D(),
+            (name: string) => this._property(name),
+            async () => {
+                const fullUpdate: Record<string, unknown> = {
+                    x: this._coordinates(this._options.x),
+                    y: this._coordinates(this._options.y),
+                    z: this._coordinates(this._options.z),
+                    'marker.color': this._colors(),
+                    'marker.size': this._sizes(),
+                    'marker.symbol': this._symbols(),
+                };
+                await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
+            },
+            PropertiesMap.LOD_THRESHOLD,
+            PropertiesMap.LOD_DEBOUNCE_MS,
+            PropertiesMap.LOD_SETTLE_MS
+        );
+
         // Initial LOD computation
-        this._computeLOD();
+        this._lod.computeLOD();
 
         // Connect the settings to event listeners or handlers
         this._connectSettings();
@@ -393,7 +411,7 @@ export class PropertiesMap {
             // Set new widget target
             this._target = target;
             // Reset LOD
-            this._lodIndices = null;
+            this._lod.computeLOD();
 
             // Process markers to correctly set then to the updated map
             this._handleMarkers();
@@ -410,7 +428,7 @@ export class PropertiesMap {
             this._setupMapOptions();
 
             // Recompute LOD with new options
-            this._computeLOD();
+            this._lod.computeLOD();
 
             // Append the callbacks to the new options
             this._connectSettings();
@@ -1254,10 +1272,10 @@ export class PropertiesMap {
 
         // ======= Level of Detail settings
         this._options.useLOD.onchange.push(() => {
-            this._computeLOD();
-            // Force a full restyle. Since _lodIndices will be null if disabled,
+            this._lod.computeLOD();
+            // Force a full restyle. Since indices will be null if disabled,
             // this will render all points.
-            void this._restyleLOD();
+            void this._lod.restyleLOD();
         });
 
         // ======= camera state update
@@ -1311,18 +1329,19 @@ export class PropertiesMap {
             }
 
             // don't intercept clicks while the subsampling is updating
-            if (this._lodUpdateLock) {
+            if (this._lod.isLocked()) {
                 return;
             }
             let environment = event.points[0].pointNumber;
 
             // LOD: Map the clicked point back to real environment index if LOD is active on main trace
-            if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
-                if (environment >= this._lodIndices.length) {
+            const lodIndices = this._lod.indices;
+            if (lodIndices !== null && event.points[0].curveNumber === 0) {
+                if (environment >= lodIndices.length) {
                     // ignore stray clicks that happen during redrawing
                     return;
                 }
-                environment = this._lodIndices[environment];
+                environment = lodIndices[environment];
             }
 
             if (this._is3D() && event.points[0].data.name === 'selected') {
@@ -1351,13 +1370,13 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void this._afterplot();
+            this._afterplot();
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         let relayoutTimer: number | undefined;
         this._plot.on('plotly_relayout', () => {
-            if (this._lodUpdateLock) {
+            if (this._lod.isLocked()) {
                 return;
             }
 
@@ -1367,15 +1386,15 @@ export class PropertiesMap {
 
             relayoutTimer = window.setTimeout(() => {
                 relayoutTimer = undefined;
-                if (!this._lodUpdateLock) {
-                    void this._afterplot();
+                if (!this._lod.isLocked()) {
+                    this._afterplot();
                 }
             }, 100);
         });
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            if (!this._lodUpdateLock) {
+            if (!this._lod.isLocked()) {
                 void this._resetToGlobalView();
             }
             return false;
@@ -1416,9 +1435,9 @@ export class PropertiesMap {
         axisOptions.min.value = NaN;
         axisOptions.max.value = NaN;
 
-        this._computeLOD();
+        this._lod.computeLOD();
 
-        void this._restyleLOD();
+        void this._lod.restyleLOD();
 
         this._relayout({
             [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
@@ -1456,14 +1475,14 @@ export class PropertiesMap {
             }
         }
 
-        this._computeLOD();
+        this._lod.computeLOD();
 
         void (async () => {
-            if (this._lodUpdateLock) return;
-            this._lodUpdateLock = true;
+            if (this._lod.isLocked()) return;
+            this._lod.setLock(true);
 
             try {
-                await this._restyleLOD();
+                await this._lod.restyleLOD();
 
                 await Plotly.relayout(this._plot, {
                     'scene.zaxis.title.text': this._title(this._options.z.property.value),
@@ -1474,14 +1493,14 @@ export class PropertiesMap {
                 this._options.z.min.value = zRange[0];
                 this._options.z.max.value = zRange[1];
 
-                this._computeLOD(this._getBounds());
-                await this._restyleLOD();
+                this._lod.computeLOD(this._getBounds());
+                await this._lod.restyleLOD();
 
                 if (this._is3D()) {
                     this._setScaleStep(this._getBounds().z as number[], 'z');
                 }
             } finally {
-                this._lodUpdateLock = false;
+                this._lod.setLock(false);
             }
         })();
     }
@@ -1625,7 +1644,7 @@ export class PropertiesMap {
         const values = this._property(axis.property.value).values;
         // LOD: Apply binning filter for main trace (trace 0)
         // If trace is undefined (both), _selectTrace distributes the first argument to main trace
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const mainValues = trace === 0 || trace === undefined ? this._lod.applyLOD(values) : values;
 
         // in 2d mode, set all selected markers coordinates to NaN since we are
         // using HTML markers instead.
@@ -1637,7 +1656,7 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace<number[]>(mainValues as number[], selected, trace);
+        return this._selectTrace(mainValues, selected, trace);
     }
 
     private _title(name: string): string {
@@ -1686,7 +1705,7 @@ export class PropertiesMap {
         }
         const values = this._options.calculateColors(colors);
         // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const mainValues = trace === 0 || trace === undefined ? this._lod.applyLOD(values) : values;
 
         const selected = [];
         for (const data of this._selected.values()) {
@@ -1711,7 +1730,7 @@ export class PropertiesMap {
         }
         const values = this._options.calculateSizes(sizes);
         // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const mainValues = trace === 0 || trace === undefined ? this._lod.applyLOD(values) : values;
 
         const selected = [];
         if (this._is3D()) {
@@ -1746,7 +1765,7 @@ export class PropertiesMap {
         if (this._is3D()) {
             const symbols3 = symbols as string[];
             const mainValues =
-                trace === 0 || trace === undefined ? this._applyLOD(symbols3) : symbols3;
+                trace === 0 || trace === undefined ? this._lod.applyLOD(symbols3) : symbols3;
             const selected: string[] = [];
             for (const data of this._selected.values()) {
                 selected.push(symbols3[data.current]);
@@ -1757,7 +1776,7 @@ export class PropertiesMap {
         } else {
             const symbols2 = symbols as number[];
             const mainValues =
-                trace === 0 || trace === undefined ? this._applyLOD(symbols2) : symbols2;
+                trace === 0 || trace === undefined ? this._lod.applyLOD(symbols2) : symbols2;
             const selected: number[] = [];
             for (const data of this._selected.values()) {
                 selected.push(symbols2[data.current]);
@@ -1916,125 +1935,16 @@ export class PropertiesMap {
     }
 
     /**
-     * Helper to trigger a full update of the main trace and selected trace when LOD changes.
-     */
-    private async _restyleLOD(): Promise<void> {
-        const fullUpdate: Record<string, unknown> = {
-            x: this._coordinates(this._options.x),
-            y: this._coordinates(this._options.y),
-            z: this._coordinates(this._options.z),
-            'marker.color': this._colors(),
-            'marker.size': this._sizes(),
-            'marker.symbol': this._symbols(),
-        };
-
-        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
-    }
-
-    private _scheduleLODUpdate(bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
-        if (this._lodDebounceTimer !== undefined) {
-            window.clearTimeout(this._lodDebounceTimer);
-        }
-
-        this._lodDebounceTimer = window.setTimeout(() => {
-            this._lodDebounceTimer = undefined;
-            void this._performLODUpdate(bounds);
-        }, PropertiesMap.LOD_DEBOUNCE_MS);
-    }
-
-    /**
-     * Computes the subset of points to display based on spatial grid binning (LOD).
-     */
-    private _computeLOD(bounds?: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
-        // check if LOD is enabled
-        if (!this._options.useLOD.value) {
-            this._lodIndices = null;
-            return;
-        }
-
-        const xProp = this._options.x.property.value;
-        const yProp = this._options.y.property.value;
-        const zProp = this._options.z.property.value;
-
-        const xValues = this._property(xProp).values;
-
-        // Check threshold
-        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
-            this._lodIndices = null;
-            return;
-        }
-
-        const yValues = this._property(yProp).values;
-        const is3D = this._is3D() && zProp !== '';
-        const zValues = is3D ? this._property(zProp).values : null;
-
-        // compute a sparser "global" grid of points for the full range
-        // of the dataset to show "something" when we rotate, pan or zoom
-        const lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
-            undefined,
-            PropertiesMap.LOD_THRESHOLD / 10
-        );
-
-        // ... and then do a higher resolution subsampling for the
-        // points that are actually visiblt
-        if (is3D && zValues && this._options.camera.value && bounds) {
-            lodIndices.push(
-                ...computeScreenSpaceLOD(
-                    xValues,
-                    yValues,
-                    zValues,
-                    this._options.camera.value,
-                    bounds,
-                    PropertiesMap.LOD_THRESHOLD
-                )
-            );
-        } else {
-            lodIndices.push(
-                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
-            );
-        }
-
-        // remove duplicates, and sort
-        this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
-    }
-
-    /**
-     * Helper to filter data arrays using the computed LOD indices.
-     */
-    private _applyLOD<T>(values: T[]): T[] {
-        if (this._lodIndices === null) {
-            return values;
-        }
-
-        const result = new Array<T>(this._lodIndices.length);
-        for (let i = 0; i < this._lodIndices.length; i++) {
-            result[i] = values[this._lodIndices[i]];
-        }
-        return result;
-    }
-
-    /**
      * Resets the view to global bounds and recomputes LOD on the full dataset.
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
         // Prevent recursion
-        if (this._lodUpdateLock) {
+        if (this._lod.isLocked()) {
             return;
         }
 
-        this._lodUpdateLock = true;
+        this._lod.setLock(true);
 
         try {
             // Reset settings to Auto (NaN)
@@ -2046,10 +1956,10 @@ export class PropertiesMap {
             this._options.z.max.value = NaN;
 
             // 1. Force global LOD computation
-            this._computeLOD();
+            this._lod.computeLOD();
 
             // 2. Update data traces first
-            await this._restyleLOD();
+            await this._lod.restyleLOD();
 
             // 3. Prepare Layout Update
             const layoutUpdate: Record<string, unknown> = {};
@@ -2082,7 +1992,7 @@ export class PropertiesMap {
             await new Promise((resolve) => setTimeout(resolve, 100));
         } finally {
             // Release lock
-            this._lodUpdateLock = false;
+            this._lod.setLock(false);
         }
     }
 
@@ -2090,20 +2000,26 @@ export class PropertiesMap {
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private async _afterplot(): Promise<void> {
-        if (this._lodUpdateLock) {
+    private _afterplot(): void {
+        if (this._lod.isLocked()) {
             return;
         }
 
-        // Set camera
+        // Set camera (3D)
         if (this._is3D()) {
-            const scene = (this._plot as any)._fullLayout.scene;
-            if (scene) {
-                const camera = plotlyToCamera({
-                    camera: scene.camera,
-                    aspectratio: scene.aspectratio,
-                });
-                this._options.camera.setValue(camera, 'DOM');
+            const fullLayout = (this._plot as unknown as { _fullLayout?: unknown })._fullLayout;
+            if (fullLayout && typeof fullLayout === 'object') {
+                const fl = fullLayout as { scene?: unknown };
+                const scene = fl.scene;
+                if (scene && typeof scene === 'object') {
+                    const sceneObj = scene as { camera?: unknown; aspectratio?: unknown };
+                    const maybePlotly: PlotlyState = {
+                        camera: sceneObj.camera as PlotlyState['camera'],
+                        aspectratio: sceneObj.aspectratio as PlotlyState['aspectratio'],
+                    };
+                    const camera = plotlyToCamera(maybePlotly);
+                    this._options.camera.setValue(camera, 'DOM');
+                }
             }
         }
 
@@ -2117,7 +2033,7 @@ export class PropertiesMap {
         }
 
         if (this._shouldUseLOD()) {
-            this._scheduleLODUpdate(bounds);
+            this._lod.scheduleLODUpdate(bounds);
         }
     }
 
@@ -2145,34 +2061,6 @@ export class PropertiesMap {
 
         const nPoints = this._property(xProp).values.length;
         return nPoints > PropertiesMap.LOD_THRESHOLD;
-    }
-
-    private async _performLODUpdate(bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): Promise<void> {
-        // Prevent concurrent updates
-        if (this._lodUpdateLock) {
-            return;
-        }
-
-        this._lodUpdateLock = true;
-
-        try {
-            // 1. Recompute indices based on new visible bounds
-            this._computeLOD(bounds);
-
-            // 2. Update Plotly
-            await this._restyleLOD();
-
-            // 3. Wait longer for Plotly to fully process with large datasets
-            await new Promise((resolve) => setTimeout(resolve, PropertiesMap.LOD_SETTLE_MS));
-        } catch (error) {
-            console.error('LOD update failed:', error);
-        } finally {
-            this._lodUpdateLock = false;
-        }
     }
 
     /**

@@ -5,6 +5,8 @@
 
 import { arrayMaxMin } from '../utils';
 import { CameraState, projectPoints } from '../utils/camera';
+import { NumericProperty } from './data';
+import { MapOptions } from './options';
 
 /**
  * Computes the subset of points to display based on 2D screen-space projection.
@@ -18,7 +20,7 @@ import { CameraState, projectPoints } from '../utils/camera';
  * @param threshLOD Maximum number of points to display (default: 50000)
  * @returns Sorted array of indices to display
  */
-export function computeScreenSpaceLOD(
+function computeScreenSpaceLOD(
     xValues: number[],
     yValues: number[],
     zValues: number[],
@@ -89,7 +91,7 @@ export function computeScreenSpaceLOD(
  * @param threshLOD  Maximum number of points to display (default: 50000)
  * @returns Sorted array of indices to display
  */
-export function computeLODIndices(
+function computeLODIndices(
     xValues: number[],
     yValues: number[],
     zValues: number[] | null,
@@ -194,4 +196,143 @@ export function computeLODIndices(
     indices.sort((a, b) => a - b);
 
     return indices;
+}
+
+/**
+ * High level controller managing LOD indices, debouncing and restyling.
+ * This encapsulates the higher-level logic previously embedded in map.ts.
+ */
+export class LODManager {
+    private _indices: number[] | null = null;
+    private _lock = false;
+    private _debounceTimer: number | undefined;
+
+    constructor(
+        private options: MapOptions,
+        private is3D: () => boolean,
+        private getProperty: (name: string) => NumericProperty,
+        private restyleFull: () => Promise<void>,
+        private threshLOD: number = 50000,
+        private debounceMs: number = 300,
+        private settleMs: number = 200
+    ) {}
+
+    public get indices(): number[] | null {
+        return this._indices;
+    }
+
+    public isLocked(): boolean {
+        return this._lock;
+    }
+
+    public setLock(v: boolean): void {
+        this._lock = v;
+    }
+
+    public applyLOD<T>(values: T[]): T[] {
+        if (this._indices === null) {
+            return values;
+        }
+        const result = new Array<T>(this._indices.length);
+        for (let i = 0; i < this._indices.length; i++) {
+            result[i] = values[this._indices[i]];
+        }
+        return result;
+    }
+
+    public computeLOD(bounds?: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        if (!this.options.useLOD.value) {
+            this._indices = null;
+            return;
+        }
+
+        const xProp = this.options.x.property.value;
+        const yProp = this.options.y.property.value;
+        const zProp = this.options.z.property.value;
+
+        const xValues = this.getProperty(xProp).values;
+
+        if (xValues.length <= this.threshLOD) {
+            this._indices = null;
+            return;
+        }
+
+        const yValues = this.getProperty(yProp).values;
+        const is3D = this.is3D() && zProp !== '';
+        const zValues = is3D ? this.getProperty(zProp).values : null;
+
+        const lodIndices = computeLODIndices(
+            xValues,
+            yValues,
+            zValues,
+            undefined,
+            Math.floor(this.threshLOD / 10)
+        );
+
+        if (is3D && zValues && this.options.camera.value && bounds) {
+            lodIndices.push(
+                ...computeScreenSpaceLOD(
+                    xValues,
+                    yValues,
+                    zValues,
+                    this.options.camera.value,
+                    bounds,
+                    this.threshLOD
+                )
+            );
+        } else {
+            lodIndices.push(
+                ...computeLODIndices(xValues, yValues, zValues, bounds, this.threshLOD)
+            );
+        }
+
+        this._indices = [...new Set(lodIndices)].sort((a, b) => a - b);
+    }
+
+    public async restyleLOD(): Promise<void> {
+        await this.restyleFull();
+    }
+
+    public scheduleLODUpdate(bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        if (this._debounceTimer !== undefined) {
+            window.clearTimeout(this._debounceTimer);
+        }
+
+        this._debounceTimer = window.setTimeout(() => {
+            this._debounceTimer = undefined;
+            void this.performLODUpdate(bounds);
+        }, this.debounceMs);
+    }
+
+    private async performLODUpdate(bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): Promise<void> {
+        if (this._lock) {
+            return;
+        }
+
+        this._lock = true;
+
+        try {
+            this.computeLOD(bounds);
+            await this.restyleFull();
+            await new Promise((resolve) => setTimeout(resolve, this.settleMs));
+        } catch (error) {
+            // avoid breaking the UI loop
+            // eslint-disable-next-line no-console
+            console.error('LOD update failed:', error);
+        } finally {
+            this._lock = false;
+        }
+    }
 }
