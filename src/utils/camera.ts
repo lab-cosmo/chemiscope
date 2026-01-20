@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 /**
  * This module contains utility functions to handle the camera settings
  * for Plotly.js and 3dmol.js viewers, including conversions between their
@@ -172,7 +174,119 @@ export function cameraToView(camera: CameraState): ViewState {
         }
     }
 
-    return [center.x, center.y, center.z, zLen, qx, qy, qz, qw];
+    return [center.x, center.y, center.z, camera.zoom, qx, qy, qz, qw];
+}
+
+/** 4x4 Matrix for 3D projection, row-major */
+export type Matrix4 = [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+];
+
+/**
+ * Computes the View Matrix from Camera State.
+ * (Column-major format for WebGL compatibility, though we calculate row-major logic above)
+ * We'll use standard math: M = Translation * Rotation
+ */
+export function getLookAtMatrix(camera: CameraState): Matrix4 {
+    const { eye, center, up } = camera;
+
+    // Z = normalize(eye - center)
+    let z0 = center.x - eye.x;
+    let z1 = center.y - eye.y;
+    let z2 = center.z - eye.z;
+    let len = Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
+    if (len > 0) {
+        z0 /= len;
+        z1 /= len;
+        z2 /= len;
+    }
+
+    // X = normalize(cross(up, Z))
+    let x0 = up.y * z2 - up.z * z1;
+    let x1 = up.z * z0 - up.x * z2;
+    let x2 = up.x * z1 - up.y * z0;
+    len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
+    if (len > 0) {
+        x0 /= len;
+        x1 /= len;
+        x2 /= len;
+    }
+
+    // Y = cross(Z, X)
+    const y0 = z1 * x2 - z2 * x1;
+    const y1 = z2 * x0 - z0 * x2;
+    const y2 = z0 * x1 - z1 * x0;
+
+    // Translation (dot products)
+    const dotX = -(x0 * eye.x + x1 * eye.y + x2 * eye.z);
+    const dotY = -(y0 * eye.x + y1 * eye.y + y2 * eye.z);
+    const dotZ = -(z0 * eye.x + z1 * eye.y + z2 * eye.z);
+
+    // Matrix 4x4
+    return [x0, y0, z0, 0, x1, y1, z1, 0, x2, y2, z2, 0, dotX, dotY, dotZ, 1];
+}
+
+/**
+ * Projects a 3D point to 2D screen space coordinates [-1, 1].
+ * Uses orthographic projection based on camera state.
+ */
+export function projectPoints(
+    xValues: number[],
+    yValues: number[],
+    zValues: number[],
+    camera: CameraState,
+    bounds: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }
+): { x: number[]; y: number[] } {
+    assert(bounds.z !== undefined);
+
+    const viewMatrix = getLookAtMatrix(camera);
+    const zoomFactor = camera.zoom;
+
+    // Get constants to determine the scaled coordinates of the points
+    const mx = (bounds.x[0] + bounds.x[1]) / 2;
+    const my = (bounds.y[0] + bounds.y[1]) / 2;
+    const mz = (bounds.z[0] + bounds.z[1]) / 2;
+    const dx = (bounds.x[1] - bounds.x[0]) / 2 / zoomFactor;
+    const dy = (bounds.y[1] - bounds.y[0]) / 2 / zoomFactor;
+    const dz = (bounds.z[1] - bounds.z[0]) / 2 / zoomFactor;
+
+    const xProj: number[] = [];
+    const yProj: number[] = [];
+
+    for (let i = 0; i < xValues.length; i++) {
+        // Scale and refer to camera center
+        const x = (xValues[i] - mx) / dx - camera.center.x;
+        const y = (yValues[i] - my) / dy - camera.center.y;
+        const z = (zValues[i] - mz) / dz - camera.center.z;
+
+        // Apply view matrix (vZ is not needed)
+        const vX = viewMatrix[0] * x + viewMatrix[4] * y + viewMatrix[8] * z + viewMatrix[12];
+        const vY = viewMatrix[1] * x + viewMatrix[5] * y + viewMatrix[9] * z + viewMatrix[13];
+
+        xProj.push(vX);
+        yProj.push(vY);
+    }
+
+    return { x: xProj, y: yProj };
 }
 
 /** Convert internal camera settings to Plotly format */
@@ -202,4 +316,42 @@ export function plotlyToCamera(plotlyUpdate: PlotlyState): CameraState {
     };
 
     return camera;
+}
+
+/**
+ * Validates that the input object matches the CameraState interface.
+ * Throws an error if the validation fails.
+ */
+export function validateCamera(camera: CameraState): void {
+    const data = camera as unknown as Record<string, unknown>;
+
+    if (typeof data !== 'object' || data === null) {
+        throw Error('invalid type for camera, expected object');
+    }
+
+    // Check top level keys
+    for (const key of ['eye', 'center', 'up']) {
+        if (!(key in data)) {
+            throw Error(`missing key '${key}' in camera`);
+        }
+        const vec = data[key] as Record<string, unknown>;
+        if (typeof vec !== 'object' || vec === null) {
+            throw Error(`invalid type for camera.${key}, expected object`);
+        }
+        for (const subkey of ['x', 'y', 'z']) {
+            if (!(subkey in vec)) {
+                throw Error(`missing key '${subkey}' in camera.${key}`);
+            }
+            if (typeof vec[subkey] !== 'number') {
+                throw Error(`invalid type for camera.${key}.${subkey}, expected number`);
+            }
+        }
+    }
+
+    if (!('zoom' in data)) {
+        throw Error("missing key 'zoom' in camera");
+    }
+    if (typeof data.zoom !== 'number') {
+        throw Error('invalid type for camera.zoom, expected number');
+    }
 }

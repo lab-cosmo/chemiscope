@@ -341,6 +341,16 @@ export class MoleculeViewer {
             };
         };
 
+        // Detect camera changes to update settings
+        const checkCameraChange = () => {
+            const view = this._viewer.getView() as ViewState;
+            const camera = viewToCamera(view);
+            this._options.camera.setValue(camera, 'DOM');
+        };
+
+        this._root.addEventListener('mouseup', checkCameraChange);
+        this._root.addEventListener('touchend', checkCameraChange);
+
         // Hack to reverse the scroll direction of 3dmol to match that of Plotly
         // The wheel event is captured on the parent of the canvas, modified
         // and then dispatched on the canvas.
@@ -367,25 +377,11 @@ export class MoleculeViewer {
                     // represents the canvas
                     assert(event.target);
                     event.target.dispatchEvent(copy);
+                    checkCameraChange();
                 }
             },
             { capture: true }
         );
-
-        // Detect camera changes to update settings
-        const checkCameraChange = () => {
-            const view = this._viewer.getView() as ViewState;
-            const camera = viewToCamera(view);
-            this._options.camera.setValue(camera, 'DOM');
-        };
-
-        this._root.addEventListener('mouseup', checkCameraChange);
-        this._root.addEventListener('touchend', checkCameraChange);
-        this._root.addEventListener('wheel', (e) => {
-            if (!e.isTrusted) {
-                checkCameraChange();
-            }
-        });
 
         window.addEventListener('resize', () => this.resize());
         // waits for loading of widget, then triggers a redraw. fixes some glitches on the Jupyter side

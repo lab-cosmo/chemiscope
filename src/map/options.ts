@@ -11,7 +11,7 @@ import { Settings } from '../dataset';
 import { HTMLOption, JSOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
 import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
-import { CameraState } from '../utils/camera';
+import { CameraState, validateCamera } from '../utils/camera';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
 
@@ -163,6 +163,14 @@ export class MapOptions extends OptionsGroup {
         // adaptive resolution for large datasets
         this.useLOD = new HTMLOption('boolean', true);
         this.camera = new JSOption<CameraState | undefined>(undefined);
+        this.camera.validate = (value: CameraState | undefined) => {
+            if (value !== undefined) {
+                validateCamera(value);
+                if (value.zoom <= 0) {
+                    throw Error(`zoom factor must be greater than zero, got ${value.zoom}`);
+                }
+            }
+        };
 
         // Setup default values
         this.x.property.value = propertiesNames[0];

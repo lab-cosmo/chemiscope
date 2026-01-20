@@ -13,14 +13,14 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { CameraState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
+import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices } from './lod';
+import { computeLODIndices, computeScreenSpaceLOD } from './lod';
 import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
@@ -224,28 +224,6 @@ export class PropertiesMap {
      * @param indexes index of the environment the new active marker is showing
      */
     public activeChanged: (guid: GUID, indexes: Indexes) => void;
-
-    /**
-     * Get the current camera state of the map
-     */
-    public getCameraState(): CameraState | undefined {
-        return this._options.camera.value;
-    }
-
-    /**
-     * Set the camera state of the map
-     * @param state the new camera state
-     */
-    public setCameraState(state: CameraState): void {
-        this._options.camera.value = state;
-        if (this._is3D()) {
-            const update = cameraToPlotly(state);
-            this._relayout({
-                'scene.camera': update.camera,
-                'scene.aspectratio': update.aspectratio,
-            } as unknown as Layout);
-        }
-    }
 
     /**
      * Callback to get the initial positioning of the settings modal.
@@ -580,10 +558,6 @@ export class PropertiesMap {
      */
     public applySettings(settings: Settings): void {
         this._options.applySettings(settings);
-
-        if (settings.camera) {
-            this.setCameraState(settings.camera as unknown as CameraState);
-        }
     }
 
     /**
@@ -610,8 +584,7 @@ export class PropertiesMap {
      * during the export.
      */
     public async exportPNG(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        const fullLayout = (this._plot as any)._fullLayout as Layout;
+        const fullLayout = this._plot._fullLayout;
         const width = Math.max(fullLayout.width, 600);
         const ratio = fullLayout.height / fullLayout.width;
         const height = width * ratio;
@@ -1027,8 +1000,8 @@ export class PropertiesMap {
             this._options.z.min.value = NaN;
             this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            const was3D = (this._plot as any)._fullData[0].type === 'scatter3d';
+
+            const was3D = this._plot._fullData[0].type === 'scatter3d';
             if (this._options.z.property.value === '') {
                 if (was3D) {
                     this._switch2D();
@@ -1040,17 +1013,31 @@ export class PropertiesMap {
                 }
             }
 
-            // LOD: Z changed, recompute binning
+            // LOD: Z changed, compute a first downsampling if necessary
             this._computeLOD();
-            void this._restyleLOD();
 
-            this._relayout({
-                'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                'scene.zaxis.autorange': true,
-            } as unknown as Layout);
-            if (this._is3D()) {
-                this._setScaleStep(this._getBounds().z as number[], 'z');
-            }
+            // This has to run asynchronously to ensure that the z axis is scaled properly
+            void (async () => {
+                await this._restyleLOD();
+
+                await Plotly.relayout(this._plot, {
+                    'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                    'scene.zaxis.autorange': true,
+                } as unknown as Layout).then(
+                    // The zrange is now known, and we can trigger a proper subsampling
+                    () => {
+                        const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
+                        this._options.z.min.value = zRange[0];
+                        this._options.z.max.value = zRange[1];
+                        this._computeLOD(this._getBounds());
+                        void this._restyleLOD();
+                    }
+                );
+
+                if (this._is3D()) {
+                    this._setScaleStep(this._getBounds().z as number[], 'z');
+                }
+            })();
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1352,6 +1339,17 @@ export class PropertiesMap {
             // this will render all points.
             void this._restyleLOD();
         });
+
+        // ======= camera state update
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined && this._is3D()) {
+                const update = cameraToPlotly(camera);
+                this._relayout({
+                    'scene.camera': update.camera,
+                    'scene.aspectratio': update.aspectratio,
+                } as unknown as Layout);
+            }
+        });
     }
 
     /** Actually create the Plotly plot */
@@ -1438,8 +1436,16 @@ export class PropertiesMap {
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
+        let relayoutTimer: number;
         this._plot.on('plotly_relayout', () => {
-            void this._afterplot();
+            // adds a small delay to avoid too frequent re-calculation
+            // of the subsampling
+            if (relayoutTimer) {
+                window.clearTimeout(relayoutTimer);
+            }
+            relayoutTimer = window.setTimeout(() => {
+                void this._afterplot();
+            }, 50);
         });
 
         // Handle double-click to reset view (global LOD)
@@ -1460,6 +1466,22 @@ export class PropertiesMap {
 
         // Hack to fix a Plotly bug preventing zooming on Safari
         this._plot.addEventListener('wheel', () => {});
+
+        // Hack to ensure that the active trace is selected AFTER the plot is drawn
+        // which seems to be necessary to ensure _fullLayout actually contains
+        // the state of the plotly viewer in 3D
+        setTimeout(() => {
+            if (this._active !== undefined) {
+                this.setActive(this._active);
+                const data = this._selected.get(this._active);
+                if (data !== undefined) {
+                    this.activeChanged(
+                        this._active,
+                        this._indexer.fromEnvironment(data.current, this._target)
+                    );
+                }
+            }
+        }, 1000);
     }
 
     /**
@@ -1533,12 +1555,9 @@ export class PropertiesMap {
 
             if (this._options.camera.value) {
                 const update = cameraToPlotly(this._options.camera.value);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                const scene = (layout as any).scene;
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                const scene = layout.scene;
                 Object.assign(scene.camera, update.camera);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                scene.aspectratio = update.aspectratio;
+                Object.assign(scene, { aspectratio: update.aspectratio });
             }
         }
 
@@ -1925,12 +1944,6 @@ export class PropertiesMap {
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
 
-        // 1. Data Preparation
-        if (!xProp || !yProp) {
-            this._lodIndices = null;
-            return;
-        }
-
         const xValues = this._property(xProp).values;
 
         // Check threshold
@@ -1943,14 +1956,37 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
-        // 2. Delegate Calculation to External Function
-        this._lodIndices = computeLODIndices(
+        // compute a sparser "global" grid of points for the full range
+        // of the dataset to show "something" when we rotate, pan or zoom
+        const lodIndices = computeLODIndices(
             xValues,
             yValues,
             zValues,
-            bounds,
-            PropertiesMap.LOD_THRESHOLD
+            undefined,
+            PropertiesMap.LOD_THRESHOLD / 10
         );
+
+        // ... and then do a higher resolution subsampling for the
+        // points that are actually visiblt
+        if (is3D && zValues && this._options.camera.value && bounds) {
+            lodIndices.push(
+                ...computeScreenSpaceLOD(
+                    xValues,
+                    yValues,
+                    zValues,
+                    this._options.camera.value,
+                    bounds,
+                    PropertiesMap.LOD_THRESHOLD
+                )
+            );
+        } else {
+            lodIndices.push(
+                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
+            );
+        }
+
+        // remove duplicates, and sort
+        this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
 
     /**
@@ -1983,51 +2019,45 @@ export class PropertiesMap {
         this._options.z.min.value = NaN;
         this._options.z.max.value = NaN;
 
-        try {
-            // 1. Force global LOD computation
-            this._computeLOD();
+        // 1. Force global LOD computation
+        this._computeLOD();
 
-            // 2. Update data traces first (re-render points with global LOD)
-            // We do this BEFORE relayout so that 'autorange' calculates bounds
-            // based on the full dataset, not the sliced one.
-            await this._restyleLOD();
+        // 2. Update data traces first (re-render points with global LOD)
+        // We do this BEFORE relayout so that 'autorange' calculates bounds
+        // based on the full dataset, not the sliced one.
+        await this._restyleLOD();
 
-            // 3. Prepare Layout Update
-            const layoutUpdate: Record<string, unknown> = {};
+        // 3. Prepare Layout Update
+        const layoutUpdate: Record<string, unknown> = {};
 
-            if (this._is3D()) {
-                // In 3D, 'autorange: true' resets camera AND axes.
-                layoutUpdate['scene.xaxis.autorange'] = true;
-                layoutUpdate['scene.yaxis.autorange'] = true;
-                layoutUpdate['scene.zaxis.autorange'] = true;
-                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
-                layoutUpdate['scene.camera'] = {
-                    center: { x: 0, y: 0, z: 0 },
-                    eye: { x: 1.25, y: 1.25, z: 1.25 },
-                    projection: { type: 'orthographic' },
-                    up: { x: 0, y: 0, z: 1 },
-                };
-            } else {
-                // In 2D, we trigger autorange on standard axes
-                layoutUpdate['xaxis.autorange'] = true;
-                layoutUpdate['yaxis.autorange'] = true;
-            }
-
-            // 4. Force the view reset
-            await Plotly.relayout(this._plot, layoutUpdate as unknown as Layout);
-
-            // Manually trigger marker update for 2D mode.
-            if (!this._is3D()) {
-                this._updateMarkers();
-            }
-        } finally {
-            // This ensures any trailing events from the relayout are also ignored.
-            setTimeout(() => {
-                this._updatingLOD = false;
-                // Store the newly computed global ranges into the settings
-                void this._afterplot();
-            }, 0);
+        if (this._is3D()) {
+            // In 3D, 'autorange: true' resets camera AND axes.
+            layoutUpdate['scene.xaxis.autorange'] = true;
+            layoutUpdate['scene.yaxis.autorange'] = true;
+            layoutUpdate['scene.zaxis.autorange'] = true;
+            layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+            layoutUpdate['scene.camera'] = {
+                center: { x: 0, y: 0, z: 0 },
+                eye: { x: 1.25, y: 1.25, z: 1.25 },
+                projection: { type: 'orthographic' },
+                up: { x: 0, y: 0, z: 1 },
+            };
+        } else {
+            // In 2D, we trigger autorange on standard axes
+            layoutUpdate['xaxis.autorange'] = true;
+            layoutUpdate['yaxis.autorange'] = true;
         }
+
+        // 4. Force the view reset
+        this._relayout(layoutUpdate);
+
+        // Manually trigger marker update for 2D mode.
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
+
+        this._updatingLOD = false;
+        await this._afterplot();
     }
 
     /**
@@ -2040,16 +2070,18 @@ export class PropertiesMap {
             return;
         }
 
+        // Set camera
         if (this._is3D()) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const scene = (this._plot as any)._fullLayout.scene;
             if (scene) {
-                this._options.camera.value = plotlyToCamera({
+                const camera = plotlyToCamera({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     camera: scene.camera,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     aspectratio: scene.aspectratio,
                 });
+                this._options.camera.setValue(camera, 'DOM');
             }
         }
 
