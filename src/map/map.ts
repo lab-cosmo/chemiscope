@@ -386,7 +386,7 @@ export class PropertiesMap {
      * Change display target and adapt the element to the new target
      * @param target display target
      */
-    public async switchTarget(target: DisplayTarget): Promise<void> {
+    public switchTarget(target: DisplayTarget): Promise<void> {
         // Check if the target value actually changed
         if (target !== this._target) {
             // Set new widget target
@@ -415,8 +415,9 @@ export class PropertiesMap {
             this._connectSettings();
 
             // Re-render the plot with the new data and layout
-            await this._react(this._getTraces(), this._getLayout());
+            return this._react(this._getTraces(), this._getLayout());
         }
+        return Promise.resolve();
     }
 
     /**
@@ -831,18 +832,16 @@ export class PropertiesMap {
         layout: Partial<Layout>,
         config?: Partial<Config>
     ): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return (
             Plotly.react(this._plot, traces, layout, config as Config)
-                .then(() => {
-                    resolve();
-                })
+                .then(() => {})
                 // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                 .catch((error: Error) => {
                     setTimeout(() => {
-                        reject(error);
+                        throw error;
                     });
-                });
-        });
+                })
+        );
     }
 
     /** Add all the required callback to the settings */
@@ -1442,7 +1441,7 @@ export class PropertiesMap {
             }
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
-                void this._afterplot();
+                this._afterplot();
             }, 50);
         });
 
@@ -1454,10 +1453,11 @@ export class PropertiesMap {
             }
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
+                console.log('aborted relayout request');
             }
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
-                void this._afterplot();
+                this._afterplot();
             }, 50);
         });
 
@@ -1917,7 +1917,7 @@ export class PropertiesMap {
     /**
      * Helper to trigger a full update of the main trace and selected trace when LOD changes.
      */
-    private async _restyleLOD() {
+    private _restyleLOD(): Promise<void> {
         const fullUpdate: Record<string, unknown> = {};
 
         // Helper to merge coordinates into the update object
@@ -1936,7 +1936,7 @@ export class PropertiesMap {
         // Update both main trace (0) and selected trace (1)
         // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
         // while keeping the _restyle wrapper synchronous for legacy calls.
-        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
+        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]).then(() => {});
     }
 
     /**
@@ -2079,14 +2079,14 @@ export class PropertiesMap {
         }
 
         this._updatingLOD = false;
-        await this._afterplot();
+        this._afterplot();
     }
 
     /**
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
-    private async _afterplot(): Promise<void> {
+    private _afterplot(): void {
         // Guard: If we are currently updating the plot due to an LOD recalculation, do not trigger again.
         if (this._updatingLOD) {
             return;
@@ -2169,12 +2169,12 @@ export class PropertiesMap {
             this._computeLOD(bounds);
 
             // 2. Push new data to Plotly
-            await this._restyleLOD();
-
-            // Release lock after event loop settles to allow subsequent updates
-            setTimeout(() => {
-                this._updatingLOD = false;
-            }, 0);
+            void this._restyleLOD().then(() => {
+                // Release lock after event loop settles to allow subsequent updates
+                setTimeout(() => {
+                    this._updatingLOD = false;
+                }, 0);
+            });
         }
 
         if (!this._is3D()) {
