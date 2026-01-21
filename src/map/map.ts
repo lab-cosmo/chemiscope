@@ -1453,7 +1453,6 @@ export class PropertiesMap {
             }
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
-                console.log('aborted relayout request');
             }
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
@@ -1953,8 +1952,6 @@ export class PropertiesMap {
             return;
         }
 
-        const startTime = performance.now();
-
         const xProp = this._options.x.property.value;
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
@@ -2004,11 +2001,6 @@ export class PropertiesMap {
 
         // remove duplicates, and sort
         this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
-
-        const duration = performance.now() - startTime;
-        console.log(
-            `LOD computed in ${duration.toFixed(2)}ms. Selected ${this._lodIndices.length} points.`
-        );
     }
 
     /**
