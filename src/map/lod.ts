@@ -43,37 +43,71 @@ export function computeScreenSpaceLOD(
     // Calculate View Matrix once
     const projections = projectPoints(xValues, yValues, zValues, camera, bounds);
 
-    // Grid resolution: we want roughly threshLOD points on screen.
-    const bins = Math.ceil(Math.sqrt(threshLOD));
-    const grid = new Map<string, number>();
-
     // this is the range we use to bin points
     const viewSize = 2.0;
-    // Use a slightly larger clip bound to avoid popping at edges
+    // Use a slightly larger clip bound to avoid popping at edges.
+    // We use half-width (radius) for comparison, so 1.1 covers [-1.1, 1.1]
     const clipSize = viewSize * 1.1;
-    const uStep = (clipSize * 2) / bins;
-    const vStep = (clipSize * 2) / bins;
 
+    // Pass 1: Filter points within the view
+    const visibleIndices: number[] = [];
     for (let i = 0; i < nPoints; i++) {
         const u = projections.x[i];
         const v = projections.y[i];
-
         // Clip points well outside the view
-        if (Math.abs(u) > clipSize || Math.abs(v) > clipSize) {
-            continue;
-        }
-
-        // Center the grid around 0
-        const ui = Math.floor(u / uStep);
-        const vi = Math.floor(v / vStep);
-
-        const key = `${ui}_${vi}`;
-        if (!grid.has(key)) {
-            grid.set(key, i);
+        if (Math.abs(u) <= clipSize && Math.abs(v) <= clipSize) {
+            visibleIndices.push(i);
         }
     }
 
-    const indices = Array.from(grid.values());
+    // Early exit if we have fewer points than the threshold
+    if (visibleIndices.length < threshLOD) {
+        return visibleIndices;
+    }
+
+    // Pass 2: Binning (only for visible points)
+    // Grid resolution: we want roughly threshLOD points on screen.
+    const bins = Math.ceil(Math.sqrt(threshLOD));
+    // Use Int32Array for performance (avoid string allocation)
+    // Initialize with -1 to indicate empty cells
+    const grid = new Int32Array(bins * bins).fill(-1);
+
+    // The grid covers the range [-clipSize, clipSize]
+    const gridSize = clipSize * 2;
+    const step = gridSize / bins;
+
+    // Pre-calculate inverse step to replace division with multiplication
+    const invStep = 1.0 / step;
+    // Offset to shift [-clipSize, clipSize] to [0, gridSize]
+    const offset = clipSize;
+
+    for (let j = 0; j < visibleIndices.length; j++) {
+        const i = visibleIndices[j];
+        const u = projections.x[i];
+        const v = projections.y[i];
+
+        // Map to grid coordinates [0, bins-1]
+        const ui = Math.floor((u + offset) * invStep);
+        const vi = Math.floor((v + offset) * invStep);
+
+        // Safety clamp (floating point errors might put 1.1 slightly over)
+        if (ui < 0 || ui >= bins || vi < 0 || vi >= bins) {
+            continue;
+        }
+
+        const index = ui + vi * bins;
+        if (grid[index] === -1) {
+            grid[index] = i;
+        }
+    }
+
+    // Filter -1s and sort
+    const indices: number[] = [];
+    for (let i = 0; i < grid.length; i++) {
+        if (grid[i] !== -1) {
+            indices.push(grid[i]);
+        }
+    }
     indices.sort((a, b) => a - b);
     return indices;
 }
@@ -110,7 +144,6 @@ export function computeLODIndices(
         if (is3D && bounds.z) {
             [zMin, zMax] = bounds.z;
         } else {
-            // Default Z range if not provided in 3D bounds (unlikely but safe)
             zMin = 0;
             zMax = 1;
         }
@@ -134,24 +167,12 @@ export function computeLODIndices(
         }
     }
 
-    // Avoid division by zero
-    const xRange = xMax - xMin || 1;
-    const yRange = yMax - yMin || 1;
-    const zRange = zMax - zMin || 1;
-
-    // Grid resolution, determined so that for a dense dataset we get roughly threshLOD points
-    const bins = is3D ? Math.ceil(Math.cbrt(threshLOD)) : Math.ceil(Math.sqrt(threshLOD));
-    const grid = new Map<string, number>();
-    const clip = Array<number>(0);
-
-    // Re-use loop variables for performance
-    let xi: number, yi: number, zi: number, key: string;
-
+    // Pass 1: Filter points within bounds
+    const visibleIndices: number[] = [];
     for (let i = 0; i < nPoints; i++) {
         const xVal = xValues[i];
         const yVal = yValues[i];
 
-        // Clipping: strictly ignore points outside the view if bounds are provided
         if (bounds) {
             if (xVal < xMin || xVal > xMax || yVal < yMin || yVal > yMax) {
                 continue;
@@ -163,33 +184,71 @@ export function computeLODIndices(
                 }
             }
         }
-        clip.push(i); // Keep track of points inside the bounds
+        visibleIndices.push(i);
+    }
 
-        // Calculate grid coordinates relative to the current View/Range
-        xi = Math.floor(((xVal - xMin) / xRange) * bins);
-        yi = Math.floor(((yVal - yMin) / yRange) * bins);
+    // Early exit
+    if (visibleIndices.length < threshLOD) {
+        return visibleIndices;
+    }
+
+    // Pass 2: Binning (only for clipped points)
+    const xRange = xMax - xMin || 1;
+    const yRange = yMax - yMin || 1;
+    const zRange = zMax - zMin || 1;
+
+    // Grid resolution
+    const bins = is3D ? Math.ceil(Math.cbrt(threshLOD)) : Math.ceil(Math.sqrt(threshLOD));
+    const gridSize = is3D ? bins * bins * bins : bins * bins;
+
+    // Use Int32Array for performance
+    const grid = new Int32Array(gridSize).fill(-1);
+
+    // Pre-calculate factors
+    const xFactor = bins / xRange;
+    const yFactor = bins / yRange;
+    const zFactor = bins / zRange;
+
+    // Loop variables
+    let xi: number, yi: number, zi: number, index: number;
+
+    for (let j = 0; j < visibleIndices.length; j++) {
+        const i = visibleIndices[j];
+        const xVal = xValues[i];
+        const yVal = yValues[i];
+
+        // Map to grid
+        xi = Math.floor((xVal - xMin) * xFactor);
+        yi = Math.floor((yVal - yMin) * yFactor);
+
+        // Clamp indices
+        if (xi >= bins) xi = bins - 1;
+        if (yi >= bins) yi = bins - 1;
+        if (xi < 0) xi = 0;
+        if (yi < 0) yi = 0;
 
         if (is3D && zValues) {
-            zi = Math.floor(((zValues[i] - zMin) / zRange) * bins);
-            key = `${xi}_${yi}_${zi}`;
+            zi = Math.floor((zValues[i] - zMin) * zFactor);
+            if (zi >= bins) zi = bins - 1;
+            if (zi < 0) zi = 0;
+
+            // Flat index: x + y*w + z*w*h
+            index = xi + yi * bins + zi * bins * bins;
         } else {
-            key = `${xi}_${yi}`;
+            index = xi + yi * bins;
         }
 
-        // Only store the first point found in this grid cell
-        if (!grid.has(key)) {
-            grid.set(key, i);
+        if (grid[index] === -1) {
+            grid[index] = i;
         }
     }
 
-    if (clip.length < threshLOD) {
-        // If the number of points inside the bounds is already below the threshold,
-        // return all those points without further downsampling.
-        return clip;
+    const indices: number[] = [];
+    for (let i = 0; i < grid.length; i++) {
+        if (grid[i] !== -1) {
+            indices.push(grid[i]);
+        }
     }
-
-    // Convert map to sorted array of indices
-    const indices = Array.from(grid.values());
     indices.sort((a, b) => a - b);
 
     return indices;
