@@ -65,10 +65,12 @@ function propertyToNumeric(name: string, property: Property): NumericProperty | 
         };
     } else if (prop_type === 'string') {
         const interner = new StringInterner();
-        const values = [];
-        for (const value of property.values as string[]) {
-            const numeric = interner.get(value);
-            values.push(numeric);
+        const stringValues = property.values as string[];
+        const len = stringValues.length;
+        const values = new Array<number>(len);
+        for (let i = 0; i < len; i++) {
+            const numeric = interner.get(stringValues[i]);
+            values[i] = numeric;
             // string properties are assumed to be categories, and each one of
             // them have an associated trace to be able to display the symbols
             // legend. Having more than a handfull of traces drastically slows

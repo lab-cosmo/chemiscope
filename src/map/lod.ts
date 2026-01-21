@@ -45,7 +45,7 @@ export function computeScreenSpaceLOD(
 
     // Grid resolution: we want roughly threshLOD points on screen.
     const bins = Math.ceil(Math.sqrt(threshLOD));
-    const grid = new Map<string, number>();
+    const grid = new Map<number, number>();
 
     // this is the range we use to bin points
     const viewSize = 2.0;
@@ -54,6 +54,9 @@ export function computeScreenSpaceLOD(
 
     // Use a slightly larger clip bound to avoid popping at edges
     const clipSize = viewSize * 1.1;
+
+    // Pre-compute multiplier for numeric key
+    const keyMultiplier = bins + 1;
 
     for (let i = 0; i < nPoints; i++) {
         const u = projections.x[i];
@@ -68,7 +71,7 @@ export function computeScreenSpaceLOD(
         const ui = Math.floor(u / uStep);
         const vi = Math.floor(v / vStep);
 
-        const key = `${ui}_${vi}`;
+        const key = ui * keyMultiplier + vi;
         if (!grid.has(key)) {
             grid.set(key, i);
         }
@@ -142,11 +145,13 @@ export function computeLODIndices(
 
     // Grid resolution, determined so that for a dense dataset we get roughly threshLOD points
     const bins = is3D ? Math.ceil(Math.cbrt(threshLOD)) : Math.ceil(Math.sqrt(threshLOD));
-    const grid = new Map<string, number>();
+    const grid = new Map<number | string, number>();
     const clip = Array<number>(0);
 
+    const keyMultiplier = bins + 1;
+
     // Re-use loop variables for performance
-    let xi: number, yi: number, zi: number, key: string;
+    let xi: number, yi: number, zi: number;
 
     for (let i = 0; i < nPoints; i++) {
         const xVal = xValues[i];
@@ -170,11 +175,12 @@ export function computeLODIndices(
         xi = Math.floor(((xVal - xMin) / xRange) * bins);
         yi = Math.floor(((yVal - yMin) / yRange) * bins);
 
+        let key: number | string;
         if (is3D && zValues) {
             zi = Math.floor(((zValues[i] - zMin) / zRange) * bins);
             key = `${xi}_${yi}_${zi}`;
         } else {
-            key = `${xi}_${yi}`;
+            key = xi * keyMultiplier + yi;
         }
 
         // Only store the first point found in this grid cell

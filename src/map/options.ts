@@ -291,7 +291,11 @@ export class MapOptions extends OptionsGroup {
             scaleMode = 'fixed';
         }
 
-        const values = rawColors.map((v: number) => {
+        const len = rawColors.length;
+        const values = new Array<number | string>(len);
+
+        for (let i = 0; i < len; i++) {
+            const v = rawColors[i];
             let transformed = 0.5; // default
             switch (scaleMode) {
                 case 'inverse':
@@ -304,16 +308,15 @@ export class MapOptions extends OptionsGroup {
                     transformed = Math.sqrt(v);
                     break;
                 case 'linear':
-                    transformed = 1.0 * v;
+                    transformed = v;
                     break;
                 default:
                     // corresponds to 'fixed'
                     transformed = 0.5;
                     break;
             }
-
-            return isNaN(transformed) ? '#aaaaaa' : transformed;
-        });
+            values[i] = isNaN(transformed) ? '#aaaaaa' : transformed;
+        }
 
         return values;
     }
@@ -323,39 +326,50 @@ export class MapOptions extends OptionsGroup {
      * all of them if `trace === undefined`.
      */
     public calculateSizes(rawSizes: number[]): number[] {
-        const logSlider = (value: number) => {
-            const min_slider = 1;
-            const max_slider = 100;
+        const sizeFactor = this.size.factor.value;
+        const min_slider = 1;
+        const max_slider = 100;
 
-            // go from 1/6th of the size to 6 time the size
-            const min_value = Math.log(1.0 / 6.0);
-            const max_value = Math.log(6.0);
+        // go from 1/6th of the size to 6 time the size
+        const min_value = Math.log(1.0 / 6.0);
+        const max_value = Math.log(6.0);
 
-            const tmp = (max_value - min_value) / (max_slider - min_slider);
-            return Math.exp(min_value + tmp * (value - min_slider));
-        };
-
-        const userFactor = logSlider(this.size.factor.value);
+        const tmp = (max_value - min_value) / (max_slider - min_slider);
+        const userFactor = Math.exp(min_value + tmp * (sizeFactor - min_slider));
 
         let scaleMode = this.size.mode.value;
         const { min, max } = arrayMaxMin(rawSizes);
         const defaultSize = this.is3D() ? 800 : 300;
         const bottomLimit = 0.1; // lower limit to prevent size of 0
         const defaultScaled = 0.3;
-        const nonzeromin = min > 0 ? min : 1e-6 * (max - min); // non-zero minimum value for scales needing it
-        const values = rawSizes.map((v: number) => {
+        const nonzeromin = min > 0 ? min : 1e-6 * (max - min);
+        const range = max - min;
+        const absMax = Math.abs(max);
+        const logMaxOverMin = max !== nonzeromin ? Math.log(max / nonzeromin) : 1;
+        const sizeMultiplier = defaultSize * userFactor;
+
+        if (max === min) {
+            scaleMode = 'fixed';
+        }
+
+        const len = rawSizes.length;
+        const values = new Array<number>(len);
+        let hasNaN = false;
+
+        for (let i = 0; i < len; i++) {
+            const v = rawSizes[i];
             // normalize between 0 and 1, then scale by the user provided value
-            let scaled = defaultScaled; // default
-            if (max === min) {
-                scaleMode = 'fixed';
-            } else {
-                scaled = (v - min) / (max - min);
+            let scaled = defaultScaled;
+
+            if (range !== 0) {
+                scaled = (v - min) / range;
             }
+
             switch (scaleMode) {
                 case 'proportional':
                     // absolude proportionality - zero to max
                     // nb this will break for negative values!
-                    scaled = v / Math.abs(max);
+                    scaled = v / absMax;
                     break;
                 case 'inverse':
                     // inverse mapping
@@ -365,15 +379,15 @@ export class MapOptions extends OptionsGroup {
                 case 'log':
                     // log scale magnitude
                     // nb this will break for negative values!
-                    scaled = Math.log(v / nonzeromin) / Math.log(max / nonzeromin);
+                    scaled = Math.log(v / nonzeromin) / logMaxOverMin;
                     break;
                 case 'sqrt':
                     // sqrt mapping
                     // nb this will break for negative values!
-                    scaled = Math.sqrt(v / Math.abs(max));
+                    scaled = Math.sqrt(v / absMax);
                     break;
                 case 'linear':
-                    scaled = 1.0 * scaled;
+                    // scaled already set above
                     break;
                 case 'flip-linear':
                     scaled = 1.0 - scaled;
@@ -383,25 +397,29 @@ export class MapOptions extends OptionsGroup {
                     scaled = defaultScaled - bottomLimit;
                     break;
             }
-            scaled = scaled + bottomLimit; // minimum size is enforced
-            // nb: we use scalemode=area so the property value is linked to the
-            // _area_ of the points (which is the perceptually correct thing to do)
-            return defaultSize * scaled * userFactor;
-        });
 
-        const someValuesNaN = values.some((value) => isNaN(value) || value < 0);
+            const result = (scaled + bottomLimit) * sizeMultiplier;
+            values[i] = result;
 
-        if (someValuesNaN) {
+            if (isNaN(result) || result < 0) {
+                hasNaN = true;
+            }
+        }
+
+        if (hasNaN) {
+            const minSize = bottomLimit * sizeMultiplier;
             this.warnings.sendMessage(
                 `After applying the selected scaling mode ${scaleMode}, some point sizes` +
                     `evaluated to invalid values. These points will be displayed at the minimum size.`
             );
-            return values.map((v: number) => {
-                return isNaN(v) ? bottomLimit * defaultSize * userFactor : v;
-            });
-        } else {
-            return values;
+            for (let i = 0; i < len; i++) {
+                if (isNaN(values[i]) || values[i] < 0) {
+                    values[i] = minSize;
+                }
+            }
         }
+
+        return values;
     }
 
     /** Given the property, return the symbols */
@@ -418,7 +436,12 @@ export class MapOptions extends OptionsGroup {
                     `${symbolsCount} symbols are required, but we only have ${POSSIBLE_SYMBOLS_IN_3D.length}. Some symbols will be repeated`
                 );
             }
-            const symbols = property.values.map(get3DSymbol);
+            const values = property.values;
+            const len = values.length;
+            const symbols = new Array<string>(len);
+            for (let i = 0; i < len; i++) {
+                symbols[i] = get3DSymbol(values[i]);
+            }
             return symbols;
         } else {
             return property.values;
