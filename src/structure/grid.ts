@@ -54,9 +54,9 @@ function groupByStructure(
         return undefined;
     }
 
-    const result = new Array(structures.length);
+    const result: NumberedEnvironment[][] = new Array<NumberedEnvironment[]>(structures.length);
     for (let i = 0; i < structures.length; i++) {
-        result[i] = new Array(structures[i].size);
+        result[i] = new Array<NumberedEnvironment>(structures[i].size);
     }
 
     for (let i = 0; i < environments.length; i++) {
@@ -67,7 +67,7 @@ function groupByStructure(
         };
     }
 
-    return result as NumberedEnvironment[][];
+    return result;
 }
 
 interface ViewerGridData {
