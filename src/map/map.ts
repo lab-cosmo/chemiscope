@@ -272,6 +272,8 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _updatingLOD = false;
+    /// Request ID for the debounced _afterplot call
+    private _afterplotRequest: number | null = null;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -1432,18 +1434,29 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            void this._afterplot();
+            if (this._updatingLOD) {
+                return;
+            }
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+            }
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
+                void this._afterplot();
+            }, 50);
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        let relayoutTimer: number;
+        // We use the same debounce mechanism as afterplot to avoid conflicts
         this._plot.on('plotly_relayout', () => {
-            // adds a small delay to avoid too frequent re-calculation
-            // of the subsampling
-            if (relayoutTimer) {
-                window.clearTimeout(relayoutTimer);
+            if (this._updatingLOD) {
+                return;
             }
-            relayoutTimer = window.setTimeout(() => {
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+            }
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
                 void this._afterplot();
             }, 50);
         });
@@ -1940,6 +1953,8 @@ export class PropertiesMap {
             return;
         }
 
+        const startTime = performance.now();
+
         const xProp = this._options.x.property.value;
         const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
@@ -1958,7 +1973,7 @@ export class PropertiesMap {
 
         // compute a sparser "global" grid of points for the full range
         // of the dataset to show "something" when we rotate, pan or zoom
-        const lodIndices = computeLODIndices(
+        let lodIndices = computeLODIndices(
             xValues,
             yValues,
             zValues,
@@ -1969,24 +1984,31 @@ export class PropertiesMap {
         // ... and then do a higher resolution subsampling for the
         // points that are actually visiblt
         if (is3D && zValues && this._options.camera.value && bounds) {
-            lodIndices.push(
-                ...computeScreenSpaceLOD(
+            lodIndices = lodIndices.concat(
+                computeScreenSpaceLOD(
                     xValues,
                     yValues,
                     zValues,
                     this._options.camera.value,
                     bounds,
-                    PropertiesMap.LOD_THRESHOLD
+                    // 3D is slower to interact with so it's
+                    // better to reduce LOD size
+                    PropertiesMap.LOD_THRESHOLD / 2
                 )
             );
         } else {
-            lodIndices.push(
-                ...computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
+            lodIndices = lodIndices.concat(
+                computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
             );
         }
 
         // remove duplicates, and sort
         this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
+
+        const duration = performance.now() - startTime;
+        console.log(
+            `LOD computed in ${duration.toFixed(2)}ms. Selected ${this._lodIndices.length} points.`
+        );
     }
 
     /**

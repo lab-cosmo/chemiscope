@@ -49,11 +49,10 @@ export function computeScreenSpaceLOD(
 
     // this is the range we use to bin points
     const viewSize = 2.0;
-    const uStep = viewSize / bins;
-    const vStep = viewSize / bins;
-
     // Use a slightly larger clip bound to avoid popping at edges
     const clipSize = viewSize * 1.1;
+    const uStep = (clipSize * 2) / bins;
+    const vStep = (clipSize * 2) / bins;
 
     for (let i = 0; i < nPoints; i++) {
         const u = projections.x[i];
