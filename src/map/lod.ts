@@ -3,7 +3,7 @@
  * @module map
  */
 
-import { arrayMaxMin } from '../utils';
+import { Bounds, arrayMaxMin } from '../utils';
 import { CameraState, projectPoints } from '../utils/camera';
 import { NumericProperty } from './data';
 import { MapOptions } from './options';
@@ -25,7 +25,7 @@ function computeScreenSpaceLOD(
     yValues: number[],
     zValues: number[],
     camera: CameraState,
-    bounds?: { x: [number, number]; y: [number, number]; z?: [number, number] },
+    bounds?: Bounds,
     threshLOD: number = 50000
 ): number[] {
     if (bounds === undefined) {
@@ -70,7 +70,6 @@ function computeScreenSpaceLOD(
     // Pass 2: Binning (only for visible points)
     // Grid resolution: we want roughly threshLOD points on screen.
     const bins = Math.ceil(Math.sqrt(threshLOD));
-    // Use Int32Array for performance (avoid string allocation)
     // Initialize with -1 to indicate empty cells
     const grid = new Int32Array(bins * bins).fill(-1);
 
@@ -128,7 +127,7 @@ function computeLODIndices(
     xValues: number[],
     yValues: number[],
     zValues: number[] | null,
-    bounds?: { x: [number, number]; y: [number, number]; z?: [number, number] },
+    bounds?: Bounds,
     threshLOD: number = 50000
 ): number[] {
     const nPoints = xValues.length;
@@ -202,7 +201,6 @@ function computeLODIndices(
     // Grid resolution
     const bins = is3D ? Math.ceil(Math.cbrt(threshLOD)) : Math.ceil(Math.sqrt(threshLOD));
     const gridSize = is3D ? bins * bins * bins : bins * bins;
-    // Use Int32Array for performance
     const grid = new Int32Array(gridSize).fill(-1);
 
     // Pre-calculate factors
@@ -276,15 +274,31 @@ export class LODManager {
         z: number[] | null;
     } | null = null;
 
+    private options: MapOptions;
+    private is3D: () => boolean;
+    private getProperty: (name: string) => NumericProperty;
+    private restyleFull: () => Promise<void>;
+    private threshLOD: number;
+    private debounceMs: number;
+    private settleMs: number;
+
     constructor(
-        private options: MapOptions,
-        private is3D: () => boolean,
-        private getProperty: (name: string) => NumericProperty,
-        private restyleFull: () => Promise<void>,
-        private threshLOD: number = 50000,
-        private debounceMs: number = 300,
-        private settleMs: number = 200
-    ) {}
+        options: MapOptions,
+        is3D: () => boolean,
+        getProperty: (name: string) => NumericProperty,
+        restyleFull: () => Promise<void>,
+        threshLOD: number = 50000,
+        debounceMs: number = 300,
+        settleMs: number = 200
+    ) {
+        this.options = options;
+        this.is3D = is3D;
+        this.getProperty = getProperty;
+        this.restyleFull = restyleFull;
+        this.threshLOD = threshLOD;
+        this.debounceMs = debounceMs;
+        this.settleMs = settleMs;
+    }
 
     public get indices(): number[] | null {
         return this._indices;
@@ -354,11 +368,7 @@ export class LODManager {
         );
     }
 
-    public computeLOD(bounds?: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
+    public computeLOD(bounds?: Bounds): void {
         if (!this._needsRecomputation() && bounds === undefined) {
             return;
         }
@@ -423,11 +433,7 @@ export class LODManager {
         this._indices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
 
-    public forceComputeLOD(bounds?: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
+    public forceComputeLOD(bounds?: Bounds): void {
         this._lastDependencies = null; // Force recomputation
         this.computeLOD(bounds);
     }
@@ -436,11 +442,7 @@ export class LODManager {
         await this.restyleFull();
     }
 
-    public scheduleLODUpdate(bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
+    public scheduleLODUpdate(bounds: Bounds): void {
         if (this._debounceTimer !== undefined) {
             window.clearTimeout(this._debounceTimer);
         }
@@ -451,11 +453,7 @@ export class LODManager {
         }, this.debounceMs);
     }
 
-    private async performLODUpdate(bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): Promise<void> {
+    private async performLODUpdate(bounds: Bounds): Promise<void> {
         if (this._lock) {
             return;
         }

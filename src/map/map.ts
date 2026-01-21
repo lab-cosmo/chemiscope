@@ -14,7 +14,7 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { PlotlyState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
-import { GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
+import { Bounds, GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -1377,6 +1377,8 @@ export class PropertiesMap {
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
             }
+
+            // Schedule a short-delayed call to afterplot to batch rapid events
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
@@ -1455,25 +1457,26 @@ export class PropertiesMap {
         axisOptions.min.value = NaN;
         axisOptions.max.value = NaN;
 
+        // Recompute LOD since axis property changed
         this._lod.computeLOD();
 
+        // Request a full restyle of traces
         void this._lod.restyleLOD();
 
+        // Update axis titles
         this._relayout({
             [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
             [`${axis}axis.title.text`]: this._title(axisOptions.property.value),
         } as unknown as Layout);
 
+        // Force autorange
         if (this._is3D()) {
-            this._relayout({
-                [`scene.${axis}axis.autorange`]: true,
-            } as unknown as Layout);
+            this._relayout({ [`scene.${axis}axis.autorange`]: true } as unknown as Layout);
         } else {
-            this._relayout({
-                [`${axis}axis.autorange`]: true,
-            } as unknown as Layout);
+            this._relayout({ [`${axis}axis.autorange`]: true } as unknown as Layout);
         }
 
+        // Update the UI step for min/max inputs based on the new bounds
         const bounds = this._getBounds();
         this._setScaleStep(bounds[axis], axis);
     }
@@ -1482,8 +1485,10 @@ export class PropertiesMap {
         this._options.z.min.value = NaN;
         this._options.z.max.value = NaN;
 
+        // Detect whether the plot was previously 3D
         const was3D = this._plot._fullData[0].type === 'scatter3d';
 
+        // If no z property selected -> switch to 2D
         if (this._options.z.property.value === '') {
             if (was3D) {
                 this._switch2D();
@@ -1497,13 +1502,16 @@ export class PropertiesMap {
 
         this._lod.computeLOD();
 
+        // Perform async sequence while holding a LOD lock to avoid races
         void (async () => {
             if (this._lod.isLocked()) return;
             this._lod.setLock(true);
 
             try {
+                // Ensure traces are restyled according to current LOD
                 await this._lod.restyleLOD();
 
+                // Update z-axis title and request autorange
                 await Plotly.relayout(this._plot, {
                     'scene.zaxis.title.text': this._title(this._options.z.property.value),
                     'scene.zaxis.autorange': true,
@@ -1513,6 +1521,7 @@ export class PropertiesMap {
                 this._options.z.min.value = zRange[0];
                 this._options.z.max.value = zRange[1];
 
+                // Recompute LOD using the new bounds
                 this._lod.computeLOD(this._getBounds());
                 await this._lod.restyleLOD();
 
@@ -1520,6 +1529,7 @@ export class PropertiesMap {
                     this._setScaleStep(this._getBounds().z as number[], 'z');
                 }
             } finally {
+                // Release lock to allow other LOD updates
                 this._lod.setLock(false);
             }
         })();
@@ -1781,29 +1791,20 @@ export class PropertiesMap {
 
         const property = this._property(this._options.symbol.value);
         const symbols = this._options.getSymbols(property);
+        const applyLODToMain = trace === 0 || trace === undefined;
 
         if (this._is3D()) {
+            // 3D uses string symbols
             const symbols3 = symbols as string[];
-            const mainValues =
-                trace === 0 || trace === undefined ? this._lod.applyLOD(symbols3) : symbols3;
-            const selected: string[] = [];
-            for (const data of this._selected.values()) {
-                selected.push(symbols3[data.current]);
-            }
-            return this._selectTrace<string[]>(mainValues, selected, trace) as Array<
-                string | string[] | number[]
-            >;
+            const mainValues = applyLODToMain ? this._lod.applyLOD(symbols3) : symbols3;
+            const selected = Array.from(this._selected.values()).map((d) => symbols3[d.current]);
+            return this._selectTrace<string[]>(mainValues, selected, trace);
         } else {
+            // 2D uses numeric symbol indices
             const symbols2 = symbols as number[];
-            const mainValues =
-                trace === 0 || trace === undefined ? this._lod.applyLOD(symbols2) : symbols2;
-            const selected: number[] = [];
-            for (const data of this._selected.values()) {
-                selected.push(symbols2[data.current]);
-            }
-            return this._selectTrace<number[]>(mainValues, selected, trace) as Array<
-                string | string[] | number[]
-            >;
+            const mainValues = applyLODToMain ? this._lod.applyLOD(symbols2) : symbols2;
+            const selected = Array.from(this._selected.values()).map((d) => symbols2[d.current]);
+            return this._selectTrace<number[]>(mainValues, selected, trace);
         }
     }
 
@@ -2057,11 +2058,7 @@ export class PropertiesMap {
         }
     }
 
-    private _updateAxisSettings(bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }): void {
+    private _updateAxisSettings(bounds: Bounds): void {
         this._options.x.min.value = bounds.x[0];
         this._options.x.max.value = bounds.x[1];
         this._options.y.min.value = bounds.y[0];
@@ -2156,7 +2153,7 @@ export class PropertiesMap {
     }
 
     // Get the current boundaries on x/y/z axis
-    private _getBounds(): { x: [number, number]; y: [number, number]; z?: [number, number] } {
+    private _getBounds(): Bounds {
         if (this._is3D()) {
             // HACK: `_fullLayout` is not public, so it might break
             const layout = this._plot._fullLayout.scene;
