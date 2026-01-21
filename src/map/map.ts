@@ -272,6 +272,8 @@ export class PropertiesMap {
     private static readonly LOD_SETTLE_MS = 200;
     /// LOD manager
     private _lod!: LODManager;
+    /// Request ID for the debounced _afterplot call
+    private _afterplotRequest: number | null = null;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -850,18 +852,16 @@ export class PropertiesMap {
         layout: Partial<Layout>,
         config?: Partial<Config>
     ): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return (
             Plotly.react(this._plot, traces, layout, config as Config)
-                .then(() => {
-                    resolve();
-                })
+                .then(() => {})
                 // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                 .catch((error: Error) => {
                     setTimeout(() => {
-                        reject(error);
+                        throw error;
                     });
-                });
-        });
+                })
+        );
     }
 
     /** Add all the required callback to the settings */
@@ -1272,7 +1272,8 @@ export class PropertiesMap {
 
         // ======= Level of Detail settings
         this._options.useLOD.onchange.push(() => {
-            this._lod.computeLOD();
+            const bounds = this._getBounds();
+            this._lod.computeLOD(bounds);
             // Force a full restyle. Since indices will be null if disabled,
             // this will render all points.
             void this._lod.restyleLOD();
@@ -1370,26 +1371,45 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            this._afterplot();
-        });
-
-        // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        let relayoutTimer: number | undefined;
-        this._plot.on('plotly_relayout', () => {
             if (this._lod.isLocked()) {
                 return;
             }
-
-            if (relayoutTimer !== undefined) {
-                window.clearTimeout(relayoutTimer);
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
             }
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
+                this._afterplot();
+            }, 50);
+        });
 
-            relayoutTimer = window.setTimeout(() => {
-                relayoutTimer = undefined;
-                if (!this._lod.isLocked()) {
-                    this._afterplot();
+        // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
+        // We use the same debounce mechanism as afterplot to avoid conflicts
+        this._plot.on('plotly_relayout', (eventData: Plotly.PlotRelayoutEvent) => {
+            if (this._lod.isLocked()) {
+                return;
+            }
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+            }
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
+                this._afterplot();
+
+                // Check if we need to update LOD based on event type
+                const keys = Object.keys(eventData);
+                const needsLOD = keys.some(
+                    (key) =>
+                        key.match(/^(xaxis|yaxis)\.range/) ||
+                        key.match(/^scene\.(camera|aspectratio)/) ||
+                        key.includes('autorange')
+                );
+
+                if (needsLOD && this._shouldUseLOD()) {
+                    const bounds = this._getBounds();
+                    this._lod.scheduleLODUpdate(bounds);
                 }
-            }, 100);
+            }, 50);
         });
 
         // Handle double-click to reset view (global LOD)
