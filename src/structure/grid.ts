@@ -54,9 +54,10 @@ function groupByStructure(
         return undefined;
     }
 
-    const result = Array.from({ length: structures.length }).map((_, i) =>
-        Array.from({ length: structures[i].size })
-    );
+    const result = new Array(structures.length);
+    for (let i = 0; i < structures.length; i++) {
+        result[i] = new Array(structures[i].size);
+    }
 
     for (let i = 0; i < environments.length; i++) {
         const env = environments[i];
