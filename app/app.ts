@@ -105,27 +105,35 @@ export class ChemiscopeApp {
      * Optionally specify the configuration in `config`
      */
     public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
-        startLoading();
-        this.dataset = url;
+        try {
+            startLoading();
+            this.dataset = url;
 
-        const response = await fetch(this.dataset);
-        if (!response.ok) {
-            throw Error(`unable to load file at '${this.dataset}'`);
-        }
-        const buffer = await response.arrayBuffer();
-
-        if (buffer.byteLength === 0) {
-            // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
-            // we can not check if the URL does not exists, so let's assume an
-            // error if the buffer is empty
-            if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
-                let originalUrl = decodeURIComponent(this.dataset.substr(35));
-                throw Error(`unable to load file at '${originalUrl}'`);
+            const response = await fetch(this.dataset);
+            if (!response.ok) {
+                throw Error(`unable to load file at '${this.dataset}': ${response.status} ${response.statusText}`);
             }
-        }
+            const buffer = await response.arrayBuffer();
 
-        const dataset = readJSON(buffer);
-        await this.load(config as Configuration, dataset);
+            if (buffer.byteLength === 0) {
+                // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
+                // we can not check if the URL does not exists, so let's assume an
+                // error if the buffer is empty
+                if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
+                    let originalUrl = decodeURIComponent(this.dataset.substr(35));
+                    throw Error(`unable to load file at '${originalUrl}'`);
+                }
+                throw Error(`loaded file is empty: '${this.dataset}'`);
+            }
+
+            const dataset = readJSON(buffer);
+            await this.load(config as Configuration, dataset);
+        } catch (error) {
+            stopLoading();
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            displayError(errorMessage);
+            throw error;
+        }
     }
 
     /**
@@ -133,64 +141,71 @@ export class ChemiscopeApp {
      */
 
     public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
-        // hide any error coming from the previous dataset loading
-        const errors = getByID('error-display');
-        errors.style.display = 'none';
+        try {
+            // hide any error coming from the previous dataset loading
+            const errors = getByID('error-display');
+            errors.style.display = 'none';
 
-        const config = {
-            map: 'chemiscope-map',
-            info: 'chemiscope-info',
-            meta: 'chemiscope-meta',
-            structure: 'chemiscope-structure',
-            loadStructure: configuration.loadStructure,
-        };
+            const config = {
+                map: 'chemiscope-map',
+                info: 'chemiscope-info',
+                meta: 'chemiscope-meta',
+                structure: 'chemiscope-structure',
+                loadStructure: configuration.loadStructure,
+            };
 
-        // show/hide setting related to on-demand structure loading
-        this.hideOnDemandStructures.sheet!.disabled = configuration.loadStructure !== undefined;
+            // show/hide setting related to on-demand structure loading
+            this.hideOnDemandStructures.sheet!.disabled = configuration.loadStructure !== undefined;
 
-        if (this.visualizer !== undefined) {
-            this.visualizer.remove();
+            if (this.visualizer !== undefined) {
+                this.visualizer.remove();
+            }
+
+            // adds warning handler
+            this.warnings.defaultTimeout = 4000; // 4s visibility
+            this.warnings.addHandler((message, timeout?) => {
+                displayWarning(message, timeout);
+            });
+
+            this.visualizer = await DefaultVisualizer.load(config, dataset, this.warnings);
+
+            this.visualizer.structure.positionSettingsModal = (rect) => {
+                const structureRect = getByID('chemiscope-structure').getBoundingClientRect();
+                let left = structureRect.left - rect.width + 25;
+                if (left < 25) {
+                    left = 25;
+                }
+                return {
+                    top: structureRect.top,
+                    left: left,
+                };
+            };
+
+            this.visualizer.map.positionSettingsModal = (rect) => {
+                const mapRect = getByID('chemiscope-map').getBoundingClientRect();
+
+                let left;
+                if (window.innerWidth < 1400) {
+                    // clip modal to the right if it overflows
+                    left = window.innerWidth - rect.width - 10;
+                } else {
+                    left = mapRect.left + mapRect.width + 25;
+                }
+
+                return {
+                    top: mapRect.top,
+                    left: left,
+                };
+            };
+
+            updateInfoWidgetHeight();
+            stopLoading();
+        } catch (error) {
+            stopLoading();
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            displayError(errorMessage);
+            throw error;
         }
-
-        // adds warning handler
-        this.warnings.defaultTimeout = 4000; // 4s visibility
-        this.warnings.addHandler((message, timeout?) => {
-            displayWarning(message, timeout);
-        });
-
-        this.visualizer = await DefaultVisualizer.load(config, dataset, this.warnings);
-
-        this.visualizer.structure.positionSettingsModal = (rect) => {
-            const structureRect = getByID('chemiscope-structure').getBoundingClientRect();
-            let left = structureRect.left - rect.width + 25;
-            if (left < 25) {
-                left = 25;
-            }
-            return {
-                top: structureRect.top,
-                left: left,
-            };
-        };
-
-        this.visualizer.map.positionSettingsModal = (rect) => {
-            const mapRect = getByID('chemiscope-map').getBoundingClientRect();
-
-            let left;
-            if (window.innerWidth < 1400) {
-                // clip modal to the right if it overflows
-                left = window.innerWidth - rect.width - 10;
-            } else {
-                left = mapRect.left + mapRect.width + 25;
-            }
-
-            return {
-                top: mapRect.top,
-                left: left,
-            };
-        };
-
-        updateInfoWidgetHeight();
-        stopLoading();
     }
 
     /**
@@ -209,11 +224,26 @@ export class ChemiscopeApp {
             const file = loadDataset.files![0];
             this.dataset = file.name;
             readFile(file, (result) => {
-                const dataset = readJSON(result);
-                this.load({}, dataset);
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
+                try {                    
+                    const dataset = readJSON(result);
+                    this.load({}, dataset).catch((error) => {
+                        stopLoading();
+                        displayError(`Failed to load dataset: ${error.message}`);
+                    });
+                } catch (error) {
+                    stopLoading();
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    displayError(`Failed to parse file: ${errorMessage}`);
+                } finally {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadDataset.value = '';
+                    loadSaveModal.classList.add('fade');
+                }
+            }, (error) => {
+                stopLoading();
+                displayError(`Failed to read file: ${error}`);
                 loadDataset.value = '';
                 loadSaveModal.classList.add('fade');
             });
@@ -243,16 +273,27 @@ export class ChemiscopeApp {
             startLoading();
             const file = loadSettings.files![0];
             readFile(file, (result) => {
-                if (this.visualizer === undefined) {
-                    return;
-                }
+                try {
+                    if (this.visualizer === undefined) {
+                        return;
+                    }
 
-                this.visualizer.applySettings(readJSON(result));
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
-                loadSettings.value = '';
+                    this.visualizer.applySettings(readJSON(result));
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    displayError(`Failed to load settings: ${errorMessage}`);
+                } finally {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadSettings.value = '';
+                    stopLoading();
+                    loadSaveModal.classList.add('fade');
+                }
+            }, (error) => {
                 stopLoading();
+                displayError(`Failed to read settings file: ${error}`);
+                loadSettings.value = '';
                 loadSaveModal.classList.add('fade');
             });
         };
@@ -299,6 +340,12 @@ function displayWarning(message: string, timeout: number = 4000) {
     }
 }
 
+function displayError(message: string) {
+    const display = getByID('error-display');
+    display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'block';
+}
+
 function startLoading() {
     getByID('loading').style.display = 'block';
 
@@ -320,13 +367,30 @@ function readJSON(buffer: ArrayBuffer): any {
     const magic = new Uint8Array(buffer.slice(0, 2));
 
     let text;
-    // '1f 8b' is the magic constant starting gzip files
-    if (magic[0] == 0x1f && magic[1] == 0x8b) {
-        text = inflate(new Uint8Array(buffer), { to: 'string' });
-    } else {
-        const decoder = new TextDecoder('utf-8');
-        text = decoder.decode(buffer);
+    try {
+        // '1f 8b' is the magic constant starting gzip files
+        if (magic[0] == 0x1f && magic[1] == 0x8b) {            
+            try {
+                const uint8Array = new Uint8Array(buffer);                
+                const decompressed = inflate(uint8Array);
+
+                if (!decompressed || decompressed.length === 0) {
+                    throw new Error('Decompression resulted in empty data');
+                }
+
+                const decoder = new TextDecoder('utf-8');
+                text = decoder.decode(decompressed);
+            } catch (inflateError) {
+                throw new Error(`Failed to decompress gzipped data: ${inflateError instanceof Error ? inflateError.message : String(inflateError)}`);
+            }
+        } else {
+            const decoder = new TextDecoder('utf-8');
+            text = decoder.decode(buffer);
+        }
+    } catch (error) {
+        throw new Error(`Failed to decode file: ${error instanceof Error ? error.message : String(error)}`);
     }
+
     return parseJsonWithNaN(text);
 }
 
@@ -335,9 +399,13 @@ function readJSON(buffer: ArrayBuffer): any {
  * module output them, and they can be useful.
  */
 function parseJsonWithNaN(text: string): any {
-    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
-        return value === '***NaN***' ? NaN : value;
-    });
+    try {
+        return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
+            return value === '***NaN***' ? NaN : value;
+        });
+    } catch (error) {
+        throw new Error(`Invalid JSON format: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 /** Write NaN in the JSON file. */
@@ -355,17 +423,53 @@ function stringifyJsonWithNaN(object: any): string {
  *
  * @param  {File}     file     user-provided file to read
  * @param  {Function} callback callback to use once the file is read
+ * @param  {Function} errorCallback callback to use if reading fails
  */
-function readFile(file: File, callback: (data: ArrayBuffer) => void): void {
+function readFile(
+    file: File, 
+    callback: (data: ArrayBuffer) => void,
+    errorCallback?: (error: string) => void
+): void {
     const reader = new FileReader();
     reader.onload = () => {
         if (reader.error) {
-            throw Error(`could not read ${file.name}: ${reader.error}`);
+            const errorMsg = `Could not read ${file.name}: ${reader.error}`;
+            if (errorCallback) {
+                errorCallback(errorMsg);
+            } else {
+                throw Error(errorMsg);
+            }
+            return;
         }
+
         if (reader.result) {
             callback(reader.result as ArrayBuffer);
+        } else {
+            const errorMsg = `File read completed but result is empty for ${file.name}`;
+            if (errorCallback) {
+                errorCallback(errorMsg);
+            } else {
+                throw Error(errorMsg);
+            }
         }
     };
+    
+    reader.onerror = () => {
+        const errorMsg = `Failed to read file ${file.name}: ${reader.error?.message || 'Unknown error'}`;
+        if (errorCallback) {
+            errorCallback(errorMsg);
+        } else {
+            throw Error(errorMsg);
+        }
+    };
+    
+    reader.onabort = () => {
+        const errorMsg = `File read was aborted for ${file.name}`;
+        if (errorCallback) {
+            errorCallback(errorMsg);
+        }
+    };
+    
     reader.readAsArrayBuffer(file);
 }
 
