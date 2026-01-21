@@ -1335,7 +1335,8 @@ export class PropertiesMap {
 
         // ======= Level of Detail settings
         this._options.useLOD.onchange.push(() => {
-            this._computeLOD();
+            const bounds = this._getBounds();
+            this._computeLOD(bounds);
             // Force a full restyle. Since _lodIndices will be null if disabled,
             // this will render all points.
             void this._restyleLOD();
@@ -1447,7 +1448,7 @@ export class PropertiesMap {
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         // We use the same debounce mechanism as afterplot to avoid conflicts
-        this._plot.on('plotly_relayout', () => {
+        this._plot.on('plotly_relayout', (eventData: Plotly.PlotRelayoutEvent) => {
             if (this._updatingLOD) {
                 return;
             }
@@ -1457,6 +1458,19 @@ export class PropertiesMap {
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
+
+                // Check if we need to update LOD
+                const keys = Object.keys(eventData);
+                const needsLOD = keys.some(
+                    (key) =>
+                        key.match(/^(xaxis|yaxis)\.range/) ||
+                        key.match(/^scene\.(camera|aspectratio)/) ||
+                        key.includes('autorange')
+                );
+
+                if (needsLOD) {
+                    this._updateLOD();
+                }
             }, 50);
         });
 
@@ -2075,6 +2089,40 @@ export class PropertiesMap {
     }
 
     /**
+     * Recomputes LOD indices based on current bounds and updates the plot.
+     * This should be called when the view changes (zoom/pan/rotate) or when
+     * the dataset properties change (axes).
+     */
+    private _updateLOD(): void {
+        if (this._updatingLOD) {
+            return;
+        }
+
+        const hasPoints = this._options.x.property.value !== '';
+        if (
+            !hasPoints ||
+            this._property(this._options.x.property.value).values.length <=
+                PropertiesMap.LOD_THRESHOLD
+        ) {
+            return;
+        }
+
+        this._updatingLOD = true;
+        const bounds = this._getBounds();
+
+        // 1. Recompute indices based on new visible bounds
+        this._computeLOD(bounds);
+
+        // 2. Push new data to Plotly
+        void this._restyleLOD().then(() => {
+            // Release lock after event loop settles to allow subsequent updates
+            setTimeout(() => {
+                this._updatingLOD = false;
+            }, 0);
+        });
+    }
+
+    /**
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
@@ -2146,27 +2194,6 @@ export class PropertiesMap {
         if (needRelayout) {
             // Force Plotly to disable autorange and use the explicit ranges
             this._relayout(layoutUpdate as unknown as Layout);
-        }
-
-        // LOD CHECK
-        const hasPoints = this._options.x.property.value !== '';
-        if (
-            hasPoints &&
-            this._property(this._options.x.property.value).values.length >
-                PropertiesMap.LOD_THRESHOLD
-        ) {
-            this._updatingLOD = true;
-
-            // 1. Recompute indices based on new visible bounds
-            this._computeLOD(bounds);
-
-            // 2. Push new data to Plotly
-            void this._restyleLOD().then(() => {
-                // Release lock after event loop settles to allow subsequent updates
-                setTimeout(() => {
-                    this._updatingLOD = false;
-                }, 0);
-            });
         }
 
         if (!this._is3D()) {
