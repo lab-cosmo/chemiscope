@@ -1674,6 +1674,14 @@ export class PropertiesMap {
      * them if `trace === undefined`
      */
     private _colors(trace?: number): Array<Array<string | number>> {
+        if (trace === 1) {
+            const selected = [];
+            for (const data of this._selected.values()) {
+                selected.push(data.color);
+            }
+            return [selected];
+        }
+
         let colors;
         if (this._options.hasColors()) {
             colors = this._property(this._options.color.property.value).values;
@@ -1682,9 +1690,8 @@ export class PropertiesMap {
                 0.5
             ) as number[];
         }
-        const values = this._options.calculateColors(colors);
-        // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const filteredColors = this._applyLOD(colors) as number[];
+        const mainValues = this._options.calculateColors(filteredColors);
 
         const selected = [];
         for (const data of this._selected.values()) {
@@ -1699,6 +1706,20 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _sizes(trace?: number): Array<number | number[]> {
+        if (trace === 1) {
+            const selected = [];
+            if (this._is3D()) {
+                for (const guid of this._selected.keys()) {
+                    if (guid === this._active) {
+                        selected.push(1000);
+                    } else {
+                        selected.push(500);
+                    }
+                }
+            }
+            return [selected];
+        }
+
         let sizes;
         if (this._options.size.property.value !== '') {
             sizes = this._property(this._options.size.property.value).values;
@@ -1707,9 +1728,10 @@ export class PropertiesMap {
                 1.0
             ) as number[];
         }
-        const values = this._options.calculateSizes(sizes);
+
         // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const filteredSizes = this._applyLOD(sizes) as number[];
+        const mainValues = this._options.calculateSizes(filteredSizes);
 
         const selected = [];
         if (this._is3D()) {
@@ -1740,8 +1762,17 @@ export class PropertiesMap {
 
         const property = this._property(this._options.symbol.value);
         const symbols = this._options.getSymbols(property);
+
+        if (trace === 1) {
+            const selected = [];
+            for (const data of this._selected.values()) {
+                selected.push(symbols[data.current]);
+            }
+            return [selected as typeof symbols];
+        }
+
         // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(symbols) : symbols;
+        const mainValues = this._applyLOD(symbols);
 
         const selected = [];
         for (const data of this._selected.values()) {
@@ -1967,7 +1998,7 @@ export class PropertiesMap {
         );
 
         // ... and then do a higher resolution subsampling for the
-        // points that are actually visiblt
+        // points that are actually visible
         if (is3D && zValues && this._options.camera.value && bounds) {
             lodIndices.push(
                 ...computeScreenSpaceLOD(
