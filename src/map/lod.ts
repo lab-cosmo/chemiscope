@@ -207,13 +207,17 @@ interface LODDependencies {
 
 /**
  * High level controller managing LOD indices, debouncing and restyling.
- * This encapsulates the higher-level logic previously embedded in map.ts.
  */
 export class LODManager {
     private _indices: number[] | null = null;
     private _lock = false;
     private _debounceTimer: number | undefined;
     private _lastDependencies: LODDependencies | null = null;
+    private _cachedValues: {
+        x: number[];
+        y: number[];
+        z: number[] | null;
+    } | null = null;
 
     constructor(
         private options: MapOptions,
@@ -237,14 +241,35 @@ export class LODManager {
         this._lock = v;
     }
 
+    private _applyLODNumeric(values: number[]): number[] {
+        if (this._indices === null) {
+            return values;
+        }
+
+        const len = this._indices.length;
+        const result = new Float64Array(len);
+        for (let i = 0; i < len; i++) {
+            result[i] = values[this._indices[i]];
+        }
+
+        return Array.from(result);
+    }
+
     public applyLOD<T>(values: T[]): T[] {
         if (this._indices === null) {
             return values;
         }
-        const result = new Array<T>(this._indices.length);
-        for (let i = 0; i < this._indices.length; i++) {
+
+        if (values.length > 0 && typeof values[0] === 'number') {
+            return this._applyLODNumeric(values as unknown as number[]) as unknown as T[];
+        }
+
+        const len = this._indices.length;
+        const result = new Array<T>(len);
+        for (let i = 0; i < len; i++) {
             result[i] = values[this._indices[i]];
         }
+
         return result;
     }
 
@@ -285,6 +310,7 @@ export class LODManager {
 
         if (!this.options.useLOD.value) {
             this._indices = null;
+            this._cachedValues = null;
             return;
         }
 
@@ -296,12 +322,19 @@ export class LODManager {
 
         if (xValues.length <= this.threshLOD) {
             this._indices = null;
+            this._cachedValues = null;
             return;
         }
 
         const yValues = this.getProperty(yProp).values;
         const is3D = this.is3D() && zProp !== '';
         const zValues = is3D ? this.getProperty(zProp).values : null;
+
+        this._cachedValues = {
+            x: xValues,
+            y: yValues,
+            z: zValues,
+        };
 
         const lodIndices = computeLODIndices(
             xValues,
@@ -388,5 +421,9 @@ export class LODManager {
             window.clearTimeout(this._debounceTimer);
             this._debounceTimer = undefined;
         }
+    }
+
+    public clearCache(): void {
+        this._cachedValues = null;
     }
 }
