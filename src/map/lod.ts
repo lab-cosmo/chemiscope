@@ -198,6 +198,13 @@ function computeLODIndices(
     return indices;
 }
 
+interface LODDependencies {
+    xProperty: string;
+    yProperty: string;
+    zProperty: string;
+    lodEnabled: boolean;
+}
+
 /**
  * High level controller managing LOD indices, debouncing and restyling.
  * This encapsulates the higher-level logic previously embedded in map.ts.
@@ -206,6 +213,7 @@ export class LODManager {
     private _indices: number[] | null = null;
     private _lock = false;
     private _debounceTimer: number | undefined;
+    private _lastDependencies: LODDependencies | null = null;
 
     constructor(
         private options: MapOptions,
@@ -240,11 +248,41 @@ export class LODManager {
         return result;
     }
 
+    private _getCurrentDependencies(): LODDependencies {
+        return {
+            xProperty: this.options.x.property.value,
+            yProperty: this.options.y.property.value,
+            zProperty: this.options.z.property.value,
+            lodEnabled: this.options.useLOD.value,
+        };
+    }
+
+    private _needsRecomputation(): boolean {
+        const current = this._getCurrentDependencies();
+
+        if (this._lastDependencies === null) {
+            return true; // First time
+        }
+
+        return (
+            current.xProperty !== this._lastDependencies.xProperty ||
+            current.yProperty !== this._lastDependencies.yProperty ||
+            current.zProperty !== this._lastDependencies.zProperty ||
+            current.lodEnabled !== this._lastDependencies.lodEnabled
+        );
+    }
+
     public computeLOD(bounds?: {
         x: [number, number];
         y: [number, number];
         z?: [number, number];
     }): void {
+        if (!this._needsRecomputation() && bounds === undefined) {
+            return;
+        }
+
+        this._lastDependencies = this._getCurrentDependencies();
+
         if (!this.options.useLOD.value) {
             this._indices = null;
             return;
@@ -293,6 +331,15 @@ export class LODManager {
         this._indices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
 
+    public forceComputeLOD(bounds?: {
+        x: [number, number];
+        y: [number, number];
+        z?: [number, number];
+    }): void {
+        this._lastDependencies = null; // Force recomputation
+        this.computeLOD(bounds);
+    }
+
     public async restyleLOD(): Promise<void> {
         await this.restyleFull();
     }
@@ -333,6 +380,13 @@ export class LODManager {
             console.error('LOD update failed:', error);
         } finally {
             this._lock = false;
+        }
+    }
+
+    public cancelPending(): void {
+        if (this._debounceTimer !== undefined) {
+            window.clearTimeout(this._debounceTimer);
+            this._debounceTimer = undefined;
         }
     }
 }
