@@ -115,20 +115,7 @@ export class ChemiscopeApp {
                     `unable to load file at '${this.dataset}': ${response.status} ${response.statusText}`
                 );
             }
-            const buffer = await response.arrayBuffer();
-
-            if (buffer.byteLength === 0) {
-                // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
-                // we can not check if the URL does not exists, so let's assume an
-                // error if the buffer is empty
-                if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
-                    let originalUrl = decodeURIComponent(this.dataset.substr(35));
-                    throw Error(`unable to load file at '${originalUrl}'`);
-                }
-                throw Error(`loaded file is empty: '${this.dataset}'`);
-            }
-
-            const dataset = readJSON(buffer);
+            const dataset = await readResponseJSON(response, this.dataset);
             await this.load(config as Configuration, dataset);
         } catch (error) {
             stopLoading();
@@ -228,23 +215,22 @@ export class ChemiscopeApp {
             readFile(
                 file,
                 (result) => {
-                    try {
-                        const dataset = readJSON(result);
-                        this.load({}, dataset).catch((error) => {
+                    readJSON(result)
+                        .then((dataset) => {
+                            return this.load({}, dataset);
+                        })
+                        .catch((error) => {
                             stopLoading();
-                            displayError(`Failed to load dataset: ${error.message}`);
+                            const errorMessage = error instanceof Error ? error.message : String(error);
+                            displayError(`Failed to load dataset: ${errorMessage}`);
+                        })
+                        .finally(() => {
+                            // clear the selected file name to make sure 'onchange' is
+                            // called again if the user loads a file a the same path
+                            // multiple time
+                            loadDataset.value = '';
+                            loadSaveModal.classList.add('fade');
                         });
-                    } catch (error) {
-                        stopLoading();
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        displayError(`Failed to parse file: ${errorMessage}`);
-                    } finally {
-                        // clear the selected file name to make sure 'onchange' is
-                        // called again if the user loads a file a the same path
-                        // multiple time
-                        loadDataset.value = '';
-                        loadSaveModal.classList.add('fade');
-                    }
                 },
                 (error) => {
                     stopLoading();
@@ -281,23 +267,28 @@ export class ChemiscopeApp {
             readFile(
                 file,
                 (result) => {
-                    try {
-                        if (this.visualizer === undefined) {
-                            return;
-                        }
-
-                        this.visualizer.applySettings(readJSON(result));
-                    } catch (error) {
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        displayError(`Failed to load settings: ${errorMessage}`);
-                    } finally {
-                        // clear the selected file name to make sure 'onchange' is
-                        // called again if the user loads a file a the same path
-                        // multiple time
-                        loadSettings.value = '';
+                    if (this.visualizer === undefined) {
                         stopLoading();
                         loadSaveModal.classList.add('fade');
+                        return;
                     }
+
+                    readJSON(result)
+                        .then((settings) => {
+                            this.visualizer!.applySettings(settings);
+                        })
+                        .catch((error) => {
+                            const errorMessage = error instanceof Error ? error.message : String(error);
+                            displayError(`Failed to load settings: ${errorMessage}`);
+                        })
+                        .finally(() => {
+                            // clear the selected file name to make sure 'onchange' is
+                            // called again if the user loads a file a the same path
+                            // multiple time
+                            loadSettings.value = '';
+                            stopLoading();
+                            loadSaveModal.classList.add('fade');
+                        });
                 },
                 (error) => {
                     stopLoading();
@@ -372,40 +363,81 @@ function stopLoading() {
     main.style.opacity = '1';
 }
 
-/** Read JSON or gzipped JSON and return the parsed object */
-function readJSON(buffer: ArrayBuffer): any {
-    const magic = new Uint8Array(buffer.slice(0, 2));
+function hasDecompressionStream(): boolean {
+    return typeof DecompressionStream !== 'undefined';
+}
 
-    let text;
-    try {
-        // '1f 8b' is the magic constant starting gzip files
-        if (magic[0] == 0x1f && magic[1] == 0x8b) {
-            try {
-                const uint8Array = new Uint8Array(buffer);
-                const decompressed = inflate(uint8Array);
+async function decompressWithStream(compressedData: ArrayBuffer): Promise<string> {
+    const stream = new Response(compressedData).body!;
+    const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+    const response = new Response(decompressedStream);
+    return response.text();
+}
 
-                if (!decompressed || decompressed.length === 0) {
-                    throw new Error('Decompression resulted in empty data');
-                }
+function decompressWithPako(buffer: ArrayBuffer): string {
+    const uint8Array = new Uint8Array(buffer);
+    const decompressed = inflate(uint8Array);
 
-                const decoder = new TextDecoder('utf-8');
-                text = decoder.decode(decompressed);
-            } catch (inflateError) {
-                throw new Error(
-                    `Failed to decompress gzipped data: ${inflateError instanceof Error ? inflateError.message : String(inflateError)}`
-                );
-            }
-        } else {
-            const decoder = new TextDecoder('utf-8');
-            text = decoder.decode(buffer);
+    if (!decompressed || decompressed.length === 0) {
+        throw new Error('Decompression resulted in empty data');
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    return decoder.decode(decompressed);
+}
+
+async function readResponseJSON(response: Response, url: string): Promise<any> {
+    const buffer = await response.arrayBuffer();
+
+    if (buffer.byteLength === 0) {
+        // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
+        // we can not check if the URL does not exists, so let's assume an
+        // error if the buffer is empty
+        if (url.startsWith('https://api.allorigins.win/raw?url=')) {
+            const originalUrl = decodeURIComponent(url.substr(35));
+            throw Error(`unable to load file at '${originalUrl}'`);
         }
-    } catch (error) {
-        throw new Error(
-            `Failed to decode file: ${error instanceof Error ? error.message : String(error)}`
-        );
+        throw Error(`loaded file is empty: '${url}'`);
+    }
+
+    const magic = new Uint8Array(buffer.slice(0, 2));
+    const isGzipped = magic[0] === 0x1f && magic[1] === 0x8b;
+
+    let text: string;
+
+    if (isGzipped) {
+        if (hasDecompressionStream()) {
+            text = await decompressWithStream(buffer);
+        } else {
+            // Fallback to pako
+            text = decompressWithPako(buffer);
+        }
+    } else {
+        // Plain JSON - just decode
+        const decoder = new TextDecoder('utf-8');
+        text = decoder.decode(buffer);
     }
 
     return parseJsonWithNaN(text);
+}
+
+function readJSON(buffer: ArrayBuffer): Promise<any> {
+    const magic = new Uint8Array(buffer.slice(0, 2));
+    const isGzipped = magic[0] === 0x1f && magic[1] === 0x8b;
+
+    if (isGzipped && hasDecompressionStream()) {
+        return decompressWithStream(buffer).then(parseJsonWithNaN);
+    }
+
+    let text: string;
+    if (isGzipped) {
+        text = decompressWithPako(buffer);
+    } else {
+        const decoder = new TextDecoder('utf-8');
+        text = decoder.decode(buffer);
+    }
+
+    return Promise.resolve(parseJsonWithNaN(text));
 }
 
 /**
