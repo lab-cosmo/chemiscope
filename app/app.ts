@@ -82,8 +82,8 @@ export class ChemiscopeApp {
         };
         if (example == 'Azaphenacenes') {
             // example of dynamic structure loading
-            config.loadStructure = async (_, structure:any) => {
-                const url = `examples/${structure.data}`
+            config.loadStructure = async (_, structure: any) => {
+                const url = `examples/${structure.data}`;
 
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -111,7 +111,9 @@ export class ChemiscopeApp {
 
             const response = await fetch(this.dataset);
             if (!response.ok) {
-                throw Error(`unable to load file at '${this.dataset}': ${response.status} ${response.statusText}`);
+                throw Error(
+                    `unable to load file at '${this.dataset}': ${response.status} ${response.statusText}`
+                );
             }
             const buffer = await response.arrayBuffer();
 
@@ -223,30 +225,34 @@ export class ChemiscopeApp {
             startLoading();
             const file = loadDataset.files![0];
             this.dataset = file.name;
-            readFile(file, (result) => {
-                try {                    
-                    const dataset = readJSON(result);
-                    this.load({}, dataset).catch((error) => {
+            readFile(
+                file,
+                (result) => {
+                    try {
+                        const dataset = readJSON(result);
+                        this.load({}, dataset).catch((error) => {
+                            stopLoading();
+                            displayError(`Failed to load dataset: ${error.message}`);
+                        });
+                    } catch (error) {
                         stopLoading();
-                        displayError(`Failed to load dataset: ${error.message}`);
-                    });
-                } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        displayError(`Failed to parse file: ${errorMessage}`);
+                    } finally {
+                        // clear the selected file name to make sure 'onchange' is
+                        // called again if the user loads a file a the same path
+                        // multiple time
+                        loadDataset.value = '';
+                        loadSaveModal.classList.add('fade');
+                    }
+                },
+                (error) => {
                     stopLoading();
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    displayError(`Failed to parse file: ${errorMessage}`);
-                } finally {
-                    // clear the selected file name to make sure 'onchange' is
-                    // called again if the user loads a file a the same path
-                    // multiple time
+                    displayError(`Failed to read file: ${error}`);
                     loadDataset.value = '';
                     loadSaveModal.classList.add('fade');
                 }
-            }, (error) => {
-                stopLoading();
-                displayError(`Failed to read file: ${error}`);
-                loadDataset.value = '';
-                loadSaveModal.classList.add('fade');
-            });
+            );
         };
         // Saving the current dataset
         const saveDataset = getByID('save-dataset');
@@ -272,30 +278,34 @@ export class ChemiscopeApp {
             closeLoadSaveModal.click();
             startLoading();
             const file = loadSettings.files![0];
-            readFile(file, (result) => {
-                try {
-                    if (this.visualizer === undefined) {
-                        return;
-                    }
+            readFile(
+                file,
+                (result) => {
+                    try {
+                        if (this.visualizer === undefined) {
+                            return;
+                        }
 
-                    this.visualizer.applySettings(readJSON(result));
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    displayError(`Failed to load settings: ${errorMessage}`);
-                } finally {
-                    // clear the selected file name to make sure 'onchange' is
-                    // called again if the user loads a file a the same path
-                    // multiple time
-                    loadSettings.value = '';
+                        this.visualizer.applySettings(readJSON(result));
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        displayError(`Failed to load settings: ${errorMessage}`);
+                    } finally {
+                        // clear the selected file name to make sure 'onchange' is
+                        // called again if the user loads a file a the same path
+                        // multiple time
+                        loadSettings.value = '';
+                        stopLoading();
+                        loadSaveModal.classList.add('fade');
+                    }
+                },
+                (error) => {
                     stopLoading();
+                    displayError(`Failed to read settings file: ${error}`);
+                    loadSettings.value = '';
                     loadSaveModal.classList.add('fade');
                 }
-            }, (error) => {
-                stopLoading();
-                displayError(`Failed to read settings file: ${error}`);
-                loadSettings.value = '';
-                loadSaveModal.classList.add('fade');
-            });
+            );
         };
 
         // Saving the current settings values
@@ -369,9 +379,9 @@ function readJSON(buffer: ArrayBuffer): any {
     let text;
     try {
         // '1f 8b' is the magic constant starting gzip files
-        if (magic[0] == 0x1f && magic[1] == 0x8b) {            
+        if (magic[0] == 0x1f && magic[1] == 0x8b) {
             try {
-                const uint8Array = new Uint8Array(buffer);                
+                const uint8Array = new Uint8Array(buffer);
                 const decompressed = inflate(uint8Array);
 
                 if (!decompressed || decompressed.length === 0) {
@@ -381,14 +391,18 @@ function readJSON(buffer: ArrayBuffer): any {
                 const decoder = new TextDecoder('utf-8');
                 text = decoder.decode(decompressed);
             } catch (inflateError) {
-                throw new Error(`Failed to decompress gzipped data: ${inflateError instanceof Error ? inflateError.message : String(inflateError)}`);
+                throw new Error(
+                    `Failed to decompress gzipped data: ${inflateError instanceof Error ? inflateError.message : String(inflateError)}`
+                );
             }
         } else {
             const decoder = new TextDecoder('utf-8');
             text = decoder.decode(buffer);
         }
     } catch (error) {
-        throw new Error(`Failed to decode file: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+            `Failed to decode file: ${error instanceof Error ? error.message : String(error)}`
+        );
     }
 
     return parseJsonWithNaN(text);
@@ -404,7 +418,9 @@ function parseJsonWithNaN(text: string): any {
             return value === '***NaN***' ? NaN : value;
         });
     } catch (error) {
-        throw new Error(`Invalid JSON format: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+            `Invalid JSON format: ${error instanceof Error ? error.message : String(error)}`
+        );
     }
 }
 
@@ -426,7 +442,7 @@ function stringifyJsonWithNaN(object: any): string {
  * @param  {Function} errorCallback callback to use if reading fails
  */
 function readFile(
-    file: File, 
+    file: File,
     callback: (data: ArrayBuffer) => void,
     errorCallback?: (error: string) => void
 ): void {
@@ -453,7 +469,7 @@ function readFile(
             }
         }
     };
-    
+
     reader.onerror = () => {
         const errorMsg = `Failed to read file ${file.name}: ${reader.error?.message || 'Unknown error'}`;
         if (errorCallback) {
@@ -462,14 +478,14 @@ function readFile(
             throw Error(errorMsg);
         }
     };
-    
+
     reader.onabort = () => {
         const errorMsg = `File read was aborted for ${file.name}`;
         if (errorCallback) {
             errorCallback(errorMsg);
         }
     };
-    
+
     reader.readAsArrayBuffer(file);
 }
 
