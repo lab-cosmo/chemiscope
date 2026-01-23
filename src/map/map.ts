@@ -20,7 +20,7 @@ import { enumerate, getElement, getFirstKey } from '../utils';
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices } from './lod';
+import { computeLODIndices, computeScreenSpaceLOD } from './lod';
 import * as styles from '../styles';
 
 import PNG_SVG from '../static/download-png.svg';
@@ -2166,27 +2166,54 @@ export class PropertiesMap {
 
     /** Computes the subset of points to display based on spatial grid binning (LOD) */
     private _computeLOD(bounds?: Bounds): void {
-        if (!this._shouldUseLOD()) {
+        if (!this._options.useLOD.value) {
             this._lodIndices = null;
             return;
         }
 
-        const xValues = this._property(this._options.x.property.value).values;
-        const yValues = this._property(this._options.y.property.value).values;
-
+        const xProp = this._options.x.property.value;
+        const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
+
+        const xValues = this._property(xProp).values;
+        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
+            this._lodIndices = null;
+            return;
+        }
+
+        const yValues = this._property(yProp).values;
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
-        const camera = is3D && this._options.camera.value ? this._options.camera.value : undefined;
 
-        this._lodIndices = computeLODIndices(
+        // Coarse pass
+        let lodIndices = computeLODIndices(
             xValues,
             yValues,
             zValues,
-            PropertiesMap.LOD_THRESHOLD,
-            bounds,
-            camera
+            undefined,
+            PropertiesMap.LOD_THRESHOLD / 10
         );
+
+        // Fine pass
+        if (is3D && zValues && this._options.camera.value && bounds) {
+            lodIndices = lodIndices.concat(
+                computeScreenSpaceLOD(
+                    xValues,
+                    yValues,
+                    zValues,
+                    this._options.camera.value,
+                    bounds,
+                    PropertiesMap.LOD_THRESHOLD / 2
+                )
+            );
+        } else {
+            lodIndices = lodIndices.concat(
+                computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
+            );
+        }
+
+        // Remove duplicates and sort
+        this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
     }
 
     /** Applies LOD filtering to data arrays */
