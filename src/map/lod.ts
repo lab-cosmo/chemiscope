@@ -6,22 +6,7 @@
 import { Bounds, arrayMaxMin } from '../utils';
 import { CameraState, projectPoints } from '../utils/camera';
 
-/** Clamps a value to [0, max-1] */
-function clampToGrid(value: number, max: number): number {
-    return Math.max(0, Math.min(max - 1, value));
-}
-
-/** Computes bounds from data if not provided */
-function getOrComputeBounds(
-    xValues: number[],
-    yValues: number[],
-    zValues: number[] | null,
-    bounds?: Bounds
-): Bounds {
-    if (bounds) {
-        return bounds;
-    }
-
+function computeBounds(xValues: number[], yValues: number[], zValues: number[] | null): Bounds {
     const xRange = arrayMaxMin(xValues);
     const yRange = arrayMaxMin(yValues);
     const zRange = zValues ? arrayMaxMin(zValues) : { min: 0, max: 1 };
@@ -33,8 +18,7 @@ function getOrComputeBounds(
     };
 }
 
-/** Extracts filled grid cells into a sorted index array */
-function extractGridIndices(grid: Int32Array): number[] {
+function extractGridIds(grid: Int32Array): number[] {
     const indices: number[] = [];
     for (let i = 0; i < grid.length; i++) {
         if (grid[i] !== -1) {
@@ -44,7 +28,6 @@ function extractGridIndices(grid: Int32Array): number[] {
     return indices.sort((a, b) => a - b);
 }
 
-/** Bins points based on their data coordinates (X, Y, Z) */
 function binPointsByDataCoordinates(
     xValues: number[],
     yValues: number[],
@@ -53,7 +36,8 @@ function binPointsByDataCoordinates(
     bounds?: Bounds
 ): number[] {
     const is3D = zValues !== null;
-    const dataBounds = getOrComputeBounds(xValues, yValues, zValues, bounds);
+    const clipToBounds = bounds !== undefined;
+    const dataBounds = clipToBounds ? bounds : computeBounds(xValues, yValues, zValues);
 
     // Filter points within bounds
     const visibleIds: number[] = [];
@@ -61,7 +45,7 @@ function binPointsByDataCoordinates(
         const x = xValues[i];
         const y = yValues[i];
 
-        if (bounds) {
+        if (clipToBounds) {
             const [xMin, xMax] = dataBounds.x;
             const [yMin, yMax] = dataBounds.y;
 
@@ -69,14 +53,15 @@ function binPointsByDataCoordinates(
                 continue;
             }
 
-            if (is3D && zValues && dataBounds.z) {
+            if (is3D && zValues) {
                 const z = zValues[i];
-                const [zMin, zMax] = dataBounds.z;
+                const [zMin, zMax] = dataBounds.z ?? [0, 1];
                 if (z < zMin || z > zMax) {
                     continue;
                 }
             }
         }
+
         visibleIds.push(i);
     }
 
@@ -87,7 +72,7 @@ function binPointsByDataCoordinates(
     // Create spatial grid
     const [xMin, xMax] = dataBounds.x;
     const [yMin, yMax] = dataBounds.y;
-    const [zMin, zMax] = dataBounds.z || [0, 1];
+    const [zMin, zMax] = dataBounds.z ?? [0, 1];
 
     const xRange = xMax - xMin || 1;
     const yRange = yMax - yMin || 1;
@@ -100,30 +85,29 @@ function binPointsByDataCoordinates(
     // Pre-calculate factors
     const xScale = gridResolution / xRange;
     const yScale = gridResolution / yRange;
-    const zScale = gridResolution / zRange;
+    const zScale = zRange === 0 ? 0 : gridResolution / zRange;
+
+    const clamp = (i: number, size: number) => Math.max(0, Math.min(i, size - 1));
+
+    const strideY = gridResolution;
+    const strideZ = gridResolution * gridResolution;
 
     for (const id of visibleIds) {
-        const x = xValues[id];
-        const y = yValues[id];
+        const xi = clamp(Math.floor((xValues[id] - xMin) * xScale), gridResolution);
+        const yi = clamp(Math.floor((yValues[id] - yMin) * yScale), gridResolution);
 
-        const xi = clampToGrid(Math.floor((x - xMin) * xScale), gridResolution);
-        const yi = clampToGrid(Math.floor((y - yMin) * yScale), gridResolution);
-
-        let cellIndex: number;
+        let cellId = xi + yi * strideY;
         if (is3D && zValues) {
-            const z = zValues[id];
-            const zi = clampToGrid(Math.floor((z - zMin) * zScale), gridResolution);
-            cellIndex = xi + yi * gridResolution + zi * gridResolution ** 2;
-        } else {
-            cellIndex = xi + yi * gridResolution;
+            const zi = clamp(Math.floor((zValues[id] - zMin) * zScale), gridResolution);
+            cellId += zi * strideZ;
         }
 
-        if (grid[cellIndex] === -1) {
-            grid[cellIndex] = id;
+        if (grid[cellId] === -1) {
+            grid[cellId] = id;
         }
     }
 
-    return extractGridIndices(grid);
+    return extractGridIds(grid);
 }
 
 /** Bins points based on camera projection (3D only) */
@@ -159,27 +143,28 @@ function binPointsByCameraProjection(
     // Create 2D grid in screen space
     const gridResolution = Math.ceil(Math.sqrt(maxPoints));
     const grid = new Int32Array(gridResolution * gridResolution).fill(-1);
-    const gridStep = (clipSize * 2) / gridResolution;
+    const gridSize = clipSize * 2;
+    const invStep = gridResolution / gridSize;
 
     for (const id of visibleIds) {
         const x = projections.x[id];
         const y = projections.y[id];
 
         // Convert screen coordinates to grid indices
-        const xi = Math.floor((x + clipSize) / gridStep);
-        const yi = Math.floor((y + clipSize) / gridStep);
+        const xi = Math.floor((x + clipSize) * invStep);
+        const yi = Math.floor((y + clipSize) * invStep);
 
         if (xi < 0 || xi >= gridResolution || yi < 0 || yi >= gridResolution) {
             continue;
         }
 
-        const cellIndex = xi + yi * gridResolution;
-        if (grid[cellIndex] === -1) {
-            grid[cellIndex] = id;
+        const cellId = xi + yi * gridResolution;
+        if (grid[cellId] === -1) {
+            grid[cellId] = id;
         }
     }
 
-    return extractGridIndices(grid);
+    return extractGridIds(grid);
 }
 
 /**
@@ -207,6 +192,7 @@ export function computeLODIndices(
 
     const is3D = zValues !== null;
 
+    // Coarse pass
     const coarseSpatialIds = binPointsByDataCoordinates(
         xValues,
         yValues,
@@ -214,10 +200,10 @@ export function computeLODIndices(
         Math.floor(maxPoints / 10)
     );
 
+    // Fine pass
     let fineDetailIds: number[];
     if (is3D && zValues && camera && bounds) {
-        // Use camera projection binning
-        const effectiveBounds = getOrComputeBounds(xValues, yValues, zValues, bounds);
+        const effectiveBounds = bounds ?? computeBounds(xValues, yValues, zValues);
         fineDetailIds = binPointsByCameraProjection(
             xValues,
             yValues,
@@ -227,7 +213,6 @@ export function computeLODIndices(
             Math.floor(maxPoints / 2)
         );
     } else {
-        // Use coordinate from data with current zoom bounds
         fineDetailIds = binPointsByDataCoordinates(xValues, yValues, zValues, maxPoints, bounds);
     }
 

@@ -2030,10 +2030,6 @@ export class PropertiesMap {
         if (!this._is3D()) {
             this._updateMarkers();
         }
-
-        if (this._shouldUseLOD()) {
-            this._scheduleLODUpdate(bounds);
-        }
     }
 
     private _updateAxisSettings(bounds: Bounds): void {
