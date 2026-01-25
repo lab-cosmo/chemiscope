@@ -6,16 +6,6 @@
 import { Bounds, arrayMaxMin } from '../utils';
 import { CameraState, projectPoints } from '../utils/camera';
 
-function extractGridIds(grid: Int32Array): number[] {
-    const indices: number[] = [];
-    for (let i = 0; i < grid.length; i++) {
-        if (grid[i] !== -1) {
-            indices.push(grid[i]);
-        }
-    }
-    return indices.sort((a, b) => a - b);
-}
-
 /**
  * Computes LOD based on 2D screen-space projection from 3D
  *
@@ -25,7 +15,7 @@ function extractGridIds(grid: Int32Array): number[] {
  * @param camera Current camera state (eye, center, up, zoom)
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
- * @returns Sorted array of indices to display
+ * @returns Array of indices to display
  */
 export function computeScreenSpaceLOD(
     xValues: number[],
@@ -59,7 +49,7 @@ export function computeScreenSpaceLOD(
         }
     }
 
-    if (visibleIds.length < maxPoints) {
+    if (visibleIds.length <= maxPoints) {
         return visibleIds;
     }
 
@@ -67,6 +57,7 @@ export function computeScreenSpaceLOD(
     const bins = Math.ceil(Math.sqrt(maxPoints));
     const grid = new Int32Array(bins * bins).fill(-1);
     const invStep = bins / (CLIP_SIZE * 2);
+    const result: number[] = [];
 
     for (const id of visibleIds) {
         const ui = Math.floor((projections.x[id] + CLIP_SIZE) * invStep);
@@ -79,10 +70,11 @@ export function computeScreenSpaceLOD(
         const idx = ui + vi * bins;
         if (grid[idx] === -1) {
             grid[idx] = id;
+            result.push(id);
         }
     }
 
-    return extractGridIds(grid);
+    return result;
 }
 
 /**
@@ -94,7 +86,7 @@ export function computeScreenSpaceLOD(
  * @param zValues Array of Z coordinates (null for 2D)
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
- * @returns Sorted array of indices to display
+ * @returns Array of indices to display
  */
 export function computeLODIndices(
     xValues: number[],
@@ -153,7 +145,7 @@ export function computeLODIndices(
         visibleIds.push(i);
     }
 
-    if (visibleIds.length < maxPoints) {
+    if (visibleIds.length <= maxPoints) {
         return visibleIds;
     }
 
@@ -171,6 +163,7 @@ export function computeLODIndices(
     const zFactor = bins / zRange;
 
     const clamp = (v: number, max: number) => Math.max(0, Math.min(v, max - 1));
+    const result: number[] = [];
 
     for (const id of visibleIds) {
         const xi = clamp(Math.floor((xValues[id] - xMin) * xFactor), bins);
@@ -184,8 +177,9 @@ export function computeLODIndices(
 
         if (grid[idx] === -1) {
             grid[idx] = id;
+            result.push(id);
         }
     }
 
-    return extractGridIds(grid);
+    return result;
 }

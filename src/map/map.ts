@@ -2173,8 +2173,10 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
+        const lodSet = new Set<number>();
+
         // Coarse pass
-        let lodIndices = computeLODIndices(
+        const lodIndices = computeLODIndices(
             xValues,
             yValues,
             zValues,
@@ -2182,26 +2184,28 @@ export class PropertiesMap {
             PropertiesMap.LOD_THRESHOLD / 10
         );
 
-        // Fine pass
-        if (is3D && zValues && this._options.camera.value && bounds) {
-            lodIndices = lodIndices.concat(
-                computeScreenSpaceLOD(
-                    xValues,
-                    yValues,
-                    zValues,
-                    this._options.camera.value,
-                    bounds,
-                    PropertiesMap.LOD_THRESHOLD / 2
-                )
-            );
-        } else {
-            lodIndices = lodIndices.concat(
-                computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD)
-            );
+        for (const id of lodIndices) {
+            lodSet.add(id);
         }
 
-        // Remove duplicates and sort
-        this._lodIndices = [...new Set(lodIndices)].sort((a, b) => a - b);
+        // Fine pass
+        const fineIndices =
+            is3D && zValues && this._options.camera.value && bounds
+                ? computeScreenSpaceLOD(
+                      xValues,
+                      yValues,
+                      zValues,
+                      this._options.camera.value,
+                      bounds,
+                      PropertiesMap.LOD_THRESHOLD / 2
+                  )
+                : computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD);
+
+        for (const id of fineIndices) {
+            lodSet.add(id);
+        }
+
+        this._lodIndices = Array.from(lodSet);
     }
 
     /** Applies LOD filtering to data arrays */
