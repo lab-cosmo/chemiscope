@@ -13,7 +13,7 @@ import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
-import { PlotlyState, cameraToPlotly, plotlyToCamera } from '../utils/camera';
+import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import { Bounds, GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
@@ -953,8 +953,60 @@ export class PropertiesMap {
         }
 
         this._options.z.property.onchange.push(() => {
+            // Reset min/max when changing property to trigger autoscale
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
             negativeLogWarning(this._options.z);
-            this._handleZAxisPropertyChange();
+
+            const was3D = this._plot._fullData[0].type === 'scatter3d';
+
+            // If no z property selected -> switch to 2D
+            if (this._options.z.property.value === '') {
+                if (was3D) {
+                    this._switch2D();
+                }
+                return;
+            } else {
+                if (!was3D) {
+                    this._switch3D();
+                }
+            }
+
+            // LOD: Z changed, compute a first downsampling if necessary
+            this._computeLOD();
+
+            // Perform async sequence while holding a LOD lock to avoid races
+            void (async () => {
+                if (this._lodLocked) {
+                    return;
+                }
+                this._lodLocked = true;
+
+                try {
+                    // Ensure traces are restyled according to current LOD
+                    await this._restyleLOD();
+
+                    await Plotly.relayout(this._plot, {
+                        'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                        'scene.zaxis.autorange': true,
+                    } as unknown as Layout);
+
+                    // The zrange is now known, and we can trigger a proper subsampling
+                    const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
+                    this._options.z.min.value = zRange[0];
+                    this._options.z.max.value = zRange[1];
+
+                    // Recompute LOD using the new bounds
+                    this._computeLOD(this._getBounds());
+                    await this._restyleLOD();
+
+                    if (this._is3D()) {
+                        this._setScaleStep(this._getBounds().z as number[], 'z');
+                    }
+                } finally {
+                    this._lodLocked = false;
+                }
+            })();
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1300,6 +1352,8 @@ export class PropertiesMap {
             );
         this._plot.classList.add('chsp-map');
 
+        // Add callbacks
+
         this._plot.on('plotly_click', (eventData: Plotly.PlotMouseEvent) => {
             const event = eventData;
             // don't update selected env on double click, since it is bound to
@@ -1315,13 +1369,12 @@ export class PropertiesMap {
             let environment = event.points[0].pointNumber;
 
             // LOD: Map the clicked point back to real environment index if LOD is active on main trace
-            const lodIndices = this._lodIndices;
-            if (lodIndices !== null && event.points[0].curveNumber === 0) {
-                if (environment >= lodIndices.length) {
+            if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
+                if (environment >= this._lodIndices.length) {
                     // ignore stray clicks that happen during redrawing
                     return;
                 }
-                environment = lodIndices[environment];
+                environment = this._lodIndices[environment];
             }
 
             if (this._is3D() && event.points[0].data.name === 'selected') {
@@ -1357,7 +1410,6 @@ export class PropertiesMap {
                 window.clearTimeout(this._afterplotRequest);
             }
 
-            // Schedule a short-delayed call to afterplot to batch rapid events
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
@@ -1365,8 +1417,7 @@ export class PropertiesMap {
         });
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        // We use the same debounce mechanism as afterplot to avoid conflicts
-        this._plot.on('plotly_relayout', (eventData: Plotly.PlotRelayoutEvent) => {
+        this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
             if (this._lodLocked) {
                 return;
             }
@@ -1377,18 +1428,21 @@ export class PropertiesMap {
                 this._afterplotRequest = null;
                 this._afterplot();
 
-                // Check if we need to update LOD based on event type
-                const keys = Object.keys(eventData);
-                const needsLOD = keys.some(
-                    (key) =>
-                        key.match(/^(xaxis|yaxis)\.range/) ||
-                        key.match(/^scene\.(camera|aspectratio)/) ||
-                        key.includes('autorange')
-                );
-
-                if (needsLOD && this._shouldUseLOD()) {
-                    const bounds = this._getBounds();
-                    this._scheduleLODUpdate(bounds);
+                // Check if LOD update is needed based on relayout event
+                const shouldUpdateLOD =
+                    this._options.useLOD.value &&
+                    this._property(this._options.x.property.value).values.length >
+                        PropertiesMap.LOD_THRESHOLD;
+                if (shouldUpdateLOD) {
+                    const needsLOD = Object.keys(event).some(
+                        (key) =>
+                            key.match(/^(xaxis|yaxis)\.range/) ||
+                            key.match(/^scene\.(camera|aspectratio)/) ||
+                            key.includes('autorange')
+                    );
+                    if (needsLOD) {
+                        this._scheduleLODUpdate(this._getBounds());
+                    }
                 }
             }, 50);
         });
@@ -1458,60 +1512,6 @@ export class PropertiesMap {
         // Update the UI step for min/max inputs based on the new bounds
         const bounds = this._getBounds();
         this._setScaleStep(bounds[axis], axis);
-    }
-
-    private _handleZAxisPropertyChange(): void {
-        this._options.z.min.value = NaN;
-        this._options.z.max.value = NaN;
-
-        // Detect whether the plot was previously 3D
-        const was3D = this._plot._fullData[0].type === 'scatter3d';
-
-        // If no z property selected -> switch to 2D
-        if (this._options.z.property.value === '') {
-            if (was3D) {
-                this._switch2D();
-            }
-            return;
-        } else {
-            if (!was3D) {
-                this._switch3D();
-            }
-        }
-
-        this._computeLOD();
-
-        // Perform async sequence while holding a LOD lock to avoid races
-        void (async () => {
-            if (this._lodLocked) return;
-            this._lodLocked = true;
-
-            try {
-                // Ensure traces are restyled according to current LOD
-                await this._restyleLOD();
-
-                // Update z-axis title and request autorange
-                await Plotly.relayout(this._plot, {
-                    'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                    'scene.zaxis.autorange': true,
-                } as unknown as Layout);
-
-                const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
-                this._options.z.min.value = zRange[0];
-                this._options.z.max.value = zRange[1];
-
-                // Recompute LOD using the new bounds
-                this._computeLOD(this._getBounds());
-                await this._restyleLOD();
-
-                if (this._is3D()) {
-                    this._setScaleStep(this._getBounds().z as number[], 'z');
-                }
-            } finally {
-                // Release lock to allow other LOD updates
-                this._lodLocked = false;
-            }
-        })();
     }
 
     /**
@@ -2006,20 +2006,8 @@ export class PropertiesMap {
 
         // Set camera (3D)
         if (this._is3D()) {
-            const fullLayout = (this._plot as unknown as { _fullLayout?: unknown })._fullLayout;
-            if (fullLayout && typeof fullLayout === 'object') {
-                const fl = fullLayout as { scene?: unknown };
-                const scene = fl.scene;
-                if (scene && typeof scene === 'object') {
-                    const sceneObj = scene as { camera?: unknown; aspectratio?: unknown };
-                    const maybePlotly: PlotlyState = {
-                        camera: sceneObj.camera as PlotlyState['camera'],
-                        aspectratio: sceneObj.aspectratio as PlotlyState['aspectratio'],
-                    };
-                    const camera = plotlyToCamera(maybePlotly);
-                    this._options.camera.setValue(camera, 'DOM');
-                }
-            }
+            const { camera, aspectratio } = this._plot._fullLayout.scene;
+            this._options.camera.setValue(plotlyToCamera({ camera, aspectratio }), 'DOM');
         }
 
         const bounds = this._getBounds();
@@ -2275,15 +2263,6 @@ export class PropertiesMap {
                 this._lodLocked = false;
             });
         }, PropertiesMap.LOD_DEBOUNCE_MS);
-    }
-
-    /** Checks if LOD should be used based on settings and dataset size */
-    private _shouldUseLOD(): boolean {
-        if (!this._options.useLOD.value) {
-            return false;
-        }
-        const xValues = this._property(this._options.x.property.value).values;
-        return xValues.length > PropertiesMap.LOD_THRESHOLD;
     }
 }
 
