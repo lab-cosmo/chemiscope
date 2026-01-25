@@ -1650,8 +1650,8 @@ export class PropertiesMap {
 
         const values = this._property(axis.property.value).values;
         // LOD: Apply binning filter for main trace (trace 0)
-        // If trace is undefined (both), _selectTrace distributes the first
-        // argument to main trace
+        // If trace is undefined (both), _selectTrace distributes the first argument to
+        // main trace
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
 
         // in 2d mode, set all selected markers coordinates to NaN since we are
@@ -1945,6 +1945,10 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
         };
+
+        // Update both main trace (0) and selected trace (1)
+        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
+        // while keeping the _restyle wrapper synchronous for legacy calls.
         await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
     }
 
@@ -1952,6 +1956,7 @@ export class PropertiesMap {
      * Computes the subset of points to display based on spatial grid binning (LOD).
      */
     private _computeLOD(bounds?: Bounds): void {
+        // check if LOD is enabled
         if (!this._options.useLOD.value) {
             this._lodIndices = null;
             return;
@@ -1962,6 +1967,8 @@ export class PropertiesMap {
         const zProp = this._options.z.property.value;
 
         const xValues = this._property(xProp).values;
+
+        // Check threshold
         if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
             this._lodIndices = null;
             return;
@@ -1974,6 +1981,9 @@ export class PropertiesMap {
         const lodSet = new Set<number>();
 
         // Coarse pass
+        // Compute a sparser "global" grid of points for the full range of the dataset
+        // to show "something" when we rotate, pan or zoom
+
         const lodIndices = computeLODIndices(
             xValues,
             yValues,
@@ -1987,6 +1997,7 @@ export class PropertiesMap {
         }
 
         // Fine pass
+        // Do a higher resolution subsampling for the points that are actually visible
         const fineIndices =
             is3D && zValues && this._options.camera.value && bounds
                 ? computeScreenSpaceLOD(
@@ -2045,13 +2056,16 @@ export class PropertiesMap {
             // 1. Force global LOD computation
             this._computeLOD();
 
-            // 2. Update data traces first
+            // 2. Update data traces first (re-render points with global LOD)
+            // We do this BEFORE relayout so that 'autorange' calculates bounds
+            // based on the full dataset, not the sliced one.
             await this._restyleLOD();
 
             // 3. Prepare Layout Update
             const layoutUpdate: Record<string, unknown> = {};
 
             if (this._is3D()) {
+                // In 3D, 'autorange: true' resets camera AND axes.
                 layoutUpdate['scene.xaxis.autorange'] = true;
                 layoutUpdate['scene.yaxis.autorange'] = true;
                 layoutUpdate['scene.zaxis.autorange'] = true;
@@ -2063,6 +2077,7 @@ export class PropertiesMap {
                     up: { x: 0, y: 0, z: 1 },
                 };
             } else {
+                // In 2D, we trigger autorange on standard axes
                 layoutUpdate['xaxis.autorange'] = true;
                 layoutUpdate['yaxis.autorange'] = true;
             }
@@ -2084,41 +2099,6 @@ export class PropertiesMap {
     }
 
     /**
-     * Schedules a debounced LOD update. Used during camera/zoom interactions to avoid
-     * excessive recomputations
-     */
-    private _updateLOD(bounds: Bounds): void {
-        // Clear any pending LOD update to debounce rapid calls
-        if (this._lodDebounceTimer !== undefined) {
-            window.clearTimeout(this._lodDebounceTimer);
-        }
-
-        this._lodDebounceTimer = window.setTimeout(() => {
-            this._lodDebounceTimer = undefined;
-
-            // Early exit if another LOD update is already in progress
-            if (this._lodLocked) {
-                return;
-            }
-
-            this._lodLocked = true;
-
-            const performUpdate = async () => {
-                this._computeLOD(bounds);
-                await this._restyleLOD();
-
-                // Wait for render to settle
-                await new Promise((resolve) => setTimeout(resolve, 200));
-            };
-
-            // Release the lock
-            void performUpdate().finally(() => {
-                this._lodLocked = false;
-            });
-        }, 300);
-    }
-
-    /**
      * Function used as callback to update the axis ranges in settings after
      * the user changes zoom or range on the plot
      */
@@ -2127,7 +2107,7 @@ export class PropertiesMap {
             return;
         }
 
-        // Set camera (3D)
+        // Set camera
         if (this._is3D()) {
             const { camera, aspectratio } = this._plot._fullLayout.scene;
             this._options.camera.setValue(plotlyToCamera({ camera, aspectratio }), 'DOM');
@@ -2261,6 +2241,41 @@ export class PropertiesMap {
             minElement.step = `${step}`;
             maxElement.step = `${step}`;
         }
+    }
+
+    /**
+     * Schedules a debounced LOD update. Used during camera/zoom interactions to avoid
+     * excessive recomputations
+     */
+    private _updateLOD(bounds: Bounds): void {
+        // Clear any pending LOD update to debounce rapid calls
+        if (this._lodDebounceTimer !== undefined) {
+            window.clearTimeout(this._lodDebounceTimer);
+        }
+
+        this._lodDebounceTimer = window.setTimeout(() => {
+            this._lodDebounceTimer = undefined;
+
+            // Early exit if another LOD update is already in progress
+            if (this._lodLocked) {
+                return;
+            }
+
+            this._lodLocked = true;
+
+            const performUpdate = async () => {
+                this._computeLOD(bounds);
+                await this._restyleLOD();
+
+                // Wait for render to settle
+                await new Promise((resolve) => setTimeout(resolve, 200));
+            };
+
+            // Release the lock
+            void performUpdate().finally(() => {
+                this._lodLocked = false;
+            });
+        }, 300);
     }
 
     /** Sync axis min/max so the UI reflects the current visible ranges in the plot */
