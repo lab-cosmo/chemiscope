@@ -78,12 +78,11 @@ export function computeScreenSpaceLOD(
 }
 
 /**
- * Computes LOD based on spatial grid binning.
- * Used for 2D plots or 3D without camera.
+ * Computes LOD based on spatial grid binning. Used for 2D plots or 3D without camera.
  *
  * @param xValues Array of X coordinates
  * @param yValues Array of Y coordinates
- * @param zValues Array of Z coordinates (null for 2D)
+ * @param zValues Array of Z coordinates (or null for 2D)
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
  * @returns Array of indices to display
@@ -97,22 +96,25 @@ export function computeLODIndices(
 ): number[] {
     const is3D = zValues !== null;
 
-    // Determine range
+    // Determine the range we are binning over
     let xMin: number, xMax: number, yMin: number, yMax: number;
     let zMin = 0;
     let zMax = 1;
 
     if (bounds) {
+        // DYNAMIC: Use the current zoom level provided by bounds
         [xMin, xMax] = bounds.x;
         [yMin, yMax] = bounds.y;
         if (is3D && bounds.z) {
             [zMin, zMax] = bounds.z;
         }
     } else {
+        // STATIC: Use the full data range (calculate from data)
         const xRange = arrayMaxMin(xValues);
-        const yRange = arrayMaxMin(yValues);
         xMin = xRange.min;
         xMax = xRange.max;
+
+        const yRange = arrayMaxMin(yValues);
         yMin = yRange.min;
         yMax = yRange.max;
 
@@ -149,7 +151,7 @@ export function computeLODIndices(
         return visibleIds;
     }
 
-    // Binning
+    // Avoid division by zero
     const xRange = xMax - xMin || 1;
     const yRange = yMax - yMin || 1;
     const zRange = zMax - zMin || 1;
