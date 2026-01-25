@@ -272,8 +272,6 @@ export class PropertiesMap {
     private _lodIndices: number[] | null = null;
     /// Guard to prevent infinite recursion in afterplot loops
     private _lodLocked = false;
-    // Debounce timer id for scheduling LOD updates
-    private _lodDebounceTimer: number | undefined;
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
 
@@ -2014,7 +2012,7 @@ export class PropertiesMap {
             lodSet.add(id);
         }
 
-        this._lodIndices = Array.from(lodSet);
+        this._lodIndices = Array.from(lodSet).sort((a, b) => a - b);
     }
 
     /**
@@ -2089,12 +2087,11 @@ export class PropertiesMap {
             if (!this._is3D()) {
                 this._updateMarkers();
             }
-
-            // Wait for Plotly to process everything
-            await new Promise((resolve) => setTimeout(resolve, 100));
         } finally {
             // Release lock
-            this._lodLocked = false;
+            setTimeout(() => {
+                this._lodLocked = false;
+            }, 0);
         }
     }
 
@@ -2244,38 +2241,24 @@ export class PropertiesMap {
     }
 
     /**
-     * Schedules a debounced LOD update. Used during camera/zoom interactions to avoid
-     * excessive recomputations
+     * Recomputes LOD indices based on current bounds and updates the plot.
+     * Called when the view changes (zoom/pan/rotate).
      */
     private _updateLOD(bounds: Bounds): void {
-        // Clear any pending LOD update to debounce rapid calls
-        if (this._lodDebounceTimer !== undefined) {
-            window.clearTimeout(this._lodDebounceTimer);
+        // Early exit if another LOD update is already in progress
+        if (this._lodLocked) {
+            return;
         }
 
-        this._lodDebounceTimer = window.setTimeout(() => {
-            this._lodDebounceTimer = undefined;
+        this._lodLocked = true;
 
-            // Early exit if another LOD update is already in progress
-            if (this._lodLocked) {
-                return;
-            }
+        this._computeLOD(bounds);
 
-            this._lodLocked = true;
-
-            const performUpdate = async () => {
-                this._computeLOD(bounds);
-                await this._restyleLOD();
-
-                // Wait for render to settle
-                await new Promise((resolve) => setTimeout(resolve, 200));
-            };
-
-            // Release the lock
-            void performUpdate().finally(() => {
+        void this._restyleLOD().then(() => {
+            setTimeout(() => {
                 this._lodLocked = false;
-            });
-        }, 300);
+            }, 0);
+        });
     }
 
     /** Sync axis min/max so the UI reflects the current visible ranges in the plot */

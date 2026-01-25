@@ -74,6 +74,7 @@ export function computeScreenSpaceLOD(
         }
     }
 
+    result.sort((a, b) => a - b);
     return result;
 }
 
@@ -183,5 +184,6 @@ export function computeLODIndices(
         }
     }
 
+    result.sort((a, b) => a - b);
     return result;
 }
