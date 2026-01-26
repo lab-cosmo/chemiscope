@@ -202,11 +202,24 @@ export class ChemiscopeApp {
         const loadSaveModal = getByID('load-save');
         const closeLoadSaveModal = getByID('close-load-save-modal');
         loadDataset.onchange = () => {
+            const file = loadDataset.files![0];
+
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > 500) {
+                const proceed = confirm(
+                    `This file is ${sizeMB.toFixed(0)} MB. Large files may fail to load due to browser memory limits.\n\n` +
+                    `Continue loading?`
+                );
+                if (!proceed) {
+                    loadDataset.value = '';
+                    return;
+                }
+            }
+
             // remove closing animation on the modal to close it with JS
             loadSaveModal.classList.remove('fade');
             closeLoadSaveModal.click();
             startLoading();
-            const file = loadDataset.files![0];
             this.dataset = file.name;
             readFile(file, (result) => {
                 readJSON(result).then((dataset) => {
