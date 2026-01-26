@@ -2042,57 +2042,54 @@ export class PropertiesMap {
 
         this._lodLocked = true;
 
-        try {
-            // Reset settings to Auto (NaN)
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
+        // Reset settings to Auto (NaN)
+        this._options.x.min.value = NaN;
+        this._options.x.max.value = NaN;
+        this._options.y.min.value = NaN;
+        this._options.y.max.value = NaN;
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
 
-            // 1. Force global LOD computation
-            this._computeLOD();
+        // 1. Force global LOD computation
+        this._computeLOD();
 
-            // 2. Update data traces first (re-render points with global LOD)
-            // We do this BEFORE relayout so that 'autorange' calculates bounds
-            // based on the full dataset, not the sliced one.
-            await this._restyleLOD();
+        // 2. Update data traces first (re-render points with global LOD)
+        // We do this BEFORE relayout so that 'autorange' calculates bounds
+        // based on the full dataset, not the sliced one.
+        await this._restyleLOD();
 
-            // 3. Prepare Layout Update
-            const layoutUpdate: Record<string, unknown> = {};
+        // 3. Prepare Layout Update
+        const layoutUpdate: Record<string, unknown> = {};
 
-            if (this._is3D()) {
-                // In 3D, 'autorange: true' resets camera AND axes.
-                layoutUpdate['scene.xaxis.autorange'] = true;
-                layoutUpdate['scene.yaxis.autorange'] = true;
-                layoutUpdate['scene.zaxis.autorange'] = true;
-                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
-                layoutUpdate['scene.camera'] = {
-                    center: { x: 0, y: 0, z: 0 },
-                    eye: { x: 1.25, y: 1.25, z: 1.25 },
-                    projection: { type: 'orthographic' },
-                    up: { x: 0, y: 0, z: 1 },
-                };
-            } else {
-                // In 2D, we trigger autorange on standard axes
-                layoutUpdate['xaxis.autorange'] = true;
-                layoutUpdate['yaxis.autorange'] = true;
-            }
-
-            // 4. Force the view reset
-            this._relayout(layoutUpdate);
-
-            // Manually trigger marker update for 2D mode
-            if (!this._is3D()) {
-                this._updateMarkers();
-            }
-        } finally {
-            // Release lock
-            setTimeout(() => {
-                this._lodLocked = false;
-            }, 0);
+        if (this._is3D()) {
+            // In 3D, 'autorange: true' resets camera AND axes.
+            layoutUpdate['scene.xaxis.autorange'] = true;
+            layoutUpdate['scene.yaxis.autorange'] = true;
+            layoutUpdate['scene.zaxis.autorange'] = true;
+            layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+            layoutUpdate['scene.camera'] = {
+                center: { x: 0, y: 0, z: 0 },
+                eye: { x: 1.25, y: 1.25, z: 1.25 },
+                projection: { type: 'orthographic' },
+                up: { x: 0, y: 0, z: 1 },
+            };
+        } else {
+            // In 2D, we trigger autorange on standard axes
+            layoutUpdate['xaxis.autorange'] = true;
+            layoutUpdate['yaxis.autorange'] = true;
         }
+
+        // 4. Force the view reset
+        this._relayout(layoutUpdate as unknown as Partial<Layout>);
+
+        // Manually trigger marker update for 2D mode
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
+
+        // Release lock
+        this._lodLocked = false;
+        this._afterplot();
     }
 
     /**
