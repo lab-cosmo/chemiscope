@@ -116,18 +116,21 @@ const DEFAULT_LAYOUT = {
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
+            type: 'linear',
         },
         yaxis: {
             showspikes: false,
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
+            type: 'linear',
         },
         zaxis: {
             showspikes: false,
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' as undefined | string },
+            type: 'linear',
         },
     },
     showlegend: true,
@@ -1498,6 +1501,9 @@ export class PropertiesMap {
         layout.scene.xaxis.title.text = this._title(this._options.x.property.value);
         layout.scene.yaxis.title.text = this._title(this._options.y.property.value);
         layout.scene.zaxis.title.text = this._title(this._options.z.property.value);
+        layout.scene.xaxis.type = this._options.x.scale.value;
+        layout.scene.yaxis.type = this._options.y.scale.value;
+        layout.scene.zaxis.type = this._options.z.scale.value;
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
