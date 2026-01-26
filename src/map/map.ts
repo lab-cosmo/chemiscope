@@ -857,6 +857,11 @@ export class PropertiesMap {
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
+            // skip if axis has no property set (e.g. z axis in 2d mode)
+            if (axis.property.value === '') {
+                return;
+            }
+
             if (
                 axis.scale.value === 'log' &&
                 arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
