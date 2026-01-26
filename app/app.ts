@@ -119,12 +119,12 @@ export class ChemiscopeApp {
             // we can not check if the URL does not exists, so let's assume an
             // error if the buffer is empty
             if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
-                let originalUrl = decodeURIComponent(this.dataset.substr(35));
+                const originalUrl = decodeURIComponent(this.dataset.substr(35));
                 throw Error(`unable to load file at '${originalUrl}'`);
             }
         }
 
-        const dataset = readJSON(buffer);
+        const dataset = await readJSON(buffer);
         await this.load(config as Configuration, dataset);
     }
 
@@ -209,13 +209,14 @@ export class ChemiscopeApp {
             const file = loadDataset.files![0];
             this.dataset = file.name;
             readFile(file, (result) => {
-                const dataset = readJSON(result);
-                this.load({}, dataset);
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
-                loadDataset.value = '';
-                loadSaveModal.classList.add('fade');
+                readJSON(result).then((dataset) => {
+                    this.load({}, dataset);
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadDataset.value = '';
+                    loadSaveModal.classList.add('fade');
+                });
             });
         };
         // Saving the current dataset
@@ -247,13 +248,15 @@ export class ChemiscopeApp {
                     return;
                 }
 
-                this.visualizer.applySettings(readJSON(result));
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
-                loadSettings.value = '';
-                stopLoading();
-                loadSaveModal.classList.add('fade');
+                readJSON(result).then((settings) => {
+                    this.visualizer!.applySettings(settings);
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadSettings.value = '';
+                    stopLoading();
+                    loadSaveModal.classList.add('fade');
+                });
             });
         };
 
@@ -316,13 +319,22 @@ function stopLoading() {
 }
 
 /** Read JSON or gzipped JSON and return the parsed object */
-function readJSON(buffer: ArrayBuffer): any {
+async function readJSON(buffer: ArrayBuffer): Promise<any> {
     const magic = new Uint8Array(buffer.slice(0, 2));
 
     let text;
     // '1f 8b' is the magic constant starting gzip files
-    if (magic[0] == 0x1f && magic[1] == 0x8b) {
-        text = inflate(new Uint8Array(buffer), { to: 'string' });
+    if (magic[0] === 0x1f && magic[1] === 0x8b) {
+        if (typeof DecompressionStream !== 'undefined') {
+            // use DecompressionStream API (for huge files)
+            const stream = new Response(buffer).body!;
+            const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+            text = await new Response(decompressedStream).text();
+        } else {
+            // fallback to pako
+            const decompressed = inflate(new Uint8Array(buffer));
+            text = new TextDecoder('utf-8').decode(decompressed);
+        }
     } else {
         const decoder = new TextDecoder('utf-8');
         text = decoder.decode(buffer);
