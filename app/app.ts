@@ -210,13 +210,19 @@ export class ChemiscopeApp {
             this.dataset = file.name;
             readFile(file, (result) => {
                 readJSON(result).then((dataset) => {
-                    this.load({}, dataset);
-                    // clear the selected file name to make sure 'onchange' is
-                    // called again if the user loads a file a the same path
-                    // multiple time
-                    loadDataset.value = '';
-                    loadSaveModal.classList.add('fade');
-                });
+                        this.load({}, dataset);
+                    })
+                    .catch((error) => {
+                        stopLoading();
+                        displayError(error instanceof Error ? error.message : String(error));
+                    })
+                    .finally(() => {
+                        // clear the selected file name to make sure 'onchange' is
+                        // called again if the user loads a file a the same path
+                        // multiple time
+                        loadDataset.value = '';
+                        loadSaveModal.classList.add('fade');
+                    });
             });
         };
         // Saving the current dataset
@@ -245,18 +251,25 @@ export class ChemiscopeApp {
             const file = loadSettings.files![0];
             readFile(file, (result) => {
                 if (this.visualizer === undefined) {
+                    stopLoading();
+                    loadSaveModal.classList.add('fade');
                     return;
                 }
 
                 readJSON(result).then((settings) => {
-                    this.visualizer!.applySettings(settings);
-                    // clear the selected file name to make sure 'onchange' is
-                    // called again if the user loads a file a the same path
-                    // multiple time
-                    loadSettings.value = '';
-                    stopLoading();
-                    loadSaveModal.classList.add('fade');
-                });
+                        this.visualizer!.applySettings(settings);
+                    })
+                    .catch((error) => {
+                        displayError(error instanceof Error ? error.message : String(error));
+                    })
+                    .finally(() => {
+                        // clear the selected file name to make sure 'onchange' is
+                        // called again if the user loads a file a the same path
+                        // multiple time
+                        loadSettings.value = '';
+                        stopLoading();
+                        loadSaveModal.classList.add('fade');
+                    });
             });
         };
 
@@ -300,6 +313,12 @@ function displayWarning(message: string, timeout: number = 4000) {
             display.style.display = 'none';
         }, timeout);
     }
+}
+
+function displayError(message: string) {
+    const display = getByID('error-display');
+    display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'block';
 }
 
 function startLoading() {
