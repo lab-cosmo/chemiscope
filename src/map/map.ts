@@ -386,7 +386,7 @@ export class PropertiesMap {
      * Change display target and adapt the element to the new target
      * @param target display target
      */
-    public async switchTarget(target: DisplayTarget): Promise<void> {
+    public switchTarget(target: DisplayTarget): Promise<void> {
         // Check if the target value actually changed
         if (target !== this._target) {
             // Set new widget target
@@ -415,8 +415,9 @@ export class PropertiesMap {
             this._connectSettings();
 
             // Re-render the plot with the new data and layout
-            await this._react(this._getTraces(), this._getLayout());
+            return this._react(this._getTraces(), this._getLayout());
         }
+        return Promise.resolve();
     }
 
     /**
@@ -1446,9 +1447,7 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            if (!this._lodLocked) {
-                void this._resetToGlobalView();
-            }
+            void this._resetToGlobalView();
             return false;
         });
 
@@ -1934,7 +1933,7 @@ export class PropertiesMap {
     /**
      * Helper to trigger a full update of the main trace and selected trace when LOD changes.
      */
-    private async _restyleLOD(): Promise<void> {
+    private _restyleLOD(): Promise<void> {
         const fullUpdate: Record<string, unknown> = {
             x: this._coordinates(this._options.x),
             y: this._coordinates(this._options.y),
@@ -1947,7 +1946,7 @@ export class PropertiesMap {
         // Update both main trace (0) and selected trace (1)
         // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
         // while keeping the _restyle wrapper synchronous for legacy calls.
-        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
+        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]).then(() => {});
     }
 
     /**
