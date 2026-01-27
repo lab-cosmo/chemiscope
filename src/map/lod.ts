@@ -79,7 +79,8 @@ export function computeScreenSpaceLOD(
 }
 
 /**
- * Computes LOD based on spatial grid binning. Used for 2D plots or 3D without camera.
+ * Computes LOD based on spatial grid binning. Used for 2D plots or to get a global
+ * 3D subsampling that does not depend on the camera viewpoint
  *
  * @param xValues Array of X coordinates
  * @param yValues Array of Y coordinates
