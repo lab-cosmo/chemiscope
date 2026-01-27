@@ -112,26 +112,14 @@ export class ChemiscopeApp {
         if (!response.ok) {
             throw Error(`unable to load file at '${this.dataset}'`);
         }
-        const buffer = await response.arrayBuffer();
-
-        if (buffer.byteLength === 0) {
-            // Until https://github.com/gnuns/allOrigins/issues/70 is resolved,
-            // we can not check if the URL does not exists, so let's assume an
-            // error if the buffer is empty
-            if (this.dataset.startsWith('https://api.allorigins.win/raw?url=')) {
-                const originalUrl = decodeURIComponent(this.dataset.substr(35));
-                throw Error(`unable to load file at '${originalUrl}'`);
-            }
-        }
-
-        const dataset = await readJSON(buffer);
+        const isGzipped = url.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
+        const dataset = await readJSONFromStream(response, isGzipped);
         await this.load(config as Configuration, dataset);
     }
 
     /**
      * Load the given `dataset` with the specified `configuration`.
      */
-
     public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
         // hide any error coming from the previous dataset loading
         const errors = getByID('error-display');
@@ -221,21 +209,20 @@ export class ChemiscopeApp {
             closeLoadSaveModal.click();
             startLoading();
             this.dataset = file.name;
-            readFile(file, (result) => {
-                readJSON(result).then((dataset) => {
-                        this.load({}, dataset);
-                    })
-                    .catch((error) => {
-                        stopLoading();
-                        displayError(error instanceof Error ? error.message : String(error));
-                    })
-                    .finally(() => {
-                        // clear the selected file name to make sure 'onchange' is
-                        // called again if the user loads a file a the same path
-                        // multiple time
-                        loadDataset.value = '';
-                        loadSaveModal.classList.add('fade');
-                    });
+            const isGzipped = file.name.endsWith('.gz');
+            readJSONFromFile(file, isGzipped).then((dataset) => {
+                this.load({}, dataset);
+            })
+            .catch((error) => {
+                stopLoading();
+                displayError(error instanceof Error ? error.message : String(error));
+            })
+            .finally(() => {
+                // clear the selected file name to make sure 'onchange' is
+                // called again if the user loads a file a the same path
+                // multiple time
+                loadDataset.value = '';
+                loadSaveModal.classList.add('fade');
             });
         };
         // Saving the current dataset
@@ -262,27 +249,26 @@ export class ChemiscopeApp {
             closeLoadSaveModal.click();
             startLoading();
             const file = loadSettings.files![0];
-            readFile(file, (result) => {
-                if (this.visualizer === undefined) {
-                    stopLoading();
-                    loadSaveModal.classList.add('fade');
-                    return;
-                }
+            if (this.visualizer === undefined) {
+                stopLoading();
+                loadSaveModal.classList.add('fade');
+                return;
+            }
 
-                readJSON(result).then((settings) => {
-                        this.visualizer!.applySettings(settings);
-                    })
-                    .catch((error) => {
-                        displayError(error instanceof Error ? error.message : String(error));
-                    })
-                    .finally(() => {
-                        // clear the selected file name to make sure 'onchange' is
-                        // called again if the user loads a file a the same path
-                        // multiple time
-                        loadSettings.value = '';
-                        stopLoading();
-                        loadSaveModal.classList.add('fade');
-                    });
+            const isGzipped = file.name.endsWith('.gz');
+            readJSONFromFile(file, isGzipped).then((settings) => {
+                this.visualizer!.applySettings(settings);
+            })
+            .catch((error) => {
+                displayError(error instanceof Error ? error.message : String(error));
+            })
+            .finally(() => {
+                // clear the selected file name to make sure 'onchange' is
+                // called again if the user loads a file a the same path
+                // multiple time
+                loadSettings.value = '';
+                stopLoading();
+                loadSaveModal.classList.add('fade');
             });
         };
 
@@ -351,25 +337,38 @@ function stopLoading() {
 }
 
 /** Read JSON or gzipped JSON and return the parsed object */
-async function readJSON(buffer: ArrayBuffer): Promise<any> {
-    const magic = new Uint8Array(buffer.slice(0, 2));
-
+async function readJSONFromStream(response: Response, isGzipped: boolean): Promise<any> {
     let text;
-    // '1f 8b' is the magic constant starting gzip files
-    if (magic[0] === 0x1f && magic[1] === 0x8b) {
+    if (isGzipped) {
         if (typeof DecompressionStream !== 'undefined') {
-            // use DecompressionStream API (for huge files)
-            const stream = new Response(buffer).body!;
-            const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+            const decompressedStream = response.body!.pipeThrough(new DecompressionStream('gzip'));
             text = await new Response(decompressedStream).text();
         } else {
             // fallback to pako
+            const buffer = await response.arrayBuffer();
             const decompressed = inflate(new Uint8Array(buffer));
             text = new TextDecoder('utf-8').decode(decompressed);
         }
     } else {
-        const decoder = new TextDecoder('utf-8');
-        text = decoder.decode(buffer);
+        text = await response.text();
+    }
+
+    return parseJsonWithNaN(text);
+}
+
+async function readJSONFromFile(file: File, isGzipped: boolean): Promise<any> {
+    let text;
+    if (isGzipped) {
+        if (typeof DecompressionStream !== 'undefined') {
+            const decompressedStream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+            text = await new Response(decompressedStream).text();
+        } else {
+            const buffer = await file.arrayBuffer();
+            const decompressed = inflate(new Uint8Array(buffer));
+            text = new TextDecoder('utf-8').decode(decompressed);
+        }
+    } else {
+        text = await file.text();
     }
     return parseJsonWithNaN(text);
 }
@@ -392,26 +391,6 @@ function stringifyJsonWithNaN(object: any): string {
     return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
 }
 
-/**
- * Read a `file` with FileReader, and use `callback` once loaded.
- *
- * The callback should take a single ArrayBuffer parameter.
- *
- * @param  {File}     file     user-provided file to read
- * @param  {Function} callback callback to use once the file is read
- */
-function readFile(file: File, callback: (data: ArrayBuffer) => void): void {
-    const reader = new FileReader();
-    reader.onload = () => {
-        if (reader.error) {
-            throw Error(`could not read ${file.name}: ${reader.error}`);
-        }
-        if (reader.result) {
-            callback(reader.result as ArrayBuffer);
-        }
-    };
-    reader.readAsArrayBuffer(file);
-}
 
 /**
  * Ensure that the height of the property table is set up in a compatible way
