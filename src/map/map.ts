@@ -116,18 +116,21 @@ const DEFAULT_LAYOUT = {
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
+            type: 'linear',
         },
         yaxis: {
             showspikes: false,
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' },
+            type: 'linear',
         },
         zaxis: {
             showspikes: false,
             autorange: true,
             range: undefined as (number | undefined)[] | undefined,
             title: { text: '' as undefined | string },
+            type: 'linear',
         },
     },
     showlegend: true,
@@ -270,8 +273,11 @@ export class PropertiesMap {
     private static readonly LOD_THRESHOLD = 50000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
-    /// Guard to prevent infinite recursion in afterplot loops
-    private _lodLocked = false;
+    /**
+     * Guard to skip concurrent LOD updates. When set, other callers simply return early
+     * instead of waiting
+     */
+    private _lodBusy = false;
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
 
@@ -386,7 +392,7 @@ export class PropertiesMap {
      * Change display target and adapt the element to the new target
      * @param target display target
      */
-    public async switchTarget(target: DisplayTarget): Promise<void> {
+    public switchTarget(target: DisplayTarget): Promise<void> {
         // Check if the target value actually changed
         if (target !== this._target) {
             // Set new widget target
@@ -415,8 +421,9 @@ export class PropertiesMap {
             this._connectSettings();
 
             // Re-render the plot with the new data and layout
-            await this._react(this._getTraces(), this._getLayout());
+            return this._react(this._getTraces(), this._getLayout());
         }
+        return Promise.resolve();
     }
 
     /**
@@ -854,6 +861,11 @@ export class PropertiesMap {
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
+            // skip if axis has no property set (e.g. z axis in 2d mode)
+            if (axis.property.value === '') {
+                return;
+            }
+
             if (
                 axis.scale.value === 'log' &&
                 arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
@@ -977,10 +989,10 @@ export class PropertiesMap {
 
             // Perform async sequence while holding a LOD lock to avoid races
             void (async () => {
-                if (this._lodLocked) {
+                if (this._lodBusy) {
                     return;
                 }
-                this._lodLocked = true;
+                this._lodBusy = true;
 
                 try {
                     // Ensure traces are restyled according to current LOD
@@ -1003,7 +1015,7 @@ export class PropertiesMap {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
                     }
                 } finally {
-                    this._lodLocked = false;
+                    this._lodBusy = false;
                 }
             })();
         });
@@ -1362,7 +1374,7 @@ export class PropertiesMap {
             }
 
             // don't intercept clicks while the subsampling is updating
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             let environment = event.points[0].pointNumber;
@@ -1402,7 +1414,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             if (this._afterplotRequest !== null) {
@@ -1417,7 +1429,7 @@ export class PropertiesMap {
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             if (this._afterplotRequest !== null) {
@@ -1446,9 +1458,7 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            if (!this._lodLocked) {
-                void this._resetToGlobalView();
-            }
+            void this._resetToGlobalView();
             return false;
         });
 
@@ -1524,6 +1534,9 @@ export class PropertiesMap {
         layout.scene.xaxis.title.text = this._title(this._options.x.property.value);
         layout.scene.yaxis.title.text = this._title(this._options.y.property.value);
         layout.scene.zaxis.title.text = this._title(this._options.z.property.value);
+        layout.scene.xaxis.type = this._options.x.scale.value;
+        layout.scene.yaxis.type = this._options.y.scale.value;
+        layout.scene.zaxis.type = this._options.z.scale.value;
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
@@ -1934,7 +1947,7 @@ export class PropertiesMap {
     /**
      * Helper to trigger a full update of the main trace and selected trace when LOD changes.
      */
-    private async _restyleLOD(): Promise<void> {
+    private _restyleLOD(): Promise<void> {
         const fullUpdate: Record<string, unknown> = {
             x: this._coordinates(this._options.x),
             y: this._coordinates(this._options.y),
@@ -1947,7 +1960,7 @@ export class PropertiesMap {
         // Update both main trace (0) and selected trace (1)
         // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
         // while keeping the _restyle wrapper synchronous for legacy calls.
-        await Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]);
+        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]).then(() => {});
     }
 
     /**
@@ -2035,64 +2048,61 @@ export class PropertiesMap {
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
-        // Prevent recursion
-        if (this._lodLocked) {
+        // Skip if another LOD update is in progress
+        if (this._lodBusy) {
             return;
         }
 
-        this._lodLocked = true;
+        this._lodBusy = true;
 
-        try {
-            // Reset settings to Auto (NaN)
-            this._options.x.min.value = NaN;
-            this._options.x.max.value = NaN;
-            this._options.y.min.value = NaN;
-            this._options.y.max.value = NaN;
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
+        // Reset settings to Auto (NaN)
+        this._options.x.min.value = NaN;
+        this._options.x.max.value = NaN;
+        this._options.y.min.value = NaN;
+        this._options.y.max.value = NaN;
+        this._options.z.min.value = NaN;
+        this._options.z.max.value = NaN;
 
-            // 1. Force global LOD computation
-            this._computeLOD();
+        // 1. Force global LOD computation
+        this._computeLOD();
 
-            // 2. Update data traces first (re-render points with global LOD)
-            // We do this BEFORE relayout so that 'autorange' calculates bounds
-            // based on the full dataset, not the sliced one.
-            await this._restyleLOD();
+        // 2. Update data traces first (re-render points with global LOD)
+        // We do this BEFORE relayout so that 'autorange' calculates bounds
+        // based on the full dataset, not the sliced one.
+        await this._restyleLOD();
 
-            // 3. Prepare Layout Update
-            const layoutUpdate: Record<string, unknown> = {};
+        // 3. Prepare Layout Update
+        const layoutUpdate: Record<string, unknown> = {};
 
-            if (this._is3D()) {
-                // In 3D, 'autorange: true' resets camera AND axes.
-                layoutUpdate['scene.xaxis.autorange'] = true;
-                layoutUpdate['scene.yaxis.autorange'] = true;
-                layoutUpdate['scene.zaxis.autorange'] = true;
-                layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
-                layoutUpdate['scene.camera'] = {
-                    center: { x: 0, y: 0, z: 0 },
-                    eye: { x: 1.25, y: 1.25, z: 1.25 },
-                    projection: { type: 'orthographic' },
-                    up: { x: 0, y: 0, z: 1 },
-                };
-            } else {
-                // In 2D, we trigger autorange on standard axes
-                layoutUpdate['xaxis.autorange'] = true;
-                layoutUpdate['yaxis.autorange'] = true;
-            }
-
-            // 4. Force the view reset
-            this._relayout(layoutUpdate);
-
-            // Manually trigger marker update for 2D mode
-            if (!this._is3D()) {
-                this._updateMarkers();
-            }
-        } finally {
-            // Release lock
-            setTimeout(() => {
-                this._lodLocked = false;
-            }, 0);
+        if (this._is3D()) {
+            // In 3D, 'autorange: true' resets camera AND axes.
+            layoutUpdate['scene.xaxis.autorange'] = true;
+            layoutUpdate['scene.yaxis.autorange'] = true;
+            layoutUpdate['scene.zaxis.autorange'] = true;
+            layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
+            layoutUpdate['scene.camera'] = {
+                center: { x: 0, y: 0, z: 0 },
+                eye: { x: 1.25, y: 1.25, z: 1.25 },
+                projection: { type: 'orthographic' },
+                up: { x: 0, y: 0, z: 1 },
+            };
+        } else {
+            // In 2D, we trigger autorange on standard axes
+            layoutUpdate['xaxis.autorange'] = true;
+            layoutUpdate['yaxis.autorange'] = true;
         }
+
+        // 4. Force the view reset
+        this._relayout(layoutUpdate as unknown as Partial<Layout>);
+
+        // Manually trigger marker update for 2D mode
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
+
+        // Release lock
+        this._lodBusy = false;
+        this._afterplot();
     }
 
     /**
@@ -2100,7 +2110,7 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private _afterplot(): void {
-        if (this._lodLocked) {
+        if (this._lodBusy) {
             return;
         }
 
@@ -2246,17 +2256,17 @@ export class PropertiesMap {
      */
     private _updateLOD(bounds: Bounds): void {
         // Early exit if another LOD update is already in progress
-        if (this._lodLocked) {
+        if (this._lodBusy) {
             return;
         }
 
-        this._lodLocked = true;
+        this._lodBusy = true;
 
         this._computeLOD(bounds);
 
         void this._restyleLOD().then(() => {
             setTimeout(() => {
-                this._lodLocked = false;
+                this._lodBusy = false;
             }, 0);
         });
     }
