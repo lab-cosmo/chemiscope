@@ -17,6 +17,12 @@ export { Warnings, WarningHandler } from './warnings';
  */
 export type PositioningCallback = (rect: DOMRect) => { top: number; left: number };
 
+export type Bounds = {
+    x: [number, number];
+    y: [number, number];
+    z?: [number, number];
+};
+
 const STANDARD_COLORS = [
     'red',
     'yellow',

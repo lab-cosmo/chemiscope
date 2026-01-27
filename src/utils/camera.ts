@@ -10,6 +10,7 @@ import assert from 'assert';
  */
 
 import { Vector3D, norm } from '../structure/linalg';
+import { Bounds } from '../utils';
 
 export interface CameraState {
     eye: { x: number; y: number; z: number };
@@ -250,11 +251,7 @@ export function projectPoints(
     yValues: number[],
     zValues: number[],
     camera: CameraState,
-    bounds: {
-        x: [number, number];
-        y: [number, number];
-        z?: [number, number];
-    }
+    bounds: Bounds
 ): { x: number[]; y: number[] } {
     assert(bounds.z !== undefined);
 
