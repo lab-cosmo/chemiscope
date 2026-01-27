@@ -270,8 +270,11 @@ export class PropertiesMap {
     private static readonly LOD_THRESHOLD = 50000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
-    /// Guard to prevent infinite recursion in afterplot loops
-    private _lodLocked = false;
+    /**
+     * Guard to skip concurrent LOD updates. When set, other callers simply return early
+     * instead of waiting
+     */
+    private _lodBusy = false;
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
 
@@ -978,10 +981,10 @@ export class PropertiesMap {
 
             // Perform async sequence while holding a LOD lock to avoid races
             void (async () => {
-                if (this._lodLocked) {
+                if (this._lodBusy) {
                     return;
                 }
-                this._lodLocked = true;
+                this._lodBusy = true;
 
                 try {
                     // Ensure traces are restyled according to current LOD
@@ -1004,7 +1007,7 @@ export class PropertiesMap {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
                     }
                 } finally {
-                    this._lodLocked = false;
+                    this._lodBusy = false;
                 }
             })();
         });
@@ -1363,7 +1366,7 @@ export class PropertiesMap {
             }
 
             // don't intercept clicks while the subsampling is updating
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             let environment = event.points[0].pointNumber;
@@ -1403,7 +1406,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             if (this._afterplotRequest !== null) {
@@ -1418,7 +1421,7 @@ export class PropertiesMap {
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
-            if (this._lodLocked) {
+            if (this._lodBusy) {
                 return;
             }
             if (this._afterplotRequest !== null) {
@@ -2034,12 +2037,12 @@ export class PropertiesMap {
      * Used for double-click and autoscale events.
      */
     private async _resetToGlobalView() {
-        // Prevent recursion
-        if (this._lodLocked) {
+        // Skip if another LOD update is in progress
+        if (this._lodBusy) {
             return;
         }
 
-        this._lodLocked = true;
+        this._lodBusy = true;
 
         // Reset settings to Auto (NaN)
         this._options.x.min.value = NaN;
@@ -2087,7 +2090,7 @@ export class PropertiesMap {
         }
 
         // Release lock
-        this._lodLocked = false;
+        this._lodBusy = false;
         this._afterplot();
     }
 
@@ -2096,7 +2099,7 @@ export class PropertiesMap {
      * the user changes zoom or range on the plot
      */
     private _afterplot(): void {
-        if (this._lodLocked) {
+        if (this._lodBusy) {
             return;
         }
 
@@ -2242,17 +2245,17 @@ export class PropertiesMap {
      */
     private _updateLOD(bounds: Bounds): void {
         // Early exit if another LOD update is already in progress
-        if (this._lodLocked) {
+        if (this._lodBusy) {
             return;
         }
 
-        this._lodLocked = true;
+        this._lodBusy = true;
 
         this._computeLOD(bounds);
 
         void this._restyleLOD().then(() => {
             setTimeout(() => {
-                this._lodLocked = false;
+                this._lodBusy = false;
             }, 0);
         });
     }
