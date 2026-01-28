@@ -208,6 +208,59 @@ export class MapOptions extends OptionsGroup {
         // Attach callbacks
         this._bind(properties);
 
+        this.color.select.mode.onchange.push(() => {
+            if (this.color.select.mode.value === 'range') {
+                if (this.color.select.min.value > this.color.select.max.value) {
+                    this.warnings.sendMessage(
+                        'The selection min value is greater than the max value! Resetting the range.'
+                    );
+                    this.color.select.min.reset();
+                    this.color.select.max.reset();
+                }
+            }
+        });
+
+        const validateSelectRange = (minOrMax: 'min' | 'max') => {
+            return () => {
+                if (this.color.select.mode.value === 'range') {
+                    const min = this.color.select.min.value;
+                    const max = this.color.select.max.value;
+                    if (!isNaN(min) && !isNaN(max) && min > max) {
+                        this.warnings.sendMessage(
+                            `The selection ${minOrMax} value makes min > max! Resetting it.`
+                        );
+                        if (minOrMax === 'min') {
+                            this.color.select.min.reset();
+                        } else {
+                            this.color.select.max.reset();
+                        }
+                    }
+                }
+            };
+        };
+        this.color.select.min.onchange.push(validateSelectRange('min'));
+        this.color.select.max.onchange.push(validateSelectRange('max'));
+
+        this.color.property.onchange.push(() => {
+            // reset selection range when the property changes
+            this.color.select.min.value = NaN;
+            this.color.select.max.value = NaN;
+
+            // disable range selection if color is fixed
+            const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
+            const rangeOption = selectMode.querySelector(
+                'option[value="range"]'
+            ) as HTMLOptionElement;
+            if (this.color.property.value === '') {
+                if (this.color.select.mode.value === 'range') {
+                    this.color.select.mode.value = 'all';
+                }
+                rangeOption.disabled = true;
+            } else {
+                rangeOption.disabled = false;
+            }
+        });
+
         // Apply new settings to the modal options
         this.applySettings(settings);
     }
@@ -579,9 +632,11 @@ export class MapOptions extends OptionsGroup {
             'map-color-select-category'
         );
         selectSelectCategory.length = 0;
+        let hasCategorical = false;
         for (const key in properties) {
             const prop = properties[key];
             if (prop.string !== undefined) {
+                hasCategorical = true;
                 const values = prop.string.strings();
                 for (const val of values) {
                     const optionValue = `${key}/${val}`;
@@ -589,6 +644,23 @@ export class MapOptions extends OptionsGroup {
                 }
             }
         }
+
+        // disable category selection if there are no categorical properties
+        const categoryOption = selectSelectMode.querySelector(
+            'option[value="category"]'
+        ) as HTMLOptionElement;
+        if (!hasCategorical) {
+            categoryOption.disabled = true;
+        }
+
+        // disable range selection if color is fixed
+        const rangeOption = selectSelectMode.querySelector(
+            'option[value="range"]'
+        ) as HTMLOptionElement;
+        if (this.color.property.value === '') {
+            rangeOption.disabled = true;
+        }
+
         if (selectSelectCategory.options.length > 0) {
             this.color.select.category.value = selectSelectCategory.options[0].value;
         }
@@ -598,7 +670,7 @@ export class MapOptions extends OptionsGroup {
         this.color.select.max.bind(this.getModalElement('map-color-select-max'), 'value');
 
         const updateSelectVisibility = () => {
-            const mode = selectSelectMode.value;
+            const mode = this.color.select.mode.value;
             const containerMode = this.getModalElement('map-color-select-container');
             const containerCategory = this.getModalElement('map-color-select-category-container');
             const containerMin = this.getModalElement('map-color-select-min-container');
@@ -622,7 +694,7 @@ export class MapOptions extends OptionsGroup {
                 containerMax.style.display = 'none';
             }
         };
-        selectSelectMode.addEventListener('change', updateSelectVisibility);
+        this.color.select.mode.onchange.push(updateSelectVisibility);
         // Call it once to set initial state (e.g. if settings loaded 'range')
         setTimeout(updateSelectVisibility, 0);
 

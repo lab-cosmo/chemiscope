@@ -1746,12 +1746,16 @@ export class PropertiesMap {
      * Get the mask of selected points based on the current selection mode
      */
     private _getMask(): boolean[] {
+        const n = this._property(this._options.x.property.value).values.length;
+        if (this._options.color.select.mode.value === 'all') {
+            return new Array<boolean>(n).fill(true);
+        }
+
         let colors;
         if (this._options.hasColors()) {
             colors = this._property(this._options.color.property.value).values;
         } else {
-            const n = this._property(this._options.x.property.value).values.length;
-            colors = new Array(n).fill(0.5) as number[];
+            colors = new Array<number>(n).fill(0.5);
         }
 
         let categoryValues: string[] | undefined;
@@ -1928,31 +1932,7 @@ export class PropertiesMap {
         // LOD: Apply filter to main trace values
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
 
-        // Selected markers (trace 1) always have fixed color
-        // Assuming they inherit or use something specific?
-        // The original code used line.color: [] in selected trace definition.
-        // Let's check _getTraces for selected trace.
-        // It had `line: { color: [], width: 2 }`.
-        // The color was filled dynamically? No, selected trace logic is different.
-        // It uses `selected` variable in _getTraces.
-
-        // In _getTraces:
-        // const selected = { ..., marker: { ..., line: { color: [], ... } } }
-        // The color is filled?
-        // Actually the selected trace (trace 1) markers are the "active" ones (big ones).
-        // Their line color depends on... well, usually black or contrasting.
-        // In `_updateMarkers`, `line.color` is NOT updated for trace 1?
-        // Wait, `_updateMarkers` calls `_restyle` for trace 1.
-        // But `_restyle` there doesn't update `marker.line.color`.
-
-        // So for trace 1, we can just return a default or handle it separately.
-        // The original code for trace 1 in _getTraces:
-        // line: { color: [], width: 2 }
-        // Wait, `color` was empty array?
-        // The markers in trace 1 are added/removed dynamically?
-        // No, trace 1 is "selected" trace, used for 3D selection markers.
-
-        // Let's assume trace 1 line color is black.
+        // Assume trace 1 line color is black.
         const selected = new Array<string>(this._selected.size).fill('black');
 
         const dummy = ['rgba(0,0,0,0)', 'rgba(0,0,0,0)'];
@@ -2362,6 +2342,7 @@ export class PropertiesMap {
                     'marker.opacity': this._options.color.opacity.value / 100,
                     'marker.size': this._sizes(1),
                     'marker.symbol': this._symbols(1),
+                    'marker.line.color': this._lineColors(1),
                     x: this._coordinates(this._options.x, 1),
                     y: this._coordinates(this._options.y, 1),
                     z: this._coordinates(this._options.z, 1),
