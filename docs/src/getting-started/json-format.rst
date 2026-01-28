@@ -700,7 +700,7 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
      - object
      - Color config: like axis, plus ``"palette"`` option for colormap selection,
        ``"opacity"`` to make traces transparent, and ``"select"`` to filter points.
-
+       Unselected points are shown in gray.
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
