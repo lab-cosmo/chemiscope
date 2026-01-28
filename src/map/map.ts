@@ -636,6 +636,7 @@ export class PropertiesMap {
             marker: {
                 color: this._colors(0)[0],
                 coloraxis: 'coloraxis',
+                showscale: false,
                 line: {
                     color: this._lineColors(0)[0],
                     width: this._options.markerOutline.value ? 0.5 : 0,
@@ -684,74 +685,30 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        const traces = [main as Data, selected as Data];
+        const range = this._getColorRange();
+        const dummy = {
+            name: 'colorbar-dummy',
+            type: type,
+            x: this._coordinates(this._options.x, 2)[0],
+            y: this._coordinates(this._options.y, 2)[0],
+            z: this._coordinates(this._options.z, 2)[0],
+            marker: {
+                color: [range.min, range.max],
+                coloraxis: 'coloraxis',
+                showscale: true,
+                opacity: 0, // Make points invisible
+                size: 0, // Make points unclickable
+            },
+            visible: this._options.hasColors(),
+            showlegend: false,
+            hoverinfo: 'none',
+        };
 
-        // If using explicit colors (strings) for main trace, add dummy trace for colorbar
-        const mainColors = main.marker.color;
-
-        if (
-            this._options.hasColors() &&
-            mainColors.length > 0 &&
-            typeof mainColors[0] === 'string'
-        ) {
-            // @ts-expect-error main is inferred with coloraxis, deleting it is fine for Plotly
-            delete main.marker.coloraxis;
-
-            // Use the first valid coordinate from main trace to ensure dummy points are valid
-            // We use 2 points to match the color array length [min, max]
-            const x0 = (main.x as number[])?.[0] || 0;
-            const y0 = (main.y as number[])?.[0] || 0;
-            const z0 = (main.z as number[])?.[0] || 0;
-
-            // Calculate robust min/max
-            let min = this._options.color.min.value;
-            let max = this._options.color.max.value;
-
-            if (isNaN(min) || isNaN(max)) {
-                const propValues = this._property(this._options.color.property.value).values;
-                const transValues = this._options.calculateColors(propValues) as number[];
-                const { min: dMin, max: dMax } = arrayMaxMin(transValues);
-                if (isNaN(min)) min = dMin;
-                if (isNaN(max)) max = dMax;
-            }
-
-            const dummy = {
-                type: type,
-                x: [x0, x0],
-                y: [y0, y0],
-                z: [z0, z0],
-                marker: {
-                    color: [min, max],
-                    colorscale: this._options.colorScale(),
-                    cmin: min,
-                    cmax: max,
-                    showscale: true,
-                    opacity: 0, // Make points invisible
-                    size: 0, // Make points invisible
-                    colorbar: {
-                        title: {
-                            text: this._colorTitle(),
-                            side: 'right',
-                            font: {
-                                size: 15,
-                            },
-                        },
-                        y: 0,
-                        yanchor: 'bottom',
-                        len: 1,
-                        thickness: 20,
-                    },
-                },
-                visible: true,
-                showlegend: false,
-                hoverinfo: 'none',
-            };
-            traces.push(dummy as Data);
-        }
+        const traces = [main as Data, selected as Data, dummy as Data];
 
         // Calculate legend names and show legend flags based on data properties
-        const legendNames = this._legendNames().slice(2);
-        const showlegend = this._showlegend().slice(2);
+        const legendNames = this._legendNames().slice(3);
+        const showlegend = this._showlegend().slice(3);
         assert(legendNames.length === showlegend.length);
         const currentLength = legendNames.length;
 
@@ -1724,7 +1681,7 @@ export class PropertiesMap {
     private _coordinates(axis: AxisOptions, trace?: number): Array<undefined | number[]> {
         // this happen for the z axis in 2D mode
         if (axis.property.value === '') {
-            return this._selectTrace(undefined, undefined, trace);
+            return this._selectTrace(undefined, undefined, undefined, trace);
         }
 
         const values = this._property(axis.property.value).values;
@@ -1743,7 +1700,11 @@ export class PropertiesMap {
                 selected.push(NaN);
             }
         }
-        return this._selectTrace(mainValues, selected, trace);
+
+        const val0 = values[0] || 0;
+        const dummy = [val0, val0];
+
+        return this._selectTrace(mainValues, selected, dummy, trace);
     }
 
     private _title(name: string): string {
@@ -1775,6 +1736,21 @@ export class PropertiesMap {
                 break;
         }
         return title;
+    }
+
+    private _getColorRange(): { min: number; max: number } {
+        let min = this._options.color.min.value;
+        let max = this._options.color.max.value;
+
+        if (isNaN(min) || isNaN(max)) {
+            const propValues = this._property(this._options.color.property.value).values;
+            const values = this._options.calculateColors(propValues);
+            const numericValues = values.filter((v): v is number => typeof v === 'number');
+            const { min: dMin, max: dMax } = arrayMaxMin(numericValues);
+            if (isNaN(min)) min = dMin;
+            if (isNaN(max)) max = dMax;
+        }
+        return { min, max };
     }
 
     /**
@@ -1824,11 +1800,9 @@ export class PropertiesMap {
             // If values are numbers, we need to convert to colors to mix with RGBA.
             if (values.length > 0 && typeof values[0] === 'number') {
                 const numValues = values as number[];
-                const { min: tMin, max: tMax } = arrayMaxMin(numValues);
-                let min = this._options.color.min.value;
-                let max = this._options.color.max.value;
-                if (isNaN(min)) min = tMin;
-                if (isNaN(max)) max = tMax;
+                const range = this._getColorRange();
+                const min = range.min;
+                const max = range.max;
 
                 finalValues = numValues.map((v, i) => {
                     if (!mask[i]) return '#d3d3d3';
@@ -1852,7 +1826,13 @@ export class PropertiesMap {
             selected.push(data.color);
         }
 
-        return this._selectTrace<Array<string | number>>(mainValues, selected, trace);
+        let dummy = [0.5, 0.5];
+        if (this._options.hasColors()) {
+            const range = this._getColorRange();
+            dummy = [range.min, range.max];
+        }
+
+        return this._selectTrace<Array<string | number>>(mainValues, selected, dummy, trace);
     }
 
     /**
@@ -1873,7 +1853,9 @@ export class PropertiesMap {
                     const valIndex = prop.values[data.current];
                     selected.push(interner.string(valIndex));
                 }
-                return this._selectTrace(mainValues, selected, trace);
+                const val0 = values[0] || '';
+                const dummy = [val0, val0];
+                return this._selectTrace(mainValues, selected, dummy, trace);
             } else {
                 const rawValues = prop.values;
                 const values = this._options.calculateColors(rawValues);
@@ -1884,7 +1866,9 @@ export class PropertiesMap {
                 for (const data of this._selected.values()) {
                     selected.push(values[data.current]);
                 }
-                return this._selectTrace(mainValues, selected, trace);
+                const range = this._getColorRange();
+                const dummy = [range.min, range.max];
+                return this._selectTrace(mainValues, selected, dummy, trace);
             }
         }
 
@@ -1892,7 +1876,7 @@ export class PropertiesMap {
             this._property(this._options.x.property.value).values.length
         ).fill(NaN);
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
-        return this._selectTrace(mainValues, [], trace);
+        return this._selectTrace(mainValues, [], [NaN, NaN], trace);
     }
 
     /**
@@ -1927,9 +1911,13 @@ export class PropertiesMap {
                 }
             }
         }
+
+        const dummy = [0, 0];
+
         return this._selectTrace<number | number[]>(
             mainValues as number | number[],
             selected,
+            dummy,
             trace
         );
     }
@@ -1978,9 +1966,12 @@ export class PropertiesMap {
         // Let's assume trace 1 line color is black.
         const selected = new Array<string>(this._selected.size).fill('black');
 
+        const dummy = ['rgba(0,0,0,0)', 'rgba(0,0,0,0)'];
+
         return this._selectTrace<string | string[]>(
             mainValues as string | string[],
             selected,
+            dummy,
             trace
         );
     }
@@ -1992,7 +1983,7 @@ export class PropertiesMap {
     private _symbols(trace?: number): Array<string | string[] | number[]> {
         if (this._options.symbol.value === '') {
             // default to 0 (i.e. circles)
-            return this._selectTrace<string | string[]>('circle', 'circle', trace);
+            return this._selectTrace<string | string[]>('circle', 'circle', 'circle', trace);
         }
 
         const property = this._property(this._options.symbol.value);
@@ -2007,16 +1998,21 @@ export class PropertiesMap {
         for (const data of this._selected.values()) {
             selected.push(symbols[data.current]);
         }
+
+        const sym0 = symbols[0] || 'circle';
+        const dummy = [sym0, sym0];
+
         return this._selectTrace<typeof symbols>(
             mainValues as typeof symbols,
             selected as typeof symbols,
+            dummy as typeof symbols,
             trace
         );
     }
 
     /** Should we show the legend for the various symbols used? */
     private _showlegend(): boolean[] {
-        const result = [false, false];
+        const result = [false, false, false];
 
         if (this._options.symbol.value !== '') {
             for (let i = 0; i < this._symbolsCount(); i++) {
@@ -2033,7 +2029,7 @@ export class PropertiesMap {
 
     /** Get the list of symbols names to use for the legend */
     private _legendNames(): string[] {
-        const result = ['', ''];
+        const result = ['', '', ''];
 
         if (this._options.symbol.value !== '') {
             const property = this._property(this._options.symbol.value);
@@ -2051,16 +2047,18 @@ export class PropertiesMap {
     }
 
     /**
-     * Select either main, selected or both depending on `trace`, and return
+     * Select either main, selected, dummy or all of them depending on `trace`, and return
      * them in a mode usable with `Plotly.restyle`/{@link PropertiesMap._restyle}
      */
-    private _selectTrace<T>(main: T, selected: T, trace?: number): T[] {
+    private _selectTrace<T>(main: T, selected: T, dummy: T, trace?: number): T[] {
         if (trace === 0) {
             return [main];
         } else if (trace === 1) {
             return [selected];
+        } else if (trace === 2) {
+            return [dummy];
         } else if (trace === undefined) {
-            return [main, selected];
+            return [main, selected, dummy];
         } else {
             throw Error('internal error: invalid trace number');
         }
@@ -2173,6 +2171,7 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
+            visible: this._selectTrace(true, true, this._options.hasColors()),
         };
 
         if (this._is3D()) {
@@ -2185,14 +2184,14 @@ export class PropertiesMap {
                 this._plot,
                 fullUpdate as unknown as Data,
                 { 'scene.camera': camera } as unknown as Layout,
-                [0, 1]
+                [0, 1, 2]
             ).then(() => {});
         }
 
-        // Update both main trace (0) and selected trace (1)
+        // Update main (0), selected (1) and dummy (2) traces
         // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
         // while keeping the _restyle wrapper synchronous for legacy calls.
-        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1]).then(() => {});
+        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]).then(() => {});
     }
 
     /**
