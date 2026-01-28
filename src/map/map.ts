@@ -632,6 +632,7 @@ export class PropertiesMap {
             z: this._coordinates(this._options.z, 0)[0],
 
             hovertemplate: this._options.hovertemplate(),
+            customdata: this._colorValues(0)[0],
             marker: {
                 color: this._colors(0)[0],
                 coloraxis: 'coloraxis',
@@ -684,6 +685,69 @@ export class PropertiesMap {
         };
 
         const traces = [main as Data, selected as Data];
+
+        // If using explicit colors (strings) for main trace, add dummy trace for colorbar
+        const mainColors = main.marker.color;
+
+        if (
+            this._options.hasColors() &&
+            mainColors.length > 0 &&
+            typeof mainColors[0] === 'string'
+        ) {
+            // @ts-expect-error main is inferred with coloraxis, deleting it is fine for Plotly
+            delete main.marker.coloraxis;
+
+            // Use the first valid coordinate from main trace to ensure dummy points are valid
+            // We use 2 points to match the color array length [min, max]
+            const x0 = (main.x as number[])[0] || 0;
+            const y0 = (main.y as number[])[0] || 0;
+            const z0 = (main.z as number[])[0] || 0;
+
+            // Calculate robust min/max
+            let min = this._options.color.min.value;
+            let max = this._options.color.max.value;
+
+            if (isNaN(min) || isNaN(max)) {
+                const propValues = this._property(this._options.color.property.value).values;
+                const transValues = this._options.calculateColors(propValues) as number[];
+                const { min: dMin, max: dMax } = arrayMaxMin(transValues);
+                if (isNaN(min)) min = dMin;
+                if (isNaN(max)) max = dMax;
+            }
+
+            const dummy = {
+                type: type,
+                x: [x0, x0],
+                y: [y0, y0],
+                z: [z0, z0],
+                marker: {
+                    color: [min, max],
+                    colorscale: this._options.colorScale(),
+                    cmin: min,
+                    cmax: max,
+                    showscale: true,
+                    opacity: 0, // Make points invisible
+                    size: 0, // Make points invisible
+                    colorbar: {
+                        title: {
+                            text: this._colorTitle(),
+                            side: 'right',
+                            font: {
+                                size: 15,
+                            },
+                        },
+                        y: 0,
+                        yanchor: 'bottom',
+                        len: 1,
+                        thickness: 20,
+                    },
+                },
+                visible: true,
+                showlegend: false,
+                hoverinfo: 'none',
+            };
+            traces.push(dummy as Data);
+        }
 
         // Calculate legend names and show legend flags based on data properties
         const legendNames = this._legendNames().slice(2);
@@ -1111,14 +1175,7 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
 
-            this._restyle(
-                {
-                    hovertemplate: this._options.hovertemplate(),
-                    'marker.color': this._colors(0),
-                    'marker.opacity': this._options.color.opacity.value / 100,
-                },
-                [0]
-            );
+            void this._restyleLOD();
         });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
@@ -1204,14 +1261,7 @@ export class PropertiesMap {
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
-                this._restyle(
-                    {
-                        hovertemplate: this._options.hovertemplate(),
-                        'marker.color': this._colors(0),
-                        'marker.opacity': this._options.color.opacity.value / 100,
-                    },
-                    [0]
-                );
+                void this._restyleLOD();
             }
         });
 
@@ -1254,6 +1304,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+            void this._restyleLOD();
         });
 
         // ======= opacity
@@ -1262,6 +1313,16 @@ export class PropertiesMap {
                 'marker.opacity': this._options.color.opacity.value / 100,
             });
         });
+
+        // ======= selection
+        const updateColors = () => {
+            void this._restyleLOD();
+        };
+
+        this._options.color.select.mode.onchange.push(updateColors);
+        this._options.color.select.category.onchange.push(updateColors);
+        this._options.color.select.min.onchange.push(updateColors);
+        this._options.color.select.max.onchange.push(updateColors);
 
         // ======= markers symbols
         this._options.symbol.onchange.push(() => {
@@ -1722,9 +1783,50 @@ export class PropertiesMap {
                 0.5
             ) as number[];
         }
+
+        // --- Selection Logic ---
+        let categoryValues: string[] | undefined;
+        const catProp = this._options.getCategorySelectionProperty();
+        if (catProp) {
+            const prop = this._property(catProp);
+            if (prop.string) {
+                const interner = prop.string;
+                categoryValues = prop.values.map((v) => interner.string(v));
+            }
+        }
+        const mask = this._options.getFilterMask(colors, categoryValues);
+        // -----------------------
+
         const values = this._options.calculateColors(colors);
+
+        let finalValues = values;
+        if (mask.some((v) => !v)) {
+            // We have some filtered out points.
+            // If values are numbers, we need to convert to colors to mix with RGBA.
+            if (values.length > 0 && typeof values[0] === 'number') {
+                const numValues = values as number[];
+                const { min: tMin, max: tMax } = arrayMaxMin(numValues);
+                let min = this._options.color.min.value;
+                let max = this._options.color.max.value;
+                if (isNaN(min)) min = tMin;
+                if (isNaN(max)) max = tMax;
+
+                finalValues = numValues.map((v, i) => {
+                    if (!mask[i]) return 'rgba(211, 211, 211, 0.5)';
+                    return this._options.valueToColor(v, min, max);
+                });
+            } else {
+                // Already strings (fixed color)
+                finalValues = values.map((v, i) => {
+                    if (!mask[i]) return 'rgba(211, 211, 211, 0.5)';
+                    return v;
+                });
+            }
+        }
+
         // LOD: Apply filter to main trace values
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        const mainValues =
+            trace === 0 || trace === undefined ? this._applyLOD(finalValues) : finalValues;
 
         const selected = [];
         for (const data of this._selected.values()) {
@@ -1732,6 +1834,46 @@ export class PropertiesMap {
         }
 
         return this._selectTrace<Array<string | number>>(mainValues, selected, trace);
+    }
+
+    /**
+     * Get the numeric color values to use with the given plotly `trace`, or all of
+     * them if `trace === undefined`. Used for customdata.
+     */
+    private _colorValues(trace?: number): Array<Array<number | string>> {
+        if (this._options.hasColors()) {
+            const prop = this._property(this._options.color.property.value);
+            if (prop.string) {
+                const interner = prop.string;
+                const values = prop.values.map((v) => interner.string(v));
+
+                const mainValues =
+                    trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+                const selected = [];
+                for (const data of this._selected.values()) {
+                    const valIndex = prop.values[data.current];
+                    selected.push(interner.string(valIndex));
+                }
+                return this._selectTrace(mainValues, selected, trace);
+            } else {
+                const rawValues = prop.values;
+                const values = this._options.calculateColors(rawValues);
+
+                const mainValues =
+                    trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+                const selected = [];
+                for (const data of this._selected.values()) {
+                    selected.push(values[data.current]);
+                }
+                return this._selectTrace(mainValues, selected, trace);
+            }
+        }
+
+        const values = new Array<number>(
+            this._property(this._options.x.property.value).values.length
+        ).fill(NaN);
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        return this._selectTrace(mainValues, [], trace);
     }
 
     /**
