@@ -641,15 +641,12 @@ export class PropertiesMap {
                     color: this._lineColors(0)[0],
                     width: this._options.markerOutline.value ? 0.5 : 0,
                 },
-                // prevent plolty from messing with opacity when doing bubble
-                // style charts (different sizes for each point)
                 opacity: this._options.color.opacity.value / 100,
                 size: this._sizes(0)[0],
                 sizemode: 'area',
                 symbol: this._symbols(0)[0],
             },
             line: {
-                // lines type (if required)
                 color: 'black',
                 width: 0.5,
                 dash: 'solid',
@@ -658,10 +655,7 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        // Create a second trace to store the last clicked point, in order to
-        // display it on top of the main plot with different styling. This is
-        // only used in 3D mode, since it is way slower than moving
-        // this._selectedMarker around.
+        // Create a second trace to store the last clicked point
         const selected = {
             name: 'selected',
             type: type,
@@ -696,8 +690,8 @@ export class PropertiesMap {
                 color: [range.min, range.max],
                 coloraxis: 'coloraxis',
                 showscale: true,
-                opacity: 0, // Make points invisible
-                size: 0, // Make points unclickable
+                opacity: 0,
+                size: 0,
             },
             visible: this._options.hasColors(),
             showlegend: false,
@@ -1063,10 +1057,7 @@ export class PropertiesMap {
                 const maxProvided = max !== undefined;
 
                 const getMinMaxFromValues = () => {
-                    const propValues = this._property(this._options.color.property.value).values;
-                    const values = this._options.calculateColors(propValues);
-                    const numericValues = values.filter((v): v is number => typeof v === 'number');
-                    return arrayMaxMin(numericValues);
+                    return arrayMaxMin(this._getNumericColors());
                 };
 
                 if (minProvided || maxProvided) {
@@ -1101,9 +1092,7 @@ export class PropertiesMap {
 
                 this._colorReset.disabled = false;
 
-                const propValues = this._property(this._options.color.property.value).values;
-                const values = this._options.calculateColors(propValues);
-                const numericValues = values.filter((v): v is number => typeof v === 'number');
+                const numericValues = this._getNumericColors();
                 // Color mode warning needs to be called before setting min and max to avoid isFinite error
                 if (canChangeColors(numericValues, 'property')) {
                     const { min, max } = arrayMaxMin(numericValues);
@@ -1205,9 +1194,7 @@ export class PropertiesMap {
         };
 
         this._options.color.mode.onchange.push(() => {
-            const propValues = this._property(this._options.color.property.value).values;
-            const values = this._options.calculateColors(propValues);
-            const numericValues = values.filter((v): v is number => typeof v === 'number');
+            const numericValues = this._getNumericColors();
             // Color mode warning needs to be called before setting min and max to avoid isFinite error
             if (canChangeColors(numericValues, 'color scale')) {
                 const { min, max } = arrayMaxMin(numericValues);
@@ -1236,9 +1223,7 @@ export class PropertiesMap {
         });
 
         this._colorReset.onclick = () => {
-            const propValues = this._property(this._options.color.property.value).values;
-            const values = this._options.calculateColors(propValues);
-            const numericValues = values.filter((v): v is number => typeof v === 'number');
+            const numericValues = this._getNumericColors();
             const { min, max } = arrayMaxMin(numericValues);
             this._options.color.min.value = min;
             this._options.color.max.value = max;
@@ -1738,14 +1723,18 @@ export class PropertiesMap {
         return title;
     }
 
+    private _getNumericColors(): number[] {
+        const propValues = this._property(this._options.color.property.value).values;
+        const values = this._options.calculateColors(propValues);
+        return values.filter((v): v is number => typeof v === 'number');
+    }
+
     private _getColorRange(): { min: number; max: number } {
         let min = this._options.color.min.value;
         let max = this._options.color.max.value;
 
         if (isNaN(min) || isNaN(max)) {
-            const propValues = this._property(this._options.color.property.value).values;
-            const values = this._options.calculateColors(propValues);
-            const numericValues = values.filter((v): v is number => typeof v === 'number');
+            const numericValues = this._getNumericColors();
             const { min: dMin, max: dMax } = arrayMaxMin(numericValues);
             if (isNaN(min)) min = dMin;
             if (isNaN(max)) max = dMax;
@@ -2175,9 +2164,7 @@ export class PropertiesMap {
         };
 
         if (this._is3D()) {
-            // explicitely preserve the camera position when updating the plot
-            // to prevent it from snapping back to the default position
-            // see https://github.com/lab-cosmo/chemiscope/issues/310
+            // Preserve the camera position when updating the plot
             const layout = this._plot._fullLayout;
             const camera = layout.scene.camera;
             return Plotly.update(
@@ -2188,9 +2175,6 @@ export class PropertiesMap {
             ).then(() => {});
         }
 
-        // Update main (0), selected (1) and dummy (2) traces
-        // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
-        // while keeping the _restyle wrapper synchronous for legacy calls.
         return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]).then(() => {});
     }
 
