@@ -169,7 +169,7 @@
 
                   <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset">reset min/max</button>
 
-                  <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 3;">
+                  <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 1;">
                      <label class="input-group-text" for="map-color-select-mode">select:</label>
                      <select id="map-color-select-mode" class="form-select">
                         <option value="all">all</option>

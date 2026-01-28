@@ -413,14 +413,16 @@ export abstract class OptionsGroup {
         this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
             let root = copy;
-            let parent;
+            // keep track of the chain of objects to be able to remove empty
+            // sub-objects (e.g. settings.map.color.select)
+            const objectChain = [root];
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
                     // this key is missing from the settings
                     return;
                 }
-                parent = root;
                 root = root[key] as unknown as Settings;
+                objectChain.push(root);
             }
             const lastKey = keys[keys.length - 1];
 
@@ -445,11 +447,17 @@ export abstract class OptionsGroup {
                 // unused keys
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete root[lastKey];
-                if (parent !== undefined && Object.keys(root).length === 0) {
-                    // if we removed all keys from a sub-object, remove the sub-object
-                    assert(keys.length >= 2);
-                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete parent[keys[keys.length - 2]];
+
+                // cleanup empty objects up the chain
+                for (let i = objectChain.length - 1; i > 0; i--) {
+                    const obj = objectChain[i];
+                    if (Object.keys(obj).length === 0) {
+                        const parent = objectChain[i - 1];
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                        delete parent[keys[i - 1]];
+                    } else {
+                        break;
+                    }
                 }
             }
         });

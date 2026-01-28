@@ -698,12 +698,18 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
      - ``{"property": "PCA[1]", "scale": "linear"}``
    * - ``color``
      - object
-     - Color config: like axis, plus ``"palette"`` option for colormap selection, and
-       ``"opacity"`` to make traces transparent.
+     - Color config: like axis, plus ``"palette"`` option for colormap selection,
+       ``"opacity"`` to make traces transparent, and ``"select"`` to filter points.
+
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
        ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100.
+
+       The ``select`` object supports:
+       - ``mode``: ``"all"`` (default), ``"range"``, or ``"category"``.
+       - ``min``/``max``: range values (for ``mode="range"``).
+       - ``category``: ``property/value`` string (for ``mode="category"``).
      - ``{"property": "energy", "palette": "viridis", "opacity": 100}``
    * - ``size``
      - object

@@ -637,7 +637,7 @@ export class PropertiesMap {
                 color: this._colors(0)[0],
                 coloraxis: 'coloraxis',
                 line: {
-                    color: 'black',
+                    color: this._lineColors(0)[0],
                     width: this._options.markerOutline.value ? 0.5 : 0,
                 },
                 // prevent plolty from messing with opacity when doing bubble
@@ -699,9 +699,9 @@ export class PropertiesMap {
 
             // Use the first valid coordinate from main trace to ensure dummy points are valid
             // We use 2 points to match the color array length [min, max]
-            const x0 = (main.x as number[])[0] || 0;
-            const y0 = (main.y as number[])[0] || 0;
-            const z0 = (main.z as number[])[0] || 0;
+            const x0 = (main.x as number[])?.[0] || 0;
+            const y0 = (main.y as number[])?.[0] || 0;
+            const z0 = (main.z as number[])?.[0] || 0;
 
             // Calculate robust min/max
             let min = this._options.color.min.value;
@@ -1106,8 +1106,10 @@ export class PropertiesMap {
                 const maxProvided = max !== undefined;
 
                 const getMinMaxFromValues = () => {
-                    const values = this._colors(0)[0] as number[];
-                    return arrayMaxMin(values);
+                    const propValues = this._property(this._options.color.property.value).values;
+                    const values = this._options.calculateColors(propValues);
+                    const numericValues = values.filter((v): v is number => typeof v === 'number');
+                    return arrayMaxMin(numericValues);
                 };
 
                 if (minProvided || maxProvided) {
@@ -1142,10 +1144,12 @@ export class PropertiesMap {
 
                 this._colorReset.disabled = false;
 
-                const values = this._colors(0)[0] as number[];
+                const propValues = this._property(this._options.color.property.value).values;
+                const values = this._options.calculateColors(propValues);
+                const numericValues = values.filter((v): v is number => typeof v === 'number');
                 // Color mode warning needs to be called before setting min and max to avoid isFinite error
-                if (canChangeColors(values, 'property')) {
-                    const { min, max } = arrayMaxMin(values);
+                if (canChangeColors(numericValues, 'property')) {
+                    const { min, max } = arrayMaxMin(numericValues);
                     // We have to set max first and min second here to avoid sending
                     // a spurious warning in `colorRangeChange` below in case the
                     // new min is bigger than the old max.
@@ -1244,10 +1248,12 @@ export class PropertiesMap {
         };
 
         this._options.color.mode.onchange.push(() => {
-            const values = this._colors(0)[0] as number[];
+            const propValues = this._property(this._options.color.property.value).values;
+            const values = this._options.calculateColors(propValues);
+            const numericValues = values.filter((v): v is number => typeof v === 'number');
             // Color mode warning needs to be called before setting min and max to avoid isFinite error
-            if (canChangeColors(values, 'color scale')) {
-                const { min, max } = arrayMaxMin(values);
+            if (canChangeColors(numericValues, 'color scale')) {
+                const { min, max } = arrayMaxMin(numericValues);
                 // We have to set min to infinity first, then max, and then min here
                 // to avoid sending a spurious warning in `colorRangeChange` below
                 // in case the new min is bigger than the old max.
@@ -1273,8 +1279,10 @@ export class PropertiesMap {
         });
 
         this._colorReset.onclick = () => {
-            const values = this._colors(0)[0] as number[];
-            const { min, max } = arrayMaxMin(values);
+            const propValues = this._property(this._options.color.property.value).values;
+            const values = this._options.calculateColors(propValues);
+            const numericValues = values.filter((v): v is number => typeof v === 'number');
+            const { min, max } = arrayMaxMin(numericValues);
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._relayout({
@@ -1364,8 +1372,7 @@ export class PropertiesMap {
         });
 
         this._options.markerOutline.onchange.push(() => {
-            const width = this._options.markerOutline.value ? 0.5 : 0;
-            this._restyle({ 'marker.line.width': width } as Data, [0]);
+            void this._react(this._getTraces(), this._getLayout());
         });
 
         this._options.joinPoints.onchange.push(() => {
@@ -1771,6 +1778,30 @@ export class PropertiesMap {
     }
 
     /**
+     * Get the mask of selected points based on the current selection mode
+     */
+    private _getMask(): boolean[] {
+        let colors;
+        if (this._options.hasColors()) {
+            colors = this._property(this._options.color.property.value).values;
+        } else {
+            const n = this._property(this._options.x.property.value).values.length;
+            colors = new Array(n).fill(0.5) as number[];
+        }
+
+        let categoryValues: string[] | undefined;
+        const catProp = this._options.getCategorySelectionProperty();
+        if (catProp) {
+            const prop = this._property(catProp);
+            if (prop.string) {
+                const interner = prop.string;
+                categoryValues = prop.values.map((v) => interner.string(v));
+            }
+        }
+        return this._options.getFilterMask(colors, categoryValues);
+    }
+
+    /**
      * Get the color values to use with the given plotly `trace`, or all of
      * them if `trace === undefined`
      */
@@ -1784,19 +1815,7 @@ export class PropertiesMap {
             ) as number[];
         }
 
-        // --- Selection Logic ---
-        let categoryValues: string[] | undefined;
-        const catProp = this._options.getCategorySelectionProperty();
-        if (catProp) {
-            const prop = this._property(catProp);
-            if (prop.string) {
-                const interner = prop.string;
-                categoryValues = prop.values.map((v) => interner.string(v));
-            }
-        }
-        const mask = this._options.getFilterMask(colors, categoryValues);
-        // -----------------------
-
+        const mask = this._getMask();
         const values = this._options.calculateColors(colors);
 
         let finalValues = values;
@@ -1812,13 +1831,13 @@ export class PropertiesMap {
                 if (isNaN(max)) max = tMax;
 
                 finalValues = numValues.map((v, i) => {
-                    if (!mask[i]) return 'rgba(211, 211, 211, 0.5)';
+                    if (!mask[i]) return '#d3d3d3';
                     return this._options.valueToColor(v, min, max);
                 });
             } else {
                 // Already strings (fixed color)
                 finalValues = values.map((v, i) => {
-                    if (!mask[i]) return 'rgba(211, 211, 211, 0.5)';
+                    if (!mask[i]) return '#d3d3d3';
                     return v;
                 });
             }
@@ -1889,7 +1908,12 @@ export class PropertiesMap {
                 1.0
             ) as number[];
         }
-        const values = this._options.calculateSizes(sizes);
+        let values = this._options.calculateSizes(sizes);
+        const mask = this._getMask();
+        if (mask.some((v) => !v)) {
+            values = values.map((v, i) => (mask[i] ? v : v * 0.25));
+        }
+
         // LOD: Apply filter to main trace values
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
 
@@ -1905,6 +1929,57 @@ export class PropertiesMap {
         }
         return this._selectTrace<number | number[]>(
             mainValues as number | number[],
+            selected,
+            trace
+        );
+    }
+
+    /**
+     * Get the values to use as marker line color with the given plotly `trace`, or
+     * all of them if `trace === undefined`.
+     */
+    private _lineColors(trace?: number): Array<string | string[]> {
+        const globalColor = 'black';
+        const n = this._property(this._options.x.property.value).values.length;
+        let values = new Array(n).fill(globalColor) as string[];
+
+        const mask = this._getMask();
+        if (mask.some((v) => !v)) {
+            values = values.map((v, i) => (mask[i] ? v : 'rgba(0,0,0,0)'));
+        }
+
+        // LOD: Apply filter to main trace values
+        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+
+        // Selected markers (trace 1) always have fixed color
+        // Assuming they inherit or use something specific?
+        // The original code used line.color: [] in selected trace definition.
+        // Let's check _getTraces for selected trace.
+        // It had `line: { color: [], width: 2 }`.
+        // The color was filled dynamically? No, selected trace logic is different.
+        // It uses `selected` variable in _getTraces.
+
+        // In _getTraces:
+        // const selected = { ..., marker: { ..., line: { color: [], ... } } }
+        // The color is filled?
+        // Actually the selected trace (trace 1) markers are the "active" ones (big ones).
+        // Their line color depends on... well, usually black or contrasting.
+        // In `_updateMarkers`, `line.color` is NOT updated for trace 1?
+        // Wait, `_updateMarkers` calls `_restyle` for trace 1.
+        // But `_restyle` there doesn't update `marker.line.color`.
+
+        // So for trace 1, we can just return a default or handle it separately.
+        // The original code for trace 1 in _getTraces:
+        // line: { color: [], width: 2 }
+        // Wait, `color` was empty array?
+        // The markers in trace 1 are added/removed dynamically?
+        // No, trace 1 is "selected" trace, used for 3D selection markers.
+
+        // Let's assume trace 1 line color is black.
+        const selected = new Array<string>(this._selected.size).fill('black');
+
+        return this._selectTrace<string | string[]>(
+            mainValues as string | string[],
             selected,
             trace
         );
@@ -2097,7 +2172,22 @@ export class PropertiesMap {
             'marker.color': this._colors(),
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
+            'marker.line.color': this._lineColors(),
         };
+
+        if (this._is3D()) {
+            // explicitely preserve the camera position when updating the plot
+            // to prevent it from snapping back to the default position
+            // see https://github.com/lab-cosmo/chemiscope/issues/310
+            const layout = this._plot._fullLayout;
+            const camera = layout.scene.camera;
+            return Plotly.update(
+                this._plot,
+                fullUpdate as unknown as Data,
+                { 'scene.camera': camera } as unknown as Layout,
+                [0, 1]
+            ).then(() => {});
+        }
 
         // Update both main trace (0) and selected trace (1)
         // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)

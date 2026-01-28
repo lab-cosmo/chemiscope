@@ -616,7 +616,7 @@ export class MapOptions extends OptionsGroup {
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';
             } else {
-                containerMode.style.gridColumn = 'auto / span 3';
+                containerMode.style.gridColumn = 'auto / span 1';
                 containerCategory.style.display = 'none';
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';
