@@ -682,7 +682,7 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        // Dummy trace to display the colorbar regardless of the styling of 
+        // Dummy trace to display the colorbar regardless of the styling of
         // the main trace. Useful when activating selection mode
         const range = this._getColorRange();
         const dummy = {
@@ -1012,19 +1012,25 @@ export class PropertiesMap {
             Plotly.relayout(this._plot, {
                 'scene.zaxis.title.text': this._title(this._options.z.property.value),
                 'scene.zaxis.autorange': true,
-            } as unknown as Layout).then(() => {
-                // The zrange is now known, and we can trigger a proper subsampling
-                const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
-                this._options.z.min.value = zRange[0];
-                this._options.z.max.value = zRange[1];
-                
-                if (this._is3D()) {
-                    this._setScaleStep(this._getBounds().z as number[], 'z');
-                }
+            } as unknown as Layout)
+                .then(() => {
+                    // The zrange is now known, and we can trigger a proper subsampling
+                    const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
+                    this._options.z.min.value = zRange[0];
+                    this._options.z.max.value = zRange[1];
 
-                // re-update LOD based on known ranges
-                this._updateLOD(this._getBounds());
-            });
+                    if (this._is3D()) {
+                        this._setScaleStep(this._getBounds().z as number[], 'z');
+                    }
+
+                    // re-update LOD based on known ranges
+                    this._updateLOD(this._getBounds());
+                })
+                .catch((e: unknown) => {
+                    setTimeout(() => {
+                        throw e;
+                    });
+                });
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1099,7 +1105,7 @@ export class PropertiesMap {
                     this._relayout({
                         'coloraxis.colorbar.title.text': this._colorTitle(),
                         'coloraxis.showscale': true,
-                        'hovertemplate': this._options.hovertemplate(),
+                        hovertemplate: this._options.hovertemplate(),
                         'marker.color': this._colors(0),
                         'marker.opacity': this._options.color.opacity.value / 100,
                     } as unknown as Layout);
@@ -1117,7 +1123,7 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
-                    'hovertemplate': this._options.hovertemplate(),
+                    hovertemplate: this._options.hovertemplate(),
                     'marker.color': this._colors(0),
                     'marker.opacity': this._options.color.opacity.value / 100,
                 } as unknown as Layout);
@@ -1466,7 +1472,7 @@ export class PropertiesMap {
 
         // Handle double-click to reset view (global LOD)
         this._plot.on('plotly_doubleclick', () => {
-            void this._resetToGlobalView();
+            this._resetToGlobalView();
             return false;
         });
 
@@ -1511,7 +1517,7 @@ export class PropertiesMap {
         this._computeLOD();
 
         // Request a full restyle of traces
-        void this._restyleFull();
+        this._restyleFull();
 
         this._relayout({
             [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
@@ -2112,9 +2118,7 @@ export class PropertiesMap {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                         icon: (Plotly as any).Icons.home,
                         click: () => {
-                            void (async () => {
-                                await this._resetToGlobalView();
-                            })();
+                            this._resetToGlobalView();
                         },
                     },
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2468,7 +2472,7 @@ export class PropertiesMap {
 
         this._computeLOD(bounds);
 
-        this._restyleFull(); 
+        this._restyleFull();
         this._lodBusy = false;
     }
 
