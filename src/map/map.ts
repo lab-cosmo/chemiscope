@@ -655,7 +655,10 @@ export class PropertiesMap {
             showlegend: false,
         };
 
-        // Create a second trace to store the last clicked point
+        // Create a second trace to store the last clicked point, in order to
+        // display it on top of the main plot with different styling. This is
+        // only used in 3D mode, since it is way slower than moving
+        // this._selectedMarker around.
         const selected = {
             name: 'selected',
             type: type,
@@ -679,6 +682,8 @@ export class PropertiesMap {
             showlegend: false,
         };
 
+        // Dummy trace to display the colorbar regardless of the styling of 
+        // the main trace. Useful when activating selection mode
         const range = this._getColorRange();
         const dummy = {
             name: 'colorbar-dummy',
@@ -1011,7 +1016,7 @@ export class PropertiesMap {
 
                 try {
                     // Ensure traces are restyled according to current LOD
-                    await this._restyleLOD();
+                    await this._restyleFull();
 
                     await Plotly.relayout(this._plot, {
                         'scene.zaxis.title.text': this._title(this._options.z.property.value),
@@ -1024,7 +1029,7 @@ export class PropertiesMap {
                     this._options.z.max.value = zRange[1];
 
                     this._computeLOD(this._getBounds());
-                    await this._restyleLOD();
+                    await this._restyleFull();
 
                     if (this._is3D()) {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
@@ -1107,6 +1112,9 @@ export class PropertiesMap {
                     this._relayout({
                         'coloraxis.colorbar.title.text': this._colorTitle(),
                         'coloraxis.showscale': true,
+                        'hovertemplate': this._options.hovertemplate(),
+                        'marker.color': this._colors(0),
+                        'marker.opacity': this._options.color.opacity.value / 100,
                     } as unknown as Layout);
                 }
             } else {
@@ -1122,10 +1130,13 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
+                    'hovertemplate': this._options.hovertemplate(),
+                    'marker.color': this._colors(0),
+                    'marker.opacity': this._options.color.opacity.value / 100,
                 } as unknown as Layout);
             }
 
-            void this._restyleLOD();
+            void this._restyleFull();
         });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
@@ -1211,7 +1222,7 @@ export class PropertiesMap {
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
-                void this._restyleLOD();
+                void this._restyleFull();
             }
         });
 
@@ -1254,7 +1265,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
-            void this._restyleLOD();
+            void this._restyleFull();
         });
 
         // ======= opacity
@@ -1266,7 +1277,7 @@ export class PropertiesMap {
 
         // ======= selection
         const updateColors = () => {
-            void this._restyleLOD();
+            void this._restyleFull();
         };
 
         this._options.color.select.mode.onchange.push(updateColors);
@@ -1328,7 +1339,7 @@ export class PropertiesMap {
             this._computeLOD(bounds);
             // Force a full restyle. Since _lodIndices will be null if disabled,
             // this will render all points.
-            void this._restyleLOD();
+            void this._restyleFull();
         });
 
         // ======= camera state update
@@ -1513,7 +1524,7 @@ export class PropertiesMap {
         this._computeLOD();
 
         // Request a full restyle of traces
-        void this._restyleLOD();
+        void this._restyleFull();
 
         this._relayout({
             [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
@@ -2129,9 +2140,10 @@ export class PropertiesMap {
     }
 
     /**
-     * Helper to trigger a full update of the main trace and selected trace when LOD changes.
+     * Helper to trigger a full update of the main trace and selected trace when 
+     * LOD or selection change.
      */
-    private _restyleLOD(): Promise<void> {
+    private _restyleFull(): Promise<void> {
         const fullUpdate: Record<string, unknown> = {
             x: this._coordinates(this._options.x),
             y: this._coordinates(this._options.y),
@@ -2140,6 +2152,7 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
+            hovertemplate: this._options.hovertemplate(),
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
 
@@ -2264,7 +2277,7 @@ export class PropertiesMap {
         // 2. Update data traces first (re-render points with global LOD)
         // We do this BEFORE relayout so that 'autorange' calculates bounds
         // based on the full dataset, not the sliced one.
-        await this._restyleLOD();
+        await this._restyleFull();
 
         // 3. Prepare Layout Update
         const layoutUpdate: Record<string, unknown> = {};
@@ -2460,7 +2473,7 @@ export class PropertiesMap {
 
         this._computeLOD(bounds);
 
-        void this._restyleLOD().then(() => {
+        void this._restyleFull().then(() => {
             setTimeout(() => {
                 this._lodBusy = false;
             }, 0);
