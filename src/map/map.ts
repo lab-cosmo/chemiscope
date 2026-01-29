@@ -875,7 +875,7 @@ export class PropertiesMap {
         // Range reset button
         const resetRanges = this._options.getModalElement<HTMLButtonElement>('map-range-reset');
         resetRanges.onclick = () => {
-            void this._resetToGlobalView();
+            this._resetToGlobalView();
         };
 
         // Send a warning if a property contains negative values, that will be
@@ -996,6 +996,8 @@ export class PropertiesMap {
             if (this._options.z.property.value === '') {
                 if (was3D) {
                     this._switch2D();
+                    // ... and re-update LOD in 2D
+                    this._updateLOD(this._getBounds());
                 }
                 return;
             } else {
@@ -1007,37 +1009,22 @@ export class PropertiesMap {
             // LOD: Z changed, compute a first downsampling if necessary
             this._computeLOD();
 
-            // Perform async sequence while holding a LOD lock to avoid races
-            void (async () => {
-                if (this._lodBusy) {
-                    return;
+            Plotly.relayout(this._plot, {
+                'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                'scene.zaxis.autorange': true,
+            } as unknown as Layout).then(() => {
+                // The zrange is now known, and we can trigger a proper subsampling
+                const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
+                this._options.z.min.value = zRange[0];
+                this._options.z.max.value = zRange[1];
+                
+                if (this._is3D()) {
+                    this._setScaleStep(this._getBounds().z as number[], 'z');
                 }
-                this._lodBusy = true;
 
-                try {
-                    // Ensure traces are restyled according to current LOD
-                    await this._restyleFull();
-
-                    await Plotly.relayout(this._plot, {
-                        'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                        'scene.zaxis.autorange': true,
-                    } as unknown as Layout);
-
-                    // The zrange is now known, and we can trigger a proper subsampling
-                    const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
-                    this._options.z.min.value = zRange[0];
-                    this._options.z.max.value = zRange[1];
-
-                    this._computeLOD(this._getBounds());
-                    await this._restyleFull();
-
-                    if (this._is3D()) {
-                        this._setScaleStep(this._getBounds().z as number[], 'z');
-                    }
-                } finally {
-                    this._lodBusy = false;
-                }
-            })();
+                // re-update LOD based on known ranges
+                this._updateLOD(this._getBounds());
+            });
         });
 
         this._options.z.scale.onchange.push(() => {
@@ -1136,7 +1123,7 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
 
-            void this._restyleFull();
+            this._restyleFull();
         });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
@@ -1222,7 +1209,7 @@ export class PropertiesMap {
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
-                void this._restyleFull();
+                this._restyleFull();
             }
         });
 
@@ -1265,7 +1252,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
-            void this._restyleFull();
+            this._restyleFull();
         });
 
         // ======= opacity
@@ -1277,7 +1264,7 @@ export class PropertiesMap {
 
         // ======= selection
         const updateColors = () => {
-            void this._restyleFull();
+            this._restyleFull();
         };
 
         this._options.color.select.mode.onchange.push(updateColors);
@@ -1339,7 +1326,7 @@ export class PropertiesMap {
             this._computeLOD(bounds);
             // Force a full restyle. Since _lodIndices will be null if disabled,
             // this will render all points.
-            void this._restyleFull();
+            this._restyleFull();
         });
 
         // ======= camera state update
@@ -2140,10 +2127,10 @@ export class PropertiesMap {
     }
 
     /**
-     * Helper to trigger a full update of the main trace and selected trace when 
-     * LOD or selection change.
+     * Helper to trigger a full update of the plot traces (main, selected, dummy)
+     * when data, styling, or selection changes.
      */
-    private _restyleFull(): Promise<void> {
+    private _restyleFull(layoutUpdate?: Partial<Layout>): void {
         const fullUpdate: Record<string, unknown> = {
             x: this._coordinates(this._options.x),
             y: this._coordinates(this._options.y),
@@ -2152,23 +2139,33 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
-            hovertemplate: this._options.hovertemplate(),
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
 
-        if (this._is3D()) {
-            // Preserve the camera position when updating the plot
-            const layout = this._plot._fullLayout;
-            const camera = layout.scene.camera;
-            return Plotly.update(
+        const layout = layoutUpdate || {};
+
+        if (layoutUpdate || this._is3D()) {
+            if (this._is3D() && !('scene.camera' in layout)) {
+                // explicitely preserve the camera position when updating the plot
+                // to prevent it from snapping back to the default position
+                // see https://github.com/lab-cosmo/chemiscope/issues/310
+                const currentLayout = this._plot._fullLayout;
+                // @ts-expect-error scene is defined in the layout
+                layout['scene.camera'] = currentLayout.scene.camera;
+            }
+
+            void Plotly.update(
                 this._plot,
                 fullUpdate as unknown as Data,
-                { 'scene.camera': camera } as unknown as Layout,
+                layout as Layout,
                 [0, 1, 2]
-            ).then(() => {});
+            );
+        } else {
+            // Update main (0), selected (1) and dummy (2) traces
+            // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
+            // while keeping the _restyle wrapper synchronous for legacy calls.
+            void Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
         }
-
-        return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]).then(() => {});
     }
 
     /**
@@ -2255,7 +2252,7 @@ export class PropertiesMap {
      * Resets the view to global bounds and recomputes LOD on the full dataset.
      * Used for double-click and autoscale events.
      */
-    private async _resetToGlobalView() {
+    private _resetToGlobalView() {
         // Skip if another LOD update is in progress
         if (this._lodBusy) {
             return;
@@ -2277,8 +2274,7 @@ export class PropertiesMap {
         // 2. Update data traces first (re-render points with global LOD)
         // We do this BEFORE relayout so that 'autorange' calculates bounds
         // based on the full dataset, not the sliced one.
-        await this._restyleFull();
-
+        //
         // 3. Prepare Layout Update
         const layoutUpdate: Record<string, unknown> = {};
 
@@ -2301,8 +2297,7 @@ export class PropertiesMap {
         }
 
         // 4. Force the view reset
-        this._relayout(layoutUpdate as unknown as Partial<Layout>);
-
+        this._restyleFull(layoutUpdate as unknown as Partial<Layout>);
         // Manually trigger marker update for 2D mode
         if (!this._is3D()) {
             this._updateMarkers();
@@ -2473,11 +2468,8 @@ export class PropertiesMap {
 
         this._computeLOD(bounds);
 
-        void this._restyleFull().then(() => {
-            setTimeout(() => {
-                this._lodBusy = false;
-            }, 0);
-        });
+        this._restyleFull(); 
+        this._lodBusy = false;
     }
 
     /** Sync axis min/max so the UI reflects the current visible ranges in the plot */
