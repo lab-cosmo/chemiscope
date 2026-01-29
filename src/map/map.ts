@@ -2146,6 +2146,7 @@ export class PropertiesMap {
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
             hovertemplate: this._options.hovertemplate(),
+            customdata: this._colorValues(),
             'marker.opacity': this._options.color.opacity.value / 100,
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
