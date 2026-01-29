@@ -710,7 +710,7 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
        - ``mode``: ``"all"`` (default), ``"range"``, or ``"category"``.
        - ``min``/``max``: range values (for ``mode="range"``).
        - ``category``: ``property/value`` string (for ``mode="category"``).
-     - ``{"property": "energy", "palette": "viridis", "opacity": 100}``
+     - ``{"property": "energy", "palette": "viridis", "opacity": 100, "select": {"mode": "range", "min": -5, "max": 0}}``
    * - ``size``
      - object
      - Size config: ``{"property": "<name>", "mode":
