@@ -193,7 +193,7 @@ export class ChemiscopeApp {
             const file = loadDataset.files![0];
 
             const sizeMB = file.size / (1024 * 1024);
-            if (sizeMB > 500) {
+            if (sizeMB > 200) {
                 const proceed = confirm(
                     `This file is ${sizeMB.toFixed(0)} MB. Large files may fail to load due to browser memory limits.\n\n` +
                     `Continue loading?`
