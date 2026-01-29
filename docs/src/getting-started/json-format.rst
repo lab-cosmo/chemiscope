@@ -704,9 +704,8 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
-       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100.
-
-       The ``select`` object supports:
+       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100. 
+       The ``select`` property supports:
        - ``mode``: ``"all"`` (default), ``"range"``, or ``"category"``.
        - ``min``/``max``: range values (for ``mode="range"``).
        - ``category``: ``property/value`` string (for ``mode="category"``).

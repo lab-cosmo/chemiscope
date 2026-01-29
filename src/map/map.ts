@@ -1727,6 +1727,10 @@ export class PropertiesMap {
         return title;
     }
 
+    /**
+     * Get the numeric color values after applying all the scaling and transforms
+     * selected by the options.
+     */
     private _getNumericColors(): number[] {
         const propValues = this._property(this._options.color.property.value).values;
         const values = this._options.calculateColors(propValues);
@@ -1749,7 +1753,7 @@ export class PropertiesMap {
     /**
      * Get the mask of selected points based on the current selection mode
      */
-    private _getMask(): boolean[] {
+    private _getSelectionMask(): boolean[] {
         const n = this._property(this._options.x.property.value).values.length;
         if (this._options.color.select.mode.value === 'all') {
             return new Array<boolean>(n).fill(true);
@@ -1759,6 +1763,8 @@ export class PropertiesMap {
         if (this._options.hasColors()) {
             colors = this._property(this._options.color.property.value).values;
         } else {
+            // "Fixed" color corresponds to a constant value
+            // (should not be used for filtering but should never happen)
             colors = new Array<number>(n).fill(0.5);
         }
 
@@ -1788,7 +1794,7 @@ export class PropertiesMap {
             ) as number[];
         }
 
-        const mask = this._getMask();
+        const mask = this._getSelectionMask();
         const values = this._options.calculateColors(colors);
 
         let finalValues = values;
@@ -1890,7 +1896,7 @@ export class PropertiesMap {
             ) as number[];
         }
         let values = this._options.calculateSizes(sizes);
-        const mask = this._getMask();
+        const mask = this._getSelectionMask();
         if (mask.some((v) => !v)) {
             values = values.map((v, i) => (mask[i] ? v : v * 0.25));
         }
@@ -1928,7 +1934,7 @@ export class PropertiesMap {
         const n = this._property(this._options.x.property.value).values.length;
         let values = new Array(n).fill(globalColor) as string[];
 
-        const mask = this._getMask();
+        const mask = this._getSelectionMask();
         if (mask.some((v) => !v)) {
             values = values.map((v, i) => (mask[i] ? v : 'rgba(0,0,0,0)'));
         }
