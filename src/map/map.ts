@@ -1105,9 +1105,6 @@ export class PropertiesMap {
                     this._relayout({
                         'coloraxis.colorbar.title.text': this._colorTitle(),
                         'coloraxis.showscale': true,
-                        hovertemplate: this._options.hovertemplate(),
-                        'marker.color': this._colors(0),
-                        'marker.opacity': this._options.color.opacity.value / 100,
                     } as unknown as Layout);
                 }
             } else {
@@ -1123,9 +1120,6 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
-                    hovertemplate: this._options.hovertemplate(),
-                    'marker.color': this._colors(0),
-                    'marker.opacity': this._options.color.opacity.value / 100,
                 } as unknown as Layout);
             }
 
@@ -1930,11 +1924,12 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _lineColors(trace?: number): Array<string | string[]> {
-        const globalColor = 'black';
         const n = this._property(this._options.x.property.value).values.length;
-        let values = new Array(n).fill(globalColor) as string[];
+        // dafault to black outline
+        let values = new Array(n).fill('black') as string[];
 
         const mask = this._getSelectionMask();
+        // unselected points have transparent outline
         if (mask.some((v) => !v)) {
             values = values.map((v, i) => (mask[i] ? v : 'rgba(0,0,0,0)'));
         }
@@ -1942,9 +1937,10 @@ export class PropertiesMap {
         // LOD: Apply filter to main trace values
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
 
-        // Assume trace 1 line color is black.
+        // Assume trace 1 (selection) line color is black.
         const selected = new Array<string>(this._selected.size).fill('black');
 
+        // Dummy trace for colorbar is invisible
         const dummy = ['rgba(0,0,0,0)', 'rgba(0,0,0,0)'];
 
         return this._selectTrace<string | string[]>(
@@ -2149,6 +2145,8 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
+            hovertemplate: this._options.hovertemplate(),
+            'marker.opacity': this._options.color.opacity.value / 100,
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
 
