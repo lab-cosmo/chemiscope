@@ -2159,8 +2159,10 @@ export class PropertiesMap {
                 // to prevent it from snapping back to the default position
                 // see https://github.com/lab-cosmo/chemiscope/issues/310
                 const currentLayout = this._plot._fullLayout;
-                // @ts-expect-error scene is defined in the layout
-                layout['scene.camera'] = currentLayout.scene.camera;
+                if (currentLayout.scene !== undefined) {
+                    // @ts-expect-error scene is defined in the layout
+                    layout['scene.camera'] = currentLayout.scene.camera;
+                }
             }
 
             void Plotly.update(
