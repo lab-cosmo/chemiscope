@@ -75,6 +75,12 @@ export class MapOptions extends OptionsGroup {
         max: HTMLOption<'number'>;
         palette: HTMLOption<'string'>;
         opacity: HTMLOption<'number'>;
+        select: {
+            mode: HTMLOption<'string'>;
+            category: HTMLOption<'string'>;
+            min: HTMLOption<'number'>;
+            max: HTMLOption<'number'>;
+        };
     };
     public size: {
         factor: HTMLOption<'number'>;
@@ -131,6 +137,12 @@ export class MapOptions extends OptionsGroup {
             max: new HTMLOption('number', NaN),
             palette: new HTMLOption('string', 'inferno'),
             opacity: new HTMLOption('number', 100),
+            select: {
+                mode: new HTMLOption('string', 'all'),
+                category: new HTMLOption('string', ''),
+                min: new HTMLOption('number', NaN),
+                max: new HTMLOption('number', NaN),
+            },
         };
         this.color.property.validate = optionValidator(propertiesNames.concat(['']), 'color');
         this.color.mode.validate = optionValidator(['linear', 'log', 'sqrt', 'inverse'], 'mode');
@@ -140,6 +152,10 @@ export class MapOptions extends OptionsGroup {
                 throw Error(`opacity must be between 1 and 100, got ${value}`);
             }
         };
+        this.color.select.mode.validate = optionValidator(
+            ['all', 'range', 'category'],
+            'selection mode'
+        );
         // Initialise size
         this.size = {
             factor: new HTMLOption('number', 50),
@@ -163,6 +179,30 @@ export class MapOptions extends OptionsGroup {
         // adaptive resolution for large datasets
         this.useLOD = new HTMLOption('boolean', true);
         this.camera = new JSOption<CameraState | undefined>(undefined);
+        // custom equality check to avoid triggering unnecessary updates
+        this.camera.equals = (a, b) => {
+            if (a === undefined && b === undefined) {
+                return true;
+            }
+
+            if (a === undefined || b === undefined) {
+                return false;
+            }
+
+            const vecEquals = (
+                v1: { x: number; y: number; z: number },
+                v2: { x: number; y: number; z: number }
+            ) => {
+                return v1.x === v2.x && v1.y === v2.y && v1.z === v2.z;
+            };
+
+            return (
+                vecEquals(a.eye, b.eye) &&
+                vecEquals(a.center, b.center) &&
+                vecEquals(a.up, b.up) &&
+                a.zoom === b.zoom
+            );
+        };
         this.camera.validate = (value: CameraState | undefined) => {
             if (value !== undefined) {
                 validateCamera(value);
@@ -191,6 +231,59 @@ export class MapOptions extends OptionsGroup {
 
         // Attach callbacks
         this._bind(properties);
+
+        this.color.select.mode.onchange.push(() => {
+            if (this.color.select.mode.value === 'range') {
+                if (this.color.select.min.value > this.color.select.max.value) {
+                    this.warnings.sendMessage(
+                        'The selection min value is greater than the max value! Resetting the range.'
+                    );
+                    this.color.select.min.reset();
+                    this.color.select.max.reset();
+                }
+            }
+        });
+
+        const validateSelectRange = (minOrMax: 'min' | 'max') => {
+            return () => {
+                if (this.color.select.mode.value === 'range') {
+                    const min = this.color.select.min.value;
+                    const max = this.color.select.max.value;
+                    if (!isNaN(min) && !isNaN(max) && min > max) {
+                        this.warnings.sendMessage(
+                            `The selection ${minOrMax} value makes min > max! Resetting it.`
+                        );
+                        if (minOrMax === 'min') {
+                            this.color.select.min.reset();
+                        } else {
+                            this.color.select.max.reset();
+                        }
+                    }
+                }
+            };
+        };
+        this.color.select.min.onchange.push(validateSelectRange('min'));
+        this.color.select.max.onchange.push(validateSelectRange('max'));
+
+        this.color.property.onchange.push(() => {
+            // reset selection range when the property changes
+            this.color.select.min.value = NaN;
+            this.color.select.max.value = NaN;
+
+            // disable range selection if color is fixed
+            const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
+            const rangeOption = selectMode.querySelector(
+                'option[value="range"]'
+            ) as HTMLOptionElement;
+            if (this.color.property.value === '') {
+                if (this.color.select.mode.value === 'range') {
+                    this.color.select.mode.value = 'all';
+                }
+                rangeOption.disabled = true;
+            } else {
+                rangeOption.disabled = false;
+            }
+        });
 
         // Apply new settings to the modal options
         this.applySettings(settings);
@@ -274,7 +367,7 @@ export class MapOptions extends OptionsGroup {
                     break;
             }
 
-            return property + ': %{marker.color:.2f}<extra></extra>';
+            return property + ': %{customdata:.2f}<extra></extra>';
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
@@ -555,6 +648,80 @@ export class MapOptions extends OptionsGroup {
         }
         this.color.palette.bind(selectPalette, 'value');
 
+        // ======= color select
+        const selectSelectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
+        this.color.select.mode.bind(selectSelectMode, 'value');
+
+        const selectSelectCategory = this.getModalElement<HTMLSelectElement>(
+            'map-color-select-category'
+        );
+        selectSelectCategory.length = 0;
+        let hasCategorical = false;
+        for (const key in properties) {
+            const prop = properties[key];
+            if (prop.string !== undefined) {
+                hasCategorical = true;
+                const values = prop.string.strings();
+                for (const val of values) {
+                    const optionValue = `${key}/${val}`;
+                    selectSelectCategory.add(new Option(optionValue, optionValue));
+                }
+            }
+        }
+
+        // disable category selection if there are no categorical properties
+        const categoryOption = selectSelectMode.querySelector(
+            'option[value="category"]'
+        ) as HTMLOptionElement;
+        if (!hasCategorical) {
+            categoryOption.disabled = true;
+        }
+
+        // disable range selection if color is fixed
+        const rangeOption = selectSelectMode.querySelector(
+            'option[value="range"]'
+        ) as HTMLOptionElement;
+        if (this.color.property.value === '') {
+            rangeOption.disabled = true;
+        }
+
+        if (selectSelectCategory.options.length > 0) {
+            this.color.select.category.value = selectSelectCategory.options[0].value;
+        }
+        this.color.select.category.bind(selectSelectCategory, 'value');
+
+        this.color.select.min.bind(this.getModalElement('map-color-select-min'), 'value');
+        this.color.select.max.bind(this.getModalElement('map-color-select-max'), 'value');
+
+        const updateSelectVisibility = () => {
+            const mode = this.color.select.mode.value;
+            const containerMode = this.getModalElement('map-color-select-container');
+            const containerCategory = this.getModalElement('map-color-select-category-container');
+            const containerMin = this.getModalElement('map-color-select-min-container');
+            const containerMax = this.getModalElement('map-color-select-max-container');
+
+            if (mode === 'range') {
+                containerMode.style.gridColumn = 'auto / span 1';
+                containerCategory.style.display = 'none';
+                containerMin.style.display = 'flex';
+                containerMax.style.display = 'flex';
+            } else if (mode === 'category') {
+                containerMode.style.gridColumn = 'auto / span 1';
+                containerCategory.style.display = 'flex';
+                containerCategory.style.gridColumn = 'auto / span 2';
+                containerMin.style.display = 'none';
+                containerMax.style.display = 'none';
+            } else {
+                containerMode.style.gridColumn = 'auto / span 1';
+                containerCategory.style.display = 'none';
+                containerMin.style.display = 'none';
+                containerMax.style.display = 'none';
+            }
+        };
+        this.color.select.mode.onchange.push(updateSelectVisibility);
+        // Call it once to set initial state (e.g. if settings loaded 'range')
+        setTimeout(updateSelectVisibility, 0);
+
         // ======= marker symbols
         const selectSymbolProperty = this.getModalElement<HTMLSelectElement>('map-symbol-property');
         // first option is 'fixed'
@@ -608,5 +775,100 @@ export class MapOptions extends OptionsGroup {
     public showLODOption(show: boolean): void {
         const el = this.getModalElement('map-lod-div');
         el.style.display = show ? 'flex' : 'none';
+    }
+
+    public getCategorySelectionProperty(): string | null {
+        if (this.color.select.mode.value !== 'category') return null;
+        const val = this.color.select.category.value;
+        const sep = val.indexOf('/');
+        if (sep === -1) return null;
+        return val.substring(0, sep);
+    }
+
+    /**
+     * Get a mask of selected points based on the current selection mode
+     *
+     * @param values values of the property used for coloring (for range mode)
+     * @param categoryValues values of the property used for categorization (property/value string)
+     */
+    public getFilterMask(values: number[], categoryValues?: string[]): boolean[] {
+        const mode = this.color.select.mode.value;
+        if (mode === 'all') {
+            return new Array(values.length).fill(true) as boolean[];
+        }
+
+        if (mode === 'range') {
+            const min = this.color.select.min.value;
+            const max = this.color.select.max.value;
+            // if min/max are NaN, they are ignored (open range)
+            return values.map((v) => {
+                if (!isNaN(min) && v < min) return false;
+                if (!isNaN(max) && v > max) return false;
+                return true;
+            });
+        }
+
+        if (mode === 'category') {
+            const target = this.color.select.category.value; // "property/value"
+            if (!categoryValues) {
+                return new Array(values.length).fill(true) as boolean[];
+            }
+
+            // let's split target
+            const sepIndex = target.indexOf('/');
+            if (sepIndex === -1) return new Array(values.length).fill(true) as boolean[];
+            const targetVal = target.substring(sepIndex + 1);
+
+            return categoryValues.map((v) => v === targetVal);
+        }
+
+        return new Array(values.length).fill(true) as boolean[];
+    }
+
+    /**
+     * Convert a numeric value to a color string based on the current palette
+     */
+    public valueToColor(value: number, min: number, max: number): string {
+        const palette = COLOR_MAPS[this.color.palette.value];
+        // palette is [stop, colorString][]
+        // normalize value
+        let t = (value - min) / (max - min);
+        if (isNaN(t)) t = 0.5;
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+
+        // find segment
+        // palette is sorted by stop 0..1
+        let i = 0;
+        while (i < palette.length - 1 && palette[i + 1][0] < t) {
+            i++;
+        }
+        // segment is i to i+1
+        const start = palette[i];
+        const end = palette[i + 1] || start; // handle t=1 or end
+
+        const t0 = start[0];
+        const t1 = end[0];
+        const c0 = start[1]; // "rgb(r, g, b)"
+        const c1 = end[1];
+
+        if (t1 === t0) return c0;
+
+        const f = (t - t0) / (t1 - t0);
+
+        const parseRgb = (s: string) => {
+            const m = s.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (m) return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+            return [0, 0, 0];
+        };
+
+        const rgb0 = parseRgb(c0);
+        const rgb1 = parseRgb(c1);
+
+        const r = Math.round(rgb0[0] + f * (rgb1[0] - rgb0[0]));
+        const g = Math.round(rgb0[1] + f * (rgb1[1] - rgb0[1]));
+        const b = Math.round(rgb0[2] + f * (rgb1[2] - rgb0[2]));
+
+        return `rgb(${r}, ${g}, ${b})`;
     }
 }
