@@ -179,6 +179,30 @@ export class MapOptions extends OptionsGroup {
         // adaptive resolution for large datasets
         this.useLOD = new HTMLOption('boolean', true);
         this.camera = new JSOption<CameraState | undefined>(undefined);
+        // custom equality check to avoid triggering unnecessary updates
+        this.camera.equals = (a, b) => {
+            if (a === undefined && b === undefined) {
+                return true;
+            }
+
+            if (a === undefined || b === undefined) {
+                return false;
+            }
+
+            const vecEquals = (
+                v1: { x: number; y: number; z: number },
+                v2: { x: number; y: number; z: number }
+            ) => {
+                return v1.x === v2.x && v1.y === v2.y && v1.z === v2.z;
+            };
+
+            return (
+                vecEquals(a.eye, b.eye) &&
+                vecEquals(a.center, b.center) &&
+                vecEquals(a.up, b.up) &&
+                a.zoom === b.zoom
+            );
+        };
         this.camera.validate = (value: CameraState | undefined) => {
             if (value !== undefined) {
                 validateCamera(value);

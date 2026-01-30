@@ -292,6 +292,8 @@ export class JSOption<T> {
     public validate: (value: T) => void;
     /** Additional callbacks to run whenever the setting value changes */
     public onchange: Array<(value: T, origin: OptionModificationOrigin) => void>;
+    /** Check if two values are equal. Default to strict equality */
+    public equals: (a: T, b: T) => boolean;
 
     private _value: T;
 
@@ -299,6 +301,7 @@ export class JSOption<T> {
         this._value = value;
         this.validate = () => {};
         this.onchange = [];
+        this.equals = (a, b) => a === b;
         Object.preventExtensions(this);
     }
 
@@ -313,6 +316,9 @@ export class JSOption<T> {
     public setValue(v: T, origin: OptionModificationOrigin) {
         // We can not check for equality here since T can be an object/array
         this.validate(v);
+        if (this.equals(this._value, v)) {
+            return;
+        }
         this._value = v;
         for (const callback of this.onchange) {
             callback(this._value, origin);
