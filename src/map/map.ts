@@ -1668,10 +1668,19 @@ export class PropertiesMap {
         }
 
         const values = this._property(axis.property.value).values;
+
         // LOD: Apply binning filter for main trace (trace 0)
         // If trace is undefined (both), _selectTrace distributes the first argument to
         // main trace
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        let mainValues = values;
+        if (this._options.color.select.mode.value.endsWith('hide')) {
+            const mask = this._getSelectionMask();
+            mainValues = values.map((v, i) => (mask[i] ? v : NaN));
+        }
+
+        if (trace === 0 || trace === undefined) {
+            mainValues = this._applyLOD(mainValues);
+        }
 
         // in 2d mode, set all selected markers coordinates to NaN since we are
         // using HTML markers instead.

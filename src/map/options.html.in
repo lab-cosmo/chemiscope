@@ -141,8 +141,8 @@
                   more options
                </button>
 
-               <div class="collapse chsp-map-extra-options" id="map-color-extra">
-                  <div class="input-group input-group-sm">
+               <div class="collapse chsp-map-extra-options" id="map-color-extra" style="grid-template-columns: repeat(6, 1fr);">
+                  <div class="input-group input-group-sm" style="grid-column: auto / span 2;">
                      <label class="input-group-text" for="map-color-transform">scale:</label>
                      <select id="map-color-transform" class="form-select" disabled>
                         <option value="linear">linear</option>
@@ -152,29 +152,31 @@
                      </select>
                   </div>
 
-                  <div class="input-group input-group-sm">
+                  <div class="input-group input-group-sm" style="grid-column: span 2;">
                      <label id="map-color-min-label" class="input-group-text" for="map-color-min"> min: </label>
                      <input id="map-color-min" class="form-control" type="number" step="any" />
                   </div>
 
-                  <div class="input-group input-group-sm">
+                  <div class="input-group input-group-sm" style="grid-column: span 2;">
                      <label id="map-color-max-label" class="input-group-text" for="map-color-max"> max: </label>
                      <input id="map-color-max" class="form-control" type="number" step="any" />
                   </div>
-                                 
-                  <div class="input-group input-group-sm" style="grid-column: auto / span 2;">
+
+                  <div class="input-group input-group-sm" style="grid-column: span 3;">
                      <label class="input-group-text" for="map-color-palette"> palette: </label>
                      <select id="map-color-palette" class="form-select"></select>
                   </div>
 
-                  <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset">reset min/max</button>
+                  <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%; grid-column: span 3;">reset min/max</button>
 
-                  <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 1;">
-                     <label class="input-group-text" for="map-color-select-mode">select:</label>
+                  <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 3;">
+                     <label class="input-group-text" for="map-color-select-mode">mark:</label>
                      <select id="map-color-select-mode" class="form-select">
-                        <option value="all">all</option>
-                        <option value="range">range</option>
-                        <option value="category">category</option>
+                        <option value="all">show all</option>
+                        <option value="range-gray">range (gray bg.)</option>
+                        <option value="category-gray">class (gray bg.)</option>
+                        <option value="range-hide">range (hide bg.)</option>
+                        <option value="category-hide">class (hide bg.)</option>
                      </select>
                   </div>
 
@@ -192,7 +194,7 @@
                      <input id="map-color-select-max" class="form-control" type="number" step="any" />
                   </div>
                
-                  <div class="input-group input-group-sm" style="grid-column: auto / span 3">
+                  <div class="input-group input-group-sm" style="grid-column: span 6">
                      <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
                      <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
                   </div>

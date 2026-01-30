@@ -153,7 +153,7 @@ export class MapOptions extends OptionsGroup {
             }
         };
         this.color.select.mode.validate = optionValidator(
-            ['all', 'range', 'category'],
+            ['all', 'range-gray', 'category-gray', 'range-hide', 'category-hide'],
             'selection mode'
         );
         // Initialise size
@@ -233,7 +233,7 @@ export class MapOptions extends OptionsGroup {
         this._bind(properties);
 
         this.color.select.mode.onchange.push(() => {
-            if (this.color.select.mode.value === 'range') {
+            if (this.color.select.mode.value.startsWith('range')) {
                 if (this.color.select.min.value > this.color.select.max.value) {
                     this.warnings.sendMessage(
                         'The selection min value is greater than the max value! Resetting the range.'
@@ -246,7 +246,7 @@ export class MapOptions extends OptionsGroup {
 
         const validateSelectRange = (minOrMax: 'min' | 'max') => {
             return () => {
-                if (this.color.select.mode.value === 'range') {
+                if (this.color.select.mode.value.startsWith('range')) {
                     const min = this.color.select.min.value;
                     const max = this.color.select.max.value;
                     if (!isNaN(min) && !isNaN(max) && min > max) {
@@ -272,16 +272,14 @@ export class MapOptions extends OptionsGroup {
 
             // disable range selection if color is fixed
             const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
-            const rangeOption = selectMode.querySelector(
-                'option[value="range"]'
-            ) as HTMLOptionElement;
+            const rangeOptions = selectMode.querySelectorAll('option[value^="range"]');
             if (this.color.property.value === '') {
-                if (this.color.select.mode.value === 'range') {
+                if (this.color.select.mode.value.startsWith('range')) {
                     this.color.select.mode.value = 'all';
                 }
-                rangeOption.disabled = true;
+                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
             } else {
-                rangeOption.disabled = false;
+                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = false));
             }
         });
 
@@ -315,6 +313,14 @@ export class MapOptions extends OptionsGroup {
             if ('scale' in color) {
                 color.mode = color.scale;
                 delete color.scale;
+            }
+            if ('select' in color) {
+                const select = color.select as Settings;
+                if (select.mode === 'range') {
+                    select.mode = 'range-gray';
+                } else if (select.mode === 'category') {
+                    select.mode = 'category-gray';
+                }
             }
         }
         if ('palette' in settings) {
@@ -670,19 +676,15 @@ export class MapOptions extends OptionsGroup {
         }
 
         // disable category selection if there are no categorical properties
-        const categoryOption = selectSelectMode.querySelector(
-            'option[value="category"]'
-        ) as HTMLOptionElement;
+        const categoryOptions = selectSelectMode.querySelectorAll('option[value^="category"]');
         if (!hasCategorical) {
-            categoryOption.disabled = true;
+            categoryOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
         }
 
         // disable range selection if color is fixed
-        const rangeOption = selectSelectMode.querySelector(
-            'option[value="range"]'
-        ) as HTMLOptionElement;
+        const rangeOptions = selectSelectMode.querySelectorAll('option[value^="range"]');
         if (this.color.property.value === '') {
-            rangeOption.disabled = true;
+            rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
         }
 
         if (selectSelectCategory.options.length > 0) {
@@ -700,19 +702,21 @@ export class MapOptions extends OptionsGroup {
             const containerMin = this.getModalElement('map-color-select-min-container');
             const containerMax = this.getModalElement('map-color-select-max-container');
 
-            if (mode === 'range') {
-                containerMode.style.gridColumn = 'auto / span 1';
+            if (mode.startsWith('range')) {
+                containerMode.style.gridColumn = 'auto / span 2';
                 containerCategory.style.display = 'none';
                 containerMin.style.display = 'flex';
+                containerMin.style.gridColumn = 'span 2';
                 containerMax.style.display = 'flex';
-            } else if (mode === 'category') {
-                containerMode.style.gridColumn = 'auto / span 1';
+                containerMax.style.gridColumn = 'span 2';
+            } else if (mode.startsWith('category')) {
+                containerMode.style.gridColumn = 'span 3';
                 containerCategory.style.display = 'flex';
-                containerCategory.style.gridColumn = 'auto / span 2';
+                containerCategory.style.gridColumn = 'span 3';
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';
             } else {
-                containerMode.style.gridColumn = 'auto / span 1';
+                containerMode.style.gridColumn = 'span 3';
                 containerCategory.style.display = 'none';
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';
@@ -778,7 +782,7 @@ export class MapOptions extends OptionsGroup {
     }
 
     public getCategorySelectionProperty(): string | null {
-        if (this.color.select.mode.value !== 'category') return null;
+        if (!this.color.select.mode.value.startsWith('category')) return null;
         const val = this.color.select.category.value;
         const sep = val.indexOf('/');
         if (sep === -1) return null;
@@ -797,7 +801,7 @@ export class MapOptions extends OptionsGroup {
             return new Array(values.length).fill(true) as boolean[];
         }
 
-        if (mode === 'range') {
+        if (mode.startsWith('range')) {
             const min = this.color.select.min.value;
             const max = this.color.select.max.value;
             // if min/max are NaN, they are ignored (open range)
@@ -808,7 +812,7 @@ export class MapOptions extends OptionsGroup {
             });
         }
 
-        if (mode === 'category') {
+        if (mode.startsWith('category')) {
             const target = this.color.select.category.value; // "property/value"
             if (!categoryValues) {
                 return new Array(values.length).fill(true) as boolean[];
