@@ -62,7 +62,7 @@ async function loadChemiscopeSphinx(
     } catch (error) {
         // Display errors
         console.error(error);
-        displayWarning(divId, error);
+        displayError(divId, error);
     } finally {
         // Hide loading
         toggleLoadingVisible(divId, false);
@@ -202,4 +202,14 @@ function displayWarning(divId, message, timeout) {
             display.style.display = 'none';
         }, timeout);
     }
+}
+
+/**
+ * Displays an error message raised inside the component
+ */
+function displayError(divId, error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const display = document.getElementById(`${divId}-error-display`);
+    display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'flex';
 }
