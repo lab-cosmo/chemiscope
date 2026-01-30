@@ -24,6 +24,34 @@
     }
 }
 
+.chemiscope-sphinx-error {
+    display: none;
+    flex-wrap: wrap;
+    border: 1px solid #d9534f;
+    background-color: #f2dede;
+    color: #a94442;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+
+    button {
+        position: relative;
+        float: right;
+        font-size: 3em;
+        line-height: 1;
+        color: inherit;
+        text-shadow: none;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+
+    p {
+        flex: 1;
+        margin: 0;
+    }
+}
+
 .chemiscope-sphinx-spinner img {
     width: 2em;
     height: 2em;
