@@ -170,11 +170,13 @@
                   <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset">reset min/max</button>
 
                   <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 1;">
-                     <label class="input-group-text" for="map-color-select-mode">select:</label>
+                     <label class="input-group-text" for="map-color-select-mode">highlight:</label>
                      <select id="map-color-select-mode" class="form-select">
-                        <option value="all">all</option>
-                        <option value="range">range</option>
-                        <option value="category">category</option>
+                        <option value="all">show all</option>
+                        <option value="range-gray">range (gray bg.)</option>
+                        <option value="category-gray">class (gray bg.)</option>
+                        <option value="range-hide">range (hide bg.)</option>
+                        <option value="category-hide">class (hide bg.)</option>
                      </select>
                   </div>
 

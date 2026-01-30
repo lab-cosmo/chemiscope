@@ -1802,13 +1802,23 @@ export class PropertiesMap {
                 const max = range.max;
 
                 finalValues = numValues.map((v, i) => {
-                    if (!mask[i]) return '#d3d3d3';
+                    if (!mask[i]) {
+                        if (this._options.color.select.mode.value.endsWith('hide')) {
+                            return 'rgba(0,0,0,0)';
+                        }
+                        return '#d3d3d3';
+                    }
                     return this._options.valueToColor(v, min, max);
                 });
             } else {
                 // Already strings (fixed color)
                 finalValues = values.map((v, i) => {
-                    if (!mask[i]) return '#d3d3d3';
+                    if (!mask[i]) {
+                        if (this._options.color.select.mode.value.endsWith('hide')) {
+                            return 'rgba(0,0,0,0)';
+                        }
+                        return '#d3d3d3';
+                    }
                     return v;
                 });
             }
@@ -1892,7 +1902,8 @@ export class PropertiesMap {
         let values = this._options.calculateSizes(sizes);
         const mask = this._getSelectionMask();
         if (mask.some((v) => !v)) {
-            values = values.map((v, i) => (mask[i] ? v : v * 0.25));
+            const hide = this._options.color.select.mode.value.endsWith('hide');
+            values = values.map((v, i) => (mask[i] ? v : hide ? 0 : v * 0.25));
         }
 
         // LOD: Apply filter to main trace values
