@@ -421,7 +421,7 @@ export class PropertiesMap {
             this._connectSettings();
 
             // Re-render the plot with the new data and layout
-            return this._react(this._getTraces(), this._getLayout());
+            return this._react(this._getTraces(), this._getLayout(), this._getConfig());
         }
         return Promise.resolve();
     }
