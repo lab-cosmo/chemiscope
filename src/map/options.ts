@@ -155,12 +155,10 @@ export class MapOptions extends OptionsGroup {
         this.color.select.mode.validate = optionValidator(
             [
                 'all',
-                'range',
                 'range-gray',
                 'category-gray',
                 'range-hide',
                 'category-hide',
-                'category',
             ],
             'selection mode'
         );
