@@ -280,21 +280,14 @@ export class MapOptions extends OptionsGroup {
 
             // disable range selection if color is fixed
             const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
-            const rangeOption = selectMode.querySelector(
-                'option[value="range-gray"]'
-            ) as HTMLOptionElement;
-            const rangeHideOption = selectMode.querySelector(
-                'option[value="range-hide"]'
-            ) as HTMLOptionElement;
+            const rangeOptions = selectMode.querySelectorAll('option[value^="range"]');
             if (this.color.property.value === '') {
                 if (this.color.select.mode.value.startsWith('range')) {
                     this.color.select.mode.value = 'all';
                 }
-                rangeOption.disabled = true;
-                rangeHideOption.disabled = true;
+                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
             } else {
-                rangeOption.disabled = false;
-                rangeHideOption.disabled = false;
+                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = false));
             }
         });
 
@@ -691,19 +684,15 @@ export class MapOptions extends OptionsGroup {
         }
 
         // disable category selection if there are no categorical properties
-        const categoryOption = selectSelectMode.querySelector(
-            'option[value="category"]'
-        ) as HTMLOptionElement;
+        const categoryOptions = selectSelectMode.querySelectorAll('option[value^="category"]');
         if (!hasCategorical) {
-            categoryOption.disabled = true;
+            categoryOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
         }
 
         // disable range selection if color is fixed
-        const rangeOption = selectSelectMode.querySelector(
-            'option[value="range"]'
-        ) as HTMLOptionElement;
+        const rangeOptions = selectSelectMode.querySelectorAll('option[value^="range"]');
         if (this.color.property.value === '') {
-            rangeOption.disabled = true;
+            rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
         }
 
         if (selectSelectCategory.options.length > 0) {
@@ -722,18 +711,20 @@ export class MapOptions extends OptionsGroup {
             const containerMax = this.getModalElement('map-color-select-max-container');
 
             if (mode.startsWith('range')) {
-                containerMode.style.gridColumn = 'auto / span 1';
+                containerMode.style.gridColumn = 'auto / span 2';
                 containerCategory.style.display = 'none';
                 containerMin.style.display = 'flex';
+                containerMin.style.gridColumn = 'span 2';
                 containerMax.style.display = 'flex';
+                containerMax.style.gridColumn = 'span 2';
             } else if (mode.startsWith('category')) {
-                containerMode.style.gridColumn = 'auto / span 1';
+                containerMode.style.gridColumn = 'span 3';
                 containerCategory.style.display = 'flex';
-                containerCategory.style.gridColumn = 'auto / span 2';
+                containerCategory.style.gridColumn = 'span 3';
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';
             } else {
-                containerMode.style.gridColumn = 'auto / span 1';
+                containerMode.style.gridColumn = 'span 3';
                 containerCategory.style.display = 'none';
                 containerMin.style.display = 'none';
                 containerMax.style.display = 'none';

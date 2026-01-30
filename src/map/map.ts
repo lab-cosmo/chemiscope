@@ -1668,10 +1668,19 @@ export class PropertiesMap {
         }
 
         const values = this._property(axis.property.value).values;
+
         // LOD: Apply binning filter for main trace (trace 0)
         // If trace is undefined (both), _selectTrace distributes the first argument to
         // main trace
-        const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
+        let mainValues = values;
+        if (this._options.color.select.mode.value.endsWith('hide')) {
+            const mask = this._getSelectionMask();
+            mainValues = values.map((v, i) => (mask[i] ? v : NaN));
+        }
+
+        if (trace === 0 || trace === undefined) {
+            mainValues = this._applyLOD(mainValues);
+        }
 
         // in 2d mode, set all selected markers coordinates to NaN since we are
         // using HTML markers instead.
@@ -1802,23 +1811,13 @@ export class PropertiesMap {
                 const max = range.max;
 
                 finalValues = numValues.map((v, i) => {
-                    if (!mask[i]) {
-                        if (this._options.color.select.mode.value.endsWith('hide')) {
-                            return 'rgba(0,0,0,0)';
-                        }
-                        return '#d3d3d3';
-                    }
+                    if (!mask[i]) return '#d3d3d3';
                     return this._options.valueToColor(v, min, max);
                 });
             } else {
                 // Already strings (fixed color)
                 finalValues = values.map((v, i) => {
-                    if (!mask[i]) {
-                        if (this._options.color.select.mode.value.endsWith('hide')) {
-                            return 'rgba(0,0,0,0)';
-                        }
-                        return '#d3d3d3';
-                    }
+                    if (!mask[i]) return '#d3d3d3';
                     return v;
                 });
             }
@@ -1902,8 +1901,7 @@ export class PropertiesMap {
         let values = this._options.calculateSizes(sizes);
         const mask = this._getSelectionMask();
         if (mask.some((v) => !v)) {
-            const hide = this._options.color.select.mode.value.endsWith('hide');
-            values = values.map((v, i) => (mask[i] ? v : hide ? 0 : v * 0.25));
+            values = values.map((v, i) => (mask[i] ? v : v * 0.25));
         }
 
         // LOD: Apply filter to main trace values
