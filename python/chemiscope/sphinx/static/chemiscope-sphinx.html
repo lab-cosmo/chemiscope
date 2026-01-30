@@ -10,6 +10,14 @@
 <link rel="stylesheet" href="{{static_path}}/chemiscope-sphinx.css" type="text/css" />
 <!-- end headers -->
 
+<!-- Error display -->
+<div id="{{div_id}}-error-display" class="chemiscope-sphinx-error">
+    <p></p>
+    <button type="button" aria-label="Close" onclick="hideElement('{{div_id}}-error-display')">
+        &times;
+    </button>
+</div>
+
 <!-- Warning Display -->
 <div id="{{div_id}}-warning-display" class="chemiscope-sphinx-warning">
     <p></p>
