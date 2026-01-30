@@ -292,6 +292,8 @@ export class JSOption<T> {
     public validate: (value: T) => void;
     /** Additional callbacks to run whenever the setting value changes */
     public onchange: Array<(value: T, origin: OptionModificationOrigin) => void>;
+    /** Check if two values are equal. Default to strict equality */
+    public equals: (a: T, b: T) => boolean;
 
     private _value: T;
 
@@ -299,6 +301,7 @@ export class JSOption<T> {
         this._value = value;
         this.validate = () => {};
         this.onchange = [];
+        this.equals = (a, b) => a === b;
         Object.preventExtensions(this);
     }
 
@@ -313,6 +316,9 @@ export class JSOption<T> {
     public setValue(v: T, origin: OptionModificationOrigin) {
         // We can not check for equality here since T can be an object/array
         this.validate(v);
+        if (this.equals(this._value, v)) {
+            return;
+        }
         this._value = v;
         for (const callback of this.onchange) {
             callback(this._value, origin);
@@ -413,14 +419,16 @@ export abstract class OptionsGroup {
         this.foreachOption((keys, option) => {
             assert(keys.length >= 1);
             let root = copy;
-            let parent;
+            // keep track of the chain of objects to be able to remove empty
+            // sub-objects (e.g. settings.map.color.select)
+            const objectChain = [root];
             for (const key of keys.slice(0, keys.length - 1)) {
                 if (!(key in root)) {
                     // this key is missing from the settings
                     return;
                 }
-                parent = root;
                 root = root[key] as unknown as Settings;
+                objectChain.push(root);
             }
             const lastKey = keys[keys.length - 1];
 
@@ -445,11 +453,17 @@ export abstract class OptionsGroup {
                 // unused keys
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete root[lastKey];
-                if (parent !== undefined && Object.keys(root).length === 0) {
-                    // if we removed all keys from a sub-object, remove the sub-object
-                    assert(keys.length >= 2);
-                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete parent[keys[keys.length - 2]];
+
+                // cleanup empty objects up the chain
+                for (let i = objectChain.length - 1; i > 0; i--) {
+                    const obj = objectChain[i];
+                    if (Object.keys(obj).length === 0) {
+                        const parent = objectChain[i - 1];
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                        delete parent[keys[i - 1]];
+                    } else {
+                        break;
+                    }
                 }
             }
         });
