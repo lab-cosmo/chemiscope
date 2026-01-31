@@ -62,7 +62,7 @@ to customize the viewer appearance and behavior:
         width="stretch",              # Width: "stretch" or pixels
         height=600,                   # Height in pixels
         selected_index=sel_id,        # Initial selected structure index
-        on_select=callback_function   # Callback for selection changes
+        on_select=callback_function,  # Callback for selection changes
         on_settings_change=callback_function   # Callback for settings changes
     )
 

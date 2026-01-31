@@ -361,6 +361,12 @@ def ase_vectors_to_arrows(
        corresponding to x,y,z
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
+    :param scale: conversion from the units of the vector to the units of the atomic
+        positions (usually Å)
+    :param radius: radius of the stem of the arrow (same units as the atomic positions,
+        typically Å)
+    :param head_radius_scale: radius of the arrow tip, relative to the stem radius
+    :param head_length_scale: length of the arrow tip, relative to the stem radius
     """
     if frames is not None:
         warnings.warn(
@@ -433,7 +439,6 @@ def ase_tensors_to_ellipsoids(
        xx,yy,zz,xy,xz,yz
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
-
     :param scale: see :py:func:`ellipsoid_from_tensor`
     :param force_positive: see :py:func:`ellipsoid_from_tensor`
     """

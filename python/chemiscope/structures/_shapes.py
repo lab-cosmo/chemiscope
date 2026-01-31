@@ -17,6 +17,7 @@ def arrow_from_vector(
     parameters to leave them undefined (so that they can be specified in the global
     parameters).
 
+    :param position: 3D vector (list or array of 3 floats) specifying the arrow endpoint
     :param scale: conversion from the units of the vector to the units of the atomic
         positions (usually Å)
     :param radius: radius of the stem of the arrow (same units as the atomic positions,

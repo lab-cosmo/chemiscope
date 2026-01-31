@@ -312,7 +312,7 @@ export function validateDataset(o: JsObject): void {
     }
 
     if (!('properties' in o)) {
-        throw Error('missing "properties" key in then dataset');
+        throw Error('missing "properties" key in the dataset');
     } else if (!(typeof o.properties === 'object' && o.properties !== null)) {
         throw Error('"properties" must be an object in the dataset');
     }
@@ -666,7 +666,6 @@ function checkProperties(
                 throw Error(`'properties['${key}'].parameters' should contain a single parameter`);
             }
             // check if parameters of the property exists in the parameters
-            //for (const value of propertyParameters) {
             for (const value of propertyParameters) {
                 if (!(value in parameters)) {
                     throw Error(
@@ -700,7 +699,7 @@ function checkProperties(
         }
 
         if ('units' in property && typeof property.units !== 'string') {
-            throw Error(`'properties['${key}'].units' should contain a string`);
+            throw Error(`'properties['${key}'].units' should be a string`);
         }
     }
 }

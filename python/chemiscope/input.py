@@ -431,7 +431,7 @@ def write_external_structures(
             by ``chemiscope``.
     :param str prefix: prefix to use for each generated JSON filename. Files will be
         named like ``{prefix}-0.json``, ``{prefix}-1.json`` etc.
-    :param str compresslevel: if zero, structures are saved as uncompressed ``.json``
+    :param int compresslevel: if zero, structures are saved as uncompressed ``.json``
         files, otherwise they are compressed and saved as ``.json.gz`` files, according
         to the desired compression level (1:fast, large file; 9: slow, small file).
 
@@ -733,12 +733,12 @@ def quick_settings(
         the properties shown should be those of environments or of structures.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
-        settings schema). It will override the settings specied from other map
+        settings schema). It will override the settings specified from other map
         parameters, e.g., ``x``, ``y``, ``z`` -axes, ``map_color`` etc.
 
     :param dict structure_settings: Additional settings for the structure viewer
         (following the chemiscope settings schema). It will override the settings
-        specied from other parameters, e.g., ``structure_color``
+        specified from other parameters, e.g., ``structure_color``
     """
 
     if target not in ["atom", "structure"]:
