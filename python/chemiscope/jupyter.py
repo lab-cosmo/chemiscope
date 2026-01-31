@@ -631,16 +631,20 @@ def show(
         or `MDAnalysis.AtomGroup
         <https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html>`_
         objects. See :py:func:`chemiscope.create_input` for more details.
-    :param dict properties: dictionary of properties (see :py:func:`chemiscope.create_input`)
+    :param dict properties: dictionary of properties (see
+        :py:func:`chemiscope.create_input`)
     :param dict metadata: optional metadata (see :py:func:`chemiscope.create_input`)
-    :param list environments: optional list of ``(structure id, atom id, cutoff)`` tuples
-        specifying which atoms have properties attached and how far out atom-centered
-        environments should be drawn by default (see :py:func:`chemiscope.create_input`)
-    :param shapes: optional dictionary of shapes (see :py:func:`chemiscope.create_input`)
-    :param settings: optional dictionary of settings (see :py:func:`chemiscope.create_input`)
-    :param str mode: widget mode: ``"default"``, ``"structure"``, or ``"map"``.
-        The ``"default"`` mode shows both map and structure panels. The ``"structure"``
-        mode shows only the structure panel. The ``"map"`` mode shows only the map panel.
+    :param list environments: optional list of ``(structure id, atom id, cutoff)``
+        tuples specifying which atoms have properties attached and how far out
+        atom-centered environments should be drawn by default (see
+        :py:func:`chemiscope.create_input`)
+    :param shapes: optional dictionary of shapes (see
+        :py:func:`chemiscope.create_input`)
+    :param settings: optional dictionary of settings (see
+        :py:func:`chemiscope.create_input`)
+    :param str mode: widget mode: ``"default"``, ``"structure"``, or ``"map"``. The
+        ``"default"`` mode shows both map and structure panels. The ``"structure"`` mode
+        shows only the structure panel. The ``"map"`` mode shows only the map panel.
     :param int warning_timeout: timeout (in ms) for warning messages. Set to a negative
         value to disable warnings, and to zero to make them persistent.
     :param bool cache_structures: whether to cache structure data on the Python side
