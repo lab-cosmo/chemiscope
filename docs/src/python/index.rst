@@ -4,9 +4,9 @@ Python module
 =============
 
 The ``chemiscope`` package provides utilities to prepare JSON input files, and
-to visualize them in a :ref:`jupyter environment <jupyter>`. The package also
-provides a small set of utility functions to convert `ase`_ structure data, and
-a command-line command to convert structure files to a JSON input.
+to visualize them in a :ref:`jupyter environment <jupyter>`. The package 
+supports multiple structure formats including `ase.Atoms`_, `stk.BuildingBlock`_,
+and `MDAnalysis.AtomGroup`_ objects.
 
 .. toctree::
     :maxdepth: 2
@@ -19,4 +19,6 @@ a command-line command to convert structure files to a JSON input.
     gallery
 
 
-.. _ase: https://wiki.fysik.dtu.dk/ase/index.html
+.. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
+.. _stk.BuildingBlock: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html
+.. _MDAnalysis.AtomGroup: https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html

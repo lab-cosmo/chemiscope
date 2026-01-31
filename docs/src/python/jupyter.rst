@@ -43,7 +43,7 @@ the `ipywidgets documentation
         widget.settings = {"structure": [{"spaceFilling": True}]}
 
         # Set up 4 viewers with the specified structures
-        widget.settings = {"pinned": [0, 1, 12, 5]
+        widget.settings = {"pinned": [0, 1, 12, 5]}
 
 .. py:attribute:: selected_ids
 
@@ -60,6 +60,17 @@ the `ipywidgets documentation
 
     An integer indicating the index of the currently active viewer
     in the grid (0-based).
+
+.. py:attribute:: warning_timeout
+
+    An integer controlling how warning messages are displayed (in ms). Set to a positive
+    value for auto dismissing warnings after the specified time, ``0`` for warnings that
+    must be manually closed or ``-1`` to disable warnings entirely.
+
+    .. code-block:: python
+
+        # Auto dismiss warnings after 5 seconds
+        widget.warning_timeout = 5000
 
 
 Saving the dataset and settings as a standalone file

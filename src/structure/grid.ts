@@ -1032,7 +1032,7 @@ export class ViewersGrid {
             case 9:
                 return { rows: 3, columns: 3 };
             default:
-                throw Error('reached unreachable code: too many viewer in the grid');
+                throw Error('reached unreachable code: too many viewers in the grid');
         }
     }
 

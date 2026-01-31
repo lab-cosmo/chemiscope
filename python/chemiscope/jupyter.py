@@ -316,8 +316,8 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         """Handle custom messages sent from the JS widget.
         The pattern is that a message is sent from another
         function, and the response is collected here, handling
-        a successful response (`msg_type="base-mst-result"`)
-        or and error (`msg_type="base-mst-result"`). See below
+        a successful response (`msg_type="base-msg-result"`)
+        or an error (`msg_type="base-msg-error"`). See below
         for a brief explanation of the different types of messages.
 
         Currently implemented messages:
@@ -514,7 +514,7 @@ def show_input(
 
     :param dict settings: override the default settings in the input
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
-    :param float warning_timeout: timeout (in ms) for warnings. Set to a negative value
+    :param int warning_timeout: timeout (in ms) for warnings. Set to a negative value
         to disable warnings, and to zero to make them persistent.
     :param bool cache_structures: whether to cache structure data on the Python side
         to reduce the JScript memory footprint
@@ -624,6 +624,28 @@ def show(
     flag determining whether to cache structure data on the Python side to reduce the
     JScript memory footprint.
 
+    :param structures: list of atomic structures. These can be `chemiscope` compatible
+        dictionaries, `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_,
+        `stk.BuildingBlock
+        <https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html>`_,
+        or `MDAnalysis.AtomGroup
+        <https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html>`_
+        objects. See :py:func:`chemiscope.create_input` for more details.
+    :param dict properties: dictionary of properties (see :py:func:`chemiscope.create_input`)
+    :param dict metadata: optional metadata (see :py:func:`chemiscope.create_input`)
+    :param list environments: optional list of ``(structure id, atom id, cutoff)`` tuples
+        specifying which atoms have properties attached and how far out atom-centered
+        environments should be drawn by default (see :py:func:`chemiscope.create_input`)
+    :param shapes: optional dictionary of shapes (see :py:func:`chemiscope.create_input`)
+    :param settings: optional dictionary of settings (see :py:func:`chemiscope.create_input`)
+    :param str mode: widget mode: ``"default"``, ``"structure"``, or ``"map"``.
+        The ``"default"`` mode shows both map and structure panels. The ``"structure"``
+        mode shows only the structure panel. The ``"map"`` mode shows only the map panel.
+    :param int warning_timeout: timeout (in ms) for warning messages. Set to a negative
+        value to disable warnings, and to zero to make them persistent.
+    :param bool cache_structures: whether to cache structure data on the Python side
+        to reduce the JavaScript memory footprint
+
     When inside a jupyter notebook, the returned object will create a new chemiscope
     visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
     allows to modify the visualization options (possibly even linking the parameters to
@@ -661,8 +683,6 @@ def show(
 
         # Save the file for later use
         widget.save("dataset.json")
-
-    .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
     """
     if frames is not None:
         warnings.warn(
