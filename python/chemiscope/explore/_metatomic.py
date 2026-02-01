@@ -49,8 +49,8 @@ class metatomic_featurizer:
         # Read the structures from the dataset
         structures = ase.io.read("data/explore_c-gap-20u.xyz", ":")
 
-        # Provide model file ("model.pt") to `metatensor_featurizer`
-        featurizer = chemiscope.metatensor_featurizer(
+        # Provide model file ("model.pt") to `metatomic_featurizer`
+        featurizer = chemiscope.metatomic_featurizer(
             "model.pt", extensions_directory="extensions"
         )
 

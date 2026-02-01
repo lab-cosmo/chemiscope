@@ -111,20 +111,9 @@ def explore(
     :param str mode: optional. Visualization mode for the chemiscope widget. Can be one
         of "default", "structure", or "map". The default mode is "default".
 
-    :param str device: torch device to use for the calculation with the default
-            ``PETMADFeaturizer``. If `None`, we will try the options in the model's
-            ``supported_device`` in order.
-
-    :param int batch_size: optional. Number of structures processed in each batch with
-        the default ``PETMADFeaturizer``.
-
     :param string write_input: optional. A path to save the chemiscope input file
         created by this function. Afterwards, the file can be loaded using
         :py:func:`chemiscope.show_input`
-
-    :return: a chemiscope widget for interactive visualization
-
-    To use this function, additional dependencies are required, specifically, `pet_mad`_
 
     :return: a chemiscope widget for interactive visualization
 
@@ -185,7 +174,7 @@ def explore(
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
-    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
     .. _pet_mad: https://github.com/lab-cosmo/pet-mad
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
