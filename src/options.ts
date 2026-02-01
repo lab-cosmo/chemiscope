@@ -38,11 +38,17 @@ function parse<T extends OptionsType>(type: T, value: string): OptionsValue<T> {
     if (type === 'string') {
         return value;
     } else if (type === 'int') {
-        // FIXME: this parses `134hdvao` as `134`
-        return parseInt(value, 10);
+        const result = Number(value);
+        if (value.trim() === '' || Number.isNaN(result) || !Number.isInteger(result)) {
+            throw Error(`invalid value for int: ${value}`);
+        }
+        return result;
     } else if (type === 'number') {
-        // FIXME: this parses `1.34hdvao` as `1.34`
-        return parseFloat(value);
+        const result = Number(value);
+        if (value.trim() === '' || Number.isNaN(result)) {
+            throw Error(`invalid value for number: ${value}`);
+        }
+        return result;
     } else if (type === 'boolean') {
         if (value === 'false') {
             return false;
