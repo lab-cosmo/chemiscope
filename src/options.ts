@@ -44,6 +44,9 @@ function parse<T extends OptionsType>(type: T, value: string): OptionsValue<T> {
         }
         return result;
     } else if (type === 'number') {
+        if (value === 'NaN') {
+            return NaN;
+        }
         const result = Number(value);
         if (value.trim() === '' || Number.isNaN(result)) {
             throw Error(`invalid value for number: ${value}`);

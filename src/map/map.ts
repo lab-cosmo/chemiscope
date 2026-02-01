@@ -14,7 +14,14 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
-import { Bounds, GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
+import {
+    Bounds,
+    GUID,
+    PositioningCallback,
+    Warnings,
+    arrayMaxMin,
+    transformedAxisLabel,
+} from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -850,7 +857,11 @@ export class PropertiesMap {
                     this._setScaleStep([min, max], 'color');
 
                     this._relayout({
-                        'coloraxis.colorbar.title.text': this._colorTitle(),
+                        'coloraxis.colorbar.title.text': transformedAxisLabel(
+                            this._title(this._options.color.property.value),
+                            this._options.color.mode.value,
+                            true
+                        ),
                         'coloraxis.showscale': true,
                     } as unknown as Layout);
                 }
@@ -952,7 +963,11 @@ export class PropertiesMap {
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
-                    'coloraxis.colorbar.title.text': this._colorTitle(),
+                    'coloraxis.colorbar.title.text': transformedAxisLabel(
+                        this._title(this._options.color.property.value),
+                        this._options.color.mode.value,
+                        true
+                    ),
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
@@ -1361,7 +1376,11 @@ export class PropertiesMap {
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._colorTitle();
+        layout.coloraxis.colorbar.title.text = transformedAxisLabel(
+            this._title(this._options.color.property.value),
+            this._options.color.mode.value,
+            true
+        );
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
 
@@ -1791,26 +1810,6 @@ export class PropertiesMap {
             }
         }
         return this._options.getFilterMask(colors, categoryValues);
-    }
-
-    private _colorTitle(): string {
-        let title = this._title(this._options.color.property.value);
-        switch (this._options.color.mode.value) {
-            case 'inverse':
-                title = `(${title})<sup>-1</sup>`;
-                break;
-            case 'log':
-                title = `log<sub>10</sub>(${title})`;
-                break;
-            case 'sqrt':
-                title = `&#x221A;(${title})`;
-                break;
-            case 'linear':
-                break;
-            default:
-                break;
-        }
-        return title;
     }
 
     /** Get the length of the colorbar to accommodate for the legend */

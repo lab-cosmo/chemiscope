@@ -20,63 +20,20 @@ import * as styles from '../styles';
 import { GUID, PositioningCallback, Warnings, getElement } from '../utils';
 import { enumerate, generateGUID, getByID, getFirstKey, getNextColor } from '../utils';
 
-import { LoadOptions, MoleculeViewer } from './viewer';
+import { MoleculeViewer } from './viewer';
 
 import { filter } from '../info/info';
 
 import CLOSE_SVG from '../static/close.svg';
 import DUPLICATE_SVG from '../static/duplicate.svg';
 import PNG_SVG from '../static/download-png.svg';
-
-/// Extension of `Environment` adding the global index of the environment
-interface NumberedEnvironment extends Environment {
-    index: number;
-}
-
-/**
- * Create a list of environments grouped together by structure.
- *
- *
- * This function returns `undefined` if `environment` is undefined, else it
- * returns a list of list of environments, such as `list[0]` contains all
- * environments in structure 0; `list[33]` all environments in structure 33, etc.
- *
- * @param  structures Expected number of structures
- * @param  environments Full list of environments
- *
- * @return              The list of environments grouped by structure
- */
-function groupByStructure(
-    structures: (Structure | UserStructure)[],
-    environments?: Environment[]
-): NumberedEnvironment[][] | undefined {
-    if (environments === undefined) {
-        return undefined;
-    }
-
-    const result = Array.from({ length: structures.length }).map((_, i) =>
-        Array.from({ length: structures[i].size })
-    );
-
-    for (let i = 0; i < environments.length; i++) {
-        const env = environments[i];
-        result[env.structure][env.center] = {
-            index: i,
-            ...env,
-        };
-    }
-
-    return result as NumberedEnvironment[][];
-}
-
-interface ViewerGridData {
-    /// the viewer itself
-    viewer: MoleculeViewer;
-    /// color associated with this viewer
-    color: string;
-    /// set of indexes currently displayed in this viewer
-    current: Indexes;
-}
+import {
+    LoadOptions,
+    NumberedEnvironment,
+    ViewerGridData,
+    downloadURI,
+    groupByStructure,
+} from './utils';
 
 /**
  * The {@link ViewersGrid} class displays a grid of molecule or a crystal viewers
@@ -1047,19 +1004,4 @@ export class ViewersGrid {
         }
         return position;
     }
-}
-
-/**
- *  Creates a download request from a URI
- * @param uri       URI of the image
- * @param name      Name of the downloaded image
- */
-function downloadURI(uri: string, name: string) {
-    const link = document.createElement('a');
-    link.download = name;
-    link.href = uri;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    link.remove();
 }
