@@ -512,7 +512,8 @@ def show_input(
     :param str | Path | file-like path: load the chemiscope input from this path or
         file-like object
 
-    :param dict settings: override the default settings in the input
+    :param dict settings: override the default settings in the input (see the
+        :ref:`json-settings` section for a list of available settings)
     :param str mode: widget mode, either ``default``, ``structure`` or ``map``.
     :param int warning_timeout: timeout (in ms) for warnings. Set to a negative value
         to disable warnings, and to zero to make them persistent.
@@ -625,7 +626,7 @@ def show(
     JScript memory footprint.
 
     :param structures: list of atomic structures. These can be `chemiscope` compatible
-        dictionaries, `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_,
+        dictionaries, `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_,
         `stk.BuildingBlock
         <https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html>`_,
         or `MDAnalysis.AtomGroup
@@ -641,7 +642,8 @@ def show(
     :param shapes: optional dictionary of shapes (see
         :py:func:`chemiscope.create_input`)
     :param settings: optional dictionary of settings (see
-        :py:func:`chemiscope.create_input`)
+        :py:func:`chemiscope.create_input` and the :ref:`json-settings`
+        section for a list of available settings)
     :param str mode: widget mode: ``"default"``, ``"structure"``, or ``"map"``. The
         ``"default"`` mode shows both map and structure panels. The ``"structure"`` mode
         shows only the structure panel. The ``"map"`` mode shows only the map panel.

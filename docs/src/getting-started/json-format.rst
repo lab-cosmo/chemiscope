@@ -640,6 +640,8 @@ Examples
      }
    }
 
+.. _json-settings:
+
 Settings (``settings``)
 ~~~~~~~~~~~~~~~~~~~~~~~
 

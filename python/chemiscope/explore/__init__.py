@@ -174,7 +174,7 @@ def explore(
 
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
-    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
     .. _pet_mad: https://github.com/lab-cosmo/pet-mad
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/

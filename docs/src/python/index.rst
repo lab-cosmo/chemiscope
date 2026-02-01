@@ -19,6 +19,6 @@ and `MDAnalysis.AtomGroup`_ objects.
     gallery
 
 
-.. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
+.. _ase.Atoms: https://ase-lib.org/ase/atoms.html
 .. _stk.BuildingBlock: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html
 .. _MDAnalysis.AtomGroup: https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html

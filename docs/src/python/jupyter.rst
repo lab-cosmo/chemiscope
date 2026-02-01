@@ -31,7 +31,8 @@ the `ipywidgets documentation
     A dictionary containing the current visualization settings. 
     This traitlet is synchronized between Python and the JavaScript 
     frontend. You can update it to change visualization options
-    (e.g. map ranges, structure representation).
+    (e.g. map ranges, structure representation, camera location). See the
+    :ref:`json-settings` section for a list of available settings.
 
     By changing the ``pinned`` setting, you can control the number
     of viewers shown in the grid, as well as which structures are

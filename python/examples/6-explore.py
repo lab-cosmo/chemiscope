@@ -11,7 +11,7 @@ configure the representation processes. This is particularly useful when the spe
 choice of hyperparameters does not significantly impact the resulting low-dimensionality
 map.
 
-By passing a list of `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ objects
+By passing a list of `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_ objects
 (or similar structures from other libraries) to :py:func:`chemiscope.explore`, it is
 possible to generate a chemiscope widget, providing an immediate and intuitive
 visualization of the dataset.
@@ -48,7 +48,7 @@ import chemiscope
 # +++++++++++++
 #
 # This example shows the basic usage of :py:func:`chemiscope.explore`. First, load a
-# dataset of structures as `ase.Atoms <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_
+# dataset of structures as `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_
 # objects. Here, we use the samples from the `MC3D dataset
 # <https://doi.org/10.24435/materialscloud:rw-t0>`_:
 

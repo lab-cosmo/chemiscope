@@ -46,12 +46,9 @@ def create_input(
         :py:func:`all_atomic_environments` can be used to generate the list of
         environments in simple cases.
 
-    :param dict shapes: optional dictionary of shapes to have available for display, see
-        below.
-
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
-        chemiscope input file reference.
+        :ref:`json-settings` section.
 
     :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
@@ -263,7 +260,7 @@ def create_input(
         }
 
 
-    .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
+    .. _`ase.Atoms`: https://ase-lib.org/ase/ase/atoms.html
     .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
     .. _`MDAnalysis.AtomGroup`: https://docs.mdanalysis.org/2.9.0/documentation_pages/core/groups.html#MDAnalysis.core.groups.AtomGroup
     """
@@ -591,7 +588,7 @@ def write_input(
             parameters=multidimensional_parameters,
         )
 
-    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     """
     if frames is not None:
