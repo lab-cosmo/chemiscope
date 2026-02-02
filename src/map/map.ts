@@ -14,7 +14,14 @@ import { Property, Settings } from '../dataset';
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
 import { OptionModificationOrigin } from '../options';
 import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
-import { Bounds, GUID, PositioningCallback, Warnings, arrayMaxMin } from '../utils';
+import {
+    Bounds,
+    GUID,
+    PositioningCallback,
+    Warnings,
+    arrayMaxMin,
+    transformedAxisLabel,
+} from '../utils';
 import { enumerate, getElement, getFirstKey } from '../utils';
 
 import { MapData, NumericProperties, NumericProperty } from './data';
@@ -23,190 +30,7 @@ import { AxisOptions, MapOptions, get3DSymbol } from './options';
 import { computeLODIndices, computeScreenSpaceLOD } from './lod';
 import * as styles from '../styles';
 
-import PNG_SVG from '../static/download-png.svg';
-import SVG_SVG from '../static/download-svg.svg';
-
-/**
- * Export the plot as a PNG or SVG image, hiding the "selected" trace (index 1)
- * during the export.
- *
- * @param gd Plotly plot element
- * @param format format of the image
- */
-function exportImage(gd: PlotlyScatterElement, format: 'png' | 'svg') {
-    const width = Math.max(gd._fullLayout.width, 600);
-    const ratio = gd._fullLayout.height / gd._fullLayout.width;
-
-    const opts: Plotly.DownloadImgopts = {
-        filename: 'chemiscope-map',
-        format: format,
-        width: width,
-        height: format === 'png' ? width * ratio : Math.max(gd._fullLayout.height, 600),
-    };
-
-    if (format === 'png') {
-        // scale is not part of `DownloadImgopts`, but accepted
-        // by the function anyway
-        (opts as unknown as { scale: number }).scale = 3;
-    }
-
-    // Hide the "selected" trace (index 1) for the export.
-    // In 2D mode, this trace is already empty (using NaNs), but in 3D mode
-    // it contains the markers for selected environments.
-    Plotly.restyle(gd, { visible: false }, [1])
-        .then(() => {
-            return Plotly.downloadImage(gd, opts);
-        })
-        .then(() => {
-            return Plotly.restyle(gd, { visible: true }, [1]);
-        })
-        .catch((e: unknown) => {
-            // make sure we show the trace again even if download failed
-            void Plotly.restyle(gd, { visible: true }, [1]);
-            setTimeout(() => {
-                throw e;
-            });
-        });
-}
-
-const DEFAULT_LAYOUT = {
-    // coloraxis is used for the markers
-    coloraxis: {
-        cmax: 0,
-        cmin: 0,
-        colorbar: {
-            len: 1,
-            thickness: 20,
-            title: {
-                text: '',
-                side: 'right',
-                font: {
-                    size: 15,
-                },
-            },
-            y: 0,
-            yanchor: 'bottom',
-        },
-        colorscale: [] as Plotly.ColorScale,
-        showscale: true,
-    },
-    hovermode: 'closest',
-    dragmode: 'zoom',
-    legend: {
-        itemclick: false,
-        itemdoubleclick: false,
-        tracegroupgap: 5,
-        y: 1,
-        yanchor: 'top',
-    },
-    margin: {
-        b: 50,
-        l: 50,
-        r: 50,
-        t: 50,
-    },
-    scene: {
-        camera: {
-            projection: {
-                type: 'orthographic',
-            },
-        },
-        xaxis: {
-            showspikes: false,
-            autorange: true,
-            range: undefined as (number | undefined)[] | undefined,
-            title: { text: '' },
-            type: 'linear',
-        },
-        yaxis: {
-            showspikes: false,
-            autorange: true,
-            range: undefined as (number | undefined)[] | undefined,
-            title: { text: '' },
-            type: 'linear',
-        },
-        zaxis: {
-            showspikes: false,
-            autorange: true,
-            range: undefined as (number | undefined)[] | undefined,
-            title: { text: '' as undefined | string },
-            type: 'linear',
-        },
-    },
-    showlegend: true,
-    xaxis: {
-        range: undefined as (number | undefined)[] | undefined,
-        title: { text: '' },
-        type: 'linear',
-        zeroline: false,
-    },
-    yaxis: {
-        range: undefined as (number | undefined)[] | undefined,
-        title: { text: '' },
-        type: 'linear',
-        zeroline: false,
-    },
-    zaxis: {
-        range: undefined as (number | undefined)[] | undefined,
-        title: { text: '' },
-        type: 'linear',
-        zeroline: false,
-    },
-};
-
-const DEFAULT_CONFIG = {
-    displayModeBar: true,
-    displaylogo: false,
-    responsive: true,
-    doubleClick: 'reset',
-    doubleClickDelay: 600,
-    scrollZoom: true,
-
-    modeBarButtonsToRemove: [
-        'hoverClosestCartesian',
-        'hoverCompareCartesian',
-        'toggleSpikelines',
-        'autoScale2d',
-        'zoomIn2d',
-        'zoomOut2d',
-        'select2d',
-        'lasso2d',
-        'hoverClosest3d',
-        'zoom3d',
-        'tableRotation',
-        'resetCameraLastSave3d',
-        'toImage',
-    ],
-
-    modeBarButtonsToAdd: [
-        [
-            {
-                name: 'Download PNG',
-                icon: {
-                    width: 400,
-                    height: 447,
-                    path: extractSvgPath(PNG_SVG),
-                },
-                click: function (gd: PlotlyScatterElement) {
-                    exportImage(gd, 'png');
-                },
-            },
-        ],
-        [
-            {
-                name: 'Download SVG',
-                icon: {
-                    width: 400,
-                    height: 447,
-                    path: extractSvgPath(SVG_SVG),
-                },
-                click: function (gd: PlotlyScatterElement) {
-                    exportImage(gd, 'svg');
-                },
-            },
-        ],
-    ],
-};
+import { DEFAULT_CONFIG, DEFAULT_LAYOUT, getAxisAutoRange, getAxisRange } from './utils';
 
 /**
  * The {@link PropertiesMap} class displays a 2D or 3D map (scatter plot) of
@@ -389,6 +213,20 @@ export class PropertiesMap {
     }
 
     /**
+     * Remove all HTML added by this {@link PropertiesMap} in the current document
+     */
+    public remove(): void {
+        // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
+        this._shadow.host.remove();
+
+        // Remove options
+        this._options.remove();
+
+        // remove SVG element created by Plotly
+        document.getElementById('js-plotly-tester')?.remove();
+    }
+
+    /**
      * Change display target and adapt the element to the new target
      * @param target display target
      */
@@ -424,40 +262,6 @@ export class PropertiesMap {
             return this._react(this._getTraces(), this._getLayout(), this._getConfig());
         }
         return Promise.resolve();
-    }
-
-    /**
-     * Processes the markers by updating their current value to structure or environment index on the current target
-     * In 'structure' target, it set structure index, and in 'atom' target its environment index
-     */
-    private _handleMarkers() {
-        for (const [key, marker] of this._selected.entries()) {
-            if (this._target === 'structure') {
-                marker.current = this._indexer.fromEnvironment(marker.current, 'atom').structure;
-            } else {
-                const environment = this._indexer.fromStructure(
-                    marker.current,
-                    'atom'
-                )?.environment;
-                assert(environment !== undefined);
-                marker.current = environment;
-            }
-            this._selected.set(key, marker);
-        }
-    }
-
-    /**
-     * Remove all HTML added by this {@link PropertiesMap} in the current document
-     */
-    public remove(): void {
-        // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
-        this._shadow.host.remove();
-
-        // Remove options
-        this._options.remove();
-
-        // remove SVG element created by Plotly
-        document.getElementById('js-plotly-tester')?.remove();
     }
 
     /**
@@ -617,257 +421,167 @@ export class PropertiesMap {
         }
     }
 
-    /**
-     * Build the traces from the options data
-     */
-    private _getTraces(): Plotly.Data[] {
-        const type = this._is3D() ? 'scatter3d' : 'scattergl';
-        // The main trace, containing default data
-        const main = {
-            name: '',
-            type: type,
+    // ======================================================================
+    // Private Initialization
+    // ======================================================================
 
-            x: this._coordinates(this._options.x, 0)[0],
-            y: this._coordinates(this._options.y, 0)[0],
-            z: this._coordinates(this._options.z, 0)[0],
+    /** Actually create the Plotly plot */
+    private _createPlot() {
+        this._plot.innerHTML = '';
 
-            hovertemplate: this._options.hovertemplate(),
-            customdata: this._colorValues(0)[0],
-            marker: {
-                color: this._colors(0)[0],
-                coloraxis: 'coloraxis',
-                showscale: false,
-                line: {
-                    color: this._lineColors(0)[0],
-                    width: this._options.markerOutline.value ? 0.5 : 0,
-                },
-                opacity: this._options.color.opacity.value / 100,
-                size: this._sizes(0)[0],
-                sizemode: 'area',
-                symbol: this._symbols(0)[0],
-            },
-            line: {
-                color: 'black',
-                width: 0.5,
-                dash: 'solid',
-            },
-            mode: this._options.joinPoints.value ? 'lines+markers' : 'markers',
-            showlegend: false,
-        };
+        // Get plot data
+        const traces = this._getTraces();
 
-        // Create a second trace to store the last clicked point, in order to
-        // display it on top of the main plot with different styling. This is
-        // only used in 3D mode, since it is way slower than moving
-        // this._selectedMarker around.
-        const selected = {
-            name: 'selected',
-            type: type,
+        // Build layout from the options of the settings
+        const layout = this._getLayout();
 
-            x: [],
-            y: [],
-            z: [],
+        // Get config
+        const config = this._getConfig();
 
-            hoverinfo: 'none',
-            marker: {
-                color: [],
-                line: {
-                    color: [],
-                    width: 2,
-                },
-                opacity: 1,
-                size: [],
-                sizemode: 'area',
-            },
-            mode: 'markers',
-            showlegend: false,
-        };
+        // Create an empty plot and fill it below
+        Plotly.newPlot(this._plot, traces, layout, config)
+            .then(() => {
+                // In some cases (e.g. in Jupyter notebooks) plotly does not comply
+                // with the dimensions of its container unless it receives a resize
+                // event _after_ it has loaded. This triggers the event.
+                window.requestAnimationFrame(() => {
+                    window.dispatchEvent(new Event('resize'));
+                });
+            })
+            .catch((e: unknown) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
+        this._plot.classList.add('chsp-map');
 
-        // Dummy trace to display the colorbar regardless of the styling of
-        // the main trace. Useful when activating selection mode
-        const range = this._getColorRange();
-        const dummy = {
-            name: 'colorbar-dummy',
-            type: type,
-            x: this._coordinates(this._options.x, 2)[0],
-            y: this._coordinates(this._options.y, 2)[0],
-            z: this._coordinates(this._options.z, 2)[0],
-            marker: {
-                color: [range.min, range.max],
-                coloraxis: 'coloraxis',
-                showscale: true,
-                opacity: 0,
-                size: 0,
-            },
-            visible: this._options.hasColors(),
-            showlegend: false,
-            hoverinfo: 'none',
-        };
+        // Add callbacks
 
-        const traces = [main as Data, selected as Data, dummy as Data];
+        this._plot.on('plotly_click', (eventData: Plotly.PlotMouseEvent) => {
+            const event = eventData;
+            // don't update selected env on double click, since it is bound to
+            // 'reset zoom level' in 2D mode.
+            if (event.event && event.event.detail === 2) {
+                return;
+            }
 
-        // Calculate legend names and show legend flags based on data properties
-        const legendNames = this._legendNames().slice(3);
-        const showlegend = this._showlegend().slice(3);
-        assert(legendNames.length === showlegend.length);
-        const currentLength = legendNames.length;
+            // don't intercept clicks while the subsampling is updating
+            if (this._lodBusy) {
+                return;
+            }
+            let environment = event.points[0].pointNumber;
 
-        // Adjust arrays based on maxSymbols configuration
-        if (this._data.maxSymbols > 0) {
-            // resize & fill arrays
-            legendNames.length = this._data.maxSymbols;
-            legendNames.fill('', currentLength);
-            showlegend.length = this._data.maxSymbols;
-            showlegend.fill(false, currentLength);
-        }
+            // LOD: Map the clicked point back to real environment index if LOD is active on main trace
+            if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
+                if (environment >= this._lodIndices.length) {
+                    // ignore stray clicks that happen during redrawing
+                    return;
+                }
+                environment = this._lodIndices[environment];
+            }
 
-        // add empty traces to be able to display the symbols legend
-        // one trace for each possible symbol
-        for (let s = 0; s < this._data.maxSymbols; s++) {
-            const data = {
-                name: legendNames[s],
-                type: type,
-
-                // We need to add a dummy point to force plotly to display the
-                // associated legend; but we don't want to see the point in the
-                // map. Setting the coordinates to NaN achieve this.
-                x: [NaN],
-                y: [NaN],
-                z: [NaN],
-
-                marker: {
-                    color: 'black',
-                    size: 10,
-                    symbol: this._is3D() ? get3DSymbol(s) : s,
-                },
-                mode: 'markers',
-                showlegend: showlegend[s],
-            };
-            traces.push(data as Data);
-        }
-        return traces;
-    }
-
-    /**
-     * Update options with the structure or atom default or config settings
-     */
-    private _setupMapOptions() {
-        // Helper function to update `_option` values with related target configuration
-        const refreshMapOptions = (properties: NumericProperties) => {
-            // Check if target's properties actually exist
-            if (properties && Object.keys(properties).length > 1) {
-                // Delete previous target modal from DOM
-                this._options.remove();
-
-                // Re-create modal
-                this._options = new MapOptions(
-                    this._root,
-                    this._getCurrentProperties(),
-                    (rect) => this.positionSettingsModal(rect),
-                    {},
-                    this.warnings
-                );
-
-                // Update reference to the color reset button, as the old one was removed from DOM
-                this._colorReset =
-                    this._options.getModalElement<HTMLButtonElement>('map-color-reset');
-
-                // Update LOD toggle visibility based on the new target's dataset size.
-                const nPoints = Object.values(properties)[0].values.length;
-                if (nPoints > PropertiesMap.LOD_THRESHOLD) {
-                    this._options.showLODOption(true);
+            if (this._is3D() && event.points[0].data.name === 'selected') {
+                // if someone has clicked on a selection marker, set to active
+                // this is only used in 3D mode, since in 2D the HTML marker
+                // directly deal with the click event
+                for (const [i, [guid, data]] of enumerate(this._selected.entries())) {
+                    if (event.points[0].pointNumber === i) {
+                        environment = data.current;
+                        if (this._active !== guid) {
+                            this.setActive(guid);
+                            this.activeChanged(
+                                guid,
+                                this._indexer.fromEnvironment(data.current, this._target)
+                            );
+                        }
+                        break;
+                    }
                 }
             }
-        };
 
-        // Apply structure or atom options based on target
-        if (this._target !== 'atom') {
-            refreshMapOptions(this._data['structure']);
-        } else {
-            refreshMapOptions(this._data['atom']);
+            const indexes = this._indexer.fromEnvironment(environment, this._target);
+
+            this.select(indexes);
+            this.onselect(indexes);
+        });
+
+        this._plot.on('plotly_afterplot', () => {
+            if (this._lodBusy) {
+                return;
+            }
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+            }
+
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
+                this._afterplot();
+            }, 50);
+        });
+
+        // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
+        this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
+            if (this._lodBusy) {
+                return;
+            }
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+            }
+            this._afterplotRequest = window.setTimeout(() => {
+                this._afterplotRequest = null;
+                this._afterplot();
+
+                // Check if LOD update is needed based on relayout event
+                const lodEnabled =
+                    this._options.useLOD.value &&
+                    this._property(this._options.x.property.value).values.length >
+                        PropertiesMap.LOD_THRESHOLD;
+                const viewChanged = Object.keys(event).some(
+                    (key) =>
+                        key.match(/^(xaxis|yaxis)\.range/) ||
+                        key.match(/^scene\.(camera|aspectratio)/) ||
+                        key.includes('autorange')
+                );
+                if (lodEnabled && viewChanged) {
+                    this._updateLOD(this._getBounds());
+                }
+            }, 50);
+        });
+
+        // Handle double-click to reset view (global LOD)
+        this._plot.on('plotly_doubleclick', () => {
+            this._resetToGlobalView();
+            return false;
+        });
+
+        this._updateMarkers();
+
+        // set step of min/max select arrows based on the plot range
+        const bounds = this._getBounds();
+        this._setScaleStep(bounds.x, 'x');
+        this._setScaleStep(bounds.y, 'y');
+        if (bounds.z !== undefined) {
+            this._setScaleStep(bounds.z, 'z');
         }
-    }
 
-    /** Returns the properties related to the target (structure or environment) */
-    private _getCurrentProperties() {
-        const properties = this._data[this._target];
-        const propertiesNames = Object.keys(properties);
-        if (propertiesNames.length < 2) {
-            // better error message in case the user forgot to give the
-            // environments in the data
-            if (this._target === 'structure') {
-                if (Object.keys(this._data['atom']).length >= 2) {
-                    throw Error(
-                        'could not find enough structure properties to display, \
-                        but there are atom properties. You could choose "atom" as \
-                        target to display them.'
+        // Hack to fix a Plotly bug preventing zooming on Safari
+        this._plot.addEventListener('wheel', () => {});
+
+        // Hack to ensure that the active trace is selected AFTER the plot is drawn
+        // which seems to be necessary to ensure _fullLayout actually contains
+        // the state of the plotly viewer in 3D
+        setTimeout(() => {
+            if (this._active !== undefined) {
+                this.setActive(this._active);
+                const data = this._selected.get(this._active);
+                if (data !== undefined) {
+                    this.activeChanged(
+                        this._active,
+                        this._indexer.fromEnvironment(data.current, this._target)
                     );
                 }
             }
-
-            let message = 'we need at least two properties to plot in the map';
-            if (propertiesNames.length === 0) {
-                message += ', we have none';
-            } else {
-                message += `, we have only one: '${propertiesNames[0]}'`;
-            }
-
-            throw Error(message);
-        }
-        return properties;
-    }
-
-    /**
-     * Forward to Plotly.restyle.
-     * Updates specific properties of traces without re-rendering the entire plot
-     *
-     * @param data properties to update
-     * @param traces optional, indices of traces or a single trace index to update
-     */
-    private _restyle(data: Partial<Data>, traces?: number | number[]) {
-        Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
-            setTimeout(() => {
-                throw e;
-            })
-        );
-    }
-
-    /**
-     * Forward to Plotly.relayout
-     * Updates the layout properties of the plot
-     *
-     * @param layout layout properties to update
-     */
-    private _relayout(layout: Partial<Layout>) {
-        Plotly.relayout(this._plot, layout).catch((e: unknown) =>
-            setTimeout(() => {
-                throw e;
-            })
-        );
-    }
-
-    /**
-     * Forward to Plotly.react
-     * Updates the Plotly plot with new data and layout with re-rendering
-     *
-     * @param traces array of data traces to update
-     * @param layout layout properties to update
-     * @param config optional plot configuration
-     */
-    private _react(
-        traces: Plotly.Data[],
-        layout: Partial<Layout>,
-        config?: Partial<Config>
-    ): Promise<void> {
-        return (
-            Plotly.react(this._plot, traces, layout, config as Config)
-                .then(() => {})
-                // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
-                .catch((error: Error) => {
-                    setTimeout(() => {
-                        throw error;
-                    });
-                })
-        );
+        }, 1000);
     }
 
     /** Add all the required callback to the settings */
@@ -878,6 +592,44 @@ export class PropertiesMap {
             this._resetToGlobalView();
         };
 
+        this._connectAxisSettings();
+        this._connectColorSettings();
+        this._connectSymbolSettings();
+        this._connectSizeSettings();
+
+        this._options.markerOutline.onchange.push(() => {
+            const width = this._options.markerOutline.value ? 0.5 : 0;
+            this._restyle({ 'marker.line.width': width } as Data, 0);
+        });
+
+        this._options.joinPoints.onchange.push(() => {
+            const mode = this._options.joinPoints.value ? 'lines+markers' : 'markers';
+            this._restyle({ mode: mode } as Data, [0]);
+        });
+
+        // ======= Level of Detail settings
+        this._options.useLOD.onchange.push(() => {
+            const bounds = this._getBounds();
+            this._computeLOD(bounds);
+            // Force a full restyle. Since _lodIndices will be null if disabled,
+            // this will render all points.
+            this._restyleFull();
+        });
+
+        // ======= camera state update
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined && this._is3D()) {
+                const update = cameraToPlotly(camera);
+                this._relayout({
+                    'scene.camera': update.camera,
+                    'scene.aspectratio': update.aspectratio,
+                } as unknown as Layout);
+            }
+        });
+    }
+
+    /** Connect x/y/z axis settings to plot updates */
+    private _connectAxisSettings() {
         // Send a warning if a property contains negative values, that will be
         // discarded when using a log scale for this axis
         const negativeLogWarning = (axis: AxisOptions) => {
@@ -1045,12 +797,15 @@ export class PropertiesMap {
 
         this._options.z.min.onchange.push(rangeChange('zaxis', this._options.z, 'min'));
         this._options.z.max.onchange.push(rangeChange('zaxis', this._options.z, 'max'));
+    }
 
+    /** Connect color axis and palette settings to plot updates */
+    private _connectColorSettings() {
         // ======= color axis settings
         if (this._options.hasColors()) {
             // setup initial color range (must do before setting up events)
             const determineColorRange = (optionMin: number, optionMax: number) => {
-                const [min, max] = this._getAxisRange(optionMin, optionMax, 'map.color');
+                const [min, max] = getAxisRange(optionMin, optionMax, 'map.color', this.warnings);
                 const minProvided = min !== undefined;
                 const maxProvided = max !== undefined;
 
@@ -1103,7 +858,11 @@ export class PropertiesMap {
                     this._setScaleStep([min, max], 'color');
 
                     this._relayout({
-                        'coloraxis.colorbar.title.text': this._colorTitle(),
+                        'coloraxis.colorbar.title.text': transformedAxisLabel(
+                            this._title(this._options.color.property.value),
+                            this._options.color.mode.value,
+                            true
+                        ),
                         'coloraxis.showscale': true,
                     } as unknown as Layout);
                 }
@@ -1205,7 +964,11 @@ export class PropertiesMap {
                 this._setScaleStep([min, max], 'color');
 
                 this._relayout({
-                    'coloraxis.colorbar.title.text': this._colorTitle(),
+                    'coloraxis.colorbar.title.text': transformedAxisLabel(
+                        this._title(this._options.color.property.value),
+                        this._options.color.mode.value,
+                        true
+                    ),
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
@@ -1271,7 +1034,10 @@ export class PropertiesMap {
         this._options.color.select.category.onchange.push(updateColors);
         this._options.color.select.min.onchange.push(updateColors);
         this._options.color.select.max.onchange.push(updateColors);
+    }
 
+    /** Connect symbol settings to plot updates */
+    private _connectSymbolSettings() {
         // ======= markers symbols
         this._options.symbol.onchange.push(() => {
             this._restyle({ 'marker.symbol': this._symbols() }, [0, 1]);
@@ -1285,7 +1051,10 @@ export class PropertiesMap {
                 'coloraxis.colorbar.len': this._colorbarLen(),
             } as unknown as Layout);
         });
+    }
 
+    /** Connect marker size settings to plot updates */
+    private _connectSizeSettings() {
         // ======= markers size
         // setup initial state of the marker size settings
         if (this._options.size.property.value === '') {
@@ -1310,223 +1079,282 @@ export class PropertiesMap {
         this._options.size.mode.onchange.push(() => {
             this._restyle({ 'marker.size': this._sizes(0) } as Data, 0);
         });
-
-        this._options.markerOutline.onchange.push(() => {
-            const width = this._options.markerOutline.value ? 0.5 : 0;
-            this._restyle({ 'marker.line.width': width } as Data, 0);
-        });
-
-        this._options.joinPoints.onchange.push(() => {
-            const mode = this._options.joinPoints.value ? 'lines+markers' : 'markers';
-            this._restyle({ mode: mode } as Data, [0]);
-        });
-
-        // ======= Level of Detail settings
-        this._options.useLOD.onchange.push(() => {
-            const bounds = this._getBounds();
-            this._computeLOD(bounds);
-            // Force a full restyle. Since _lodIndices will be null if disabled,
-            // this will render all points.
-            this._restyleFull();
-        });
-
-        // ======= camera state update
-        this._options.camera.onchange.push((camera, origin) => {
-            if (origin === 'JS' && camera !== undefined && this._is3D()) {
-                const update = cameraToPlotly(camera);
-                this._relayout({
-                    'scene.camera': update.camera,
-                    'scene.aspectratio': update.aspectratio,
-                } as unknown as Layout);
-            }
-        });
     }
 
-    /** Actually create the Plotly plot */
-    private _createPlot() {
-        this._plot.innerHTML = '';
+    /**
+     * Update options with the structure or atom default or config settings
+     */
+    private _setupMapOptions() {
+        // Helper function to update `_option` values with related target configuration
+        const refreshMapOptions = (properties: NumericProperties) => {
+            // Check if target's properties actually exist
+            if (properties && Object.keys(properties).length > 1) {
+                // Delete previous target modal from DOM
+                this._options.remove();
 
-        // Get plot data
-        const traces = this._getTraces();
-
-        // Build layout from the options of the settings
-        const layout = this._getLayout();
-
-        // Get config
-        const config = this._getConfig();
-
-        // Create an empty plot and fill it below
-        Plotly.newPlot(this._plot, traces, layout, config)
-            .then(() => {
-                // In some cases (e.g. in Jupyter notebooks) plotly does not comply
-                // with the dimensions of its container unless it receives a resize
-                // event _after_ it has loaded. This triggers the event.
-                window.requestAnimationFrame(() => {
-                    window.dispatchEvent(new Event('resize'));
-                });
-            })
-            .catch((e: unknown) =>
-                setTimeout(() => {
-                    throw e;
-                })
-            );
-        this._plot.classList.add('chsp-map');
-
-        // Add callbacks
-
-        this._plot.on('plotly_click', (eventData: Plotly.PlotMouseEvent) => {
-            const event = eventData;
-            // don't update selected env on double click, since it is bound to
-            // 'reset zoom level' in 2D mode.
-            if (event.event && event.event.detail === 2) {
-                return;
-            }
-
-            // don't intercept clicks while the subsampling is updating
-            if (this._lodBusy) {
-                return;
-            }
-            let environment = event.points[0].pointNumber;
-
-            // LOD: Map the clicked point back to real environment index if LOD is active on main trace
-            if (this._lodIndices !== null && event.points[0].curveNumber === 0) {
-                if (environment >= this._lodIndices.length) {
-                    // ignore stray clicks that happen during redrawing
-                    return;
-                }
-                environment = this._lodIndices[environment];
-            }
-
-            if (this._is3D() && event.points[0].data.name === 'selected') {
-                // if someone has clicked on a selection marker, set to active
-                // this is only used in 3D mode, since in 2D the HTML marker
-                // directly deal with the click event
-                for (const [i, [guid, data]] of enumerate(this._selected.entries())) {
-                    if (event.points[0].pointNumber === i) {
-                        environment = data.current;
-                        if (this._active !== guid) {
-                            this.setActive(guid);
-                            this.activeChanged(
-                                guid,
-                                this._indexer.fromEnvironment(data.current, this._target)
-                            );
-                        }
-                        break;
-                    }
-                }
-            }
-
-            const indexes = this._indexer.fromEnvironment(environment, this._target);
-
-            this.select(indexes);
-            this.onselect(indexes);
-        });
-
-        this._plot.on('plotly_afterplot', () => {
-            if (this._lodBusy) {
-                return;
-            }
-            if (this._afterplotRequest !== null) {
-                window.clearTimeout(this._afterplotRequest);
-            }
-
-            this._afterplotRequest = window.setTimeout(() => {
-                this._afterplotRequest = null;
-                this._afterplot();
-            }, 50);
-        });
-
-        // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
-        this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
-            if (this._lodBusy) {
-                return;
-            }
-            if (this._afterplotRequest !== null) {
-                window.clearTimeout(this._afterplotRequest);
-            }
-            this._afterplotRequest = window.setTimeout(() => {
-                this._afterplotRequest = null;
-                this._afterplot();
-
-                // Check if LOD update is needed based on relayout event
-                const lodEnabled =
-                    this._options.useLOD.value &&
-                    this._property(this._options.x.property.value).values.length >
-                        PropertiesMap.LOD_THRESHOLD;
-                const viewChanged = Object.keys(event).some(
-                    (key) =>
-                        key.match(/^(xaxis|yaxis)\.range/) ||
-                        key.match(/^scene\.(camera|aspectratio)/) ||
-                        key.includes('autorange')
+                // Re-create modal
+                this._options = new MapOptions(
+                    this._root,
+                    this._getCurrentProperties(),
+                    (rect) => this.positionSettingsModal(rect),
+                    {},
+                    this.warnings
                 );
-                if (lodEnabled && viewChanged) {
-                    this._updateLOD(this._getBounds());
-                }
-            }, 50);
-        });
 
-        // Handle double-click to reset view (global LOD)
-        this._plot.on('plotly_doubleclick', () => {
-            this._resetToGlobalView();
-            return false;
-        });
+                // Update reference to the color reset button, as the old one was removed from DOM
+                this._colorReset =
+                    this._options.getModalElement<HTMLButtonElement>('map-color-reset');
 
-        this._updateMarkers();
-
-        // set step of min/max select arrows based on the plot range
-        const bounds = this._getBounds();
-        this._setScaleStep(bounds.x, 'x');
-        this._setScaleStep(bounds.y, 'y');
-        if (bounds.z !== undefined) {
-            this._setScaleStep(bounds.z, 'z');
-        }
-
-        // Hack to fix a Plotly bug preventing zooming on Safari
-        this._plot.addEventListener('wheel', () => {});
-
-        // Hack to ensure that the active trace is selected AFTER the plot is drawn
-        // which seems to be necessary to ensure _fullLayout actually contains
-        // the state of the plotly viewer in 3D
-        setTimeout(() => {
-            if (this._active !== undefined) {
-                this.setActive(this._active);
-                const data = this._selected.get(this._active);
-                if (data !== undefined) {
-                    this.activeChanged(
-                        this._active,
-                        this._indexer.fromEnvironment(data.current, this._target)
-                    );
+                // Update LOD toggle visibility based on the new target's dataset size.
+                const nPoints = Object.values(properties)[0].values.length;
+                if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+                    this._options.showLODOption(true);
                 }
             }
-        }, 1000);
+        };
+
+        // Apply structure or atom options based on target
+        if (this._target !== 'atom') {
+            refreshMapOptions(this._data['structure']);
+        } else {
+            refreshMapOptions(this._data['atom']);
+        }
     }
 
-    private _handleAxisPropertyChange(axis: 'x' | 'y'): void {
-        const axisOptions = this._options[axis];
+    // ======================================================================
+    // Plotly Wrappers
+    // ======================================================================
 
-        // Reset min/max when changing property to trigger autoscale
-        axisOptions.min.value = NaN;
-        axisOptions.max.value = NaN;
+    /**
+     * Forward to Plotly.react
+     * Updates the Plotly plot with new data and layout with re-rendering
+     *
+     * @param traces array of data traces to update
+     * @param layout layout properties to update
+     * @param config optional plot configuration
+     */
+    private _react(
+        traces: Plotly.Data[],
+        layout: Partial<Layout>,
+        config?: Partial<Config>
+    ): Promise<void> {
+        return Plotly.react(this._plot, traces, layout, config as Config)
+            .then(() => {}) // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+            .catch((error: Error) => {
+                setTimeout(() => {
+                    throw error;
+                });
+            });
+    }
 
-        // Recompute LOD since axis property changed
-        this._computeLOD();
+    /**
+     * Forward to Plotly.restyle.
+     * Updates specific properties of traces without re-rendering the entire plot
+     *
+     * @param data properties to update
+     * @param traces optional, indices of traces or a single trace index to update
+     */
+    private _restyle(data: Partial<Data>, traces?: number | number[]) {
+        Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
+    }
 
-        // Request a full restyle of traces
-        this._restyleFull();
+    /**
+     * Helper to trigger a full update of the plot traces (main, selected, dummy)
+     * when data, styling, or selection changes.
+     */
+    private _restyleFull(layoutUpdate?: Partial<Layout>): void {
+        const fullUpdate: Record<string, unknown> = {
+            x: this._coordinates(this._options.x),
+            y: this._coordinates(this._options.y),
+            z: this._coordinates(this._options.z),
+            'marker.color': this._colors(),
+            'marker.size': this._sizes(),
+            'marker.symbol': this._symbols(),
+            'marker.line.color': this._lineColors(),
+            hovertemplate: this._options.hovertemplate(),
+            customdata: this._colorValues(),
+            'marker.opacity': this._options.color.opacity.value / 100,
+            visible: this._selectTrace(true, true, this._options.hasColors()),
+        };
 
-        this._relayout({
-            [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
-            [`${axis}axis.title.text`]: this._title(axisOptions.property.value),
-        } as unknown as Layout);
+        const layout = layoutUpdate || {};
 
-        if (this._is3D()) {
-            this._relayout({ [`scene.${axis}axis.autorange`]: true } as unknown as Layout);
+        if (layoutUpdate || this._is3D()) {
+            if (this._is3D() && !('scene.camera' in layout)) {
+                // explicitely preserve the camera position when updating the plot
+                // to prevent it from snapping back to the default position
+                // see https://github.com/lab-cosmo/chemiscope/issues/310
+                const currentLayout = this._plot._fullLayout;
+                if (currentLayout.scene !== undefined) {
+                    // @ts-expect-error scene is defined in the layout
+                    layout['scene.camera'] = currentLayout.scene.camera;
+                }
+            }
+
+            void Plotly.update(
+                this._plot,
+                fullUpdate as unknown as Data,
+                layout as Layout,
+                [0, 1, 2]
+            );
         } else {
-            this._relayout({ [`${axis}axis.autorange`]: true } as unknown as Layout);
+            // Update main (0), selected (1) and dummy (2) traces
+            // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
+            // while keeping the _restyle wrapper synchronous for legacy calls.
+            void Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
+        }
+    }
+
+    /**
+     * Forward to Plotly.relayout
+     * Updates the layout properties of the plot
+     *
+     * @param layout layout properties to update
+     */
+    private _relayout(layout: Partial<Layout>) {
+        Plotly.relayout(this._plot, layout).catch((e: unknown) =>
+            setTimeout(() => {
+                throw e;
+            })
+        );
+    }
+
+    // ======================================================================
+    // Plot Configuration
+    // ======================================================================
+
+    /**
+     * Build the traces from the options data
+     */
+    private _getTraces(): Plotly.Data[] {
+        const type = this._is3D() ? 'scatter3d' : 'scattergl';
+        // The main trace, containing default data
+        const main = {
+            name: '',
+            type: type,
+
+            x: this._coordinates(this._options.x, 0)[0],
+            y: this._coordinates(this._options.y, 0)[0],
+            z: this._coordinates(this._options.z, 0)[0],
+
+            hovertemplate: this._options.hovertemplate(),
+            customdata: this._colorValues(0)[0],
+            marker: {
+                color: this._colors(0)[0],
+                coloraxis: 'coloraxis',
+                showscale: false,
+                line: {
+                    color: this._lineColors(0)[0],
+                    width: this._options.markerOutline.value ? 0.5 : 0,
+                },
+                opacity: this._options.color.opacity.value / 100,
+                size: this._sizes(0)[0],
+                sizemode: 'area',
+                symbol: this._symbols(0)[0],
+            },
+            line: {
+                color: 'black',
+                width: 0.5,
+                dash: 'solid',
+            },
+            mode: this._options.joinPoints.value ? 'lines+markers' : 'markers',
+            showlegend: false,
+        };
+
+        // Create a second trace to store the last clicked point, in order to
+        // display it on top of the main plot with different styling. This is
+        // only used in 3D mode, since it is way slower than moving
+        // this._selectedMarker around.
+        const selected = {
+            name: 'selected',
+            type: type,
+
+            x: [],
+            y: [],
+            z: [],
+
+            hoverinfo: 'none',
+            marker: {
+                color: [],
+                line: {
+                    color: [],
+                    width: 2,
+                },
+                opacity: 1,
+                size: [],
+                sizemode: 'area',
+            },
+            mode: 'markers',
+            showlegend: false,
+        };
+
+        // Dummy trace to display the colorbar regardless of the styling of
+        // the main trace. Useful when activating selection mode
+        const range = this._getColorRange();
+        const dummy = {
+            name: 'colorbar-dummy',
+            type: type,
+            x: this._coordinates(this._options.x, 2)[0],
+            y: this._coordinates(this._options.y, 2)[0],
+            z: this._coordinates(this._options.z, 2)[0],
+            marker: {
+                color: [range.min, range.max],
+                coloraxis: 'coloraxis',
+                showscale: true,
+                opacity: 0,
+                size: 0,
+            },
+            visible: this._options.hasColors(),
+            showlegend: false,
+            hoverinfo: 'none',
+        };
+
+        const traces = [main as Data, selected as Data, dummy as Data];
+
+        // Calculate legend names and show legend flags based on data properties
+        const legendNames = this._legendNames().slice(3);
+        const showlegend = this._showlegend().slice(3);
+        assert(legendNames.length === showlegend.length);
+        const currentLength = legendNames.length;
+
+        // Adjust arrays based on maxSymbols configuration
+        if (this._data.maxSymbols > 0) {
+            // resize & fill arrays
+            legendNames.length = this._data.maxSymbols;
+            legendNames.fill('', currentLength);
+            showlegend.length = this._data.maxSymbols;
+            showlegend.fill(false, currentLength);
         }
 
-        const bounds = this._getBounds();
-        this._setScaleStep(bounds[axis], axis);
+        // add empty traces to be able to display the symbols legend
+        // one trace for each possible symbol
+        for (let s = 0; s < this._data.maxSymbols; s++) {
+            const data = {
+                name: legendNames[s],
+                type: type,
+
+                // We need to add a dummy point to force plotly to display the
+                // associated legend; but we don't want to see the point in the
+                // map. Setting the coordinates to NaN achieve this.
+                x: [NaN],
+                y: [NaN],
+                z: [NaN],
+
+                marker: {
+                    color: 'black',
+                    size: 10,
+                    symbol: this._is3D() ? get3DSymbol(s) : s,
+                },
+                mode: 'markers',
+                showlegend: showlegend[s],
+            };
+            traces.push(data as Data);
+        }
+        return traces;
     }
 
     /**
@@ -1549,53 +1377,63 @@ export class PropertiesMap {
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = this._colorTitle();
+        layout.coloraxis.colorbar.title.text = transformedAxisLabel(
+            this._title(this._options.color.property.value),
+            this._options.color.mode.value,
+            true
+        );
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
 
         // Set ranges for the axes
-        layout.xaxis.range = this._getAxisRange(
+        layout.xaxis.range = getAxisRange(
             this._options.x.min.value,
             this._options.x.max.value,
-            'map.x'
+            'map.x',
+            this.warnings
         );
-        layout.yaxis.range = this._getAxisRange(
+        layout.yaxis.range = getAxisRange(
             this._options.y.min.value,
             this._options.y.max.value,
-            'map.y'
+            'map.y',
+            this.warnings
         );
-        layout.zaxis.range = this._getAxisRange(
+        layout.zaxis.range = getAxisRange(
             this._options.z.min.value,
             this._options.z.max.value,
-            'map.z'
+            'map.z',
+            this.warnings
         );
 
         // 3D scenes have a separate axis configuration
         if (this._is3D()) {
-            layout.scene.xaxis.range = this._getAxisRange(
+            layout.scene.xaxis.range = getAxisRange(
                 this._options.x.min.value,
                 this._options.x.max.value,
-                'map.x'
+                'map.x',
+                this.warnings
             );
-            layout.scene.xaxis.autorange = this._getAxisAutoRange(
+            layout.scene.xaxis.autorange = getAxisAutoRange(
                 this._options.x.min.value,
                 this._options.x.max.value
             );
-            layout.scene.yaxis.range = this._getAxisRange(
+            layout.scene.yaxis.range = getAxisRange(
                 this._options.y.min.value,
                 this._options.y.max.value,
-                'map.y'
+                'map.y',
+                this.warnings
             );
-            layout.scene.yaxis.autorange = this._getAxisAutoRange(
+            layout.scene.yaxis.autorange = getAxisAutoRange(
                 this._options.y.min.value,
                 this._options.y.max.value
             );
-            layout.scene.zaxis.range = this._getAxisRange(
+            layout.scene.zaxis.range = getAxisRange(
                 this._options.z.min.value,
                 this._options.z.max.value,
-                'map.z'
+                'map.z',
+                this.warnings
             );
-            layout.scene.zaxis.autorange = this._getAxisAutoRange(
+            layout.scene.zaxis.autorange = getAxisAutoRange(
                 this._options.z.min.value,
                 this._options.z.max.value
             );
@@ -1613,46 +1451,39 @@ export class PropertiesMap {
     }
 
     /**
-     * Validate min/max options provided by the user. We use `NaN` internally to mark missing values,
-     * which are then transformed into undefined by this function
+     * Get the Plotly configuration based on current mode (2D/3D)
      */
-    private _getAxisRange = (
-        min: number,
-        max: number,
-        axisName: string
-    ): [number | undefined, number | undefined] => {
-        const minProvided = !isNaN(min);
-        const maxProvided = !isNaN(max);
+    private _getConfig(): Config {
+        // Clone default config
+        const config = { ...DEFAULT_CONFIG };
+        config.modeBarButtonsToRemove = [...DEFAULT_CONFIG.modeBarButtonsToRemove];
+        config.modeBarButtonsToAdd = [...DEFAULT_CONFIG.modeBarButtonsToAdd];
 
-        // At least one range value is specified. By default, zeros are set
-        if (minProvided && maxProvided) {
-            if (min <= max) {
-                return [min, max];
-            }
-            this.warnings.sendMessage(
-                `The inserted min and max values in ${axisName} are such that min > max!` +
-                    `The default values will be used.`
-            );
+        if (this._is3D()) {
+            config.modeBarButtonsToRemove.push('resetCameraDefault3d');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            config.modeBarButtonsToAdd = [
+                [
+                    {
+                        name: 'Reset View',
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        icon: (Plotly as any).Icons.home,
+                        click: () => {
+                            this._resetToGlobalView();
+                        },
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ] as any,
+                ...config.modeBarButtonsToAdd,
+            ];
         }
-        return [minProvided ? min : undefined, maxProvided ? max : undefined];
-    };
 
-    private _getAxisAutoRange = (min: number, max: number): boolean => {
-        const minProvided = !isNaN(min);
-        const maxProvided = !isNaN(max);
-
-        // Both ranges are provided
-        return !(minProvided && maxProvided);
-    };
-
-    /** Get the property with the given name */
-    private _property(name: string): NumericProperty {
-        const result = this._data[this._target][name];
-        if (result === undefined) {
-            throw Error(`unknown property '${name}' requested in map`);
-        }
-        return result;
+        return config as unknown as Config;
     }
+
+    // ======================================================================
+    // Trace Attributes Generators
+    // ======================================================================
 
     /**
      * Get the values associated with the given `axis`, to use with the given
@@ -1698,90 +1529,6 @@ export class PropertiesMap {
         const dummy = [val0, val0];
 
         return this._selectTrace(mainValues, selected, dummy, trace);
-    }
-
-    private _title(name: string): string {
-        let propertyTitle = name;
-        if (name !== '') {
-            const units = this._property(name).units;
-            if (units !== undefined) {
-                propertyTitle = name + ` / ${units}`;
-            }
-        }
-        return propertyTitle;
-    }
-
-    private _colorTitle(): string {
-        let title = this._title(this._options.color.property.value);
-        switch (this._options.color.mode.value) {
-            case 'inverse':
-                title = `(${title})<sup>-1</sup>`;
-                break;
-            case 'log':
-                title = `log<sub>10</sub>(${title})`;
-                break;
-            case 'sqrt':
-                title = `&#x221A;(${title})`;
-                break;
-            case 'linear':
-                break;
-            default:
-                break;
-        }
-        return title;
-    }
-
-    /**
-     * Get the numeric color values after applying all the scaling and transforms
-     * selected by the options.
-     */
-    private _getNumericColors(): number[] {
-        const propValues = this._property(this._options.color.property.value).values;
-        const values = this._options.calculateColors(propValues);
-        return values.filter((v): v is number => typeof v === 'number');
-    }
-
-    private _getColorRange(): { min: number; max: number } {
-        let min = this._options.color.min.value;
-        let max = this._options.color.max.value;
-
-        if (isNaN(min) || isNaN(max)) {
-            const numericValues = this._getNumericColors();
-            const { min: dMin, max: dMax } = arrayMaxMin(numericValues);
-            if (isNaN(min)) min = dMin;
-            if (isNaN(max)) max = dMax;
-        }
-        return { min, max };
-    }
-
-    /**
-     * Get the mask of selected points based on the current selection mode
-     */
-    private _getSelectionMask(): boolean[] {
-        const n = this._property(this._options.x.property.value).values.length;
-        if (this._options.color.select.mode.value === 'all') {
-            return new Array<boolean>(n).fill(true);
-        }
-
-        let colors;
-        if (this._options.hasColors()) {
-            colors = this._property(this._options.color.property.value).values;
-        } else {
-            // "Fixed" color corresponds to a constant value
-            // (should not be used for filtering but should never happen)
-            colors = new Array<number>(n).fill(0.5);
-        }
-
-        let categoryValues: string[] | undefined;
-        const catProp = this._options.getCategorySelectionProperty();
-        if (catProp) {
-            const prop = this._property(catProp);
-            if (prop.string) {
-                const interner = prop.string;
-                categoryValues = prop.values.map((v) => interner.string(v));
-            }
-        }
-        return this._options.getFilterMask(colors, categoryValues);
     }
 
     /**
@@ -1995,6 +1742,85 @@ export class PropertiesMap {
         );
     }
 
+    /**
+     * Select either main, selected, dummy or all of them depending on `trace`, and return
+     * them in a mode usable with `Plotly.restyle`/{@link PropertiesMap._restyle}
+     */
+    private _selectTrace<T>(main: T, selected: T, dummy: T, trace?: number): T[] {
+        if (trace === 0) {
+            return [main];
+        } else if (trace === 1) {
+            return [selected];
+        } else if (trace === 2) {
+            return [dummy];
+        } else if (trace === undefined) {
+            return [main, selected, dummy];
+        } else {
+            throw Error('internal error: invalid trace number');
+        }
+    }
+
+    /**
+     * Get the numeric color values after applying all the scaling and transforms
+     * selected by the options.
+     */
+    private _getNumericColors(): number[] {
+        const propValues = this._property(this._options.color.property.value).values;
+        const values = this._options.calculateColors(propValues);
+        return values.filter((v): v is number => typeof v === 'number');
+    }
+
+    private _getColorRange(): { min: number; max: number } {
+        let min = this._options.color.min.value;
+        let max = this._options.color.max.value;
+
+        if (isNaN(min) || isNaN(max)) {
+            const numericValues = this._getNumericColors();
+            const { min: dMin, max: dMax } = arrayMaxMin(numericValues);
+            if (isNaN(min)) min = dMin;
+            if (isNaN(max)) max = dMax;
+        }
+        return { min, max };
+    }
+
+    /**
+     * Get the mask of selected points based on the current selection mode
+     */
+    private _getSelectionMask(): boolean[] {
+        const n = this._property(this._options.x.property.value).values.length;
+        if (this._options.color.select.mode.value === 'all') {
+            return new Array<boolean>(n).fill(true);
+        }
+
+        let colors;
+        if (this._options.hasColors()) {
+            colors = this._property(this._options.color.property.value).values;
+        } else {
+            // "Fixed" color corresponds to a constant value
+            // (should not be used for filtering but should never happen)
+            colors = new Array<number>(n).fill(0.5);
+        }
+
+        let categoryValues: string[] | undefined;
+        const catProp = this._options.getCategorySelectionProperty();
+        if (catProp) {
+            const prop = this._property(catProp);
+            if (prop.string) {
+                const interner = prop.string;
+                categoryValues = prop.values.map((v) => interner.string(v));
+            }
+        }
+        return this._options.getFilterMask(colors, categoryValues);
+    }
+
+    /** Get the length of the colorbar to accommodate for the legend */
+    private _colorbarLen(): number {
+        /// Heigh of a legend item in plot unit
+        const LEGEND_ITEM_HEIGH = 0.045;
+        const PADDING = 0.025;
+        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount() - PADDING;
+    }
+
     /** Should we show the legend for the various symbols used? */
     private _showlegend(): boolean[] {
         const result = [false, false, false];
@@ -2031,242 +1857,147 @@ export class PropertiesMap {
         }
     }
 
-    /**
-     * Select either main, selected, dummy or all of them depending on `trace`, and return
-     * them in a mode usable with `Plotly.restyle`/{@link PropertiesMap._restyle}
-     */
-    private _selectTrace<T>(main: T, selected: T, dummy: T, trace?: number): T[] {
-        if (trace === 0) {
-            return [main];
-        } else if (trace === 1) {
-            return [selected];
-        } else if (trace === 2) {
-            return [dummy];
-        } else if (trace === undefined) {
-            return [main, selected, dummy];
-        } else {
-            throw Error('internal error: invalid trace number');
-        }
-    }
-
-    /** Get the length of the colorbar to accommodate for the legend */
-    private _colorbarLen(): number {
-        /// Heigh of a legend item in plot unit
-        const LEGEND_ITEM_HEIGH = 0.045;
-        const PADDING = 0.025;
-        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount() - PADDING;
-    }
-
-    /** Is the the current plot a 3D plot? */
-    private _is3D(): boolean {
-        return this._options.is3D();
-    }
-
     /** How many symbols are on this plot?*/
     private _symbolsCount(): number {
         if (this._options.symbol.value !== '') {
             const property = this._property(this._options.symbol.value);
             assert(property.string !== undefined);
             return property.string.strings().length;
-        } else {
-            return 0;
         }
+        return 0;
     }
 
-    /** Switch current plot from 2D to 3D */
-    private _switch3D(): void {
-        assert(this._is3D());
-        this._options.z.enable();
-
-        // Ensure 3D traces are prepared
-        // Show selected environments markers is handled by _getTraces logic for 3D
-
-        // _switch3D logic for markers:
-        for (const data of this._selected.values()) {
-            data.toggleVisible(false);
+    private _title(name: string): string {
+        let propertyTitle = name;
+        if (name !== '') {
+            const units = this._property(name).units;
+            if (units !== undefined) {
+                propertyTitle = name + ` / ${units}`;
+            }
         }
-        this._updateMarkers();
-
-        // We do a full react to update config (modebar)
-        // Settings (like markers) are applied in _getTraces/_getLayout
-        // which rely on _options and internal state. _options.z is enabled above.
-
-        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+        return propertyTitle;
     }
 
-    /** Switch current plot from 3D back to 2D */
-    private _switch2D(): void {
-        assert(!this._is3D());
-        this._options.z.disable();
+    // ======================================================================
+    // Axis & View Helpers
+    // ======================================================================
 
-        // Show selected environments markers
-        for (const data of this._selected.values()) {
-            data.toggleVisible(true);
-        }
+    private _handleAxisPropertyChange(axis: 'x' | 'y'): void {
+        const axisOptions = this._options[axis];
 
-        // We do a full react to update config (modebar)
-        // _getTraces uses _sizes() and options to set marker line width and size
-        // consistently in 2D and 3D
+        // Reset min/max when changing property to trigger autoscale
+        axisOptions.min.value = NaN;
+        axisOptions.max.value = NaN;
 
-        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
-    }
+        // Recompute LOD since axis property changed
+        this._computeLOD();
 
-    /**
-     * Get the Plotly configuration based on current mode (2D/3D)
-     */
-    private _getConfig(): Config {
-        // Clone default config
-        const config = { ...DEFAULT_CONFIG };
-        config.modeBarButtonsToRemove = [...DEFAULT_CONFIG.modeBarButtonsToRemove];
-        config.modeBarButtonsToAdd = [...DEFAULT_CONFIG.modeBarButtonsToAdd];
+        // Request a full restyle of traces
+        this._restyleFull();
+
+        this._relayout({
+            [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
+            [`${axis}axis.title.text`]: this._title(axisOptions.property.value),
+        } as unknown as Layout);
 
         if (this._is3D()) {
-            config.modeBarButtonsToRemove.push('resetCameraDefault3d');
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            config.modeBarButtonsToAdd = [
-                [
-                    {
-                        name: 'Reset View',
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        icon: (Plotly as any).Icons.home,
-                        click: () => {
-                            this._resetToGlobalView();
-                        },
-                    },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ] as any,
-                ...config.modeBarButtonsToAdd,
-            ];
-        }
-
-        return config as unknown as Config;
-    }
-
-    /**
-     * Helper to trigger a full update of the plot traces (main, selected, dummy)
-     * when data, styling, or selection changes.
-     */
-    private _restyleFull(layoutUpdate?: Partial<Layout>): void {
-        const fullUpdate: Record<string, unknown> = {
-            x: this._coordinates(this._options.x),
-            y: this._coordinates(this._options.y),
-            z: this._coordinates(this._options.z),
-            'marker.color': this._colors(),
-            'marker.size': this._sizes(),
-            'marker.symbol': this._symbols(),
-            'marker.line.color': this._lineColors(),
-            hovertemplate: this._options.hovertemplate(),
-            customdata: this._colorValues(),
-            'marker.opacity': this._options.color.opacity.value / 100,
-            visible: this._selectTrace(true, true, this._options.hasColors()),
-        };
-
-        const layout = layoutUpdate || {};
-
-        if (layoutUpdate || this._is3D()) {
-            if (this._is3D() && !('scene.camera' in layout)) {
-                // explicitely preserve the camera position when updating the plot
-                // to prevent it from snapping back to the default position
-                // see https://github.com/lab-cosmo/chemiscope/issues/310
-                const currentLayout = this._plot._fullLayout;
-                if (currentLayout.scene !== undefined) {
-                    // @ts-expect-error scene is defined in the layout
-                    layout['scene.camera'] = currentLayout.scene.camera;
-                }
-            }
-
-            void Plotly.update(
-                this._plot,
-                fullUpdate as unknown as Data,
-                layout as Layout,
-                [0, 1, 2]
-            );
+            this._relayout({ [`scene.${axis}axis.autorange`]: true } as unknown as Layout);
         } else {
-            // Update main (0), selected (1) and dummy (2) traces
-            // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
-            // while keeping the _restyle wrapper synchronous for legacy calls.
-            void Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
+            this._relayout({ [`${axis}axis.autorange`]: true } as unknown as Layout);
+        }
+
+        const bounds = this._getBounds();
+        this._setScaleStep(bounds[axis], axis);
+    }
+
+    /** Sync axis min/max so the UI reflects the current visible ranges in the plot */
+    private _updateAxisSettings(bounds: Bounds): void {
+        this._options.x.min.value = bounds.x[0];
+        this._options.x.max.value = bounds.x[1];
+        this._options.y.min.value = bounds.y[0];
+        this._options.y.max.value = bounds.y[1];
+
+        if (bounds.z !== undefined) {
+            this._options.z.min.value = bounds.z[0];
+            this._options.z.max.value = bounds.z[1];
         }
     }
 
-    /**
-     * Computes the subset of points to display based on spatial grid binning (LOD).
-     */
-    private _computeLOD(bounds?: Bounds): void {
-        // check if LOD is enabled
-        if (!this._options.useLOD.value) {
-            this._lodIndices = null;
-            return;
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    private _setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
+        if (axisBounds !== undefined) {
+            // round to 10 decimal places so it does not break in Firefox
+            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
+            const minElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-min`);
+            const maxElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-max`);
+            minElement.step = `${step}`;
+            maxElement.step = `${step}`;
         }
-
-        const xProp = this._options.x.property.value;
-        const yProp = this._options.y.property.value;
-        const zProp = this._options.z.property.value;
-
-        const xValues = this._property(xProp).values;
-
-        // Check threshold
-        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
-            this._lodIndices = null;
-            return;
-        }
-
-        const yValues = this._property(yProp).values;
-        const is3D = this._is3D() && zProp !== '';
-        const zValues = is3D ? this._property(zProp).values : null;
-
-        const lodSet = new Set<number>();
-
-        // Coarse pass
-        // Compute a sparser "global" grid of points for the full range of the dataset
-        // to show "something" when we rotate, pan or zoom
-
-        const lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
-            undefined,
-            PropertiesMap.LOD_THRESHOLD / 10
-        );
-
-        for (const id of lodIndices) {
-            lodSet.add(id);
-        }
-
-        // Fine pass
-        // Do a higher resolution subsampling for the points that are actually visible
-        const fineIndices =
-            is3D && zValues && this._options.camera.value && bounds
-                ? computeScreenSpaceLOD(
-                      xValues,
-                      yValues,
-                      zValues,
-                      this._options.camera.value,
-                      bounds,
-                      PropertiesMap.LOD_THRESHOLD / 2
-                  )
-                : computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD);
-
-        for (const id of fineIndices) {
-            lodSet.add(id);
-        }
-
-        this._lodIndices = Array.from(lodSet).sort((a, b) => a - b);
     }
 
-    /**
-     * Helper to filter data arrays using the computed LOD indices.
-     */
-    private _applyLOD<T>(values: T[]): T[] {
-        if (this._lodIndices === null) {
-            return values;
+    // Get the current boundaries on x/y/z axis
+    private _getBounds(): Bounds {
+        if (this._is3D()) {
+            // HACK: `_fullLayout` is not public, so it might break
+            const layout = this._plot._fullLayout.scene;
+            return {
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
+                z: layout.zaxis.range as [number, number],
+            };
+        } else {
+            const layout = this._plot._fullLayout;
+            return {
+                x: layout.xaxis.range as [number, number],
+                y: layout.yaxis.range as [number, number],
+            };
+        }
+    }
+
+    // Computes the pixel coordinate inside the plot div of a given value along
+    // the given axis
+    private _pixelCoordinate(value: number, axisName: 'x' | 'y'): number {
+        assert(!this._is3D());
+        let axis;
+        switch (axisName) {
+            case 'x':
+                axis = this._plot._fullLayout.xaxis;
+                break;
+            case 'y':
+                axis = this._plot._fullLayout.yaxis;
+                break;
         }
 
-        const result = new Array<T>(this._lodIndices.length);
-        for (let i = 0; i < this._lodIndices.length; i++) {
-            result[i] = values[this._lodIndices[i]];
+        return axis.l2p(value) + axis._offset;
+    }
+
+    // ======================================================================
+    // Interaction & Event Handlers
+    // ======================================================================
+
+    /**
+     * Function used as callback to update the axis ranges in settings after
+     * the user changes zoom or range on the plot
+     */
+    private _afterplot(): void {
+        if (this._lodBusy) {
+            return;
         }
-        return result;
+
+        // Set camera
+        if (this._is3D()) {
+            const { camera, aspectratio } = this._plot._fullLayout.scene;
+            this._options.camera.setValue(plotlyToCamera({ camera, aspectratio }), 'DOM');
+        }
+
+        const bounds = this._getBounds();
+
+        this._updateAxisSettings(bounds);
+
+        // Update markers for 2D mode
+        if (!this._is3D()) {
+            this._updateMarkers();
+        }
     }
 
     /**
@@ -2329,28 +2060,65 @@ export class PropertiesMap {
         this._afterplot();
     }
 
+    /** Switch current plot from 2D to 3D */
+    private _switch3D(): void {
+        assert(this._is3D());
+        this._options.z.enable();
+
+        // Ensure 3D traces are prepared
+        // Show selected environments markers is handled by _getTraces logic for 3D
+
+        // _switch3D logic for markers:
+        for (const data of this._selected.values()) {
+            data.toggleVisible(false);
+        }
+        this._updateMarkers();
+
+        // We do a full react to update config (modebar)
+        // Settings (like markers) are applied in _getTraces/_getLayout
+        // which rely on _options and internal state. _options.z is enabled above.
+
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+    }
+
+    /** Switch current plot from 3D back to 2D */
+    private _switch2D(): void {
+        assert(!this._is3D());
+        this._options.z.disable();
+
+        // Show selected environments markers
+        for (const data of this._selected.values()) {
+            data.toggleVisible(true);
+        }
+
+        // We do a full react to update config (modebar)
+        // _getTraces uses _sizes() and options to set marker line width and size
+        // consistently in 2D and 3D
+
+        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+    }
+
+    // ======================================================================
+    // Markers Management
+    // ======================================================================
+
     /**
-     * Function used as callback to update the axis ranges in settings after
-     * the user changes zoom or range on the plot
+     * Processes the markers by updating their current value to structure or environment index on the current target
+     * In 'structure' target, it set structure index, and in 'atom' target its environment index
      */
-    private _afterplot(): void {
-        if (this._lodBusy) {
-            return;
-        }
-
-        // Set camera
-        if (this._is3D()) {
-            const { camera, aspectratio } = this._plot._fullLayout.scene;
-            this._options.camera.setValue(plotlyToCamera({ camera, aspectratio }), 'DOM');
-        }
-
-        const bounds = this._getBounds();
-
-        this._updateAxisSettings(bounds);
-
-        // Update markers for 2D mode
-        if (!this._is3D()) {
-            this._updateMarkers();
+    private _handleMarkers() {
+        for (const [key, marker] of this._selected.entries()) {
+            if (this._target === 'structure') {
+                marker.current = this._indexer.fromEnvironment(marker.current, 'atom').structure;
+            } else {
+                const environment = this._indexer.fromStructure(
+                    marker.current,
+                    'atom'
+                )?.environment;
+                assert(environment !== undefined);
+                marker.current = environment;
+            }
+            this._selected.set(key, marker);
         }
     }
 
@@ -2427,52 +2195,73 @@ export class PropertiesMap {
         }
     }
 
-    // Get the current boundaries on x/y/z axis
-    private _getBounds(): Bounds {
-        if (this._is3D()) {
-            // HACK: `_fullLayout` is not public, so it might break
-            const layout = this._plot._fullLayout.scene;
-            return {
-                x: layout.xaxis.range as [number, number],
-                y: layout.yaxis.range as [number, number],
-                z: layout.zaxis.range as [number, number],
-            };
-        } else {
-            const layout = this._plot._fullLayout;
-            return {
-                x: layout.xaxis.range as [number, number],
-                y: layout.yaxis.range as [number, number],
-            };
-        }
-    }
+    // ======================================================================
+    // Level of Detail (LOD)
+    // ======================================================================
 
-    // Computes the pixel coordinate inside the plot div of a given value along
-    // the given axis
-    private _pixelCoordinate(value: number, axisName: 'x' | 'y'): number {
-        assert(!this._is3D());
-        let axis;
-        switch (axisName) {
-            case 'x':
-                axis = this._plot._fullLayout.xaxis;
-                break;
-            case 'y':
-                axis = this._plot._fullLayout.yaxis;
-                break;
+    /**
+     * Computes the subset of points to display based on spatial grid binning (LOD).
+     */
+    private _computeLOD(bounds?: Bounds): void {
+        // check if LOD is enabled
+        if (!this._options.useLOD.value) {
+            this._lodIndices = null;
+            return;
         }
 
-        return axis.l2p(value) + axis._offset;
-    }
+        const xProp = this._options.x.property.value;
+        const yProp = this._options.y.property.value;
+        const zProp = this._options.z.property.value;
 
-    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private _setScaleStep(axisBounds: number[], name: 'x' | 'y' | 'z' | 'color'): void {
-        if (axisBounds !== undefined) {
-            // round to 10 decimal places so it does not break in Firefox
-            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-min`);
-            const maxElement = this._options.getModalElement<HTMLInputElement>(`map-${name}-max`);
-            minElement.step = `${step}`;
-            maxElement.step = `${step}`;
+        const xValues = this._property(xProp).values;
+
+        // Check threshold
+        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
+            this._lodIndices = null;
+            return;
         }
+
+        const yValues = this._property(yProp).values;
+        const is3D = this._is3D() && zProp !== '';
+        const zValues = is3D ? this._property(zProp).values : null;
+
+        const lodSet = new Set<number>();
+
+        // Coarse pass
+        // Compute a sparser "global" grid of points for the full range of the dataset
+        // to show "something" when we rotate, pan or zoom
+
+        const lodIndices = computeLODIndices(
+            xValues,
+            yValues,
+            zValues,
+            undefined,
+            PropertiesMap.LOD_THRESHOLD / 10
+        );
+
+        for (const id of lodIndices) {
+            lodSet.add(id);
+        }
+
+        // Fine pass
+        // Do a higher resolution subsampling for the points that are actually visible
+        const fineIndices =
+            is3D && zValues && this._options.camera.value && bounds
+                ? computeScreenSpaceLOD(
+                      xValues,
+                      yValues,
+                      zValues,
+                      this._options.camera.value,
+                      bounds,
+                      PropertiesMap.LOD_THRESHOLD / 2
+                  )
+                : computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD);
+
+        for (const id of fineIndices) {
+            lodSet.add(id);
+        }
+
+        this._lodIndices = Array.from(lodSet).sort((a, b) => a - b);
     }
 
     /**
@@ -2493,23 +2282,63 @@ export class PropertiesMap {
         this._lodBusy = false;
     }
 
-    /** Sync axis min/max so the UI reflects the current visible ranges in the plot */
-    private _updateAxisSettings(bounds: Bounds): void {
-        this._options.x.min.value = bounds.x[0];
-        this._options.x.max.value = bounds.x[1];
-        this._options.y.min.value = bounds.y[0];
-        this._options.y.max.value = bounds.y[1];
-
-        if (bounds.z !== undefined) {
-            this._options.z.min.value = bounds.z[0];
-            this._options.z.max.value = bounds.z[1];
+    /**
+     * Helper to filter data arrays using the computed LOD indices.
+     */
+    private _applyLOD<T>(values: T[]): T[] {
+        if (this._lodIndices === null) {
+            return values;
         }
-    }
-}
 
-/** Extract the data associated with the first `path` element in an SVG string */
-function extractSvgPath(svg: string) {
-    const doc = document.createElement('div');
-    doc.innerHTML = svg;
-    return doc.getElementsByTagName('path')[0].getAttribute('d');
+        const result = new Array<T>(this._lodIndices.length);
+        for (let i = 0; i < this._lodIndices.length; i++) {
+            result[i] = values[this._lodIndices[i]];
+        }
+        return result;
+    }
+
+    // ======================================================================
+    // General Helpers
+    // ======================================================================
+
+    /** Get the property with the given name */
+    private _property(name: string): NumericProperty {
+        const result = this._data[this._target][name];
+        if (result === undefined) {
+            throw Error(`unknown property '${name}' requested in map`);
+        }
+        return result;
+    }
+
+    /** Returns the properties related to the target (structure or environment) */
+    private _getCurrentProperties() {
+        const properties = this._data[this._target];
+        const propertiesNames = Object.keys(properties);
+        if (propertiesNames.length < 2) {
+            // better error message in case the user forgot to give the
+            // environments in the data
+            if (this._target === 'structure') {
+                if (Object.keys(this._data['atom']).length >= 2) {
+                    throw Error(
+                        'could not find enough structure properties to display, \n                        but there are atom properties. You could choose "atom" as \n                        target to display them.'
+                    );
+                }
+            }
+
+            let message = 'we need at least two properties to plot in the map';
+            if (propertiesNames.length === 0) {
+                message += ', we have none';
+            } else {
+                message += `, we have only one: '${propertiesNames[0]}'`;
+            }
+
+            throw Error(message);
+        }
+        return properties;
+    }
+
+    /** Is the the current plot a 3D plot? */
+    private _is3D(): boolean {
+        return this._options.is3D();
+    }
 }

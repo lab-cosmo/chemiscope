@@ -220,3 +220,35 @@ export function fixedWidthFloat(value: number, width: number = 4): string {
         }
     }
 }
+
+/**
+ * Generates a formatted label for a property with a given transformation.
+ *
+ * @param property The name of the property.
+ * @param transform The transformation applied ('inverse', 'log', 'sqrt', 'linear').
+ * @param html_format If true, uses HTML tags (e.g., <sup>). If false, uses Unicode characters.
+ * @returns The formatted label string.
+ */
+export function transformedAxisLabel(
+    property: string,
+    transform: string,
+    html_format: boolean
+): string {
+    let title = property;
+    switch (transform) {
+        case 'inverse':
+            title = html_format ? `(${title})<sup>-1</sup>` : `(${title})⁻¹`;
+            break;
+        case 'log':
+            title = html_format ? `log<sub>10</sub>(${title})` : `log₁₀(${title})`;
+            break;
+        case 'sqrt':
+            title = html_format ? `&#x221A;(${title})` : `√(${title})`;
+            break;
+        case 'linear':
+            break;
+        default:
+            break;
+    }
+    return title;
+}

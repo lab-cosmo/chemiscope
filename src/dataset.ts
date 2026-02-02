@@ -661,7 +661,7 @@ function checkProperties(
             if (!isArrayString(propertyParameters)) {
                 throw Error(`'properties['${key}'].parameters' should be an array of strings`);
             }
-            // check if the length of parameters is 1 TODO: remove when support for multiple parameters is ready
+            // check if the length of parameters is 1; currently only single parameter supported
             if (propertyParameters.length !== 1) {
                 throw Error(`'properties['${key}'].parameters' should contain a single parameter`);
             }

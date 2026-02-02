@@ -11,4 +11,5 @@
 
 export { ViewersGrid } from './grid';
 export { StructureOptions } from './options';
-export { MoleculeViewer, LoadOptions } from './viewer';
+export { MoleculeViewer } from './viewer';
+export { LoadOptions } from './utils';
