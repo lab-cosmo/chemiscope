@@ -598,7 +598,8 @@ export class PropertiesMap {
         this._connectSizeSettings();
 
         this._options.markerOutline.onchange.push(() => {
-            void this._react(this._getTraces(), this._getLayout());
+            const width = this._options.markerOutline.value ? 0.5 : 0;
+            this._restyle({ 'marker.line.width': width } as Data, 0);
         });
 
         this._options.joinPoints.onchange.push(() => {
