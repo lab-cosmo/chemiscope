@@ -40,10 +40,20 @@ bibliography: paper.bib
 ---
 
 # Summary
-Chemiscope is an interactive visualization viewer for exploring structure–property
-relationships in molecular and materials datasets [@Fraux2020]. The original project
-provided a lightweight, browser-based interface to link embedding maps with 3D
-renderings of structures and atomic environments. With the _1.0.0_ release the project matures into a cross-platform visualizer that embeds the interactive viewer into Jupyter notebooks [@Jupyter], web application frameworks (Streamlit), and Sphinx-generated documentation [@sphinx], while preserving the standalone web viewer and format. The release also extends support for common atomistic Python toolkits [@ase-paper; @MDAnalysis; @STK] and scales interactive exploration to datasets containing hundreds of thousands of points.
+Chemiscope is an interactive visualization tool for exploring structure–property
+relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
+e.g., a low-dimensional embedding or property–property scatter plot, to an interactive
+3D structure viewer, enabling rapid inspection of clusters and outliers by moving
+between points in feature space and the corresponding atomic configurations.
+
+Chemiscope 1.0 turns the original browser-based visualizer into a multi-platform tool
+that fits into Python-centric workflows. The same visualization can be rendered as a
+standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included in
+Streamlit web-applications, or integrated into Sphinx-built documentation and
+sphinx-gallery examples for reproducible teaching and software manuals [@sphinx].
+Chemiscope 1.0 also provides support for visualizing datasets directly from widely used
+atomistic Python toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk
+[@STK].
 
 ![Overview of chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
 
@@ -86,9 +96,15 @@ dimensionality reduction based on last-layer features of PET-MAD universal inter
 chemiscope.explore(structures, featurizer="pet-mad-1.0")
 ```
 
-Chemiscope package can be installed via pip (`pip install chemiscope`), with optional dependencies for the explore functionality (`pip install chemiscope[explore]`) and Streamlit support (`pip install chemiscope[streamlit]`). The standalone web application is accessible at https://chemiscope.org.
+Chemiscope datasets can be exported as standalone artifacts that remain viewable in a
+browser, supporting dissemination alongside publications and long-term access to
+interactive figures. Integration with the Materials Cloud is an additional route to
+archive computational data and make interactive visualization available directly from
+the record page [@Talirz_2020]. (Sofiia: should we cite some papers that do this?)
 
-TODO: say about materials cloud intergration?
+Chemiscope is distributed as an open-source package that can be installed from PyPI, and
+the default standalone viewer is available online at https://chemiscope.org for quick
+inspection of datasets without local setup.
 
 # Acknowledgements
 
