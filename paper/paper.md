@@ -48,18 +48,35 @@ between points in feature space and the corresponding atomic configurations.
 
 Chemiscope 1.0 turns the original browser-based visualizer into a multi-platform tool
 that fits into Python-centric workflows. The same visualization can be rendered as a
-standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included in
+standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included to
 Streamlit web-applications, or integrated into Sphinx-built documentation and
-sphinx-gallery examples for reproducible teaching and software manuals [@sphinx].
-Chemiscope 1.0 also provides support for visualizing datasets directly from widely used
-atomistic Python toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk
-[@STK].
+sphinx-gallery examples for reproducible software manuals [@sphinx]. Chemiscope 1.0 also
+provides support for visualizing datasets directly from widely used atomistic Python
+toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk [@STK].
 
 ![Overview of chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
 
-Computational chemistry and materials science increasingly rely on the large datasets that combine atomic structures, local environments, computed properties and often visualized through descriptors (TODO: citations). Identifying correlations, outliers, and structure–property relationships in such data often requires simultaneous inspection of reduced-dimensional representations, scalar or vector properties, and the underlying geometry. While the original chemiscope addressed the need for such visualization [@Fraux2020], modern computational workflows increasingly rely on Python environments for data analysis.
+Sofiia: add citations
 
-Recent chemiscope 1.0 addresses this gap through several advancements. Native Jupyter integration provides interactive widgets, supporting bidirectional communication between the visualization and the notebook kernel. Streamlit component enable building interactive web applications, while Sphinx extensions allow direct embedding of chemiscope viewers in documentation with sphinx-gallery integration for executable examples [@sphinx]. A unified Python API provides a consistent interface for creating visualizations across ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk structures [@STK]. Finally, built-in support for machine learning featurizers, including integration with metatomic models [@metatensor], enables automated dimensionality reduction and exploration of chemical space without manual descriptor engineering.
+Atomistic modeling workflows produce collections of molecular and materials structures
+together with associated quantities, including energies, forces, charges, and other
+scalar or tensorial properties. These datasets are commonly explored using
+post-processing analysis, including property–property correlations and low-dimensional
+projections, to relate abstract representations to the underlying atomic structures.
+Interactive visualization provides a practical means to interpret structure–property
+relationships, verify computational results, identify unexpected patterns, and explore
+learned representations.
+
+For this purpose, Chemiscope has been adopted across multiple atomistic modeling
+studies, with interactive viewers shared alongside publications and archived datasets on
+platforms such as Materials Cloud [@Talirz_2020]. While complementary visualization
+tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
+@Stukowski2010] to WebGL-based molecular viewers as 3Dmol.js and NGLview [@Rego2015;
+@Nguyen2017], Chemiscope distinguishes itself by providing a single dataset
+representation and rendering stack that can be reused across multiple contexts. This is
+especially important in Python-centric workflows, where the same visualization is often
+needed in a Jupyter notebook for analysis, a web view for sharing, and documentation for
+reproducibility and teaching [@JupyterNotebook].
 
 # Implementation
 **Very drafty**
