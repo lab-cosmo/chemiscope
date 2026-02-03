@@ -22,6 +22,7 @@ def _stk_valid_structures(
     elif (
         HAVE_STK
         and isinstance(structures, list)
+        and len(structures) > 0
         and isinstance(structures[0], Molecule)
     ):
         for structure in structures:

@@ -19,6 +19,9 @@ def _ase_valid_structures(structures):
     except TypeError:
         return [], False
 
+    if len(structures_list) == 0:
+        return [], False
+
     if HAVE_ASE and isinstance(structures_list[0], ase.Atoms):
         for structure in structures_list:
             assert isinstance(structure, ase.Atoms)
