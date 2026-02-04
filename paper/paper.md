@@ -43,18 +43,18 @@ bibliography: paper.bib
 Chemiscope is an interactive visualization tool for exploring structure–property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
 e.g., a low-dimensional embedding or property–property scatter plot, to an interactive
-3D structure viewer, enabling rapid inspection of clusters and outliers by moving
-between points in feature space and the corresponding atomic configurations.
+3D structure viewer, streamlining inspection of clusters and outliers by moving between
+points in feature space and the corresponding atomic configurations.
 
 Chemiscope 1.0 turns the original browser-based visualizer into a multi-platform tool
 that fits into Python-centric workflows. The same visualization can be rendered as a
-standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included to
+standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included in
 Streamlit web-applications, or integrated into Sphinx-built documentation and
 sphinx-gallery examples for reproducible software manuals [@sphinx]. Chemiscope 1.0 also
 provides support for visualizing datasets directly from widely used atomistic Python
 toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk [@STK].
 
-![Overview of chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
+![Overview of Chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
 
 Sofiia: add citations
 
@@ -76,52 +76,76 @@ tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
 representation and rendering stack that can be reused across multiple contexts. This is
 especially important in Python-centric workflows, where the same visualization is often
 needed in a Jupyter notebook for analysis, a web view for sharing, and documentation for
-reproducibility and teaching [@JupyterNotebook].
+reproducibility and teaching [@JupyterNotebook; @Goscinski2025scicodewidgets; @Du2024].
 
 # Implementation
-**Very drafty**
 
-Chemiscope 1.0 maintains its core implementation in TypeScript and Python.
+Chemiscope 1.0 is implemented as a TypeScript visualization library with the Python
+package providing platform-specific integrations. The Python API builds the chemiscope
+dataset from atomic structures, associated properties, and visualization settings, and
+exports it in the JSON schema consumed by the JavaScript renderer. The interface is
+organized as a linked map, structure, and info panels. The map panel uses Plotly.js to
+render 2D and 3D scatter plots [@plotlyjs], the structure panel uses 3Dmol.js for
+molecular rendering and supports both atomistic styles and biomolecular cartoons.
 
-To handle datasets with hundreds of thousands of data points while maintaining interactive frame rates, chemiscope 1.0 implements adaptive Level of Detail (LOD) rendering.
+The map rendering is a primary performance bottleneck for large datasets. Chemiscope 1.0
+introduces adaptive Level of Detail (LOD) rendering for scatter views, which downsample
+the huge datasets based on screen-space density. In practice, this handles the maps with
+more than 500,000 points on commodity hardware, without requiring users to pre-filter or
+manually decimate their data.
 
-The Jupyter widget implementation uses the ipywidgets framework to establish bidirectional communication between Python and JavaScript [@IPython]. Users can create visualizations with a single function call:
+[possibly LOD plot here]
+
+Chemiscope 1.0 can render atom-centered shapes to represent vectorial and tensorial
+properties, including arrows (e.g., dipoles or forces), ellipsoids (e.g.,
+polarizabilities), and user-defined triangular meshes. For biomolecular systems, it
+supports cartoon representations based on residue and chain information. The structure
+viewer handles a grid layout for side-by-side comparison of multiple structures or local
+environments.
+
+In Jupyter notebooks, the viewer is exposed as a widget with bidirectional communication
+between Python and the JavaScript runtime, implemented via traitlets [@Jupyter;
+@IPython]. The widget supports programmatic control of the visualization, including
+selection synchronization, settings modification, and export of map snapshots. Users can
+create a visualization by preparing structures and associated properties and calling
+`chemiscope.show`:
 
 ```python
-import chemiscope
 import ase.io
+import chemiscope
 
 structures = ase.io.read("trajectory.xyz", ":")
-chemiscope.show(structures, properties={"energy": energies})
+
+# Extract properties present in the trajectory (e.g., energy, forces)
+properties = chemiscope.extract_properties(structures)
+
+# Set default settings for multi-frame trajectories
+settings = chemiscope.quick_settings(trajectory=True)
+
+# Display the viewer
+chemiscope.show(structures=structures, properties=properties, settings=settings)
 ```
 
-The widget supports programmatic control of the visualization, including selection synchronization, settings modification, and export of map snapshots.
+For web applications built with Streamlit, Chemiscope component renders a viewer from an
+in-memory dataset and propagates user interaction (e.g., selection and settings changes)
+back to Python, coupling to other Streamlit widgets. For reproducible documentation,
+Chemiscope includes a Sphinx extension that embeds interactive viewers alongside
+narrative text and executable examples [@sphinx].
 
-Chemiscope 1.0 introduces support for visualizing atom-centered shapes, enabling the
-display of tensorial and vectorial properties directly on atomic structures. For
-example, users can render ellipsoids to represent polarizability tensors or atomic
-displacement parameters, arrows to visualize forces or dipole moments, and custom shapes defined by arbitrary triangular meshes.
-
-For biomolecular systems, chemiscope now supports cartoon representations ...
-
-The structure panel grid layout now enables simultaneous comparison of up to nine different structures or atomic environments. 
-
-Finally, the `chemiscope.explore()` function provides automatic featurization and
-dimensionality reduction based on last-layer features of PET-MAD universal interatomic potential [@Mazitov2025] projected into reduced latent feature space upon MAD dataset [@MAD],  without requiring user-specified descriptors or dimensionality reduction parameters.
+Finally, the package includes `explore` workflow that generates interactive
+visualizations starting from structures alone. It integrates metatomic models
+[@metatensor], particularly, the PET-MAD model [@Mazitov2025] which is used by default,
+to derive informative representations and produce map coordinates without requiring
+manual descriptor engineering or dimentionality reduction [@MAD]:
 
 ```python
 chemiscope.explore(structures, featurizer="pet-mad-1.0")
 ```
 
-Chemiscope datasets can be exported as standalone artifacts that remain viewable in a
-browser, supporting dissemination alongside publications and long-term access to
-interactive figures. Integration with the Materials Cloud is an additional route to
-archive computational data and make interactive visualization available directly from
-the record page [@Talirz_2020]. (Sofiia: should we cite some papers that do this?)
-
 Chemiscope is distributed as an open-source package that can be installed from PyPI, and
 the default standalone viewer is available online at https://chemiscope.org for quick
-inspection of datasets without local setup.
+inspection of datasets without local setup. Optional features can be installed via
+extras: `pip install 'chemiscope[streamlit]'` and `pip install 'chemiscope[explore]'`.
 
 # Acknowledgements
 
