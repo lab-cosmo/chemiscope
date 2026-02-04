@@ -76,10 +76,10 @@ For this purpose, Chemiscope has been adopted across multiple atomistic modeling
 studies, with interactive viewers shared alongside publications and archived datasets on
 platforms such as Materials Cloud [@Talirz_2020]. While complementary visualization
 tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
-@Stukowski2010] to WebGL-based molecular viewers as 3Dmol.js and NGLview [@Rego2015;
+@Stukowski2010] to WebGL-based molecular viewers such as 3Dmol.js and NGLview [@Rego2015;
 @Nguyen2017], Chemiscope distinguishes itself by providing a single dataset
 representation and rendering stack that can be reused across multiple contexts. This is
-especially important in Python-centric workflows, where the same visualization is often
+especially important in Python-based workflows, where the same visualization is often
 needed in a Jupyter notebook for analysis, a web view for sharing, and documentation for
 reproducibility and teaching [@JupyterNotebook; @Goscinski2025scicodewidgets; @Du2024].
 
@@ -89,13 +89,15 @@ Chemiscope 1.0 is implemented as a TypeScript visualization library with the Pyt
 package providing platform-specific integrations. The Python API builds the chemiscope
 dataset from atomic structures, associated properties, and visualization settings, and
 exports it in the JSON schema consumed by the JavaScript renderer. The interface is
-organized as a linked map, structure, and info panels. The map panel uses Plotly.js to
+organized into linked map, structure, and information panels. The map panel uses Plotly.js to
 render 2D and 3D scatter plots [@plotlyjs], the structure panel uses 3Dmol.js for
 molecular rendering and supports both atomistic styles and biomolecular cartoons.
 
 The map rendering is a primary performance bottleneck for large datasets. Chemiscope 1.0
 introduces adaptive Level of Detail (LOD) rendering for scatter views, which downsample
-the huge datasets based on screen-space density. In practice, this handles the maps with
+large datasets based on screen-space density, i.e., how many points would overlap in the
+current view. As users zoom or change view parameters, the displayed subset is updated
+to preserve both responsiveness and visual structure. In practice, this handles maps with
 more than 500,000 points on commodity hardware, without requiring users to pre-filter or
 manually decimate their data.
 
@@ -130,7 +132,7 @@ chemiscope.show(structures=structures, properties=properties, settings=settings)
 ```
 
 For web applications built with Streamlit, Chemiscope component renders a viewer from an
-in-memory dataset and propagates user interaction (e.g., selection and settings changes)
+in-memory dataset and propagates user interactions (e.g., selection and settings changes)
 back to Python, coupling to other Streamlit widgets. For reproducible documentation,
 Chemiscope includes a Sphinx extension that embeds interactive viewers alongside
 narrative text and executable examples [@sphinx].
@@ -141,7 +143,7 @@ Finally, the package includes `explore` workflow that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
 [@metatensor], particularly, the PET-MAD model [@Mazitov2025] which is used by default,
 to derive informative representations and produce map coordinates without requiring
-manual descriptor engineering or dimentionality reduction [@MAD]:
+manual descriptor engineering or an explicit dimensionality reduction step [@MAD]:
 
 ```python
 chemiscope.explore(structures, featurizer="pet-mad-1.0")
