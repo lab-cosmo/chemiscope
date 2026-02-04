@@ -56,16 +56,16 @@ toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk [@STK].
 
 ![Overview of Chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
 
-Sofiia: add citations
-
 Atomistic modeling workflows produce collections of molecular and materials structures
 together with associated quantities, including energies, forces, charges, and other
 scalar or tensorial properties. These datasets are commonly explored using
-post-processing analysis, including property–property correlations and low-dimensional
-projections, to relate abstract representations to the underlying atomic structures.
-Interactive visualization provides a practical means to interpret structure–property
-relationships, verify computational results, identify unexpected patterns, and explore
-learned representations.
+post-processing analysis, including property–property correlations [@Huang2020;
+@Wurger2021] and low-dimensional projections [@orlov2025; @Tamura2022;
+@HernandezLeon2024], to relate abstract representations to the underlying atomic
+structures [@Chapman2022; @Nicholas2020]. Interactive visualization provides a practical
+means to interpret structure–property relationships [@Wurger2021], verify computational
+results, identify unexpected patterns [@xie2018], and explore learned representations
+[@Walsh2025mapping; @Cheng2020; @De2016].
 
 For this purpose, Chemiscope has been adopted across multiple atomistic modeling
 studies, with interactive viewers shared alongside publications and archived datasets on
@@ -93,8 +93,6 @@ introduces adaptive Level of Detail (LOD) rendering for scatter views, which dow
 the huge datasets based on screen-space density. In practice, this handles the maps with
 more than 500,000 points on commodity hardware, without requiring users to pre-filter or
 manually decimate their data.
-
-[possibly LOD plot here]
 
 Chemiscope 1.0 can render atom-centered shapes to represent vectorial and tensorial
 properties, including arrows (e.g., dipoles or forces), ellipsoids (e.g.,
@@ -131,6 +129,8 @@ in-memory dataset and propagates user interaction (e.g., selection and settings 
 back to Python, coupling to other Streamlit widgets. For reproducible documentation,
 Chemiscope includes a Sphinx extension that embeds interactive viewers alongside
 narrative text and executable examples [@sphinx].
+
+[LOD plot upon PET-MAD featurizer here ?]
 
 Finally, the package includes `explore` workflow that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
