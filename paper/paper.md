@@ -52,9 +52,14 @@ standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], includ
 Streamlit web-applications, or integrated into Sphinx-built documentation and
 sphinx-gallery examples for reproducible software manuals [@sphinx]. Chemiscope 1.0 also
 provides support for visualizing datasets directly from widely used atomistic Python
-toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], and stk [@STK].
+toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], stk [@STK], and
+Chemfiles [@chemfiles].
 
-![Overview of Chemiscope v1.0 cross-platform architecture. The Python API accepts structures from ASE, MDAnalysis, and stk, along with user-defined properties and visualization settings. These inputs can be rendered as an interactive Jupyter widget, embedded in Streamlit applications, integrated into Sphinx documentation, or exported for the standalone web application at chemiscope.org.](chemiscope-v1.0.0.png)
+![Overview of Chemiscope 1.0 cross-platform architecture. The Python API accepts
+structures from ASE, MDAnalysis, stk, and Chemfiles, along with user-defined properties and
+visualization settings. These inputs can be rendered as an interactive Jupyter widget,
+embedded in Streamlit applications, integrated into Sphinx documentation, or exported
+for the standalone web application at chemiscope.org.](chemiscope-v1.0.svg)
 
 Atomistic modeling workflows produce collections of molecular and materials structures
 together with associated quantities, including energies, forces, charges, and other
@@ -149,7 +154,7 @@ extras: `pip install 'chemiscope[streamlit]'` and `pip install 'chemiscope[explo
 
 # Acknowledgements
 
-The development of chemiscope 1.0 has been funded primarily by 
-the [NCCR MARVEL](http://nccr-marvel.ch/). 
+The development of Chemiscope 1.0 has been funded primarily by the [NCCR
+MARVEL](http://nccr-marvel.ch/).
 
 # References
