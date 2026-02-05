@@ -64,7 +64,7 @@ Atomistic modeling workflows produce collections of molecular and materials stru
 together with associated quantities, including energies, forces, charges, and other
 scalar or tensorial properties. These datasets are commonly explored using
 post-processing analysis, including property–property correlations [@Huang2020;
-@Wurger2021] and low-dimensional projections [@Helfrecht2020; @Jorgensen2025; @orlov2025; @Tamura2022;
+@Wurger2021] and low-dimensional projections [@Helfrecht2020; @Jorgensen2026; @orlov2025; @Tamura2022;
 @HernandezLeon2024], to relate abstract representations to the underlying atomic
 configurations [@Chapman2022; @Nicholas2020]. Interactive visualization provides a practical
 means to interpret structure–property relationships [@Wurger2021], verify computational
