@@ -21,7 +21,6 @@ authors:
     - name: Rose K. Cersonsky
       orcid: 0000-0003-4515-3441
       affiliation: 3
-      # TODO: confirm affiliation
     - name: Guillaume Fraux
       orcid: 0000-0003-4824-6512
       affiliation: 1
@@ -65,15 +64,14 @@ Atomistic modeling workflows produce collections of molecular and materials stru
 together with associated quantities, including energies, forces, charges, and other
 scalar or tensorial properties. These datasets are commonly explored using
 post-processing analysis, including property–property correlations [@Huang2020;
-@Wurger2021] and low-dimensional projections [@orlov2025; @Tamura2022;
+@Wurger2021] and low-dimensional projections [@Helfrecht2020; @Jorgensen2025; @orlov2025; @Tamura2022;
 @HernandezLeon2024], to relate abstract representations to the underlying atomic
-structures [@Chapman2022; @Nicholas2020]. Interactive visualization provides a practical
+configurations [@Chapman2022; @Nicholas2020]. Interactive visualization provides a practical
 means to interpret structure–property relationships [@Wurger2021], verify computational
 results, identify unexpected patterns [@xie2018], and explore learned representations
 [@Walsh2025mapping; @Cheng2020; @De2016].
 
-For this purpose, Chemiscope has been adopted across multiple atomistic modeling
-studies, with interactive viewers shared alongside publications and archived datasets on
+For this purpose, Chemiscope has been adopted across multiple atomistic modeling and coarse-grained studies, with interactive viewers shared alongside publications and archived datasets on
 platforms such as Materials Cloud [@Talirz_2020]. While complementary visualization
 tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
 @Stukowski2010] to WebGL-based molecular viewers such as 3Dmol.js and NGLview [@Rego2015;
