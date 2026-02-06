@@ -54,7 +54,7 @@ provides support for visualizing datasets directly from widely used atomistic Py
 toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], stk [@STK], and
 Chemfiles [@chemfiles].
 
-![Overview of Chemiscope 1.0 cross-platform architecture. The Python API accepts
+![Overview of Chemiscope 1.0 cross-platform support. The Python API accepts
 structures from ASE, MDAnalysis, stk, and Chemfiles, along with user-defined properties and
 visualization settings. These inputs can be rendered as an interactive Jupyter widget,
 embedded in Streamlit applications, integrated into Sphinx documentation, or exported
@@ -135,7 +135,12 @@ back to Python, coupling to other Streamlit widgets. For reproducible documentat
 Chemiscope includes a Sphinx extension that embeds interactive viewers alongside
 narrative text and executable examples [@sphinx].
 
-[LOD plot upon PET-MAD featurizer here ?]
+![50k random structures from the MD22 dataset [@MD22] visualized with Chemiscope by
+projecting them into the PET-MAD reduced latent space using `chemiscope.explore`. Panel
+a) shows the Chemiscope widget overall, panel b) a zoom-in of the map demonstrating
+adaptive level-of-detail rendering, panel c) the 3D view with selective coloring by
+cohesive energy, and panel d) the shape functionality displaying forces as
+arrows.](chemiscope-v1.0-overview.svg)
 
 Finally, the package includes `explore` workflow that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
