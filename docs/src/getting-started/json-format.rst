@@ -21,7 +21,7 @@ The chemiscope JSON file consists of these top-level entries:
      - Required?
    * - ``meta``
      - Dataset metadata (name, authors, etc.)
-     - No
+     - Yes
    * - ``structures``
      - List of atomic structures (coordinates, cell, bonds)
      - Yes
@@ -46,7 +46,7 @@ Below is the detailed description of the values types and examples for each entr
 Metadata (``meta``)
 ~~~~~~~~~~~~~~~~~~~
 
-Optional. Contains description of your dataset. The fields will be rendered as markdown.
+Required. Contains description of your dataset. The fields will be rendered as markdown.
 
 .. list-table:: Metadata fields
    :header-rows: 1
@@ -139,11 +139,6 @@ represented as an object with the following fields:
      - Unit cell vectors as ``[ax, ay, az, bx, by, bz, cx, cy, cz]`` (Å)
      - No
      - ``[10, 0, 0, 0, 10, 0, 0, 0, 10]``
-   * - ``pbc``
-     - bool[3]
-     - Periodic boundary conditions for x, y, z.
-     - No
-     - ``[true, true, true]``
    * - ``bonds``
      - integer[][3]
      - List of bonds as ``[[i, j, order], ...]`` (0-based atom indices).
@@ -236,7 +231,7 @@ Each property is an object with the following fields:
      - Property description
      - No
      - ``"DFT-calculated forces"``
-   * - ``parameter``
+   * - ``parameters``
      - string[]
      - For multidimensional: single parameter name (links to ``parameters`` top-level)
      - If multidimensional properties
@@ -534,8 +529,8 @@ Each shape kind supports additional parameters (in addition to the common ones a
      - Yes
    * - ``radius``
      - number
-     - Cylinder radius.
-     - Yes
+     - Cylinder radius (default: 0.1).
+     - No
 
 **Arrow**
 
@@ -554,16 +549,16 @@ Each shape kind supports additional parameters (in addition to the common ones a
      - Yes
    * - ``baseRadius``
      - number
-     - Shaft radius.
-     - Yes
+     - Shaft radius (default: 0.1).
+     - No
    * - ``headRadius``
      - number
-     - Arrowhead radius.
-     - Yes
+     - Arrowhead radius (default: 0.15).
+     - No
    * - ``headLength``
      - number
-     - Arrowhead length; may extend beyond base if the vector is short.
-     - Yes
+     - Arrowhead length; may extend beyond base if the vector is short (default: 0.2).
+     - No
 
 **Custom**
 
