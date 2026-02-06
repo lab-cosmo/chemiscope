@@ -785,9 +785,13 @@ Array of objects (one per viewer).
      - bool
      - Auto-rotate molecule
      - false
+   * - ``cartoon``
+     - bool
+     - Show cartoon representation (for biomolecules)
+     - false
    * - ``axes``
      - string
-     - Axis system: ``"none"|"xyz"|"abc"``
+     - Axis system: ``"off"|"xyz"|"abc"``
      - ``"xyz"``
    * - ``keepOrientation``
      - bool
