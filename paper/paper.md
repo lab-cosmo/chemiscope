@@ -12,7 +12,7 @@ authors:
     - name: Sofiia Chorna
       orcid: 0009-0008-7426-0856
       affiliation: 1
-    - name: Jakub Lala
+    - name: Jakub Lála
       orcid: 0000-0002-5424-5260
       affiliation: "1, 2"
     - name: Qianjun Xu
@@ -58,7 +58,7 @@ Chemfiles [@chemfiles].
 structures from ASE, MDAnalysis, stk, and Chemfiles, along with user-defined properties and
 visualization settings. These inputs can be rendered as an interactive Jupyter widget,
 embedded in Streamlit applications, integrated into Sphinx documentation, or exported
-for the standalone web application at chemiscope.org.](chemiscope-v1.0.svg)
+for the standalone web application at chemiscope.org.](chemiscope-v1.0.svg){width=100%}
 
 Atomistic modeling workflows produce collections of molecular and materials structures
 together with associated quantities, including energies, forces, charges, and other
@@ -84,12 +84,11 @@ reproducibility and teaching [@JupyterNotebook; @Goscinski2025scicodewidgets; @D
 # Implementation
 
 Chemiscope 1.0 is implemented as a TypeScript visualization library with the Python
-package providing platform-specific integrations. The Python API builds the chemiscope
+package providing platform-specific integrations. The Python API can be used to build a chemiscope
 dataset from atomic structures, associated properties, and visualization settings, and
-exports it in the JSON schema consumed by the JavaScript renderer. The interface is
+export it in the JSON schema consumed by the JavaScript renderer. The interface is
 organized into linked map, structure, and information panels. The map panel uses Plotly.js to
-render 2D and 3D scatter plots [@plotlyjs], the structure panel uses 3Dmol.js for
-molecular rendering and supports both atomistic styles and biomolecular cartoons.
+render 2D and 3D scatter plots [@plotlyjs], the structure panel uses 3Dmol.js for molecular rendering.
 
 The map rendering is a primary performance bottleneck for large datasets. Chemiscope 1.0
 introduces adaptive Level of Detail (LOD) rendering for scatter views, which downsample
@@ -97,7 +96,7 @@ large datasets based on screen-space density, i.e., how many points would overla
 current view. As users zoom or change view parameters, the displayed subset is updated
 to preserve both responsiveness and visual structure. In practice, this handles maps with
 more than 500,000 points on commodity hardware, without requiring users to pre-filter or
-manually decimate their data.
+manually decimate their data. Structure data can also be off-loaded to external files, reducing memory foodprint and inital loading time.
 
 Chemiscope 1.0 can render atom-centered shapes to represent vectorial and tensorial
 properties, including arrows (e.g., dipoles or forces), ellipsoids (e.g.,
@@ -129,7 +128,7 @@ settings = chemiscope.quick_settings(trajectory=True)
 chemiscope.show(structures=structures, properties=properties, settings=settings)
 ```
 
-For web applications built with Streamlit, Chemiscope component renders a viewer from an
+For web applications built with Streamlit, the Chemiscope component renders a viewer from an
 in-memory dataset and propagates user interactions (e.g., selection and settings changes)
 back to Python, coupling to other Streamlit widgets. For reproducible documentation,
 Chemiscope includes a Sphinx extension that embeds interactive viewers alongside
@@ -140,9 +139,9 @@ projecting them into the PET-MAD reduced latent space using `chemiscope.explore`
 a) shows the Chemiscope widget overall, panel b) a zoom-in of the map demonstrating
 adaptive level-of-detail rendering, panel c) the 3D view with selective coloring by
 cohesive energy, and panel d) the shape functionality displaying forces as
-arrows.](chemiscope-v1.0-overview.svg)
+arrows.](chemiscope-v1.0-overview.svg){width=100%}
 
-Finally, the package includes `explore` workflow that generates interactive
+Finally, the package includes an `explore` function that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
 [@metatensor], particularly, the PET-MAD model [@Mazitov2025] which is used by default,
 to derive informative representations and produce map coordinates without requiring
@@ -154,7 +153,7 @@ chemiscope.explore(structures, featurizer="pet-mad-1.0")
 
 Chemiscope is distributed as an open-source package that can be installed from PyPI, and
 the default standalone viewer is available online at https://chemiscope.org for quick
-inspection of datasets without local setup. Optional features can be installed via
+inspection of datasets without local installation. Optional features can be installed via
 extras: `pip install 'chemiscope[streamlit]'` and `pip install 'chemiscope[explore]'`.
 
 # Acknowledgements
