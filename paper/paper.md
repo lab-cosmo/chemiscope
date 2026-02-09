@@ -48,7 +48,7 @@ points in feature space and the corresponding atomic configurations.
 Chemiscope 1.0 turns the original browser-based visualizer into a multi-platform tool
 that fits into Python-centric workflows. The same visualization can be rendered as a
 standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included in
-Streamlit web-applications, or integrated into Sphinx-built documentation and
+Streamlit web applications, or integrated into Sphinx-built documentation and
 sphinx-gallery examples for reproducible software manuals [@sphinx]. Chemiscope 1.0 also
 provides support for visualizing datasets directly from widely used atomistic Python
 toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], stk [@STK], and
@@ -96,7 +96,7 @@ large datasets based on screen-space density, i.e., how many points would overla
 current view. As users zoom or change view parameters, the displayed subset is updated
 to preserve both responsiveness and visual structure. In practice, this handles maps with
 more than 500,000 points on commodity hardware, without requiring users to pre-filter or
-manually decimate their data. Structure data can also be off-loaded to external files, reducing memory foodprint and inital loading time.
+manually decimate their data. Structure data can also be off-loaded to external files, reducing memory footprint and initial loading time.
 
 Chemiscope 1.0 can render atom-centered shapes to represent vectorial and tensorial
 properties, including arrows (e.g., dipoles or forces), ellipsoids (e.g.,
