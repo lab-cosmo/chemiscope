@@ -2253,7 +2253,8 @@ export class PropertiesMap {
                       zValues,
                       this._options.camera.value,
                       bounds,
-                      PropertiesMap.LOD_THRESHOLD / 2
+                      PropertiesMap.LOD_THRESHOLD / 2,
+                      this._plot.clientWidth / this._plot.clientHeight || 1.0
                   )
                 : computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD);
 

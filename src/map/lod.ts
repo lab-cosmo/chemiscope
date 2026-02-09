@@ -15,6 +15,7 @@ import { CameraState, projectPoints } from '../utils/camera';
  * @param camera Current camera state (eye, center, up, zoom)
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
+ * @param aspectRatio Width/height ratio of plot area
  * @returns Array of indices to display
  */
 export function computeScreenSpaceLOD(
@@ -23,7 +24,8 @@ export function computeScreenSpaceLOD(
     zValues: number[],
     camera: CameraState,
     bounds?: Bounds,
-    maxPoints: number = 50000
+    maxPoints: number = 50000,
+    aspectRatio: number = 1.0
 ): number[] {
     if (bounds === undefined) {
         const xRange = arrayMaxMin(xValues);
@@ -39,12 +41,18 @@ export function computeScreenSpaceLOD(
     const projections = projectPoints(xValues, yValues, zValues, camera, bounds);
 
     // Bounds slightly larger to avoid popping at edges
-    const CLIP_SIZE = 2.2;
+    const BASE_CLIP_SIZE = 2.2;
+    // Adjust clip sizes based on aspect ratio
+    const CLIP_SIZE_X = BASE_CLIP_SIZE * Math.max(1, aspectRatio);
+    const CLIP_SIZE_Y = BASE_CLIP_SIZE * Math.max(1, 1 / aspectRatio);
 
     // Filter visible points
     const visibleIds: number[] = [];
     for (let i = 0; i < xValues.length; i++) {
-        if (Math.abs(projections.x[i]) <= CLIP_SIZE && Math.abs(projections.y[i]) <= CLIP_SIZE) {
+        if (
+            Math.abs(projections.x[i]) <= CLIP_SIZE_X &&
+            Math.abs(projections.y[i]) <= CLIP_SIZE_Y
+        ) {
             visibleIds.push(i);
         }
     }
@@ -54,20 +62,23 @@ export function computeScreenSpaceLOD(
     }
 
     // Binning
-    const bins = Math.ceil(Math.sqrt(maxPoints));
-    const grid = new Int32Array(bins * bins).fill(-1);
-    const invStep = bins / (CLIP_SIZE * 2);
+    const baseBins = Math.ceil(Math.sqrt(maxPoints));
+    const binsX = Math.ceil(baseBins * Math.sqrt(aspectRatio));
+    const binsY = Math.ceil(baseBins / Math.sqrt(aspectRatio));
+    const grid = new Int32Array(binsX * binsY).fill(-1);
+    const invStepX = binsX / (CLIP_SIZE_X * 2);
+    const invStepY = binsY / (CLIP_SIZE_Y * 2);
     const result: number[] = [];
 
     for (const id of visibleIds) {
-        const ui = Math.floor((projections.x[id] + CLIP_SIZE) * invStep);
-        const vi = Math.floor((projections.y[id] + CLIP_SIZE) * invStep);
+        const ui = Math.floor((projections.x[id] + CLIP_SIZE_X) * invStepX);
+        const vi = Math.floor((projections.y[id] + CLIP_SIZE_Y) * invStepY);
 
-        if (ui < 0 || ui >= bins || vi < 0 || vi >= bins) {
+        if (ui < 0 || ui >= binsX || vi < 0 || vi >= binsY) {
             continue;
         }
 
-        const idx = ui + vi * bins;
+        const idx = ui + vi * binsX;
         if (grid[idx] === -1) {
             grid[idx] = id;
             result.push(id);
