@@ -466,8 +466,8 @@ export class PropertiesMap {
             );
         this._plot.classList.add('chsp-map');
 
-        // Add callbacks 
-        
+        // Add callbacks
+
         this._plot.on('plotly_relayouting', (event) => {
             // Triggered when dragging or zooming in 3D
             this._isDragging3D = true;
@@ -478,16 +478,20 @@ export class PropertiesMap {
             window.removeEventListener('mouseup', this._mouseupHandler);
         }
         this._mouseupHandler = () => {
-            // We need to track mouse up events because plotly does not trigger 
+            // We need to track mouse up events because plotly does not trigger
             // relayout when the user stops dragging the 3D plot outside of the
             // plot area, preventing LOD updates
             if (this._isDragging3D) {
+                this._isDragging3D = false;
 
                 if (this._is3D() && this._lastRelayoutingEvent !== null) {
                     // Adds axis ranges to avoid resetting the range to default values
                     const scene = this._plot._fullLayout.scene;
                     if (scene !== undefined) {
-                        const event = this._lastRelayoutingEvent as any;
+                        const event = this._lastRelayoutingEvent as unknown as Record<
+                            string,
+                            unknown
+                        >;
                         event['scene.xaxis.range'] = scene.xaxis.range;
                         event['scene.yaxis.range'] = scene.yaxis.range;
                         event['scene.zaxis.range'] = scene.zaxis.range;
