@@ -105,6 +105,13 @@ export class PropertiesMap {
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
 
+    // flag used to track whether the user is currently dragging the 3D plot
+    private _isDragging3D = false;
+    // handler for the global mouseup event used to fix a plotly bug in 3D
+    private _mouseupHandler?: () => void;
+    // last event data received from plotly_relayouting
+    private _lastRelayoutingEvent: Plotly.PlotRelayoutEvent | null = null;
+
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
      * `id`
@@ -224,6 +231,10 @@ export class PropertiesMap {
 
         // remove SVG element created by Plotly
         document.getElementById('js-plotly-tester')?.remove();
+
+        if (this._mouseupHandler !== undefined) {
+            window.removeEventListener('mouseup', this._mouseupHandler);
+        }
     }
 
     /**
@@ -455,7 +466,37 @@ export class PropertiesMap {
             );
         this._plot.classList.add('chsp-map');
 
-        // Add callbacks
+        // Add callbacks 
+        
+        this._plot.on('plotly_relayouting', (event) => {
+            // Triggered when dragging or zooming in 3D
+            this._isDragging3D = true;
+            this._lastRelayoutingEvent = event;
+        });
+
+        if (this._mouseupHandler !== undefined) {
+            window.removeEventListener('mouseup', this._mouseupHandler);
+        }
+        this._mouseupHandler = () => {
+            // We need to track mouse up events because plotly does not trigger 
+            // relayout when the user stops dragging the 3D plot outside of the
+            // plot area, preventing LOD updates
+            if (this._isDragging3D) {
+
+                if (this._is3D() && this._lastRelayoutingEvent !== null) {
+                    // Adds axis ranges to avoid resetting the range to default values
+                    const scene = this._plot._fullLayout.scene;
+                    if (scene !== undefined) {
+                        const event = this._lastRelayoutingEvent as any;
+                        event['scene.xaxis.range'] = scene.xaxis.range;
+                        event['scene.yaxis.range'] = scene.yaxis.range;
+                        event['scene.zaxis.range'] = scene.zaxis.range;
+                    }
+                    this._relayout(this._lastRelayoutingEvent);
+                }
+            }
+        };
+        window.addEventListener('mouseup', this._mouseupHandler);
 
         this._plot.on('plotly_click', (eventData: Plotly.PlotMouseEvent) => {
             const event = eventData;
@@ -506,6 +547,7 @@ export class PropertiesMap {
         });
 
         this._plot.on('plotly_afterplot', () => {
+            this._isDragging3D = false;
             if (this._lodBusy) {
                 return;
             }
@@ -521,6 +563,8 @@ export class PropertiesMap {
 
         // 3D LOD: Listen to relayout to catch 3D camera changes (zoom/pan)
         this._plot.on('plotly_relayout', (event: Plotly.PlotRelayoutEvent) => {
+            this._isDragging3D = false;
+            this._lastRelayoutingEvent = null;
             if (this._lodBusy) {
                 return;
             }
@@ -1203,8 +1247,6 @@ export class PropertiesMap {
             );
         } else {
             // Update main (0), selected (1) and dummy (2) traces
-            // Use Plotly.restyle directly to allow awaiting (fixing synchronization issues)
-            // while keeping the _restyle wrapper synchronous for legacy calls.
             void Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
         }
     }
