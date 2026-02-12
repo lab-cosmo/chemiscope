@@ -469,9 +469,17 @@ export class PropertiesMap {
         // Add callbacks
 
         this._plot.on('plotly_relayouting', (event) => {
-            // Triggered when dragging or zooming in 3D
-            this._isDragging3D = true;
-            this._lastRelayoutingEvent = event;
+            if (this._is3D()) {
+                // Keep track of dragging in 3D to ensure that
+                // the plot gets updated at the end of the dragging,
+                // since plotly does not trigger if the mouse is released
+                // outside of the plot area
+                this._isDragging3D = true;
+                this._lastRelayoutingEvent = event;
+            } else {
+                // In 2D, we use this to update the html markers
+                this._updateMarkers();
+            }
         });
 
         if (this._mouseupHandler !== undefined) {
