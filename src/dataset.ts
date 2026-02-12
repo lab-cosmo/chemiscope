@@ -297,7 +297,7 @@ export function validateDataset(o: JsObject): void {
         const check_shape = checkShapes(
             o.shapes as Record<string, JsObject>,
             structureCount,
-            envCount
+            atomsCount
         );
         if (check_shape !== '') {
             throw Error('Error checking shape definitions: ' + check_shape);
