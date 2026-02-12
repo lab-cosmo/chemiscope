@@ -542,13 +542,15 @@ export class MoleculeViewer {
             }
         }
 
-        if (this._environments === undefined) {
+        if (this._environments === undefined || options.target === 'structure') {
             this._styles.noEnvs.replaceSync('.chsp-hide-if-no-environments { display: none; }');
+            this._options.environments.activated.disable();
         } else {
             this._styles.noEnvs.replaceSync('');
+            this._options.environments.activated.enable();
             assert(this._environments.length === structure.size);
             this._setEnvironmentInteractions();
-            const newCenter = options.highlight || this._environments[0]?.center;
+            const newCenter = options.highlight;
             this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
@@ -840,12 +842,25 @@ export class MoleculeViewer {
             this._enableEnvironmentSettings(value);
 
             if (value) {
-                assert(this._lastHighlighted !== undefined);
-                // add the 3DMol model for highlighted environment
-                this._options.environments.cutoff.value = this._lastHighlighted.cutoff;
-                const center = this._lastHighlighted.center;
-                const previousDefaultCutoff = this._defaultCutoff(center);
-                this._changeHighlighted(center, previousDefaultCutoff);
+                if (this._highlighted !== undefined) {
+                    return;
+                }
+
+                let last = this._lastHighlighted;
+                if (last === undefined) {
+                    const env = this._environments?.find((e) => e !== undefined);
+                    if (env !== undefined) {
+                        last = { center: env.center, cutoff: env.cutoff };
+                    }
+                }
+
+                if (last !== undefined) {
+                    // add the 3DMol model for highlighted environment
+                    this._options.environments.cutoff.value = last.cutoff;
+                    const center = last.center;
+                    const previousDefaultCutoff = this._defaultCutoff(center);
+                    this._changeHighlighted(center, previousDefaultCutoff);
+                }
             } else {
                 if (this._highlighted !== undefined) {
                     // remove the 3DMol model for highlighted environment
@@ -2164,6 +2179,9 @@ export class MoleculeViewer {
         if (center === undefined) {
             this._options.environments.cutoff.value = 0;
             this._highlighted = undefined;
+
+            this._options.environments.activated.value = false;
+            this._enableEnvironmentSettings(false);
         } else {
             if (this._environments === undefined) {
                 throw Error('cannot highlight an atom without having a list of environments');
@@ -2181,6 +2199,9 @@ export class MoleculeViewer {
             if (previousDefaultCutoff === undefined || previousDefaultCutoff === htmlCutoff) {
                 this._options.environments.cutoff.value = environment.cutoff;
             }
+
+            this._options.environments.activated.value = true;
+            this._enableEnvironmentSettings(true);
 
             // We need to create a separate model to have different opacity
             // for the background & highlighted atoms

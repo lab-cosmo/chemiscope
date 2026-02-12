@@ -694,6 +694,7 @@ export class ViewersGrid {
         const properties = this._propertiesForStructure(structureIndex);
         // Initialize load options with trajectory enabled
         const options: Partial<LoadOptions> = {
+            target: this._target,
             trajectory: true,
         };
 

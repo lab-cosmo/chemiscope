@@ -7,7 +7,7 @@ import * as $3Dmol from '3dmol';
 import { Environment, Structure, UserStructure } from '../dataset';
 import { computeSecondaryStructure } from './topology';
 import { MoleculeViewer } from './viewer';
-import { Indexes } from '../indexer';
+import { DisplayTarget, Indexes } from '../indexer';
 
 /** We need to use the same opacity everywhere since 3Dmol uses 1 opacity per model */
 export function defaultOpacity(): number {
@@ -110,6 +110,8 @@ export interface LoadOptions {
      * `environments` is set.
      */
     highlight: number;
+    /** Current display target (atom or structure) */
+    target?: DisplayTarget;
 }
 
 /// Extension of `Environment` adding the global index of the environment
