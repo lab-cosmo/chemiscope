@@ -1286,14 +1286,19 @@ export class MoleculeViewer {
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];
 
                                 atomShapeData.position = position;
+
+                                const elem = structure.elements ? structure.elements[i] : name;
+
                                 // obey explicit color specification if given,
                                 // otherwise color as the corresponding atom
                                 if (!atomShapeData.color) {
                                     if (colorFunc) {
                                         atomSpec.serial = i;
+                                        atomSpec.elem = elem;
                                         atomShapeData.color = colorFunc(atomSpec);
                                     } else {
-                                        atomShapeData.color = $3Dmol.elementColors.Jmol[name];
+                                        atomShapeData.color =
+                                            $3Dmol.elementColors.Jmol[elem] || 0xffffff;
                                     }
                                 }
 
