@@ -42,15 +42,15 @@ export class ChemiscopeApp {
         // setup the main HTML
         const root = getByID(id);
         root.innerHTML = `<div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6 d-flex flex-column" style="padding: 0">
+            <div class="row gx-2">
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
                     <div class="ratio ratio-1x1 ratio-map">
                         <div id="chemiscope-meta" style="z-index: 10"></div>
                         <div id="chemiscope-map" style="position: absolute"></div>
                     </div>
                 </div>
 
-                <div class="col-md-6 d-flex flex-column" style="padding: 0">
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
                     <div class="ratio ratio-5x7">
                         <div>
                             <!-- height: 0 below is a hack to force safari to

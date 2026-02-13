@@ -66,12 +66,12 @@ main.container-fluid {
 
 @media screen and (min-width: 900px) {
     main.container-fluid {
-        margin: 2em 2em calc(2em + var(--header-height)) 2em;
-        width: calc(100% - 4em);
+        margin: 2em 10px calc(2em + var(--header-height)) 10px;
+        width: calc(100% - 20px);
     }
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 1220px) {
     main.container-fluid {
         margin: 2em auto calc(2em + var(--header-height)) auto;
         width: 1200px;
@@ -79,8 +79,6 @@ main.container-fluid {
 }
 
 main .ratio {
-    margin: auto;
-    width: 90%;
     position: relative;
     display: flex;
     flex-direction: column;
