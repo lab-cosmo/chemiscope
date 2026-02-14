@@ -150,7 +150,8 @@ rmsd = R.results.rmsd.T[2]
 
 # Given that trajectories can be very large, we load the structures on disk to
 # reduce the memory usage of the viewer.
-# Note: write_external_structures works with both MDAnalysis AtomGroups and chemfiles structures.
+# Note: write_external_structures works with both MDAnalysis AtomGroups
+# and chemfiles structures.
 external_structures = chemiscope.write_external_structures(
     complx.atoms, prefix="protein-rmsd"
 )
