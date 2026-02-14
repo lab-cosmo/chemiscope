@@ -81,20 +81,37 @@ def _chemfiles_to_json(frame):
     data["size"] = len(frame.atoms)
     data["names"] = [atom.name for atom in frame.atoms]
 
+    print("converting chemfiles frame to json: ", len(frame.atoms), " atoms")
     elements = []
     all_have_element = True
     for atom in frame.atoms:
+        print(atom.name, atom.atomic_number)
         atomic_number = atom.atomic_number
         if atomic_number == 0:
             all_have_element = False
             break
         else:
             elements.append(ELEMENTS[atomic_number])
+    if not all_have_element:
+        print(
+            "warning: not all atoms have a valid atomic number; "
+            "trying to infer from atom names"
+        )
+        elements = []
+        for atom in frame.atoms:
+            print("atom.name: ", atom.name, atom.atomic_number)
+            if atom.name[0] in "HBCNOPS":
+                elements.append(atom.name[0])
+            elif atom.name[0:2].capitalize() in ELEMENTS:
+                elements.append(atom.name[0:2].capitalize())
+            elif atom.name[0] in "FIUKV":
+                elements.append(atom.name[0])
+            else:
+                print(f"could not guess element for atom '{atom.name}' with atomic number 0")
+                elements.append("X")
 
-    if all_have_element:
-        data["elements"] = elements
+    data["elements"] = elements
 
-    # data["elements"] = TODO
     positions = frame.positions
     data["x"] = [float(positions[i][0]) for i in range(data["size"])]
     data["y"] = [float(positions[i][1]) for i in range(data["size"])]
