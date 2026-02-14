@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import warnings
+from typing import Sequence
 
 from ._ase import (  # noqa: F401
     _ase_all_atomic_environments,
@@ -8,6 +9,12 @@ from ._ase import (  # noqa: F401
     _ase_valid_structures,
     ase_tensors_to_ellipsoids,
     ase_vectors_to_arrows,
+)
+from ._chemfiles import (  # noqa: F401
+    _chemfiles_all_atomic_environments,
+    _chemfiles_extract_properties,
+    _chemfiles_to_json,
+    _chemfiles_valid_structures,
 )
 from ._mda import (  # noqa: F401
     _mda_all_atomic_environments,
@@ -34,7 +41,7 @@ def _chemiscope_valid_structures(structures):
     :return: tuple (structures as list, boolean indicating if structures are valid)
     """
 
-    if not hasattr(structures, "__iter__"):
+    if not isinstance(structures, Sequence):
         return structures, False
 
     first_structure = structures[0]
@@ -75,15 +82,22 @@ def _guess_adapter(structures):
     if use_ase:
         return ase_structures, "ASE"
 
-    stk_structures, use_stk = _stk_valid_structures(structures)
-    if use_stk:
-        return stk_structures, "stk"
+    chemfiles_structures, use_chemfiles = _chemfiles_valid_structures(structures)
+    if use_chemfiles:
+        return chemfiles_structures, "chemfiles"
 
     mda_structures, use_mda = _mda_valid_structures(structures)
     if use_mda:
         return mda_structures, "mda"
 
-    raise Exception(f"unknown structure type: '{structures[0].__class__.__name__}'")
+    stk_structures, use_stk = _stk_valid_structures(structures)
+    if use_stk:
+        return stk_structures, "stk"
+
+    if isinstance(structures, Sequence):
+        raise Exception(f"unknown structure type: '{structures[0].__class__.__name__}'")
+    else:
+        raise Exception(f"unknown structure type: '{structures.__class__.__name__}'")
 
 
 def structures_to_json(structures):
@@ -103,12 +117,14 @@ def structures_to_json(structures):
         json_data = structures
     elif adapter == "ASE":
         json_data = [_ase_to_json(s) for s in structures]
-    elif adapter == "stk":
-        json_data = [_stk_to_json(s) for s in structures]
+    elif adapter == "chemfiles":
+        json_data = [_chemfiles_to_json(s) for s in structures]
     elif adapter == "mda":
         # Be careful of the lazy loading of `structures.atoms`, which is updated during
         # the iteration of the trajectory
         json_data = [_mda_to_json(structures) for _ in structures.universe.trajectory]
+    elif adapter == "stk":
+        json_data = [_stk_to_json(s) for s in structures]
     else:
         raise Exception("reached unreachable code")
 
@@ -139,10 +155,10 @@ def extract_properties(structures=None, only=None, *, environments=None, frames=
 
     if adapter == "ASE":
         return _ase_extract_properties(structures, only, environments)
-
+    elif adapter == "chemfiles":
+        return _chemfiles_extract_properties(structures, only, environments)
     elif adapter == "mda":
         return _mda_extract_properties(structures, only, environments)
-
     elif adapter == "stk":
         raise RuntimeError(
             "stk structures do not contain properties, you must manually provide them"
@@ -178,9 +194,11 @@ def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None):
 
     if adapter == "ASE":
         return _ase_all_atomic_environments(structures, cutoff)
-    elif adapter == "stk":
-        return _stk_all_atomic_environments(structures, cutoff)
+    elif adapter == "chemfiles":
+        return _chemfiles_all_atomic_environments(structures, cutoff)
     elif adapter == "mda":
         return _mda_all_atomic_environments(structures, cutoff)
+    elif adapter == "stk":
+        return _stk_all_atomic_environments(structures, cutoff)
     else:
         raise Exception("reached unreachable code")
