@@ -7,6 +7,7 @@ furo
 ase
 stk
 stko
+chemfiles
 rdkit>=2025
 MDAnalysis
 MDAnalysisTests

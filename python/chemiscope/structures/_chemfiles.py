@@ -61,6 +61,50 @@ ELEMENTS = [
 ]
 # fmt: on
 
+# Standard protein and nucleic acid residues (non-hetatoms)
+STANDARD_RESIDUES = {
+    # Amino acids
+    "ALA",
+    "ARG",
+    "ASN",
+    "ASP",
+    "CYS",
+    "GLN",
+    "GLU",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LEU",
+    "LYS",
+    "MET",
+    "PHE",
+    "PRO",
+    "SER",
+    "THR",
+    "TRP",
+    "TYR",
+    "VAL",
+    # Protonation states / common non-standard names often treated as standard
+    "HID",
+    "HIE",
+    "HIP",
+    "CYX",
+    "ASH",
+    "GLH",
+    "LYN",
+    # Nucleic acids (DNA/RNA)
+    "DA",
+    "DC",
+    "DG",
+    "DT",
+    "DI",
+    "A",
+    "C",
+    "G",
+    "U",
+    "I",
+}
+
 
 def _chemfiles_to_json(frame):
     """Implementation of structures_to_json for chemfiles' ``Frame``."""
@@ -91,10 +135,28 @@ def _chemfiles_to_json(frame):
         else:
             elements.append(ELEMENTS[atomic_number])
 
-    if all_have_element:
-        data["elements"] = elements
+    if not all_have_element:
+        # If there are unknown elements we assume the element detection failed,
+        # and try a more conservative approach assuming the elements is stored
+        # in atom type names. Chemfiles uses a similar heuristic, but maps CA
+        # and CD to Ca and Cd, while in all likelihood they should be carbon atoms.
+        elements = []
+        for atom in frame.atoms:
+            name = atom.name
+            if not name:
+                elements.append("X")
+                continue
+            if name[0] in "HBCNOPS":
+                elements.append(name[0])
+            elif len(name) >= 2 and name[0:2].capitalize() in ELEMENTS:
+                elements.append(name[0:2].capitalize())
+            elif name[0] in "FIUKV":
+                elements.append(name[0])
+            else:
+                elements.append("X")
 
-    # data["elements"] = TODO
+    data["elements"] = elements
+
     positions = frame.positions
     data["x"] = [float(positions[i][0]) for i in range(data["size"])]
     data["y"] = [float(positions[i][1]) for i in range(data["size"])]
@@ -139,7 +201,10 @@ def _chemfiles_to_json(frame):
         if "is_standard_pdb" in residue_properties:
             hetatom.append(not residue["is_standard_pdb"])
         else:
-            hetatom.append(True)
+            # Fallback: check if residue name is in standard list
+            # We strip whitespace and uppercase just in case
+            is_standard = residue.name.strip().upper() in STANDARD_RESIDUES
+            hetatom.append(not is_standard)
 
     if has_biomol_info:
         data["chains"] = chains
