@@ -4,7 +4,7 @@ Visualize biomolecules with MDAnalysis or chemfiles
 
 This example shows how to visualize biomolecules in chemiscope with `MDAnalysis
 <https://www.mdanalysis.org/>`_ or `chemfiles <https://chemfiles.org/>`_, and
-how  to leverage the selection capabilities of these libraries to show only a
+how to leverage the selection capabilities of these libraries to show only a
 subset of the atoms.
 
 Biomolecules often contain a large number of atoms, which makes the classical
@@ -18,7 +18,6 @@ import urllib.request
 import chemfiles
 import MDAnalysis as mda
 import numpy as np
-from MDAnalysis.analysis.distances import distance_array
 from MDAnalysis.analysis.rms import RMSD
 from MDAnalysis.tests.datafiles import GRO_MEMPROT, XTC_MEMPROT
 
