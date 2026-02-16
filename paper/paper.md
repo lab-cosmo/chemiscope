@@ -60,6 +60,8 @@ visualization settings. These inputs can be rendered as an interactive Jupyter w
 embedded in Streamlit applications, integrated into Sphinx documentation, or exported
 for the standalone web application at chemiscope.org.](chemiscope-v1.0.svg){width=100%}
 
+# Statement of need
+
 Atomistic modeling workflows produce collections of molecular and materials structures
 together with associated quantities, including energies, forces, charges, and other
 scalar or tensorial properties. These datasets are commonly explored using
@@ -71,6 +73,8 @@ means to interpret structure–property relationships [@Wurger2021], verify comp
 results, identify unexpected patterns [@xie2018], and explore learned representations
 [@Walsh2025mapping; @Cheng2020; @De2016].
 
+# State of the field
+
 For this purpose, Chemiscope has been adopted across multiple atomistic modeling and coarse-grained studies, with interactive viewers shared alongside publications and archived datasets on
 platforms such as Materials Cloud [@Talirz_2020]. While complementary visualization
 tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
@@ -81,7 +85,7 @@ especially important in Python-based workflows, where the same visualization is 
 needed in a Jupyter notebook for analysis, a web view for sharing, and documentation for
 reproducibility and teaching [@JupyterNotebook; @Goscinski2025scicodewidgets; @Du2024].
 
-# Implementation
+# Software design
 
 Chemiscope 1.0 is implemented as a TypeScript visualization library with the Python
 package providing platform-specific integrations. The Python API can be used to build a chemiscope
@@ -155,6 +159,36 @@ Chemiscope is distributed as an open-source package that can be installed from P
 the default standalone viewer is available online at https://chemiscope.org for quick
 inspection of datasets without local installation. Optional features can be installed via
 extras: `pip install 'chemiscope[streamlit]'` and `pip install 'chemiscope[explore]'`.
+
+# Research impact statement
+
+Chemiscope has been adopted by the atomistic modeling community as a tool for
+interactive exploration of structure–property relationships. Interactive visualizations
+built with Chemiscope accompany publications and archived datasets on Materials Cloud
+[@Talirz_2020] and provide citable links that readers can use to explore data beyond
+static images. As of February 2026, the Materials Cloud Archive lists 18 publications
+using Chemiscope as an external app [@MaterialsCloudChemiscopeSearch].
+
+The tool has been cited in studies spanning machine-learned interatomic potentials and
+datasets [@Cheng2020; @MAD], coarse-grained molecular representations [@Helfrecht2020],
+and high-throughput screening of materials [@Jorgensen2026]. It is also integrated with
+the metatensor ecosystem [@metatensor] through the `chemiscope.explore` function, which
+uses foundation models like PET-MAD [@Mazitov2025] to generate map coordinates without
+manual descriptor engineering.
+
+Beyond research papers, Chemiscope serves educational and reproducibility purposes:
+tutorials and course materials use live widgets to demonstrate dimensionality reduction
+and structure–property correlations [@Goscinski2025scicodewidgets], and Chemiscope
+viewers can be embedded directly into manuals, as it is done in Atomisitic cookbook
+recipies [@AtomisticCookbook]. The Python package reach 4,235 downloads in the last
+month on PyPI Stats, accessed February 2026 [@PyPIStatsChemiscope].
+
+# AI usage disclosure
+
+Generative AI tools were assisted occasionally during software development (e.g., to
+obtain code suggestions). All AI-generated suggestions were reviewed, modified, and
+verified by the authors before inclusion, and the authors take full responsibility for
+the final content of the software.
 
 # Acknowledgements
 
