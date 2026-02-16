@@ -104,6 +104,8 @@ chemiscope.show(
 #
 # .. _chfl-select: https://chemfiles.org/chemfiles/latest/selections.html
 
+# takes the first frame from the trajectory (in case there are many...)
+frame = trajectory.read()
 selection = chemfiles.Selection("resname HOH")
 to_remove = selection.evaluate(frame)
 
