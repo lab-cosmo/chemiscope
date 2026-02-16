@@ -98,8 +98,8 @@ chemiscope.show(
 # Selecting atoms of interest
 # ---------------------------
 #
-# We can also use `chemfiles selections <chfl-select>`_ to filter atoms. The selection returns
-# the indices of the atoms matching the query. We then remove the atoms we
+# We can also use `chemfiles selections <chfl-select>`_ to filter atoms. The selection
+# returns the indices of the atoms matching the query. We then remove the atoms we
 # don't want from the frame.
 #
 # .. _chfl-select: https://chemfiles.org/chemfiles/latest/selections.html
