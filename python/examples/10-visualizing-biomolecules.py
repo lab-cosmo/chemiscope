@@ -85,11 +85,10 @@ chemiscope.show(
 # Alternatively, we can use `chemfiles <https://chemfiles.org/>`_ to read the PDB file.
 
 trajectory = chemfiles.Trajectory(f"./{pdb_id}.pdb")
-frame = trajectory.read()
 
 # Just like with MDAnalysis, we can pass the chemfiles frame directly to chemiscope.
 chemiscope.show(
-    structures=frame,
+    structures=trajectory,
     mode="structure",
     settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
 )
