@@ -75,7 +75,8 @@ results, identify unexpected patterns [@xie2018], and explore learned representa
 
 # State of the field
 
-For this purpose, Chemiscope has been adopted across multiple atomistic modeling and coarse-grained studies, with interactive viewers shared alongside publications and archived datasets on
+Chemiscope has been adopted across multiple atomistic modeling and coarse-grained
+studies, with interactive viewers shared alongside publications and archived datasets on
 platforms such as Materials Cloud [@Talirz_2020]. While complementary visualization
 tools exist, from desktop applications such as VMD and OVITO [@Humphrey1996;
 @Stukowski2010] to WebGL-based molecular viewers such as 3Dmol.js and NGLview [@Rego2015;
