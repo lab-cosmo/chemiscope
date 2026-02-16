@@ -59,51 +59,15 @@ ELEMENTS = [
     "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn",
     "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ]
-# fmt: on
 
-# Standard protein and nucleic acid residues (non-hetatoms)
+# Standard protein and nucleic acid residues (non-hetatoms), including
+# canonical aminoacitds in various protonationstates, and nucleic acids
 STANDARD_RESIDUES = {
-    # Amino acids
-    "ALA",
-    "ARG",
-    "ASN",
-    "ASP",
-    "CYS",
-    "GLN",
-    "GLU",
-    "GLY",
-    "HIS",
-    "ILE",
-    "LEU",
-    "LYS",
-    "MET",
-    "PHE",
-    "PRO",
-    "SER",
-    "THR",
-    "TRP",
-    "TYR",
-    "VAL",
-    # Protonation states / common non-standard names often treated as standard
-    "HID",
-    "HIE",
-    "HIP",
-    "CYX",
-    "ASH",
-    "GLH",
-    "LYN",
-    # Nucleic acids (DNA/RNA)
-    "DA",
-    "DC",
-    "DG",
-    "DT",
-    "DI",
-    "A",
-    "C",
-    "G",
-    "U",
-    "I",
+    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", 
+    "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "HID", "HIE", "HIP", "CYX", 
+    "ASH", "GLH", "LYN", "DA", "DC", "DG", "DT", "DI", "A", "C", "G", "U", "I",
 }
+# fmt: on
 
 
 def _chemfiles_to_json(frame):
@@ -136,22 +100,24 @@ def _chemfiles_to_json(frame):
             elements.append(ELEMENTS[atomic_number])
 
     if not all_have_element:
+        warnings.warn(
+            "Chemfiles could not determine the element for all atoms. "
+            "Will attempt to infer them from names. ",
+            stacklevel=2,
+        )
         # If there are unknown elements we assume the element detection failed,
         # and try a more conservative approach assuming the elements is stored
         # in atom type names. Chemfiles uses a similar heuristic, but maps CA
         # and CD to Ca and Cd, while in all likelihood they should be carbon atoms.
         elements = []
-        for atom in frame.atoms:
-            name = atom.name
+        for name in data["names"]:
             if not name:
                 elements.append("X")
                 continue
-            if name[0] in "HBCNOPS":
+            if name[0] in "HBCNOPSFIJUKV":
                 elements.append(name[0])
             elif len(name) >= 2 and name[0:2].capitalize() in ELEMENTS:
                 elements.append(name[0:2].capitalize())
-            elif name[0] in "FIUKV":
-                elements.append(name[0])
             else:
                 elements.append("X")
 
