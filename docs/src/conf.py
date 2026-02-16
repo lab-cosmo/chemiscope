@@ -14,8 +14,8 @@ ROOT = os.path.abspath(os.path.join("..", ".."))
 # -- Project information -----------------------------------------------------
 
 project = "chemiscope"
-copyright = "2020-2026, Guillaume Fraux"
-author = "Guillaume Fraux"
+copyright = "2020-2026, chemiscope developers"
+author = "chemiscope developers"
 
 # The full version, including alpha/beta/rc tags
 release = chemiscope.__version__
