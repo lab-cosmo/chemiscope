@@ -19,6 +19,9 @@ def _ase_valid_structures(structures):
     except TypeError:
         return [], False
 
+    if len(structures_list) == 0:
+        return [], False
+
     if HAVE_ASE and isinstance(structures_list[0], ase.Atoms):
         for structure in structures_list:
             assert isinstance(structure, ase.Atoms)
@@ -361,6 +364,12 @@ def ase_vectors_to_arrows(
        corresponding to x,y,z
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
+    :param scale: conversion from the units of the vector to the units of the atomic
+        positions (usually Å)
+    :param radius: radius of the stem of the arrow (same units as the atomic positions,
+        typically Å)
+    :param head_radius_scale: radius of the arrow tip, relative to the stem radius
+    :param head_length_scale: length of the arrow tip, relative to the stem radius
     """
     if frames is not None:
         warnings.warn(
@@ -433,7 +442,6 @@ def ase_tensors_to_ellipsoids(
        xx,yy,zz,xy,xz,yz
     :param target: whether the properties should be associated with the entire
        structure, or each atom (``structure`` or ``atom``). defaults to autodetection
-
     :param scale: see :py:func:`ellipsoid_from_tensor`
     :param force_positive: see :py:func:`ellipsoid_from_tensor`
     """
@@ -475,83 +483,3 @@ def ase_tensors_to_ellipsoids(
         return dict(kind="ellipsoid", parameters={"global": {}, "atom": tensors})
     else:
         return dict(kind="ellipsoid", parameters={"global": {}, "structure": tensors})
-
-
-# Required parameters from different kinds of shapes
-SHAPE_PARAMETERS = {
-    "ellipsoid": "semiaxes",
-    "sphere": "radius",
-}
-
-
-def _extract_lammps_shapes(structure, key):
-    if key in structure.info:
-        if structure.info[key] not in SHAPE_PARAMETERS:
-            raise KeyError(
-                "The currently-supported shape in `extract_lammps_shapes_from_ase` are "
-                f"{list(SHAPE_PARAMETERS.keys())}, received '{structure.info[key]}'"
-            )
-
-        shape = _get_shape_params(key, structure.info[key], structure.info)
-        if "orientation" in structure.arrays:
-            return {
-                key: [
-                    {**shape, "orientation": list(o)}
-                    for o in structure.arrays["orientation"]
-                ]
-            }
-        else:
-            return {key: [shape for _ in structure]}
-
-    elif key in structure.arrays:
-        shapes = []
-        for atom_i, shape_key in enumerate(structure.arrays[key]):
-            if shape_key not in SHAPE_PARAMETERS:
-                raise KeyError(
-                    "The currently-supported shape types are {}, received {}.".format(
-                        ", ".join(SHAPE_PARAMETERS.keys()), shape_key
-                    )
-                )
-            shape = _get_shape_params_atom(
-                key,
-                shape_key,
-                structure.arrays,
-                atom_i,
-            )
-
-            if "orientation" in structure.arrays:
-                shape["orientation"] = list(structure.arrays["orientation"][atom_i])
-
-            shapes.append(shape)
-
-        return {key: shapes}
-
-
-def _get_shape_params(prefix, shape_kind, dictionary):
-    shape = {"kind": shape_kind}
-    parameter = SHAPE_PARAMETERS[shape_kind]
-    try:
-        shape[parameter] = dictionary[f"{prefix}_{parameter}"]
-    except KeyError:
-        raise KeyError(
-            f"Missing required parameter '{prefix}_{parameter}' for "
-            f"'{shape_kind}' shape"
-        )
-
-    return shape
-
-
-def _get_shape_params_atom(prefix, shape_kind, dictionary, atom_i):
-    """Extract shape parameters for a single atom"""
-
-    shape = {"kind": shape_kind}
-    parameter = SHAPE_PARAMETERS[shape_kind]
-    try:
-        shape[parameter] = dictionary[f"{prefix}_{parameter}"][atom_i]
-    except KeyError:
-        raise KeyError(
-            f"Missing required parameter '{prefix}_{parameter}' for "
-            f"'{shape_kind}' shape"
-        )
-
-    return shape

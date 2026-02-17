@@ -6,7 +6,7 @@ the structure viewer, and the environment information display. Additionally,
 clicking on the dataset title (on top of the map) will display some metadata
 about the dataset (description, authors, references). This section will
 present each one, as well as the main settings accessible to customize the
-display.
+display (see the :ref:`json-settings` section for a full list).
 
 The map is a 2D or 3D scatter plot showing properties for all the environments
 in the dataset. You can set which properties (structural or physical) should be

@@ -492,7 +492,7 @@ export class MapOptions extends OptionsGroup {
 
         if (someValuesNaN) {
             this.warnings.sendMessage(
-                `After applying the selected scaling mode ${scaleMode}, some point sizes` +
+                `After applying the selected scaling mode ${scaleMode}, some point sizes ` +
                     `evaluated to invalid values. These points will be displayed at the minimum size.`
             );
             return values.map((v: number) => {

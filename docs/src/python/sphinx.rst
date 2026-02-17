@@ -100,7 +100,7 @@ Viewing a documentation locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because of the need to dynamically load the chemiscope module and the desired
-file, it is not possible to load the widget by viewing the the raw HTML pages.
+file, it is not possible to load the widget by viewing the raw HTML pages.
 Instead, one needs to run a local HTTP server. For instance, using the port
 8765,
 

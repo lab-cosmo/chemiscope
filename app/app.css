@@ -66,12 +66,12 @@ main.container-fluid {
 
 @media screen and (min-width: 900px) {
     main.container-fluid {
-        margin: 2em 2em calc(2em + var(--header-height)) 2em;
-        width: calc(100% - 4em);
+        margin: 2em 10px calc(2em + var(--header-height)) 10px;
+        width: calc(100% - 20px);
     }
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 1220px) {
     main.container-fluid {
         margin: 2em auto calc(2em + var(--header-height)) auto;
         width: 1200px;
@@ -79,33 +79,47 @@ main.container-fluid {
 }
 
 main .ratio {
-    margin: auto;
-    width: 90%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-main .ratio > * {
-    display: flex;
-    flex-flow: column;
+.ratio-1x1 {
+    aspect-ratio: 1 / 1;
 }
 
 .ratio-5x7 {
-    overflow-y: hidden;
-    overflow-x: hidden;
+    aspect-ratio: 5 / 7;
+    overflow: hidden;
 }
 
-.ratio-5x7::before {
-    padding-top: 140%;
+main .ratio > * {
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+    min-height: 0;
 }
 
 @media screen and (min-width: 768px) {
-    .ratio-5x7 {
+    main .ratio {
         max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        width: 100%;
+        /* In horizontal layout, allow the box to be wider than the aspect ratio 
+           if vertical space is constrained, but never wider than the column. */
+        aspect-ratio: auto;
+        height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        max-width: 100%;
     }
 
-    main .ratio {
-        /* set the width to fit the vertical space, and the height will be set automatically */
-        max-width: calc(100vh - 2em - var(--header-height) - var(--footer-height));
-        width: 100%;
+    .ratio-1x1 {
+        min-width: min(100%, calc((100vh - 2em - var(--header-height) - var(--footer-height)) * 1));
+    }
+
+    .ratio-5x7 {
+        min-width: min(
+            100%,
+            calc((100vh - 2em - var(--header-height) - var(--footer-height)) * 5 / 7)
+        );
     }
 }
 

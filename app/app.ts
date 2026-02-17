@@ -42,15 +42,15 @@ export class ChemiscopeApp {
         // setup the main HTML
         const root = getByID(id);
         root.innerHTML = `<div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6" style="padding: 0">
-                    <div class="ratio ratio-1x1">
+            <div class="row gx-2">
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
+                    <div class="ratio ratio-1x1 ratio-map">
                         <div id="chemiscope-meta" style="z-index: 10"></div>
                         <div id="chemiscope-map" style="position: absolute"></div>
                     </div>
                 </div>
 
-                <div class="col-md-6" style="padding: 0">
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
                     <div class="ratio ratio-5x7">
                         <div>
                             <!-- height: 0 below is a hack to force safari to
@@ -82,8 +82,8 @@ export class ChemiscopeApp {
         };
         if (example == 'Azaphenacenes') {
             // example of dynamic structure loading
-            config.loadStructure = async (_, structure:any) => {
-                const url = `examples/${structure.data}`
+            config.loadStructure = async (_, structure: any) => {
+                const url = `examples/${structure.data}`;
 
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -112,7 +112,8 @@ export class ChemiscopeApp {
         if (!response.ok) {
             throw Error(`unable to load file at '${this.dataset}'`);
         }
-        const isGzipped = url.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
+        const isGzipped =
+            url.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
         const dataset = await readJSONFromStream(response, isGzipped);
         await this.load(config as Configuration, dataset);
     }
@@ -196,7 +197,7 @@ export class ChemiscopeApp {
             if (sizeMB > 200) {
                 const proceed = confirm(
                     `This file is ${sizeMB.toFixed(0)} MB. Large files may fail to load due to browser memory limits.\n\n` +
-                    `Continue loading?`
+                        `Continue loading?`
                 );
                 if (!proceed) {
                     loadDataset.value = '';
@@ -210,20 +211,21 @@ export class ChemiscopeApp {
             startLoading();
             this.dataset = file.name;
             const isGzipped = file.name.endsWith('.gz');
-            readJSONFromFile(file, isGzipped).then((dataset) => {
-                this.load({}, dataset);
-            })
-            .catch((error) => {
-                stopLoading();
-                displayError(error instanceof Error ? error.message : String(error));
-            })
-            .finally(() => {
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
-                loadDataset.value = '';
-                loadSaveModal.classList.add('fade');
-            });
+            readJSONFromFile(file, isGzipped)
+                .then((dataset) => {
+                    this.load({}, dataset);
+                })
+                .catch((error) => {
+                    stopLoading();
+                    displayError(error instanceof Error ? error.message : String(error));
+                })
+                .finally(() => {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadDataset.value = '';
+                    loadSaveModal.classList.add('fade');
+                });
         };
         // Saving the current dataset
         const saveDataset = getByID('save-dataset');
@@ -256,20 +258,21 @@ export class ChemiscopeApp {
             }
 
             const isGzipped = file.name.endsWith('.gz');
-            readJSONFromFile(file, isGzipped).then((settings) => {
-                this.visualizer!.applySettings(settings);
-            })
-            .catch((error) => {
-                displayError(error instanceof Error ? error.message : String(error));
-            })
-            .finally(() => {
-                // clear the selected file name to make sure 'onchange' is
-                // called again if the user loads a file a the same path
-                // multiple time
-                loadSettings.value = '';
-                stopLoading();
-                loadSaveModal.classList.add('fade');
-            });
+            readJSONFromFile(file, isGzipped)
+                .then((settings) => {
+                    this.visualizer!.applySettings(settings);
+                })
+                .catch((error) => {
+                    displayError(error instanceof Error ? error.message : String(error));
+                })
+                .finally(() => {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadSettings.value = '';
+                    stopLoading();
+                    loadSaveModal.classList.add('fade');
+                });
         };
 
         // Saving the current settings values
@@ -390,7 +393,6 @@ function stringifyJsonWithNaN(object: any): string {
     });
     return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
 }
-
 
 /**
  * Ensure that the height of the property table is set up in a compatible way

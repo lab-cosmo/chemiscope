@@ -6,9 +6,15 @@
 import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
-import { assignBonds, computeSecondaryStructure } from './topology';
+import { assignBonds } from './topology';
 
-import { arrayMaxMin, getElement, unreachable } from '../utils';
+import {
+    arrayMaxMin,
+    fixedWidthFloat,
+    getElement,
+    transformedAxisLabel,
+    unreachable,
+} from '../utils';
 import { PositioningCallback, Warnings } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
@@ -20,108 +26,7 @@ import { StructureOptions } from './options';
 
 import { COLOR_MAPS } from '../map/colorscales';
 
-/** We need to use the same opacity everywhere since 3Dmol uses 1 opacity per model */
-function defaultOpacity(): number {
-    // The actual visual appearance seems to depend on browser and platform.
-    // This is a value that seems to work well across the board, but it might
-    // need to become platform-dependent in case of changes in the browsers.
-    return 0.85;
-}
-
-/**
- * Add data from the `structure` to the `model`
- *
- * @param model 3Dmol GLModel that will contain structure data
- * @param structure the structure to convert
- */
-function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure): void {
-    if (structure.cell !== undefined) {
-        const cell = structure.cell;
-        // prettier-ignore
-        const matrix = new $3Dmol.Matrix3(
-            cell[0], cell[3], cell[6],
-            cell[1], cell[4], cell[7],
-            cell[2], cell[5], cell[8]
-        );
-        model.setCrystMatrix(matrix);
-    }
-
-    const atoms = [];
-    for (let i = 0; i < structure.size; i++) {
-        const x = structure.x[i];
-        const y = structure.y[i];
-        const z = structure.z[i];
-        const atom = {
-            serial: i,
-            elem: structure.elements ? structure.elements[i] : structure.names[i],
-            atom: structure.names[i],
-            x: x,
-            y: y,
-            z: z,
-            hetflag: true,
-            ss: 'c', // initialize to coil by default, the same as in 3Dmol
-        } as unknown as $3Dmol.AtomSpec;
-
-        if (structure.resnames !== undefined) {
-            atom.resn = structure.resnames[i];
-        }
-
-        if (structure.chains !== undefined) {
-            atom.chain = structure.chains[i];
-        }
-
-        if (structure.resids !== undefined) {
-            atom.resi = structure.resids[i];
-        }
-
-        if (structure.hetatom !== undefined) {
-            atom.hetflag = structure.hetatom[i];
-        }
-
-        atoms.push(atom);
-    }
-
-    computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);
-    model.addAtoms(atoms);
-}
-
-interface LabeledArrow {
-    label: $3Dmol.Label;
-    arrow: $3Dmol.GLShape;
-}
-
-interface ColorBar {
-    /** The numbers scaling the color bar for the minimum, the middle
-     * and the maximum values respectively displayed from left to right
-     * under the color bar */
-    min: $3Dmol.Label;
-    mid: $3Dmol.Label;
-    max: $3Dmol.Label;
-    /** The property used in the color bar,
-     * displayed under the number labels */
-    property: $3Dmol.Label;
-    // The color gradient (i.e. the main element) of the color bar
-    gradient: $3Dmol.Label;
-}
-
-/** Possible options passed to `MoleculeViewer.load` */
-export interface LoadOptions {
-    /** Supercell to display (default: [1, 1, 1]) */
-    supercell: [number, number, number];
-    /** Should preserve we the current camera orientation (default: false) */
-    keepOrientation: boolean;
-    /** Are we loading a file part of a trajectory (default: false) */
-    trajectory: boolean;
-    /** List of atom-centered environments in the current structure, potentially
-     * undefined if the environnement is not part of the dataset.
-     * The `structure` field of `Environment` is ignored */
-    environments: (Environment | undefined)[];
-    /**
-     * Index of the environment to highlight, this is only considered if
-     * `environments` is set.
-     */
-    highlight: number;
-}
+import { ColorBar, LabeledArrow, LoadOptions, defaultOpacity, setup3DmolStructure } from './utils';
 
 /** */
 export class MoleculeViewer {
@@ -217,6 +122,10 @@ export class MoleculeViewer {
     private _colorMoreOptions: HTMLButtonElement;
     // Switch do disable automatic updates
     private _disableStyleUpdates: boolean = false;
+
+    // ======================================================================
+    // Public API
+    // ======================================================================
 
     /**
      * Create a new `MoleculeViewer` inside the HTML DOM element with the given `id`.
@@ -483,13 +392,6 @@ export class MoleculeViewer {
     }
 
     /**
-     * @param value list of atom-centered environments for the current structure
-     */
-    public set environments(value: (Environment | undefined)[] | undefined) {
-        this._environments = value;
-    }
-
-    /**
      * Load the given `structure` in this viewer.
      *
      * @param structure structure to load
@@ -640,13 +542,15 @@ export class MoleculeViewer {
             }
         }
 
-        if (this._environments === undefined) {
+        if (this._environments === undefined || options.target === 'structure') {
             this._styles.noEnvs.replaceSync('.chsp-hide-if-no-environments { display: none; }');
+            this._options.environments.activated.disable();
         } else {
             this._styles.noEnvs.replaceSync('');
+            this._options.environments.activated.enable();
             assert(this._environments.length === structure.size);
             this._setEnvironmentInteractions();
-            const newCenter = options.highlight || this._environments[0]?.center;
+            const newCenter = options.highlight;
             this._changeHighlighted(newCenter, previousDefaultCutoff);
         }
 
@@ -708,32 +612,6 @@ export class MoleculeViewer {
                 onLoadingDone();
             }
         });
-    }
-
-    /** Setup interaction (click & hover) for environments highlighting */
-    private _setEnvironmentInteractions() {
-        if (this._environments === undefined) {
-            return;
-        }
-
-        const active = this._environments
-            .filter((e): e is Environment => e !== undefined)
-            .map((e) => e.center);
-
-        // resets clickable and hoverable state interactions
-        for (const atom of this._viewer.selectedAtoms({})) {
-            atom.clickable = false;
-            atom.hoverable = false;
-        }
-
-        assert(this._current !== undefined);
-        this._viewer.setClickable(
-            { model: this._current.model, index: active },
-            true,
-            (atom: $3Dmol.AtomSelectionSpec) => this._selectAtom(atom)
-        );
-
-        this._setHoverable(active);
     }
 
     /**
@@ -809,75 +687,41 @@ export class MoleculeViewer {
         return this._viewer.pngURI();
     }
 
-    /* Set the given list of active atoms as hoverable **/
-    private _setHoverable(active: number[]): void {
-        assert(this._current !== undefined);
-        this._viewer.setHoverDuration(0);
-
-        const n_atoms = this.natoms();
-        assert(n_atoms !== undefined);
-        const hovered: Map<number, $3Dmol.GLModel> = new Map();
-
-        const hoverStart = (atom: $3Dmol.AtomSpec) => {
-            assert(atom.index !== undefined);
-            if (hovered.get(atom.index) !== undefined) {
-                // the 'hover' model for this atom already exists
-                return;
-            }
-
-            const model = this._viewer.addModel();
-            model.addAtoms([atom]);
-            model.setStyle({}, this._centralStyle(0.3));
-
-            // the atom in the new is still marked as clickable, but we only
-            // want the atom in the main model to react to interactions
-            const sel = model.selectedAtoms({});
-            sel[0].clickable = false;
-            sel[0].hoverable = false;
-
-            hovered.set(atom.index, model);
-            this._viewer.render();
-        };
-
-        const hoverStop = (atom: $3Dmol.AtomSpec) => {
-            assert(atom.index !== undefined);
-            const model = hovered.get(atom.index);
-            if (model === undefined) {
-                return;
-            }
-
-            this._viewer.removeModel(model);
-            hovered.delete(atom.index);
-            this._viewer.render();
-        };
-
-        this._viewer.setHoverable(
-            {
-                model: this._current.model,
-                index: active,
-            },
-            true,
-            hoverStart,
-            hoverStop
-        );
+    /**
+     * @param value list of atom-centered environments for the current structure
+     */
+    public set environments(value: (Environment | undefined)[] | undefined) {
+        this._environments = value;
     }
 
-    private _connectOptions(): void {
-        const restyleAndRender = () => {
-            if (!this._disableStyleUpdates) {
-                this._updateStyle();
-                this._updateColorBar();
-                this._viewer.render();
-            }
-        };
+    // ======================================================================
+    // Private Initialization & Setup
+    // ======================================================================
 
-        this._options.cartoon.onchange.push(restyleAndRender);
-        this._options.spaceFilling.onchange.push(restyleAndRender);
-        this._options.bonds.onchange.push(restyleAndRender);
-        this._options.atoms.onchange.push(restyleAndRender);
+    private _connectOptions(): void {
+        this._connectRepresentationSettings();
+        this._connectSceneSettings();
+        this._connectEnvironmentSettings();
+        this._connectColorSettings();
+        this._connectGenericSettings();
+    }
+
+    private _restyleAndRender(): void {
+        if (!this._disableStyleUpdates) {
+            this._updateStyle();
+            this._updateColorBar();
+            this._viewer.render();
+        }
+    }
+
+    private _connectRepresentationSettings(): void {
+        this._options.cartoon.onchange.push(() => this._restyleAndRender());
+        this._options.spaceFilling.onchange.push(() => this._restyleAndRender());
+        this._options.bonds.onchange.push(() => this._restyleAndRender());
+        this._options.atoms.onchange.push(() => this._restyleAndRender());
 
         this._options.atomLabels.onchange.push((showLabels) => {
-            restyleAndRender();
+            this._restyleAndRender();
             if (!showLabels) {
                 this._styles.noLabels.replaceSync(
                     '.chsp-hide-if-no-atom-labels { display: none; }'
@@ -886,7 +730,9 @@ export class MoleculeViewer {
                 this._styles.noLabels.replaceSync('');
             }
         });
+    }
 
+    private _connectSceneSettings(): void {
         this._options.axes.onchange.push((value) => this._addAxes(value));
 
         this._options.rotation.onchange.push((rotate) => {
@@ -923,7 +769,7 @@ export class MoleculeViewer {
             // resets shapes before checking if there are shapes to add
             this._resetShapes();
 
-            restyleAndRender();
+            this._restyleAndRender();
         });
 
         const changedSuperCell = () => {
@@ -956,20 +802,28 @@ export class MoleculeViewer {
             if (this._environmentsEnabled()) {
                 this._setEnvironmentInteractions();
             }
-            restyleAndRender();
+            this._restyleAndRender();
         };
         this._options.supercell[0].onchange.push(changedSuperCell);
         this._options.supercell[1].onchange.push(changedSuperCell);
         this._options.supercell[2].onchange.push(changedSuperCell);
 
-        this._options.environments.bgColor.onchange.push(restyleAndRender);
-        this._options.environments.bgStyle.onchange.push(restyleAndRender);
+        this._options.camera.onchange.push((camera, origin) => {
+            if (origin === 'JS' && camera !== undefined) {
+                this._viewer.setView(cameraToView(camera));
+            }
+        });
+    }
+
+    private _connectEnvironmentSettings(): void {
+        this._options.environments.bgColor.onchange.push(() => this._restyleAndRender());
+        this._options.environments.bgStyle.onchange.push(() => this._restyleAndRender());
         this._options.environments.cutoff.onchange.push(() => {
             if (this._highlighted !== undefined) {
                 const previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
                 this._changeHighlighted(this._highlighted.center, previousDefaultCutoff);
             }
-            restyleAndRender();
+            this._restyleAndRender();
         });
         this._options.environments.center.onchange.push((center) => {
             if (!this._options.keepOrientation.value) {
@@ -983,23 +837,30 @@ export class MoleculeViewer {
             this._viewer.render();
         });
 
-        this._options.camera.onchange.push((camera, origin) => {
-            if (origin === 'JS' && camera !== undefined) {
-                this._viewer.setView(cameraToView(camera));
-            }
-        });
-
         // Deal with activation/de-activation of environments
         this._options.environments.activated.onchange.push((value) => {
             this._enableEnvironmentSettings(value);
 
             if (value) {
-                assert(this._lastHighlighted !== undefined);
-                // add the 3DMol model for highlighted environment
-                this._options.environments.cutoff.value = this._lastHighlighted.cutoff;
-                const center = this._lastHighlighted.center;
-                const previousDefaultCutoff = this._defaultCutoff(center);
-                this._changeHighlighted(center, previousDefaultCutoff);
+                if (this._highlighted !== undefined) {
+                    return;
+                }
+
+                let last = this._lastHighlighted;
+                if (last === undefined) {
+                    const env = this._environments?.find((e) => e !== undefined);
+                    if (env !== undefined) {
+                        last = { center: env.center, cutoff: env.cutoff };
+                    }
+                }
+
+                if (last !== undefined) {
+                    // add the 3DMol model for highlighted environment
+                    this._options.environments.cutoff.value = last.cutoff;
+                    const center = last.center;
+                    const previousDefaultCutoff = this._defaultCutoff(center);
+                    this._changeHighlighted(center, previousDefaultCutoff);
+                }
             } else {
                 if (this._highlighted !== undefined) {
                     // remove the 3DMol model for highlighted environment
@@ -1014,88 +875,91 @@ export class MoleculeViewer {
             }
 
             if (!this._disableStyleUpdates) {
-                restyleAndRender();
+                this._restyleAndRender();
             }
         });
+    }
 
+    private _colorPropertyChanged() {
+        if (this._properties === undefined) {
+            return;
+        }
+
+        const property = this._options.color.property.value;
+
+        if (property !== 'element') {
+            this._options.color.transform.enable();
+            this._options.color.transform.value = 'linear';
+            this._options.color.min.enable();
+            this._options.color.max.enable();
+
+            this._colorReset.disabled = false;
+            this._colorMoreOptions.disabled = false;
+            this._options.color.palette.enable();
+
+            const values = this._transformValues(property, 'linear');
+
+            if (values.some((v) => v === null)) {
+                this.warnings.sendMessage(
+                    'The selected structure has undefined properties for some atoms,' +
+                        ' these atoms will be colored in light gray.'
+                );
+            }
+
+            // To change min and max values when the transform has been changed
+            const { max, min } = arrayMaxMin(values);
+
+            // We have to set max first and min second here to avoid sending
+            // a spurious warning in `colorRangeChange` below in case the
+            // new min is bigger than the old max.
+            this._options.color.min.value = Number.NEGATIVE_INFINITY;
+            this._options.color.max.value = max;
+            this._options.color.min.value = min;
+            this._setScaleStep([min, max]);
+        } else {
+            this._options.color.transform.disable();
+            this._options.color.min.disable();
+            this._options.color.max.disable();
+
+            // Collapse a color panel if it was opened
+            const colorExpandPanel =
+                this._options.getModalElement<HTMLButtonElement>('atom-color-extra');
+            if (colorExpandPanel.classList.contains('show')) {
+                this._colorMoreOptions.click();
+            }
+
+            this._colorReset.disabled = true;
+            this._colorMoreOptions.disabled = true;
+            this._options.color.palette.disable();
+
+            this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
+        }
+
+        this._restyleAndRender();
+    }
+
+    private _colorRangeChange(minOrMax: 'min' | 'max') {
+        const min = this._options.color.min.value;
+        const max = this._options.color.max.value;
+        if (min > max) {
+            this.warnings.sendMessage(
+                `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
+            );
+            if (minOrMax === 'min') {
+                this._options.color.min.reset();
+            } else {
+                this._options.color.max.reset();
+            }
+            return;
+        }
+        this._setScaleStep([min, max]);
+        this._restyleAndRender();
+    }
+
+    private _connectColorSettings(): void {
         // ======= color settings
         // setup state when the property changes
-        const colorPropertyChanged = () => {
-            if (this._properties === undefined) {
-                return;
-            }
-
-            const property = this._options.color.property.value;
-
-            if (property !== 'element') {
-                this._options.color.transform.enable();
-                this._options.color.transform.value = 'linear';
-                this._options.color.min.enable();
-                this._options.color.max.enable();
-
-                this._colorReset.disabled = false;
-                this._colorMoreOptions.disabled = false;
-                this._options.color.palette.enable();
-
-                const values = this._transformValues(property, 'linear');
-
-                if (values.some((v) => v === null)) {
-                    this.warnings.sendMessage(
-                        'The selected structure has undefined properties for some atoms,' +
-                            ' these atoms will be colored in light gray.'
-                    );
-                }
-
-                // To change min and max values when the transform has been changed
-                const { max, min } = arrayMaxMin(values);
-
-                // We have to set max first and min second here to avoid sending
-                // a spurious warning in `colorRangeChange` below in case the
-                // new min is bigger than the old max.
-                this._options.color.min.value = Number.NEGATIVE_INFINITY;
-                this._options.color.max.value = max;
-                this._options.color.min.value = min;
-                this._setScaleStep([min, max]);
-            } else {
-                this._options.color.transform.disable();
-                this._options.color.min.disable();
-                this._options.color.max.disable();
-
-                // Collapse a color panel if it was opened
-                const colorExpandPanel =
-                    this._options.getModalElement<HTMLButtonElement>('atom-color-extra');
-                if (colorExpandPanel.classList.contains('show')) {
-                    this._colorMoreOptions.click();
-                }
-
-                this._colorReset.disabled = true;
-                this._colorMoreOptions.disabled = true;
-                this._options.color.palette.disable();
-
-                this._viewer.setColorByElement({}, $3Dmol.elementColors.Jmol);
-            }
-
-            restyleAndRender();
-        };
-        this._options.color.property.onchange.push(colorPropertyChanged);
-
-        const colorRangeChange = (minOrMax: 'min' | 'max') => {
-            const min = this._options.color.min.value;
-            const max = this._options.color.max.value;
-            if (min > max) {
-                this.warnings.sendMessage(
-                    `The inserted min and max values in color are such that min > max! The last inserted value was reset.`
-                );
-                if (minOrMax === 'min') {
-                    this._options.color.min.reset();
-                } else {
-                    this._options.color.max.reset();
-                }
-                return;
-            }
-            this._setScaleStep([min, max]);
-            restyleAndRender();
-        };
+        this._options.color.property.onchange.push(() => this._colorPropertyChanged());
 
         // ======= color transform
         this._options.color.transform.onchange.push(() => {
@@ -1118,19 +982,19 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._setScaleStep([min, max]);
             if (!this._disableStyleUpdates) this._updateColorBar();
-            restyleAndRender();
+            this._restyleAndRender();
         });
 
         // ======= color min
         this._options.color.min.onchange.push(() => {
-            colorRangeChange('min');
-            restyleAndRender();
+            this._colorRangeChange('min');
+            this._restyleAndRender();
         });
 
         // ======= color max
         this._options.color.max.onchange.push(() => {
-            colorRangeChange('max');
-            restyleAndRender();
+            this._colorRangeChange('max');
+            this._restyleAndRender();
         });
 
         // ======= color reset
@@ -1153,24 +1017,26 @@ export class MoleculeViewer {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max]);
-            restyleAndRender();
+            this._restyleAndRender();
         });
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
-            restyleAndRender();
+            this._restyleAndRender();
         });
+    }
 
+    private _connectGenericSettings(): void {
         // ======= labels settings
         // setup state when the property changes
-        this._options.labelsProperty.onchange.push(restyleAndRender);
+        this._options.labelsProperty.onchange.push(() => this._restyleAndRender());
 
         // Setup various buttons
         this._resetEnvCutoff = this._options.getModalElement<HTMLButtonElement>('env-reset');
         this._resetEnvCutoff.onclick = () => {
             assert(this._highlighted !== undefined);
             this._options.environments.cutoff.value = this._defaultCutoff(this._highlighted.center);
-            restyleAndRender();
+            this._restyleAndRender();
         };
 
         const alignX = this._options.getModalElement<HTMLButtonElement>('align-x');
@@ -1232,16 +1098,9 @@ export class MoleculeViewer {
         };
     }
 
-    /**
-     * Function called whenever the user click on an atom in the viewer
-     */
-    private _selectAtom(atom: $3Dmol.AtomSelectionSpec): void {
-        // use atom.serial instead of atom.index to ensure we are getting the
-        // id of the atom inside the central cell when using a supercell
-        assert(atom.serial !== undefined);
-
-        this.onselect(atom.serial);
-    }
+    // ======================================================================
+    // Core Rendering & Logic
+    // ======================================================================
 
     /**
      * Update the styles of all atoms as required
@@ -1427,14 +1286,19 @@ export class MoleculeViewer {
                                 position[2] += a * cell[2] + b * cell[5] + c * cell[8];
 
                                 atomShapeData.position = position;
+
+                                const elem = structure.elements ? structure.elements[i] : name;
+
                                 // obey explicit color specification if given,
                                 // otherwise color as the corresponding atom
                                 if (!atomShapeData.color) {
                                     if (colorFunc) {
                                         atomSpec.serial = i;
+                                        atomSpec.elem = elem;
                                         atomShapeData.color = colorFunc(atomSpec);
                                     } else {
-                                        atomShapeData.color = $3Dmol.elementColors.Jmol[name];
+                                        atomShapeData.color =
+                                            $3Dmol.elementColors.Jmol[elem] || 0xffffff;
                                     }
                                 }
 
@@ -1526,241 +1390,6 @@ export class MoleculeViewer {
             this._viewer.addCustom(mergedShapes);
         }
         this._viewer.render();
-    }
-    /**
-     * Get the main style used for all atoms/atoms inside the environment when
-     * highlighting a specific environment
-     */
-    private _mainStyle(isProtein: boolean = false): Partial<$3Dmol.AtomStyleSpec> {
-        const style: Partial<$3Dmol.AtomStyleSpec> = {};
-        const showProteinAtomsAndBonds = isProtein && !this._options.cartoon.value;
-        if (this._options.atoms.value && (!isProtein || showProteinAtomsAndBonds)) {
-            style.sphere = {
-                scale: this._options.spaceFilling.value ? 1.0 : 0.22,
-                colorfunc: this._colorFunction(),
-            } as unknown as $3Dmol.SphereStyleSpec;
-        }
-        if (this._options.bonds.value && (!isProtein || showProteinAtomsAndBonds)) {
-            style.stick = {
-                radius: 0.15,
-                colorfunc: this._colorFunction(),
-            } as unknown as $3Dmol.StickStyleSpec;
-        }
-        if (!showProteinAtomsAndBonds && isProtein) {
-            style.cartoon = {
-                color: 'spectrum',
-                arrows: true,
-                opacity: 1.0,
-            } as unknown as $3Dmol.CartoonStyleSpec;
-        }
-
-        return style;
-    }
-
-    /**
-     * Get the values that should be used to color atoms when coloring them
-     * according to properties
-     */
-    private _transformValues(property: string, transform: string): Array<number | null> {
-        assert(this._properties !== undefined);
-        assert(Object.keys(this._properties).includes(property));
-
-        // JSON.parse & JSON.stringify to make a deep copy of the properties to
-        // avoid modifying the original ones.
-        //
-        // This also transforms all `undefined` values into `null`
-        let currentProperty = JSON.parse(JSON.stringify(this._properties[property])) as Array<
-            number | null
-        >;
-
-        let transformFunc = (x: number) => x;
-        if (transform === 'log') {
-            transformFunc = Math.log10;
-        } else if (transform === 'sqrt') {
-            transformFunc = Math.sqrt;
-        } else if (transform === 'inverse') {
-            transformFunc = (x) => 1 / x;
-        }
-
-        currentProperty = currentProperty.map((value) => {
-            if (value !== null && !isNaN(value)) {
-                return transformFunc(value);
-            } else {
-                return value;
-            }
-        });
-
-        return currentProperty;
-    }
-
-    private _nonStandardElemColors = new Map<string, string>();
-
-    /**
-     * Get a function computing the atom color, that can be used as 3Dmol
-     * `colorfunc`
-     */
-    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => $3Dmol.ColorSpec) | undefined {
-        const property = this._options.color.property.value;
-
-        if (this._properties === undefined || property === 'element') {
-            const tab20Palette = COLOR_MAPS['tab20'];
-            return (atom: $3Dmol.AtomSpec) => {
-                if (atom.elem !== undefined) {
-                    const value = $3Dmol.elementColors.Jmol[atom.elem];
-                    if (value !== undefined) {
-                        // standard element names
-                        return value;
-                    } else {
-                        let value = this._nonStandardElemColors.get(atom.elem);
-                        if (value === undefined) {
-                            this._nonStandardElemColors.set(
-                                atom.elem,
-                                tab20Palette[
-                                    (this._nonStandardElemColors.size % (tab20Palette.length / 2)) *
-                                        2
-                                ][1]
-                            ); // each color is repeated twice
-                            value = this._nonStandardElemColors.get(atom.elem);
-                        }
-                        assert(value !== undefined);
-                        return value;
-                    }
-                } else {
-                    // missing values
-                    return 0xdddddd;
-                }
-            };
-        }
-
-        const transform = this._options.color.transform.value;
-
-        const currentProperty = this._transformValues(property, transform);
-        const min = this._options.color.min.value;
-        const max = this._options.color.max.value;
-
-        const palette = COLOR_MAPS[this._options.color.palette.value];
-        const colors = [];
-        // NB: 3Dmol does not consider midpoints. Palettes should be given as
-        // uniformly spaced colors, otherwise the mapping will be incorrect
-        for (let c = 0; c < palette.length; c++) {
-            colors.push(palette[c][1]);
-        }
-        const grad: $3Dmol.Gradient = new $3Dmol.Gradient.CustomLinear(min, max, colors);
-
-        return (atom: $3Dmol.AtomSpec) => {
-            assert(atom.serial !== undefined);
-            const value = currentProperty[atom.serial];
-            if (value === null) {
-                // missing values
-                return 0xdddddd;
-            } else if (isNaN(value)) {
-                // NaN values
-                return 0x222222;
-            } else {
-                if (Number.isFinite(min) && Number.isFinite(max)) {
-                    return grad.valueToHex(value);
-                } else {
-                    return 0x222222;
-                }
-            }
-        };
-    }
-
-    /**
-     * Get the style specification for the hidden/background atoms when
-     * highlighting a specific environment
-     */
-    private _hiddenStyle(): Partial<$3Dmol.AtomStyleSpec> {
-        const style: Partial<$3Dmol.AtomStyleSpec> = {};
-
-        const bgStyle = this._options.environments.bgStyle.value;
-        if (bgStyle === 'hide') {
-            // nothing to do
-        } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
-            style.stick = {
-                // slightly smaller radius than the main style
-                radius: 0.149,
-                opacity: defaultOpacity(),
-                hidden: !this._options.bonds.value,
-            };
-
-            if (bgStyle === 'ball-stick' && this._options.shape.value === '') {
-                style.sphere = {
-                    // slightly smaller scale than the main style
-                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
-                    opacity: defaultOpacity(),
-                };
-            }
-        } else if (bgStyle === 'cartoon') {
-            style.cartoon = {
-                opacity: defaultOpacity(),
-                thickness: 0.3,
-                arrows: true,
-            };
-        } else {
-            unreachable();
-        }
-
-        const bgColor = this._options.environments.bgColor.value;
-        if (bgColor === 'CPK') {
-            // nothing to do
-        } else if (bgColor === 'grey') {
-            if (style.stick !== undefined) {
-                style.stick.color = 0x808080;
-            }
-
-            if (style.sphere !== undefined) {
-                style.sphere.color = 0x808080;
-            }
-            if (style.cartoon !== undefined) {
-                style.cartoon.color = 0x808080;
-            }
-        } else if (bgColor === 'property') {
-            if (style.stick !== undefined) {
-                style.stick = {
-                    // slightly smaller radius than the main style
-                    radius: 0.149,
-                    opacity: defaultOpacity(),
-                    hidden: !this._options.bonds.value,
-                    colorfunc: this._colorFunction(),
-                } as unknown as $3Dmol.StickStyleSpec;
-            }
-
-            if (style.sphere !== undefined) {
-                style.sphere = {
-                    // slightly smaller scale than the main style
-                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
-                    opacity: defaultOpacity(),
-                    colorfunc: this._colorFunction(),
-                } as unknown as $3Dmol.SphereStyleSpec;
-            }
-            if (style.cartoon !== undefined) {
-                style.cartoon = {
-                    opacity: defaultOpacity(),
-                    thickness: 0.3,
-                    arrows: true,
-                    colorfunc: this._colorFunction(),
-                } as unknown as $3Dmol.CartoonStyleSpec;
-            }
-        } else {
-            unreachable();
-        }
-
-        return style;
-    }
-
-    /**
-     * Get the style specification for the central atom when
-     * highlighting a specific environment
-     */
-    private _centralStyle(scale: number): Partial<$3Dmol.AtomStyleSpec> {
-        return {
-            sphere: {
-                scale: scale,
-                color: 'green',
-                opacity: defaultOpacity(),
-            },
-        };
     }
 
     private _updateAtomLabels(): void {
@@ -1878,271 +1507,22 @@ export class MoleculeViewer {
         this._viewer.render();
     }
 
-    private _formatLabel(value: string | number | undefined): string {
-        if (value === undefined) {
-            return '';
-        }
-
-        if (typeof value === 'string') {
-            return value;
-        }
-
-        if (typeof value === 'number') {
-            if (!Number.isFinite(value)) {
-                // handle NaN, Infinity, -Infinity nicely
-                return value.toString();
-            }
-
-            // 3 significant digits, force scientific notation for small or large values
-            // e.g. 12.3213213 -> "12.3", 0.354123123 -> "0.354", 6.724353247e-21 -> "6.77e-21"
-            let s = value.toPrecision(3);
-            if (Math.abs(value) < 1e-2 || Math.abs(value) >= 1e3) {
-                s = value.toExponential(2);
-            }
-
-            return s;
-        }
-
-        return String(value);
-    }
-
-    /**
-     * Show the information related to supercell in a small box on the bottom
-     * right corner.
-     */
-    private _showSupercellInfo(): void {
-        const a = this._options.supercell[0].value;
-        const b = this._options.supercell[1].value;
-        const c = this._options.supercell[2].value;
-
-        if (a !== 1 || b !== 1 || c !== 1) {
-            this._cellInfo.innerText = `${a}x${b}x${c} supercell`;
-        } else {
-            this._cellInfo.innerText = '';
+    private _updateColorBar() {
+        this._deleteColorBar();
+        if (this._options.color.property.value !== 'element') {
+            this._colorBar = this._addColorBar();
         }
     }
 
-    /**
-     * Check whether environments are enabled or not
-     */
-    private _environmentsEnabled(): boolean {
-        return this._highlighted !== undefined && !this._resetEnvCutoff.disabled;
-    }
-
-    /**
-     * Enable (if `show` is true) or disable (if `show` is false) the settings
-     * related to environments
-     */
-    private _enableEnvironmentSettings(show: boolean): void {
-        const toggle = this._options.getModalElement(`env-activated`)
-            .nextElementSibling as HTMLLabelElement;
-        assert(toggle !== null);
-        const reset = this._resetEnvCutoff;
-
-        if (show) {
-            if (this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
-
-            reset.disabled = false;
-            toggle.innerText = 'Disable';
-
-            this._options.environments.cutoff.enable();
-            this._options.environments.bgStyle.enable();
-            this._options.environments.bgColor.enable();
-        } else {
-            if (!this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
-
-            reset.disabled = true;
-            toggle.innerText = 'Enable';
-
-            this._options.environments.cutoff.disable();
-            this._options.environments.bgStyle.disable();
-            this._options.environments.bgColor.disable();
+    private _deleteColorBar() {
+        if (this._colorBar !== undefined) {
+            this._viewer.removeLabel(this._colorBar.min);
+            this._viewer.removeLabel(this._colorBar.mid);
+            this._viewer.removeLabel(this._colorBar.max);
+            this._viewer.removeLabel(this._colorBar.property);
+            this._viewer.removeLabel(this._colorBar.gradient);
+            this._colorBar = undefined;
         }
-    }
-
-    /**
-     * Get the cutoff for the environment around the given `center`
-     */
-    private _defaultCutoff(center: number): number {
-        assert(this._environments !== undefined);
-        const environment = this._environments[center];
-        assert(environment !== undefined);
-        return environment.cutoff;
-    }
-
-    /**
-     * Change which central atom is highlighted in the system to `center`. If
-     * `center` is undefined, this disable highlighting.
-     *
-     * @param center index of the atom to highlight
-     */
-    private _changeHighlighted(center?: number, previousDefaultCutoff?: number): void {
-        if (this._highlighted !== undefined) {
-            this._viewer.removeModel(this._highlighted.model);
-        }
-
-        if (center === undefined) {
-            this._options.environments.cutoff.value = 0;
-            this._highlighted = undefined;
-        } else {
-            if (this._environments === undefined) {
-                throw Error('cannot highlight an atom without having a list of environments');
-            }
-
-            const environment = this._environments[center];
-            if (environment === undefined) {
-                throw Error(
-                    `cannot highlight atom ${center}: it is not part of the list of environments`
-                );
-            }
-
-            // only change the cutoff if it was not changed manually by the user
-            const htmlCutoff = this._options.environments.cutoff.value;
-            if (previousDefaultCutoff === undefined || previousDefaultCutoff === htmlCutoff) {
-                this._options.environments.cutoff.value = environment.cutoff;
-            }
-
-            // We need to create a separate model to have different opacity
-            // for the background & highlighted atoms
-            // https://github.com/3dmol/3Dmol.js/issues/166
-            // prettier-ignore
-            const selection = {
-                or: [
-                    { index: center },
-                    { within: { distance: this._options.environments.cutoff.value, sel: { index: center } } },
-                ],
-            };
-            this._highlighted = {
-                model: this._viewer.createModelFrom(selection),
-                center: center,
-            };
-            // initialize with main style
-            this._highlighted.model.setStyle({}, this._mainStyle());
-        }
-    }
-
-    /**
-     * Reset the view by re-centering it and zooming to fit the model as much as
-     * possible inside the views.
-     */
-    private _resetView(): void {
-        this._viewer.zoomTo();
-        this._viewer.zoom(2.0);
-        this._viewer.setSlab(-1000, 1000);
-    }
-
-    /**
-     * Centers the view around the selected atom (if there is one)
-     */
-    private _centerView(): void {
-        if (this._highlighted !== undefined && this._current !== undefined) {
-            // use index rather than serial to specify the selection, to avoid picking also the
-            // periodic replicas. however we then have to specify the model id, otherwise it'd
-            // pick the index from the highlighted selection, which does not match the serial ID
-            this._viewer.center({ index: this._highlighted.center, model: this._current.model });
-        }
-    }
-
-    /**
-     * Rotate the viewed group so that the given direction (in group
-     * coordinates) is aligned with the z axis (in camera space)
-     *
-     * @param direction axis to align with the camera view
-     */
-    private _viewAlong(direction: [number, number, number]): void {
-        const norm = Math.sqrt(
-            direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]
-        );
-
-        // angle between Oz and the axis
-        const angle = Math.acos(direction[2] / norm);
-
-        const quaternion = [
-            // rotation axis is direction ^ Oz
-            // rotation[0] * sin(angle / 2)
-            (direction[1] / norm) * Math.sin(angle / 2),
-            // rotation[1] * sin(angle / 2)
-            (-direction[0] / norm) * Math.sin(angle / 2),
-            // rotation[2] * sin(angle / 2)
-            0,
-            Math.cos(angle / 2),
-        ];
-
-        const viewpoint = this._viewer.getView();
-        viewpoint[4] = quaternion[0];
-        viewpoint[5] = quaternion[1];
-        viewpoint[6] = quaternion[2];
-        viewpoint[7] = quaternion[3];
-        this._viewer.setView(viewpoint);
-    }
-
-    /**
-     * Add a labeled arrow of the given color from 0 to the given position, with
-     * the given label.
-     */
-    private _addLabeledArrow(
-        position: [number, number, number],
-        color: string,
-        label: string
-    ): LabeledArrow {
-        const pos = new $3Dmol.Vector3(position[0], position[1], position[2]);
-
-        return {
-            arrow: this._viewer.addArrow({
-                start: new $3Dmol.Vector3(0, 0, 0),
-                end: pos,
-                radius: 0.1,
-                color: color,
-                midpos: -1,
-            }),
-            label: this._viewer.addLabel(label, {
-                position: pos,
-                inFront: true,
-                fontColor: 'black',
-                fontSize: 14,
-                showBackground: false,
-            }),
-        };
-    }
-
-    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
-    private _setScaleStep(axisBounds: number[]): void {
-        if (axisBounds !== undefined) {
-            // round to 10 decimal places so it does not break in Firefox
-            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
-            const minElement = this._options.getModalElement<HTMLInputElement>(`atom-color-min`);
-            const maxElement = this._options.getModalElement<HTMLInputElement>(`atom-color-max`);
-            minElement.step = `${step}`;
-            maxElement.step = `${step}`;
-        }
-    }
-
-    // this is duplicated from map.ts - should really move all this stuff in a utils module
-    // and uniform the names and modes of operation
-    private _transformTitle(): string {
-        let title = this._options.color.property.value;
-        switch (this._options.color.transform.value) {
-            case 'inverse':
-                title = `(${title})⁻¹`;
-                break;
-            case 'log':
-                title = `log₁₀(${title})`;
-                break;
-            case 'sqrt':
-                title = `√(${title})`;
-                break;
-            case 'linear':
-                break;
-            default:
-                break;
-        }
-        return title;
     }
 
     /**
@@ -2151,7 +1531,11 @@ export class MoleculeViewer {
      */
     private _addColorBar(): ColorBar {
         const palette = this._options.color.palette.value;
-        const title = this._transformTitle();
+        const title = transformedAxisLabel(
+            this._options.color.property.value,
+            this._options.color.transform.value,
+            false
+        );
 
         const viewerWidth = this._viewer.container?.clientWidth;
         const viewerHeight = this._viewer.container?.clientHeight;
@@ -2244,6 +1628,284 @@ export class MoleculeViewer {
         };
     }
 
+    // ======================================================================
+    // Helper Methods (Logic/Calculation)
+    // ======================================================================
+
+    /**
+     * Get a function computing the atom color, that can be used as 3Dmol
+     * `colorfunc`
+     */
+    private _colorFunction(): ((atom: $3Dmol.AtomSpec) => $3Dmol.ColorSpec) | undefined {
+        const property = this._options.color.property.value;
+
+        if (this._properties === undefined || property === 'element') {
+            const tab20Palette = COLOR_MAPS['tab20'];
+            return (atom: $3Dmol.AtomSpec) => {
+                if (atom.elem !== undefined) {
+                    const value = $3Dmol.elementColors.Jmol[atom.elem];
+                    if (value !== undefined) {
+                        // standard element names
+                        return value;
+                    } else {
+                        let value = this._nonStandardElemColors.get(atom.elem);
+                        if (value === undefined) {
+                            this._nonStandardElemColors.set(
+                                atom.elem,
+                                tab20Palette[
+                                    (this._nonStandardElemColors.size % (tab20Palette.length / 2)) *
+                                        2
+                                ][1]
+                            ); // each color is repeated twice
+                            value = this._nonStandardElemColors.get(atom.elem);
+                        }
+                        assert(value !== undefined);
+                        return value;
+                    }
+                } else {
+                    // missing values
+                    return 0xdddddd;
+                }
+            };
+        }
+
+        const transform = this._options.color.transform.value;
+
+        const currentProperty = this._transformValues(property, transform);
+        const min = this._options.color.min.value;
+        const max = this._options.color.max.value;
+
+        const palette = COLOR_MAPS[this._options.color.palette.value];
+        const colors = [];
+        // NB: 3Dmol does not consider midpoints. Palettes should be given as
+        // uniformly spaced colors, otherwise the mapping will be incorrect
+        for (let c = 0; c < palette.length; c++) {
+            colors.push(palette[c][1]);
+        }
+        const grad: $3Dmol.Gradient = new $3Dmol.Gradient.CustomLinear(min, max, colors);
+
+        return (atom: $3Dmol.AtomSpec) => {
+            assert(atom.serial !== undefined);
+            const value = currentProperty[atom.serial];
+            if (value === null) {
+                // missing values
+                return 0xdddddd;
+            } else if (isNaN(value)) {
+                // NaN values
+                return 0x222222;
+            } else {
+                if (Number.isFinite(min) && Number.isFinite(max)) {
+                    return grad.valueToHex(value);
+                } else {
+                    return 0x222222;
+                }
+            }
+        };
+    }
+
+    private _nonStandardElemColors = new Map<string, string>();
+
+    /**
+     * Get the values that should be used to color atoms when coloring them
+     * according to properties
+     */
+    private _transformValues(property: string, transform: string): Array<number | null> {
+        assert(this._properties !== undefined);
+        assert(Object.keys(this._properties).includes(property));
+
+        // JSON.parse & JSON.stringify to make a deep copy of the properties to
+        // avoid modifying the original ones.
+        //
+        // This also transforms all `undefined` values into `null`
+        let currentProperty = JSON.parse(JSON.stringify(this._properties[property])) as Array<
+            number | null
+        >;
+
+        let transformFunc = (x: number) => x;
+        if (transform === 'log') {
+            transformFunc = Math.log10;
+        } else if (transform === 'sqrt') {
+            transformFunc = Math.sqrt;
+        } else if (transform === 'inverse') {
+            transformFunc = (x) => 1 / x;
+        }
+
+        currentProperty = currentProperty.map((value) => {
+            if (value !== null && !isNaN(value)) {
+                return transformFunc(value);
+            } else {
+                return value;
+            }
+        });
+
+        return currentProperty;
+    }
+
+    /**
+     * Get the main style used for all atoms/atoms inside the environment when
+     * highlighting a specific environment
+     */
+    private _mainStyle(isProtein: boolean = false): Partial<$3Dmol.AtomStyleSpec> {
+        const style: Partial<$3Dmol.AtomStyleSpec> = {};
+        const showProteinAtomsAndBonds = isProtein && !this._options.cartoon.value;
+        if (this._options.atoms.value && (!isProtein || showProteinAtomsAndBonds)) {
+            style.sphere = {
+                scale: this._options.spaceFilling.value ? 1.0 : 0.22,
+                colorfunc: this._colorFunction(),
+            } as unknown as $3Dmol.SphereStyleSpec;
+        }
+        if (this._options.bonds.value && (!isProtein || showProteinAtomsAndBonds)) {
+            style.stick = {
+                radius: 0.15,
+                colorfunc: this._colorFunction(),
+            } as unknown as $3Dmol.StickStyleSpec;
+        }
+        if (!showProteinAtomsAndBonds && isProtein) {
+            style.cartoon = {
+                color: 'spectrum',
+                arrows: true,
+                opacity: 1.0,
+            } as unknown as $3Dmol.CartoonStyleSpec;
+        }
+
+        return style;
+    }
+
+    /**
+     * Get the style specification for the hidden/background atoms when
+     * highlighting a specific environment
+     */
+    private _hiddenStyle(): Partial<$3Dmol.AtomStyleSpec> {
+        const style: Partial<$3Dmol.AtomStyleSpec> = {};
+
+        const bgStyle = this._options.environments.bgStyle.value;
+        if (bgStyle === 'hide') {
+            // nothing to do
+        } else if (bgStyle === 'licorice' || bgStyle === 'ball-stick') {
+            style.stick = {
+                // slightly smaller radius than the main style
+                radius: 0.149,
+                opacity: defaultOpacity(),
+                hidden: !this._options.bonds.value,
+            };
+
+            if (bgStyle === 'ball-stick' && this._options.shape.value === '') {
+                style.sphere = {
+                    // slightly smaller scale than the main style
+                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
+                    opacity: defaultOpacity(),
+                };
+            }
+        } else if (bgStyle === 'cartoon') {
+            style.cartoon = {
+                opacity: defaultOpacity(),
+                thickness: 0.3,
+                arrows: true,
+            };
+        } else {
+            unreachable();
+        }
+
+        const bgColor = this._options.environments.bgColor.value;
+        if (bgColor === 'CPK') {
+            // nothing to do
+        } else if (bgColor === 'grey') {
+            if (style.stick !== undefined) {
+                style.stick.color = 0x808080;
+            }
+
+            if (style.sphere !== undefined) {
+                style.sphere.color = 0x808080;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon.color = 0x808080;
+            }
+        } else if (bgColor === 'property') {
+            if (style.stick !== undefined) {
+                style.stick = {
+                    // slightly smaller radius than the main style
+                    radius: 0.149,
+                    opacity: defaultOpacity(),
+                    hidden: !this._options.bonds.value,
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.StickStyleSpec;
+            }
+
+            if (style.sphere !== undefined) {
+                style.sphere = {
+                    // slightly smaller scale than the main style
+                    scale: this._options.spaceFilling.value ? 0.999 : 0.219,
+                    opacity: defaultOpacity(),
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.SphereStyleSpec;
+            }
+            if (style.cartoon !== undefined) {
+                style.cartoon = {
+                    opacity: defaultOpacity(),
+                    thickness: 0.3,
+                    arrows: true,
+                    colorfunc: this._colorFunction(),
+                } as unknown as $3Dmol.CartoonStyleSpec;
+            }
+        } else {
+            unreachable();
+        }
+
+        return style;
+    }
+
+    /**
+     * Get the style specification for the central atom when
+     * highlighting a specific environment
+     */
+    private _centralStyle(scale: number): Partial<$3Dmol.AtomStyleSpec> {
+        return {
+            sphere: {
+                scale: scale,
+                color: 'green',
+                opacity: defaultOpacity(),
+            },
+        };
+    }
+
+    /**
+     * Get the cutoff for the environment around the given `center`
+     */
+    private _defaultCutoff(center: number): number {
+        assert(this._environments !== undefined);
+        const environment = this._environments[center];
+        assert(environment !== undefined);
+        return environment.cutoff;
+    }
+
+    private _formatLabel(value: string | number | undefined): string {
+        if (value === undefined) {
+            return '';
+        }
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (typeof value === 'number') {
+            if (!Number.isFinite(value)) {
+                // handle NaN, Infinity, -Infinity nicely
+                return value.toString();
+            }
+
+            // 3 significant digits, force scientific notation for small or large values
+            // e.g. 12.3213213 -> "12.3", 0.354123123 -> "0.354", 6.724353247e-21 -> "6.77e-21"
+            let s = value.toPrecision(3);
+            if (Math.abs(value) < 1e-2 || Math.abs(value) >= 1e3) {
+                s = value.toExponential(2);
+            }
+
+            return s;
+        }
+
+        return String(value);
+    }
+
     /** Generate a LabelSpec for the key values in the color bar */
     private _colorBarLabelsSpec(options: {
         x: number;
@@ -2264,64 +1926,320 @@ export class MoleculeViewer {
         };
     }
 
-    private _deleteColorBar() {
-        if (this._colorBar !== undefined) {
-            this._viewer.removeLabel(this._colorBar.min);
-            this._viewer.removeLabel(this._colorBar.mid);
-            this._viewer.removeLabel(this._colorBar.max);
-            this._viewer.removeLabel(this._colorBar.property);
-            this._viewer.removeLabel(this._colorBar.gradient);
-            this._colorBar = undefined;
+    /** Changes the step of the arrow buttons in min/max input based on dataset range*/
+    private _setScaleStep(axisBounds: number[]): void {
+        if (axisBounds !== undefined) {
+            // round to 10 decimal places so it does not break in Firefox
+            const step = Math.round(((axisBounds[1] - axisBounds[0]) / 20) * 10 ** 10) / 10 ** 10;
+            const minElement = this._options.getModalElement<HTMLInputElement>(`atom-color-min`);
+            const maxElement = this._options.getModalElement<HTMLInputElement>(`atom-color-max`);
+            minElement.step = `${step}`;
+            maxElement.step = `${step}`;
         }
     }
 
-    private _updateColorBar() {
-        this._deleteColorBar();
-        if (this._options.color.property.value !== 'element') {
-            this._colorBar = this._addColorBar();
+    // ======================================================================
+    // Interaction & View Control
+    // ======================================================================
+
+    /**
+     * Function called whenever the user click on an atom in the viewer
+     */
+    private _selectAtom(atom: $3Dmol.AtomSelectionSpec): void {
+        // use atom.serial instead of atom.index to ensure we are getting the
+        // id of the atom inside the central cell when using a supercell
+        assert(atom.serial !== undefined);
+
+        this.onselect(atom.serial);
+    }
+
+    /**
+     * Reset the view by re-centering it and zooming to fit the model as much as
+     * possible inside the views.
+     */
+    private _resetView(): void {
+        this._viewer.zoomTo();
+        this._viewer.zoom(2.0);
+        this._viewer.setSlab(-1000, 1000);
+    }
+
+    /**
+     * Centers the view around the selected atom (if there is one)
+     */
+    private _centerView(): void {
+        if (this._highlighted !== undefined && this._current !== undefined) {
+            // use index rather than serial to specify the selection, to avoid picking also the
+            // periodic replicas. however we then have to specify the model id, otherwise it'd
+            // pick the index from the highlighted selection, which does not match the serial ID
+            this._viewer.center({ index: this._highlighted.center, model: this._current.model });
         }
     }
-}
 
-/** Try to format a float to ensure it fits in a 4 characters limit */
-function fixedWidthFloat(value: number): string {
-    if (value === 0) {
-        return '0';
-    } else if (value > 0) {
-        // we can use the full 4 characters for the number
-        if (value < 10000 && value > 0.009) {
-            if (Number.isInteger(value)) {
-                return value.toString();
-            } else {
-                // convert to fixed format with 3 decimals, then truncate to fit
-                // in 4 characters
-                let result = value.toFixed(3).substring(0, 4);
-                if (result[3] === '.') {
-                    result = result.substring(0, 3);
-                }
-                return result;
-            }
-        } else {
-            // convert to exponential format with no decimal part
-            return value.toExponential(0).replace('+', '');
+    /**
+     * Rotate the viewed group so that the given direction (in group
+     * coordinates) is aligned with the z axis (in camera space)
+     *
+     * @param direction axis to align with the camera view
+     */
+    private _viewAlong(direction: [number, number, number]): void {
+        const norm = Math.sqrt(
+            direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]
+        );
+
+        // angle between Oz and the axis
+        const angle = Math.acos(direction[2] / norm);
+
+        const quaternion = [
+            // rotation axis is direction ^ Oz
+            // rotation[0] * sin(angle / 2)
+            (direction[1] / norm) * Math.sin(angle / 2),
+            // rotation[1] * sin(angle / 2)
+            (-direction[0] / norm) * Math.sin(angle / 2),
+            // rotation[2] * sin(angle / 2)
+            0,
+            Math.cos(angle / 2),
+        ];
+
+        const viewpoint = this._viewer.getView();
+        viewpoint[4] = quaternion[0];
+        viewpoint[5] = quaternion[1];
+        viewpoint[6] = quaternion[2];
+        viewpoint[7] = quaternion[3];
+        this._viewer.setView(viewpoint);
+    }
+
+    /**
+     * Add a labeled arrow of the given color from 0 to the given position, with
+     * the given label.
+     */
+    private _addLabeledArrow(
+        position: [number, number, number],
+        color: string,
+        label: string
+    ): LabeledArrow {
+        const pos = new $3Dmol.Vector3(position[0], position[1], position[2]);
+        const arrow = this._viewer.addArrow({
+            start: { x: 0, y: 0, z: 0 },
+            end: pos,
+            color: color,
+            radius: 0.1,
+            mid: 1.0,
+            midpos: -1,
+        });
+
+        // 3Dmol.js puts labels at x,y,z=0 by default if we don't give a
+        // position. This seems to be a bug in the typescript definitions?
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        if ((arrow as any).lbl !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+            this._viewer.removeLabel((arrow as any).lbl);
         }
-    } else {
-        // we only have 3 characters, we need one for the '-' sign
-        if (value > -1000 && value < -0.09) {
-            if (Number.isInteger(value)) {
-                return value.toString();
-            } else {
-                // convert to fixed format with 2 decimals, then truncate to fit in
-                // 4 characters
-                let result = value.toFixed(3).substring(0, 4);
-                if (result[3] === '.') {
-                    result = result.substring(0, 3);
-                }
-                return result;
+
+        return {
+            arrow: arrow,
+            label: this._viewer.addLabel(label, {
+                position: pos,
+                inFront: true,
+                fontColor: 'black',
+                fontSize: 14,
+                showBackground: false,
+            }),
+        };
+    }
+
+    /** Setup interaction (click & hover) for environments highlighting */
+    private _setEnvironmentInteractions() {
+        if (this._environments === undefined) {
+            return;
+        }
+
+        const active = this._environments
+            .filter((e): e is Environment => e !== undefined)
+            .map((e) => e.center);
+
+        // resets clickable and hoverable state interactions
+        for (const atom of this._viewer.selectedAtoms({})) {
+            atom.clickable = false;
+            atom.hoverable = false;
+        }
+
+        assert(this._current !== undefined);
+        this._viewer.setClickable(
+            { model: this._current.model, index: active },
+            true,
+            (atom: $3Dmol.AtomSelectionSpec) => this._selectAtom(atom)
+        );
+
+        this._setHoverable(active);
+    }
+
+    /* Set the given list of active atoms as hoverable **/
+    private _setHoverable(active: number[]): void {
+        assert(this._current !== undefined);
+        this._viewer.setHoverDuration(0);
+
+        const n_atoms = this.natoms();
+        assert(n_atoms !== undefined);
+        const hovered: Map<number, $3Dmol.GLModel> = new Map();
+
+        const hoverStart = (atom: $3Dmol.AtomSpec) => {
+            assert(atom.index !== undefined);
+            if (hovered.get(atom.index) !== undefined) {
+                // the 'hover' model for this atom already exists
+                return;
             }
+
+            const model = this._viewer.addModel();
+            model.addAtoms([atom]);
+            model.setStyle({}, this._centralStyle(0.3));
+
+            // the atom in the new is still marked as clickable, but we only
+            // want the atom in the main model to react to interactions
+            const sel = model.selectedAtoms({});
+            sel[0].clickable = false;
+            sel[0].hoverable = false;
+
+            hovered.set(atom.index, model);
+            this._viewer.render();
+        };
+
+        const hoverStop = (atom: $3Dmol.AtomSpec) => {
+            assert(atom.index !== undefined);
+            const model = hovered.get(atom.index);
+            if (model === undefined) {
+                return;
+            }
+
+            this._viewer.removeModel(model);
+            hovered.delete(atom.index);
+            this._viewer.render();
+        };
+
+        this._viewer.setHoverable(
+            {
+                model: this._current.model,
+                index: active,
+            },
+            true,
+            hoverStart,
+            hoverStop
+        );
+    }
+
+    /**
+     * Check whether environments are enabled or not
+     */
+    private _environmentsEnabled(): boolean {
+        return this._highlighted !== undefined && !this._resetEnvCutoff.disabled;
+    }
+
+    /**
+     * Enable (if `show` is true) or disable (if `show` is false) the settings
+     * related to environments
+     */
+    private _enableEnvironmentSettings(show: boolean): void {
+        const toggle = this._options.getModalElement(`env-activated`)
+            .nextElementSibling as HTMLLabelElement;
+        assert(toggle !== null);
+        const reset = this._resetEnvCutoff;
+
+        if (show) {
+            if (this._environmentsEnabled()) {
+                // nothing to do
+                return;
+            }
+
+            reset.disabled = false;
+            toggle.innerText = 'Disable';
+
+            this._options.environments.cutoff.enable();
+            this._options.environments.bgStyle.enable();
+            this._options.environments.bgColor.enable();
         } else {
-            // convert to exponential format with no decimal part
-            return value.toExponential(0).replace('+', '');
+            if (!this._environmentsEnabled()) {
+                // nothing to do
+                return;
+            }
+
+            reset.disabled = true;
+            toggle.innerText = 'Enable';
+
+            this._options.environments.cutoff.disable();
+            this._options.environments.bgStyle.disable();
+            this._options.environments.bgColor.disable();
+        }
+    }
+
+    /**
+     * Change which central atom is highlighted in the system to `center`. If
+     * `center` is undefined, this disable highlighting.
+     *
+     * @param center index of the atom to highlight
+     */
+    private _changeHighlighted(center?: number, previousDefaultCutoff?: number): void {
+        if (this._highlighted !== undefined) {
+            this._viewer.removeModel(this._highlighted.model);
+        }
+
+        if (center === undefined) {
+            this._options.environments.cutoff.value = 0;
+            this._highlighted = undefined;
+
+            this._options.environments.activated.value = false;
+            this._enableEnvironmentSettings(false);
+        } else {
+            if (this._environments === undefined) {
+                throw Error('cannot highlight an atom without having a list of environments');
+            }
+
+            const environment = this._environments[center];
+            if (environment === undefined) {
+                throw Error(
+                    `cannot highlight atom ${center}: it is not part of the list of environments`
+                );
+            }
+
+            // only change the cutoff if it was not changed manually by the user
+            const htmlCutoff = this._options.environments.cutoff.value;
+            if (previousDefaultCutoff === undefined || previousDefaultCutoff === htmlCutoff) {
+                this._options.environments.cutoff.value = environment.cutoff;
+            }
+
+            this._options.environments.activated.value = true;
+            this._enableEnvironmentSettings(true);
+
+            // We need to create a separate model to have different opacity
+            // for the background & highlighted atoms
+            // https://github.com/3dmol/3Dmol.js/issues/166
+            // prettier-ignore
+            const selection = {
+                or: [
+                    { index: center },
+                    { within: { distance: this._options.environments.cutoff.value, sel: { index: center } } },
+                ],
+            };
+            this._highlighted = {
+                model: this._viewer.createModelFrom(selection),
+                center: center,
+            };
+            // initialize with main style
+            this._highlighted.model.setStyle({}, this._mainStyle());
+        }
+    }
+
+    /**
+     * Show the information related to supercell in a small box on the bottom
+     * right corner.
+     */
+    private _showSupercellInfo(): void {
+        const a = this._options.supercell[0].value;
+        const b = this._options.supercell[1].value;
+        const c = this._options.supercell[2].value;
+
+        if (a !== 1 || b !== 1 || c !== 1) {
+            this._cellInfo.innerText = `${a}x${b}x${c} supercell`;
+        } else {
+            this._cellInfo.innerText = '';
         }
     }
 }

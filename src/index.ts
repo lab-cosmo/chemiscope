@@ -131,7 +131,7 @@ function validateSettings(settings: JsObject) {
             checkArray(key, settings.pinned);
             for (const value of settings.pinned as unknown[]) {
                 if (!(Number.isInteger(value) && (value as number) >= 0)) {
-                    throw Error('"settings.pinned" must be an array of number');
+                    throw Error('"settings.pinned" must be an array of numbers');
                 }
             }
         } else if (key === 'target') {

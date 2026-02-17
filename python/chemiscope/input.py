@@ -46,12 +46,9 @@ def create_input(
         :py:func:`all_atomic_environments` can be used to generate the list of
         environments in simple cases.
 
-    :param dict shapes: optional dictionary of shapes to have available for display, see
-        below.
-
     :param dict settings: optional dictionary of settings to use when displaying the
         data. Possible entries for the ``settings`` dictionary are documented in the
-        chemiscope input file reference.
+        :ref:`json-settings` section.
 
     :param dict parameters: optional dictionary of parameters for multidimensional
         properties, see below
@@ -263,7 +260,7 @@ def create_input(
         }
 
 
-    .. _`ase.Atoms`: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
+    .. _`ase.Atoms`: https://ase-lib.org/ase/ase/atoms.html
     .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
     .. _`MDAnalysis.AtomGroup`: https://docs.mdanalysis.org/2.9.0/documentation_pages/core/groups.html#MDAnalysis.core.groups.AtomGroup
     """
@@ -431,7 +428,7 @@ def write_external_structures(
             by ``chemiscope``.
     :param str prefix: prefix to use for each generated JSON filename. Files will be
         named like ``{prefix}-0.json``, ``{prefix}-1.json`` etc.
-    :param str compresslevel: if zero, structures are saved as uncompressed ``.json``
+    :param int compresslevel: if zero, structures are saved as uncompressed ``.json``
         files, otherwise they are compressed and saved as ``.json.gz`` files, according
         to the desired compression level (1:fast, large file; 9: slow, small file).
 
@@ -591,7 +588,7 @@ def write_input(
             parameters=multidimensional_parameters,
         )
 
-    .. _ase-io: https://wiki.fysik.dtu.dk/ase/ase/io/io.html
+    .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
     .. _sklearn: https://scikit-learn.org/
     """
     if frames is not None:
@@ -733,12 +730,12 @@ def quick_settings(
         the properties shown should be those of environments or of structures.
 
     :param dict map_settings: Additional settings for the map (following the chemiscope
-        settings schema). It will override the settings specied from other map
+        settings schema). It will override the settings specified from other map
         parameters, e.g., ``x``, ``y``, ``z`` -axes, ``map_color`` etc.
 
     :param dict structure_settings: Additional settings for the structure viewer
         (following the chemiscope settings schema). It will override the settings
-        specied from other parameters, e.g., ``structure_color``
+        specified from other parameters, e.g., ``structure_color``
     """
 
     if target not in ["atom", "structure"]:

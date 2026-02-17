@@ -36,8 +36,9 @@ of the many [examples](https://chemiscope.org/docs/examples/index.html).
 ## Getting help for using chemiscope
 
 If you want to get help when using chemiscope either as a JavaScript/TypeScript
-library inside your own project; or for creating input files for the default
-visualizer at https://chemiscope.org, you can open a [Github
+library inside your own project, for creating input files for the default
+visualizer at https://chemiscope.org, or if you want to propose new
+features you can open a [Github
 issue](https://github.com/lab-cosmo/chemiscope/issues/new) with your question;
 or send an email to the developers (you can find these emails on the lab
 webpage: https://www.epfl.ch/labs/cosmo/people/)

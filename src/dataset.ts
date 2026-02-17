@@ -297,7 +297,7 @@ export function validateDataset(o: JsObject): void {
         const check_shape = checkShapes(
             o.shapes as Record<string, JsObject>,
             structureCount,
-            envCount
+            atomsCount
         );
         if (check_shape !== '') {
             throw Error('Error checking shape definitions: ' + check_shape);
@@ -312,7 +312,7 @@ export function validateDataset(o: JsObject): void {
     }
 
     if (!('properties' in o)) {
-        throw Error('missing "properties" key in then dataset');
+        throw Error('missing "properties" key in the dataset');
     } else if (!(typeof o.properties === 'object' && o.properties !== null)) {
         throw Error('"properties" must be an object in the dataset');
     }
@@ -661,12 +661,11 @@ function checkProperties(
             if (!isArrayString(propertyParameters)) {
                 throw Error(`'properties['${key}'].parameters' should be an array of strings`);
             }
-            // check if the length of parameters is 1 TODO: remove when support for multiple parameters is ready
+            // check if the length of parameters is 1; currently only single parameter supported
             if (propertyParameters.length !== 1) {
                 throw Error(`'properties['${key}'].parameters' should contain a single parameter`);
             }
             // check if parameters of the property exists in the parameters
-            //for (const value of propertyParameters) {
             for (const value of propertyParameters) {
                 if (!(value in parameters)) {
                     throw Error(
@@ -700,7 +699,7 @@ function checkProperties(
         }
 
         if ('units' in property && typeof property.units !== 'string') {
-            throw Error(`'properties['${key}'].units' should contain a string`);
+            throw Error(`'properties['${key}'].units' should be a string`);
         }
     }
 }
