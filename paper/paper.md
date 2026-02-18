@@ -1,5 +1,5 @@
 ---
-title: 'Chemiscope 1.0: a multi-platform atomistic data explorer'
+title: 'Chemiscope 1.0: interactive exploration of atomistic data from analysis to dissemination'
 tags:
     - TypeScript
     - JavaScript
@@ -43,22 +43,23 @@ Chemiscope is an interactive visualization tool for exploring structure-property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
 e.g., a low-dimensional embedding or property-property scatter plot, to an interactive
 3D structure viewer, streamlining inspection of clusters and outliers by moving between
-points in feature space and the corresponding atomic configurations.
+points in feature and property space and the corresponding atomic configurations.
 
-Chemiscope 1.0 turns the original browser-based visualizer into a multi-platform tool
-that fits into Python-centric workflows. The same visualization can be rendered as a
-standalone web viewer, embedded as a Jupyter widget [@Jupyter; @IPython], included in
-Streamlit web applications, or integrated into Sphinx-built documentation and
-sphinx-gallery examples for reproducible software manuals [@sphinx]. Chemiscope 1.0 also
-provides support for visualizing datasets directly from widely used atomistic Python
-toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], stk [@STK], and
-Chemfiles [@chemfiles].
+Chemiscope 1.0 turns the original browser-based visualizer into a versatile,
+multi-purpose tool that fits into Python-centric workflows. The same visualization can
+be rendered as a standalone web viewer, embedded as a Jupyter widget [@Jupyter;
+@IPython], included in Streamlit web applications, or integrated into Sphinx-built
+documentation and sphinx-gallery examples for reproducible software manuals [@sphinx].
+Chemiscope 1.0 also provides support for visualizing datasets directly from widely used
+atomistic Python toolkits, including ASE [@ase-paper], MDAnalysis [@MDAnalysis], stk
+[@STK], and Chemfiles [@chemfiles].
 
-![Overview of Chemiscope 1.0 cross-platform support. The Python API accepts structures
-from ASE, MDAnalysis, stk, and Chemfiles, along with user-defined properties and
-visualization settings. These inputs can be rendered as an interactive Jupyter widget,
-embedded in Streamlit applications, integrated into Sphinx documentation, or exported
-for the standalone web application at chemiscope.org.](chemiscope-v1.0.svg){width=100%}
+![Overview of Chemiscope 1.0 multi-environment support. The Python API accepts
+structures from ASE, MDAnalysis, stk, and Chemfiles, along with user-defined properties
+and visualization settings. These inputs can be rendered as an interactive Jupyter
+widget, embedded in Streamlit applications, integrated into Sphinx documentation, or
+exported for the standalone web application at
+chemiscope.org.](chemiscope-v1.0.svg){width=100%}
 
 # Statement of need
 
@@ -105,12 +106,12 @@ with more than 500,000 points on commodity hardware, without requiring users to
 pre-filter or manually decimate their data. Structure data can also be off-loaded to
 external files, reducing memory footprint and initial loading time.
 
-Chemiscope 1.0 can render atom-centered shapes to represent vectorial and tensorial
-properties, including arrows (e.g., dipoles or forces), ellipsoids (e.g.,
-polarizabilities), and user-defined triangular meshes. For biomolecular systems, it
-supports cartoon representations based on residue and chain information. The structure
-viewer handles a grid layout for side-by-side comparison of multiple structures or local
-environments.
+Chemiscope 1.0 introduces the possibility of rendering atom-centered shapes to represent
+vectorial and tensorial properties, including arrows (e.g., dipoles or forces),
+ellipsoids (e.g., polarizabilities), and user-defined triangular meshes. For
+biomolecular systems, it supports cartoon representations based on residue and chain
+information. The structure viewer handles a grid layout for side-by-side comparison of
+multiple structures or local environments.
 
 In Jupyter notebooks, the viewer is exposed as a widget with bidirectional communication
 between Python and the JavaScript runtime, implemented via traitlets [@Jupyter;
@@ -150,7 +151,7 @@ arrows.](chemiscope-v1.0-overview.svg){width=100%}
 
 Finally, the package includes an `explore` function that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
-[@metatensor], particularly, the PET-MAD model [@Mazitov2025] which is used by default,
+[@metatensor], particularly, the PET-MAD model [@Mazitov2025], which is used by default,
 to derive informative representations and produce map coordinates without requiring
 manual descriptor engineering or an explicit dimensionality reduction step [@MAD]:
 
@@ -174,25 +175,26 @@ static images. As of February 2026, the Materials Cloud Archive lists 18 publica
 using Chemiscope as an external app [@MaterialsCloudChemiscopeSearch].
 
 The tool has been cited in studies spanning machine-learned interatomic potentials and
-datasets [@Cheng2020; @MAD], coarse-grained molecular representations [@Helfrecht2020],
-and high-throughput screening of materials [@Jorgensen2026]. It is also integrated with
-the metatensor ecosystem [@metatensor] through the `chemiscope.explore` function, which
-uses foundation models like PET-MAD [@Mazitov2025] to generate map coordinates without
-manual descriptor engineering.
+datasets [@MACE; @He2025; @MAD; @Keith2021; @Cheng2020], coarse-grained molecular
+representations [@Helfrecht2020; @Nicholas2020], and high-throughput screening of
+materials [@Jorgensen2026; @Blaskovits2024; @Gallarati2022]. Chemiscope is integrated
+with the metatensor ecosystem [@metatensor] through the `chemiscope.explore` function,
+which uses foundation models like PET-MAD [@Mazitov2025] to generate map coordinates
+without manual descriptor engineering.
 
 Beyond research papers, Chemiscope serves educational and reproducibility purposes:
 tutorials and course materials use live widgets to demonstrate dimensionality reduction
 and structure-property correlations [@Goscinski2025scicodewidgets], and Chemiscope
-viewers can be embedded directly into manuals, as it is done in Atomisitic cookbook
-recipies [@AtomisticCookbook]. The Python package reach 4,235 downloads in the last
-month on PyPI Stats, accessed February 2026 [@PyPIStatsChemiscope].
+viewers can be embedded directly into manuals, as is done in Atomistic cookbook recipes
+[@AtomisticCookbook]. The Python package reached 4,235 downloads in the last month on
+PyPI Stats, accessed February 2026 [@PyPIStatsChemiscope].
 
 # AI usage disclosure
 
-Generative AI tools were assisted occasionally during software development (e.g., to
-obtain code suggestions). All AI-generated suggestions were reviewed, modified, and
-verified by the authors before inclusion, and the authors take full responsibility for
-the final content of the software.
+Generative AI tools were used occasionally during software development (e.g., to obtain
+code suggestions). All AI-generated suggestions were reviewed, modified, and verified by
+the authors before inclusion, and the authors take full responsibility for the final
+content of the software.
 
 # Acknowledgements
 
