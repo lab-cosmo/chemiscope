@@ -1,5 +1,6 @@
 from . import streamlit  # noqa: F401
 from .explore import explore, get_featurizer, metatomic_featurizer  # noqa: F401
+from .headless import headless  # noqa: F401
 from .input import (  # noqa: F401
     create_input,
     quick_settings,
