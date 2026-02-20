@@ -843,23 +843,44 @@ export class MoleculeViewer {
 
             if (value) {
                 if (this._highlighted !== undefined) {
-                    return;
-                }
+                    // If we already have a highlighted environment, recreate the model
+                    // to ensure that 3Dmol updates the transparency correctly
+                    const center = this._highlighted.center;
+                    const cutoff = this._options.environments.cutoff.value;
 
-                let last = this._lastHighlighted;
-                if (last === undefined) {
-                    const env = this._environments?.find((e) => e !== undefined);
-                    if (env !== undefined) {
-                        last = { center: env.center, cutoff: env.cutoff };
+                    this._viewer.removeModel(this._highlighted.model);
+
+                    // We need to create a separate model to have different opacity
+                    // for the background & highlighted atoms
+                    // https://github.com/3dmol/3Dmol.js/issues/166
+                    const selection = {
+                        or: [
+                            { index: center },
+                            { within: { distance: cutoff, sel: { index: center } } },
+                        ],
+                    };
+                    this._highlighted = {
+                        model: this._viewer.createModelFrom(selection),
+                        center: center,
+                    };
+                    // initialize with main style
+                    this._highlighted.model.setStyle({}, this._mainStyle());
+                } else {
+                    let last = this._lastHighlighted;
+                    if (last === undefined) {
+                        const env = this._environments?.find((e) => e !== undefined);
+                        if (env !== undefined) {
+                            last = { center: env.center, cutoff: env.cutoff };
+                        }
                     }
-                }
 
-                if (last !== undefined) {
-                    // add the 3DMol model for highlighted environment
-                    this._options.environments.cutoff.value = last.cutoff;
-                    const center = last.center;
-                    const previousDefaultCutoff = this._defaultCutoff(center);
-                    this._changeHighlighted(center, previousDefaultCutoff);
+                    if (last !== undefined) {
+                        // add the 3DMol model for highlighted environment
+                        this._options.environments.cutoff.value = last.cutoff;
+                        const center = last.center;
+                        const previousDefaultCutoff = this._defaultCutoff(center);
+                        this._changeHighlighted(center, previousDefaultCutoff);
+                    }
                 }
             } else {
                 if (this._highlighted !== undefined) {
@@ -1967,7 +1988,11 @@ export class MoleculeViewer {
      * Centers the view around the selected atom (if there is one)
      */
     private _centerView(): void {
-        if (this._highlighted !== undefined && this._current !== undefined) {
+        if (
+            this._highlighted !== undefined &&
+            this._current !== undefined &&
+            this._options.environments.activated.value
+        ) {
             // use index rather than serial to specify the selection, to avoid picking also the
             // periodic replicas. however we then have to specify the model id, otherwise it'd
             // pick the index from the highlighted selection, which does not match the serial ID
@@ -2144,29 +2169,21 @@ export class MoleculeViewer {
         const reset = this._resetEnvCutoff;
 
         if (show) {
-            if (this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
-
             reset.disabled = false;
             toggle.innerText = 'Disable';
 
             this._options.environments.cutoff.enable();
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
+            this._options.environments.center.enable();
         } else {
-            if (!this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
-
             reset.disabled = true;
             toggle.innerText = 'Enable';
 
             this._options.environments.cutoff.disable();
             this._options.environments.bgStyle.disable();
             this._options.environments.bgColor.disable();
+            this._options.environments.center.disable();
         }
     }
 
@@ -2205,8 +2222,7 @@ export class MoleculeViewer {
                 this._options.environments.cutoff.value = environment.cutoff;
             }
 
-            this._options.environments.activated.value = true;
-            this._enableEnvironmentSettings(true);
+            this._enableEnvironmentSettings(this._options.environments.activated.value);
 
             // We need to create a separate model to have different opacity
             // for the background & highlighted atoms
