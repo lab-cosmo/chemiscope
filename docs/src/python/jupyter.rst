@@ -157,7 +157,7 @@ settings to each frame.
 Headless widget
 ---------------
 
-If you want to use chemiscope to generate screenshots or inspect datasets programmatically without running a Jupyter notebook, you can use the headless widget. This widget uses a headless browser (Playwright) to render the chemiscope interface.
+If you want to use chemiscope to generate screenshots or inspect datasets programmatically without running a Jupyter notebook, you can use the headless widget. This widget uses a headless browser (Playwright) to render the chemiscope interface, which you can fetch installing the optional dependency ``chemiscope[headless]``.
 
 .. autofunction:: chemiscope.headless
 
