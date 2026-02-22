@@ -34,7 +34,13 @@ def _get_browser():
                 "run `playwright install`."
             )
         _PLAYWRIGHT = sync_playwright().start()
-        _BROWSER = _PLAYWRIGHT.chromium.launch()
+        
+        args = []
+        if os.environ.get("CI"):
+            args.append("--no-sandbox")
+            args.append("--disable-setuid-sandbox")
+
+        _BROWSER = _PLAYWRIGHT.chromium.launch(args=args)
         # clean up browser on exit
         atexit.register(_close_browser)
     return _BROWSER
