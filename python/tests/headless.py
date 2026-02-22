@@ -108,6 +108,56 @@ class TestHeadless(unittest.TestCase):
 
         self.assertIn("meta", data)
 
+    def test_missing_visualizer_errors(self):
+        # Test structure-only mode
+        widget = headless(structures=self.structures, mode="structure")
+        try:
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot retrieve map image: this widget is a structure-only viewer.",
+            ):
+                widget.get_map_image()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot retrieve map image: this widget is a structure-only viewer.",
+            ):
+                widget.save_map_image("dummy.png")
+        finally:
+            widget.close()
+
+        # Test map-only mode
+        widget = headless(
+            structures=self.structures, properties=self.properties, mode="map"
+        )
+        try:
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot retrieve structure image: this widget is a map-only viewer.",
+            ):
+                widget.get_structure_image()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot save structure image: this widget is a map-only viewer.",
+            ):
+                widget.save_structure_image("dummy.png")
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot save structure image: this widget is a map-only viewer.",
+            ):
+                widget.get_structure_sequence([0])
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot save structure image: this widget is a map-only viewer.",
+            ):
+                widget.save_structure_sequence([0], ["dummy.png"])
+
+        finally:
+            widget.close()
+
 
 if __name__ == "__main__":
     unittest.main()

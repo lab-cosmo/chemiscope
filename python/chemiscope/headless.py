@@ -91,6 +91,7 @@ class ChemiscopeHeadless(HasTraits):
 
         # Initialize visualizer
         self._initialize_visualizer(data, mode)
+        self._mode = mode
         self._data = data
 
     def save(self, path):
@@ -231,6 +232,11 @@ class ChemiscopeHeadless(HasTraits):
         Request a snapshot of the active structure viewer.
         Returns the image data (PNG formatted) as bytes.
         """
+        if self._mode == "map":
+            raise RuntimeError(
+                "Cannot retrieve structure image: this widget is a map-only viewer."
+            )
+
         data_url = self._page.evaluate("""
             async () => {
                 if (!window.visualizer || !window.visualizer.structure) {
@@ -248,6 +254,11 @@ class ChemiscopeHeadless(HasTraits):
         Request a snapshot of the map.
         Returns the image data (PNG formatted) as bytes.
         """
+        if self._mode == "structure":
+            raise RuntimeError(
+                "Cannot retrieve map image: this widget is a structure-only viewer."
+            )
+
         data_url = self._page.evaluate("""
             async () => {
                 if (!window.visualizer || !window.visualizer.map) {
@@ -262,6 +273,11 @@ class ChemiscopeHeadless(HasTraits):
         """
         Save a snapshot of the active structure viewer to a file.
         """
+        if self._mode == "map":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
+
         data = self.get_structure_image()
         with open(path, "wb") as f:
             f.write(data)
@@ -290,6 +306,11 @@ class ChemiscopeHeadless(HasTraits):
         """
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
+
+        if self._mode == "map":
+            raise RuntimeError(
+                "Cannot save structure image: this widget is a map-only viewer."
+            )
 
         images = []
         for i, index in enumerate(indices):
