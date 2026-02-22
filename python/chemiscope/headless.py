@@ -128,7 +128,7 @@ class ChemiscopeHeadless(HasTraits):
                 content = f.read()
         else:
             raise ImportError(
-                "Cannot locate `chemiscope.min.js`. Please chech that the chemiscope"
+                "Cannot locate `chemiscope.min.js`. Please check that the chemiscope"
                 " package is installed and accessible."
             )
 
