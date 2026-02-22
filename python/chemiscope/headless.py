@@ -309,7 +309,7 @@ class ChemiscopeHeadless(HasTraits):
 
         if self._mode == "map":
             raise RuntimeError(
-                "Cannot save structure image: this widget is a map-only viewer."
+                "Cannot retrieve structure image: this widget is a map-only viewer."
             )
 
         images = []
