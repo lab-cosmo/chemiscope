@@ -286,8 +286,8 @@ for i, img in zip(indices_to_show, atom_images, strict=True):
     x_mean = np.mean(atomic_trace)
     y_mean = np.mean(atomic_anisotropy)
 
-    xybox_x = -80 if x > x_mean else 80
-    xybox_y = -80 if y > y_mean else 80
+    xybox_x = -60 if x > x_mean else 60
+    xybox_y = -60 if y > y_mean else 60
 
     ab = AnnotationBbox(
         imagebox,
