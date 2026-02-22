@@ -35,7 +35,8 @@ def _get_browser():
             )
         _PLAYWRIGHT = sync_playwright().start()
 
-        args = []
+        # enable software rendering to support headless environments without GPU
+        args = ["--enable-unsafe-swiftshader"]
         if _should_disable_sandbox():
             args.append("--no-sandbox")
             args.append("--disable-setuid-sandbox")
