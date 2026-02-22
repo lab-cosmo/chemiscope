@@ -5,16 +5,9 @@ import shutil
 import tempfile
 import unittest
 
-import pytest
+from chemiscope.headless import headless
 
 
-try:
-    from chemiscope.headless import PLAYWRIGHT_AVAILABLE, headless
-except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
-
-
-@pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="playwright is not available")
 class TestHeadless(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -114,3 +107,7 @@ class TestHeadless(unittest.TestCase):
             data = json.load(f)
 
         self.assertIn("meta", data)
+
+
+if __name__ == "__main__":
+    unittest.main()
