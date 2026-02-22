@@ -33,6 +33,16 @@ def _get_browser():
                 "Please install it with `pip install playwright` and "
                 "run `playwright install`."
             )
+
+        # apply nest_asyncio if available to allow re-entering the event loop
+        # in environments like Jupyter/IPython
+        try:
+            import nest_asyncio
+
+            nest_asyncio.apply()
+        except ImportError:
+            pass
+
         _PLAYWRIGHT = sync_playwright().start()
 
         # enable software rendering to support headless environments without GPU
