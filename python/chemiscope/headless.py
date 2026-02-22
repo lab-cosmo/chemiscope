@@ -34,16 +34,47 @@ def _get_browser():
                 "run `playwright install`."
             )
         _PLAYWRIGHT = sync_playwright().start()
-        
+
         args = []
-        if os.environ.get("CI"):
+        if _should_disable_sandbox():
             args.append("--no-sandbox")
             args.append("--disable-setuid-sandbox")
 
+        print("Launching headless browser...")
         _BROWSER = _PLAYWRIGHT.chromium.launch(args=args)
+        print("Browser launched successfully.")
         # clean up browser on exit
         atexit.register(_close_browser)
     return _BROWSER
+
+
+def _should_disable_sandbox():
+    """
+    Determine if the browser sandbox should be disabled.
+    This is necessary in CI environments, containers, and when running as root.
+    """
+    # CI environments
+    if os.environ.get("CI"):
+        return True
+
+    # Running as root (Chrome refuses to run as root with sandbox)
+    if hasattr(os, "getuid") and os.getuid() == 0:
+        return True
+
+    # Running in a container (Docker/Podman)
+    # Check for .dockerenv
+    if os.path.exists("/.dockerenv"):
+        return True
+
+    # Check cgroups for docker/containerd strings
+    try:
+        with open("/proc/self/cgroup", "r") as f:
+            if any("docker" in line or "containerd" in line for line in f):
+                return True
+    except (OSError, IOError):
+        pass
+
+    return False
 
 
 def _close_browser():
