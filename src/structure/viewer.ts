@@ -633,9 +633,11 @@ export class MoleculeViewer {
         this._changeHighlighted(center, previousDefaultCutoff);
         this._updateStyle();
 
-        const centerView = this._options.environments.center.value;
-
-        if (this._highlighted !== undefined && centerView) {
+        if (
+            this._highlighted !== undefined &&
+            this._options.environments.center.value &&
+            this._options.environments.activated.value
+        ) {
             if (!this._options.keepOrientation.value) {
                 this._resetView();
             }
@@ -2168,9 +2170,17 @@ export class MoleculeViewer {
         assert(toggle !== null);
         const reset = this._resetEnvCutoff;
 
+        const centerCheckbox = this._options.getModalElement('env-center');
+        const centerContainer = centerCheckbox.parentElement as HTMLElement;
+        assert(centerContainer !== null);
+
+        const moreOptionsBtn = this._options.getModalElement('chsp-env-more');
+
         if (show) {
             reset.disabled = false;
             toggle.innerText = 'Disable';
+            centerContainer.style.display = '';
+            moreOptionsBtn.style.display = '';
 
             this._options.environments.cutoff.enable();
             this._options.environments.bgStyle.enable();
@@ -2179,6 +2189,8 @@ export class MoleculeViewer {
         } else {
             reset.disabled = true;
             toggle.innerText = 'Enable';
+            centerContainer.style.display = 'none';
+            moreOptionsBtn.style.display = 'none';
 
             this._options.environments.cutoff.disable();
             this._options.environments.bgStyle.disable();
