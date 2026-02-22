@@ -97,12 +97,9 @@ class TestHeadless(unittest.TestCase):
         self.assertIn("properties", data)
 
     def test_save_gz_json(self):
-
-        print("Testing save_gz_json...")
         path = os.path.join(self.tmp_dir, "data.json.gz")
         self.widget.save(path)
-        print("saved")
-        
+
         self.assertTrue(os.path.exists(path))
         self.assertGreater(os.path.getsize(path), 0)
 
