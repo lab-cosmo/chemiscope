@@ -2190,6 +2190,12 @@ export class MoleculeViewer {
             reset.disabled = true;
             toggle.innerText = 'Enable';
             centerContainer.style.display = 'none';
+
+            const extraEnv = this._options.getModalElement('chsp-extra-env');
+            if (extraEnv.classList.contains('show')) {
+                moreOptionsBtn.click();
+            }
+
             moreOptionsBtn.style.display = 'none';
 
             this._options.environments.cutoff.disable();
