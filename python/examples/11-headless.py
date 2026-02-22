@@ -222,8 +222,6 @@ indices_to_show = [
     np.argmax(atomic_trace),
     np.argmin(atomic_anisotropy),
     np.argmax(atomic_anisotropy),
-    sorted_trace_indices[len(atomic_trace) // 4],  # 25th percentile trace
-    sorted_trace_indices[3 * len(atomic_trace) // 4],  # 75th percentile trace
 ]
 indices_to_show = sorted(list(set(indices_to_show)))
 
@@ -288,8 +286,8 @@ for i, img in zip(indices_to_show, atom_images, strict=True):
     x_mean = np.mean(atomic_trace)
     y_mean = np.mean(atomic_anisotropy)
 
-    xybox_x = -40 if x > x_mean else 40
-    xybox_y = -40 if y > y_mean else 40
+    xybox_x = -80 if x > x_mean else 80
+    xybox_y = -80 if y > y_mean else 80
 
     ab = AnnotationBbox(
         imagebox,

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import atexit
 import base64
+import gzip
 import json
 import os
 from pathlib import Path
@@ -86,7 +87,6 @@ class ChemiscopeHeadless(HasTraits):
 
         :param str path: where to save the dataset.
         """
-        import gzip
 
         if path.endswith(".gz"):
             file = gzip.open(path, "w", 9)
@@ -113,8 +113,8 @@ class ChemiscopeHeadless(HasTraits):
                 content = f.read()
         else:
             raise ImportError(
-                "Cannot locate `chemiscope.min.js`. Please the chemiscope package"
-                " is installed and accessible."
+                "Cannot locate `chemiscope.min.js`. Please chech that the chemiscope"
+                " package is installed and accessible."
             )
 
         # minimal chemiscope page with divs for the various components
@@ -260,17 +260,25 @@ class ChemiscopeHeadless(HasTraits):
         with open(path, "wb") as f:
             f.write(data)
 
-    def save_structure_sequence(self, indices, paths, settings=None):
+    def get_structure_sequence(self, indices, settings=None):
         """
-        Save a sequence of structure snapshots to files.
-        """
+        Request a sequence of structure snapshots.
+        Returns a list of image data (PNG formatted) as bytes.
 
-        if len(indices) != len(paths):
-            raise ValueError("indices and paths must have the same length")
+        The ``indices`` list can contain integers (structure index) or
+        dictionaries specifying ``structure`` and ``atom`` indices
+        (for environments).
+
+        The ``settings`` list, if provided, must have the same length
+        as ``indices``. Each element is a dictionary of structure
+        settings (e.g. ``{"spaceFilling": True}``) to apply for
+        that specific frame.
+        """
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
 
-        for i, (index, path) in enumerate(zip(indices, paths, strict=True)):
+        images = []
+        for i, index in enumerate(indices):
             current_settings = settings[i] if settings else None
 
             # Prepare arguments
@@ -283,34 +291,47 @@ class ChemiscopeHeadless(HasTraits):
                 async ({index, settings}) => {
                     const vis = window.visualizer;
                     const indexer = vis.indexer;
-                    
+
                     if (settings) {
                         vis.structure.applySettings([settings]);
                     }
-                    
+
                     const target = vis.saveSettings().target;
                     let indexes;
-                    
+
                     // Handle index being int or object
                     let structIdx = typeof index === 'number' ? index : index.structure;
                     let atomIdx = typeof index === 'number' ? undefined : index.atom;
-                    
+
                     if (atomIdx !== undefined) {
                         indexes = indexer.fromStructureAtom(target, structIdx, atomIdx);
                     } else {
                         indexes = indexer.fromStructure(structIdx, target);
                     }
-                    
+
                     await vis.structure.show(indexes);
                     await new Promise(r => requestAnimationFrame(r));
-                    
+
                     return vis.structure.exportActivePNG();
                 }
             """,
                 args,
             )
 
-            data = self._decode_base64(data_url)
+            images.append(self._decode_base64(data_url))
+
+        return images
+
+    def save_structure_sequence(self, indices, paths, settings=None):
+        """
+        Save a sequence of structure snapshots to files.
+        """
+
+        if len(indices) != len(paths):
+            raise ValueError("indices and paths must have the same length")
+
+        images = self.get_structure_sequence(indices, settings)
+        for path, data in zip(paths, images, strict=True):
             with open(path, "wb") as f:
                 f.write(data)
 
