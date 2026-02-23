@@ -80,4 +80,4 @@ explore = [
     "vesin >=0.3.5,<0.6",
 ]
 streamlit = ["streamlit>=1.25"]
-headless = ["playwright>=1.52", "nest_asyncio"]
+headless = ["playwright>=1.52"]
