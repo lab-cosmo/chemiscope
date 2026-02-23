@@ -1,0 +1,1449 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Sharing datasets with collaborators" href="sharing.html"><link rel="prev" title="Creating inputs with Python" href="input.html">
+        <link rel="prefetch" href="../_static/chemiscope-icon-no-name.svg" as="image">
+
+    <link rel="shortcut icon" href="../_static/chemiscope-icon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Chemiscope JSON file format - chemiscope 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/chemiscope.css?v=842a4e29" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-background-secondary: #f4f8ff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-background-secondary: #303d4f;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-background-secondary: #303d4f;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">chemiscope 1.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/chemiscope-icon-no-name.svg" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">chemiscope 1.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Chemiscope</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Getting started</a><input aria-label="Toggle navigation of Getting started" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html">Introduction to structural properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="panels.html">Different panels and settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Creating inputs with Python</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Chemiscope JSON file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sharing.html">Sharing datasets with collaborators</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/1-base.html">Simple chemiscope input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/2-structure_map.html">Structure-property maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/3-trajectory.html">Trajectory plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/4-colors.html">Atom property coloring and labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/5-shapes.html">Shape visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/6-explore.html">Exploring dataset with chemiscope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/7-explore-advanced.html">Advanced dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/8-explore-with-metatomic.html">Using metatomic models for dataset exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/9-stk-custom-bonds.html">Using stk structures and showing custom bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/10-visualizing-biomolecules.html">Visualize biomolecules with MDAnalysis or chemfiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/11-headless.html">Headless mode</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../python/index.html">Python module</a><input aria-label="Toggle navigation of Python module" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../python/cli.html">Command line interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../python/reference.html"><code class="docutils literal notranslate"><span class="pre">chemiscope</span></code> functions reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../python/jupyter.html">Jupyter notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../python/streamlit.html">Chemiscope in <code class="docutils literal notranslate"><span class="pre">streamlit</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../python/sphinx.html">Chemiscope in <code class="docutils literal notranslate"><span class="pre">sphinx</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../python/gallery.html">Use with <code class="docutils literal notranslate"><span class="pre">sphinx-gallery</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../embedding.html">Chemiscope as a library</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/getting-started/json-format.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="chemiscope-json-file-format">
+<span id="json-format"></span><h1>Chemiscope JSON file format<a class="headerlink" href="#chemiscope-json-file-format" title="Link to this heading">¶</a></h1>
+<p>This page documents the JSON file format used by chemiscope. These are the fields that
+appear in the final JSON output file generated by Python functions like
+<a class="reference internal" href="../python/reference.html#chemiscope.write_input" title="chemiscope.write_input"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.write_input()</span></code></a> or when manually constructing JSON data.</p>
+<p>For instructions on how to create these JSON files using Python, see the <a class="reference internal" href="input.html#input"><span class="std std-ref">Input
+creation with Python</span></a> page.</p>
+<p>The chemiscope JSON file consists of these top-level entries:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 23.5%" />
+<col style="width: 58.8%" />
+<col style="width: 17.6%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required?</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meta</span></code></p></td>
+<td><p>Dataset metadata (name, authors, etc.)</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">structures</span></code></p></td>
+<td><p>List of atomic structures (coordinates, cell, bonds)</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">properties</span></code></p></td>
+<td><p>Properties mapped to atoms/structures (energy, forces, PCA, etc)</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">shapes</span></code></p></td>
+<td><p>Custom shapes (spheres, arrows) to visualize in structures</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">settings</span></code></p></td>
+<td><p>Default visualization settings (map axes, colors, etc.)</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">environments</span></code></p></td>
+<td><p>Atom-centered neighborhoods</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">parameters</span></code></p></td>
+<td><p>Parameters for multidimensional properties (e.g., time series)</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Below is the detailed description of the values types and examples for each entry.</p>
+<section id="metadata-meta">
+<h2>Metadata (<code class="docutils literal notranslate"><span class="pre">meta</span></code>)<a class="headerlink" href="#metadata-meta" title="Link to this heading">¶</a></h2>
+<p>Required. Contains description of your dataset. The fields will be rendered as markdown.</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id5">
+<table class="tight-table docutils align-default" id="id5">
+<caption><span class="caption-text">Metadata fields</span><a class="headerlink" href="#id5" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Short title of your dataset</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;XXX</span> <span class="pre">dataset&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Detailed explanation of content/origin</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;A</span> <span class="pre">dataset</span> <span class="pre">from</span> <span class="pre">...&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">authors</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>List of dataset authors</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;Author</span> <span class="pre">1&quot;,</span> <span class="pre">&quot;Author</span> <span class="pre">2&quot;]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">references</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>Citations/links (one per array item)</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;DOI:10.1234/abc&quot;,</span> <span class="pre">&quot;'A</span> <span class="pre">new</span> <span class="pre">molecular</span> <span class="pre">construction',</span> <span class="pre">Journal</span> <span class="pre">of</span> <span class="pre">Random</span> <span class="pre">Words</span> <span class="pre">19</span>
+<span class="pre">(1923)</span> <span class="pre">pp</span> <span class="pre">3333,</span> <span class="pre">DOI:</span> <span class="pre">10.0000/0001100&quot;,</span> <span class="pre">&quot;'nice</span> <span class="pre">website'</span> <span class="pre">http://example.com&quot;]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="example">
+<h3>Example:<a class="headerlink" href="#example" title="Link to this heading">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MAD PCA&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1000 validation structures from the *MAD dataset* under PCA&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;authors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Author 1&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;references&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;https://arxiv.org/abs/2506.19674&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="structures-structures">
+<h2>Structures (<code class="docutils literal notranslate"><span class="pre">structures</span></code>)<a class="headerlink" href="#structures-structures" title="Link to this heading">¶</a></h2>
+<p>Required. Contains all atomic configurations in your dataset. Each structure is
+represented as an object with the following fields:</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id6">
+<table class="tight-table docutils align-default" id="id6">
+<caption><span class="caption-text">Structure fields</span><a class="headerlink" href="#id6" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td><p>integer</p></td>
+<td><p>Number of atoms in the structure</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">5</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">names</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>Chemical symbols (length must match <code class="docutils literal notranslate"><span class="pre">size</span></code>)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;H&quot;,</span> <span class="pre">&quot;O&quot;,</span> <span class="pre">&quot;H&quot;]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x</span></code></p></td>
+<td><p>number[]</p></td>
+<td><p>X coordinates (Å)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0.0,</span> <span class="pre">1.5]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">y</span></code></p></td>
+<td><p>number[]</p></td>
+<td><p>Y coordinates (Å)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0.0,</span> <span class="pre">0.0]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">z</span></code></p></td>
+<td><p>number[]</p></td>
+<td><p>Z coordinates (Å)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0.0,</span> <span class="pre">-1.5]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cell</span></code></p></td>
+<td><p>number[9]</p></td>
+<td><p>Unit cell vectors as <code class="docutils literal notranslate"><span class="pre">[ax,</span> <span class="pre">ay,</span> <span class="pre">az,</span> <span class="pre">bx,</span> <span class="pre">by,</span> <span class="pre">bz,</span> <span class="pre">cx,</span> <span class="pre">cy,</span> <span class="pre">cz]</span></code> (Å)</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[10,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">10,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">10]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bonds</span></code></p></td>
+<td><p>integer[][3]</p></td>
+<td><p>List of bonds as <code class="docutils literal notranslate"><span class="pre">[[i,</span> <span class="pre">j,</span> <span class="pre">order],</span> <span class="pre">...]</span></code> (0-based atom indices).</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[[0,</span> <span class="pre">1,</span> <span class="pre">1],</span> <span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">1]]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Path to an external structure file to load the full structure (relative to
+the main JSON file). When present, the structure is read from that file
+instead of being defined inline with the coordinate arrays.</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;structures/frame-0.json&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">elements</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>Optional alternative to <code class="docutils literal notranslate"><span class="pre">names</span></code> for element symbols</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;C&quot;,</span> <span class="pre">&quot;H&quot;,</span> <span class="pre">&quot;H&quot;,</span> <span class="pre">&quot;O&quot;]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">resnames</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>Residue names (useful for biomolecules)</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;GLY&quot;,</span> <span class="pre">&quot;GLY&quot;,</span> <span class="pre">&quot;HOH&quot;]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resids</span></code></p></td>
+<td><p>integer[]</p></td>
+<td><p>Residue indices corresponding to each atom</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">1,</span> <span class="pre">2]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chains</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>Chain identifiers for biomolecules</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;A&quot;,</span> <span class="pre">&quot;B&quot;]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hetatom</span></code></p></td>
+<td><p>bool[]</p></td>
+<td><p>Marks heteroatoms (non-standard or non-biopolymer atoms)</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[false,</span> <span class="pre">false,</span> <span class="pre">true]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="id1">
+<h3>Example:<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;names&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.76</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.76</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;y&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.59</span><span class="p">,</span><span class="w"> </span><span class="mf">0.59</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;z&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="properties-properties">
+<h2>Properties (<code class="docutils literal notranslate"><span class="pre">properties</span></code>)<a class="headerlink" href="#properties-properties" title="Link to this heading">¶</a></h2>
+<p>Required. Defines all dataset properties to be available for a display inside
+the widget. The field is an object where each key is the property name (e.g.,
+<code class="docutils literal notranslate"><span class="pre">&quot;energy&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;charge&quot;</span></code>) and each value is the property definition.</p>
+<p>Each property is an object with the following fields:</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id7">
+<table class="tight-table docutils align-default" id="id7">
+<caption><span class="caption-text">Property fields</span><a class="headerlink" href="#id7" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">target</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Scope of the property: <code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;structure&quot;</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">values</span></code></p></td>
+<td><p>number[] | string[] | number[][]</p></td>
+<td><p>Values (scalars or arrays; see shapes below)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[1.2,</span> <span class="pre">3.4]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">units</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Physical units of the values</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;eV/Å&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Property description</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;DFT-calculated</span> <span class="pre">forces&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">parameters</span></code></p></td>
+<td><p>string[]</p></td>
+<td><p>For multidimensional: single parameter name (links to <code class="docutils literal notranslate"><span class="pre">parameters</span></code> top-level)</p></td>
+<td><p>If multidimensional properties</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;time&quot;]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">properties</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;something&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;atom&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;Cd / mol&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;some description&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="value-types-and-shapes">
+<h3>Value types and shapes<a class="headerlink" href="#value-types-and-shapes" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id8">
+<table class="tight-table docutils align-default" id="id8">
+<caption><span class="caption-text">Supported value formats</span><a class="headerlink" href="#id8" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Format</p></th>
+<th class="head"><p>Details</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Scalar</strong></p></td>
+<td><p>Array of numbers</p></td>
+<td><p>Length must match the number of atoms (for <code class="docutils literal notranslate"><span class="pre">target=&quot;atom&quot;</span></code>) or the
+number of structures (for <code class="docutils literal notranslate"><span class="pre">target=&quot;structure&quot;</span></code>).</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0.1,</span> <span class="pre">0.2,</span> <span class="pre">0.3]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Multi-dimensional</strong></p></td>
+<td><p>Array of arrays of numbers</p></td>
+<td><p>Used for parameterized properties; outer array length must match the
+number of atoms (for <code class="docutils literal notranslate"><span class="pre">target=&quot;atom&quot;</span></code>) or the number of structures (for
+<code class="docutils literal notranslate"><span class="pre">target=&quot;structure&quot;</span></code>), while the inner arrays length must match the
+linked parameter length.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[[0.1,</span> <span class="pre">0.2],</span> <span class="pre">[0.3,</span> <span class="pre">0.4]]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Categorical</strong></p></td>
+<td><p>Array of strings</p></td>
+<td><p>Used for symbols setting</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[&quot;H&quot;,</span> <span class="pre">&quot;O&quot;,</span> <span class="pre">&quot;O&quot;]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="parameters-parameters">
+<h2>Parameters (<code class="docutils literal notranslate"><span class="pre">parameters</span></code>)<a class="headerlink" href="#parameters-parameters" title="Link to this heading">¶</a></h2>
+<p>Optional. Defines the variables for multidimensional properties. This is required when
+properties use the <code class="docutils literal notranslate"><span class="pre">parameters</span></code> field in the <code class="docutils literal notranslate"><span class="pre">properties</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">parameters</span></code> field is an object where each key is a name (referenced in
+property <code class="docutils literal notranslate"><span class="pre">parameters</span></code>), and the value is the parameter definition.</p>
+<section id="parameter-definition">
+<h3>Parameter definition<a class="headerlink" href="#parameter-definition" title="Link to this heading">¶</a></h3>
+<p>Each parameter is an object with the following fields:</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id9">
+<table class="tight-table docutils align-default" id="id9">
+<caption><span class="caption-text">Parameter fields</span><a class="headerlink" href="#id9" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">values</span></code></p></td>
+<td><p>number[]</p></td>
+<td><p>Array of values (length must match the second dimension of linked properties)</p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">10,</span> <span class="pre">20]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Display name</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Time</span> <span class="pre">steps&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">units</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Units</p></td>
+<td><p>No</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;fs&quot;</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id2">
+<h3>Example<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;values&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">],</span><span class="w">  </span><span class="c1">// matches length in linked property</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Simulation time&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;units&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fs&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// linked property (from properties section)</span>
+<span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;energy&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;values&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mf">-1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.1</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.2</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.3</span><span class="p">],</span><span class="w"> </span><span class="cm">/* ... */</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;units&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eV&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="environments-environments">
+<h2>Environments (<code class="docutils literal notranslate"><span class="pre">environments</span></code>)<a class="headerlink" href="#environments-environments" title="Link to this heading">¶</a></h2>
+<p>Optional. Specifies atom-centered environments for datasets where properties are
+associated with specific atoms rather than entire structures. Omitting this field
+defaults to structure-level visualization only.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">environments</span></code> field is an array of objects, each defining an environment. To
+generate, use helper function <a class="reference internal" href="../python/reference.html#chemiscope.all_atomic_environments" title="chemiscope.all_atomic_environments"><code class="xref py py-func docutils literal notranslate"><span class="pre">chemiscope.all_atomic_environments()</span></code></a>.</p>
+<section id="environment-definition">
+<h3>Environment definition<a class="headerlink" href="#environment-definition" title="Link to this heading">¶</a></h3>
+<p>Each environment is an object with:</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id10">
+<table class="tight-table docutils align-default" id="id10">
+<caption><span class="caption-text">Environment fields</span><a class="headerlink" href="#id10" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">structure</span></code></p></td>
+<td><p>integer</p></td>
+<td><p>0-based index of the structure in <code class="docutils literal notranslate"><span class="pre">structures</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">center</span></code></p></td>
+<td><p>integer</p></td>
+<td><p>0-based index of the central atom in the structure</p></td>
+<td><p>Yes</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cutoff</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Spherical cutoff radius (in Å; must be &gt; 0)</p></td>
+<td><p>Yes</p></td>
+<td><p>3.5</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;environments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;center&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cutoff&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">3.5</span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;center&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cutoff&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">3.5</span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;center&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cutoff&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">3.5</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="shapes-shapes">
+<h2>Shapes (<code class="docutils literal notranslate"><span class="pre">shapes</span></code>)<a class="headerlink" href="#shapes-shapes" title="Link to this heading">¶</a></h2>
+<p>Optional. Defines custom 3D shapes (e.g., spheres, arrows) to overlay in the structure
+viewer. This is useful for visualizing additional features like atomic forces (as
+arrows), uncertainty ellipsoids, or custom meshes.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">shapes</span></code> field is an object where each key is a shape group name (e.g.,
+“forces”), and the value is the shape group definition. Multiple groups can be defined
+for different visualizations.</p>
+<section id="shape-group-definition">
+<h3>Shape group definition<a class="headerlink" href="#shape-group-definition" title="Link to this heading">¶</a></h3>
+<p>Each shape group is an object with the following fields:</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id11">
+<table class="tight-table docutils align-default" id="id11">
+<caption><span class="caption-text">Shape group fields</span><a class="headerlink" href="#id11" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 33.3%" />
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">kind</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Shape type: <code class="docutils literal notranslate"><span class="pre">&quot;sphere&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ellipsoid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cylinder&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;arrow&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">&quot;custom&quot;</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;arrow&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">parameters</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Parameters at different levels: <code class="docutils literal notranslate"><span class="pre">&quot;global&quot;</span></code> (all shapes), <code class="docutils literal notranslate"><span class="pre">&quot;structure&quot;</span></code> (per
+structure), <code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code> (per atom/environment)</p></td>
+<td><p>Yes</p></td>
+<td><p>See below</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="parameter-levels">
+<h3>Parameter levels<a class="headerlink" href="#parameter-levels" title="Link to this heading">¶</a></h3>
+<p>Parameters are specified in nested objects and merged from general to specific:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">global</span></code>: Object containing the default parameters applied to all shapes in the group.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">structure</span></code>: array of objects, one per structure. Overrides <code class="docutils literal notranslate"><span class="pre">global</span></code> for that structure.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">atom</span></code>: array of objects, one per atom. Overrides <code class="docutils literal notranslate"><span class="pre">structure</span></code> and <code class="docutils literal notranslate"><span class="pre">global</span></code> for that atom.</p></li>
+</ul>
+</section>
+<section id="common-parameters">
+<h3>Common parameters<a class="headerlink" href="#common-parameters" title="Link to this heading">¶</a></h3>
+<p>These apply to any shape kind:</p>
+<div class="table-wrapper colwidths-given docutils container" id="id12">
+<table class="docutils align-default" id="id12">
+<caption><span class="caption-text">Common parameters</span><a class="headerlink" href="#id12" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">position</span></code></p></td>
+<td><p>number[3]</p></td>
+<td><p>Center position (defaults to structure origin or atom position)</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scale</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Scaling factor for size</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">orientation</span></code></p></td>
+<td><p>number[4]</p></td>
+<td><p>Rotation quaternion (x, y, z, w); ignored for <code class="docutils literal notranslate"><span class="pre">cylinder</span></code> and <code class="docutils literal notranslate"><span class="pre">arrow</span></code></p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p>string | hex</p></td>
+<td><p>Color (e.g., <code class="docutils literal notranslate"><span class="pre">&quot;red&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">0xFF0000</span></code>)</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="kind-specific-parameters">
+<h3>Kind-specific parameters<a class="headerlink" href="#kind-specific-parameters" title="Link to this heading">¶</a></h3>
+<p>Each shape kind supports additional parameters (in addition to the common ones above).</p>
+<p><strong>Sphere</strong></p>
+<div class="table-wrapper colwidths-given tight-table docutils container">
+<table class="tight-table docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">radius</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Sphere radius.</p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Ellipsoid</strong></p>
+<div class="table-wrapper colwidths-given tight-table docutils container">
+<table class="tight-table docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">semiaxes</span></code></p></td>
+<td><p>number[3]</p></td>
+<td><p>Semi-axes lengths along x, y, z.</p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Cylinder</strong></p>
+<div class="table-wrapper colwidths-given tight-table docutils container">
+<table class="tight-table docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vector</span></code></p></td>
+<td><p>number[3]</p></td>
+<td><p>Direction and length; tip at vector end.</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">radius</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Cylinder radius (default: 0.1).</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Arrow</strong></p>
+<div class="table-wrapper colwidths-given tight-table docutils container">
+<table class="tight-table docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vector</span></code></p></td>
+<td><p>number[3]</p></td>
+<td><p>Direction and length; tip at vector end.</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">baseRadius</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Shaft radius (default: 0.1).</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">headRadius</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Arrowhead radius (default: 0.15).</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">headLength</span></code></p></td>
+<td><p>number</p></td>
+<td><p>Arrowhead length; may extend beyond base if the vector is short (default: 0.2).</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Custom</strong></p>
+<div class="table-wrapper colwidths-given tight-table docutils container">
+<table class="tight-table docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vertices</span></code></p></td>
+<td><p>number[N][3]</p></td>
+<td><p>array of vertex positions.</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">simplices</span></code></p></td>
+<td><p>integer[M][3]</p></td>
+<td><p>Mesh triangulation indices.</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id3">
+<h3>Examples<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Global spheres (same for all structures/atoms):</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;shapes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;highlight_spheres&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sphere&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;global&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;radius&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;color&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;red&quot;</span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Per-atom arrows (e.g., for forces):</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;shapes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;forces&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;arrow&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;global&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;baseRadius&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;headRadius&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;headLength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;atom&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="c1">// length = total atoms</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">&quot;vector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">]},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">&quot;vector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">]},</span>
+<span class="w">        </span><span class="cm">/* ... */</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Custom mesh with per-structure scaling:</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;shapes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;tetrahedron&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;global&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;vertices&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span>
+<span class="w">        </span><span class="nt">&quot;simplices&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]]</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="c1">// length = number of structures</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">&quot;scale&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">&quot;scale&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.0</span><span class="p">},</span>
+<span class="w">        </span><span class="cm">/* ... */</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="settings-settings">
+<span id="json-settings"></span><h2>Settings (<code class="docutils literal notranslate"><span class="pre">settings</span></code>)<a class="headerlink" href="#settings-settings" title="Link to this heading">¶</a></h2>
+<p>Optional. Preconfigures the default visualization settings for the dataset, such
+as map axes, colors, and structure viewer options. The <code class="docutils literal notranslate"><span class="pre">settings</span></code> field is an
+object with top-level keys for different panels.</p>
+<section id="top-level-settings">
+<h3>Top-level settings<a class="headerlink" href="#top-level-settings" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id13">
+<table class="tight-table docutils align-default" id="id13">
+<caption><span class="caption-text">Top-level settings</span><a class="headerlink" href="#id13" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 44.4%" />
+<col style="width: 22.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">target</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Default view: <code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;structure&quot;</span></code> (requires environments for
+<code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;atom&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">map</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Map panel settings (axes, colors, etc.)</p></td>
+<td><p>See below</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">structure</span></code></p></td>
+<td><p>array[object]</p></td>
+<td><p>Structure viewer settings (one object per viewer; up to 9)</p></td>
+<td><p>See below</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pinned</span></code></p></td>
+<td><p>integer[]</p></td>
+<td><p>Indices of environments/structures to pin in viewers (up to 9; defaults to [0])</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">5,</span> <span class="pre">10]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="map-settings-map">
+<h3>Map settings (<code class="docutils literal notranslate"><span class="pre">map</span></code>)<a class="headerlink" href="#map-settings-map" title="Link to this heading">¶</a></h3>
+<p>Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id14">
+<table class="tight-table docutils align-default" id="id14">
+<caption><span class="caption-text">Map settings</span><a class="headerlink" href="#id14" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 44.4%" />
+<col style="width: 22.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x</span></code> / <code class="docutils literal notranslate"><span class="pre">y</span></code> / <code class="docutils literal notranslate"><span class="pre">z</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Axis config: <code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;&lt;name&gt;&quot;,</span> <span class="pre">&quot;scale&quot;:</span> <span class="pre">&quot;linear&quot;|&quot;log&quot;,</span> <span class="pre">&quot;min&quot;:</span> <span class="pre">number,</span>
+<span class="pre">&quot;max&quot;:</span> <span class="pre">number}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;PCA[1]&quot;,</span> <span class="pre">&quot;scale&quot;:</span> <span class="pre">&quot;linear&quot;}</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Color config: like axis, plus <code class="docutils literal notranslate"><span class="pre">&quot;palette&quot;</span></code> option for colormap selection,
+<code class="docutils literal notranslate"><span class="pre">&quot;opacity&quot;</span></code> to make traces transparent, and <code class="docutils literal notranslate"><span class="pre">&quot;select&quot;</span></code> to filter points.
+Unselected points are shown in gray.
+Supported palettes: <code class="docutils literal notranslate"><span class="pre">&quot;inferno&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;magma&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;plasma&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;viridis&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;cividis&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;seismic&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;brg&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;bwr&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;rwg&quot;</span></code>,  <code class="docutils literal notranslate"><span class="pre">&quot;twilight</span>
+<span class="pre">(periodic)&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;twilight</span> <span class="pre">dark</span> <span class="pre">(periodic)&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;hsv</span> <span class="pre">(periodic)&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;tab10&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;tab20&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;tab20b&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;tab20bc&quot;</span></code>. Opacity range: 1-100.
+The <code class="docutils literal notranslate"><span class="pre">select</span></code> property supports:
+- <code class="docutils literal notranslate"><span class="pre">mode</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code> (default), <code class="docutils literal notranslate"><span class="pre">&quot;range&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;category&quot;</span></code>.
+- <code class="docutils literal notranslate"><span class="pre">min</span></code>/<code class="docutils literal notranslate"><span class="pre">max</span></code>: range values (for <code class="docutils literal notranslate"><span class="pre">mode=&quot;range&quot;</span></code>).
+- <code class="docutils literal notranslate"><span class="pre">category</span></code>: <code class="docutils literal notranslate"><span class="pre">property/value</span></code> string (for <code class="docutils literal notranslate"><span class="pre">mode=&quot;category&quot;</span></code>).</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;energy&quot;,</span> <span class="pre">&quot;palette&quot;:</span> <span class="pre">&quot;viridis&quot;,</span> <span class="pre">&quot;opacity&quot;:</span> <span class="pre">100,</span> <span class="pre">&quot;select&quot;:</span> <span class="pre">{&quot;mode&quot;:</span> <span class="pre">&quot;range&quot;,</span> <span class="pre">&quot;min&quot;:</span> <span class="pre">-5,</span> <span class="pre">&quot;max&quot;:</span> <span class="pre">0}}</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Size config: <code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;&lt;name&gt;&quot;,</span> <span class="pre">&quot;mode&quot;:</span>
+<span class="pre">&quot;constant&quot;|&quot;linear&quot;|&quot;log&quot;|&quot;sqrt&quot;|&quot;inverse&quot;,</span> <span class="pre">&quot;factor&quot;:</span> <span class="pre">1–100,</span> <span class="pre">&quot;reverse&quot;:</span> <span class="pre">bool}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;volume&quot;,</span> <span class="pre">&quot;mode&quot;:</span> <span class="pre">&quot;sqrt&quot;,</span> <span class="pre">&quot;factor&quot;:</span> <span class="pre">50}</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">symbol</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Property name for categorical symbols (string values)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;phase&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">useLOD</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Use level-of-detail rendering for large datasets (improves performance)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">markerOutline</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Thin black outline on markers</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">joinPoints</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Connect points with a thin black line (e.g., for trajectories)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">camera</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Initial camera position for 3D plots:
+<code class="docutils literal notranslate"><span class="pre">{&quot;eye&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;center&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;up&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;zoom&quot;:</span> <span class="pre">number}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;eye&quot;:</span> <span class="pre">[1.5,</span> <span class="pre">1.5,</span> <span class="pre">1.5],</span> <span class="pre">&quot;center&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">0],</span> <span class="pre">&quot;up&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">1],</span> <span class="pre">&quot;zoom&quot;:</span> <span class="pre">1}</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="structure-settings-structure">
+<h3>Structure settings (<code class="docutils literal notranslate"><span class="pre">structure</span></code>)<a class="headerlink" href="#structure-settings-structure" title="Link to this heading">¶</a></h3>
+<p>Array of objects (one per viewer).</p>
+<div class="table-wrapper colwidths-given tight-table docutils container" id="id15">
+<table class="tight-table docutils align-default" id="id15">
+<caption><span class="caption-text">Structure settings</span><a class="headerlink" href="#id15" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 16.7%" />
+<col style="width: 16.7%" />
+<col style="width: 44.4%" />
+<col style="width: 22.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bonds</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Show bonds</p></td>
+<td><p>true</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">atoms</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Show atoms</p></td>
+<td><p>true</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">spaceFilling</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Use space-filling representation</p></td>
+<td><p>false</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">shape</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Default shape group name(s) to display in the structure viewer (comma-separated)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;alpha,dipole&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">atomLabels</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Show atom labels</p></td>
+<td><p>false</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">labelsProperty</span></code></p></td>
+<td><p>string</p></td>
+<td><p>An environment property value for the atom labels</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">element</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">unitCell</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Show unit cell</p></td>
+<td><p>true</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">supercell</span></code></p></td>
+<td><p>integer[3]</p></td>
+<td><p>Repetitions in a/b/c directions</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">2,</span> <span class="pre">2]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rotation</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Auto-rotate molecule</p></td>
+<td><p>false</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cartoon</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Show cartoon representation (for biomolecules)</p></td>
+<td><p>false</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">axes</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Axis system: <code class="docutils literal notranslate"><span class="pre">&quot;off&quot;|&quot;xyz&quot;|&quot;abc&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;xyz&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">keepOrientation</span></code></p></td>
+<td><p>bool</p></td>
+<td><p>Maintain orientation when changing structures</p></td>
+<td><p>true</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">camera</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Camera orientation for the viewer:
+<code class="docutils literal notranslate"><span class="pre">{&quot;eye&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;center&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;up&quot;:</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">&quot;zoom&quot;:</span> <span class="pre">number}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;eye&quot;:</span> <span class="pre">[1.5,</span> <span class="pre">1.5,</span> <span class="pre">1.5],</span> <span class="pre">&quot;center&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">0],</span> <span class="pre">&quot;up&quot;:</span> <span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">1],</span> <span class="pre">&quot;zoom&quot;:</span> <span class="pre">1}</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">playbackDelay</span></code></p></td>
+<td><p>integer</p></td>
+<td><p>Delay between frames in milliseconds when playing back structures</p></td>
+<td><p>50</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">environments</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Environment options: <code class="docutils literal notranslate"><span class="pre">{&quot;activated&quot;:</span> <span class="pre">bool,</span> <span class="pre">&quot;center&quot;:</span> <span class="pre">bool,</span> <span class="pre">&quot;cutoff&quot;:</span> <span class="pre">number,</span>
+<span class="pre">&quot;bgStyle&quot;:</span> <span class="pre">&quot;licorice&quot;|&quot;ball-stick&quot;|&quot;cartoon&quot;|&quot;hide&quot;,</span> <span class="pre">&quot;bgColor&quot;:</span>
+<span class="pre">&quot;grey&quot;|&quot;CPK&quot;|&quot;property&quot;}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;activated&quot;:</span> <span class="pre">true,</span> <span class="pre">&quot;cutoff&quot;:</span> <span class="pre">3.5}</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p>object</p></td>
+<td><p>Atom coloring: <code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;element&quot;|&quot;&lt;name&gt;&quot;,</span> <span class="pre">&quot;transform&quot;:</span>
+<span class="pre">&quot;linear&quot;|&quot;log10&quot;|&quot;sqrt&quot;|&quot;inverse&quot;,</span> <span class="pre">&quot;min&quot;:</span> <span class="pre">number,</span> <span class="pre">&quot;max&quot;:</span> <span class="pre">number,</span> <span class="pre">&quot;palette&quot;:</span>
+<span class="pre">&quot;bwr&quot;}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;property&quot;:</span> <span class="pre">&quot;charge&quot;,</span> <span class="pre">&quot;palette&quot;:</span> <span class="pre">&quot;bwr&quot;}</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id4">
+<h3>Examples<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Basic 2D map with color:</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;property&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PCA[1]&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;y&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;property&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PCA[2]&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;z&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;property&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;color&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;property&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;energy&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Trajectory mode with pinned structures:</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;structure&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;joinPoints&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">    </span><span class="nt">&quot;keepOrientation&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;playbackDelay&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span>
+<span class="w">  </span><span class="p">}],</span>
+<span class="w">  </span><span class="nt">&quot;pinned&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sharing.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Sharing datasets with collaborators</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="input.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Creating inputs with Python</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2020-2026, chemiscope developers
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Chemiscope JSON file format</a><ul>
+<li><a class="reference internal" href="#metadata-meta">Metadata (<code class="docutils literal notranslate"><span class="pre">meta</span></code>)</a><ul>
+<li><a class="reference internal" href="#example">Example:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#structures-structures">Structures (<code class="docutils literal notranslate"><span class="pre">structures</span></code>)</a><ul>
+<li><a class="reference internal" href="#id1">Example:</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#properties-properties">Properties (<code class="docutils literal notranslate"><span class="pre">properties</span></code>)</a><ul>
+<li><a class="reference internal" href="#value-types-and-shapes">Value types and shapes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#parameters-parameters">Parameters (<code class="docutils literal notranslate"><span class="pre">parameters</span></code>)</a><ul>
+<li><a class="reference internal" href="#parameter-definition">Parameter definition</a></li>
+<li><a class="reference internal" href="#id2">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#environments-environments">Environments (<code class="docutils literal notranslate"><span class="pre">environments</span></code>)</a><ul>
+<li><a class="reference internal" href="#environment-definition">Environment definition</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#shapes-shapes">Shapes (<code class="docutils literal notranslate"><span class="pre">shapes</span></code>)</a><ul>
+<li><a class="reference internal" href="#shape-group-definition">Shape group definition</a></li>
+<li><a class="reference internal" href="#parameter-levels">Parameter levels</a></li>
+<li><a class="reference internal" href="#common-parameters">Common parameters</a></li>
+<li><a class="reference internal" href="#kind-specific-parameters">Kind-specific parameters</a></li>
+<li><a class="reference internal" href="#id3">Examples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#settings-settings">Settings (<code class="docutils literal notranslate"><span class="pre">settings</span></code>)</a><ul>
+<li><a class="reference internal" href="#top-level-settings">Top-level settings</a></li>
+<li><a class="reference internal" href="#map-settings-map">Map settings (<code class="docutils literal notranslate"><span class="pre">map</span></code>)</a></li>
+<li><a class="reference internal" href="#structure-settings-structure">Structure settings (<code class="docutils literal notranslate"><span class="pre">structure</span></code>)</a></li>
+<li><a class="reference internal" href="#id4">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

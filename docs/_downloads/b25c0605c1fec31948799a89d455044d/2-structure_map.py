@@ -1,0 +1,110 @@
+"""
+Structure-property maps
+=======================
+
+This example demonstrates the visualization of structures (or environments) using
+data-driven descriptors of their geometry to cluster together similar motifs. Here, the
+geometric descriptors have been computed by PCA starting from SOAP representations but
+are provided as text files to avoid external dependencies for the example.
+
+The same parameters demonstrated on this example can be used with
+:py:func:`chemiscope.show` to visualize an interactive widget in a Jupyter notebook.
+"""
+
+# %%
+#
+
+import ase.io
+import numpy as np
+
+import chemiscope
+
+
+# %%
+# Load structures:
+
+structures = ase.io.read("data/trajectory.xyz", ":")
+
+# %%
+#
+# Load the SOAP-PCA descriptors. To obtain them yourself, check the :ref:`examples
+# <explore-advanced-example>` of feature calculation and dimentionality reduction.
+# Chemiscope also provides :py:func:`chemiscope.explore` function to automatically
+# create the features using machine learning models.
+
+pca_atom = np.loadtxt("data/trajectory-pca_atom.dat")
+pca_structure = np.loadtxt("data/trajectory-pca_structure.dat")
+
+# %%
+#
+# When both environments and structure properties are present, a toggle allows you to
+# switch between both modes.
+#
+# .. note::
+#
+#     if there are properties stored in the ASE structures, you can extract them with
+#     :py:func:`chemiscope.extract_properties`
+
+properties = {
+    # concise definition of a property, with just an array and the type
+    # inferred by the size
+    "structure PCA": pca_structure,
+    "atom PCA": pca_atom,
+    # an example of the verbose definition
+    "energy": {
+        "target": "structure",
+        "values": [s.info["dftb_energy_eV"] for s in structures],
+        "units": "eV",
+        "description": "potential energy, computed with DFTB+",
+    },
+}
+
+# %%
+#
+# Environment descriptors have only been computed for C and O atoms.
+environments = []
+cutoff = 4.0
+for structure_i, structure in enumerate(structures):
+    for atom_i, atom in enumerate(structure.numbers):
+        if atom == 6 or atom == 8:
+            environments.append((structure_i, atom_i, cutoff))
+
+
+# %%
+#
+# Create a visualization and save it as a file that can be viewed at
+# `<chemiscope.org>`_:
+
+chemiscope.write_input(
+    "trajectory-pca.json.gz",
+    # dataset metadata can also be included to provide a self-contained description
+    # of the data, authors, and references
+    metadata={
+        "name": "Allyl alcohol PCA map",
+        "description": (
+            "This dataset contains a PCA map of the C and O environments "
+            "from a few structures out of a MD simulation of allyl alcohol, C3H5OH."
+        ),
+        "authors": ["The chemiscope developers"],
+        "references": [
+            (
+                "G. Fraux, R. Cersonsky, and M. Ceriotti, "
+                '"Chemiscope: interactive structure-property explorer for materials '
+                'and molecules," JOSS 5(51), 2117 (2020).'
+            )
+        ],
+    },
+    structures=structures,
+    properties=properties,
+    environments=environments,
+    settings={  # these are reasonable settings for trajectory visualization
+        "structure": [{"keepOrientation": True, "playbackDelay": 100}]
+    },
+)
+
+# %%
+#
+# The file can also be viewed in a notebook. Use `chemiscope.show` above to bypass the
+# creation of a JSON file and directly create a viewer.
+
+chemiscope.show_input("trajectory-pca.json.gz")
