@@ -273,10 +273,6 @@ class ChemiscopeHeadless(HasTraits):
         """
         Save a snapshot of the active structure viewer to a file.
         """
-        if self._mode == "map":
-            raise RuntimeError(
-                "Cannot save structure image: this widget is a map-only viewer."
-            )
 
         data = self.get_structure_image()
         with open(path, "wb") as f:

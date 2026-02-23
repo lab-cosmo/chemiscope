@@ -120,7 +120,7 @@ class TestHeadless(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "Cannot save map image: this widget is a structure-only viewer.",
+                "Cannot retrieve map image: this widget is a structure-only viewer.",
             ):
                 widget.save_map_image("dummy.png")
         finally:
@@ -139,7 +139,7 @@ class TestHeadless(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "Cannot save structure image: this widget is a map-only viewer.",
+                "Cannot retrieve structure image: this widget is a map-only viewer.",
             ):
                 widget.save_structure_image("dummy.png")
 
@@ -151,7 +151,7 @@ class TestHeadless(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "Cannot save structure image: this widget is a map-only viewer.",
+                "Cannot retrieve structure image: this widget is a map-only viewer.",
             ):
                 widget.save_structure_sequence([0], ["dummy.png"])
 
