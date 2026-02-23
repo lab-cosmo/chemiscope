@@ -120,7 +120,7 @@ class TestHeadless(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "Cannot retrieve map image: this widget is a structure-only viewer.",
+                "Cannot save map image: this widget is a structure-only viewer.",
             ):
                 widget.save_map_image("dummy.png")
         finally:
