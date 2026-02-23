@@ -2,6 +2,7 @@ import gzip
 import json
 import os
 import shutil
+import struct
 import tempfile
 import unittest
 
@@ -157,6 +158,69 @@ class TestHeadless(unittest.TestCase):
 
         finally:
             widget.close()
+
+
+class TestHeadlessDimensions(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.structures = [
+            {
+                "size": 1,
+                "names": ["H"],
+                "x": [0.0],
+                "y": [0.0],
+                "z": [0.0],
+            }
+        ]
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def _get_dims(self, path):
+        with open(path, "rb") as f:
+            f.seek(16)
+            width = struct.unpack(">I", f.read(4))[0]
+            height = struct.unpack(">I", f.read(4))[0]
+        return width, height
+
+    def test_default_vs_explicit(self):
+        # Default (800x600 container)
+        widget = headless(structures=self.structures, mode="structure")
+        path1 = os.path.join(self.tmp_dir, "default.png")
+        widget.save_structure_image(path1)
+        widget.close()
+        w1, h1 = self._get_dims(path1)
+
+        # Explicit smaller (400x300 container)
+        widget = headless(
+            structures=self.structures, mode="structure", width=400, height=300
+        )
+        path2 = os.path.join(self.tmp_dir, "explicit.png")
+        widget.save_structure_image(path2)
+        widget.close()
+        w2, h2 = self._get_dims(path2)
+
+        # Ensure explicit is smaller than default
+        self.assertLess(w2, w1 * 0.6)
+        self.assertLess(h2, h1 * 0.6)
+
+        # Ensure aspect ratio is roughly preserved (4:3)
+        # Allow 20% tolerance due to scrollbars/padding/DPI effects
+        ratio1 = w1 / h1
+        ratio2 = w2 / h2
+        self.assertAlmostEqual(ratio1, 4 / 3, delta=0.2)
+        self.assertAlmostEqual(ratio2, 4 / 3, delta=0.2)
+
+    def test_single_dimension(self):
+        # width=400 -> height=300 (4:3)
+        widget = headless(structures=self.structures, mode="structure", width=400)
+        path = os.path.join(self.tmp_dir, "width.png")
+        widget.save_structure_image(path)
+        widget.close()
+        w, h = self._get_dims(path)
+
+        # Check aspect ratio
+        self.assertAlmostEqual(w / h, 4 / 3, delta=0.2)
 
 
 if __name__ == "__main__":

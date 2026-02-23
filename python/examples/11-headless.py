@@ -158,6 +158,7 @@ headless_widget = headless(
     shapes=shapes,
     settings=settings,
     environments=environments,
+    width=400,  # smaller width for smaller file size
 )
 
 # 1. Capture snapshots of the two whole structures with ellipsoids
@@ -278,7 +279,7 @@ ax_main.grid(True, linestyle="--", alpha=0.3)
 # Add atom snapshots as annotations
 for i, img in zip(indices_to_show, atom_images, strict=True):
     # Create image box
-    imagebox = OffsetImage(img, zoom=0.06)  # Smaller
+    imagebox = OffsetImage(img, zoom=0.12)  # Smaller
 
     x, y = atomic_trace[i], atomic_anisotropy[i]
 

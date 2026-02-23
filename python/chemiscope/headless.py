@@ -5,7 +5,6 @@ import gzip
 import json
 import os
 import threading
-from concurrent.futures import Future
 from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
@@ -65,9 +64,9 @@ class PlaywrightServer:
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join()
 
-    def new_page(self):
+    def new_page(self, **kwargs):
         """Create a new page in the browser."""
-        return self.run_sync(self._browser.new_page())
+        return self.run_sync(self._browser.new_page(**kwargs))
 
 
 def _get_server():
@@ -98,12 +97,27 @@ class ChemiscopeHeadless(HasTraits):
     # currently selected environment/structure/atom
     selected_ids = Dict()
 
-    def __init__(self, data, mode="default", **kwargs):
+    def __init__(self, data, mode="default", width=None, height=None, **kwargs):
         super().__init__(**kwargs)
+
+        # Handle dimensions with 4:3 ratio default
+        if width is None and height is None:
+            width = 800
+            height = 600
+        elif width is None:
+            width = int(height * 4 / 3)
+        elif height is None:
+            height = int(width * 3 / 4)
+
+        self._width = width
+        self._height = height
 
         # Gets a shared server instance (or creates one if it doesn't exist)
         self._server = _get_server()
-        self._page = self._server.new_page()
+        self._page = self._server.new_page(device_scale_factor=1)
+        self._run_sync(
+            self._page.set_viewport_size({"width": self._width, "height": self._height})
+        )
 
         if "settings" in data:
             self.settings = data["settings"]
@@ -158,15 +172,16 @@ class ChemiscopeHeadless(HasTraits):
             )
 
         # minimal chemiscope page with divs for the various components
-        html = """
+        html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <style>
-        #chemiscope-structure, #chemiscope-map, #chemiscope-meta, #chemiscope-info {
-            width: 800px; height: 600px;
-        }
+        body {{ margin: 0; padding: 0; overflow: hidden; }}
+        #chemiscope-structure, #chemiscope-map, #chemiscope-meta, #chemiscope-info {{
+            width: {self._width}px; height: {self._height}px;
+        }}
     </style>
 </head>
 <body>
@@ -431,11 +446,21 @@ def headless(
     shapes=None,
     settings=None,
     mode="default",
+    width=None,
+    height=None,
     **kwargs,
 ):
     """
     Create a headless Chemiscope instance.
     Parameters match those of `chemiscope.show`.
+
+    :param int width: width of the widget container in pixels. If not specified,
+        it is calculated from the height (defaulting to 800 if both are missing)
+        to keep a 4:3 aspect ratio. Note that the output image resolution might
+        differ from this value (e.g. due to high-DPI scaling or internal padding).
+    :param int height: height of the widget container in pixels. If not specified,
+        it is calculated from the width (defaulting to 600 if both are missing)
+        to keep a 4:3 aspect ratio.
     """
     data = create_input(
         structures=structures,
@@ -446,4 +471,4 @@ def headless(
         settings=settings,
     )
 
-    return ChemiscopeHeadless(data, mode=mode, **kwargs)
+    return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
