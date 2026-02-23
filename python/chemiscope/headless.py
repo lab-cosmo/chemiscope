@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
+import asyncio
 import atexit
 import base64
 import gzip
 import json
 import os
+import threading
+from concurrent.futures import Future
 from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
@@ -12,21 +14,24 @@ from .input import create_input
 
 
 try:
-    from playwright.sync_api import sync_playwright
+    from playwright.async_api import async_playwright
 
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
-# global browser instance for reuse across multiple
+# global PlaywrightServer instance for reuse across multiple
 # ChemiscopeHeadless instances
-_PLAYWRIGHT = None
-_BROWSER = None
+_SERVER = None
 
 
-def _get_browser():
-    global _PLAYWRIGHT, _BROWSER
-    if _PLAYWRIGHT is None:
+class PlaywrightServer:
+    """
+    A dedicated thread running an asyncio loop to manage Playwright.
+    This avoids conflicts with existing loops in the main thread.
+    """
+
+    def __init__(self):
         if not PLAYWRIGHT_AVAILABLE:
             raise ImportError(
                 "chemiscope.headless requires the 'playwright' package. "
@@ -34,34 +39,51 @@ def _get_browser():
                 "run `playwright install`."
             )
 
-        # apply nest_asyncio if available to allow re-entering the event loop
-        # in environments like Jupyter/IPython
-        try:
-            import nest_asyncio
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread.start()
 
-            nest_asyncio.apply()
-        except ImportError:
-            pass
-
-        _PLAYWRIGHT = sync_playwright().start()
+        self._playwright = self.run_sync(async_playwright().start())
 
         # enable software rendering to support headless environments without GPU
         args = ["--enable-unsafe-swiftshader"]
+        self._browser = self.run_sync(self._playwright.chromium.launch(args=args))
 
-        _BROWSER = _PLAYWRIGHT.chromium.launch(args=args)
-        # clean up browser on exit
-        atexit.register(_close_browser)
-    return _BROWSER
+    def _run_loop(self):
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_forever()
+
+    def run_sync(self, coro):
+        """Run a coroutine in the server loop and wait for the result."""
+        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result()
+
+    def stop(self):
+        """Clean up resources and stop the loop."""
+        self.run_sync(self._browser.close())
+        self.run_sync(self._playwright.stop())
+        self._loop.call_soon_threadsafe(self._loop.stop)
+        self._thread.join()
+
+    def new_page(self):
+        """Create a new page in the browser."""
+        return self.run_sync(self._browser.new_page())
 
 
-def _close_browser():
-    global _PLAYWRIGHT, _BROWSER
-    if _BROWSER:
-        _BROWSER.close()
-        _BROWSER = None
-    if _PLAYWRIGHT:
-        _PLAYWRIGHT.stop()
-        _PLAYWRIGHT = None
+def _get_server():
+    global _SERVER
+    if _SERVER is None:
+        _SERVER = PlaywrightServer()
+        # clean up server on exit
+        atexit.register(_close_server)
+    return _SERVER
+
+
+def _close_server():
+    global _SERVER
+    if _SERVER:
+        _SERVER.stop()
+        _SERVER = None
 
 
 class ChemiscopeHeadless(HasTraits):
@@ -79,9 +101,9 @@ class ChemiscopeHeadless(HasTraits):
     def __init__(self, data, mode="default", **kwargs):
         super().__init__(**kwargs)
 
-        # Gets a shared browser instance (or creates one if it doesn't exist)
-        self._browser = _get_browser()
-        self._page = self._browser.new_page()
+        # Gets a shared server instance (or creates one if it doesn't exist)
+        self._server = _get_server()
+        self._page = self._server.new_page()
 
         if "settings" in data:
             self.settings = data["settings"]
@@ -114,6 +136,9 @@ class ChemiscopeHeadless(HasTraits):
 
         file.write(json.dumps(data).encode("utf8"))
         file.close()
+
+    def _run_sync(self, coro):
+        return self._server.run_sync(coro)
 
     def _load_chemiscope_library(self):
         # look for the library in the install path
@@ -151,10 +176,10 @@ class ChemiscopeHeadless(HasTraits):
     <div id="chemiscope-info"></div>
 </body>
 </html>"""
-        self._page.set_content(html)
+        self._run_sync(self._page.set_content(html))
 
         if content:
-            self._page.add_script_tag(content=content)
+            self._run_sync(self._page.add_script_tag(content=content))
 
     def _initialize_visualizer(self, data, mode):
         # determine visualizer class based on mode
@@ -180,7 +205,7 @@ class ChemiscopeHeadless(HasTraits):
             }}
         """
 
-        self._page.evaluate(script, data)
+        self._run_sync(self._page.evaluate(script, data))
         # ensure initial settings are applied
         if self.settings:
             self._apply_settings(self.settings)
@@ -198,7 +223,7 @@ class ChemiscopeHeadless(HasTraits):
                 }
             }
         """
-        self._page.evaluate(script, settings)
+        self._run_sync(self._page.evaluate(script, settings))
 
     @observe("selected_ids")
     def _on_selected_ids_change(self, change):
@@ -225,7 +250,7 @@ class ChemiscopeHeadless(HasTraits):
                 }
             }
         """
-        self._page.evaluate(script, selected)
+        self._run_sync(self._page.evaluate(script, selected))
 
     def get_structure_image(self):
         """
@@ -237,7 +262,9 @@ class ChemiscopeHeadless(HasTraits):
                 "Cannot retrieve structure image: this widget is a map-only viewer."
             )
 
-        data_url = self._page.evaluate("""
+        data_url = self._run_sync(
+            self._page.evaluate(
+                """
             async () => {
                 if (!window.visualizer || !window.visualizer.structure) {
                     throw new Error("No structure visualizer available");
@@ -246,7 +273,9 @@ class ChemiscopeHeadless(HasTraits):
                 await new Promise(r => requestAnimationFrame(r));
                 return window.visualizer.structure.exportActivePNG();
             }
-        """)
+        """
+            )
+        )
         return self._decode_base64(data_url)
 
     def get_map_image(self):
@@ -259,14 +288,18 @@ class ChemiscopeHeadless(HasTraits):
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
 
-        data_url = self._page.evaluate("""
+        data_url = self._run_sync(
+            self._page.evaluate(
+                """
             async () => {
                 if (!window.visualizer || !window.visualizer.map) {
                     throw new Error("No map visualizer available");
                 }
                 return await window.visualizer.map.exportPNG();
             }
-        """)
+        """
+            )
+        )
         return self._decode_base64(data_url)
 
     def save_structure_image(self, path):
@@ -317,8 +350,9 @@ class ChemiscopeHeadless(HasTraits):
             if current_settings:
                 args["settings"] = current_settings
 
-            data_url = self._page.evaluate(
-                """
+            data_url = self._run_sync(
+                self._page.evaluate(
+                    """
                 async ({index, settings}) => {
                     const vis = window.visualizer;
                     const indexer = vis.indexer;
@@ -346,7 +380,8 @@ class ChemiscopeHeadless(HasTraits):
                     return vis.structure.exportActivePNG();
                 }
             """,
-                args,
+                    args,
+                )
             )
 
             images.append(self._decode_base64(data_url))
@@ -377,7 +412,7 @@ class ChemiscopeHeadless(HasTraits):
     def close(self):
         """Close the browser page."""
         if hasattr(self, "_page") and self._page is not None:
-            self._page.close()
+            self._run_sync(self._page.close())
             self._page = None
 
     def __del__(self):
