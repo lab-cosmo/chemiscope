@@ -886,14 +886,11 @@ export class MoleculeViewer {
                 }
             } else {
                 if (this._highlighted !== undefined) {
-                    // remove the 3DMol model for highlighted environment
-                    this._viewer.removeModel(this._highlighted.model);
                     // keep information about the last highlighted point around
                     this._lastHighlighted = {
                         center: this._highlighted.center,
                         cutoff: this._options.environments.cutoff.value,
                     };
-                    this._highlighted = undefined;
                 }
             }
 
@@ -1142,6 +1139,16 @@ export class MoleculeViewer {
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
             // render non-hetero atoms with protein mode (e.g. cartoon)
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
+            // if there is a selected atom, render it larger and in green
+            if (this._highlighted !== undefined) {
+                // hide all atoms in the highlighted model
+                this._highlighted.model.setStyle({}, this._hiddenStyle());
+                // and add the green halo style to the central atom
+                this._highlighted.model.setStyle(
+                    { serial: this._highlighted.center },
+                    this._centralStyle(0.4)
+                );
+            }
         } else {
             assert(this._highlighted !== undefined);
             // otherwise, render all atoms with hidden/background style
