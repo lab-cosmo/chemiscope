@@ -1,4 +1,5 @@
 *.json.gz
+*.png
 model-exported.pt
 data/stk_cages.xyz
 10MH.pdb
