@@ -5,7 +5,6 @@ import gzip
 import json
 import os
 import threading
-from concurrent.futures import Future
 from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
