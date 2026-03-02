@@ -95,18 +95,23 @@ export default class Modal {
         this._element.classList.remove('show');
         this._open = false;
 
-        // Immediately disable pointer events
-        this._element.style.setProperty('pointer-events', 'none');
-        this._backdrop.style.setProperty('pointer-events', 'none');
+        // Clean up immediately if transitions are disabled
+        const transitionDuration = parseFloat(getComputedStyle(this._element).transitionDuration);
+        if (transitionDuration === 0) {
+            this._element.style.setProperty('display', 'none');
+            this._backdrop.remove();
+
+            // Restore focus
+            if (this._activeElement instanceof HTMLElement) {
+                this._activeElement.focus();
+            }
+            this._activeElement = null;
+        }
     }
 
     open(): void {
         this._element.getRootNode().appendChild(this._backdrop);
         this._element.style.setProperty('display', 'block');
-
-        // Re-enable pointer events
-        this._element.style.removeProperty('pointer-events');
-        this._backdrop.style.removeProperty('pointer-events');
 
         // Trick to allow transitioning immediately after setting display to block
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
