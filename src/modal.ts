@@ -96,6 +96,7 @@ export default class Modal {
         this._open = false;
 
         // Clean up immediately if transitions are disabled
+        // cf. https://github.com/lab-cosmo/chemiscope/issues/526
         const transitionDuration = parseFloat(getComputedStyle(this._element).transitionDuration);
         if (transitionDuration === 0) {
             this._element.style.setProperty('display', 'none');
