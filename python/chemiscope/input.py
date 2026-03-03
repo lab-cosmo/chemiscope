@@ -1216,13 +1216,9 @@ def _check_vector(value, name, expected_length):
             isinstance(v, (int, float)) for v in value
         ):
             return
-    arr = np.asarray(value).astype(
-        np.float64, casting="safe", subok=False, copy=False
-    )
+    arr = np.asarray(value).astype(np.float64, casting="safe", subok=False, copy=False)
     if arr.shape != (expected_length,):
-        raise ValueError(
-            f"'{name}' must be an array with {expected_length} values"
-        )
+        raise ValueError(f"'{name}' must be an array with {expected_length} values")
 
 
 def _check_valid_shape(shape):
