@@ -1209,7 +1209,14 @@ _VALID_KEYS = {
 }
 
 
-def _check_vector(value, name, expected_length):
+def _check_scalar(value, name, kind=""):
+    """Check that a value is a numeric scalar (int, float, or numpy numeric)."""
+    if not np.issubdtype(type(value), np.number):
+        prefix = f"{kind} shape " if kind else ""
+        raise TypeError(f"{prefix}'{name}' must be a numeric value, got {type(value)}")
+
+
+def _check_vector(value, name, expected_length, kind=""):
     """Check that a value is a numeric sequence with the expected length."""
     if isinstance(value, list):
         if len(value) == expected_length and all(
@@ -1218,7 +1225,10 @@ def _check_vector(value, name, expected_length):
             return
     arr = np.asarray(value).astype(np.float64, casting="safe", subok=False, copy=False)
     if arr.shape != (expected_length,):
-        raise ValueError(f"'{name}' must be an array with {expected_length} values")
+        prefix = f"{kind} shape " if kind else ""
+        raise ValueError(
+            f"{prefix}'{name}' must be an array with {expected_length} values"
+        )
 
 
 def _check_valid_shape(shape):
@@ -1251,14 +1261,10 @@ def _check_valid_shape(shape):
             )
 
     if kind == "sphere":
-        if not isinstance(parameters["radius"], float):
-            raise TypeError(
-                "sphere shape 'radius' must be a float, got "
-                f"{type(parameters['radius'])}"
-            )
+        _check_scalar(parameters["radius"], "radius", kind)
 
     elif kind == "ellipsoid":
-        _check_vector(parameters["semiaxes"], "semiaxes", 3)
+        _check_vector(parameters["semiaxes"], "semiaxes", 3, kind)
 
     elif kind == "custom":
         vertices_array = np.asarray(parameters["vertices"]).astype(
@@ -1266,9 +1272,7 @@ def _check_valid_shape(shape):
         )
 
         if len(vertices_array.shape) != 2 or vertices_array.shape[1] != 3:
-            raise ValueError(
-                "'vertices' must be an Nx3 array values for 'custom' shape kind"
-            )
+            raise ValueError("custom shape 'vertices' must be an Nx3 array")
 
         if "simplices" in parameters:
             simplices_array = np.asarray(parameters["simplices"]).astype(
@@ -1276,34 +1280,16 @@ def _check_valid_shape(shape):
             )
 
             if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
-                raise ValueError(
-                    "'simplices' must be an Nx3 array values for 'custom' shape kind"
-                )
+                raise ValueError("custom shape 'simplices' must be an Nx3 array")
     elif kind == "cylinder":
-        if not isinstance(parameters["radius"], float):
-            raise TypeError(
-                "cylinder shape 'radius' must be a float, "
-                f"got {type(parameters['radius'])}"
-            )
-        _check_vector(parameters["vector"], "vector", 3)
+        _check_scalar(parameters["radius"], "radius", kind)
+        _check_vector(parameters["vector"], "vector", 3, kind)
 
     elif kind == "arrow":
-        if not isinstance(parameters["baseRadius"], float):
-            raise TypeError(
-                "arrow shape 'baseRadius' must be a float, "
-                f"got {type(parameters['baseRadius'])}"
-            )
-        if not isinstance(parameters["headRadius"], float):
-            raise TypeError(
-                "arrow shape 'headRadius' must be a float, "
-                f"got {type(parameters['headRadius'])}"
-            )
-        if not isinstance(parameters["headLength"], float):
-            raise TypeError(
-                "arrow shape 'headLength' must be a float, "
-                f"got {type(parameters['headLength'])}"
-            )
-        _check_vector(parameters["vector"], "vector", 3)
+        _check_scalar(parameters["baseRadius"], "baseRadius", kind)
+        _check_scalar(parameters["headRadius"], "headRadius", kind)
+        _check_scalar(parameters["headLength"], "headLength", kind)
+        _check_vector(parameters["vector"], "vector", 3, kind)
 
     if "orientation" in parameters:
-        _check_vector(parameters["orientation"], "orientation", 4)
+        _check_vector(parameters["orientation"], "orientation", 4, kind)

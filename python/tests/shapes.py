@@ -90,7 +90,7 @@ INVALID_SHAPES = [
             },
         },
         TypeError,
-        "sphere shape 'radius' must be a float, got str",
+        "sphere shape 'radius' must be a numeric value, got <class 'str'>",
     ],
     [
         {
@@ -110,7 +110,7 @@ INVALID_SHAPES = [
             },
         },
         TypeError,
-        "'semiaxes' must be an array with 3 values for 'ellipsoid' shape kind",
+        "ellipsoid shape 'semiaxes' must be an array with 3 values",
     ],
     [
         {"kind": "custom", "parameters": {"global": {"radius": 1.0}}},
@@ -123,7 +123,7 @@ INVALID_SHAPES = [
             "parameters": {"global": {"vertices": np.array(CUBE_VERTICES)[:, :2]}},
         },
         ValueError,
-        "'vertices' must be an Nx3 array values for 'custom' shape kind",
+        "custom shape 'vertices' must be an Nx3 array",
     ],
     [
         {
@@ -144,7 +144,7 @@ INVALID_SHAPES = [
             },
         },
         ValueError,
-        "'simplices' must be an Nx3 array values for 'custom' shape kind",
+        "custom shape 'simplices' must be an Nx3 array",
     ],
     [
         {"kind": "garbage", "parameters": {"radius": None}},

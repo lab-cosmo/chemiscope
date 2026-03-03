@@ -4,6 +4,7 @@ import base64
 import gzip
 import json
 import os
+import tempfile
 import threading
 from pathlib import Path
 
@@ -217,8 +218,6 @@ class ChemiscopeHeadless(HasTraits):
         # magnitude faster than page.evaluate(script, data) for large datasets,
         # because evaluate() serializes data through CDP which is extremely slow
         # (e.g. 300s for 50MB vs 15s with script tag).
-        import tempfile
-
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".js", delete=False, prefix="chemiscope_"
         ) as f:
