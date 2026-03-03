@@ -212,15 +212,37 @@ class ChemiscopeHeadless(HasTraits):
 
         config = {key: f"chemiscope-{key}" for key in config_keys}
 
+        # Write dataset to a temp JS file and load via add_script_tag(path=...)
+        # which reads the file directly into the browser. This is orders of
+        # magnitude faster than page.evaluate(script, data) for large datasets,
+        # because evaluate() serializes data through CDP which is extremely slow
+        # (e.g. 300s for 50MB vs 15s with script tag).
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False, prefix="chemiscope_"
+        ) as f:
+            f.write("window.__chsp_data = ")
+            json.dump(data, f)
+            f.write(";")
+            tmp_path = f.name
+
+        try:
+            self._run_sync(self._page.add_script_tag(path=tmp_path))
+        finally:
+            os.unlink(tmp_path)
+
         script = f"""
-            async (dataset) => {{
+            async () => {{
+                const dataset = window.__chsp_data;
+                delete window.__chsp_data;
                 const config = {json.dumps(config)};
                 window.visualizer = await Chemiscope.{vis_class}.load(config, dataset);
                 return 'loaded';
             }}
         """
 
-        self._run_sync(self._page.evaluate(script, data))
+        self._run_sync(self._page.evaluate(script))
         # ensure initial settings are applied
         if self.settings:
             self._apply_settings(self.settings)
