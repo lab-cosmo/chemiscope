@@ -1,0 +1,238 @@
+:root {
+    --header-height: 48px;
+    --footer-height: 30px;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 30px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: var(--footer-height);
+    padding-top: 7px;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 0.8rem;
+}
+
+.footer .container {
+    max-width: 1140px;
+}
+
+.footer a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+header {
+    background-color: #2c3e50;
+    width: 100%;
+    height: var(--header-height);
+}
+
+.navbar {
+    max-width: 1100px;
+    margin-bottom: 1em;
+    z-index: 999;
+    background-color: inherit;
+}
+
+.references a {
+    color: grey;
+}
+
+#loading {
+    font-size: 6em;
+    margin: auto;
+    text-align: center;
+    color: grey;
+    position: absolute;
+    z-index: 100000;
+    left: 50%;
+}
+
+main.container-fluid {
+    margin: 1.5em 0em calc(1.5em + var(--header-height)) 0em;
+    width: 100%;
+}
+
+@media screen and (min-width: 900px) {
+    main.container-fluid {
+        margin: 2em 10px calc(2em + var(--header-height)) 10px;
+        width: calc(100% - 20px);
+    }
+}
+
+@media screen and (min-width: 1220px) {
+    main.container-fluid {
+        margin: 2em auto calc(2em + var(--header-height)) auto;
+        width: 1200px;
+    }
+}
+
+main .ratio {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.ratio-1x1 {
+    aspect-ratio: 1 / 1;
+}
+
+.ratio-5x7 {
+    aspect-ratio: 5 / 7;
+    overflow: hidden;
+}
+
+main .ratio > * {
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+    min-height: 0;
+}
+
+@media screen and (min-width: 768px) {
+    main .ratio {
+        max-height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        width: 100%;
+        /* In horizontal layout, allow the box to be wider than the aspect ratio 
+           if vertical space is constrained, but never wider than the column. */
+        aspect-ratio: auto;
+        height: calc(100vh - 2em - var(--header-height) - var(--footer-height));
+        max-width: 100%;
+    }
+
+    .ratio-1x1 {
+        min-width: min(100%, calc((100vh - 2em - var(--header-height) - var(--footer-height)) * 1));
+    }
+
+    .ratio-5x7 {
+        min-width: min(
+            100%,
+            calc((100vh - 2em - var(--header-height) - var(--footer-height)) * 5 / 7)
+        );
+    }
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.pop-on-top {
+    z-index: 100;
+    position: absolute;
+    width: 80%;
+    left: 50%;
+    margin-left: -40%;
+}
+
+#chemiscope-meta {
+    width: max-content;
+    height: max-content;
+    position: absolute;
+    top: 0;
+    left: 2em;
+    font-size: 16pt;
+}
+
+#chemiscope-map {
+    display: block;
+}
+
+#chemiscope-structure {
+    flex: 1 1 auto;
+}
+
+#chemiscope-info {
+    flex: 0 1 auto;
+    width: 100%;
+}
+
+#upload {
+    width: 280px;
+}
+
+#open-save-menu {
+    background-color: #e2e6ea;
+    border-color: #ced4da;
+}
+
+#open-save-menu:hover {
+    background-color: #f8f9fa;
+}
+
+.grid-1-1 {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-1-1-1 {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    align-content: start;
+    grid-gap: 1em;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.width-10em {
+    width: 10em;
+}
+
+.btn-outline-secondary-less-hover:hover {
+    color: inherit;
+    background-color: #f2f2f2;
+}
+
+.hidden-input-file {
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+/* scroll bands for mobile devices */
+@media (max-width: 768px) {
+    .scroll-band-container {
+        position: relative;
+        width: 100%;
+    }
+
+    /* invisible scroll bands */
+    .scroll-band-left,
+    .scroll-band-right {
+        position: absolute;
+        z-index: 20;
+        top: 0;
+        height: 100%;
+
+        /* width of the safe scroll area */
+        width: 10%;
+
+        pointer-events: auto;
+        background-color: transparent;
+        touch-action: pan-y;
+    }
+
+    .scroll-band-left {
+        left: 0;
+    }
+    .scroll-band-right {
+        right: 0;
+    }
+}

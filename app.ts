@@ -1,0 +1,430 @@
+// load bootstrap: this needs to come first so that CSS files are loaded in the
+// right order
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+import { Warnings, getByID } from '../src/utils';
+import { Dataset, Structure } from '../src/dataset';
+import { version, DefaultVisualizer, Settings } from '../src/index';
+
+import { inflate } from 'pako';
+
+// load CSS for the app
+import './app.css';
+
+interface Configuration {
+    /// optional callback to load the structures on demand.
+    loadStructure?: (index: number, structure: unknown) => Promise<any>;
+}
+
+export class ChemiscopeApp {
+    /// Instance of the chemiscope visualizer
+    private visualizer?: DefaultVisualizer;
+    /// Path/URL of the dataset currently displayed
+    private dataset?: string;
+    /// CSS style sheet to hide the setting in loading panel about on-demand
+    /// loading
+    private hideOnDemandStructures: HTMLStyleElement;
+    public warnings: Warnings = new Warnings();
+
+    /**
+     * Create a new instance of the chemiscope application.
+     */
+    constructor(id: string) {
+        // show the version of chemiscope currently running
+        const versionDisplay = getByID('chemiscope-version');
+        versionDisplay.innerText = `version ${version()}`;
+
+        // when the window is resized, change the size available to the info
+        // widget
+        window.addEventListener('resize', updateInfoWidgetHeight);
+
+        // setup the main HTML
+        const root = getByID(id);
+        root.innerHTML = `<div class="container-fluid">
+            <div class="row gx-2">
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
+                    <div class="ratio ratio-1x1 ratio-map">
+                        <div id="chemiscope-meta" style="z-index: 10"></div>
+                        <div id="chemiscope-map" style="position: absolute"></div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 d-flex flex-column" style="padding: 0 5px">
+                    <div class="ratio ratio-5x7">
+                        <div>
+                            <!-- height: 0 below is a hack to force safari to
+                            respect height: 100% on the children
+                            https://github.com/philipwalton/flexbugs/issues/197#issuecomment-378908438
+                            -->
+                            <div id="chemiscope-structure" style="height: 0"></div>
+                            <div id="chemiscope-info"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        this._setupLoadSaveMenu();
+
+        this.hideOnDemandStructures = document.createElement('style');
+        document.head.appendChild(this.hideOnDemandStructures);
+        this.hideOnDemandStructures.sheet!.insertRule('.hide-on-demand-structures {display: none}');
+        this.hideOnDemandStructures.sheet!.disabled = false;
+    }
+
+    /**
+     * Load the example input with the given name, and display it
+     */
+    public async loadExample(example: string): Promise<void> {
+        let config: Partial<Configuration> = {
+            loadStructure: undefined,
+        };
+        if (example == 'Azaphenacenes') {
+            // example of dynamic structure loading
+            config.loadStructure = async (_, structure: any) => {
+                const url = `examples/${structure.data}`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to fetch structure file "${url}": ${response.status} ${response.statusText}`
+                    );
+                }
+
+                return await response.json();
+            };
+        }
+
+        await this.fetchAndLoad(`/examples/${example}.json.gz`, config);
+    }
+
+    /**
+     * Fetch the JSON file at the given URL, an load it as a chemiscope dataset.
+     *
+     * Optionally specify the configuration in `config`
+     */
+    public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
+        startLoading();
+        this.dataset = url;
+
+        const response = await fetch(this.dataset);
+        if (!response.ok) {
+            throw Error(`unable to load file at '${this.dataset}'`);
+        }
+        const isGzipped =
+            url.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
+        const dataset = await readJSONFromStream(response, isGzipped);
+        await this.load(config as Configuration, dataset);
+    }
+
+    /**
+     * Load the given `dataset` with the specified `configuration`.
+     */
+    public async load(configuration: Configuration, dataset: Dataset): Promise<void> {
+        // hide any error coming from the previous dataset loading
+        const errors = getByID('error-display');
+        errors.style.display = 'none';
+
+        const config = {
+            map: 'chemiscope-map',
+            info: 'chemiscope-info',
+            meta: 'chemiscope-meta',
+            structure: 'chemiscope-structure',
+            loadStructure: configuration.loadStructure,
+        };
+
+        // show/hide setting related to on-demand structure loading
+        this.hideOnDemandStructures.sheet!.disabled = configuration.loadStructure !== undefined;
+
+        if (this.visualizer !== undefined) {
+            this.visualizer.remove();
+        }
+
+        // adds warning handler
+        this.warnings.defaultTimeout = 4000; // 4s visibility
+        this.warnings.addHandler((message, timeout?) => {
+            displayWarning(message, timeout);
+        });
+
+        this.visualizer = await DefaultVisualizer.load(config, dataset, this.warnings);
+
+        this.visualizer.structure.positionSettingsModal = (rect) => {
+            const structureRect = getByID('chemiscope-structure').getBoundingClientRect();
+            let left = structureRect.left - rect.width + 25;
+            if (left < 25) {
+                left = 25;
+            }
+            return {
+                top: structureRect.top,
+                left: left,
+            };
+        };
+
+        this.visualizer.map.positionSettingsModal = (rect) => {
+            const mapRect = getByID('chemiscope-map').getBoundingClientRect();
+
+            let left;
+            if (window.innerWidth < 1400) {
+                // clip modal to the right if it overflows
+                left = window.innerWidth - rect.width - 10;
+            } else {
+                left = mapRect.left + mapRect.width + 25;
+            }
+
+            return {
+                top: mapRect.top,
+                left: left,
+            };
+        };
+
+        updateInfoWidgetHeight();
+        stopLoading();
+    }
+
+    /**
+     * Setup all callbacks & style related to the Load/Save menu
+     */
+    private _setupLoadSaveMenu(): void {
+        // Loading new dataset
+        const loadDataset = getByID<HTMLInputElement>('load-dataset');
+        const loadSaveModal = getByID('load-save');
+        const closeLoadSaveModal = getByID('close-load-save-modal');
+        loadDataset.onchange = () => {
+            const file = loadDataset.files![0];
+
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > 200) {
+                const proceed = confirm(
+                    `This file is ${sizeMB.toFixed(0)} MB. Large files may fail to load due to browser memory limits.\n\n` +
+                        `Continue loading?`
+                );
+                if (!proceed) {
+                    loadDataset.value = '';
+                    return;
+                }
+            }
+
+            // remove closing animation on the modal to close it with JS
+            loadSaveModal.classList.remove('fade');
+            closeLoadSaveModal.click();
+            startLoading();
+            this.dataset = file.name;
+            const isGzipped = file.name.endsWith('.gz');
+            readJSONFromFile(file, isGzipped)
+                .then((dataset) => {
+                    this.load({}, dataset);
+                })
+                .catch((error) => {
+                    stopLoading();
+                    displayError(error instanceof Error ? error.message : String(error));
+                })
+                .finally(() => {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadDataset.value = '';
+                    loadSaveModal.classList.add('fade');
+                });
+        };
+        // Saving the current dataset
+        const saveDataset = getByID('save-dataset');
+        const saveDatasetName = getByID<HTMLInputElement>('save-dataset-name');
+        const includeSettings = getByID<HTMLInputElement>('save-dataset-settings');
+        const includeStructures = getByID<HTMLInputElement>('save-dataset-structures');
+        saveDataset.onclick = () => {
+            if (this.visualizer === undefined) {
+                return;
+            }
+
+            const dataset: any = this.visualizer.dataset(includeStructures.checked);
+            if (includeSettings.checked) {
+                dataset.settings = this.visualizer.saveSettings();
+            }
+            startDownload(saveDatasetName.value, stringifyJsonWithNaN(dataset));
+            closeLoadSaveModal.click();
+        };
+        // loading saved settings
+        const loadSettings = getByID<HTMLInputElement>('load-settings');
+        loadSettings.onchange = () => {
+            loadSaveModal.classList.remove('fade');
+            closeLoadSaveModal.click();
+            startLoading();
+            const file = loadSettings.files![0];
+            if (this.visualizer === undefined) {
+                stopLoading();
+                loadSaveModal.classList.add('fade');
+                return;
+            }
+
+            const isGzipped = file.name.endsWith('.gz');
+            readJSONFromFile(file, isGzipped)
+                .then((settings) => {
+                    this.visualizer!.applySettings(settings);
+                })
+                .catch((error) => {
+                    displayError(error instanceof Error ? error.message : String(error));
+                })
+                .finally(() => {
+                    // clear the selected file name to make sure 'onchange' is
+                    // called again if the user loads a file a the same path
+                    // multiple time
+                    loadSettings.value = '';
+                    stopLoading();
+                    loadSaveModal.classList.add('fade');
+                });
+        };
+
+        // Saving the current settings values
+        const saveSettings = getByID('save-settings');
+        const saveSettingsName = getByID<HTMLInputElement>('save-settings-name');
+        const saveSettingsMap = getByID<HTMLInputElement>('save-settings-map');
+        const saveSettingsStructure = getByID<HTMLInputElement>('save-settings-structure');
+        const saveSettingsSelected = getByID<HTMLInputElement>('save-settings-selected');
+        saveSettings.onclick = () => {
+            if (this.visualizer === undefined) {
+                return;
+            }
+
+            const settings: Partial<Settings> = this.visualizer.saveSettings();
+            if (!saveSettingsMap.checked) {
+                delete settings.map;
+            }
+            if (!saveSettingsStructure.checked) {
+                delete settings.structure;
+            }
+            if (!saveSettingsSelected.checked) {
+                delete settings.pinned;
+            }
+            startDownload(saveSettingsName.value, JSON.stringify(settings));
+            closeLoadSaveModal.click();
+        };
+    }
+}
+
+function displayWarning(message: string, timeout: number = 4000) {
+    // draws a message box (and closes after the specified timeout)
+    if (timeout > 0) {
+        // use a negative timeout not to print messages
+        const display = getByID('warning-display');
+        display.getElementsByTagName('p')[0].innerText = message;
+        display.style.display = 'block';
+
+        // automatically remove the warning after the specified timeout
+        setTimeout(() => {
+            display.style.display = 'none';
+        }, timeout);
+    }
+}
+
+function displayError(message: string) {
+    const display = getByID('error-display');
+    display.getElementsByTagName('p')[0].innerText = message;
+    display.style.display = 'block';
+}
+
+function startLoading() {
+    getByID('loading').style.display = 'block';
+
+    const main = document.getElementsByTagName('main')[0];
+    main.onclick = () => {};
+    main.style.opacity = '0.3';
+}
+
+function stopLoading() {
+    getByID('loading').style.display = 'none';
+
+    const main = document.getElementsByTagName('main')[0];
+    main.onclick = null;
+    main.style.opacity = '1';
+}
+
+/** Read JSON or gzipped JSON and return the parsed object */
+async function readJSONFromStream(response: Response, isGzipped: boolean): Promise<any> {
+    let text;
+    if (isGzipped) {
+        if (typeof DecompressionStream !== 'undefined') {
+            const decompressedStream = response.body!.pipeThrough(new DecompressionStream('gzip'));
+            text = await new Response(decompressedStream).text();
+        } else {
+            // fallback to pako
+            const buffer = await response.arrayBuffer();
+            const decompressed = inflate(new Uint8Array(buffer));
+            text = new TextDecoder('utf-8').decode(decompressed);
+        }
+    } else {
+        text = await response.text();
+    }
+
+    return parseJsonWithNaN(text);
+}
+
+async function readJSONFromFile(file: File, isGzipped: boolean): Promise<any> {
+    let text;
+    if (isGzipped) {
+        if (typeof DecompressionStream !== 'undefined') {
+            const decompressedStream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+            text = await new Response(decompressedStream).text();
+        } else {
+            const buffer = await file.arrayBuffer();
+            const decompressed = inflate(new Uint8Array(buffer));
+            text = new TextDecoder('utf-8').decode(decompressed);
+        }
+    } else {
+        text = await file.text();
+    }
+    return parseJsonWithNaN(text);
+}
+
+/**
+ * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+ * module output them, and they can be useful.
+ */
+function parseJsonWithNaN(text: string): any {
+    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
+        return value === '***NaN***' ? NaN : value;
+    });
+}
+
+/** Write NaN in the JSON file. */
+function stringifyJsonWithNaN(object: any): string {
+    const string = JSON.stringify(object, (key, value) => {
+        return typeof value === 'number' && isNaN(value) ? '***NaN***' : value;
+    });
+    return string.replace(/"\*\*\*NaN\*\*\*"/g, 'NaN');
+}
+
+/**
+ * Ensure that the height of the property table is set up in a compatible way
+ * with the use of embed-responsive. embed-responsive is used to ensure no
+ * vertical or horizontal scroll bar appear on the whole page while keeping
+ * know aspect ratio for the main panels.
+ */
+function updateInfoWidgetHeight(): void {
+    const height = getByID('chemiscope-structure').getBoundingClientRect().height;
+
+    const infoTables = document.getElementsByClassName('chsp-info-table');
+    for (let i = 0; i < infoTables.length; i++) {
+        // max height for the chsp-info-table elements is the height of the
+        // structure viewer
+        (infoTables[i] as HTMLElement).style.maxHeight = `${height}px`;
+    }
+}
+
+/**
+ * Start a download from the user browser, asking it to save the file with the
+ * given `filename`. The file will contain the given `content`.
+ */
+function startDownload(filename: string, content: string): void {
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
+    a.style.display = 'none';
+
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }, 2000);
+}
