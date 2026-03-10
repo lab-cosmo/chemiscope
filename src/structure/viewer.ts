@@ -1277,9 +1277,21 @@ export class MoleculeViewer {
                 }
             }
 
+            // Use the same centering pattern as 3Dmol's replicateUnitCell:
+            // 0, +1, -1, +2, -2, ... so that replicas are symmetric around
+            // the original cell
+            const makeoff = (i: number): number => {
+                if (i % 2 === 0) return -i / 2;
+                else return Math.ceil(i / 2);
+            };
+
             for (let a = 0; a < supercell_a; a++) {
                 for (let b = 0; b < supercell_b; b++) {
                     for (let c = 0; c < supercell_c; c++) {
+                        const oa = makeoff(a);
+                        const ob = makeoff(b);
+                        const oc = makeoff(c);
+
                         let shapeData: Partial<ShapeData> = { ...currentShape.parameters.global };
 
                         shapeData.position = [0, 0, 0]; // defaults
@@ -1311,9 +1323,9 @@ export class MoleculeViewer {
                                 }
 
                                 // adds supercell offset
-                                position[0] += a * cell[0] + b * cell[3] + c * cell[6];
-                                position[1] += a * cell[1] + b * cell[4] + c * cell[7];
-                                position[2] += a * cell[2] + b * cell[5] + c * cell[8];
+                                position[0] += oa * cell[0] + ob * cell[3] + oc * cell[6];
+                                position[1] += oa * cell[1] + ob * cell[4] + oc * cell[7];
+                                position[2] += oa * cell[2] + ob * cell[5] + oc * cell[8];
 
                                 atomShapeData.position = position;
 
