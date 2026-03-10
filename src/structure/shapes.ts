@@ -153,6 +153,15 @@ export type ShapeParameters =
     | CylindersParameters
     | SpheresParameters;
 
+/** Parameters for a combined shape (group of sub-shapes activated as one) */
+export interface CombinedShapeParameters {
+    kind: 'combined';
+    shapes: ShapeParameters[];
+}
+
+/** Any shape parameters, including combined */
+export type AnyShapeParameters = ShapeParameters | CombinedShapeParameters;
+
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
 }

@@ -25,6 +25,7 @@ import {
     Cylinders,
     Ellipsoid,
     ShapeData,
+    ShapeParameters,
     Sphere,
     Spheres,
     mergeShapes,
@@ -1271,119 +1272,212 @@ export class MoleculeViewer {
             }
 
             assert(shape in structure.shapes);
-            const currentShape = structure.shapes[shape];
-            let supercell_a = this._options.supercell[0].value;
-            let supercell_b = this._options.supercell[1].value;
-            let supercell_c = this._options.supercell[2].value;
-            let cell = this._current.structure.cell;
+            const activeShape = structure.shapes[shape];
 
-            if (cell === undefined) {
-                cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+            // flatten combined shapes into a list of regular shapes
+            const shapesToRender: ShapeParameters[] =
+                activeShape.kind === 'combined' ? activeShape.shapes : [activeShape];
 
-                if (supercell_a > 1 || supercell_b > 1 || supercell_c > 1) {
-                    supercell_a = 1;
-                    supercell_b = 1;
-                    supercell_c = 1;
+            for (const currentShape of shapesToRender) {
+                let supercell_a = this._options.supercell[0].value;
+                let supercell_b = this._options.supercell[1].value;
+                let supercell_c = this._options.supercell[2].value;
+                let cell = this._current.structure.cell;
+
+                if (cell === undefined) {
+                    cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
+                    if (supercell_a > 1 || supercell_b > 1 || supercell_c > 1) {
+                        supercell_a = 1;
+                        supercell_b = 1;
+                        supercell_c = 1;
+                    }
                 }
-            }
 
-            // Use the same centering pattern as 3Dmol's replicateUnitCell:
-            // 0, +1, -1, +2, -2, ... so that replicas are symmetric around
-            // the original cell
-            const makeoff = (i: number): number => {
-                if (i % 2 === 0) return -i / 2;
-                else return Math.ceil(i / 2);
-            };
+                // Use the same centering pattern as 3Dmol's replicateUnitCell:
+                // 0, +1, -1, +2, -2, ... so that replicas are symmetric around
+                // the original cell
+                const makeoff = (i: number): number => {
+                    if (i % 2 === 0) return -i / 2;
+                    else return Math.ceil(i / 2);
+                };
 
-            for (let a = 0; a < supercell_a; a++) {
-                for (let b = 0; b < supercell_b; b++) {
-                    for (let c = 0; c < supercell_c; c++) {
-                        const oa = makeoff(a);
-                        const ob = makeoff(b);
-                        const oc = makeoff(c);
+                for (let a = 0; a < supercell_a; a++) {
+                    for (let b = 0; b < supercell_b; b++) {
+                        for (let c = 0; c < supercell_c; c++) {
+                            const oa = makeoff(a);
+                            const ob = makeoff(b);
+                            const oc = makeoff(c);
 
-                        let shapeData: Partial<ShapeData> = { ...currentShape.parameters.global };
-
-                        shapeData.position = [0, 0, 0]; // defaults
-                        if (currentShape.parameters.structure) {
-                            shapeData = {
-                                ...shapeData,
-                                ...currentShape.parameters.structure[0],
+                            let shapeData: Partial<ShapeData> = {
+                                ...currentShape.parameters.global,
                             };
-                        }
-                        if (currentShape.parameters.atom) {
-                            for (let i = 0; i < structure.size; i++) {
-                                const name = structure.names[i];
-                                assert(i < currentShape.parameters.atom.length);
-                                const atomShapeData = {
+
+                            shapeData.position = [0, 0, 0]; // defaults
+                            if (currentShape.parameters.structure) {
+                                shapeData = {
                                     ...shapeData,
-                                    ...currentShape.parameters.atom[i],
+                                    ...currentShape.parameters.structure[0],
                                 };
+                            }
+                            if (currentShape.parameters.atom) {
+                                for (let i = 0; i < structure.size; i++) {
+                                    const name = structure.names[i];
+                                    assert(i < currentShape.parameters.atom.length);
+                                    const atomShapeData = {
+                                        ...shapeData,
+                                        ...currentShape.parameters.atom[i],
+                                    };
 
-                                let position: [number, number, number] = [
-                                    structure.x[i],
-                                    structure.y[i],
-                                    structure.z[i],
-                                ];
+                                    let position: [number, number, number] = [
+                                        structure.x[i],
+                                        structure.y[i],
+                                        structure.z[i],
+                                    ];
 
-                                // only overrides the atom position if it's given explicitly
-                                const atom_position = currentShape.parameters.atom[i].position;
-                                if (atom_position !== undefined) {
-                                    position = atom_position;
-                                }
+                                    // only overrides the atom position if it's given explicitly
+                                    const atom_position = currentShape.parameters.atom[i].position;
+                                    if (atom_position !== undefined) {
+                                        position = atom_position;
+                                    }
 
-                                // adds supercell offset
-                                position[0] += oa * cell[0] + ob * cell[3] + oc * cell[6];
-                                position[1] += oa * cell[1] + ob * cell[4] + oc * cell[7];
-                                position[2] += oa * cell[2] + ob * cell[5] + oc * cell[8];
+                                    // adds supercell offset
+                                    position[0] += oa * cell[0] + ob * cell[3] + oc * cell[6];
+                                    position[1] += oa * cell[1] + ob * cell[4] + oc * cell[7];
+                                    position[2] += oa * cell[2] + ob * cell[5] + oc * cell[8];
 
-                                atomShapeData.position = position;
+                                    atomShapeData.position = position;
 
-                                const elem = structure.elements ? structure.elements[i] : name;
+                                    const elem = structure.elements ? structure.elements[i] : name;
 
-                                // obey explicit color specification if given,
-                                // otherwise color as the corresponding atom
-                                if (!atomShapeData.color) {
-                                    if (colorFunc) {
-                                        atomSpec.serial = i;
-                                        atomSpec.elem = elem;
-                                        atomShapeData.color = colorFunc(atomSpec);
+                                    // obey explicit color specification if given,
+                                    // otherwise color as the corresponding atom
+                                    if (!atomShapeData.color) {
+                                        if (colorFunc) {
+                                            atomSpec.serial = i;
+                                            atomSpec.elem = elem;
+                                            atomShapeData.color = colorFunc(atomSpec);
+                                        } else {
+                                            atomShapeData.color =
+                                                $3Dmol.elementColors.Jmol[elem] || 0xffffff;
+                                        }
+                                    }
+
+                                    if (currentShape.kind === 'sphere') {
+                                        const shape = new Sphere(atomShapeData);
+                                        mergeShapes(
+                                            mergedShapes,
+                                            shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                            this._viewer
+                                        );
+                                    } else if (currentShape.kind === 'ellipsoid') {
+                                        const shape = new Ellipsoid(atomShapeData);
+                                        mergeShapes(
+                                            mergedShapes,
+                                            shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                            this._viewer
+                                        );
+                                    } else if (currentShape.kind === 'cylinder') {
+                                        const shape = new Cylinder(atomShapeData);
+                                        mergeShapes(
+                                            mergedShapes,
+                                            shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                            this._viewer
+                                        );
+                                    } else if (currentShape.kind === 'arrow') {
+                                        const shape = new Arrow(atomShapeData);
+                                        mergeShapes(
+                                            mergedShapes,
+                                            shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                            this._viewer
+                                        );
+                                    } else if (currentShape.kind === 'cylinders') {
+                                        const shape = new Cylinders(atomShapeData);
+                                        for (let ci = 0; ci < shape.vectors.length; ci++) {
+                                            const singleCyl = new Cylinder({
+                                                position: [
+                                                    shape.position.x + shape.bases[ci][0],
+                                                    shape.position.y + shape.bases[ci][1],
+                                                    shape.position.z + shape.bases[ci][2],
+                                                ],
+                                                vector: shape.vectors[ci],
+                                                radius: shape.radii[ci],
+                                                scale: 1.0,
+                                            });
+                                            mergeShapes(
+                                                mergedShapes,
+                                                singleCyl.outputTo3Dmol(
+                                                    shape.colors[ci] ||
+                                                        atomShapeData.color ||
+                                                        0xffffff
+                                                ),
+                                                this._viewer
+                                            );
+                                        }
+                                    } else if (currentShape.kind === 'spheres') {
+                                        const shape = new Spheres(atomShapeData);
+                                        for (let si = 0; si < shape.centers.length; si++) {
+                                            const singleSph = new Sphere({
+                                                position: [
+                                                    shape.position.x + shape.centers[si][0],
+                                                    shape.position.y + shape.centers[si][1],
+                                                    shape.position.z + shape.centers[si][2],
+                                                ],
+                                                radius: shape.radii[si],
+                                                scale: 1.0,
+                                            });
+                                            mergeShapes(
+                                                mergedShapes,
+                                                singleSph.outputTo3Dmol(
+                                                    shape.colors[si] ||
+                                                        atomShapeData.color ||
+                                                        0xffffff
+                                                ),
+                                                this._viewer
+                                            );
+                                        }
                                     } else {
-                                        atomShapeData.color =
-                                            $3Dmol.elementColors.Jmol[elem] || 0xffffff;
+                                        assert(currentShape.kind === 'custom');
+                                        const shape = new CustomShape(atomShapeData);
+                                        mergeShapes(
+                                            mergedShapes,
+                                            shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                            this._viewer
+                                        );
                                     }
                                 }
-
+                            } else {
+                                // the shape is defined only at the structure level
                                 if (currentShape.kind === 'sphere') {
-                                    const shape = new Sphere(atomShapeData);
+                                    const shape = new Sphere(shapeData);
                                     mergeShapes(
                                         mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                        shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                         this._viewer
                                     );
                                 } else if (currentShape.kind === 'ellipsoid') {
-                                    const shape = new Ellipsoid(atomShapeData);
+                                    const shape = new Ellipsoid(shapeData);
                                     mergeShapes(
                                         mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                        shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                         this._viewer
                                     );
                                 } else if (currentShape.kind === 'cylinder') {
-                                    const shape = new Cylinder(atomShapeData);
+                                    const shape = new Cylinder(shapeData);
                                     mergeShapes(
                                         mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                        shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                         this._viewer
                                     );
                                 } else if (currentShape.kind === 'arrow') {
-                                    const shape = new Arrow(atomShapeData);
+                                    const shape = new Arrow(shapeData);
                                     mergeShapes(
                                         mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                        shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                         this._viewer
                                     );
                                 } else if (currentShape.kind === 'cylinders') {
-                                    const shape = new Cylinders(atomShapeData);
+                                    const shape = new Cylinders(shapeData);
                                     for (let ci = 0; ci < shape.vectors.length; ci++) {
                                         const singleCyl = new Cylinder({
                                             position: [
@@ -1398,13 +1492,13 @@ export class MoleculeViewer {
                                         mergeShapes(
                                             mergedShapes,
                                             singleCyl.outputTo3Dmol(
-                                                shape.colors[ci] || atomShapeData.color || 0xffffff
+                                                shape.colors[ci] || shapeData.color || 0xffffff
                                             ),
                                             this._viewer
                                         );
                                     }
                                 } else if (currentShape.kind === 'spheres') {
-                                    const shape = new Spheres(atomShapeData);
+                                    const shape = new Spheres(shapeData);
                                     for (let si = 0; si < shape.centers.length; si++) {
                                         const singleSph = new Sphere({
                                             position: [
@@ -1418,105 +1512,25 @@ export class MoleculeViewer {
                                         mergeShapes(
                                             mergedShapes,
                                             singleSph.outputTo3Dmol(
-                                                shape.colors[si] || atomShapeData.color || 0xffffff
+                                                shape.colors[si] || shapeData.color || 0xffffff
                                             ),
                                             this._viewer
                                         );
                                     }
                                 } else {
                                     assert(currentShape.kind === 'custom');
-                                    const shape = new CustomShape(atomShapeData);
+                                    const shape = new CustomShape(shapeData);
                                     mergeShapes(
                                         mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
+                                        shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                         this._viewer
                                     );
                                 }
-                            }
-                        } else {
-                            // the shape is defined only at the structure level
-                            if (currentShape.kind === 'sphere') {
-                                const shape = new Sphere(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'ellipsoid') {
-                                const shape = new Ellipsoid(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'cylinder') {
-                                const shape = new Cylinder(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'arrow') {
-                                const shape = new Arrow(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'cylinders') {
-                                const shape = new Cylinders(shapeData);
-                                for (let ci = 0; ci < shape.vectors.length; ci++) {
-                                    const singleCyl = new Cylinder({
-                                        position: [
-                                            shape.position.x + shape.bases[ci][0],
-                                            shape.position.y + shape.bases[ci][1],
-                                            shape.position.z + shape.bases[ci][2],
-                                        ],
-                                        vector: shape.vectors[ci],
-                                        radius: shape.radii[ci],
-                                        scale: 1.0,
-                                    });
-                                    mergeShapes(
-                                        mergedShapes,
-                                        singleCyl.outputTo3Dmol(
-                                            shape.colors[ci] || shapeData.color || 0xffffff
-                                        ),
-                                        this._viewer
-                                    );
-                                }
-                            } else if (currentShape.kind === 'spheres') {
-                                const shape = new Spheres(shapeData);
-                                for (let si = 0; si < shape.centers.length; si++) {
-                                    const singleSph = new Sphere({
-                                        position: [
-                                            shape.position.x + shape.centers[si][0],
-                                            shape.position.y + shape.centers[si][1],
-                                            shape.position.z + shape.centers[si][2],
-                                        ],
-                                        radius: shape.radii[si],
-                                        scale: 1.0,
-                                    });
-                                    mergeShapes(
-                                        mergedShapes,
-                                        singleSph.outputTo3Dmol(
-                                            shape.colors[si] || shapeData.color || 0xffffff
-                                        ),
-                                        this._viewer
-                                    );
-                                }
-                            } else {
-                                assert(currentShape.kind === 'custom');
-                                const shape = new CustomShape(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
                             }
                         }
                     }
                 }
-            }
+            } // end shapesToRender loop
         }
 
         if (Array.isArray(mergedShapes.faceArr) && mergedShapes.faceArr.length > 0) {

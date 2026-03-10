@@ -426,7 +426,7 @@ Each shape group is an object with the following fields:
    * - ``kind``
      - string
      - Shape type: ``"sphere"``, ``"ellipsoid"``, ``"cylinder"``, ``"arrow"``,
-       ``"cylinders"``, ``"spheres"``, or ``"custom"``
+       ``"cylinders"``, ``"spheres"``, ``"custom"``, or ``"combined"``
      - Yes
      - ``"arrow"``
    * - ``parameters``
@@ -634,6 +634,26 @@ Each shape kind supports additional parameters (in addition to the common ones a
      - Mesh triangulation indices.
      - No
 
+**Combined** (group of sub-shapes activated as one)
+
+A ``"combined"`` shape groups multiple shapes so they appear as a single entry in the
+visualizer's shape selector. Instead of ``"parameters"``, it has a ``"shapes"`` array
+containing regular shape definitions. Nesting combined shapes is not allowed.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Field
+     - Type
+     - Description
+     - Required
+   * - ``shapes``
+     - array
+     - List of shape definitions (each with ``kind`` and ``parameters``).
+     - Yes
+
 Examples
 ++++++++
 
@@ -705,6 +725,30 @@ Examples
            /* ... */
          ]
        }
+     }
+   }
+
+5. Combined shape (edges + vertices activated as one):
+
+.. code-block:: json
+
+   "shapes": {
+     "wireframe_box": {
+       "kind": "combined",
+       "shapes": [
+         {
+           "kind": "cylinders",
+           "parameters": {
+             "global": {"vectors": [[1,0,0], [0,1,0]], "radii": 0.05}
+           }
+         },
+         {
+           "kind": "spheres",
+           "parameters": {
+             "global": {"centers": [[0,0,0], [1,0,0], [0,1,0]], "radii": 0.1}
+           }
+         }
+       ]
      }
    }
 

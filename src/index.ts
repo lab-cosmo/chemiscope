@@ -22,7 +22,9 @@ import {
 import { JsObject, getTarget, validateDataset } from './dataset';
 import { GUID, PositioningCallback, WarningHandler, Warnings, getNextColor } from './utils';
 import {
+    AnyShapeParameters,
     ArrowParameters,
+    CombinedShapeParameters,
     CustomShapeParameters,
     CylindersParameters,
     EllipsoidParameters,
@@ -1004,6 +1006,8 @@ export {
     CustomShapeParameters,
     CylindersParameters,
     SpheresParameters,
+    CombinedShapeParameters,
+    AnyShapeParameters,
     // different panels
     MetadataPanel,
     PropertiesMap,

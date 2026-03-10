@@ -283,6 +283,22 @@ def create_input(
             ],
         }
 
+    Multiple shapes can be grouped using ``"kind": "combined"`` so they
+    are activated as a single entry in the UI:
+
+    .. code-block:: python
+
+        # "kind" : "combined"
+        {
+            "kind": "combined",
+            "shapes": [
+                {"kind": "cylinders", "parameters": {...}},
+                {"kind": "spheres", "parameters": {...}},
+            ],
+        }
+
+    Each sub-shape uses the standard ``parameters`` format. Nesting
+    combined shapes is not allowed.
 
     .. _`ase.Atoms`: https://ase-lib.org/ase/ase/atoms.html
     .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
@@ -1102,6 +1118,72 @@ def _typetransform(data, name):
         )
 
 
+def _validate_single_shape(shapes_for_key, structures):
+    """Validate a single (non-combined) shape definition against structures."""
+    base_shape = shapes_for_key["parameters"].get("global", {})
+    structure_parameters = shapes_for_key["parameters"].get("structure", None)
+    atom_parameters = shapes_for_key["parameters"].get("atom", None)
+
+    if structure_parameters is not None:
+        if len(structure_parameters) < len(structures):
+            raise TypeError(
+                f"structure_parameters must be a list with {len(structures)} "
+                f"elements, got {len(structure_parameters)}"
+            )
+
+    if atom_parameters is not None:
+        total_atoms = sum(s["size"] for s in structures)
+        if len(atom_parameters) < total_atoms:
+            raise TypeError(
+                f"atom_parameters must be a list coinciding to the atomic "
+                f"environments, got {len(atom_parameters)} elements"
+            )
+
+    if atom_parameters is not None:
+        atom_counter = 0
+        for structure_i in range(len(structures)):
+            struct_params = (
+                structure_parameters[structure_i]
+                if structure_parameters is not None
+                else {}
+            )
+            for _ in range(structures[structure_i]["size"]):
+                _check_valid_shape(
+                    {
+                        "kind": shapes_for_key["kind"],
+                        "parameters": {
+                            "global": base_shape,
+                            "structure": struct_params,
+                            "atom": atom_parameters[atom_counter],
+                        },
+                    }
+                )
+                atom_counter += 1
+    elif structure_parameters is not None:
+        for structure_i in range(len(structures)):
+            _check_valid_shape(
+                {
+                    "kind": shapes_for_key["kind"],
+                    "parameters": {
+                        "global": base_shape,
+                        "structure": structure_parameters[structure_i],
+                        "atom": {},
+                    },
+                }
+            )
+    else:
+        _check_valid_shape(
+            {
+                "kind": shapes_for_key["kind"],
+                "parameters": {
+                    "global": base_shape,
+                    "structure": {},
+                    "atom": {},
+                },
+            }
+        )
+
+
 def _validate_shapes(structures, shapes):
     if not isinstance(shapes, dict):
         raise TypeError(f"`shapes` must be a dictionary, got {type(shapes)} instead")
@@ -1119,87 +1201,32 @@ def _validate_shapes(structures, shapes):
                 f"got {type(shapes_for_key)} instead for '{key}'"
             )
 
+        if shapes_for_key.get("kind") == "combined":
+            valid_keys = {"kind", "shapes"}
+        else:
+            valid_keys = {"kind", "parameters"}
+
         for shape_key in shapes_for_key:
-            if shape_key not in ["kind", "parameters"]:
+            if shape_key not in valid_keys:
                 raise ValueError(
                     f"Invalid entry `{shape_key}` in the specification "
                     f"for shape `{key}`"
                 )
 
-        base_shape = shapes_for_key["parameters"].get("global", {})
-        structure_parameters = shapes_for_key["parameters"].get("structure", None)
-        atom_parameters = shapes_for_key["parameters"].get("atom", None)
+        if shapes_for_key.get("kind") == "combined":
+            # validate each sub-shape independently
+            _check_valid_shape(shapes_for_key)
+            for sub_shape in shapes_for_key["shapes"]:
+                _validate_single_shape(sub_shape, structures)
+            continue
 
-        # Validate structure parameters length
-        if structure_parameters is not None:
-            if len(structure_parameters) < len(structures):
-                raise TypeError(
-                    f"structure_parameters must be a list with {len(structures)} "
-                    f"elements, got {len(structure_parameters)}"
-                )
+        _validate_single_shape(shapes_for_key, structures)
 
-        # Validate atom parameters length
-        if atom_parameters is not None:
-            total_atoms = sum(s["size"] for s in structures)
-            if len(atom_parameters) < total_atoms:
-                raise TypeError(
-                    f"atom_parameters must be a list coinciding to the atomic "
-                    f"environments, got {len(atom_parameters)} elements"
-                )
-
-        if atom_parameters is not None:
-            # When atom parameters exist, validate each atom with merged
-            # global + structure + atom parameters (as in the original logic)
-            atom_counter = 0
-            for structure_i in range(len(structures)):
-                struct_params = (
-                    structure_parameters[structure_i]
-                    if structure_parameters is not None
-                    else {}
-                )
-                for _ in range(structures[structure_i]["size"]):
-                    _check_valid_shape(
-                        {
-                            "kind": shapes_for_key["kind"],
-                            "parameters": {
-                                "global": base_shape,
-                                "structure": struct_params,
-                                "atom": atom_parameters[atom_counter],
-                            },
-                        }
-                    )
-                    atom_counter += 1
-        elif structure_parameters is not None:
-            # No atom parameters — validate each structure entry once
-            for structure_i in range(len(structures)):
-                _check_valid_shape(
-                    {
-                        "kind": shapes_for_key["kind"],
-                        "parameters": {
-                            "global": base_shape,
-                            "structure": structure_parameters[structure_i],
-                            "atom": {},
-                        },
-                    }
-                )
-        else:
-            # Only global parameters — validate once
-            _check_valid_shape(
-                {
-                    "kind": shapes_for_key["kind"],
-                    "parameters": {
-                        "global": base_shape,
-                        "structure": {},
-                        "atom": {},
-                    },
-                }
-            )
-
-    for shape in shapes.values():
+    def _add_convex_hull(s):
         if (
-            shape["kind"] == "custom"
-            and "vertices" in shape["parameters"]
-            and "simplices" not in shape["parameters"]
+            s["kind"] == "custom"
+            and "vertices" in s["parameters"]
+            and "simplices" not in s["parameters"]
         ):
             try:
                 import scipy.spatial
@@ -1208,10 +1235,15 @@ def _validate_shapes(structures, shapes):
                     "Missing simplices in custom shape, and scipy is not installed"
                 ) from e
 
-            convex_hull = scipy.spatial.ConvexHull(shape["parameters"]["vertices"])
-            shape["parameters"]["simplices"] = [
-                s.tolist() for s in convex_hull.simplices
-            ]
+            hull = scipy.spatial.ConvexHull(s["parameters"]["vertices"])
+            s["parameters"]["simplices"] = [x.tolist() for x in hull.simplices]
+
+    for shape in shapes.values():
+        if shape["kind"] == "combined":
+            for sub_shape in shape["shapes"]:
+                _add_convex_hull(sub_shape)
+        else:
+            _add_convex_hull(shape)
     return shapes
 
 
@@ -1277,6 +1309,18 @@ def _check_valid_shape(shape):
         raise TypeError(
             f"individual shapes must be dictionaries, got {type(shape)} instead"
         )
+
+    kind = shape.get("kind")
+    if kind == "combined":
+        if "shapes" not in shape or not isinstance(shape["shapes"], list):
+            raise ValueError("combined shape must have a 'shapes' list")
+        for i, sub_shape in enumerate(shape["shapes"]):
+            if not isinstance(sub_shape, dict):
+                raise TypeError(f"sub-shape {i} in combined shape must be a dictionary")
+            if sub_shape.get("kind") == "combined":
+                raise ValueError("nested combined shapes are not allowed")
+        # sub-shape parameter validation is handled by _validate_single_shape
+        return
 
     parameters = {}
     if "parameters" in shape:

@@ -307,6 +307,16 @@ tetrahedron_vertices = dict(
 
 # %%
 #
+# Combined shape: groups the wireframe edges and vertex spheres so they
+# are activated together as a single entry in the visualizer.
+
+wireframe_with_vertices = dict(
+    kind="combined",
+    shapes=[wireframe_tetrahedron, tetrahedron_vertices],
+)
+
+# %%
+#
 
 dipoles_auto = chemiscope.ase_vectors_to_arrows(structures, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
@@ -348,6 +358,8 @@ chemiscope.write_input(
         "tetrahedron": wireframe_tetrahedron,
         # spheres at tetrahedron vertices
         "tet_vertices": tetrahedron_vertices,
+        # combined: edges + vertices as one shape entry
+        "tet_combined": wireframe_with_vertices,
     },
     # the write_input function also allows defining the default visualization settings
     settings={

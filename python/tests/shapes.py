@@ -136,6 +136,57 @@ SHAPE_DEFAULTS = {
             "structure": [{"position": [5, 5, 5], "scale": 2.0}],
         },
     },
+    # combined: cylinders + spheres as one shape entry
+    "combined_wireframe": {
+        "kind": "combined",
+        "shapes": [
+            {
+                "kind": "cylinders",
+                "parameters": {
+                    "global": {
+                        "vectors": [[1, 0, 0], [0, 1, 0]],
+                        "radii": 0.05,
+                    },
+                },
+            },
+            {
+                "kind": "spheres",
+                "parameters": {
+                    "global": {
+                        "centers": [[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+                        "radii": 0.1,
+                    },
+                },
+            },
+        ],
+    },
+    # combined: with atom-level parameters in sub-shapes
+    "combined_atoms": {
+        "kind": "combined",
+        "shapes": [
+            {
+                "kind": "arrow",
+                "parameters": {
+                    "global": {
+                        "baseRadius": 0.1,
+                        "headRadius": 0.15,
+                        "headLength": 0.2,
+                    },
+                    "atom": [
+                        {"vector": [1, 0, 0]},
+                        {"vector": [0, 1, 0]},
+                        {"vector": [0, 0, 1]},
+                    ],
+                },
+            },
+            {
+                "kind": "sphere",
+                "parameters": {
+                    "global": {"radius": 0.2},
+                },
+            },
+        ],
+    },
 }
 INVALID_SHAPES = [
     [
@@ -302,6 +353,45 @@ INVALID_SHAPES = [
         },
         ValueError,
         "spheres shape 'radii' must be a scalar or array of length 2",
+    ],
+    # combined: missing shapes list
+    [
+        {
+            "kind": "combined",
+            "shapes": "not a list",
+        },
+        ValueError,
+        "combined shape must have a 'shapes' list",
+    ],
+    # combined: nested combined not allowed
+    [
+        {
+            "kind": "combined",
+            "shapes": [
+                {
+                    "kind": "combined",
+                    "shapes": [
+                        {"kind": "sphere", "parameters": {"global": {"radius": 0.1}}},
+                    ],
+                },
+            ],
+        },
+        ValueError,
+        "nested combined shapes are not allowed",
+    ],
+    # combined: invalid sub-shape parameter
+    [
+        {
+            "kind": "combined",
+            "shapes": [
+                {
+                    "kind": "sphere",
+                    "parameters": {"global": {"diameter": 0.1}},
+                },
+            ],
+        },
+        ValueError,
+        "unknown shape parameter 'diameter' for 'sphere' shape kind",
     ],
 ]
 
