@@ -24,9 +24,11 @@ import { GUID, PositioningCallback, WarningHandler, Warnings, getNextColor } fro
 import {
     ArrowParameters,
     CustomShapeParameters,
+    CylindersParameters,
     EllipsoidParameters,
     ShapeParameters,
     SphereParameters,
+    SpheresParameters,
 } from './structure/shapes';
 
 import './static/chemiscope.css';
@@ -1000,6 +1002,8 @@ export {
     EllipsoidParameters,
     ArrowParameters,
     CustomShapeParameters,
+    CylindersParameters,
+    SpheresParameters,
     // different panels
     MetadataPanel,
     PropertiesMap,

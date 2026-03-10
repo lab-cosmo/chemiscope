@@ -245,6 +245,30 @@ def create_input(
             "headLength": float,
         }
 
+        # "kind" : "cylinders" (multiple cylinders with parallel arrays)
+        {
+            # list of direction/length vectors, one per cylinder
+            "vectors": [[float, float, float], ...],
+            # base point of each cylinder, relative to shape position (optional).
+            # scaled by "scale" together with "vectors"
+            "bases": [[float, float, float], ...],
+            # scalar (broadcast) or per-cylinder array (optional, default 0.1)
+            "radii": float | [float, ...],
+            # scalar (broadcast) or per-cylinder array (optional)
+            "colors": color | [color, ...],
+        }
+
+        # "kind" : "spheres" (multiple spheres with parallel arrays)
+        {
+            # center of each sphere, relative to shape position.
+            # scaled by "scale"
+            "centers": [[float, float, float], ...],
+            # scalar (broadcast) or per-sphere array (optional, default 1.0)
+            "radii": float | [float, ...],
+            # scalar (broadcast) or per-sphere array (optional)
+            "colors": color | [color, ...],
+        }
+
         # "kind" : "custom"
         {
             "vertices": [  # list of vertices
@@ -1206,6 +1230,23 @@ _VALID_KEYS = {
         "position",
         "color",
     },
+    "cylinders": {
+        "vectors",
+        "bases",
+        "radii",
+        "colors",
+        "scale",
+        "position",
+        "color",
+    },
+    "spheres": {
+        "centers",
+        "radii",
+        "colors",
+        "scale",
+        "position",
+        "color",
+    },
 }
 
 
@@ -1290,6 +1331,52 @@ def _check_valid_shape(shape):
         _check_scalar(parameters["headRadius"], "headRadius", kind)
         _check_scalar(parameters["headLength"], "headLength", kind)
         _check_vector(parameters["vector"], "vector", 3, kind)
+
+    elif kind == "cylinders":
+        vectors_array = np.asarray(parameters["vectors"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+        if len(vectors_array.shape) != 2 or vectors_array.shape[1] != 3:
+            raise ValueError("cylinders shape 'vectors' must be an Nx3 array")
+        n = vectors_array.shape[0]
+
+        if "bases" in parameters:
+            bases_array = np.asarray(parameters["bases"]).astype(
+                np.float64, casting="safe", subok=False, copy=False
+            )
+            if bases_array.shape != (n, 3):
+                raise ValueError(f"cylinders shape 'bases' must be an {n}x3 array")
+
+        if "radii" in parameters:
+            radii = parameters["radii"]
+            if np.issubdtype(type(radii), np.number):
+                pass  # scalar broadcast
+            else:
+                radii_array = np.asarray(radii)
+                if radii_array.shape != (n,):
+                    raise ValueError(
+                        "cylinders shape 'radii' must be a scalar"
+                        f" or array of length {n}"
+                    )
+
+    elif kind == "spheres":
+        centers_array = np.asarray(parameters["centers"]).astype(
+            np.float64, casting="safe", subok=False, copy=False
+        )
+        if len(centers_array.shape) != 2 or centers_array.shape[1] != 3:
+            raise ValueError("spheres shape 'centers' must be an Nx3 array")
+        n = centers_array.shape[0]
+
+        if "radii" in parameters:
+            radii = parameters["radii"]
+            if np.issubdtype(type(radii), np.number):
+                pass  # scalar broadcast
+            else:
+                radii_array = np.asarray(radii)
+                if radii_array.shape != (n,):
+                    raise ValueError(
+                        f"spheres shape 'radii' must be a scalar or array of length {n}"
+                    )
 
     if "orientation" in parameters:
         _check_vector(parameters["orientation"], "orientation", 4, kind)

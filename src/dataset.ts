@@ -5,7 +5,15 @@
 
 import assert from 'assert';
 
-import { Arrow, CustomShape, Cylinder, Ellipsoid, Sphere } from './structure/shapes';
+import {
+    Arrow,
+    CustomShape,
+    Cylinder,
+    Cylinders,
+    Ellipsoid,
+    Sphere,
+    Spheres,
+} from './structure/shapes';
 import { ShapeParameters } from './structure/shapes';
 import { DisplayTarget } from './indexer';
 
@@ -482,6 +490,10 @@ function validateShape(kind: string, parameters: Record<string, unknown>): strin
         return Arrow.validateParameters(parameters);
     } else if (kind === 'cylinder') {
         return Cylinder.validateParameters(parameters);
+    } else if (kind === 'cylinders') {
+        return Cylinders.validateParameters(parameters);
+    } else if (kind === 'spheres') {
+        return Spheres.validateParameters(parameters);
     } else if (kind === 'custom') {
         return CustomShape.validateParameters(parameters);
     }

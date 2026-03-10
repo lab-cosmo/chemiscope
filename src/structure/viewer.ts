@@ -18,7 +18,17 @@ import {
 import { PositioningCallback, Warnings } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
-import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
+import {
+    Arrow,
+    CustomShape,
+    Cylinder,
+    Cylinders,
+    Ellipsoid,
+    ShapeData,
+    Sphere,
+    Spheres,
+    mergeShapes,
+} from './shapes';
 
 import { ViewState, cameraToView, viewToCamera } from '../utils/camera';
 
@@ -1372,6 +1382,47 @@ export class MoleculeViewer {
                                         shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
                                         this._viewer
                                     );
+                                } else if (currentShape.kind === 'cylinders') {
+                                    const shape = new Cylinders(atomShapeData);
+                                    for (let ci = 0; ci < shape.vectors.length; ci++) {
+                                        const singleCyl = new Cylinder({
+                                            position: [
+                                                shape.position.x + shape.bases[ci][0],
+                                                shape.position.y + shape.bases[ci][1],
+                                                shape.position.z + shape.bases[ci][2],
+                                            ],
+                                            vector: shape.vectors[ci],
+                                            radius: shape.radii[ci],
+                                            scale: 1.0,
+                                        });
+                                        mergeShapes(
+                                            mergedShapes,
+                                            singleCyl.outputTo3Dmol(
+                                                shape.colors[ci] || atomShapeData.color || 0xffffff
+                                            ),
+                                            this._viewer
+                                        );
+                                    }
+                                } else if (currentShape.kind === 'spheres') {
+                                    const shape = new Spheres(atomShapeData);
+                                    for (let si = 0; si < shape.centers.length; si++) {
+                                        const singleSph = new Sphere({
+                                            position: [
+                                                shape.position.x + shape.centers[si][0],
+                                                shape.position.y + shape.centers[si][1],
+                                                shape.position.z + shape.centers[si][2],
+                                            ],
+                                            radius: shape.radii[si],
+                                            scale: 1.0,
+                                        });
+                                        mergeShapes(
+                                            mergedShapes,
+                                            singleSph.outputTo3Dmol(
+                                                shape.colors[si] || atomShapeData.color || 0xffffff
+                                            ),
+                                            this._viewer
+                                        );
+                                    }
                                 } else {
                                     assert(currentShape.kind === 'custom');
                                     const shape = new CustomShape(atomShapeData);
@@ -1412,6 +1463,47 @@ export class MoleculeViewer {
                                     shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                     this._viewer
                                 );
+                            } else if (currentShape.kind === 'cylinders') {
+                                const shape = new Cylinders(shapeData);
+                                for (let ci = 0; ci < shape.vectors.length; ci++) {
+                                    const singleCyl = new Cylinder({
+                                        position: [
+                                            shape.position.x + shape.bases[ci][0],
+                                            shape.position.y + shape.bases[ci][1],
+                                            shape.position.z + shape.bases[ci][2],
+                                        ],
+                                        vector: shape.vectors[ci],
+                                        radius: shape.radii[ci],
+                                        scale: 1.0,
+                                    });
+                                    mergeShapes(
+                                        mergedShapes,
+                                        singleCyl.outputTo3Dmol(
+                                            shape.colors[ci] || shapeData.color || 0xffffff
+                                        ),
+                                        this._viewer
+                                    );
+                                }
+                            } else if (currentShape.kind === 'spheres') {
+                                const shape = new Spheres(shapeData);
+                                for (let si = 0; si < shape.centers.length; si++) {
+                                    const singleSph = new Sphere({
+                                        position: [
+                                            shape.position.x + shape.centers[si][0],
+                                            shape.position.y + shape.centers[si][1],
+                                            shape.position.z + shape.centers[si][2],
+                                        ],
+                                        radius: shape.radii[si],
+                                        scale: 1.0,
+                                    });
+                                    mergeShapes(
+                                        mergedShapes,
+                                        singleSph.outputTo3Dmol(
+                                            shape.colors[si] || shapeData.color || 0xffffff
+                                        ),
+                                        this._viewer
+                                    );
+                                }
                             } else {
                                 assert(currentShape.kind === 'custom');
                                 const shape = new CustomShape(shapeData);

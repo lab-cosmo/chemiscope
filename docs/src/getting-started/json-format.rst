@@ -425,8 +425,8 @@ Each shape group is an object with the following fields:
      - Example
    * - ``kind``
      - string
-     - Shape type: ``"sphere"``, ``"ellipsoid"``, ``"cylinder"``, ``"arrow"``, or
-       ``"custom"``
+     - Shape type: ``"sphere"``, ``"ellipsoid"``, ``"cylinder"``, ``"arrow"``,
+       ``"cylinders"``, ``"spheres"``, or ``"custom"``
      - Yes
      - ``"arrow"``
    * - ``parameters``
@@ -560,6 +560,60 @@ Each shape kind supports additional parameters (in addition to the common ones a
      - Arrowhead length; may extend beyond base if the vector is short (default: 0.2).
      - No
 
+**Cylinders** (multiple cylinders with parallel arrays)
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``vectors``
+     - number[N][3]
+     - Direction and length for each cylinder.
+     - Yes
+   * - ``bases``
+     - number[N][3]
+     - Base point of each cylinder, relative to the shape position. Scaled by ``scale``
+       together with ``vectors`` (default: all at origin).
+     - No
+   * - ``radii``
+     - number | number[N]
+     - Radius for each cylinder. A scalar value is broadcast to all cylinders (default:
+       0.1).
+     - No
+   * - ``colors``
+     - color | color[N]
+     - Color for each cylinder. A scalar value is broadcast to all cylinders.
+     - No
+
+**Spheres** (multiple spheres with parallel arrays)
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 45 15
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Description
+     - Required
+   * - ``centers``
+     - number[N][3]
+     - Center of each sphere, relative to the shape position. Scaled by ``scale``.
+     - Yes
+   * - ``radii``
+     - number | number[N]
+     - Radius for each sphere. A scalar value is broadcast to all spheres (default: 1.0).
+     - No
+   * - ``colors``
+     - color | color[N]
+     - Color for each sphere. A scalar value is broadcast to all spheres.
+     - No
+
 **Custom**
 
 .. list-table::
@@ -614,7 +668,26 @@ Examples
      }
    }
 
-3. Custom mesh with per-structure scaling:
+3. Wireframe tetrahedron using multiple cylinders:
+
+.. code-block:: json
+
+   "shapes": {
+     "wireframe": {
+       "kind": "cylinders",
+       "parameters": {
+         "global": {"radii": 0.05, "colors": "blue"},
+         "structure": [
+           {
+             "vectors": [[2,0,0], [0,2,0], [0,0,2], [-2,2,0], [-2,0,2], [0,-2,2]],
+             "bases": [[0,0,0], [0,0,0], [0,0,0], [2,0,0], [2,0,0], [0,2,0]]
+           }
+         ]
+       }
+     }
+   }
+
+4. Custom mesh with per-structure scaling:
 
 .. code-block:: json
 

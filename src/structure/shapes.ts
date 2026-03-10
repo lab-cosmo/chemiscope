@@ -98,7 +98,39 @@ export interface CustomShapeParameters extends BaseShapeParameters<CustomShapeDa
     kind: 'custom';
 }
 
-export type ShapeData = SphereData | EllipsoidData | ArrowData | CylinderData | CustomShapeData;
+// Interface for multiple cylinders (parallel arrays, with scalar broadcasting)
+export interface CylindersData extends BaseShapeData {
+    vectors: [number, number, number][];
+    bases?: [number, number, number][];
+    radii?: number[] | number;
+    colors?: ColorSpec[] | ColorSpec;
+}
+
+/** Parameters for a collection of cylinders */
+export interface CylindersParameters extends BaseShapeParameters<CylindersData> {
+    kind: 'cylinders';
+}
+
+// Interface for multiple spheres (parallel arrays, with scalar broadcasting)
+export interface SpheresData extends BaseShapeData {
+    centers: [number, number, number][];
+    radii?: number[] | number;
+    colors?: ColorSpec[] | ColorSpec;
+}
+
+/** Parameters for a collection of spheres */
+export interface SpheresParameters extends BaseShapeParameters<SpheresData> {
+    kind: 'spheres';
+}
+
+export type ShapeData =
+    | SphereData
+    | EllipsoidData
+    | ArrowData
+    | CylinderData
+    | CustomShapeData
+    | CylindersData
+    | SpheresData;
 
 /**
  * Describes a shape, to be displayed alongside an atomic structure.
@@ -117,7 +149,9 @@ export type ShapeParameters =
     | EllipsoidParameters
     | CylinderParameters
     | ArrowParameters
-    | CustomShapeParameters;
+    | CustomShapeParameters
+    | CylindersParameters
+    | SpheresParameters;
 
 function addXYZ(a: XYZ, b: XYZ): XYZ {
     return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -714,6 +748,274 @@ export class Cylinder extends Shape {
             normalArr: normals,
             faceArr: indices,
             color: color,
+        };
+    }
+}
+
+export class Cylinders extends Shape {
+    public vectors: [number, number, number][];
+    public bases: [number, number, number][];
+    public radii: number[];
+    public colors: ColorSpec[];
+
+    constructor(data: Partial<CylindersData>) {
+        super(data);
+        assert(data.vectors);
+        const n = data.vectors.length;
+
+        this.vectors = data.vectors.map(([x, y, z]) => [
+            this.scale * x,
+            this.scale * y,
+            this.scale * z,
+        ]);
+
+        // broadcast bases: default to [0,0,0] for each cylinder, scaled
+        if (data.bases) {
+            this.bases = data.bases.map(([x, y, z]) => [
+                this.scale * x,
+                this.scale * y,
+                this.scale * z,
+            ]);
+        } else {
+            this.bases = Array(n)
+                .fill(null)
+                .map(() => [0, 0, 0] as [number, number, number]);
+        }
+
+        // broadcast radii: scalar -> array, default 0.1
+        if (data.radii === undefined) {
+            this.radii = Array<number>(n).fill(this.scale * 0.1);
+        } else if (typeof data.radii === 'number') {
+            this.radii = Array<number>(n).fill(this.scale * data.radii);
+        } else {
+            this.radii = data.radii.map((r) => this.scale * r);
+        }
+
+        // broadcast colors: scalar -> array, default 0xffffff
+        if (data.colors === undefined) {
+            this.colors = Array<ColorSpec>(n).fill(0xffffff);
+        } else if (!Array.isArray(data.colors)) {
+            this.colors = Array<ColorSpec>(n).fill(data.colors);
+        } else {
+            this.colors = data.colors;
+        }
+    }
+
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        if (!('vectors' in parameters)) {
+            return '"vectors" is required for "cylinders" shapes';
+        }
+
+        if (!Array.isArray(parameters.vectors)) {
+            return '"vectors" must be an array for "cylinders" shapes';
+        }
+
+        for (const v of parameters.vectors as unknown[]) {
+            if (!Array.isArray(v) || v.length !== 3) {
+                return 'each entry in "vectors" must be an array with 3 elements for "cylinders" shapes';
+            }
+            const [x, y, z] = v as unknown[];
+            if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+                return 'each entry in "vectors" must be an array of numbers for "cylinders" shapes';
+            }
+        }
+
+        const n = (parameters.vectors as unknown[]).length;
+
+        if ('bases' in parameters) {
+            if (!Array.isArray(parameters.bases)) {
+                return '"bases" must be an array for "cylinders" shapes';
+            }
+            if ((parameters.bases as unknown[]).length !== n) {
+                return '"bases" must have the same length as "vectors" for "cylinders" shapes';
+            }
+            for (const p of parameters.bases as unknown[]) {
+                if (!Array.isArray(p) || p.length !== 3) {
+                    return 'each entry in "bases" must be an array with 3 elements for "cylinders" shapes';
+                }
+            }
+        }
+
+        if ('radii' in parameters) {
+            if (typeof parameters.radii === 'number') {
+                // scalar broadcast, ok
+            } else if (Array.isArray(parameters.radii)) {
+                if ((parameters.radii as unknown[]).length !== n) {
+                    return '"radii" must have the same length as "vectors" for "cylinders" shapes';
+                }
+            } else {
+                return '"radii" must be a number or array for "cylinders" shapes';
+            }
+        }
+
+        if ('orientation' in parameters) {
+            return '"orientation" cannot be used on "cylinders" shapes. define "vectors" instead';
+        }
+
+        return '';
+    }
+
+    public outputTo3Dmol(
+        defaultColor: $3Dmol.ColorSpec,
+        resolution: number = 20
+    ): $3Dmol.CustomShapeSpec {
+        // Render each cylinder and merge them
+        const allVertices: XYZ[] = [];
+        const allNormals: XYZ[] = [];
+        const allIndices: number[] = [];
+
+        for (let i = 0; i < this.vectors.length; i++) {
+            const triangulation = triangulateCylinder(this.vectors[i], this.radii[i], resolution);
+
+            // offset position: shape base position + per-cylinder base
+            const pos: XYZ = addXYZ(this.position, {
+                x: this.bases[i][0],
+                y: this.bases[i][1],
+                z: this.bases[i][2],
+            });
+
+            const vertices: XYZ[] = [];
+            const simplices: [number, number, number][] = [];
+
+            for (const v of triangulation.vertices) {
+                vertices.push(addXYZ(v, pos));
+            }
+
+            for (let j = 0; j < triangulation.indices.length; j += 3) {
+                simplices.push(triangulation.indices.slice(j, j + 3) as [number, number, number]);
+            }
+
+            const normals = determineNormals(vertices, simplices);
+            const shift = allVertices.length;
+            allVertices.push(...vertices);
+            allNormals.push(...normals);
+            for (const idx of triangulation.indices) {
+                allIndices.push(idx + shift);
+            }
+        }
+
+        return {
+            vertexArr: allVertices,
+            normalArr: allNormals,
+            faceArr: allIndices,
+            color: defaultColor,
+        };
+    }
+}
+
+export class Spheres extends Shape {
+    public centers: [number, number, number][];
+    public radii: number[];
+    public colors: ColorSpec[];
+
+    constructor(data: Partial<SpheresData>) {
+        super(data);
+        assert(data.centers);
+        const n = data.centers.length;
+
+        // scale centers relative to shape position
+        this.centers = data.centers.map(([x, y, z]) => [
+            this.scale * x,
+            this.scale * y,
+            this.scale * z,
+        ]);
+
+        // broadcast radii: scalar -> array, default 1.0
+        if (data.radii === undefined) {
+            this.radii = Array<number>(n).fill(this.scale * 1.0);
+        } else if (typeof data.radii === 'number') {
+            this.radii = Array<number>(n).fill(this.scale * data.radii);
+        } else {
+            this.radii = data.radii.map((r) => this.scale * r);
+        }
+
+        // broadcast colors: scalar -> array, default 0xffffff
+        if (data.colors === undefined) {
+            this.colors = Array<ColorSpec>(n).fill(0xffffff);
+        } else if (!Array.isArray(data.colors)) {
+            this.colors = Array<ColorSpec>(n).fill(data.colors);
+        } else {
+            this.colors = data.colors;
+        }
+    }
+
+    public static validateParameters(parameters: Record<string, unknown>): string {
+        if (!('centers' in parameters)) {
+            return '"centers" is required for "spheres" shapes';
+        }
+
+        if (!Array.isArray(parameters.centers)) {
+            return '"centers" must be an array for "spheres" shapes';
+        }
+
+        for (const c of parameters.centers as unknown[]) {
+            if (!Array.isArray(c) || c.length !== 3) {
+                return 'each entry in "centers" must be an array with 3 elements for "spheres" shapes';
+            }
+            const [x, y, z] = c as unknown[];
+            if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+                return 'each entry in "centers" must be an array of numbers for "spheres" shapes';
+            }
+        }
+
+        const n = (parameters.centers as unknown[]).length;
+
+        if ('radii' in parameters) {
+            if (typeof parameters.radii === 'number') {
+                // scalar broadcast, ok
+            } else if (Array.isArray(parameters.radii)) {
+                if ((parameters.radii as unknown[]).length !== n) {
+                    return '"radii" must have the same length as "centers" for "spheres" shapes';
+                }
+            } else {
+                return '"radii" must be a number or array for "spheres" shapes';
+            }
+        }
+
+        if ('orientation' in parameters) {
+            return '"orientation" has no effect on "spheres" shapes';
+        }
+
+        return '';
+    }
+
+    public outputTo3Dmol(
+        defaultColor: $3Dmol.ColorSpec,
+        resolution: number = 20
+    ): $3Dmol.CustomShapeSpec {
+        const allVertices: XYZ[] = [];
+        const allNormals: XYZ[] = [];
+        const allIndices: number[] = [];
+
+        for (let i = 0; i < this.centers.length; i++) {
+            const pos: XYZ = addXYZ(this.position, {
+                x: this.centers[i][0],
+                y: this.centers[i][1],
+                z: this.centers[i][2],
+            });
+            const r = this.radii[i];
+
+            const triangulation = triangulateEllipsoid([r, r, r], resolution);
+            const shift = allVertices.length;
+
+            for (const v of triangulation.vertices) {
+                allVertices.push(addXYZ(v, pos));
+                allNormals.push({
+                    x: v.x / (r * r),
+                    y: v.y / (r * r),
+                    z: v.z / (r * r),
+                });
+            }
+            for (const idx of triangulation.indices) {
+                allIndices.push(idx + shift);
+            }
+        }
+
+        return {
+            vertexArr: allVertices,
+            normalArr: allNormals,
+            faceArr: allIndices,
+            color: defaultColor,
         };
     }
 }
