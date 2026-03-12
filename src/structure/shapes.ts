@@ -715,16 +715,16 @@ export class Cylinder extends Shape {
 
     public static validateParameters(parameters: Record<string, unknown>): string {
         if (!('vector' in parameters)) {
-            return '"vector" is required for "arrow" shapes';
+            return '"vector" is required for "cylinder" shapes';
         }
 
         if (!Array.isArray(parameters.vector) || parameters.vector.length !== 3) {
-            return '"vector" must be an array with 3 elements for "vector" shapes';
+            return '"vector" must be an array with 3 elements for "cylinder" shapes';
         }
 
         const [ax, ay, az] = parameters.vector as unknown[];
         if (typeof ax !== 'number' || typeof ay !== 'number' || typeof az !== 'number') {
-            return '"vector" elements must be numbers for "vector" shapes';
+            return '"vector" elements must be numbers for "cylinder" shapes';
         }
 
         if ('orientation' in parameters) {
