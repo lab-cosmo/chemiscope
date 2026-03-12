@@ -182,7 +182,7 @@ export const DEFAULT_CONFIG = {
     displayModeBar: true,
     displaylogo: false,
     responsive: true,
-    doubleClick: 'reset',
+    doubleClick: false as const,
     doubleClickDelay: 600,
     scrollZoom: true,
 
@@ -191,6 +191,7 @@ export const DEFAULT_CONFIG = {
         'hoverCompareCartesian',
         'toggleSpikelines',
         'autoScale2d',
+        'resetScale2d',
         'zoomIn2d',
         'zoomOut2d',
         'select2d',
