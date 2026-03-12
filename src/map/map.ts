@@ -1515,22 +1515,25 @@ export class PropertiesMap {
 
         if (this._is3D()) {
             config.modeBarButtonsToRemove.push('resetCameraDefault3d');
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            config.modeBarButtonsToAdd = [
-                [
-                    {
-                        name: 'Reset View',
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        icon: (Plotly as any).Icons.home,
-                        click: () => {
-                            this._resetToGlobalView();
-                        },
-                    },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ] as any,
-                ...config.modeBarButtonsToAdd,
-            ];
         }
+
+        // Add custom reset button for both 2D and 3D, so that the reset
+        // always uses the current property ranges instead of the initial ones
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        config.modeBarButtonsToAdd = [
+            [
+                {
+                    name: 'Reset View',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    icon: (Plotly as any).Icons.home,
+                    click: () => {
+                        this._resetToGlobalView();
+                    },
+                },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ] as any,
+            ...config.modeBarButtonsToAdd,
+        ];
 
         return config as unknown as Config;
     }
