@@ -354,9 +354,13 @@ export class MapOptions extends OptionsGroup {
     }
 
     /** Get the plotly hovertemplate depending on `this._current.color` */
-    public hovertemplate(): string {
+    public hovertemplate(colorType: 'number' | 'integer' | 'string' = 'number'): string {
         if (this.hasColors()) {
             let property = this.color.property.value;
+            if (colorType === 'string') {
+                return property + ': %{customdata}<extra></extra>';
+            }
+
             switch (this.color.mode.value) {
                 case 'inverse':
                     property = `(${property})<sup>-1</sup>`;
@@ -373,7 +377,8 @@ export class MapOptions extends OptionsGroup {
                     break;
             }
 
-            return property + ': %{customdata:.2f}<extra></extra>';
+            const format = colorType === 'integer' ? 'd' : '.2f';
+            return property + `: %{customdata:${format}}<extra></extra>`;
         } else {
             return '%{x:.2f}, %{y:.2f}<extra></extra>';
         }
