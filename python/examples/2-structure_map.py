@@ -27,8 +27,9 @@ structures = ase.io.read("data/trajectory.xyz", ":")
 
 # %%
 #
-# Load the SOAP-PCA descriptors. To obtain them yourself, check the :ref:`examples
-# <explore-advanced-example>` of feature calculation and dimentionality reduction.
+# Load the SOAP-PCA descriptors. Look at
+# `this example <https://atomistic-cookbook.org/examples/gaas-map/gaas-map.html>`_
+# to see how to build low-dimensional embeddings of datasets.
 # Chemiscope also provides :py:func:`chemiscope.explore` function to automatically
 # create the features using machine learning models.
 

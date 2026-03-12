@@ -141,7 +141,3 @@ chemiscope.explore(
     featurizer=fractional_composition_featurize,
     settings=settings,
 )
-
-# %%
-#
-# For more advanced examples, see the :ref:`next tutorial <explore-advanced-example>`.
