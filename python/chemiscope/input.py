@@ -1125,7 +1125,7 @@ def _validate_single_shape(shapes_for_key, structures):
     atom_parameters = shapes_for_key["parameters"].get("atom", None)
 
     if structure_parameters is not None:
-        if len(structure_parameters) < len(structures):
+        if len(structure_parameters) != len(structures):
             raise TypeError(
                 f"structure_parameters must be a list with {len(structures)} "
                 f"elements, got {len(structure_parameters)}"
@@ -1133,7 +1133,7 @@ def _validate_single_shape(shapes_for_key, structures):
 
     if atom_parameters is not None:
         total_atoms = sum(s["size"] for s in structures)
-        if len(atom_parameters) < total_atoms:
+        if len(atom_parameters) != total_atoms:
             raise TypeError(
                 f"atom_parameters must be a list coinciding to the atomic "
                 f"environments, got {len(atom_parameters)} elements"

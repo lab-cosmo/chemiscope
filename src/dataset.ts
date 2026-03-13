@@ -440,25 +440,25 @@ function checkSingleShape(
     const parameters = shape.parameters;
 
     if ('structure' in parameters) {
-        const s_parameters = parameters.structure;
-        if (!Array.isArray(s_parameters)) {
+        const structureParameters = parameters.structure;
+        if (!Array.isArray(structureParameters)) {
             return `'structure' parameters should be an array in shape ${key}`;
         }
 
-        if (s_parameters.length !== structureCount) {
-            return `'structure' parameters in shape ${key} contain ${s_parameters.length} \
+        if (structureParameters.length !== structureCount) {
+            return `'structure' parameters in shape ${key} contain ${structureParameters.length} \
                      entries, but there are ${structureCount} structures.`;
         }
     }
 
     if ('atom' in parameters) {
-        const a_parameters = parameters.atom;
-        if (!Array.isArray(a_parameters)) {
+        const atomParams = parameters.atom;
+        if (!Array.isArray(atomParams)) {
             return `'atom' parameters should be an array in shape ${key}`;
         }
 
-        if (a_parameters.length !== envCount) {
-            return `'atom' parameters in shape ${key} contain ${a_parameters.length} entries, \
+        if (atomParams.length !== envCount) {
+            return `'atom' parameters in shape ${key} contain ${atomParams.length} entries, \
                      but there are ${envCount} environments.`;
         }
     }
@@ -477,8 +477,8 @@ function checkShapes(
         return "'shapes' must be an object";
     }
 
-    for (const [key, o_shape] of Object.entries(shapes as object)) {
-        const shape = o_shape as AnyShapeParameters;
+    for (const [key, rawShape] of Object.entries(shapes as object)) {
+        const shape = rawShape as AnyShapeParameters;
         if (!('kind' in shape)) {
             return `missing "kind" in shape ${key}`;
         }
@@ -539,7 +539,7 @@ function validateShape(kind: string, parameters: Record<string, unknown>): strin
 function assignSingleShape(
     shape: ShapeParameters,
     name: string,
-    i_structure: number,
+    structureIndex: number,
     structureSize: number,
     atomsCount: number
 ): { result: ShapeParameters; error: string } {
@@ -549,18 +549,18 @@ function assignSingleShape(
         atom: shape.parameters.atom,
     };
 
-    let full_parameters = shape.parameters.global;
+    let fullParameters = shape.parameters.global;
     if (parameters.structure) {
-        parameters.structure = [parameters.structure[i_structure]];
-        full_parameters = { ...full_parameters, ...parameters.structure[0] };
+        parameters.structure = [parameters.structure[structureIndex]];
+        fullParameters = { ...fullParameters, ...parameters.structure[0] };
     }
 
     if (parameters.atom) {
         parameters.atom = parameters.atom.slice(atomsCount, atomsCount + structureSize);
 
         for (const atom of parameters.atom) {
-            const atom_parameters = { ...full_parameters, ...atom };
-            const check = validateShape(shape.kind, atom_parameters);
+            const atomParameters = { ...fullParameters, ...atom };
+            const check = validateShape(shape.kind, atomParameters);
             if (check !== '') {
                 return {
                     result: shape,
@@ -569,7 +569,7 @@ function assignSingleShape(
             }
         }
     } else {
-        const check = validateShape(shape.kind, full_parameters);
+        const check = validateShape(shape.kind, fullParameters);
         if (check !== '') {
             return {
                 result: shape,
@@ -592,8 +592,8 @@ function assignShapes(
     structures: Structure[]
 ): string {
     let atomsCount = 0;
-    for (let i_structure = 0; i_structure < structures.length; i_structure++) {
-        const structure = structures[i_structure];
+    for (let structureIndex = 0; structureIndex < structures.length; structureIndex++) {
+        const structure = structures[structureIndex];
         structure.shapes = {};
         for (const [name, shape] of Object.entries(shapes)) {
             if (shape.kind === 'combined') {
@@ -603,7 +603,7 @@ function assignShapes(
                     const { result, error } = assignSingleShape(
                         sub,
                         `${name}[${i}]`,
-                        i_structure,
+                        structureIndex,
                         structure.size,
                         atomsCount
                     );
@@ -620,7 +620,7 @@ function assignShapes(
                 const { result, error } = assignSingleShape(
                     shape,
                     name,
-                    i_structure,
+                    structureIndex,
                     structure.size,
                     atomsCount
                 );

@@ -857,6 +857,14 @@ export class Cylinders extends Shape {
             }
         }
 
+        if ('colors' in parameters) {
+            if (Array.isArray(parameters.colors)) {
+                if ((parameters.colors as unknown[]).length !== n) {
+                    return '"colors" must have the same length as "vectors" for "cylinders" shapes';
+                }
+            }
+        }
+
         if ('orientation' in parameters) {
             return '"orientation" cannot be used on "cylinders" shapes. define "vectors" instead';
         }
@@ -978,6 +986,14 @@ export class Spheres extends Shape {
                 }
             } else {
                 return '"radii" must be a number or array for "spheres" shapes';
+            }
+        }
+
+        if ('colors' in parameters) {
+            if (Array.isArray(parameters.colors)) {
+                if ((parameters.colors as unknown[]).length !== n) {
+                    return '"colors" must have the same length as "centers" for "spheres" shapes';
+                }
             }
         }
 
@@ -1164,5 +1180,61 @@ export function mergeShapes(
             newColor
         ) as $3Dmol.ColorSpec[];
         mergedShapes.color.push(...newColors);
+    }
+}
+
+/** Render a shape of the given kind into a merged CustomShapeSpec */
+export function renderShape(
+    kind: string,
+    data: Partial<ShapeData>,
+    mergedShapes: $3Dmol.CustomShapeSpec,
+    viewer: $3Dmol.GLViewer
+): void {
+    const color = data.color || 0xffffff;
+    if (kind === 'sphere') {
+        const s = new Sphere(data);
+        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+    } else if (kind === 'ellipsoid') {
+        const s = new Ellipsoid(data);
+        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+    } else if (kind === 'cylinder') {
+        const s = new Cylinder(data);
+        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+    } else if (kind === 'arrow') {
+        const s = new Arrow(data);
+        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+    } else if (kind === 'cylinders') {
+        const s = new Cylinders(data);
+        for (let ci = 0; ci < s.vectors.length; ci++) {
+            const singleCyl = new Cylinder({
+                position: [
+                    s.position.x + s.bases[ci][0],
+                    s.position.y + s.bases[ci][1],
+                    s.position.z + s.bases[ci][2],
+                ],
+                vector: s.vectors[ci],
+                radius: s.radii[ci],
+                scale: 1.0,
+            });
+            mergeShapes(mergedShapes, singleCyl.outputTo3Dmol(s.colors[ci] || color), viewer);
+        }
+    } else if (kind === 'spheres') {
+        const s = new Spheres(data);
+        for (let si = 0; si < s.centers.length; si++) {
+            const singleSph = new Sphere({
+                position: [
+                    s.position.x + s.centers[si][0],
+                    s.position.y + s.centers[si][1],
+                    s.position.z + s.centers[si][2],
+                ],
+                radius: s.radii[si],
+                scale: 1.0,
+            });
+            mergeShapes(mergedShapes, singleSph.outputTo3Dmol(s.colors[si] || color), viewer);
+        }
+    } else {
+        assert(kind === 'custom');
+        const s = new CustomShape(data);
+        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
     }
 }
