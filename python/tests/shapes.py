@@ -70,6 +70,123 @@ SHAPE_DEFAULTS = {
             "global": {"vertices": CUBE_VERTICES, "simplices": CUBE_SIMPLICES},
         },
     },
+    # cylinders: global scalar broadcast for radii
+    "cylinders_global": {
+        "kind": "cylinders",
+        "parameters": {
+            "global": {
+                "vectors": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+                "radii": 0.05,
+            },
+        },
+    },
+    # cylinders: per-atom with bases, per-element radii and colors
+    "cylinders_atoms": {
+        "kind": "cylinders",
+        "parameters": {
+            "global": {
+                "vectors": [[1, 0, 0], [0, 1, 0]],
+                "bases": [[0, 0, 0], [1, 0, 0]],
+                "radii": [0.05, 0.1],
+                "colors": [0xFF0000, 0x00FF00],
+            },
+            "atom": [{}, {"scale": 2.0}, {}],
+        },
+    },
+    # cylinders: structure-level with scale
+    "cylinders_structure": {
+        "kind": "cylinders",
+        "parameters": {
+            "global": {
+                "vectors": [[1, 0, 0]],
+                "radii": 0.1,
+            },
+            "structure": [{"position": [0, 0, 0], "scale": 1.5}],
+        },
+    },
+    # spheres: global scalar broadcast for radii
+    "spheres_multi_global": {
+        "kind": "spheres",
+        "parameters": {
+            "global": {
+                "centers": [[0, 0, 0], [1, 1, 1], [2, 0, 0]],
+                "radii": 0.2,
+            },
+        },
+    },
+    # spheres: per-atom with per-element radii and colors
+    "spheres_multi_atoms": {
+        "kind": "spheres",
+        "parameters": {
+            "global": {
+                "centers": [[0, 0, 0], [1, 0, 0]],
+                "radii": [0.1, 0.2],
+                "colors": [0xFF0000, 0x0000FF],
+            },
+            "atom": [{}, {"scale": 0.5}, {}],
+        },
+    },
+    # spheres: structure-level with scale
+    "spheres_multi_structure": {
+        "kind": "spheres",
+        "parameters": {
+            "global": {
+                "centers": [[0, 0, 0], [1, 1, 1]],
+            },
+            "structure": [{"position": [5, 5, 5], "scale": 2.0}],
+        },
+    },
+    # combined: cylinders + spheres as one shape entry
+    "combined_wireframe": {
+        "kind": "combined",
+        "shapes": [
+            {
+                "kind": "cylinders",
+                "parameters": {
+                    "global": {
+                        "vectors": [[1, 0, 0], [0, 1, 0]],
+                        "radii": 0.05,
+                    },
+                },
+            },
+            {
+                "kind": "spheres",
+                "parameters": {
+                    "global": {
+                        "centers": [[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+                        "radii": 0.1,
+                    },
+                },
+            },
+        ],
+    },
+    # combined: with atom-level parameters in sub-shapes
+    "combined_atoms": {
+        "kind": "combined",
+        "shapes": [
+            {
+                "kind": "arrow",
+                "parameters": {
+                    "global": {
+                        "baseRadius": 0.1,
+                        "headRadius": 0.15,
+                        "headLength": 0.2,
+                    },
+                    "atom": [
+                        {"vector": [1, 0, 0]},
+                        {"vector": [0, 1, 0]},
+                        {"vector": [0, 0, 1]},
+                    ],
+                },
+            },
+            {
+                "kind": "sphere",
+                "parameters": {
+                    "global": {"radius": 0.2},
+                },
+            },
+        ],
+    },
 }
 INVALID_SHAPES = [
     [
@@ -151,6 +268,131 @@ INVALID_SHAPES = [
         ValueError,
         "unknown shape kind 'garbage'",
     ],
+    # cylinders: unknown parameter
+    [
+        {
+            "kind": "cylinders",
+            "parameters": {
+                "global": {"vectors": [[1, 0, 0]], "vector": [1, 0, 0]},
+            },
+        },
+        ValueError,
+        "unknown shape parameter 'vector' for 'cylinders' shape kind",
+    ],
+    # cylinders: vectors not Nx3
+    [
+        {
+            "kind": "cylinders",
+            "parameters": {
+                "global": {"vectors": [[1, 0], [0, 1]]},
+            },
+        },
+        ValueError,
+        "cylinders shape 'vectors' must be an Nx3 array",
+    ],
+    # cylinders: bases wrong length
+    [
+        {
+            "kind": "cylinders",
+            "parameters": {
+                "global": {
+                    "vectors": [[1, 0, 0], [0, 1, 0]],
+                    "bases": [[0, 0, 0]],
+                },
+            },
+        },
+        ValueError,
+        "cylinders shape 'bases' must be an 2x3 array",
+    ],
+    # cylinders: radii wrong length
+    [
+        {
+            "kind": "cylinders",
+            "parameters": {
+                "global": {
+                    "vectors": [[1, 0, 0], [0, 1, 0]],
+                    "radii": [0.1],
+                },
+            },
+        },
+        ValueError,
+        "cylinders shape 'radii' must be a scalar or array of length 2",
+    ],
+    # spheres: unknown parameter
+    [
+        {
+            "kind": "spheres",
+            "parameters": {
+                "global": {"centers": [[0, 0, 0]], "radius": 0.1},
+            },
+        },
+        ValueError,
+        "unknown shape parameter 'radius' for 'spheres' shape kind",
+    ],
+    # spheres: centers not Nx3
+    [
+        {
+            "kind": "spheres",
+            "parameters": {
+                "global": {"centers": [[1, 0], [0, 1]]},
+            },
+        },
+        ValueError,
+        "spheres shape 'centers' must be an Nx3 array",
+    ],
+    # spheres: radii wrong length
+    [
+        {
+            "kind": "spheres",
+            "parameters": {
+                "global": {
+                    "centers": [[0, 0, 0], [1, 1, 1]],
+                    "radii": [0.1, 0.2, 0.3],
+                },
+            },
+        },
+        ValueError,
+        "spheres shape 'radii' must be a scalar or array of length 2",
+    ],
+    # combined: missing shapes list
+    [
+        {
+            "kind": "combined",
+            "shapes": "not a list",
+        },
+        ValueError,
+        "combined shape must have a 'shapes' list",
+    ],
+    # combined: nested combined not allowed
+    [
+        {
+            "kind": "combined",
+            "shapes": [
+                {
+                    "kind": "combined",
+                    "shapes": [
+                        {"kind": "sphere", "parameters": {"global": {"radius": 0.1}}},
+                    ],
+                },
+            ],
+        },
+        ValueError,
+        "nested combined shapes are not allowed",
+    ],
+    # combined: invalid sub-shape parameter
+    [
+        {
+            "kind": "combined",
+            "shapes": [
+                {
+                    "kind": "sphere",
+                    "parameters": {"global": {"diameter": 0.1}},
+                },
+            ],
+        },
+        ValueError,
+        "unknown shape parameter 'diameter' for 'sphere' shape kind",
+    ],
 ]
 
 
@@ -163,13 +405,7 @@ class TestShapes(unittest.TestCase):
         result = data["shapes"]
         self.assertEqual(
             list(result.keys()),
-            [
-                "spheres_structure",
-                "ellipsoids_atoms",
-                "cubes1_structure",
-                "cubes2_structure",
-                "cubes3_structure",
-            ],
+            list(SHAPE_DEFAULTS.keys()),
         )
 
         for key, values in result.items():
