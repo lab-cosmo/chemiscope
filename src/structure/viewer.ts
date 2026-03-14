@@ -1459,11 +1459,6 @@ export class MoleculeViewer {
 
             const name = structure.names[serial];
 
-            let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
-            if (color === 0xffffff || color === 'white') {
-                color = 0x444444; //use dark gray for white atoms for better visibility
-            }
-
             const position = new $3Dmol.Vector3(atom.x, atom.y, atom.z);
 
             let label_str = name;
@@ -1476,19 +1471,21 @@ export class MoleculeViewer {
                 );
             }
 
-            const label = this._viewer.addLabel(
-                label_str,
-                {
-                    position: position,
-                    inFront: true,
-                    fontColor: color,
-                    fontSize: 14,
-                    showBackground: false,
-                    alignment: 'bottomLeft',
-                },
-                undefined,
-                true
-            );
+            const labelStyle: $3Dmol.LabelSpec = {
+                position: position,
+                inFront: true,
+                fontColor: 0x222222,
+                fontSize: 14,
+                showBackground: true,
+                backgroundColor: 0xffffff,
+                backgroundOpacity: 0.4,
+                borderThickness: 0,
+                alignment: 'bottomLeft',
+            };
+            // 'bold' is supported at runtime but missing from the type definitions
+            (labelStyle as Record<string, unknown>).bold = true;
+
+            const label = this._viewer.addLabel(label_str, labelStyle, undefined, true);
 
             this._current.atomLabels.push(label);
         }
