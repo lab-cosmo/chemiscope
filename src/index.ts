@@ -647,7 +647,7 @@ class StructureVisualizer {
             dataset.properties,
             this._indexer,
             this._target,
-            undefined,
+            dataset.parameters,
             this.warnings
         );
         this.info.onchange = (indexes) => {
@@ -875,7 +875,7 @@ class MapVisualizer {
             dataset.properties,
             this._indexer,
             this._target,
-            undefined,
+            dataset.parameters,
             (warnings = this.warnings)
         );
         this.info.onchange = (indexes) => {
