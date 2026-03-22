@@ -659,6 +659,7 @@ export class MoleculeViewer {
 
         this._disableStyleUpdates = false;
         this._updateStyle();
+        this._updateColorBar();
     }
 
     /**
