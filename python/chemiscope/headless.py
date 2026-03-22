@@ -39,6 +39,7 @@ class PlaywrightServer:
                 "run `playwright install`."
             )
 
+        self._running = True
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
@@ -53,17 +54,28 @@ class PlaywrightServer:
         asyncio.set_event_loop(self._loop)
         self._loop.run_forever()
 
-    def run_sync(self, coro):
+    def run_sync(self, coro, timeout=10):
         """Run a coroutine in the server loop and wait for the result."""
+        if not self._running:
+            raise RuntimeError("PlaywrightServer has been stopped")
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
-        return future.result()
+        # timeout prevents hanging if the browser process died
+        return future.result(timeout=timeout)
 
     def stop(self):
         """Clean up resources and stop the loop."""
-        self.run_sync(self._browser.close())
-        self.run_sync(self._playwright.stop())
+        if not self._running:
+            return
+        self._running = False
+        # browser/playwright may already be dead, so ignore errors
+        for coro in [self._browser.close(), self._playwright.stop()]:
+            try:
+                future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+                future.result(timeout=5)
+            except Exception:
+                pass
         self._loop.call_soon_threadsafe(self._loop.stop)
-        self._thread.join()
+        self._thread.join(timeout=5)
 
     def new_page(self, **kwargs):
         """Create a new page in the browser."""
@@ -80,8 +92,9 @@ def _get_server():
 
 
 def _close_server():
+    """Shut down the server and discard it so a fresh one is created next time."""
     global _SERVER
-    if _SERVER:
+    if _SERVER is not None:
         _SERVER.stop()
         _SERVER = None
 
@@ -113,9 +126,15 @@ class ChemiscopeHeadless(HasTraits):
         self._width = width
         self._height = height
 
-        # Gets a shared server instance (or creates one if it doesn't exist)
+        # Get a shared server, or create one. If the browser has crashed
+        # (common in long-running Jupyter sessions), retry with a fresh server.
         self._server = _get_server()
-        self._page = self._server.new_page(device_scale_factor=1)
+        try:
+            self._page = self._server.new_page(device_scale_factor=1)
+        except Exception:
+            _close_server()
+            self._server = _get_server()
+            self._page = self._server.new_page(device_scale_factor=1)
         self._run_sync(
             self._page.set_viewport_size({"width": self._width, "height": self._height})
         )
@@ -152,8 +171,8 @@ class ChemiscopeHeadless(HasTraits):
         file.write(json.dumps(data).encode("utf8"))
         file.close()
 
-    def _run_sync(self, coro):
-        return self._server.run_sync(coro)
+    def _run_sync(self, coro, timeout=10):
+        return self._server.run_sync(coro, timeout=timeout)
 
     def _load_chemiscope_library(self):
         # look for the library in the install path
@@ -227,7 +246,8 @@ class ChemiscopeHeadless(HasTraits):
             tmp_path = f.name
 
         try:
-            self._run_sync(self._page.add_script_tag(path=tmp_path))
+            # use a large timeout as it might take some time to load the dataset
+            self._run_sync(self._page.add_script_tag(path=tmp_path), timeout=300)
         finally:
             os.unlink(tmp_path)
 
@@ -448,7 +468,12 @@ class ChemiscopeHeadless(HasTraits):
     def close(self):
         """Close the browser page."""
         if hasattr(self, "_page") and self._page is not None:
-            self._run_sync(self._page.close())
+            # skip if the server is already shut down (avoids hangs in __del__)
+            if hasattr(self, "_server") and self._server._running:
+                try:
+                    self._run_sync(self._page.close())
+                except Exception:
+                    pass
             self._page = None
 
     def __del__(self):
@@ -466,6 +491,7 @@ def headless(
     environments=None,
     shapes=None,
     settings=None,
+    parameters=None,
     mode="default",
     width=None,
     height=None,
@@ -490,6 +516,7 @@ def headless(
         environments=environments,
         shapes=shapes,
         settings=settings,
+        parameters=parameters,
     )
 
     return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
