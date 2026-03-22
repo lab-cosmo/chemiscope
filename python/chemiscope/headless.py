@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 import threading
+import warnings
 from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
@@ -67,13 +68,16 @@ class PlaywrightServer:
         if not self._running:
             return
         self._running = False
-        # browser/playwright may already be dead, so ignore errors
+        # browser/playwright may already be dead; warn but don't raise
         for coro in [self._browser.close(), self._playwright.stop()]:
             try:
                 future = asyncio.run_coroutine_threadsafe(coro, self._loop)
                 future.result(timeout=5)
-            except Exception:
-                pass
+            except Exception as e:
+                warnings.warn(
+                    f"error during PlaywrightServer cleanup: {e}",
+                    stacklevel=2,
+                )
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join(timeout=5)
 
@@ -131,7 +135,11 @@ class ChemiscopeHeadless(HasTraits):
         self._server = _get_server()
         try:
             self._page = self._server.new_page(device_scale_factor=1)
-        except Exception:
+        except Exception as e:
+            warnings.warn(
+                f"browser connection lost ({e}), restarting server",
+                stacklevel=2,
+            )
             _close_server()
             self._server = _get_server()
             self._page = self._server.new_page(device_scale_factor=1)
