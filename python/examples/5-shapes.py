@@ -225,6 +225,99 @@ dipoles_manual = (
 )
 
 
+# %%
+#
+# Wireframe tetrahedron using the "cylinders" shape kind.
+# "cylinders" allows defining multiple cylinders in a single shape entry,
+# using parallel arrays for bases and vectors. This is convenient for
+# drawing wireframes and other multi-segment shapes.
+
+# vertices of a regular tetrahedron
+tet_vertices = np.array(
+    [
+        [1, 1, 1],
+        [1, -1, -1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+    ],
+    dtype=float,
+)
+
+# edges connecting all pairs of vertices (6 edges for a tetrahedron)
+tet_edges = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+tet_bases = [tet_vertices[i].tolist() for i, j in tet_edges]
+tet_vectors = [(tet_vertices[j] - tet_vertices[i]).tolist() for i, j in tet_edges]
+
+wireframe_tetrahedron = dict(
+    kind="cylinders",
+    parameters={
+        "global": {
+            "radii": 0.05,
+            "colors": [
+                0x4444FF,
+                0xFF44FF,
+                0xFF4444,
+                0x888888,
+                0x880088,
+                0x008800,
+            ],
+        },
+        "structure": [
+            {
+                "bases": tet_bases,
+                "vectors": tet_vectors,
+                "position": [12, 12, 16],
+            },
+            {
+                "bases": tet_bases,
+                "vectors": tet_vectors,
+                "position": [12, 12, 16],
+                "scale": 1.5,
+            },
+        ],
+    },
+)
+
+# %%
+#
+# Spheres at the tetrahedron vertices, using the "spheres" shape kind.
+# "centers" are scaled by "scale" just like "bases" and "vectors" in
+# "cylinders", so the whole shape scales uniformly.
+
+tetrahedron_vertices = dict(
+    kind="spheres",
+    parameters={
+        "global": {
+            "radii": 0.15,
+            "colors": [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00],
+        },
+        "structure": [
+            {
+                "centers": tet_vertices.tolist(),
+                "position": [12, 12, 16],
+            },
+            {
+                "centers": tet_vertices.tolist(),
+                "position": [12, 12, 16],
+                "scale": 1.5,
+            },
+        ],
+    },
+)
+
+# %%
+#
+# Combined shape: groups the wireframe edges and vertex spheres so they
+# are activated together as a single entry in the visualizer.
+
+wireframe_with_vertices = dict(
+    kind="combined",
+    shapes=[wireframe_tetrahedron, tetrahedron_vertices],
+)
+
+# %%
+#
+
 dipoles_auto = chemiscope.ase_vectors_to_arrows(structures, "dipole_ccsd", scale=0.5)
 # one can always update the defaults created by these automatic functions
 dipoles_auto["parameters"]["global"] = {
@@ -261,6 +354,12 @@ chemiscope.write_input(
         ),
         # shapes with a bit of flair
         "irreverence": irreverent_shape,
+        # wireframe tetrahedron using cylinders
+        "tetrahedron": wireframe_tetrahedron,
+        # spheres at tetrahedron vertices
+        "tet_vertices": tetrahedron_vertices,
+        # combined: edges + vertices as one shape entry
+        "tet_combined": wireframe_with_vertices,
     },
     # the write_input function also allows defining the default visualization settings
     settings={

@@ -129,6 +129,10 @@ Basic usage example:
     img_data = img_future.result()
     display(Image(img_data))
 
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_map_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_map_image
+.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_image
 
 Capturing sequences
 ~~~~~~~~~~~~~~~~~~~
@@ -147,12 +151,50 @@ settings to each frame.
     # Capture and save a sequence of frames
     widget.save_structure_sequence(indices, paths)
 
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_map_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_map_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_image
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_sequence
 .. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_sequence
+
+Headless widget
+---------------
+
+If you want to use chemiscope to generate screenshots or inspect datasets programmatically without running a Jupyter notebook, you can use the headless widget. This widget uses a headless browser (Playwright) to render the chemiscope interface, which you can fetch installing the optional dependency ``chemiscope[headless]``.
+
+.. autofunction:: chemiscope.headless
+
+The headless widget provides the same ``settings`` and ``selected_ids`` traitlets as the main widget, and exposes the same methods for saving screenshots and sequences.
+
+.. code-block:: python
+
+    import chemiscope
+    from chemiscope import headless
+
+    # Load your data
+    structures = ...
+    properties = ...
+
+    # Create a headless widget instance
+    # This automatically downloads and configures the required browser
+    widget = headless(structures=structures, properties=properties, mode="structure")
+
+    # Modify settings programmatically
+    widget.settings = {'structure': [{'spaceFilling': True}]}
+
+    # Save a snapshot of the active structure
+    widget.save_structure_image("snapshot.png")
+
+    # Save a sequence of images
+    indices = [0, 1, 2]
+    paths = ["frame_0.png", "frame_1.png", "frame_2.png"]
+    widget.save_structure_sequence(indices, paths)
+
+    # Save the dataset to a JSON file
+    widget.save("dataset.json")
+
+    # Clean up resources
+    widget.close()
+
+.. note::
+    The headless widget requires the `playwright` python package to be installed. You can install it with ``pip install playwright`` and then run ``playwright install`` to download the browser binaries.
 
 Dataset exploration
 -------------------

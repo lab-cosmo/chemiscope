@@ -603,6 +603,7 @@ def show(
     environments=None,
     shapes=None,
     settings=None,
+    parameters=None,
     mode="default",
     warning_timeout=10000,
     cache_structures=True,
@@ -644,6 +645,8 @@ def show(
     :param settings: optional dictionary of settings (see
         :py:func:`chemiscope.create_input` and the :ref:`json-settings`
         section for a list of available settings)
+    :param dict parameters: optional dictionary of parameters for multidimensional
+        properties (see :py:func:`chemiscope.create_input`)
     :param str mode: widget mode: ``"default"``, ``"structure"``, or ``"map"``. The
         ``"default"`` mode shows both map and structure panels. The ``"structure"`` mode
         shows only the structure panel. The ``"map"`` mode shows only the map panel.
@@ -748,6 +751,7 @@ def show(
         environments=environments,
         shapes=shapes,
         settings=settings,
+        parameters=parameters,
     )
 
     if mode == "structure" and "index" not in dict_input["properties"]:

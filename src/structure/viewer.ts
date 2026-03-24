@@ -18,7 +18,7 @@ import {
 import { PositioningCallback, Warnings } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
-import { Arrow, CustomShape, Cylinder, Ellipsoid, ShapeData, Sphere, mergeShapes } from './shapes';
+import { ShapeData, ShapeParameters, renderShape } from './shapes';
 
 import { ViewState, cameraToView, viewToCamera } from '../utils/camera';
 
@@ -633,9 +633,11 @@ export class MoleculeViewer {
         this._changeHighlighted(center, previousDefaultCutoff);
         this._updateStyle();
 
-        const centerView = this._options.environments.center.value;
-
-        if (this._highlighted !== undefined && centerView) {
+        if (
+            this._highlighted !== undefined &&
+            this._options.environments.center.value &&
+            this._options.environments.activated.value
+        ) {
             if (!this._options.keepOrientation.value) {
                 this._resetView();
             }
@@ -657,6 +659,7 @@ export class MoleculeViewer {
 
         this._disableStyleUpdates = false;
         this._updateStyle();
+        this._updateColorBar();
     }
 
     /**
@@ -843,34 +846,52 @@ export class MoleculeViewer {
 
             if (value) {
                 if (this._highlighted !== undefined) {
-                    return;
-                }
+                    // If we already have a highlighted environment, recreate the model
+                    // to ensure that 3Dmol updates the transparency correctly
+                    const center = this._highlighted.center;
+                    const cutoff = this._options.environments.cutoff.value;
 
-                let last = this._lastHighlighted;
-                if (last === undefined) {
-                    const env = this._environments?.find((e) => e !== undefined);
-                    if (env !== undefined) {
-                        last = { center: env.center, cutoff: env.cutoff };
+                    this._viewer.removeModel(this._highlighted.model);
+
+                    // We need to create a separate model to have different opacity
+                    // for the background & highlighted atoms
+                    // https://github.com/3dmol/3Dmol.js/issues/166
+                    const selection = {
+                        or: [
+                            { index: center },
+                            { within: { distance: cutoff, sel: { index: center } } },
+                        ],
+                    };
+                    this._highlighted = {
+                        model: this._viewer.createModelFrom(selection),
+                        center: center,
+                    };
+                    // initialize with main style
+                    this._highlighted.model.setStyle({}, this._mainStyle());
+                } else {
+                    let last = this._lastHighlighted;
+                    if (last === undefined) {
+                        const env = this._environments?.find((e) => e !== undefined);
+                        if (env !== undefined) {
+                            last = { center: env.center, cutoff: env.cutoff };
+                        }
                     }
-                }
 
-                if (last !== undefined) {
-                    // add the 3DMol model for highlighted environment
-                    this._options.environments.cutoff.value = last.cutoff;
-                    const center = last.center;
-                    const previousDefaultCutoff = this._defaultCutoff(center);
-                    this._changeHighlighted(center, previousDefaultCutoff);
+                    if (last !== undefined) {
+                        // add the 3DMol model for highlighted environment
+                        this._options.environments.cutoff.value = last.cutoff;
+                        const center = last.center;
+                        const previousDefaultCutoff = this._defaultCutoff(center);
+                        this._changeHighlighted(center, previousDefaultCutoff);
+                    }
                 }
             } else {
                 if (this._highlighted !== undefined) {
-                    // remove the 3DMol model for highlighted environment
-                    this._viewer.removeModel(this._highlighted.model);
                     // keep information about the last highlighted point around
                     this._lastHighlighted = {
                         center: this._highlighted.center,
                         cutoff: this._options.environments.cutoff.value,
                     };
-                    this._highlighted = undefined;
                 }
             }
 
@@ -1119,6 +1140,16 @@ export class MoleculeViewer {
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
             // render non-hetero atoms with protein mode (e.g. cartoon)
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
+            // if there is a selected atom, render it larger and in green
+            if (this._highlighted !== undefined) {
+                // hide all atoms in the highlighted model
+                this._highlighted.model.setStyle({}, this._hiddenStyle());
+                // and add the green halo style to the central atom
+                this._highlighted.model.setStyle(
+                    { serial: this._highlighted.center },
+                    this._centralStyle(0.4)
+                );
+            }
         } else {
             assert(this._highlighted !== undefined);
             // otherwise, render all atoms with hidden/background style
@@ -1231,158 +1262,117 @@ export class MoleculeViewer {
             }
 
             assert(shape in structure.shapes);
-            const currentShape = structure.shapes[shape];
-            let supercell_a = this._options.supercell[0].value;
-            let supercell_b = this._options.supercell[1].value;
-            let supercell_c = this._options.supercell[2].value;
-            let cell = this._current.structure.cell;
+            const activeShape = structure.shapes[shape];
 
-            if (cell === undefined) {
-                cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+            // flatten combined shapes into a list of regular shapes
+            const shapesToRender: ShapeParameters[] =
+                activeShape.kind === 'combined' ? activeShape.shapes : [activeShape];
 
-                if (supercell_a > 1 || supercell_b > 1 || supercell_c > 1) {
-                    supercell_a = 1;
-                    supercell_b = 1;
-                    supercell_c = 1;
+            for (const currentShape of shapesToRender) {
+                let supercell_a = this._options.supercell[0].value;
+                let supercell_b = this._options.supercell[1].value;
+                let supercell_c = this._options.supercell[2].value;
+                let cell = this._current.structure.cell;
+
+                if (cell === undefined) {
+                    cell = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
+                    if (supercell_a > 1 || supercell_b > 1 || supercell_c > 1) {
+                        supercell_a = 1;
+                        supercell_b = 1;
+                        supercell_c = 1;
+                    }
                 }
-            }
 
-            for (let a = 0; a < supercell_a; a++) {
-                for (let b = 0; b < supercell_b; b++) {
-                    for (let c = 0; c < supercell_c; c++) {
-                        let shapeData: Partial<ShapeData> = { ...currentShape.parameters.global };
+                // Use the same centering pattern as 3Dmol's replicateUnitCell:
+                // 0, +1, -1, +2, -2, ... so that replicas are symmetric around
+                // the original cell
+                const makeoff = (i: number): number => {
+                    if (i % 2 === 0) return -i / 2;
+                    else return Math.ceil(i / 2);
+                };
 
-                        shapeData.position = [0, 0, 0]; // defaults
-                        if (currentShape.parameters.structure) {
-                            shapeData = {
-                                ...shapeData,
-                                ...currentShape.parameters.structure[0],
+                for (let a = 0; a < supercell_a; a++) {
+                    for (let b = 0; b < supercell_b; b++) {
+                        for (let c = 0; c < supercell_c; c++) {
+                            const oa = makeoff(a);
+                            const ob = makeoff(b);
+                            const oc = makeoff(c);
+
+                            let shapeData: Partial<ShapeData> = {
+                                ...currentShape.parameters.global,
                             };
-                        }
-                        if (currentShape.parameters.atom) {
-                            for (let i = 0; i < structure.size; i++) {
-                                const name = structure.names[i];
-                                assert(i < currentShape.parameters.atom.length);
-                                const atomShapeData = {
+
+                            shapeData.position = [0, 0, 0]; // defaults
+                            if (currentShape.parameters.structure) {
+                                shapeData = {
                                     ...shapeData,
-                                    ...currentShape.parameters.atom[i],
+                                    ...currentShape.parameters.structure[0],
                                 };
-
-                                let position: [number, number, number] = [
-                                    structure.x[i],
-                                    structure.y[i],
-                                    structure.z[i],
-                                ];
-
-                                // only overrides the atom position if it's given explicitly
-                                const atom_position = currentShape.parameters.atom[i].position;
-                                if (atom_position !== undefined) {
-                                    position = atom_position;
-                                }
-
-                                // adds supercell offset
-                                position[0] += a * cell[0] + b * cell[3] + c * cell[6];
-                                position[1] += a * cell[1] + b * cell[4] + c * cell[7];
-                                position[2] += a * cell[2] + b * cell[5] + c * cell[8];
-
-                                atomShapeData.position = position;
-
-                                const elem = structure.elements ? structure.elements[i] : name;
-
-                                // obey explicit color specification if given,
-                                // otherwise color as the corresponding atom
-                                if (!atomShapeData.color) {
-                                    if (colorFunc) {
-                                        atomSpec.serial = i;
-                                        atomSpec.elem = elem;
-                                        atomShapeData.color = colorFunc(atomSpec);
-                                    } else {
-                                        atomShapeData.color =
-                                            $3Dmol.elementColors.Jmol[elem] || 0xffffff;
-                                    }
-                                }
-
-                                if (currentShape.kind === 'sphere') {
-                                    const shape = new Sphere(atomShapeData);
-                                    mergeShapes(
-                                        mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
-                                        this._viewer
-                                    );
-                                } else if (currentShape.kind === 'ellipsoid') {
-                                    const shape = new Ellipsoid(atomShapeData);
-                                    mergeShapes(
-                                        mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
-                                        this._viewer
-                                    );
-                                } else if (currentShape.kind === 'cylinder') {
-                                    const shape = new Cylinder(atomShapeData);
-                                    mergeShapes(
-                                        mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
-                                        this._viewer
-                                    );
-                                } else if (currentShape.kind === 'arrow') {
-                                    const shape = new Arrow(atomShapeData);
-                                    mergeShapes(
-                                        mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
-                                        this._viewer
-                                    );
-                                } else {
-                                    assert(currentShape.kind === 'custom');
-                                    const shape = new CustomShape(atomShapeData);
-                                    mergeShapes(
-                                        mergedShapes,
-                                        shape.outputTo3Dmol(atomShapeData.color || 0xffffff),
-                                        this._viewer
-                                    );
-                                }
                             }
-                        } else {
-                            // the shape is defined only at the structure level
-                            if (currentShape.kind === 'sphere') {
-                                const shape = new Sphere(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'ellipsoid') {
-                                const shape = new Ellipsoid(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'cylinder') {
-                                const shape = new Cylinder(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
-                            } else if (currentShape.kind === 'arrow') {
-                                const shape = new Arrow(shapeData);
-                                mergeShapes(
-                                    mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
-                                    this._viewer
-                                );
+                            if (currentShape.parameters.atom) {
+                                for (let i = 0; i < structure.size; i++) {
+                                    const name = structure.names[i];
+                                    assert(i < currentShape.parameters.atom.length);
+                                    const atomShapeData = {
+                                        ...shapeData,
+                                        ...currentShape.parameters.atom[i],
+                                    };
+
+                                    let position: [number, number, number] = [
+                                        structure.x[i],
+                                        structure.y[i],
+                                        structure.z[i],
+                                    ];
+
+                                    // only overrides the atom position if it's given explicitly
+                                    const atomPosition = currentShape.parameters.atom[i].position;
+                                    if (atomPosition !== undefined) {
+                                        position = atomPosition;
+                                    }
+
+                                    // adds supercell offset
+                                    position[0] += oa * cell[0] + ob * cell[3] + oc * cell[6];
+                                    position[1] += oa * cell[1] + ob * cell[4] + oc * cell[7];
+                                    position[2] += oa * cell[2] + ob * cell[5] + oc * cell[8];
+
+                                    atomShapeData.position = position;
+
+                                    const elem = structure.elements ? structure.elements[i] : name;
+
+                                    // obey explicit color specification if given,
+                                    // otherwise color as the corresponding atom
+                                    if (!atomShapeData.color) {
+                                        if (colorFunc) {
+                                            atomSpec.serial = i;
+                                            atomSpec.elem = elem;
+                                            atomShapeData.color = colorFunc(atomSpec);
+                                        } else {
+                                            atomShapeData.color =
+                                                $3Dmol.elementColors.Jmol[elem] || 0xffffff;
+                                        }
+                                    }
+
+                                    renderShape(
+                                        currentShape.kind,
+                                        atomShapeData,
+                                        mergedShapes,
+                                        this._viewer
+                                    );
+                                }
                             } else {
-                                assert(currentShape.kind === 'custom');
-                                const shape = new CustomShape(shapeData);
-                                mergeShapes(
+                                // the shape is defined only at the structure level
+                                renderShape(
+                                    currentShape.kind,
+                                    shapeData,
                                     mergedShapes,
-                                    shape.outputTo3Dmol(shapeData.color || 0xffffff),
                                     this._viewer
                                 );
                             }
                         }
                     }
                 }
-            }
+            } // end shapesToRender loop
         }
 
         if (Array.isArray(mergedShapes.faceArr) && mergedShapes.faceArr.length > 0) {
@@ -1470,11 +1460,6 @@ export class MoleculeViewer {
 
             const name = structure.names[serial];
 
-            let color = $3Dmol.elementColors.Jmol[name] || 0x000000;
-            if (color === 0xffffff || color === 'white') {
-                color = 0x444444; //use dark gray for white atoms for better visibility
-            }
-
             const position = new $3Dmol.Vector3(atom.x, atom.y, atom.z);
 
             let label_str = name;
@@ -1487,19 +1472,21 @@ export class MoleculeViewer {
                 );
             }
 
-            const label = this._viewer.addLabel(
-                label_str,
-                {
-                    position: position,
-                    inFront: true,
-                    fontColor: color,
-                    fontSize: 14,
-                    showBackground: false,
-                    alignment: 'bottomLeft',
-                },
-                undefined,
-                true
-            );
+            const labelStyle: $3Dmol.LabelSpec = {
+                position: position,
+                inFront: true,
+                fontColor: 0x222222,
+                fontSize: 14,
+                showBackground: true,
+                backgroundColor: 0xffffff,
+                backgroundOpacity: 0.4,
+                borderThickness: 0,
+                alignment: 'bottomLeft',
+            };
+            // 'bold' is supported at runtime but missing from the type definitions
+            (labelStyle as Record<string, unknown>).bold = true;
+
+            const label = this._viewer.addLabel(label_str, labelStyle, undefined, true);
 
             this._current.atomLabels.push(label);
         }
@@ -1967,7 +1954,11 @@ export class MoleculeViewer {
      * Centers the view around the selected atom (if there is one)
      */
     private _centerView(): void {
-        if (this._highlighted !== undefined && this._current !== undefined) {
+        if (
+            this._highlighted !== undefined &&
+            this._current !== undefined &&
+            this._options.environments.activated.value
+        ) {
             // use index rather than serial to specify the selection, to avoid picking also the
             // periodic replicas. however we then have to specify the model id, otherwise it'd
             // pick the index from the highlighted selection, which does not match the serial ID
@@ -2143,30 +2134,38 @@ export class MoleculeViewer {
         assert(toggle !== null);
         const reset = this._resetEnvCutoff;
 
-        if (show) {
-            if (this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
+        const centerCheckbox = this._options.getModalElement('env-center');
+        const centerContainer = centerCheckbox.parentElement as HTMLElement;
+        assert(centerContainer !== null);
 
+        const moreOptionsBtn = this._options.getModalElement('chsp-env-more');
+
+        if (show) {
             reset.disabled = false;
             toggle.innerText = 'Disable';
+            centerContainer.style.display = '';
+            moreOptionsBtn.style.display = '';
 
             this._options.environments.cutoff.enable();
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
+            this._options.environments.center.enable();
         } else {
-            if (!this._environmentsEnabled()) {
-                // nothing to do
-                return;
-            }
-
             reset.disabled = true;
             toggle.innerText = 'Enable';
+            centerContainer.style.display = 'none';
+
+            const extraEnv = this._options.getModalElement('chsp-extra-env');
+            if (extraEnv.classList.contains('show')) {
+                moreOptionsBtn.click();
+            }
+
+            moreOptionsBtn.style.display = 'none';
 
             this._options.environments.cutoff.disable();
             this._options.environments.bgStyle.disable();
             this._options.environments.bgColor.disable();
+            this._options.environments.center.disable();
         }
     }
 
@@ -2205,8 +2204,7 @@ export class MoleculeViewer {
                 this._options.environments.cutoff.value = environment.cutoff;
             }
 
-            this._options.environments.activated.value = true;
-            this._enableEnvironmentSettings(true);
+            this._enableEnvironmentSettings(this._options.environments.activated.value);
 
             // We need to create a separate model to have different opacity
             // for the background & highlighted atoms

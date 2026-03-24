@@ -1231,7 +1231,7 @@ export class PropertiesMap {
             'marker.size': this._sizes(),
             'marker.symbol': this._symbols(),
             'marker.line.color': this._lineColors(),
-            hovertemplate: this._options.hovertemplate(),
+            hovertemplate: this._options.hovertemplate(this._colorType()),
             customdata: this._colorValues(),
             'marker.opacity': this._options.color.opacity.value / 100,
             visible: this._selectTrace(true, true, this._options.hasColors()),
@@ -1295,7 +1295,7 @@ export class PropertiesMap {
             y: this._coordinates(this._options.y, 0)[0],
             z: this._coordinates(this._options.z, 0)[0],
 
-            hovertemplate: this._options.hovertemplate(),
+            hovertemplate: this._options.hovertemplate(this._colorType()),
             customdata: this._colorValues(0)[0],
             marker: {
                 color: this._colors(0)[0],
@@ -1515,22 +1515,25 @@ export class PropertiesMap {
 
         if (this._is3D()) {
             config.modeBarButtonsToRemove.push('resetCameraDefault3d');
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            config.modeBarButtonsToAdd = [
-                [
-                    {
-                        name: 'Reset View',
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        icon: (Plotly as any).Icons.home,
-                        click: () => {
-                            this._resetToGlobalView();
-                        },
-                    },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ] as any,
-                ...config.modeBarButtonsToAdd,
-            ];
         }
+
+        // Add custom reset button for both 2D and 3D, so that the reset
+        // always uses the current property ranges instead of the initial ones
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        config.modeBarButtonsToAdd = [
+            [
+                {
+                    name: 'Reset View',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    icon: (Plotly as any).Icons.home,
+                    click: () => {
+                        this._resetToGlobalView();
+                    },
+                },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ] as any,
+            ...config.modeBarButtonsToAdd,
+        ];
 
         return config as unknown as Config;
     }
@@ -1641,6 +1644,20 @@ export class PropertiesMap {
         }
 
         return this._selectTrace<Array<string | number>>(mainValues, selected, dummy, trace);
+    }
+
+    /** Get the type of the current color property values */
+    private _colorType(): 'number' | 'integer' | 'string' {
+        if (this._options.hasColors()) {
+            const prop = this._property(this._options.color.property.value);
+            if (prop.string !== undefined) {
+                return 'string';
+            }
+            if (prop.values.every((v) => Number.isInteger(v))) {
+                return 'integer';
+            }
+        }
+        return 'number';
     }
 
     /**

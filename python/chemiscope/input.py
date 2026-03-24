@@ -245,6 +245,30 @@ def create_input(
             "headLength": float,
         }
 
+        # "kind" : "cylinders" (multiple cylinders with parallel arrays)
+        {
+            # list of direction/length vectors, one per cylinder
+            "vectors": [[float, float, float], ...],
+            # base point of each cylinder, relative to shape position (optional).
+            # scaled by "scale" together with "vectors"
+            "bases": [[float, float, float], ...],
+            # scalar (broadcast) or per-cylinder array (optional, default 0.1)
+            "radii": float | [float, ...],
+            # scalar (broadcast) or per-cylinder array (optional)
+            "colors": color | [color, ...],
+        }
+
+        # "kind" : "spheres" (multiple spheres with parallel arrays)
+        {
+            # center of each sphere, relative to shape position.
+            # scaled by "scale"
+            "centers": [[float, float, float], ...],
+            # scalar (broadcast) or per-sphere array (optional, default 1.0)
+            "radii": float | [float, ...],
+            # scalar (broadcast) or per-sphere array (optional)
+            "colors": color | [color, ...],
+        }
+
         # "kind" : "custom"
         {
             "vertices": [  # list of vertices
@@ -259,6 +283,22 @@ def create_input(
             ],
         }
 
+    Multiple shapes can be grouped using ``"kind": "combined"`` so they
+    are activated as a single entry in the UI:
+
+    .. code-block:: python
+
+        # "kind" : "combined"
+        {
+            "kind": "combined",
+            "shapes": [
+                {"kind": "cylinders", "parameters": {...}},
+                {"kind": "spheres", "parameters": {...}},
+            ],
+        }
+
+    Each sub-shape uses the standard ``parameters`` format. Nesting
+    combined shapes is not allowed.
 
     .. _`ase.Atoms`: https://ase-lib.org/ase/ase/atoms.html
     .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
@@ -1078,6 +1118,72 @@ def _typetransform(data, name):
         )
 
 
+def _validate_single_shape(shapes_for_key, structures):
+    """Validate a single (non-combined) shape definition against structures."""
+    base_shape = shapes_for_key["parameters"].get("global", {})
+    structure_parameters = shapes_for_key["parameters"].get("structure", None)
+    atom_parameters = shapes_for_key["parameters"].get("atom", None)
+
+    if structure_parameters is not None:
+        if len(structure_parameters) != len(structures):
+            raise TypeError(
+                f"structure_parameters must be a list with {len(structures)} "
+                f"elements, got {len(structure_parameters)}"
+            )
+
+    if atom_parameters is not None:
+        total_atoms = sum(s["size"] for s in structures)
+        if len(atom_parameters) != total_atoms:
+            raise TypeError(
+                f"atom_parameters must be a list coinciding to the atomic "
+                f"environments, got {len(atom_parameters)} elements"
+            )
+
+    if atom_parameters is not None:
+        atom_counter = 0
+        for structure_i in range(len(structures)):
+            struct_params = (
+                structure_parameters[structure_i]
+                if structure_parameters is not None
+                else {}
+            )
+            for _ in range(structures[structure_i]["size"]):
+                _check_valid_shape(
+                    {
+                        "kind": shapes_for_key["kind"],
+                        "parameters": {
+                            "global": base_shape,
+                            "structure": struct_params,
+                            "atom": atom_parameters[atom_counter],
+                        },
+                    }
+                )
+                atom_counter += 1
+    elif structure_parameters is not None:
+        for structure_i in range(len(structures)):
+            _check_valid_shape(
+                {
+                    "kind": shapes_for_key["kind"],
+                    "parameters": {
+                        "global": base_shape,
+                        "structure": structure_parameters[structure_i],
+                        "atom": {},
+                    },
+                }
+            )
+    else:
+        _check_valid_shape(
+            {
+                "kind": shapes_for_key["kind"],
+                "parameters": {
+                    "global": base_shape,
+                    "structure": {},
+                    "atom": {},
+                },
+            }
+        )
+
+
 def _validate_shapes(structures, shapes):
     if not isinstance(shapes, dict):
         raise TypeError(f"`shapes` must be a dictionary, got {type(shapes)} instead")
@@ -1095,58 +1201,32 @@ def _validate_shapes(structures, shapes):
                 f"got {type(shapes_for_key)} instead for '{key}'"
             )
 
+        if shapes_for_key.get("kind") == "combined":
+            valid_keys = {"kind", "shapes"}
+        else:
+            valid_keys = {"kind", "parameters"}
+
         for shape_key in shapes_for_key:
-            if shape_key not in ["kind", "parameters"]:
+            if shape_key not in valid_keys:
                 raise ValueError(
                     f"Invalid entry `{shape_key}` in the specification "
                     f"for shape `{key}`"
                 )
 
-        base_shape = shapes_for_key["parameters"].get("global", {})
-        structure_parameters = shapes_for_key["parameters"].get("structure", None)
-        atom_parameters = shapes_for_key["parameters"].get("atom", None)
-        atom_counter = 0
+        if shapes_for_key.get("kind") == "combined":
+            # validate each sub-shape independently
+            _check_valid_shape(shapes_for_key)
+            for sub_shape in shapes_for_key["shapes"]:
+                _validate_single_shape(sub_shape, structures)
+            continue
 
-        for structure_i in range(len(structures)):
-            if (
-                structure_parameters is not None
-                and len(structure_parameters) <= structure_i
-            ):
-                raise TypeError(
-                    f"structure_parameters must be a list with {(len(structures))} "
-                    f"elements, got {len(structure_parameters)}"
-                )
-            for _ in range(structures[structure_i]["size"]):
-                if atom_parameters is not None and len(atom_parameters) <= atom_counter:
-                    raise TypeError(
-                        f"atom_parameters must be a list coinciding to the atomic "
-                        f"environments, got {len(atom_parameters)} elements"
-                    )
+        _validate_single_shape(shapes_for_key, structures)
 
-                shape = {
-                    "kind": shapes_for_key["kind"],
-                    "parameters": {
-                        "global": base_shape,
-                        "structure": (
-                            structure_parameters[structure_i]
-                            if structure_parameters is not None
-                            else {}
-                        ),
-                        "atom": (
-                            atom_parameters[atom_counter]
-                            if atom_parameters is not None
-                            else {}
-                        ),
-                    },
-                }
-                _check_valid_shape(shape)
-                atom_counter += 1
-
-    for shape in shapes.values():
+    def _add_convex_hull(s):
         if (
-            shape["kind"] == "custom"
-            and "vertices" in shape["parameters"]
-            and "simplices" not in shape["parameters"]
+            s["kind"] == "custom"
+            and "vertices" in s["parameters"]
+            and "simplices" not in s["parameters"]
         ):
             try:
                 import scipy.spatial
@@ -1155,11 +1235,73 @@ def _validate_shapes(structures, shapes):
                     "Missing simplices in custom shape, and scipy is not installed"
                 ) from e
 
-            convex_hull = scipy.spatial.ConvexHull(shape["parameters"]["vertices"])
-            shape["parameters"]["simplices"] = [
-                s.tolist() for s in convex_hull.simplices
-            ]
+            hull = scipy.spatial.ConvexHull(s["parameters"]["vertices"])
+            s["parameters"]["simplices"] = [x.tolist() for x in hull.simplices]
+
+    for shape in shapes.values():
+        if shape["kind"] == "combined":
+            for sub_shape in shape["shapes"]:
+                _add_convex_hull(sub_shape)
+        else:
+            _add_convex_hull(shape)
     return shapes
+
+
+_VALID_KEYS = {
+    "sphere": {"radius", "orientation", "scale", "position", "color"},
+    "ellipsoid": {"semiaxes", "orientation", "scale", "position", "color"},
+    "custom": {"vertices", "simplices", "orientation", "scale", "position", "color"},
+    "cylinder": {"radius", "vector", "orientation", "scale", "position", "color"},
+    "arrow": {
+        "baseRadius",
+        "headRadius",
+        "headLength",
+        "vector",
+        "orientation",
+        "scale",
+        "position",
+        "color",
+    },
+    "cylinders": {
+        "vectors",
+        "bases",
+        "radii",
+        "colors",
+        "scale",
+        "position",
+        "color",
+    },
+    "spheres": {
+        "centers",
+        "radii",
+        "colors",
+        "scale",
+        "position",
+        "color",
+    },
+}
+
+
+def _check_scalar(value, name, kind=""):
+    """Check that a value is a numeric scalar (int, float, or numpy numeric)."""
+    if not np.issubdtype(type(value), np.number):
+        prefix = f"{kind} shape " if kind else ""
+        raise TypeError(f"{prefix}'{name}' must be a numeric value, got {type(value)}")
+
+
+def _check_vector(value, name, expected_length, kind=""):
+    """Check that a value is a numeric sequence with the expected length."""
+    if isinstance(value, list):
+        if len(value) == expected_length and all(
+            isinstance(v, (int, float)) for v in value
+        ):
+            return
+    arr = np.asarray(value).astype(np.float64, casting="safe", subok=False, copy=False)
+    if arr.shape != (expected_length,):
+        prefix = f"{kind} shape " if kind else ""
+        raise ValueError(
+            f"{prefix}'{name}' must be an array with {expected_length} values"
+        )
 
 
 def _check_valid_shape(shape):
@@ -1168,7 +1310,18 @@ def _check_valid_shape(shape):
             f"individual shapes must be dictionaries, got {type(shape)} instead"
         )
 
-    always_okay = ["orientation", "scale", "position", "color"]
+    kind = shape.get("kind")
+    if kind == "combined":
+        if "shapes" not in shape or not isinstance(shape["shapes"], list):
+            raise ValueError("combined shape must have a 'shapes' list")
+        for i, sub_shape in enumerate(shape["shapes"]):
+            if not isinstance(sub_shape, dict):
+                raise TypeError(f"sub-shape {i} in combined shape must be a dictionary")
+            if sub_shape.get("kind") == "combined":
+                raise ValueError("nested combined shapes are not allowed")
+        # sub-shape parameter validation is handled by _validate_single_shape
+        return
+
     parameters = {}
     if "parameters" in shape:
         parameters.update(shape["parameters"]["global"])
@@ -1177,110 +1330,97 @@ def _check_valid_shape(shape):
     if "atom" in shape["parameters"]:
         parameters.update(shape["parameters"]["atom"])
 
+    kind = shape["kind"]
+
     if len(parameters) == 0:
-        raise ValueError(f"no parameters provided for {shape['kind']} shape")
-    if shape["kind"] == "sphere":
-        for parameter in parameters:
-            if parameter not in ["radius", *always_okay]:
-                raise ValueError(
-                    f"unknown shape parameter '{parameter}' for 'sphere' shape kind"
-                )
+        raise ValueError(f"no parameters provided for {kind} shape")
 
-        if not isinstance(parameters["radius"], float):
-            raise TypeError(
-                "sphere shape 'radius' must be a float, got "
-                f"{type(parameters['radius'])}"
-            )
+    valid_keys = _VALID_KEYS.get(kind)
+    if valid_keys is None:
+        raise ValueError(f"unknown shape kind '{kind}'")
 
-    elif shape["kind"] == "ellipsoid":
-        for parameter in parameters.keys():
-            if parameter not in ["semiaxes", *always_okay]:
-                raise ValueError(
-                    f"unknown shape parameter '{parameter}' for 'ellipsoid' shape kind"
-                )
-
-        semiaxes_array = np.asarray(parameters["semiaxes"]).astype(
-            np.float64, casting="safe", subok=False, copy=False
-        )
-
-        if not semiaxes_array.shape == (3,):
+    for parameter in parameters:
+        if parameter not in valid_keys:
             raise ValueError(
-                "'semiaxes' must be an array with 3 values for 'ellipsoid' shape kind"
+                f"unknown shape parameter '{parameter}' for '{kind}' shape kind"
             )
 
-    elif shape["kind"] == "custom":
-        for parameter in parameters.keys():
-            if parameter not in ["vertices", "simplices", *always_okay]:
-                raise ValueError(
-                    f"unknown shape parameter '{parameter}' for 'custom' shape kind"
-                )
+    if kind == "sphere":
+        _check_scalar(parameters["radius"], "radius", kind)
 
+    elif kind == "ellipsoid":
+        _check_vector(parameters["semiaxes"], "semiaxes", 3, kind)
+
+    elif kind == "custom":
         vertices_array = np.asarray(parameters["vertices"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
 
         if len(vertices_array.shape) != 2 or vertices_array.shape[1] != 3:
-            raise ValueError(
-                "'vertices' must be an Nx3 array values for 'custom' shape kind"
-            )
+            raise ValueError("custom shape 'vertices' must be an Nx3 array")
 
-        if "simplices" in parameter:
+        if "simplices" in parameters:
             simplices_array = np.asarray(parameters["simplices"]).astype(
                 int, casting="safe", subok=False, copy=False
             )
 
             if len(simplices_array.shape) != 2 or simplices_array.shape[1] != 3:
-                raise ValueError(
-                    "'simplices' must be an Nx3 array values for 'custom' shape kind"
-                )
-    elif shape["kind"] == "cylinder":
-        if not isinstance(parameters["radius"], float):
-            raise TypeError(
-                "cylinder shape 'radius' must be a float, "
-                f"got {type(parameters['radius'])}"
-            )
-        vector_array = np.asarray(parameters["vector"]).astype(
+                raise ValueError("custom shape 'simplices' must be an Nx3 array")
+    elif kind == "cylinder":
+        _check_scalar(parameters["radius"], "radius", kind)
+        _check_vector(parameters["vector"], "vector", 3, kind)
+
+    elif kind == "arrow":
+        _check_scalar(parameters["baseRadius"], "baseRadius", kind)
+        _check_scalar(parameters["headRadius"], "headRadius", kind)
+        _check_scalar(parameters["headLength"], "headLength", kind)
+        _check_vector(parameters["vector"], "vector", 3, kind)
+
+    elif kind == "cylinders":
+        vectors_array = np.asarray(parameters["vectors"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
+        if len(vectors_array.shape) != 2 or vectors_array.shape[1] != 3:
+            raise ValueError("cylinders shape 'vectors' must be an Nx3 array")
+        n = vectors_array.shape[0]
 
-        if not vector_array.shape == (3,):
-            raise ValueError(
-                "'vector' must be an array with 3 values for 'cylinder' shape kind"
+        if "bases" in parameters:
+            bases_array = np.asarray(parameters["bases"]).astype(
+                np.float64, casting="safe", subok=False, copy=False
             )
-    elif shape["kind"] == "arrow":
-        if not isinstance(parameters["baseRadius"], float):
-            raise TypeError(
-                "arrow shape 'baseRadius' must be a float, "
-                f"got {type(parameters['baseRadius'])}"
-            )
-        if not isinstance(parameters["headRadius"], float):
-            raise TypeError(
-                "arrow shape 'headRadius' must be a float, "
-                f"got {type(parameters['headRadius'])}"
-            )
-        if not isinstance(parameters["headLength"], float):
-            raise TypeError(
-                "arrow shape 'headLength' must be a float, "
-                f"got {type(parameters['headLength'])}"
-            )
+            if bases_array.shape != (n, 3):
+                raise ValueError(f"cylinders shape 'bases' must be an {n}x3 array")
 
-        vector_array = np.asarray(parameters["vector"]).astype(
+        if "radii" in parameters:
+            radii = parameters["radii"]
+            if np.issubdtype(type(radii), np.number):
+                pass  # scalar broadcast
+            else:
+                radii_array = np.asarray(radii)
+                if radii_array.shape != (n,):
+                    raise ValueError(
+                        "cylinders shape 'radii' must be a scalar"
+                        f" or array of length {n}"
+                    )
+
+    elif kind == "spheres":
+        centers_array = np.asarray(parameters["centers"]).astype(
             np.float64, casting="safe", subok=False, copy=False
         )
+        if len(centers_array.shape) != 2 or centers_array.shape[1] != 3:
+            raise ValueError("spheres shape 'centers' must be an Nx3 array")
+        n = centers_array.shape[0]
 
-        if not vector_array.shape == (3,):
-            raise ValueError(
-                "'vector' must be an array with 3 values for 'arrow' shape kind"
-            )
-    else:
-        raise ValueError(f"unknown shape kind '{shape['kind']}'")
+        if "radii" in parameters:
+            radii = parameters["radii"]
+            if np.issubdtype(type(radii), np.number):
+                pass  # scalar broadcast
+            else:
+                radii_array = np.asarray(radii)
+                if radii_array.shape != (n,):
+                    raise ValueError(
+                        f"spheres shape 'radii' must be a scalar or array of length {n}"
+                    )
 
     if "orientation" in parameters:
-        orientation_array = np.asarray(parameters["orientation"]).astype(
-            np.float64, casting="safe", subok=False, copy=False
-        )
-
-        if not orientation_array.shape == (4,):
-            raise ValueError(
-                "semiaxes must be an array with 4 values for 'ellipsoid' shape kind"
-            )
+        _check_vector(parameters["orientation"], "orientation", 4, kind)

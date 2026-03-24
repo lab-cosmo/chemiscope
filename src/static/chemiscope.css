@@ -237,6 +237,7 @@
     margin: auto;
     border: 1px solid #222;
     background-color: #ffffffee;
+    color: #222;
 }
 
 .chsp-properties-table td,
@@ -375,6 +376,7 @@
     border: none;
     transition: background-color 0.15s;
     background-color: #ebedf0;
+    color: #222;
     margin-left: 2px;
     margin-right: 3px;
     font-family: inherit;

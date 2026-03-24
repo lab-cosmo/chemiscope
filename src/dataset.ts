@@ -5,8 +5,16 @@
 
 import assert from 'assert';
 
-import { Arrow, CustomShape, Cylinder, Ellipsoid, Sphere } from './structure/shapes';
-import { ShapeParameters } from './structure/shapes';
+import {
+    Arrow,
+    CustomShape,
+    Cylinder,
+    Cylinders,
+    Ellipsoid,
+    Sphere,
+    Spheres,
+} from './structure/shapes';
+import { AnyShapeParameters, ShapeParameters } from './structure/shapes';
 import { DisplayTarget } from './indexer';
 
 /** A dataset containing all the data to be displayed. */
@@ -29,7 +37,7 @@ export interface Dataset {
      * and the definition of the type and parameters of each shape is given by
      * in the {@link ShapeParameters} dictionary.
      */
-    shapes?: { [name: string]: ShapeParameters };
+    shapes?: { [name: string]: AnyShapeParameters };
     /**
      * List of properties for the structures (`target == "structure"`), or
      * atom-centered environments in the structures (`target == "atom"`).
@@ -136,7 +144,7 @@ export interface Structure {
         /**
          * dictionary containing shape data
          */
-        [name: string]: ShapeParameters;
+        [name: string]: AnyShapeParameters;
     };
     /** Element names of all atoms in the structure, if available */
     elements?: string[];
@@ -185,7 +193,7 @@ export interface UserStructure {
      * dataset.
      */
     shapes?: {
-        [name: string]: ShapeParameters;
+        [name: string]: AnyShapeParameters;
     };
 }
 
@@ -418,6 +426,46 @@ function checkStructures(o: JsObject[]): [number, number] {
     return [o.length, atomsCount];
 }
 
+// checks a single (non-combined) shape definition
+function checkSingleShape(
+    shape: ShapeParameters,
+    key: string,
+    structureCount: number,
+    envCount: number
+): string {
+    if (!('parameters' in shape)) {
+        return `missing "parameters" in shape ${key}`;
+    }
+
+    const parameters = shape.parameters;
+
+    if ('structure' in parameters) {
+        const structureParameters = parameters.structure;
+        if (!Array.isArray(structureParameters)) {
+            return `'structure' parameters should be an array in shape ${key}`;
+        }
+
+        if (structureParameters.length !== structureCount) {
+            return `'structure' parameters in shape ${key} contain ${structureParameters.length} \
+                     entries, but there are ${structureCount} structures.`;
+        }
+    }
+
+    if ('atom' in parameters) {
+        const atomParams = parameters.atom;
+        if (!Array.isArray(atomParams)) {
+            return `'atom' parameters should be an array in shape ${key}`;
+        }
+
+        if (atomParams.length !== envCount) {
+            return `'atom' parameters in shape ${key} contain ${atomParams.length} entries, \
+                     but there are ${envCount} environments.`;
+        }
+    }
+
+    return '';
+}
+
 // checks only that the shape and naming of shape options is correct.
 // validity of the actual options is assessed in assignShapes
 function checkShapes(
@@ -429,8 +477,8 @@ function checkShapes(
         return "'shapes' must be an object";
     }
 
-    for (const [key, o_shape] of Object.entries(shapes as object)) {
-        const shape = o_shape as ShapeParameters;
+    for (const [key, rawShape] of Object.entries(shapes as object)) {
+        const shape = rawShape as AnyShapeParameters;
         if (!('kind' in shape)) {
             return `missing "kind" in shape ${key}`;
         }
@@ -439,33 +487,28 @@ function checkShapes(
             return `shapes 'kind' must be a string for shape ${key}`;
         }
 
-        if (!('parameters' in shape)) {
-            return `missing "parameters" in shape ${key}`;
-        }
-
-        const parameters = shape.parameters;
-
-        if ('structure' in parameters) {
-            const s_parameters = parameters.structure;
-            if (!Array.isArray(s_parameters)) {
-                return `'structure' parameters should be an array in shape ${key}`;
+        if (shape.kind === 'combined') {
+            if (!('shapes' in shape) || !Array.isArray(shape.shapes)) {
+                return `missing "shapes" array in combined shape ${key}`;
             }
 
-            if (s_parameters.length !== structureCount) {
-                return `'structure' parameters in shape ${key} contain ${s_parameters.length} \
-                         entries, but there are ${structureCount} structures.`;
+            for (let i = 0; i < shape.shapes.length; i++) {
+                const subShape = shape.shapes[i] as AnyShapeParameters;
+                if (!('kind' in subShape) || typeof subShape.kind !== 'string') {
+                    return `missing "kind" in sub-shape ${i} of combined shape ${key}`;
+                }
+                if (subShape.kind === 'combined') {
+                    return `nested "combined" shapes are not allowed (in shape ${key})`;
+                }
+                const check = checkSingleShape(subShape, `${key}[${i}]`, structureCount, envCount);
+                if (check !== '') {
+                    return check;
+                }
             }
-        }
-
-        if ('atom' in parameters) {
-            const a_parameters = parameters.atom;
-            if (!Array.isArray(a_parameters)) {
-                return `'atom' parameters should be an array in shape ${key}`;
-            }
-
-            if (a_parameters.length !== envCount) {
-                return `'atom' parameters in shape ${key} contain ${a_parameters.length} entries, \
-                         but there are ${envCount} environments.`;
+        } else {
+            const check = checkSingleShape(shape, key, structureCount, envCount);
+            if (check !== '') {
+                return check;
             }
         }
     }
@@ -482,57 +525,110 @@ function validateShape(kind: string, parameters: Record<string, unknown>): strin
         return Arrow.validateParameters(parameters);
     } else if (kind === 'cylinder') {
         return Cylinder.validateParameters(parameters);
+    } else if (kind === 'cylinders') {
+        return Cylinders.validateParameters(parameters);
+    } else if (kind === 'spheres') {
+        return Spheres.validateParameters(parameters);
     } else if (kind === 'custom') {
         return CustomShape.validateParameters(parameters);
     }
     return '';
 }
 
+// assigns and validates a single (non-combined) shape for one structure
+function assignSingleShape(
+    shape: ShapeParameters,
+    name: string,
+    structureIndex: number,
+    structureSize: number,
+    atomsCount: number
+): { result: ShapeParameters; error: string } {
+    const parameters = {
+        global: shape.parameters.global,
+        structure: shape.parameters.structure,
+        atom: shape.parameters.atom,
+    };
+
+    let fullParameters = shape.parameters.global;
+    if (parameters.structure) {
+        parameters.structure = [parameters.structure[structureIndex]];
+        fullParameters = { ...fullParameters, ...parameters.structure[0] };
+    }
+
+    if (parameters.atom) {
+        parameters.atom = parameters.atom.slice(atomsCount, atomsCount + structureSize);
+
+        for (const atom of parameters.atom) {
+            const atomParameters = { ...fullParameters, ...atom };
+            const check = validateShape(shape.kind, atomParameters);
+            if (check !== '') {
+                return {
+                    result: shape,
+                    error: `Validation error for an atom in shape ${name}: ${check}`,
+                };
+            }
+        }
+    } else {
+        const check = validateShape(shape.kind, fullParameters);
+        if (check !== '') {
+            return {
+                result: shape,
+                error: `Validation error for a structure in shape ${name}: ${check}`,
+            };
+        }
+    }
+
+    return {
+        result: { kind: shape.kind, parameters: parameters } as ShapeParameters,
+        error: '',
+    };
+}
+
 // creates shapes associated with actual structures by picking slices of the full
 // arrays. it also tests the shape validity, and for that it builds (but does not store)
 // the fully expanded parameters for each shape
 function assignShapes(
-    shapes: { [name: string]: ShapeParameters },
+    shapes: { [name: string]: AnyShapeParameters },
     structures: Structure[]
 ): string {
     let atomsCount = 0;
-    for (let i_structure = 0; i_structure < structures.length; i_structure++) {
-        const structure = structures[i_structure];
+    for (let structureIndex = 0; structureIndex < structures.length; structureIndex++) {
+        const structure = structures[structureIndex];
         structure.shapes = {};
         for (const [name, shape] of Object.entries(shapes)) {
-            const parameters = {
-                global: shape.parameters.global,
-                structure: shape.parameters.structure,
-                atom: shape.parameters.atom,
-            };
-
-            let full_parameters = shape.parameters.global;
-            if (parameters.structure) {
-                parameters.structure = [parameters.structure[i_structure]];
-                full_parameters = { ...full_parameters, ...parameters.structure[0] };
-            }
-
-            if (parameters.atom) {
-                parameters.atom = parameters.atom.slice(atomsCount, atomsCount + structure.size);
-
-                for (const atom of parameters.atom) {
-                    const atom_parameters = { ...full_parameters, ...atom };
-                    const check = validateShape(shape.kind, atom_parameters);
-                    if (check !== '') {
-                        return `Validation error for an atom in shape ${name}: ${check}`;
+            if (shape.kind === 'combined') {
+                const assignedSubShapes: ShapeParameters[] = [];
+                for (let i = 0; i < shape.shapes.length; i++) {
+                    const sub = shape.shapes[i];
+                    const { result, error } = assignSingleShape(
+                        sub,
+                        `${name}[${i}]`,
+                        structureIndex,
+                        structure.size,
+                        atomsCount
+                    );
+                    if (error !== '') {
+                        return error;
                     }
+                    assignedSubShapes.push(result);
                 }
+                structure.shapes[name] = {
+                    kind: 'combined',
+                    shapes: assignedSubShapes,
+                };
             } else {
-                const check = validateShape(shape.kind, full_parameters);
-                if (check !== '') {
-                    return `Validation error for a structure in shape ${name}: ${check}`;
+                const { result, error } = assignSingleShape(
+                    shape,
+                    name,
+                    structureIndex,
+                    structure.size,
+                    atomsCount
+                );
+                if (error !== '') {
+                    return error;
                 }
+                structure.shapes[name] = result;
             }
-
-            structure.shapes[name] = {
-                kind: shape.kind,
-                parameters: parameters,
-            };
         }
 
         atomsCount += structure.size;

@@ -14,3 +14,7 @@ You can find more usage examples, in combination with other atomistic
 simulation packages, in the
 `chemiscope chapter <http://atomistic-cookbook.org/software/chemiscope.html>`_
 of the `atomistic cookbook <http://atomistic-cookbook.org/>`_.
+
+Examples with ``.py_noci`` extension are too slow, or otherwise problematic
+so they are not run on the CI, but you can try them locally if they
+correspond to your needs.

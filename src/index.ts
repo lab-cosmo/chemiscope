@@ -22,11 +22,15 @@ import {
 import { JsObject, getTarget, validateDataset } from './dataset';
 import { GUID, PositioningCallback, WarningHandler, Warnings, getNextColor } from './utils';
 import {
+    AnyShapeParameters,
     ArrowParameters,
+    CombinedShapeParameters,
     CustomShapeParameters,
+    CylindersParameters,
     EllipsoidParameters,
     ShapeParameters,
     SphereParameters,
+    SpheresParameters,
 } from './structure/shapes';
 
 import './static/chemiscope.css';
@@ -643,7 +647,7 @@ class StructureVisualizer {
             dataset.properties,
             this._indexer,
             this._target,
-            undefined,
+            dataset.parameters,
             this.warnings
         );
         this.info.onchange = (indexes) => {
@@ -871,7 +875,7 @@ class MapVisualizer {
             dataset.properties,
             this._indexer,
             this._target,
-            undefined,
+            dataset.parameters,
             (warnings = this.warnings)
         );
         this.info.onchange = (indexes) => {
@@ -1000,6 +1004,10 @@ export {
     EllipsoidParameters,
     ArrowParameters,
     CustomShapeParameters,
+    CylindersParameters,
+    SpheresParameters,
+    CombinedShapeParameters,
+    AnyShapeParameters,
     // different panels
     MetadataPanel,
     PropertiesMap,
