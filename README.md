@@ -136,6 +136,6 @@ Chemiscope itself is distributed under the 3-Clauses BSD license. By
 contributing to this repository, you agree to distribute your contributions
 under the same license.
 
-This project is [maintained](https://github.com/lab-cosmo/.github/blob/main/Maintainers.md) by @ceriottm and @sofiia-chorna, who will reply to issues and pull requests opened on this repository as soon as possible. You can mention them directly if you did not receive an answer after a couple of days.
+This project is [maintained](https://github.com/lab-cosmo/.github/blob/main/Maintainers.md) by [@ceriottm](https://github.com/ceriottm) and [@sofiia-chorna](https://github.com/sofiia-chorna), who will reply to issues and pull requests opened on this repository as soon as possible. You can mention them directly if you did not receive an answer after a couple of days.
 
-It was previously maintained by @Luthaf (2019 to 2026), many thanks to them for their work making chemiscope awesome!
+It was previously maintained by [@Luthaf](https://github.com/Luthaf) (2019 to 2026), many thanks to them for their work making chemiscope awesome!
