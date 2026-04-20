@@ -1887,9 +1887,13 @@ export class PropertiesMap {
     /** Get the length of the colorbar to accommodate for the legend */
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
+        const count = this._symbolsCount();
+        if (count === 0) {
+            return 1;
+        }
         const LEGEND_ITEM_HEIGH = 0.045;
         const PADDING = 0.025;
-        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount() - PADDING;
+        return Math.max(0.2, 1 - LEGEND_ITEM_HEIGH * count - PADDING);
     }
 
     /** Should we show the legend for the various symbols used? */
