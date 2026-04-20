@@ -1887,45 +1887,35 @@ export class PropertiesMap {
     /** Get the length of the colorbar to accommodate for the legend */
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
+        const count = this._symbolsCount();
+        if (count === 0) {
+            return 1;
+        }
         const LEGEND_ITEM_HEIGH = 0.045;
         const PADDING = 0.025;
-        return 1 - LEGEND_ITEM_HEIGH * this._symbolsCount() - PADDING;
+        return Math.max(0.2, 1 - LEGEND_ITEM_HEIGH * count - PADDING);
     }
 
     /** Should we show the legend for the various symbols used? */
     private _showlegend(): boolean[] {
         const result = [false, false, false];
-
-        if (this._options.symbol.value !== '') {
-            for (let i = 0; i < this._symbolsCount(); i++) {
-                result.push(true);
-            }
-            return result;
-        } else {
-            for (let i = 0; i < this._data.maxSymbols; i++) {
-                result.push(false);
-            }
-            return result;
+        const activeCount = this._symbolsCount();
+        for (let i = 0; i < this._data.maxSymbols; i++) {
+            result.push(i < activeCount);
         }
+        return result;
     }
 
     /** Get the list of symbols names to use for the legend */
     private _legendNames(): string[] {
         const result = ['', '', ''];
-
-        if (this._options.symbol.value !== '') {
-            const property = this._property(this._options.symbol.value);
-            assert(property.string !== undefined);
-            for (const name of property.string.strings()) {
-                result.push(name);
-            }
-            return result;
-        } else {
-            for (let i = 0; i < this._data.maxSymbols; i++) {
-                result.push('');
-            }
-            return result;
+        const symbolValue = this._options.symbol.value;
+        const names =
+            symbolValue !== '' ? (this._property(symbolValue).string?.strings() ?? []) : [];
+        for (let i = 0; i < this._data.maxSymbols; i++) {
+            result.push(names[i] ?? '');
         }
+        return result;
     }
 
     /** How many symbols are on this plot?*/
