@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+            name="description"
+            content="Interactive data visualization for materials and molecular databases. Correlate atomic structures and their properties, either online, in a jupyter notebook, or with a portable app."
+        />
+
+        <title>Chemiscope</title>
+
+        <script type="text/javascript">
+            // defines available examples (filename:label)
+            var examples = {
+                'Arginine-Dipeptide': 'Arginine Dipeptide',
+                AlphaMu: 'Dielectric Response',
+                'CSD-1000R': 'Chemical Shieldings',
+                'ROY-GCH': 'Generalized Convex Hull',
+                Qm7b: 'Qm7b',
+                'Amorphous-Silicon': 'Amorphous Silicon',
+                Azaphenacenes: 'Azaphenacenes',
+                Zeolites: 'Zeolites',
+            };
+        </script>
+
+        <!-- analytics -->
+        <script
+            defer
+            data-domain="chemiscope.org"
+            src="https://plausible.io/js/plausible.js"
+        ></script>
+
+        <!-- jquery -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- font-awesome -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css"
+        />
+        <link rel="icon" type="image/png" href="chemiscope-icon.png" sizes="32x32" />
+        <script type="text/javascript" src="chemiscope-app.min.js"></script>
+    </head>
+
+    <body>
+        <header>
+            <nav class="container navbar navbar-expand-lg navbar-dark py-1">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">chemiscope</a>
+                    <button
+                        class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbar"
+                        aria-controls="navbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbar">
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://chemiscope.org/docs/"
+                                    ><i class="fa fa-book"></i> Documentation</a
+                                >
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="modal" href="#about"
+                                    ><i class="fa fa-user"></i> About</a
+                                >
+                            </li>
+
+                            <li class="nav-item hide-if-standalone">
+                                <a class="nav-link" data-bs-toggle="modal" href="#sources"
+                                    ><i class="fa fa-download"></i> Sources</a
+                                >
+                            </li>
+
+                            <li class="nav-item dropdown hide-if-standalone">
+                                <a
+                                    class="nav-link"
+                                    href="#"
+                                    id="examples"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                >
+                                    <i class="fa fa-images"></i> Examples
+                                </a>
+                                <div
+                                    class="dropdown-menu"
+                                    aria-labelledby="examples"
+                                    id="examples-dropdown"
+                                >
+                                    <!-- Menu items will be populated here based on the example dictionary defined above -->
+                                </div>
+                            </li>
+
+                            <li>
+                                <a class="nav-link" data-bs-toggle="modal" href="#load-save">
+                                    <i class="fa fa-file"></i> Load/Save
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <div class="container" style="height: 1em; padding: 0">
+            <div
+                class="alert alert-dismissible alert-danger pop-on-top"
+                role="alert"
+                id="error-display"
+                style="display: none"
+            >
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('error-display').style.display = 'none';"
+                ></button>
+                <p></p>
+                <details>
+                    <summary>Backtrace</summary>
+                    <p></p>
+                </details>
+            </div>
+
+            <div
+                class="alert alert-warning alert-dismissible pop-on-top"
+                role="alert"
+                id="warning-display"
+                style="display: none"
+            >
+                <p></p>
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('warning-display').style.display = 'none';"
+                ></button>
+            </div>
+            <div style="padding: 0.5rem 1.25rem">&nbsp;</div>
+
+            <div id="loading">
+                <i class="fa fa-spinner fa-spin"></i>
+            </div>
+        </div>
+
+        <div class="scroll-band-container">
+            <main id="chemiscope-container"></main>
+
+            <div class="scroll-band-left"></div>
+            <div class="scroll-band-right"></div>
+        </div>
+        <footer class="footer">
+            <div class="container">
+                <div style="float: left; font-size: x-small">
+                    Created by <a href="https://guillaume.fraux.fr">Guillaume Fraux</a>
+                </div>
+                <div style="float: right; font-size: x-small">
+                    <i class="far fa-copyright"></i> 2020-2026
+                    <a href="https://cosmo.epfl.ch">COSMO@EPFL</a>
+                    &nbsp; - &nbsp;
+                    <span id="chemiscope-version">unknown version</span>
+                </div>
+                <div style="text-align: center">
+                    Chemiscope: interactive structure/property explorer for materials and molecules
+                </div>
+            </div>
+        </footer>
+
+        <div class="modal fade" tabindex="-1" id="about">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Chemiscope: interactive structure/property explorer for materials and
+                            molecules
+                        </h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Chemiscope is a tool for interactive exploration of databases of
+                            materials and molecules, correlating local and global structural
+                            representations with the properties of the systems.
+                        </p>
+
+                        <p>
+                            Chemiscope is free and open source, distributed under the BSD license.
+                            It is developed by
+                            <a href="https://guillaume.fraux.fr">Guillaume Fraux</a> in the
+                            <a href="https://cosmo.epfl.ch">COSMO lab</a> at EPFL, with support from
+                            the <a href="http://nccr-marvel.ch">NCCR MARVEL</a> and
+                            <a href="http://max-centre.eu">MaX</a> European Centre of Excellence.
+                            Early development was influenced by the
+                            <a href="https://github.com/lab-cosmo/isv">
+                                Interactive Sketch-map Visualizer</a
+                            >
+                        </p>
+
+                        <h5>References</h5>
+                        <ul class="references">
+                            <li>
+                                <a href="https://doi.org/10.21105/joss.02117">
+                                    Chemiscope: interactive structure-property explorer for
+                                    materials and molecules
+                                </a>
+                                <br />G Fraux, RK Cersonsky, M Ceriotti - JOSS, 2020
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" tabindex="-1" id="sources">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Download chemiscope</h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Chemiscope consists in a set of JavaScript modules to visualize atomic
+                            structures and map associated data. These modules can be assembled into
+                            all sorts of interactive visualization tools, such as that which you can
+                            use on these pages.
+                        </p>
+
+                        <p>
+                            If you are a developer you may be interested in downloading the
+                            <a href="https://github.com/lab-cosmo/chemiscope"> source code</a>,
+                            which is available on GitHub.
+                        </p>
+
+                        <p>
+                            If you are a user, you may want to download a
+                            <a href="chemiscope_standalone.html" download> standalone version </a>
+                            of the standard viewer, which you can use to display locally datasets
+                            prepared in the chemiscope JSON format.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" tabindex="-1" id="load-save">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Load and save data</h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                            id="close-load-save-modal"
+                        ></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <h5>Dataset</h5>
+                        <p>
+                            Using <a href="https://chemiscope.org">chemiscope.org</a>, you are able
+                            to visualize your own data, stored in a JSON file. Please see the
+                            <a href="https://chemiscope.org/docs/manual">documentation</a> for a
+                            complete description of the JSON format; as well as tools that can help
+                            you generate such files.
+                        </p>
+
+                        <div class="input-group">
+                            <label for="load-dataset" class="form-control">
+                                pick a file
+                                <input
+                                    id="load-dataset"
+                                    type="file"
+                                    accept=".json,.gz"
+                                    class="hidden-input-file"
+                                />
+                            </label>
+                            <button
+                                class="btn btn-primary width-10em"
+                                type="button"
+                                name="button"
+                                onclick="document.getElementById('load-dataset').click()"
+                            >
+                                <i class="fa fa-upload"></i> load dataset
+                            </button>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 1em">
+                            <span class="input-group-text">save as</span>
+                            <input
+                                id="save-dataset-name"
+                                class="form-control"
+                                type="text"
+                                value="dataset.json"
+                                autocomplete="off"
+                            />
+                            <button
+                                class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
+                                type="button"
+                                name="button"
+                                id="save-dataset"
+                            >
+                                <i class="fa fa-download"></i> save dataset
+                            </button>
+                        </div>
+
+                        <div class="grid-1-1" style="margin-top: 1em">
+                            <div class="form-check form-switch">
+                                <input
+                                    class="form-check-input"
+                                    id="save-dataset-settings"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="save-dataset-settings"
+                                    >include visualization state</label
+                                >
+                            </div>
+                            <div class="form-check form-switch hide-on-demand-structures">
+                                <input
+                                    class="form-check-input"
+                                    id="save-dataset-structures"
+                                    type="checkbox"
+                                />
+                                <label class="form-check-label" for="save-dataset-structures"
+                                    >include all structures</label
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="alert alert-warning hide-on-demand-structures"
+                            role="alert"
+                            style="margin: 0; margin-top: 1em"
+                        >
+                            The current dataset contains dynamically loaded structures, use 'include
+                            all structure' to include all of them in the file
+                        </div>
+
+                        <h5 style="margin-top: 1em">Visualization state</h5>
+                        <p>
+                            The visualization state is a JSON file including all settings changes
+                            made on the current dataset.
+                        </p>
+                        <div class="input-group">
+                            <label for="load-settings" class="form-control">
+                                pick a file
+                                <input
+                                    id="load-settings"
+                                    type="file"
+                                    accept=".json"
+                                    class="hidden-input-file"
+                                />
+                            </label>
+                            <button
+                                class="btn btn-secondary width-10em"
+                                type="button"
+                                name="button"
+                                onclick="document.getElementById('load-settings').click()"
+                            >
+                                <i class="fa fa-upload"></i> load settings
+                            </button>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 1em">
+                            <span class="input-group-text">save as</span>
+                            <input
+                                id="save-settings-name"
+                                class="form-control"
+                                type="text"
+                                value="settings.json"
+                                autocomplete="off"
+                            />
+                            <button
+                                class="btn btn-outline-secondary btn-outline-secondary-less-hover width-10em"
+                                type="button"
+                                name="button"
+                                id="save-settings"
+                            >
+                                <i class="fa fa-download"></i> save settings
+                            </button>
+
+                            <div class="grid-1-1" style="margin-top: 1em">
+                                <div class="form-check form-switch align-middle">
+                                    <input
+                                        class="form-check-input"
+                                        id="save-settings-map"
+                                        type="checkbox"
+                                        checked
+                                    />
+                                    <label class="form-check-label" for="save-settings-map"
+                                        >include map settings</label
+                                    >
+                                </div>
+                                <div class="form-check form-switch align-middle">
+                                    <input
+                                        class="form-check-input"
+                                        id="save-settings-structure"
+                                        type="checkbox"
+                                        checked
+                                    />
+                                    <label class="form-check-label" for="save-settings-structure"
+                                        >include structure settings</label
+                                    >
+                                </div>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input
+                                    class="form-check-input"
+                                    id="save-settings-selected"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="save-settings-selected"
+                                    >include selected environments</label
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script type="text/javascript">
+        // Populate the example menu
+        var dropdownMenu = document.getElementById('examples-dropdown');
+
+        // Loop through the examples object and create menu items
+        Object.keys(examples).forEach(function (file) {
+            var label = examples[file];
+
+            // Create a new span element for each menu item
+            var span = document.createElement('span');
+            span.className = 'dropdown-item clickable';
+
+            // Set the onclick handler
+            span.onclick = function () {
+                CHEMISCOPE_APP.loadExample(file);
+            };
+
+            // Set the display text
+            span.textContent = label;
+
+            // Append the span to the dropdown menu
+            dropdownMenu.appendChild(span);
+        });
+    </script>
+    <script type="text/javascript">
+        /**
+         * Create an URL that can be used to load data from the `external` URL
+         * working around Same-Origin policy by using https://allorigins.win/ to
+         * redirect the request for us.
+         */
+        function externalDataUrl(external) {
+            return `https://api.allorigins.win/raw?url=${encodeURIComponent(external)}`;
+        }
+
+        function displayError(error) {
+            document.getElementById('loading').style.display = 'none';
+
+            const display = document.getElementById('error-display');
+            display.style.display = 'block';
+            display.getElementsByTagName('p')[0].innerText = error.toString();
+            const stacktrace = display.getElementsByTagName('details')[0];
+            stacktrace.getElementsByTagName('p')[0].innerText = error.stack || '';
+        }
+
+        // display uncaught Errors from synchronous code
+        window.onerror = (msg, url, line, col, error) => {
+            if (error !== undefined) {
+                displayError(error);
+            }
+        };
+
+        // display uncaught Errors from async code
+        window.onunhandledrejection = (error) => {
+            displayError(error.reason);
+        };
+
+        // store the app instance globally, and use it to load examples with
+        // `onclick` above
+        let CHEMISCOPE_APP;
+
+        /**
+         * Allow NaN in the JSON file. They are not part of the spec, but Python's json
+         * module output them, and they can be useful.
+         */
+        function parseJsonWithNaN(text) {
+            return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
+                return value === '***NaN***' ? NaN : value;
+            });
+        }
+
+        async function loadDefaultDataset(app) {
+            const standalone = document.getElementById('standalone-json-data');
+
+            if (!standalone) {
+                const url = new URL(window.location.href);
+                const external = url.searchParams.get('load');
+                if (external) {
+                    const settings = url.searchParams.get('settings');
+                    const config = {};
+                    if (settings) {
+                        const response = await fetch(externalDataUrl(settings));
+                        if (!response.ok) {
+                            throw Error(`unable to load settings from '${settings}'`);
+                        }
+                        config.settings = await response.json();
+
+                        // Until https://github.com/gnuns/allOrigins/issues/70
+                        // is resolved, this is how we can check for wrong url
+                        if (config.settings.status?.error !== undefined) {
+                            throw Error(`unable to load settings from '${settings}'`);
+                        }
+                    }
+
+                    await app.fetchAndLoad(externalDataUrl(external), config);
+                } else {
+                    // loads a random example
+                    var exampleKeys = Object.keys(examples);
+                    var randomIndex = Math.floor(Math.random() * exampleKeys.length);
+                    var randomExampleKey = exampleKeys[randomIndex];
+
+                    await app.loadExample(randomExampleKey);
+                }
+            } else {
+                const data = standalone.innerText;
+                if (data.trim() !== '') {
+                    const dataset = parseJsonWithNaN(standalone.innerText);
+                    const config = {
+                        settings: dataset.settings || {},
+                    };
+                    await app.load(config, dataset);
+                } else {
+                    // it looks like this standalone viewer does not contain
+                    // data. stop the loading indicator to not make the user
+                    // think we are doing something useful.
+                    stopLoading();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            CHEMISCOPE_APP = new Chemiscope.ChemiscopeApp('chemiscope-container');
+            loadDefaultDataset(CHEMISCOPE_APP).catch((e) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
+        });
+    </script>
+    <script>
+        // script to forward clicks through the scroll bands
+        function deepElementFromPoint(x, y) {
+            // gets an element at the given coordinates, diving into open shadow roots
+            let el = document.elementFromPoint(x, y);
+            let shadowHit;
+
+            // Walk down through open shadow roots as long as they exist
+            while (el && el.shadowRoot && typeof el.shadowRoot.elementFromPoint === 'function') {
+                shadowHit = el.shadowRoot.elementFromPoint(x, y);
+                if (!shadowHit || shadowHit === el) break;
+                el = shadowHit;
+            }
+
+            return el;
+        }
+
+        function onScrollBandClick(e) {
+            const band = e.currentTarget;
+
+            // Don’t let this original click bubble and do anything else
+            e.stopPropagation();
+            e.preventDefault();
+
+            const x = e.clientX;
+            const y = e.clientY;
+
+            // Temporarily make the band transparent to hit-testing
+            band.style.pointerEvents = 'none';
+            const underlying = deepElementFromPoint(x, y);
+            band.style.pointerEvents = 'auto';
+
+            if (!underlying || underlying === band) {
+                return;
+            }
+            underlying.dispatchEvent(
+                new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    button: e.button || 0,
+                })
+            );
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.scroll-band-left, .scroll-band-right').forEach((band) => {
+                band.addEventListener('click', onScrollBandClick);
+            });
+        });
+    </script>
+</html>
