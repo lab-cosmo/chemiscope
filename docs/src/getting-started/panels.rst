@@ -21,6 +21,13 @@ the left of the dataset title.
 
     The map panel in 2D mode and the related settings
 
+For datasets with more than 50,000 points, the map enables adaptive resolution
+(level-of-detail) rendering by default: only a subset of the points is drawn while
+zoomed out, and more points are displayed as you zoom in. This keeps the map interactive
+on large datasets, at the cost of not showing every point at every zoom level. *Adaptive
+resolution* checkbox appears in the map settings panel once the threshold is crossed,
+and the same option is exposed as ``useLOD`` in the :ref:`json-settings`.
+
 The structure panel is a 3D molecular viewer based on `3Dmol.js`_. The settings are
 accessible through the hamburger menu (☰) on the right of the viewer. The
 settings are grouped into
