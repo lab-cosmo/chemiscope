@@ -626,6 +626,11 @@ def show(
     flag determining whether to cache structure data on the Python side to reduce the
     JScript memory footprint.
 
+    For datasets with more than 50,000 points, the map uses adaptive resolution by
+    default to stay interactive: only a subset of the points is drawn while zoomed
+    out, and more are revealed as you zoom in. To render every point at all zoom
+    levels, pass ``settings={"map": {"useLOD": False}}``.
+
     :param structures: list of atomic structures. These can be `chemiscope` compatible
         dictionaries, `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_,
         `stk.BuildingBlock
