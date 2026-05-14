@@ -5,7 +5,7 @@ tags:
     - JavaScript
     - Python
     - chemistry
-    - material science
+    - materials science
     - machine learning
     - visualization
 authors:
@@ -41,7 +41,7 @@ bibliography: paper.bib
 # Summary
 Chemiscope is an interactive visualization tool for exploring structure-property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
-e.g., a low-dimensional embedding or property-property scatter plot, to an interactive
+e.g. a low-dimensional embedding or property-property scatter plot, to an interactive
 3D structure viewer, which streamlines inspection of clusters and outliers by moving
 between points in feature and property space and the corresponding atomic
 configurations.
@@ -108,8 +108,8 @@ pre-filter or manually decimate their data. Structure data can also be off-loade
 external files, reducing memory footprint and initial loading time.
 
 Chemiscope 1.0 introduces the possibility of rendering atom-centered shapes to represent
-vectorial and tensorial properties, including arrows (e.g., dipoles or forces),
-ellipsoids (e.g., polarizabilities), and user-defined triangular meshes. For
+vectorial and tensorial properties, including arrows (e.g. dipoles or forces),
+ellipsoids (e.g. polarizabilities), and user-defined triangular meshes. For
 biomolecular systems, it supports cartoon representations based on residue and chain
 information. The structure viewer handles a grid layout for side-by-side comparison of
 multiple structures or local environments.
@@ -127,7 +127,7 @@ import chemiscope
 
 structures = ase.io.read("trajectory.xyz", ":")
 
-# Extract properties present in the trajectory (e.g., energy, forces)
+# Extract properties present in the trajectory (e.g. energy, forces)
 properties = chemiscope.extract_properties(structures)
 
 # Set default settings for multi-frame trajectories
@@ -138,7 +138,7 @@ chemiscope.show(structures=structures, properties=properties, settings=settings)
 ```
 
 For web applications built with Streamlit, the Chemiscope component renders a viewer
-from an in-memory dataset and propagates user interactions (e.g., selection and settings
+from an in-memory dataset and propagates user interactions (e.g. selection and settings
 changes) back to Python, coupling to other Streamlit widgets. For reproducible
 documentation, Chemiscope includes a Sphinx extension that embeds interactive viewers
 alongside narrative text and executable examples [@sphinx].
@@ -186,13 +186,13 @@ without manual descriptor engineering.
 Beyond research papers, Chemiscope serves educational and reproducibility purposes:
 tutorials and course materials use live widgets to demonstrate dimensionality reduction
 and structure-property correlations [@Goscinski2025scicodewidgets], and Chemiscope
-viewers can be embedded directly into manuals, as is done in Atomistic cookbook recipes
+viewers can be embedded directly into manuals, as is done in the Atomistic Cookbook recipes
 [@AtomisticCookbook]. The Python package reached 5,726 downloads in the last month on
 PyPI Stats, accessed May 2026 [@PyPIStatsChemiscope].
 
 # AI usage disclosure
 
-Generative AI tools were used occasionally during software development (e.g., to obtain
+Generative AI tools were used occasionally during software development (e.g. to obtain
 code suggestions). All AI-generated suggestions were reviewed, modified, and verified by
 the authors before inclusion, and the authors take full responsibility for the final
 content of the software.
@@ -200,6 +200,6 @@ content of the software.
 # Acknowledgements
 
 The development of Chemiscope 1.0 has been funded primarily by the [NCCR
-MARVEL](http://nccr-marvel.ch/).
+MARVEL](https://nccr-marvel.ch/).
 
 # References
