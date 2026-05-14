@@ -41,8 +41,8 @@ bibliography: paper.bib
 # Summary
 Chemiscope is an interactive visualization tool for exploring structure-property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
-e.g. a low-dimensional embedding or property-property scatter plot, to an interactive
-3D structure viewer, which streamlines inspection of clusters and outliers by moving
+e.g. a low-dimensional embedding or property-property scatter plot, to an interactive 3D
+structure viewer, which streamlines inspection of clusters and outliers by moving
 between points in feature and property space and the corresponding atomic
 configurations.
 
@@ -109,10 +109,10 @@ external files, reducing memory footprint and initial loading time.
 
 Chemiscope 1.0 introduces the possibility of rendering atom-centered shapes to represent
 vectorial and tensorial properties, including arrows (e.g. dipoles or forces),
-ellipsoids (e.g. polarizabilities), and user-defined triangular meshes. For
-biomolecular systems, it supports cartoon representations based on residue and chain
-information. The structure viewer handles a grid layout for side-by-side comparison of
-multiple structures or local environments.
+ellipsoids (e.g. polarizabilities), and user-defined triangular meshes. For biomolecular
+systems, it supports cartoon representations based on residue and chain information. The
+structure viewer handles a grid layout for side-by-side comparison of multiple
+structures or local environments.
 
 In Jupyter notebooks, the viewer is exposed as a widget with bidirectional communication
 between Python and the JavaScript runtime, implemented via traitlets [@Jupyter;
@@ -186,9 +186,9 @@ without manual descriptor engineering.
 Beyond research papers, Chemiscope serves educational and reproducibility purposes:
 tutorials and course materials use live widgets to demonstrate dimensionality reduction
 and structure-property correlations [@Goscinski2025scicodewidgets], and Chemiscope
-viewers can be embedded directly into manuals, as is done in the Atomistic Cookbook recipes
-[@AtomisticCookbook]. The Python package reached 5,726 downloads in the last month on
-PyPI Stats, accessed May 2026 [@PyPIStatsChemiscope].
+viewers can be embedded directly into manuals, as is done in the Atomistic Cookbook
+recipes [@AtomisticCookbook]. The Python package reached 5,726 downloads in the last
+month on PyPI Stats, accessed May 2026 [@PyPIStatsChemiscope].
 
 # AI usage disclosure
 
