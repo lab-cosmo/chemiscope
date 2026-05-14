@@ -42,8 +42,9 @@ bibliography: paper.bib
 Chemiscope is an interactive visualization tool for exploring structure-property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
 e.g., a low-dimensional embedding or property-property scatter plot, to an interactive
-3D structure viewer, which streamlines inspection of clusters and outliers by moving between
-points in feature and property space and the corresponding atomic configurations.
+3D structure viewer, which streamlines inspection of clusters and outliers by moving
+between points in feature and property space and the corresponding atomic
+configurations.
 
 Chemiscope 1.0 turns the original browser-based visualizer into a versatile,
 multi-purpose tool that fits into Python-centric workflows. The same visualization can
@@ -171,8 +172,8 @@ Chemiscope has been adopted by the atomistic modeling community as a tool for
 interactive exploration of structure-property relationships. Interactive visualizations
 built with Chemiscope accompany publications and archived datasets on Materials Cloud
 [@Talirz_2020] and provide citable links that readers can use to explore data beyond
-static images. As of May 2026, the Materials Cloud Archive lists 19 publications
-using Chemiscope as an external app [@MaterialsCloudChemiscopeSearch].
+static images. As of May 2026, the Materials Cloud Archive lists 19 publications using
+Chemiscope as an external app [@MaterialsCloudChemiscopeSearch].
 
 The tool has been cited in studies spanning machine-learned interatomic potentials and
 datasets [@MACE; @He2025; @MAD; @Keith2021; @Cheng2020], coarse-grained molecular
