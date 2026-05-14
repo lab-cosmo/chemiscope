@@ -171,7 +171,7 @@ Chemiscope has been adopted by the atomistic modeling community as a tool for
 interactive exploration of structure-property relationships. Interactive visualizations
 built with Chemiscope accompany publications and archived datasets on Materials Cloud
 [@Talirz_2020] and provide citable links that readers can use to explore data beyond
-static images. As of February 2026, the Materials Cloud Archive lists 18 publications
+static images. As of May 2026, the Materials Cloud Archive lists 19 publications
 using Chemiscope as an external app [@MaterialsCloudChemiscopeSearch].
 
 The tool has been cited in studies spanning machine-learned interatomic potentials and
@@ -186,8 +186,8 @@ Beyond research papers, Chemiscope serves educational and reproducibility purpos
 tutorials and course materials use live widgets to demonstrate dimensionality reduction
 and structure-property correlations [@Goscinski2025scicodewidgets], and Chemiscope
 viewers can be embedded directly into manuals, as is done in Atomistic cookbook recipes
-[@AtomisticCookbook]. The Python package reached 4,235 downloads in the last month on
-PyPI Stats, accessed February 2026 [@PyPIStatsChemiscope].
+[@AtomisticCookbook]. The Python package reached 5,726 downloads in the last month on
+PyPI Stats, accessed May 2026 [@PyPIStatsChemiscope].
 
 # AI usage disclosure
 
