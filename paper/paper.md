@@ -42,7 +42,7 @@ bibliography: paper.bib
 Chemiscope is an interactive visualization tool for exploring structure-property
 relationships in molecular and materials datasets [@Fraux2020]. It links a map view,
 e.g., a low-dimensional embedding or property-property scatter plot, to an interactive
-3D structure viewer, streamlining inspection of clusters and outliers by moving between
+3D structure viewer, which streamlines inspection of clusters and outliers by moving between
 points in feature and property space and the corresponding atomic configurations.
 
 Chemiscope 1.0 turns the original browser-based visualizer into a versatile,
@@ -91,7 +91,7 @@ reproducibility and teaching [@JupyterNotebook; @Goscinski2025scicodewidgets; @D
 
 Chemiscope 1.0 is implemented as a TypeScript visualization library with the Python
 package providing platform-specific integrations. The Python API can be used to build a
-chemiscope dataset from atomic structures, associated properties, and visualization
+Chemiscope dataset from atomic structures, associated properties, and visualization
 settings, and export it in the JSON schema consumed by the JavaScript renderer. The
 interface is organized into linked map, structure, and information panels. The map panel
 uses Plotly.js to render 2D and 3D scatter plots [@plotlyjs], the structure panel uses
@@ -151,7 +151,7 @@ arrows.](chemiscope-v1.0-overview.svg){width=100%}
 
 Finally, the package includes an `explore` function that generates interactive
 visualizations starting from structures alone. It integrates metatomic models
-[@metatensor], particularly, the PET-MAD model [@Mazitov2025], which is used by default,
+[@metatensor], particularly the PET-MAD model [@Mazitov2025], which is used by default,
 to derive informative representations and produce map coordinates without requiring
 manual descriptor engineering or an explicit dimensionality reduction step [@MAD]:
 
