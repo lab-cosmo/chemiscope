@@ -66,9 +66,13 @@ export function computeScreenSpaceLOD(
     const binsX = Math.ceil(baseBins * Math.sqrt(aspectRatio));
     const binsY = Math.ceil(baseBins / Math.sqrt(aspectRatio));
     const grid = new Int32Array(binsX * binsY).fill(-1);
+    // Per-bin best hash: keep the id with the smallest hash so each cell's
+    // pick is a deterministic, evenly-distributed permutation of input order.
+    // Selecting the first hit introduces a "first encountered wins" bias
+    // that creates artificial structure when the input is sorted.
+    const bestHash = new Uint32Array(binsX * binsY).fill(0xffffffff);
     const invStepX = binsX / (CLIP_SIZE_X * 2);
     const invStepY = binsY / (CLIP_SIZE_Y * 2);
-    const result: number[] = [];
 
     for (const id of visibleIds) {
         const ui = Math.floor((projections.x[id] + CLIP_SIZE_X) * invStepX);
@@ -79,12 +83,19 @@ export function computeScreenSpaceLOD(
         }
 
         const idx = ui + vi * binsX;
-        if (grid[idx] === -1) {
+        const h = Math.imul(id, 2654435761) >>> 0;
+        if (h < bestHash[idx]) {
+            bestHash[idx] = h;
             grid[idx] = id;
-            result.push(id);
         }
     }
 
+    const result: number[] = [];
+    for (let i = 0; i < grid.length; i++) {
+        if (grid[i] !== -1) {
+            result.push(grid[i]);
+        }
+    }
     result.sort((a, b) => a - b);
     return result;
 }
@@ -170,7 +181,13 @@ export function computeLODIndices(
     const zRange = zMax - zMin || 1;
 
     const bins = is3D ? Math.ceil(Math.cbrt(maxPoints)) : Math.ceil(Math.sqrt(maxPoints));
-    const grid = new Int32Array(is3D ? bins ** 3 : bins ** 2).fill(-1);
+    const nCells = is3D ? bins ** 3 : bins ** 2;
+    const grid = new Int32Array(nCells).fill(-1);
+    // Per-bin best hash: keep the id with the smallest hash so each cell's
+    // pick is a deterministic, evenly-distributed permutation of input order.
+    // This removes the "first encountered wins" bias that creates artificial
+    // structure when the input is sorted along a coordinate.
+    const bestHash = new Uint32Array(nCells).fill(0xffffffff);
 
     // Pre-calculate factors
     const xFactor = bins / xRange;
@@ -178,7 +195,6 @@ export function computeLODIndices(
     const zFactor = bins / zRange;
 
     const clamp = (v: number, max: number) => Math.max(0, Math.min(v, max - 1));
-    const result: number[] = [];
 
     for (const id of visibleIds) {
         const xi = clamp(Math.floor((xValues[id] - xMin) * xFactor), bins);
@@ -190,12 +206,19 @@ export function computeLODIndices(
             idx += zi * bins * bins;
         }
 
-        if (grid[idx] === -1) {
+        const h = Math.imul(id, 2654435761) >>> 0;
+        if (h < bestHash[idx]) {
+            bestHash[idx] = h;
             grid[idx] = id;
-            result.push(id);
         }
     }
 
+    const result: number[] = [];
+    for (let i = 0; i < grid.length; i++) {
+        if (grid[i] !== -1) {
+            result.push(grid[i]);
+        }
+    }
     result.sort((a, b) => a - b);
     return result;
 }
