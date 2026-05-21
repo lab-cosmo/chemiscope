@@ -14,7 +14,7 @@ it as a parameterized property alongside the structure viewer.
 
 import ase.io
 import numpy as np
-from ase.geometry.analysis import Analysis
+from ase.geometry.rdf import get_rdf
 
 import chemiscope
 
