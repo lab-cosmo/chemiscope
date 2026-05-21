@@ -338,6 +338,46 @@ function isPositiveInteger(o: unknown): boolean {
     return typeof o === 'number' && Number.isInteger(o) && o >= 0;
 }
 
+// Matches a CSS-style `#RRGGBBAA` hex string. Anchored so 6-digit `#RRGGBB`,
+// named colors, and rgb()/rgba() strings fall through unchanged to 3Dmol.
+const HEX_RGBA_STRING = /^#([0-9a-f]{6})([0-9a-f]{2})$/i;
+
+// Extract the alpha component from a ColorSpec. 3Dmol's Color parser is
+// RGB-only, so any alpha would otherwise be dropped silently. Alpha is
+// recognized in two forms:
+//   - object color `{r, g, b, a}` with `a` in [0, 1];
+//   - 8-digit CSS hex string `#RRGGBBAA` (alpha in the last two hex digits).
+// All other colors (named, `#RRGGBB`, numeric, rgb(), etc.) are opaque.
+function colorAlpha(color: ColorSpec | undefined): number {
+    if (color === undefined || color === null) {
+        return 1;
+    }
+    if (typeof color === 'object' && typeof color.a === 'number') {
+        return Math.max(0, Math.min(1, color.a));
+    }
+    if (typeof color === 'string') {
+        const match = HEX_RGBA_STRING.exec(color);
+        if (match) {
+            return parseInt(match[2], 16) / 255;
+        }
+    }
+    return 1;
+}
+
+// Return a ColorSpec stripped of any alpha component so 3Dmol's RGB-only
+// parser sees the right RGB. `#RRGGBBAA` strings are truncated to `#RRGGBB`;
+// object colors with a spurious `a` field are passed through (3Dmol ignores
+// extra keys); everything else is unchanged.
+function stripAlpha(color: ColorSpec | undefined): ColorSpec | undefined {
+    if (typeof color === 'string') {
+        const match = HEX_RGBA_STRING.exec(color);
+        if (match) {
+            return '#' + match[1];
+        }
+    }
+    return color;
+}
+
 export class Sphere extends Shape {
     public radius: number;
 
@@ -1137,6 +1177,36 @@ export class CustomShape extends Shape {
 
 const MAX_VERTICES_IN_SINGLE_SHAPE = 32768;
 
+/**
+ * Submit the accumulated merged shape to the viewer and reset the in-place
+ * buffers so further shapes can keep accumulating with a fresh opacity. Safe
+ * to call when the merged shape is empty.
+ */
+export function flushMergedShapes(
+    mergedShapes: $3Dmol.CustomShapeSpec,
+    viewer: $3Dmol.GLViewer
+): void {
+    if (!Array.isArray(mergedShapes.faceArr) || mergedShapes.faceArr.length === 0) {
+        return;
+    }
+    viewer.addCustom(mergedShapes);
+    if (Array.isArray(mergedShapes.vertexArr)) {
+        mergedShapes.vertexArr.length = 0;
+    }
+    if (Array.isArray(mergedShapes.normalArr)) {
+        mergedShapes.normalArr.length = 0;
+    }
+    if (Array.isArray(mergedShapes.faceArr)) {
+        mergedShapes.faceArr.length = 0;
+    }
+    if (Array.isArray(mergedShapes.color)) {
+        mergedShapes.color.length = 0;
+    }
+    // 3Dmol only supports one opacity per shape, so each flushed batch
+    // gets its own — clear it so the next batch can set a fresh value.
+    mergedShapes.opacity = undefined;
+}
+
 export function mergeShapes(
     mergedShapes: $3Dmol.CustomShapeSpec,
     shape: $3Dmol.CustomShapeSpec,
@@ -1148,18 +1218,7 @@ export function mergeShapes(
             mergedShapes.vertexArr.length + shape.vertexArr.length >=
             MAX_VERTICES_IN_SINGLE_SHAPE
         ) {
-            // adds to the viewer and resets the list
-            viewer.addCustom(mergedShapes);
-            mergedShapes.vertexArr.length = 0;
-            if (Array.isArray(mergedShapes.normalArr)) {
-                mergedShapes.normalArr.length = 0;
-            }
-            if (Array.isArray(mergedShapes.faceArr)) {
-                mergedShapes.faceArr.length = 0;
-            }
-            if (Array.isArray(mergedShapes.color)) {
-                mergedShapes.color.length = 0;
-            }
+            flushMergedShapes(mergedShapes, viewer);
         }
     }
     // Consolidates a list of shapes to add them all at once
@@ -1183,6 +1242,15 @@ export function mergeShapes(
     }
 }
 
+// 3Dmol custom shapes only carry one opacity per addCustom call, so when the
+// merged shape doesn't already have one we adopt the first transparent
+// contribution. Fully opaque shapes (alpha === 1) leave it untouched.
+function applyMergedOpacity(mergedShapes: $3Dmol.CustomShapeSpec, alpha: number): void {
+    if (alpha < 1 && mergedShapes.opacity === undefined) {
+        mergedShapes.opacity = alpha;
+    }
+}
+
 /** Render a shape of the given kind into a merged CustomShapeSpec */
 export function renderShape(
     kind: string,
@@ -1191,20 +1259,32 @@ export function renderShape(
     viewer: $3Dmol.GLViewer
 ): void {
     const color = data.color || 0xffffff;
+    const cleanColor = stripAlpha(color) as $3Dmol.ColorSpec;
     if (kind === 'sphere') {
         const s = new Sphere(data);
-        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+        applyMergedOpacity(mergedShapes, colorAlpha(color));
+        mergeShapes(mergedShapes, s.outputTo3Dmol(cleanColor), viewer);
     } else if (kind === 'ellipsoid') {
         const s = new Ellipsoid(data);
-        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+        applyMergedOpacity(mergedShapes, colorAlpha(color));
+        mergeShapes(mergedShapes, s.outputTo3Dmol(cleanColor), viewer);
     } else if (kind === 'cylinder') {
         const s = new Cylinder(data);
-        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+        applyMergedOpacity(mergedShapes, colorAlpha(color));
+        mergeShapes(mergedShapes, s.outputTo3Dmol(cleanColor), viewer);
     } else if (kind === 'arrow') {
         const s = new Arrow(data);
-        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+        applyMergedOpacity(mergedShapes, colorAlpha(color));
+        mergeShapes(mergedShapes, s.outputTo3Dmol(cleanColor), viewer);
     } else if (kind === 'cylinders') {
         const s = new Cylinders(data);
+        // Per-element alpha isn't supported by 3Dmol; average across the array
+        // so a mix of transparencies degrades gracefully into one opacity.
+        let alphaSum = 0;
+        for (let ci = 0; ci < s.colors.length; ci++) {
+            alphaSum += colorAlpha(s.colors[ci] || color);
+        }
+        applyMergedOpacity(mergedShapes, s.colors.length > 0 ? alphaSum / s.colors.length : 1);
         for (let ci = 0; ci < s.vectors.length; ci++) {
             const singleCyl = new Cylinder({
                 position: [
@@ -1216,10 +1296,16 @@ export function renderShape(
                 radius: s.radii[ci],
                 scale: 1.0,
             });
-            mergeShapes(mergedShapes, singleCyl.outputTo3Dmol(s.colors[ci] || color), viewer);
+            const elementColor = stripAlpha(s.colors[ci] || color) as $3Dmol.ColorSpec;
+            mergeShapes(mergedShapes, singleCyl.outputTo3Dmol(elementColor), viewer);
         }
     } else if (kind === 'spheres') {
         const s = new Spheres(data);
+        let alphaSum = 0;
+        for (let si = 0; si < s.colors.length; si++) {
+            alphaSum += colorAlpha(s.colors[si] || color);
+        }
+        applyMergedOpacity(mergedShapes, s.colors.length > 0 ? alphaSum / s.colors.length : 1);
         for (let si = 0; si < s.centers.length; si++) {
             const singleSph = new Sphere({
                 position: [
@@ -1230,11 +1316,13 @@ export function renderShape(
                 radius: s.radii[si],
                 scale: 1.0,
             });
-            mergeShapes(mergedShapes, singleSph.outputTo3Dmol(s.colors[si] || color), viewer);
+            const elementColor = stripAlpha(s.colors[si] || color) as $3Dmol.ColorSpec;
+            mergeShapes(mergedShapes, singleSph.outputTo3Dmol(elementColor), viewer);
         }
     } else {
         assert(kind === 'custom');
         const s = new CustomShape(data);
-        mergeShapes(mergedShapes, s.outputTo3Dmol(color), viewer);
+        applyMergedOpacity(mergedShapes, colorAlpha(color));
+        mergeShapes(mergedShapes, s.outputTo3Dmol(cleanColor), viewer);
     }
 }
