@@ -18,7 +18,7 @@ import {
 import { PositioningCallback, Warnings } from '../utils';
 import { Environment, Settings, Structure } from '../dataset';
 
-import { ShapeData, ShapeParameters, renderShape } from './shapes';
+import { ShapeData, ShapeParameters, flushMergedShapes, renderShape } from './shapes';
 
 import { ViewState, cameraToView, viewToCamera } from '../utils/camera';
 
@@ -1373,12 +1373,12 @@ export class MoleculeViewer {
                     }
                 }
             } // end shapesToRender loop
+
+            // Flush after each top-level shape so each gets its own opacity
+            // (3Dmol only honors one opacity per custom shape).
+            flushMergedShapes(mergedShapes, this._viewer);
         }
 
-        if (Array.isArray(mergedShapes.faceArr) && mergedShapes.faceArr.length > 0) {
-            // adds all shapes that have been merged
-            this._viewer.addCustom(mergedShapes);
-        }
         this._viewer.render();
     }
 

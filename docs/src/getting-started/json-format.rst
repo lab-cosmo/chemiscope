@@ -471,9 +471,35 @@ These apply to any shape kind:
      - Rotation quaternion (x, y, z, w); ignored for ``cylinder`` and ``arrow``
      - No
    * - ``color``
-     - string | hex
-     - Color (e.g., ``"red"`` or ``0xFF0000``)
+     - string | object
+     - Color, in one of these forms:
+
+       - a named CSS color, e.g. ``"red"`` (always opaque);
+       - a CSS hex string ``"#RRGGBB"`` (opaque) or ``"#RRGGBBAA"``
+         (with alpha in the last two hex digits);
+       - an object ``{"r": ..., "g": ..., "b": ..., "a": ...}`` with
+         ``r``, ``g``, ``b`` in ``[0, 1]`` and an optional ``a`` in
+         ``[0, 1]``.
      - No
+
+.. note::
+
+   Shape transparency is supported through the optional alpha component of
+   the ``color`` field — either as the last two hex digits of a
+   ``"#RRGGBBAA"`` string (e.g. ``"#FF663380"`` for orange at ~50% opacity)
+   or as the ``a`` field of the object form (e.g.
+   ``{"r": 1.0, "g": 0.4, "b": 0.2, "a": 0.5}``). Named colors and 6-digit
+   ``"#RRGGBB"`` strings are always opaque.
+
+   The underlying 3D viewer (3Dmol.js) supports only a single opacity per
+   custom shape, so when two **overlapping** transparent shapes are displayed
+   together they share a single depth layer and the shape drawn second is
+   occluded in the overlap region (see
+   `3Dmol.js issue #224 <https://github.com/3dmol/3Dmol.js/issues/224>`_).
+   For clean visuals, prefer non-overlapping transparent shapes. For
+   ``cylinders`` and ``spheres`` shape groups (which carry a ``colors``
+   array), per-element alphas are averaged to a single opacity for the whole
+   group.
 
 Kind-specific parameters
 ++++++++++++++++++++++++
