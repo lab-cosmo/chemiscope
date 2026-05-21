@@ -169,7 +169,7 @@ sharp_cubes = dict(
             {"position": [12, 14, 12], "color": 0xFF0000},
             {
                 "position": [15, 14, 12],
-                "color": 0x00FF00,
+                "color": "#10FF00B0", # #RRGGBBAA for transparency
                 "orientation": [0.5, -0.5, 0, 1 / np.sqrt(2)],
             },
         ],
