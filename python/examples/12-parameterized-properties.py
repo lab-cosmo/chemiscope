@@ -33,8 +33,7 @@ rmax = 3.5
 nbins = 50
 rdf_values = []
 for structure in structures:
-    ana = Analysis(structure)
-    rdf = ana.get_rdf(rmax=rmax, nbins=nbins, return_dists=False)[0]
+    rdf = get_rdf(structure, rmax=rmax, nbins=nbins, no_dists=True)
     rdf_values.append(rdf)
 
 # The r grid corresponding to the RDF bins
