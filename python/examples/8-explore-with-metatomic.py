@@ -118,14 +118,12 @@ class FeatureModel(torch.nn.Module):
 
         for name, output in outputs.items():
             # feature variant 1: moments + PCA
-            if name == "features":
-                results["features"] = self._compute_moment_features(systems, output)
+            if name == "feature":
+                results["feature"] = self._compute_moment_features(systems, output)
 
             # feature variant 2: cos/sin features of positions
-            elif name == "features/cos_sin":
-                results["features/cos_sin"] = self._compute_cos_features(
-                    systems, output
-                )
+            elif name == "feature/cos_sin":
+                results["feature/cos_sin"] = self._compute_cos_features(systems, output)
 
             else:
                 raise ValueError(f"Unknown output '{name}' requested")
@@ -135,9 +133,9 @@ class FeatureModel(torch.nn.Module):
     def _compute_moment_features(
         self, systems: List[System], output: ModelOutput
     ) -> TensorMap:
-        if not output.per_atom:
+        if output.sample_kind != "atom":
             raise NotImplementedError(
-                "per structure features are not implemented for variant 'features'"
+                "per structure features are not implemented for variant 'feature'"
             )
 
         all_features = []
@@ -207,12 +205,12 @@ class FeatureModel(torch.nn.Module):
             features[:, 0] = torch.cos(features[:, 0])
             features[:, 1] = torch.sin(features[:, 1])
 
-            if not output.per_atom:
+            if output.sample_kind != "atom":
                 features = features.sum(dim=0, keepdim=True)
 
             all_features.append(features)
 
-        if output.per_atom:
+        if output.sample_kind == "atom":
             samples_list: List[List[int]] = []
             for s, system in enumerate(systems):
                 for a in range(len(system)):
@@ -266,11 +264,11 @@ metadata = ModelMetadata(
 
 capabilities = ModelCapabilities(
     outputs={
-        "features": ModelOutput(
-            per_atom=True, description="PCA of neighbor distance moments"
+        "feature": ModelOutput(
+            sample_kind="atom", description="PCA of neighbor distance moments"
         ),
-        "features/cos_sin": ModelOutput(
-            per_atom=True, description="Cosine and sin of atomic position norms"
+        "feature/cos_sin": ModelOutput(
+            sample_kind="atom", description="Cosine and sin of atomic position norms"
         ),
     },
     atomic_types=[6],
@@ -312,11 +310,11 @@ mta_model.save("model-exported.pt")
 # --------------------------
 #
 # The model we defined provides several feature outputs (variants). By default,
-# ``metatomic_featurizer`` uses the main ``"features"`` output. To use a different
+# ``metatomic_featurizer`` uses the main ``"feature"`` output. To use a different
 # variant, simply pass the desired variant name with the ``variant`` argument when
 # creating the featurizer.
 #
-# For example, to use the ``"features/cos_sin"`` variant:
+# For example, to use the ``"feature/cos_sin"`` variant:
 
 cos_sin_featurizer = chemiscope.metatomic_featurizer(
     mta_model, variant="cos_sin", check_consistency=True

@@ -11,7 +11,7 @@ vesin_metatomic = None
 class metatomic_featurizer:
     """
     Create a featurizer function using a `metatomic`_ model to obtain the features from
-    structures. The model must be able to create a ``"features"`` output.
+    structures. The model must be able to create a ``"feature"`` output.
 
     :param model: model to use for the calculation. It can be a file path, a Python
         instance of :py:class:`metatomic.torch.AtomisticModel`, or the output of
@@ -23,9 +23,9 @@ class metatomic_featurizer:
         will use the options in model's ``supported_device`` attribute.
     :param length_unit: Unit of length used in the structures.
     :param variant: selects which feature output variant to use. By default, the main
-        ``"features"`` output is used. To choose another variant, provide its name
+        ``"feature"`` output is used. To choose another variant, provide its name
         (e.g., ``"cos_sin"``), which will select the corresponding
-        ``"features/<variant>"`` output.
+        ``"feature/<variant>"`` output.
 
     :returns: a function that takes a list of structures and returns the features.
 
@@ -99,7 +99,7 @@ class metatomic_featurizer:
         capabilities = self.model.capabilities()
 
         self.feature_output_name = mta.pick_output(
-            "features", capabilities.outputs, variant
+            "feature", capabilities.outputs, variant
         )
 
         if capabilities.dtype == "float32":
@@ -122,7 +122,7 @@ class metatomic_featurizer:
 
         if environments is not None:
             capabilities = self.model.capabilities()
-            if not capabilities.outputs[self.feature_output_name].per_atom:
+            if capabilities.outputs[self.feature_output_name].sample_kind != "atom":
                 raise ValueError(
                     (
                         "this model does not support per-atom features calculation for "
@@ -143,7 +143,7 @@ class metatomic_featurizer:
             length_unit=self.length_unit,
             outputs={
                 self.feature_output_name: mta.ModelOutput(
-                    per_atom=environments is not None
+                    sample_kind="atom" if environments is not None else "system"
                 )
             },
             selected_atoms=selected_atoms,

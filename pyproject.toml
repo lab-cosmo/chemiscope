@@ -76,7 +76,7 @@ docstring-code-format = true
 [project.optional-dependencies]
 explore = [
     "pet_mad>=1.4,<2.0",
-    "metatomic-torch >=0.1.0,<0.2",
+    "metatomic-torch >=0.1.12,<0.2",
     "vesin >=0.3.5,<0.6",
 ]
 streamlit = ["streamlit>=1.25"]
