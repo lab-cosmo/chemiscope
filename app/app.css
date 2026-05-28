@@ -51,12 +51,13 @@ header {
 
 #loading {
     font-size: 6em;
-    margin: auto;
     text-align: center;
     color: grey;
-    position: absolute;
+    position: fixed;
     z-index: 100000;
+    top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 main.container-fluid {
