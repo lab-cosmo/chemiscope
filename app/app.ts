@@ -9,7 +9,7 @@ import { version, DefaultVisualizer, Settings } from '../src/index';
 
 import { inflate } from 'pako';
 
-import { StreamingProgress, loadDatasetStreaming, parseJsonWithNaN } from './streaming';
+import { StreamingDataset, StreamingProgress, parseJsonWithNaN } from './streaming';
 
 // load CSS for the app
 import './app.css';
@@ -30,7 +30,7 @@ export class ChemiscopeApp {
     /// CSS style sheet to hide the setting in loading panel about on-demand
     /// loading
     private hideOnDemandStructures: HTMLStyleElement;
-    /// release callback for the IndexedDB store of the previously streamed dataset
+    /// release callback for the previously streamed dataset's store
     private streamingRelease?: () => Promise<void>;
     public warnings: Warnings = new Warnings();
 
@@ -78,6 +78,14 @@ export class ChemiscopeApp {
         document.head.appendChild(this.hideOnDemandStructures);
         this.hideOnDemandStructures.sheet!.insertRule('.hide-on-demand-structures {display: none}');
         this.hideOnDemandStructures.sheet!.disabled = false;
+
+        // drop the streaming store when the tab is going away
+        window.addEventListener('pagehide', (event) => {
+            if (event.persisted || this.streamingRelease === undefined) {
+                return;
+            }
+            void this.streamingRelease().catch(() => {});
+        });
     }
 
     /**
@@ -112,6 +120,7 @@ export class ChemiscopeApp {
      * Optionally specify the configuration in `config`
      */
     public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
+        await this.releasePreviousStream();
         startLoading();
         this.dataset = url;
 
@@ -125,28 +134,43 @@ export class ChemiscopeApp {
         await this.load(config as Configuration, dataset);
     }
 
-    /** Load a large dataset via {@link loadDatasetStreaming} */
-    public async loadStreaming(file: File): Promise<void> {
-        // drop the previous streamed dataset's store before opening a new one
+    // drop the previous streamed dataset's store, if any
+    private async releasePreviousStream(): Promise<void> {
         if (this.streamingRelease !== undefined) {
             await this.streamingRelease().catch(() => {});
             this.streamingRelease = undefined;
         }
+    }
 
-        const { dataset, loadStructure, release } = await loadDatasetStreaming(
+    public async loadStreaming(file: File): Promise<void> {
+        await this.releasePreviousStream();
+
+        const { dataset, loadStructure, release } = await loadDatasetViaWorker(
             file,
             (progress: StreamingProgress) => {
                 const percent =
                     progress.bytesTotal > 0
                         ? ` (${((100 * progress.bytesRead) / progress.bytesTotal).toFixed(0)}%)`
                         : '';
-                setLoadingProgress(
-                    `loaded ${progress.structures.toLocaleString()} structures${percent}`
-                );
+
+                let message: string;
+                if (progress.phase === 'structures') {
+                    message = `loaded ${progress.structures.toLocaleString()} structures${percent}`;
+                } else if (progress.phase === 'flushing') {
+                    message = 'finalizing structure data…';
+                } else if (progress.phase === 'properties') {
+                    message = 'parsing properties…';
+                } else if (progress.phase === 'environments') {
+                    message = 'parsing environments…';
+                } else if (progress.phase === 'preparing') {
+                    message = 'preparing visualization…';
+                } else {
+                    message = 'finalizing dataset…';
+                }
+                setLoadingProgress(message);
             }
         );
         this.streamingRelease = release;
-
         await this.load({ loadStructure }, dataset);
     }
 
@@ -225,10 +249,11 @@ export class ChemiscopeApp {
         loadDataset.onchange = () => {
             const file = loadDataset.files![0];
 
+            const isGzipped = file.name.endsWith('.gz');
             const sizeMB = file.size / (1024 * 1024);
             const canStream =
                 typeof indexedDB !== 'undefined' &&
-                (!file.name.endsWith('.gz') || typeof DecompressionStream !== 'undefined');
+                (!isGzipped || typeof DecompressionStream !== 'undefined');
             const useStreaming = sizeMB >= STREAMING_THRESHOLD_MB && canStream;
 
             if (sizeMB > 200 && !useStreaming) {
@@ -265,8 +290,8 @@ export class ChemiscopeApp {
             if (useStreaming) {
                 this.loadStreaming(file).catch(onError).finally(finish);
             } else {
-                const isGzipped = file.name.endsWith('.gz');
-                readJSONFromFile(file, isGzipped)
+                this.releasePreviousStream()
+                    .then(() => readJSONFromFile(file, isGzipped))
                     .then((dataset) => this.load({}, dataset))
                     .catch(onError)
                     .finally(finish);
@@ -470,4 +495,91 @@ function startDownload(filename: string, content: string): void {
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
     }, 2000);
+}
+
+type PendingRead = { resolve: (s: Structure) => void; reject: (e: Error) => void };
+
+function loadDatasetViaWorker(
+    file: File,
+    onProgress?: (progress: StreamingProgress) => void
+): Promise<StreamingDataset> {
+    // @ts-ignore
+    const worker = new Worker(new URL('./streaming.worker.ts', import.meta.url));
+
+    let nextRequestId = 0;
+    const pendingReads = new Map<number, PendingRead>();
+
+    let resolveReady!: (d: StreamingDataset) => void;
+    let rejectReady!: (e: Error) => void;
+    let resolveRelease: (() => void) | undefined;
+
+    const ready = new Promise<StreamingDataset>((res, rej) => {
+        resolveReady = res;
+        rejectReady = rej;
+    });
+
+    worker.onmessage = (event: MessageEvent) => {
+        const msg = event.data as
+            | { type: 'progress'; progress: StreamingProgress }
+            | { type: 'done'; dataset: Dataset }
+            | { type: 'structure'; requestId: number; structure: Structure }
+            | { type: 'structureError'; requestId: number; message: string }
+            | { type: 'released' }
+            | { type: 'error'; message: string };
+
+        if (msg.type === 'progress') {
+            onProgress?.(msg.progress);
+        } else if (msg.type === 'done') {
+            resolveReady({
+                dataset: msg.dataset,
+                loadStructure: (index: number) => {
+                    const requestId = nextRequestId++;
+                    return new Promise<Structure>((res, rej) => {
+                        pendingReads.set(requestId, { resolve: res, reject: rej });
+                        worker.postMessage({ type: 'loadStructure', index, requestId });
+                    });
+                },
+                release: () =>
+                    new Promise<void>((res) => {
+                        resolveRelease = () => {
+                            worker.terminate();
+                            res();
+                        };
+                        worker.postMessage({ type: 'release' });
+                    }),
+            });
+        } else if (msg.type === 'structure') {
+            const pending = pendingReads.get(msg.requestId);
+            if (pending !== undefined) {
+                pendingReads.delete(msg.requestId);
+                pending.resolve(msg.structure);
+            }
+        } else if (msg.type === 'structureError') {
+            const pending = pendingReads.get(msg.requestId);
+            if (pending !== undefined) {
+                pendingReads.delete(msg.requestId);
+                pending.reject(new Error(msg.message));
+            }
+        } else if (msg.type === 'released') {
+            resolveRelease?.();
+        } else if (msg.type === 'error') {
+            shutDown(new Error(msg.message));
+        }
+    };
+
+    worker.onerror = (event) => {
+        shutDown(new Error(event.message || 'streaming worker crashed'));
+    };
+
+    function shutDown(error: Error): void {
+        rejectReady(error);
+        for (const pending of pendingReads.values()) {
+            pending.reject(error);
+        }
+        pendingReads.clear();
+        worker.terminate();
+    }
+
+    worker.postMessage({ type: 'load', file });
+    return ready;
 }
