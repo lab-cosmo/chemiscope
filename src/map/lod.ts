@@ -16,6 +16,9 @@ import { CameraState, projectPoints } from '../utils/camera';
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
  * @param aspectRatio Width/height ratio of plot area
+ * @param priorityMask Optional boolean mask: ids with mask[id] === true win their
+ *                     bin over ids with mask[id] === false (used to prefer
+ *                     foreground points when a selection filter is active).
  * @returns Array of indices to display
  */
 export function computeScreenSpaceLOD(
@@ -25,7 +28,8 @@ export function computeScreenSpaceLOD(
     camera: CameraState,
     bounds?: Bounds,
     maxPoints: number = 50000,
-    aspectRatio: number = 1.0
+    aspectRatio: number = 1.0,
+    priorityMask?: boolean[]
 ): number[] {
     if (bounds === undefined) {
         const xRange = arrayMaxMin(xValues);
@@ -83,7 +87,11 @@ export function computeScreenSpaceLOD(
         }
 
         const idx = ui + vi * binsX;
-        const h = Math.imul(id, 2654435761) >>> 0;
+        // Foreground ids (priorityMask[id] === true) get the high bit cleared,
+        // background ids get it set, so any foreground id always beats any
+        // background id competing for the same bin.
+        const baseH = Math.imul(id, 2654435761) >>> 1;
+        const h = priorityMask && !priorityMask[id] ? baseH | 0x80000000 : baseH;
         if (h < bestHash[idx]) {
             bestHash[idx] = h;
             grid[idx] = id;
@@ -109,6 +117,9 @@ export function computeScreenSpaceLOD(
  * @param zValues Array of Z coordinates (or null for 2D)
  * @param bounds Optional boundaries to clip the data
  * @param maxPoints Maximum number of points to display
+ * @param priorityMask Optional boolean mask: ids with mask[id] === true win their
+ *                     bin over ids with mask[id] === false (used to prefer
+ *                     foreground points when a selection filter is active).
  * @returns Array of indices to display
  */
 export function computeLODIndices(
@@ -116,7 +127,8 @@ export function computeLODIndices(
     yValues: number[],
     zValues: number[] | null,
     bounds?: Bounds,
-    maxPoints: number = 50000
+    maxPoints: number = 50000,
+    priorityMask?: boolean[]
 ): number[] {
     const is3D = zValues !== null;
 
@@ -206,7 +218,11 @@ export function computeLODIndices(
             idx += zi * bins * bins;
         }
 
-        const h = Math.imul(id, 2654435761) >>> 0;
+        // Foreground ids (priorityMask[id] === true) get the high bit cleared,
+        // background ids get it set, so any foreground id always beats any
+        // background id competing for the same bin.
+        const baseH = Math.imul(id, 2654435761) >>> 1;
+        const h = priorityMask && !priorityMask[id] ? baseH | 0x80000000 : baseH;
         if (h < bestHash[idx]) {
             bestHash[idx] = h;
             grid[idx] = id;

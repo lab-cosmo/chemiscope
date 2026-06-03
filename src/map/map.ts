@@ -1082,7 +1082,10 @@ export class PropertiesMap {
         });
 
         // ======= selection
+        // Selection changes alter the foreground/background split, which feeds
+        // into LOD prioritization, so recompute LOD before restyling.
         const updateColors = () => {
+            this._computeLOD();
             this._restyleFull();
         };
 
@@ -2286,6 +2289,28 @@ export class PropertiesMap {
         const is3D = this._is3D() && zProp !== '';
         const zValues = is3D ? this._property(zProp).values : null;
 
+        // When a selection filter is active, prefer foreground points: pass the
+        // mask as a priority signal to the LOD functions. If hide mode is on
+        // and the foreground subset fits under the threshold, skip LOD entirely
+        // for that subset so every foreground point is shown.
+        const selectMode = this._options.color.select.mode.value;
+        let priorityMask: boolean[] | undefined;
+        if (selectMode !== 'all') {
+            priorityMask = this._getSelectionMask();
+            if (selectMode.endsWith('hide')) {
+                const foreground: number[] = [];
+                for (let i = 0; i < priorityMask.length; i++) {
+                    if (priorityMask[i]) {
+                        foreground.push(i);
+                    }
+                }
+                if (foreground.length <= PropertiesMap.LOD_THRESHOLD) {
+                    this._lodIndices = foreground;
+                    return;
+                }
+            }
+        }
+
         const lodSet = new Set<number>();
 
         // Coarse pass
@@ -2297,7 +2322,8 @@ export class PropertiesMap {
             yValues,
             zValues,
             undefined,
-            PropertiesMap.LOD_THRESHOLD / 10
+            PropertiesMap.LOD_THRESHOLD / 10,
+            priorityMask
         );
 
         for (const id of lodIndices) {
@@ -2315,9 +2341,17 @@ export class PropertiesMap {
                       this._options.camera.value,
                       bounds,
                       PropertiesMap.LOD_THRESHOLD / 2,
-                      this._plot.clientWidth / this._plot.clientHeight || 1.0
+                      this._plot.clientWidth / this._plot.clientHeight || 1.0,
+                      priorityMask
                   )
-                : computeLODIndices(xValues, yValues, zValues, bounds, PropertiesMap.LOD_THRESHOLD);
+                : computeLODIndices(
+                      xValues,
+                      yValues,
+                      zValues,
+                      bounds,
+                      PropertiesMap.LOD_THRESHOLD,
+                      priorityMask
+                  );
 
         for (const id of fineIndices) {
             lodSet.add(id);
