@@ -89,9 +89,11 @@ export function computeScreenSpaceLOD(
         const idx = ui + vi * binsX;
         // Foreground ids (priorityMask[id] === true) get the high bit cleared,
         // background ids get it set, so any foreground id always beats any
-        // background id competing for the same bin.
+        // background id competing for the same bin. The `>>> 0` keeps the
+        // result an unsigned 32-bit value so it compares correctly against
+        // bestHash, which is read from a Uint32Array.
         const baseH = Math.imul(id, 2654435761) >>> 1;
-        const h = priorityMask && !priorityMask[id] ? baseH | 0x80000000 : baseH;
+        const h = priorityMask && !priorityMask[id] ? (baseH | 0x80000000) >>> 0 : baseH;
         if (h < bestHash[idx]) {
             bestHash[idx] = h;
             grid[idx] = id;
@@ -220,9 +222,11 @@ export function computeLODIndices(
 
         // Foreground ids (priorityMask[id] === true) get the high bit cleared,
         // background ids get it set, so any foreground id always beats any
-        // background id competing for the same bin.
+        // background id competing for the same bin. The `>>> 0` keeps the
+        // result an unsigned 32-bit value so it compares correctly against
+        // bestHash, which is read from a Uint32Array.
         const baseH = Math.imul(id, 2654435761) >>> 1;
-        const h = priorityMask && !priorityMask[id] ? baseH | 0x80000000 : baseH;
+        const h = priorityMask && !priorityMask[id] ? (baseH | 0x80000000) >>> 0 : baseH;
         if (h < bestHash[idx]) {
             bestHash[idx] = h;
             grid[idx] = id;
