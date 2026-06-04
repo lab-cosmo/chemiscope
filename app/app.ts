@@ -4,12 +4,12 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { Warnings, getByID } from '../src/utils';
-import { Dataset, Structure } from '../src/dataset';
+import { Dataset } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
 
 import { inflate } from 'pako';
 
-import { StreamingDataset, StreamingProgress, parseJsonWithNaN } from './streaming';
+import { StreamingProgress, loadDatasetStreaming, parseJsonWithNaN } from './streaming';
 
 // load CSS for the app
 import './app.css';
@@ -145,7 +145,7 @@ export class ChemiscopeApp {
     public async loadStreaming(file: File): Promise<void> {
         await this.releasePreviousStream();
 
-        const { dataset, loadStructure, release } = await loadDatasetViaWorker(
+        const { dataset, loadStructure, release } = await loadDatasetStreaming(
             file,
             (progress: StreamingProgress) => {
                 const percent =
@@ -495,91 +495,4 @@ function startDownload(filename: string, content: string): void {
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
     }, 2000);
-}
-
-type PendingRead = { resolve: (s: Structure) => void; reject: (e: Error) => void };
-
-function loadDatasetViaWorker(
-    file: File,
-    onProgress?: (progress: StreamingProgress) => void
-): Promise<StreamingDataset> {
-    // @ts-ignore
-    const worker = new Worker(new URL('./streaming.worker.ts', import.meta.url));
-
-    let nextRequestId = 0;
-    const pendingReads = new Map<number, PendingRead>();
-
-    let resolveReady!: (d: StreamingDataset) => void;
-    let rejectReady!: (e: Error) => void;
-    let resolveRelease: (() => void) | undefined;
-
-    const ready = new Promise<StreamingDataset>((res, rej) => {
-        resolveReady = res;
-        rejectReady = rej;
-    });
-
-    worker.onmessage = (event: MessageEvent) => {
-        const msg = event.data as
-            | { type: 'progress'; progress: StreamingProgress }
-            | { type: 'done'; dataset: Dataset }
-            | { type: 'structure'; requestId: number; structure: Structure }
-            | { type: 'structureError'; requestId: number; message: string }
-            | { type: 'released' }
-            | { type: 'error'; message: string };
-
-        if (msg.type === 'progress') {
-            onProgress?.(msg.progress);
-        } else if (msg.type === 'done') {
-            resolveReady({
-                dataset: msg.dataset,
-                loadStructure: (index: number) => {
-                    const requestId = nextRequestId++;
-                    return new Promise<Structure>((res, rej) => {
-                        pendingReads.set(requestId, { resolve: res, reject: rej });
-                        worker.postMessage({ type: 'loadStructure', index, requestId });
-                    });
-                },
-                release: () =>
-                    new Promise<void>((res) => {
-                        resolveRelease = () => {
-                            worker.terminate();
-                            res();
-                        };
-                        worker.postMessage({ type: 'release' });
-                    }),
-            });
-        } else if (msg.type === 'structure') {
-            const pending = pendingReads.get(msg.requestId);
-            if (pending !== undefined) {
-                pendingReads.delete(msg.requestId);
-                pending.resolve(msg.structure);
-            }
-        } else if (msg.type === 'structureError') {
-            const pending = pendingReads.get(msg.requestId);
-            if (pending !== undefined) {
-                pendingReads.delete(msg.requestId);
-                pending.reject(new Error(msg.message));
-            }
-        } else if (msg.type === 'released') {
-            resolveRelease?.();
-        } else if (msg.type === 'error') {
-            shutDown(new Error(msg.message));
-        }
-    };
-
-    worker.onerror = (event) => {
-        shutDown(new Error(event.message || 'streaming worker crashed'));
-    };
-
-    function shutDown(error: Error): void {
-        rejectReady(error);
-        for (const pending of pendingReads.values()) {
-            pending.reject(error);
-        }
-        pendingReads.clear();
-        worker.terminate();
-    }
-
-    worker.postMessage({ type: 'load', file });
-    return ready;
 }
