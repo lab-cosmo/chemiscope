@@ -67,6 +67,12 @@ You can get the source from the
 If you find it useful, we would appreciate a citation to the chemiscope
 `paper`_:
 
+S. Chorna, J. Lála, Q. Xu, R. K. Cersonsky, G. Fraux, M. Ceriotti, *Chemiscope
+1.0: interactive exploration of atomistic data from analysis to dissemination.*
+**Journal of Open Source Software** 11 (122), 10380 (2026)
+
+The original chemiscope paper may also be cited:
+
 G. Fraux, R. K. Cersonsky, M. Ceriotti, *Chemiscope: Interactive
 Structure-Property Explorer for Materials and Molecules.* **Journal of Open
 Source Software** 5 (51), 2117 (2020)
@@ -89,5 +95,5 @@ What's in this documentation?
 
 
 .. _chemiscope: https://chemiscope.org
-.. _paper: https://doi.org/10.21105/joss.02117
+.. _paper: https://doi.org/10.21105/joss.10380
 .. _Qm7b: https://doi.org/10.1088/1367-2630/15/9/095003
