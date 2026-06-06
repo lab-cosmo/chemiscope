@@ -1,3 +1,36 @@
+/**
+ * Streaming dataset loader for the web app.
+ *
+ * Loading a large dataset by reading the whole file into a string and calling
+ * `JSON.parse` can exhaust memory or exceed the engine's max string length. This
+ * module instead reads the file as a byte stream (transparently gunzipping
+ * `.gz` files) and tokenizes the JSON incrementally with a small hand-written
+ * parser, so the full text never needs to live in memory at once.
+ *
+ * The bulk of a dataset is its `structures` array. As each structure object is
+ * parsed, its raw JSON text is written (in batches) to an IndexedDB store, and
+ * only a lightweight `UserStructure` placeholder ({ size, data: index }) is kept
+ * in memory. This keeps the resident set small even for files larger than RAM.
+ * Smaller sections (`properties`, `environments`, metadata) are parsed normally.
+ *
+ * The returned `loadStructure(index)` callback lazily reads a structure back
+ * from IndexedDB and parses it on demand (chemiscope only materializes a
+ * structure when it is actually displayed). `release()` drops the IndexedDB
+ * store; only one streamed dataset is kept alive per page (see `activeRelease`),
+ * and the store is also released on `pagehide` and when a new dataset loads.
+ *
+ * Usage from the app:
+ *   if (shouldUseStreaming(file)) {
+ *       const { dataset, loadStructure } = await loadDatasetStreaming(file, (p) =>
+ *           setLoadingProgress(progressMessage(p))
+ *       );
+ *       await visualizer.load({ loadStructure }, dataset);
+ *   }
+ *
+ * `parseJsonWithNaN` is also exported and reused by the app's non-streaming path
+ * to accept the non-standard bare `NaN` tokens that Python's json module emits.
+ */
+
 import type { Dataset, Environment, Property, Structure, UserStructure } from '../src/dataset';
 
 // how many structures go into a single store record
