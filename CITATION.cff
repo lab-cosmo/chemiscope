@@ -1,0 +1,60 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article in preferred-citation."
+title: "Chemiscope: interactive structure-property explorer for materials and molecules"
+type: software
+authors:
+  - given-names: Sofiia
+    family-names: Chorna
+    orcid: "https://orcid.org/0009-0008-7426-0856"
+  - given-names: Jakub
+    family-names: Lála
+    orcid: "https://orcid.org/0000-0002-5424-5260"
+  - given-names: Qianjun
+    family-names: Xu
+    orcid: "https://orcid.org/0000-0003-0778-7208"
+  - given-names: Rose K.
+    family-names: Cersonsky
+    orcid: "https://orcid.org/0000-0003-4515-3441"
+  - given-names: Guillaume
+    family-names: Fraux
+    orcid: "https://orcid.org/0000-0003-4824-6512"
+  - given-names: Michele
+    family-names: Ceriotti
+    orcid: "https://orcid.org/0000-0003-2571-2832"
+version: 1.0.4
+date-released: "2026-06-02"
+license: BSD-3-Clause
+repository-code: "https://github.com/lab-cosmo/chemiscope"
+url: "https://chemiscope.org"
+preferred-citation:
+  type: article
+  title: "Chemiscope 1.0: interactive exploration of atomistic data from analysis to dissemination"
+  authors:
+    - given-names: Sofiia
+      family-names: Chorna
+      orcid: "https://orcid.org/0009-0008-7426-0856"
+    - given-names: Jakub
+      family-names: Lála
+      orcid: "https://orcid.org/0000-0002-5424-5260"
+    - given-names: Qianjun
+      family-names: Xu
+      orcid: "https://orcid.org/0000-0003-0778-7208"
+    - given-names: Rose K.
+      family-names: Cersonsky
+      orcid: "https://orcid.org/0000-0003-4515-3441"
+    - given-names: Guillaume
+      family-names: Fraux
+      orcid: "https://orcid.org/0000-0003-4824-6512"
+    - given-names: Michele
+      family-names: Ceriotti
+      orcid: "https://orcid.org/0000-0003-2571-2832"
+  doi: "10.21105/joss.10380"
+  url: "https://doi.org/10.21105/joss.10380"
+  journal: "Journal of Open Source Software"
+  publisher:
+    name: "The Open Journal"
+  year: 2026
+  month: 6
+  volume: 11
+  issue: 122
+  start: 10380
