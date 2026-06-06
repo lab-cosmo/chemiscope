@@ -21,13 +21,91 @@ export interface StreamingProgress {
     bytesRead: number;
     bytesTotal: number;
     structures: number;
-    phase:
-        | 'structures'
-        | 'flushing'
-        | 'properties'
-        | 'environments'
-        | 'finalizing'
-        | 'preparing';
+    phase: 'structures' | 'flushing' | 'properties' | 'environments' | 'finalizing' | 'preparing';
+}
+
+// files at/above this size (MB) stream; smaller ones load fully in memory
+const STREAMING_THRESHOLD_MB = 75;
+
+/** Whether a file should be loaded through the streaming path. */
+export function shouldUseStreaming(file: File): boolean {
+    const isGzipped = file.name.endsWith('.gz');
+    const sizeMB = file.size / (1024 * 1024);
+    const canStream =
+        typeof indexedDB !== 'undefined' &&
+        (!isGzipped || typeof DecompressionStream !== 'undefined');
+    return sizeMB >= STREAMING_THRESHOLD_MB && canStream;
+}
+
+/** Human-readable loading message for a streaming progress update. */
+export function progressMessage(progress: StreamingProgress): string {
+    const percent =
+        progress.bytesTotal > 0
+            ? ` (${((100 * progress.bytesRead) / progress.bytesTotal).toFixed(0)}%)`
+            : '';
+
+    switch (progress.phase) {
+        case 'structures':
+            return `loaded ${progress.structures.toLocaleString()} structures${percent}`;
+        case 'flushing':
+            return 'finalizing structure data…';
+        case 'properties':
+            return 'parsing properties…';
+        case 'environments':
+            return 'parsing environments…';
+        case 'preparing':
+            return 'preparing visualization…';
+        default:
+            return 'finalizing dataset…';
+    }
+}
+
+// Only one streamed dataset is kept alive per page; its store is released when a
+// new dataset is loaded or when the tab goes away.
+let activeRelease: (() => Promise<void>) | undefined;
+let pagehideRegistered = false;
+
+/** Release the currently-active streamed dataset's store, if any. */
+export async function releaseActiveStream(): Promise<void> {
+    if (activeRelease !== undefined) {
+        const release = activeRelease;
+        activeRelease = undefined;
+        await release().catch(() => {});
+    }
+}
+
+// drop the streaming store when the tab is going away
+function registerPagehideOnce(): void {
+    if (pagehideRegistered || typeof window === 'undefined') {
+        return;
+    }
+    pagehideRegistered = true;
+    window.addEventListener('pagehide', (event) => {
+        if (event.persisted || activeRelease === undefined) {
+            return;
+        }
+        void activeRelease().catch(() => {});
+    });
+}
+
+/**
+ * Given `buf[openQuoteIndex] === '"'`, return the index just past the matching
+ * closing quote, honoring backslash escapes; -1 if the string is unterminated.
+ * One-shot only: operates on a complete in-memory string, not across streamed chunks.
+ */
+function endOfString(buf: string, openQuoteIndex: number): number {
+    let escape = false;
+    for (let i = openQuoteIndex + 1; i < buf.length; i++) {
+        const c = buf[i];
+        if (escape) {
+            escape = false;
+        } else if (c === '\\') {
+            escape = true;
+        } else if (c === '"') {
+            return i + 1;
+        }
+    }
+    return -1;
 }
 
 export function parseJsonWithNaN(text: string): unknown {
@@ -37,22 +115,12 @@ export function parseJsonWithNaN(text: string): unknown {
 
     let out = '';
     let chunkStart = 0;
-    let inString = false;
-    let escape = false;
     for (let i = 0; i < text.length; i++) {
         const c = text[i];
-        if (inString) {
-            if (escape) {
-                escape = false;
-            } else if (c === '\\') {
-                escape = true;
-            } else if (c === '"') {
-                inString = false;
-            }
-            continue;
-        }
         if (c === '"') {
-            inString = true;
+            // skip the whole string token so a literal "NaN" inside it is untouched
+            const end = endOfString(text, i);
+            i = (end < 0 ? text.length : end) - 1;
             continue;
         }
         if (c === 'N' && text[i + 1] === 'a' && text[i + 2] === 'N') {
@@ -105,26 +173,17 @@ function makeDepthScanner(): (buf: string, from: number) => number {
 }
 
 function extractSize(raw: string, index: number): number {
-    let inString = false;
-    let escape = false;
-
     for (let i = 0; i < raw.length; i++) {
-        const c = raw[i];
-        if (inString) {
-            if (escape) {
-                escape = false;
-            } else if (c === '\\') {
-                escape = true;
-            } else if (c === '"') {
-                inString = false;
-            }
+        if (raw[i] !== '"') {
             continue;
         }
-        if (c !== '"') {
-            continue;
-        }
+        // skip any string that is not the "size" key
         if (!raw.startsWith('"size"', i)) {
-            inString = true;
+            const end = endOfString(raw, i);
+            if (end < 0) {
+                break;
+            }
+            i = end - 1;
             continue;
         }
 
@@ -133,8 +192,12 @@ function extractSize(raw: string, index: number): number {
             j++;
         }
         if (raw[j] !== ':') {
-            // a string value that happens to be "size" — skip it
-            i += 5;
+            // a string value that happens to be "size" — skip past it
+            const end = endOfString(raw, i);
+            if (end < 0) {
+                break;
+            }
+            i = end - 1;
             continue;
         }
         j++;
@@ -373,6 +436,9 @@ export async function loadDatasetStreaming(
     file: File,
     onProgress?: (progress: StreamingProgress) => void
 ): Promise<StreamingDataset> {
+    registerPagehideOnce();
+    await releaseActiveStream();
+
     const isGzipped = file.name.endsWith('.gz');
     if (isGzipped && typeof DecompressionStream === 'undefined') {
         throw new Error(
@@ -428,7 +494,14 @@ export async function loadDatasetStreaming(
         phase = next;
         reportProgress(true);
 
-        await new Promise<void>((resolve) => setTimeout(resolve, 32));
+        // yield once so the new phase label can paint before heavy synchronous work
+        await new Promise<void>((resolve) => {
+            if (typeof requestAnimationFrame !== 'undefined') {
+                requestAnimationFrame(() => resolve());
+            } else {
+                setTimeout(resolve, 0);
+            }
+        });
     }
 
     // batching and writing structures to the store
@@ -620,10 +693,19 @@ export async function loadDatasetStreaming(
 
         await setPhase('preparing');
 
+        const release = async (): Promise<void> => {
+            // forget this store if it is still the active one
+            if (activeRelease === release) {
+                activeRelease = undefined;
+            }
+            await store.release();
+        };
+        activeRelease = release;
+
         return {
             dataset,
             loadStructure: (index: number) => store.get(index),
-            release: () => store.release(),
+            release,
         };
     } catch (error) {
         await store.release().catch(() => {});

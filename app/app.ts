@@ -9,13 +9,16 @@ import { version, DefaultVisualizer, Settings } from '../src/index';
 
 import { inflate } from 'pako';
 
-import { StreamingProgress, loadDatasetStreaming, parseJsonWithNaN } from './streaming';
+import {
+    loadDatasetStreaming,
+    parseJsonWithNaN,
+    progressMessage,
+    releaseActiveStream,
+    shouldUseStreaming,
+} from './streaming';
 
 // load CSS for the app
 import './app.css';
-
-// files above this size (MB) stream, smaller ones load in memory
-const STREAMING_THRESHOLD_MB = 75;
 
 interface Configuration {
     /// optional callback to load the structures on demand.
@@ -30,8 +33,6 @@ export class ChemiscopeApp {
     /// CSS style sheet to hide the setting in loading panel about on-demand
     /// loading
     private hideOnDemandStructures: HTMLStyleElement;
-    /// release callback for the previously streamed dataset's store
-    private streamingRelease?: () => Promise<void>;
     public warnings: Warnings = new Warnings();
 
     /**
@@ -78,14 +79,6 @@ export class ChemiscopeApp {
         document.head.appendChild(this.hideOnDemandStructures);
         this.hideOnDemandStructures.sheet!.insertRule('.hide-on-demand-structures {display: none}');
         this.hideOnDemandStructures.sheet!.disabled = false;
-
-        // drop the streaming store when the tab is going away
-        window.addEventListener('pagehide', (event) => {
-            if (event.persisted || this.streamingRelease === undefined) {
-                return;
-            }
-            void this.streamingRelease().catch(() => {});
-        });
     }
 
     /**
@@ -120,7 +113,7 @@ export class ChemiscopeApp {
      * Optionally specify the configuration in `config`
      */
     public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
-        await this.releasePreviousStream();
+        await releaseActiveStream();
         startLoading();
         this.dataset = url;
 
@@ -134,43 +127,10 @@ export class ChemiscopeApp {
         await this.load(config as Configuration, dataset);
     }
 
-    // drop the previous streamed dataset's store, if any
-    private async releasePreviousStream(): Promise<void> {
-        if (this.streamingRelease !== undefined) {
-            await this.streamingRelease().catch(() => {});
-            this.streamingRelease = undefined;
-        }
-    }
-
     public async loadStreaming(file: File): Promise<void> {
-        await this.releasePreviousStream();
-
-        const { dataset, loadStructure, release } = await loadDatasetStreaming(
-            file,
-            (progress: StreamingProgress) => {
-                const percent =
-                    progress.bytesTotal > 0
-                        ? ` (${((100 * progress.bytesRead) / progress.bytesTotal).toFixed(0)}%)`
-                        : '';
-
-                let message: string;
-                if (progress.phase === 'structures') {
-                    message = `loaded ${progress.structures.toLocaleString()} structures${percent}`;
-                } else if (progress.phase === 'flushing') {
-                    message = 'finalizing structure data…';
-                } else if (progress.phase === 'properties') {
-                    message = 'parsing properties…';
-                } else if (progress.phase === 'environments') {
-                    message = 'parsing environments…';
-                } else if (progress.phase === 'preparing') {
-                    message = 'preparing visualization…';
-                } else {
-                    message = 'finalizing dataset…';
-                }
-                setLoadingProgress(message);
-            }
+        const { dataset, loadStructure } = await loadDatasetStreaming(file, (progress) =>
+            setLoadingProgress(progressMessage(progress))
         );
-        this.streamingRelease = release;
         await this.load({ loadStructure }, dataset);
     }
 
@@ -249,12 +209,8 @@ export class ChemiscopeApp {
         loadDataset.onchange = () => {
             const file = loadDataset.files![0];
 
-            const isGzipped = file.name.endsWith('.gz');
             const sizeMB = file.size / (1024 * 1024);
-            const canStream =
-                typeof indexedDB !== 'undefined' &&
-                (!isGzipped || typeof DecompressionStream !== 'undefined');
-            const useStreaming = sizeMB >= STREAMING_THRESHOLD_MB && canStream;
+            const useStreaming = shouldUseStreaming(file);
 
             if (sizeMB > 200 && !useStreaming) {
                 const proceed = confirm(
@@ -290,7 +246,8 @@ export class ChemiscopeApp {
             if (useStreaming) {
                 this.loadStreaming(file).catch(onError).finally(finish);
             } else {
-                this.releasePreviousStream()
+                const isGzipped = file.name.endsWith('.gz');
+                releaseActiveStream()
                     .then(() => readJSONFromFile(file, isGzipped))
                     .then((dataset) => this.load({}, dataset))
                     .catch(onError)
