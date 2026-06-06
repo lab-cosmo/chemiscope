@@ -888,6 +888,15 @@ export class PropertiesMap {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
+
+            // fill the selection range with the data bounds, unless it was
+            // restored from saved settings
+            if (
+                isNaN(this._options.color.select.min.value) &&
+                isNaN(this._options.color.select.max.value)
+            ) {
+                this._resetSelectionRange();
+            }
         } else {
             this._options.color.min.value = 0;
             this._options.color.max.value = 0;
@@ -921,6 +930,9 @@ export class PropertiesMap {
                         ),
                         'coloraxis.showscale': true,
                     } as unknown as Layout);
+
+                    // refill the selection range with the new property's bounds
+                    this._resetSelectionRange();
                 }
             } else {
                 this._options.color.mode.disable();
@@ -966,6 +978,13 @@ export class PropertiesMap {
                 // would need to investigate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+
+            // With a subset selection active, points are drawn with explicit
+            // colors (valueToColor / grey) rather than via the coloraxis, so the
+            // relayout above does not recolor them; restyle the colors explicitly.
+            if (this._options.color.select.mode.value !== 'all') {
+                this._restyle({ 'marker.color': this._colors() } as Data, [0, 1]);
+            }
         };
 
         const canChangeColors = (values: number[], changed: string): boolean => {
@@ -1084,8 +1103,18 @@ export class PropertiesMap {
         // ======= selection
         // Selection changes alter the foreground/background split, which feeds
         // into LOD prioritization, so recompute LOD before restyling.
-        const updateColors = () => {
-            this._computeLOD();
+        const updateColors = (_value: number | string, origin: OptionModificationOrigin) => {
+            // Only react to user edits. Programmatic ('JS') changes come from
+            // repopulating the range bounds (_resetSelectionRange) or from
+            // applySettings, which render on their own; this mirrors the axis
+            // `rangeChange` / camera handlers and avoids redundant recomputes.
+            if (origin === 'JS') {
+                return;
+            }
+            // recompute LOD at the current view bounds so the foreground density
+            // matches what a subsequent zoom/pan would produce (otherwise the
+            // selection change resets to the sparser global-range sampling)
+            this._computeLOD(this._getBounds());
             this._restyleFull();
         };
 
@@ -1855,6 +1884,31 @@ export class PropertiesMap {
             if (isNaN(max)) max = dMax;
         }
         return { min, max };
+    }
+
+    /**
+     * Populate the selection range (mark: range) bounds with the current color
+     * property's data min/max, mirroring how the color-scale range boxes are
+     * filled. The filter compares against the raw property values (see
+     * `_getSelectionMask`), so we use those rather than the transformed colors.
+     */
+    private _resetSelectionRange(): void {
+        if (!this._options.hasColors()) {
+            return;
+        }
+        const values = this._property(this._options.color.property.value).values;
+        const finite = values.filter((v): v is number => typeof v === 'number' && isFinite(v));
+        if (finite.length === 0) {
+            return;
+        }
+        const { min, max } = arrayMaxMin(finite);
+
+        // These are 'JS'-origin changes, so updateColors ignores them (the caller
+        // restyles). Set min to -Infinity first so an intermediate min > max never
+        // trips the validateSelectRange reset/warning while updating both values.
+        this._options.color.select.min.value = Number.NEGATIVE_INFINITY;
+        this._options.color.select.max.value = max;
+        this._options.color.select.min.value = min;
     }
 
     /**
