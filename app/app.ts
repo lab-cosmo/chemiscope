@@ -4,10 +4,18 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { Warnings, getByID } from '../src/utils';
-import { Dataset, Structure } from '../src/dataset';
+import { Dataset } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
 
 import { inflate } from 'pako';
+
+import {
+    loadDatasetStreaming,
+    parseJsonWithNaN,
+    progressMessage,
+    releaseActiveStream,
+    shouldUseStreaming,
+} from './streaming';
 
 // load CSS for the app
 import './app.css';
@@ -105,6 +113,7 @@ export class ChemiscopeApp {
      * Optionally specify the configuration in `config`
      */
     public async fetchAndLoad(url: string, config: Partial<Configuration> = {}): Promise<void> {
+        await releaseActiveStream();
         startLoading();
         this.dataset = url;
 
@@ -116,6 +125,13 @@ export class ChemiscopeApp {
             url.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
         const dataset = await readJSONFromStream(response, isGzipped);
         await this.load(config as Configuration, dataset);
+    }
+
+    public async loadStreaming(file: File): Promise<void> {
+        const { dataset, loadStructure } = await loadDatasetStreaming(file, (progress) =>
+            setLoadingProgress(progressMessage(progress))
+        );
+        await this.load({ loadStructure }, dataset);
     }
 
     /**
@@ -194,7 +210,9 @@ export class ChemiscopeApp {
             const file = loadDataset.files![0];
 
             const sizeMB = file.size / (1024 * 1024);
-            if (sizeMB > 200) {
+            const useStreaming = shouldUseStreaming(file);
+
+            if (sizeMB > 200 && !useStreaming) {
                 const proceed = confirm(
                     `This file is ${sizeMB.toFixed(0)} MB. Large files may fail to load due to browser memory limits.\n\n` +
                         `Continue loading?`
@@ -210,22 +228,31 @@ export class ChemiscopeApp {
             closeLoadSaveModal.click();
             startLoading();
             this.dataset = file.name;
-            const isGzipped = file.name.endsWith('.gz');
-            readJSONFromFile(file, isGzipped)
-                .then((dataset) => {
-                    this.load({}, dataset);
-                })
-                .catch((error) => {
-                    stopLoading();
-                    displayError(error instanceof Error ? error.message : String(error));
-                })
-                .finally(() => {
-                    // clear the selected file name to make sure 'onchange' is
-                    // called again if the user loads a file a the same path
-                    // multiple time
-                    loadDataset.value = '';
-                    loadSaveModal.classList.add('fade');
-                });
+
+            const finish = () => {
+                // clear the selected file name to make sure 'onchange' is
+                // called again if the user loads a file a the same path
+                // multiple time
+                loadDataset.value = '';
+                loadSaveModal.classList.add('fade');
+                setLoadingProgress('');
+            };
+
+            const onError = (error: unknown) => {
+                stopLoading();
+                displayError(error instanceof Error ? error.message : String(error));
+            };
+
+            if (useStreaming) {
+                this.loadStreaming(file).catch(onError).finally(finish);
+            } else {
+                const isGzipped = file.name.endsWith('.gz');
+                releaseActiveStream()
+                    .then(() => readJSONFromFile(file, isGzipped))
+                    .then((dataset) => this.load({}, dataset))
+                    .catch(onError)
+                    .finally(finish);
+            }
         };
         // Saving the current dataset
         const saveDataset = getByID('save-dataset');
@@ -331,8 +358,16 @@ function startLoading() {
     main.style.opacity = '0.3';
 }
 
+function setLoadingProgress(text: string) {
+    const el = document.getElementById('loading-progress');
+    if (el) {
+        el.innerText = text;
+    }
+}
+
 function stopLoading() {
     getByID('loading').style.display = 'none';
+    setLoadingProgress('');
 
     const main = document.getElementsByTagName('main')[0];
     main.onclick = null;
@@ -374,16 +409,6 @@ async function readJSONFromFile(file: File, isGzipped: boolean): Promise<any> {
         text = await file.text();
     }
     return parseJsonWithNaN(text);
-}
-
-/**
- * Allow NaN in the JSON file. They are not part of the spec, but Python's json
- * module output them, and they can be useful.
- */
-function parseJsonWithNaN(text: string): any {
-    return JSON.parse(text.replace(/\bNaN\b/g, '"***NaN***"'), (key, value) => {
-        return value === '***NaN***' ? NaN : value;
-    });
 }
 
 /** Write NaN in the JSON file. */
