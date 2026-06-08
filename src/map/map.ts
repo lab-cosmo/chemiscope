@@ -12,7 +12,6 @@ import * as plotlyStyles from './plotly/plotly-styles';
 import { Property, Settings } from '../dataset';
 
 import { DisplayTarget, EnvironmentIndexer, Indexes } from '../indexer';
-import { OptionModificationOrigin } from '../options';
 import { cameraToPlotly, plotlyToCamera } from '../utils/camera';
 import {
     Bounds,
@@ -97,10 +96,11 @@ export class PropertiesMap {
     private static readonly LOD_THRESHOLD = 50000;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
-    /**
-     * Guard to skip concurrent LOD updates. When set, other callers simply return early
-     * instead of waiting
-     */
+    /// True while writing derived option values programmatically; the reactive
+    /// onchange handlers (updateColors, axis rangeChange) skip while it is set.
+    private _internalUpdate = false;
+    /// Guard to skip concurrent LOD updates. When set, other callers simply
+    // return early instead of waiting
     private _lodBusy = false;
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
@@ -727,10 +727,9 @@ export class PropertiesMap {
         // function creating a function to be used as onchange callback
         // for <axis>.min and <axis>.max
         const rangeChange = (name: string, axis: AxisOptions, minOrMax: 'min' | 'max') => {
-            return (_: number, origin: OptionModificationOrigin) => {
-                if (origin === 'JS') {
-                    // prevent recursion: this function calls relayout, which then
-                    // calls _afterplot, which reset the min/max values.
+            return () => {
+                // ignore programmatic (derived) min/max writes
+                if (this._internalUpdate) {
                     return;
                 }
                 const min = axis.min.value;
@@ -739,11 +738,14 @@ export class PropertiesMap {
                     this.warnings.sendMessage(
                         `The inserted min and max values in ${name} are such that min > max! The last inserted value was reset.`
                     );
-                    if (minOrMax === 'min') {
-                        axis.min.reset();
-                    } else {
-                        axis.max.reset();
-                    }
+                    // revert the invalid value without re-running this handler
+                    this.withInternalUpdate(() => {
+                        if (minOrMax === 'min') {
+                            axis.min.reset();
+                        } else {
+                            axis.max.reset();
+                        }
+                    });
                     return;
                 }
 
@@ -794,8 +796,10 @@ export class PropertiesMap {
 
         this._options.z.property.onchange.push(() => {
             // Reset min/max when changing property to trigger autoscale
-            this._options.z.min.value = NaN;
-            this._options.z.max.value = NaN;
+            this.withInternalUpdate(() => {
+                this._options.z.min.value = NaN;
+                this._options.z.max.value = NaN;
+            });
             negativeLogWarning(this._options.z);
 
             const was3D = this._plot._fullData[0].type === 'scatter3d';
@@ -824,8 +828,10 @@ export class PropertiesMap {
                 .then(() => {
                     // The zrange is now known, and we can trigger a proper subsampling
                     const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
-                    this._options.z.min.value = zRange[0];
-                    this._options.z.max.value = zRange[1];
+                    this.withInternalUpdate(() => {
+                        this._options.z.min.value = zRange[0];
+                        this._options.z.max.value = zRange[1];
+                    });
 
                     if (this._is3D()) {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
@@ -888,6 +894,15 @@ export class PropertiesMap {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
+
+            // fill the selection range with the data bounds, unless it was
+            // restored from saved settings
+            if (
+                isNaN(this._options.color.select.min.value) &&
+                isNaN(this._options.color.select.max.value)
+            ) {
+                this._resetSelectionRange();
+            }
         } else {
             this._options.color.min.value = 0;
             this._options.color.max.value = 0;
@@ -921,6 +936,9 @@ export class PropertiesMap {
                         ),
                         'coloraxis.showscale': true,
                     } as unknown as Layout);
+
+                    // refill the selection range with the new property's bounds
+                    this._resetSelectionRange();
                 }
             } else {
                 this._options.color.mode.disable();
@@ -966,6 +984,13 @@ export class PropertiesMap {
                 // would need to investigate a bit more.
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+
+            // with a subset selection active the points use explicit colors
+            // (valueToColor / grey), which the coloraxis relayout does not touch,
+            // so restyle the marker colors directly
+            if (this._options.color.select.mode.value !== 'all') {
+                this._restyle({ 'marker.color': this._colors() } as Data, [0, 1]);
+            }
         };
 
         const canChangeColors = (values: number[], changed: string): boolean => {
@@ -1085,7 +1110,13 @@ export class PropertiesMap {
         // Selection changes alter the foreground/background split, which feeds
         // into LOD prioritization, so recompute LOD before restyling.
         const updateColors = () => {
-            this._computeLOD();
+            // ignore programmatic (derived) selection writes
+            if (this._internalUpdate) {
+                return;
+            }
+            // recompute LOD at the current view bounds so the foreground keeps
+            // the same density as the visible region
+            this._computeLOD(this._getBounds());
             this._restyleFull();
         };
 
@@ -1858,6 +1889,45 @@ export class PropertiesMap {
     }
 
     /**
+     * Set option values inside `fn` without running the reactive onchange
+     * handlers that check `_internalUpdate`. Nesting- and exception-safe.
+     */
+    private withInternalUpdate(fn: () => void): void {
+        const previous = this._internalUpdate;
+        this._internalUpdate = true;
+        try {
+            fn();
+        } finally {
+            this._internalUpdate = previous;
+        }
+    }
+
+    /**
+     * Set the selection range (mark: range) bounds to the color property's raw
+     * data min/max — the values the filter compares against (see
+     * `_getSelectionMask`).
+     */
+    private _resetSelectionRange(): void {
+        if (!this._options.hasColors()) {
+            return;
+        }
+        const values = this._property(this._options.color.property.value).values;
+        const finite = values.filter((v): v is number => typeof v === 'number' && isFinite(v));
+        if (finite.length === 0) {
+            return;
+        }
+        const { min, max } = arrayMaxMin(finite);
+
+        // set min to -Infinity first so an intermediate min > max does not trip
+        // the min/max validation while updating both bounds
+        this.withInternalUpdate(() => {
+            this._options.color.select.min.value = Number.NEGATIVE_INFINITY;
+            this._options.color.select.max.value = max;
+            this._options.color.select.min.value = min;
+        });
+    }
+
+    /**
      * Get the mask of selected points based on the current selection mode
      */
     private _getSelectionMask(): boolean[] {
@@ -1950,8 +2020,10 @@ export class PropertiesMap {
         const axisOptions = this._options[axis];
 
         // Reset min/max when changing property to trigger autoscale
-        axisOptions.min.value = NaN;
-        axisOptions.max.value = NaN;
+        this.withInternalUpdate(() => {
+            axisOptions.min.value = NaN;
+            axisOptions.max.value = NaN;
+        });
 
         // Recompute LOD since axis property changed
         this._computeLOD();
@@ -1976,15 +2048,17 @@ export class PropertiesMap {
 
     /** Sync axis min/max so the UI reflects the current visible ranges in the plot */
     private _updateAxisSettings(bounds: Bounds): void {
-        this._options.x.min.value = bounds.x[0];
-        this._options.x.max.value = bounds.x[1];
-        this._options.y.min.value = bounds.y[0];
-        this._options.y.max.value = bounds.y[1];
+        this.withInternalUpdate(() => {
+            this._options.x.min.value = bounds.x[0];
+            this._options.x.max.value = bounds.x[1];
+            this._options.y.min.value = bounds.y[0];
+            this._options.y.max.value = bounds.y[1];
 
-        if (bounds.z !== undefined) {
-            this._options.z.min.value = bounds.z[0];
-            this._options.z.max.value = bounds.z[1];
-        }
+            if (bounds.z !== undefined) {
+                this._options.z.min.value = bounds.z[0];
+                this._options.z.max.value = bounds.z[1];
+            }
+        });
     }
 
     /** Changes the step of the arrow buttons in min/max input based on dataset range*/
@@ -2077,12 +2151,14 @@ export class PropertiesMap {
         this._lodBusy = true;
 
         // Reset settings to Auto (NaN)
-        this._options.x.min.value = NaN;
-        this._options.x.max.value = NaN;
-        this._options.y.min.value = NaN;
-        this._options.y.max.value = NaN;
-        this._options.z.min.value = NaN;
-        this._options.z.max.value = NaN;
+        this.withInternalUpdate(() => {
+            this._options.x.min.value = NaN;
+            this._options.x.max.value = NaN;
+            this._options.y.min.value = NaN;
+            this._options.y.max.value = NaN;
+            this._options.z.min.value = NaN;
+            this._options.z.max.value = NaN;
+        });
 
         // 1. Force global LOD computation
         this._computeLOD();

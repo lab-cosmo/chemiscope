@@ -266,9 +266,8 @@ export class MapOptions extends OptionsGroup {
         this.color.select.max.onchange.push(validateSelectRange('max'));
 
         this.color.property.onchange.push(() => {
-            // reset selection range when the property changes
-            this.color.select.min.value = NaN;
-            this.color.select.max.value = NaN;
+            // the selection range is repopulated with the new property's data
+            // bounds by PropertiesMap (see _resetSelectionRange)
 
             // disable range selection if color is fixed
             const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
