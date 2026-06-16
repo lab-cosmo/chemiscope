@@ -10,7 +10,7 @@ declare module '*.svg' {
 
 declare module '*.css';
 
-declare module '!css-loader?exportType=css-style-sheet!*.css' {
+declare module '!css-loader?{"exportType":"css-style-sheet","url":false}!*.css' {
     const content: CSSStyleSheet;
     export default content;
 }

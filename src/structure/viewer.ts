@@ -122,6 +122,9 @@ export class MoleculeViewer {
     private _colorMoreOptions: HTMLButtonElement;
     // Switch do disable automatic updates
     private _disableStyleUpdates: boolean = false;
+    // Observes the container so the 3Dmol canvas is resized when the container
+    // gets its size after the viewer is created (e.g. in marimo/Colab/lazy cells)
+    private _resizeObserver?: ResizeObserver;
 
     // ======================================================================
     // Public API
@@ -298,6 +301,13 @@ export class MoleculeViewer {
             window.dispatchEvent(new Event('resize'));
         });
 
+        // Some hosts (marimo, Google Colab, lazily-rendered cells) only give the
+        // container its final size after the viewer is created. 3Dmol sizes its
+        // canvas at creation, so it would stay blank until a resize happens.
+        // Observing the container resizes the viewer as soon as it is laid out.
+        this._resizeObserver = new ResizeObserver(() => this.resize());
+        this._resizeObserver.observe(this._root);
+
         // default view when creating the viewer
         this._resetView();
     }
@@ -360,6 +370,7 @@ export class MoleculeViewer {
      * Remove all HTML added by this {@link MoleculeViewer} in the current document
      */
     public remove(): void {
+        this._resizeObserver?.disconnect();
         if (this._root.parentElement !== null) {
             this._root.parentElement.innerHTML = '';
         }

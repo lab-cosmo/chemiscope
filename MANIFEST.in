@@ -1,5 +1,4 @@
 include pyproject.toml
 
-recursive-include python/jupyter *.js
-recursive-include python/jupyter *.json
+recursive-include python/chemiscope/static *
 recursive-include python/chemiscope/sphinx/static *
