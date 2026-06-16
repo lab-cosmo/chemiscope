@@ -1,11 +1,14 @@
-import { DOMWidgetView } from '@jupyter-widgets/base';
-import { JSONValue } from '@lumino/coreutils';
+import type { AnyModel } from '@anywidget/types';
 import Plausible from 'plausible-tracker';
 
 import { Warnings, binarySearch, generateGUID, getByID } from '../../../src/utils';
 
-// Import the CSS
-import './widget.css';
+// Widget layout stylesheet, imported as a constructable stylesheet so it can be
+// adopted into the root node that actually contains the widget. Some hosts (e.g.
+// marimo) render the widget inside a shadow root, where a <style> injected into
+// document.head (the default css-loader behaviour) would not apply, breaking the
+// grid layout and collapsing the structure panel.
+import widgetStyles from '!css-loader?{"exportType":"css-style-sheet","url":false}!./widget.css';
 
 import {
     DefaultConfig,
@@ -45,7 +48,16 @@ interface StructureSequenceRequest {
     settings?: Partial<Settings>[];
 }
 
-class ChemiscopeBaseView extends DOMWidgetView {
+// Loosely-typed handler for model events, so that handlers with narrow argument
+// types can still be tracked for removal on dispose.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ModelEventHandler = (...args: any[]) => void;
+
+class ChemiscopeBaseView {
+    // anywidget model and DOM container, provided by the `render` entry point
+    protected model: AnyModel;
+    protected el: HTMLElement;
+
     protected visualizer?: DefaultVisualizer | StructureVisualizer | MapVisualizer;
     protected guid!: string;
     protected warnings: Warnings = new Warnings();
@@ -60,26 +72,65 @@ class ChemiscopeBaseView extends DOMWidgetView {
         { resolve: (s: Structure) => void; reject: (e: Error) => void }
     >();
 
+    // model event handlers, tracked so they can be removed in `dispose`
+    private _modelListeners: { event: string; handler: ModelEventHandler }[] = [];
+
+    // roots into which the widget stylesheet has already been adopted, to avoid
+    // adding it more than once per document/shadow root
+    private static _styledRoots = new WeakSet<Document | ShadowRoot>();
+
     // Flag to prevent infinite loops when updating settings from Python
     protected _updatingFromPython = false;
 
+    constructor(model: AnyModel, el: HTMLElement) {
+        this.model = model;
+        this.el = el;
+    }
+
+    /** Register a model event handler and track it for removal on dispose */
+    protected _listen(event: string, handler: ModelEventHandler): void {
+        this.model.on(event, handler);
+        this._modelListeners.push({ event, handler });
+    }
+
     public render(): void {
+        this._adoptStyles();
+
         PlausibleTracker.trackPageview({
             url: (location.pathname.split('/')[1] || '') + '/' + this.getClassName(),
         });
 
         this.guid = `chsp-${generateGUID()}`;
 
-        this.model.on('change:warning_timeout', () => this._updateWarningTimeout());
+        this._listen('change:warning_timeout', () => this._updateWarningTimeout());
         this._enableScreenshotMessages();
     }
 
-    public remove(): unknown {
+    /**
+     * Adopt the widget layout stylesheet into the root node containing this
+     * widget. Using `adoptedStyleSheets` (rather than a document.head <style>)
+     * ensures the layout CSS applies even when the host renders the widget inside
+     * a shadow root, as marimo does.
+     */
+    private _adoptStyles(): void {
+        const root = this.el.getRootNode() as Document | ShadowRoot;
+        if (!ChemiscopeBaseView._styledRoots.has(root)) {
+            root.adoptedStyleSheets = [...root.adoptedStyleSheets, widgetStyles];
+            ChemiscopeBaseView._styledRoots.add(root);
+        }
+    }
+
+    /** Tear down the visualizer and remove all model event handlers */
+    public dispose(): void {
+        for (const { event, handler } of this._modelListeners) {
+            this.model.off(event, handler);
+        }
+        this._modelListeners = [];
+
         if (this.visualizer !== undefined) {
             this.visualizer.remove();
+            this.visualizer = undefined;
         }
-
-        return super.remove();
     }
 
     protected _initializeVisualizer(
@@ -105,61 +156,57 @@ class ChemiscopeBaseView extends DOMWidgetView {
 
     protected _bindPythonSettings(): void {
         // update settings on the JS side when they are changed in Python
-        this.model.on(
-            'change:settings',
-            () => {
-                // only trigger a visualizer update if required.
-                // this is also used to avoid an infinite loop when settings are changed JS-side
-                if (this._updatingFromPython) {
-                    return;
-                }
+        this._listen('change:settings', () => {
+            // only trigger a visualizer update if required.
+            // this is also used to avoid an infinite loop when settings are changed JS-side
+            if (this._updatingFromPython) {
+                return;
+            }
 
-                const settingsRef = this.model.get('settings') as Partial<Settings>;
-                const settings = { ...settingsRef };
+            const settingsRef = this.model.get('settings') as Partial<Settings>;
+            const settings = { ...settingsRef };
 
-                // Handle pinned: only apply if different from current state.
-                // This prevents the destructive reset loop while allowing explicit updates.
-                if (
-                    this.visualizer &&
-                    'structure' in this.visualizer &&
-                    Array.isArray(settings.pinned)
-                ) {
-                    const target = this.visualizer.saveSettings().target as DisplayTarget;
-                    const currentPinned = this.visualizer.structure
-                        .pinned()
-                        .map((value) => (target === 'atom' ? value.environment : value.structure));
+            // Handle pinned: only apply if different from current state.
+            // This prevents the destructive reset loop while allowing explicit updates.
+            if (
+                this.visualizer &&
+                'structure' in this.visualizer &&
+                Array.isArray(settings.pinned)
+            ) {
+                const target = this.visualizer.saveSettings().target as DisplayTarget;
+                const currentPinned = this.visualizer.structure
+                    .pinned()
+                    .map((value) => (target === 'atom' ? value.environment : value.structure));
 
-                    const pinned = settings.pinned as number[];
-                    const pinnedChanged =
-                        pinned.length !== currentPinned.length ||
-                        pinned.some((val, idx) => val !== currentPinned[idx]);
+                const pinned = settings.pinned as number[];
+                const pinnedChanged =
+                    pinned.length !== currentPinned.length ||
+                    pinned.some((val, idx) => val !== currentPinned[idx]);
 
-                    if (!pinnedChanged) {
-                        delete settings.pinned;
-                    }
-                } else {
+                if (!pinnedChanged) {
                     delete settings.pinned;
                 }
+            } else {
+                delete settings.pinned;
+            }
 
-                this._updatingFromPython = true;
-                try {
-                    this.visualizer?.applySettings(settings);
-                    // sync back the full settings to Python, so that they are available
-                    // for saving
-                    this._updatePythonSettings();
+            this._updatingFromPython = true;
+            try {
+                this.visualizer?.applySettings(settings);
+                // sync back the full settings to Python, so that they are available
+                // for saving
+                this._updatePythonSettings();
 
-                    // also sync back the selection, which might have changed if pinned changed
-                    if (this.visualizer) {
-                        this._updatePythonSelection(this.visualizer.info.indexes, true);
-                    }
-                } catch (e) {
-                    this.warnings.sendMessage(`Error setting state: ${e}`);
-                } finally {
-                    this._updatingFromPython = false;
+                // also sync back the selection, which might have changed if pinned changed
+                if (this.visualizer) {
+                    this._updatePythonSelection(this.visualizer.info.indexes, true);
                 }
-            },
-            this
-        );
+            } catch (e) {
+                this.warnings.sendMessage(`Error setting state: ${e}`);
+            } finally {
+                this._updatingFromPython = false;
+            }
+        });
     }
 
     protected _updatePythonSelection(indexes: Indexes, force = false): void {
@@ -268,106 +315,94 @@ class ChemiscopeBaseView extends DOMWidgetView {
         }
 
         // Python -> JS
-        this.model.on(
-            'change:selected_ids',
-            () => {
-                if (!this.visualizer) {
-                    return;
+        this._listen('change:selected_ids', () => {
+            if (!this.visualizer) {
+                return;
+            }
+
+            if (this._updatingFromPython) {
+                return;
+            }
+
+            const selected = this.model.get('selected_ids') as
+                | {
+                      structure?: number;
+                      atom?: number;
+                  }
+                | undefined;
+
+            if (!selected) {
+                return;
+            }
+
+            this._updatingFromPython = true;
+            try {
+                const currentIndexes = this.visualizer.info.indexes;
+                let structure = selected.structure;
+                let atom = selected.atom;
+
+                if (structure === undefined) {
+                    structure = currentIndexes.structure;
                 }
 
-                if (this._updatingFromPython) {
-                    return;
+                if (atom === undefined) {
+                    atom = currentIndexes.atom;
                 }
 
-                const selected = this.model.get('selected_ids') as
-                    | {
-                          structure?: number;
-                          atom?: number;
-                      }
-                    | undefined;
+                // Validate atom index
 
-                if (!selected) {
-                    return;
-                }
+                if (atom !== undefined) {
+                    const activeAtoms = this.visualizer.indexer.activeAtoms(structure);
 
-                this._updatingFromPython = true;
-                try {
-                    const currentIndexes = this.visualizer.info.indexes;
-                    let structure = selected.structure;
-                    let atom = selected.atom;
-
-                    if (structure === undefined) {
-                        structure = currentIndexes.structure;
-                    }
-
-                    if (atom === undefined) {
-                        atom = currentIndexes.atom;
-                    }
-
-                    // Validate atom index
-
-                    if (atom !== undefined) {
-                        const activeAtoms = this.visualizer.indexer.activeAtoms(structure);
-
-                        if (activeAtoms && activeAtoms.length > 0) {
-                            if (binarySearch(activeAtoms, atom) === -1) {
-                                // Reset to 0 if valid, else first active
-                                if (binarySearch(activeAtoms, 0) !== -1) {
-                                    atom = 0;
-                                } else {
-                                    atom = activeAtoms[0];
-                                }
+                    if (activeAtoms && activeAtoms.length > 0) {
+                        if (binarySearch(activeAtoms, atom) === -1) {
+                            // Reset to 0 if valid, else first active
+                            if (binarySearch(activeAtoms, 0) !== -1) {
+                                atom = 0;
+                            } else {
+                                atom = activeAtoms[0];
                             }
                         }
                     }
-
-                    const target = this.visualizer.saveSettings().target as DisplayTarget;
-                    const indexes = this.visualizer.indexer.fromStructureAtom(
-                        target,
-                        structure,
-                        atom
-                    );
-
-                    if (indexes !== undefined) {
-                        this.visualizer.select(indexes);
-                    } else {
-                        this.warnings.sendMessage(
-                            `Invalid selection request: structure=${selected.structure}, atom=${selected.atom}`
-                        );
-                    }
-                } finally {
-                    this._updatingFromPython = false;
                 }
-            },
-            this
-        );
+
+                const target = this.visualizer.saveSettings().target as DisplayTarget;
+                const indexes = this.visualizer.indexer.fromStructureAtom(target, structure, atom);
+
+                if (indexes !== undefined) {
+                    this.visualizer.select(indexes);
+                } else {
+                    this.warnings.sendMessage(
+                        `Invalid selection request: structure=${selected.structure}, atom=${selected.atom}`
+                    );
+                }
+            } finally {
+                this._updatingFromPython = false;
+            }
+        });
 
         // Python -> JS (active viewer)
-        this.model.on(
-            'change:active_viewer',
-            () => {
-                if (!this.visualizer || !('structure' in this.visualizer)) {
-                    return;
-                }
+        this._listen('change:active_viewer', () => {
+            if (!this.visualizer || !('structure' in this.visualizer)) {
+                return;
+            }
 
-                if (this._updatingFromPython) {
-                    return;
-                }
+            if (this._updatingFromPython) {
+                return;
+            }
 
-                const activeViewer = this.model.get('active_viewer') as number;
+            const activeViewer = this.model.get('active_viewer') as number;
 
-                this._updatingFromPython = true;
-                try {
-                    this.visualizer.structure.activeIndex = activeViewer;
-                    if ('map' in this.visualizer) {
-                        this.visualizer.map.setActive(this.visualizer.structure.active);
-                    }
-                } finally {
-                    this._updatingFromPython = false;
+            this._updatingFromPython = true;
+            try {
+                this.visualizer.structure.activeIndex = activeViewer;
+                if ('map' in this.visualizer) {
+                    this.visualizer.map.setActive(this.visualizer.structure.active);
                 }
-            },
-            this
-        );
+            } finally {
+                this._updatingFromPython = false;
+            }
+        });
 
         // Initialize Python state if needed
         const currentPython = this.model.get('selected_ids') as {
@@ -404,7 +439,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Install a handler for custom messages coming from Python
      */
     protected _enableScreenshotMessages(): void {
-        this.model.on(
+        this._listen(
             'msg:custom',
             (content: ScreenshotRequest | StructureSequenceRequest, _buffers: unknown[]) => {
                 void _buffers;
@@ -419,8 +454,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     const req = content as StructureSequenceRequest;
                     void this._handleStructureSequence(req);
                 }
-            },
-            this
+            }
         );
     }
 
@@ -557,43 +591,39 @@ class ChemiscopeBaseView extends DOMWidgetView {
      * Install a handler for custom messages coming from Python
      */
     protected _enableStructureMessages(): void {
-        this.model.on(
-            'msg:custom',
-            (content: StructureRequest, _buffers: unknown[]) => {
-                void _buffers; // explicitly mark as intentionally unused
-                if (!content || typeof content !== 'object') {
-                    return;
-                }
+        this._listen('msg:custom', (content: StructureRequest, _buffers: unknown[]) => {
+            void _buffers; // explicitly mark as intentionally unused
+            if (!content || typeof content !== 'object') {
+                return;
+            }
 
-                if (content.type === 'load-structure-result') {
-                    const requestId = content.requestId;
-                    const pending = this._pendingStructureRequests.get(requestId);
-                    if (pending) {
-                        this._pendingStructureRequests.delete(requestId);
-                        // python can send either a string (JSON-serialized) or an object
-                        const raw = content.structure;
-                        const structure: Structure =
-                            typeof raw === 'string'
-                                ? (JSON.parse(raw) as Structure)
-                                : (raw as Structure);
-                        pending.resolve(structure);
-                    }
-                } else if (content.type === 'load-structure-error') {
-                    const requestId = content.requestId;
-                    const pending = this._pendingStructureRequests.get(requestId);
-                    if (pending) {
-                        this._pendingStructureRequests.delete(requestId);
-                        pending.reject(
-                            new Error(content.error || 'unknown error while loading structure')
-                        );
-                    }
-                    if (content.error) {
-                        this.warnings.sendMessage(`Error loading structure: ${content.error}`);
-                    }
+            if (content.type === 'load-structure-result') {
+                const requestId = content.requestId;
+                const pending = this._pendingStructureRequests.get(requestId);
+                if (pending) {
+                    this._pendingStructureRequests.delete(requestId);
+                    // python can send either a string (JSON-serialized) or an object
+                    const raw = content.structure;
+                    const structure: Structure =
+                        typeof raw === 'string'
+                            ? (JSON.parse(raw) as Structure)
+                            : (raw as Structure);
+                    pending.resolve(structure);
                 }
-            },
-            this
-        );
+            } else if (content.type === 'load-structure-error') {
+                const requestId = content.requestId;
+                const pending = this._pendingStructureRequests.get(requestId);
+                if (pending) {
+                    this._pendingStructureRequests.delete(requestId);
+                    pending.reject(
+                        new Error(content.error || 'unknown error while loading structure')
+                    );
+                }
+                if (content.error) {
+                    this.warnings.sendMessage(`Error loading structure: ${content.error}`);
+                }
+            }
+        });
     }
 
     /**
@@ -629,7 +659,7 @@ class ChemiscopeBaseView extends DOMWidgetView {
                     type: 'load-structure',
                     requestId,
                     index,
-                    data: structure.data as JSONValue,
+                    data: structure.data,
                 });
             }
         });

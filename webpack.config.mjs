@@ -21,8 +21,21 @@ export const WEBPACK_CONFIG = {
     module: {
         rules: [
             { test: /\.ts$/, use: ['ts-loader', './utils/webpack-assert-message.js'] },
-            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
-            { test: /\.less$/, use: ['style-loader', 'css-loader', 'less-loader'] },
+            // `url: false` keeps `url(data:...)` references as literal data URIs
+            // rather than `new URL(..., import.meta.url)` assets, which break when
+            // the bundle is loaded as an ES module from a blob URL (anywidget).
+            {
+                test: /\.css$/,
+                use: ['style-loader', { loader: 'css-loader', options: { url: false } }],
+            },
+            {
+                test: /\.less$/,
+                use: [
+                    'style-loader',
+                    { loader: 'css-loader', options: { url: false } },
+                    'less-loader',
+                ],
+            },
             { test: /\.html\.in$/, loader: 'raw-loader' },
             { test: /\.svg$/, loader: 'raw-loader' },
             // this is required by plotly, since we are building our own bundle

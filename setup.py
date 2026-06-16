@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import glob
-import json
 import os
 import shutil
 import subprocess
 import sys
-import warnings
 
 from setuptools import setup
 from setuptools.command.bdist_egg import bdist_egg
@@ -42,9 +40,8 @@ NPM_BUILD_INPUT = [
 ]
 
 NPM_BUILD_OUTPUT = [
-    # jupyter extensions
-    "python/jupyter/nbextension/chemiscope.min.js",
-    "python/jupyter/labextension/package.json",
+    # anywidget ES module for the jupyter widget
+    "python/chemiscope/static/chemiscope-widget.mjs",
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
     # streamlit component
@@ -89,41 +86,16 @@ def run_npm_build():
     # js files.
     if os.path.exists(os.path.join(root, "package.json")):
         subprocess.run("npm ci", check=True, shell=True)
-        # build the labextension first, since it triggers a rebuild of the main
-        # package code
-        try:
-            import jupyterlab  # noqa
 
-            subprocess.run("npm run build:labextension", check=True, shell=True)
-            with open(
-                os.path.join(root, "python", "jupyter", "labextension", "install.json"),
-                "w",
-            ) as fd:
-                install_json = {
-                    "__comment": "metadata for chemiscope jupyterlab extension",
-                    "packageManager": "python",
-                    "packageName": "chemiscope",
-                    "uninstallInstructions": "Use your Python package manager "
-                    + "(pip, conda, etc.) to uninstall chemiscope",
-                }
-                json.dump(install_json, fd)
-        except ImportError:
-            # skip building jupyterlab if it is not installed on the developer
-            # machine
-            warnings.warn(
-                "skipping the lab extension build since jupyterlab is not installed",
-                stacklevel=1,
-            )
-
-            # still build the main code for the sphinx extension
-            subprocess.run("npm run build", check=True, shell=True)
-
+        # build the main code, used by the sphinx extension
+        subprocess.run("npm run build", check=True, shell=True)
         shutil.copyfile(
             src="dist/chemiscope.min.js",
             dst="python/chemiscope/sphinx/static/chemiscope.min.js",
         )
 
-        subprocess.run("npm run build:nbextension", check=True, shell=True)
+        # build the anywidget ES module for the jupyter widget
+        subprocess.run("npm run build:anywidget", check=True, shell=True)
 
         subprocess.run("npm run build:streamlit", check=True, shell=True)
 
@@ -141,54 +113,22 @@ def run_npm_build():
 
 
 if __name__ == "__main__":
-    # we need to run npm build outside of the call to setup to be able to get
-    # the full list of files to install for the labextension. Building the
-    # labextension creates unpredictable file names, and `data_file` wants to
-    # explicitly list all files one by one.
-
     if needs_npm_build():
         print("==== rebuilding the JS code with npm, this might take a while ...")
         run_npm_build()
 
+    # The anywidget ES module is loaded directly by anywidget through the `_esm`
+    # trait, so it only needs to be installed as package data (no jupyter
+    # nbextension/labextension data_files registration is required anymore).
     setup(
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,
         },
         package_data={
             "chemiscope": [
+                "static/*",
                 "sphinx/static/*",
                 "streamlit/**/*",
             ]
         },
-        data_files=[
-            # this is what `jupyter nbextension install --sys-prefix` does
-            (
-                "share/jupyter/nbextensions/chemiscope",
-                [
-                    "python/jupyter/extension.js",
-                    "python/jupyter/nbextension/chemiscope.min.js",
-                ],
-            ),
-            # this is what `jupyter nbextension enable --sys-prefix` does
-            (
-                "etc/jupyter/nbconfig/notebook.d",
-                [
-                    "python/jupyter/chemiscope.json",
-                ],
-            ),
-            # install the labextension
-            (
-                "share/jupyter/labextensions/chemiscope",
-                list(
-                    filter(
-                        lambda f: os.path.isfile(f),
-                        glob.glob("python/jupyter/labextension/*"),
-                    )
-                ),
-            ),
-            (
-                "share/jupyter/labextensions/chemiscope/static",
-                glob.glob("python/jupyter/labextension/static/*"),
-            ),
-        ],
     )

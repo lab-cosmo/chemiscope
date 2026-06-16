@@ -7,22 +7,24 @@ import json
 import warnings
 from pathlib import Path
 
-import ipywidgets
+import anywidget
 from traitlets import Bool, Dict, Int, Unicode
 
 from .input import create_input
-from .version import __version__
 
 
-# this needs to match the version/name defined in
-# python/jupyter/src/labextension.ts
-PACKAGE_NAME = "chemiscope"
-PACKAGE_VERSION = __version__
+# Single ES module loaded by anywidget for all three widget modes. It is built by
+# `npm run build:anywidget` from python/jupyter/src/anywidget.ts.
+_ESM_PATH = Path(__file__).parent / "static" / "chemiscope-widget.mjs"
 
 
-class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
-    _view_module = Unicode(PACKAGE_NAME).tag(sync=True)
-    _view_module_version = Unicode(PACKAGE_VERSION).tag(sync=True)
+class ChemiscopeWidgetBase(anywidget.AnyWidget):
+    _esm = _ESM_PATH
+
+    # widget mode, read by the JS side to pick which view to render; overridden by
+    # each subclass
+    mode = Unicode("default").tag(sync=True)
+
     value = Unicode().tag(sync=True)
     has_metadata = Bool().tag(sync=True)
 
@@ -100,7 +102,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to the image data as bytes.
         """
 
-        if self._view_name == "StructureView":
+        if self.mode == "structure":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
@@ -122,7 +124,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to the image data as bytes.
         """
 
-        if self._view_name == "MapView":
+        if self.mode == "map":
             raise RuntimeError(
                 "Cannot retrieve structure image: this widget is a map-only viewer."
             )
@@ -145,7 +147,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves when the file is written.
         """
 
-        if self._view_name == "StructureView":
+        if self.mode == "structure":
             raise RuntimeError(
                 "Cannot retrieve map image: this widget is a structure-only viewer."
             )
@@ -168,7 +170,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves when the file is written.
         """
 
-        if self._view_name == "MapView":
+        if self.mode == "map":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
@@ -204,7 +206,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
         :return: A Future that resolves to a list of image data bytes.
         """
 
-        if self._view_name == "MapView":
+        if self.mode == "map":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
@@ -237,7 +239,7 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             raise ValueError("indices and paths must have the same length")
         if settings is not None and len(indices) != len(settings):
             raise ValueError("indices and settings must have the same length")
-        if self._view_name == "MapView":
+        if self.mode == "map":
             raise RuntimeError(
                 "Cannot save structure image: this widget is a map-only viewer."
             )
@@ -476,25 +478,22 @@ class ChemiscopeWidgetBase(ipywidgets.DOMWidget, ipywidgets.ValueWidget):
             return ""
 
 
-@ipywidgets.register
 class ChemiscopeWidget(ChemiscopeWidgetBase):
-    _view_name = Unicode("ChemiscopeView").tag(sync=True)
+    mode = Unicode("default").tag(sync=True)
 
     def __init__(self, data, has_metadata, warning_timeout, cache_structures):
         super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
-@ipywidgets.register
 class StructureWidget(ChemiscopeWidgetBase):
-    _view_name = Unicode("StructureView").tag(sync=True)
+    mode = Unicode("structure").tag(sync=True)
 
     def __init__(self, data, has_metadata, warning_timeout, cache_structures):
         super().__init__(data, has_metadata, warning_timeout, cache_structures)
 
 
-@ipywidgets.register
 class MapWidget(ChemiscopeWidgetBase):
-    _view_name = Unicode("MapView").tag(sync=True)
+    mode = Unicode("map").tag(sync=True)
 
     def __init__(self, data, has_metadata, warning_timeout, cache_structures):
         super().__init__(data, has_metadata, warning_timeout, cache_structures)

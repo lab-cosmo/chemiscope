@@ -6,6 +6,10 @@ html {
     display: grid;
     grid-template-columns: 59% 39%;
     grid-template-rows: 480px;
+    /* Explicit height (matching the row track) so descendant percentage heights
+       resolve in all hosts. Without it some hosts (e.g. marimo, Colab) leave the
+       grid height indefinite, collapsing the 3Dmol structure panel to ~0px. */
+    height: 480px;
     grid-column-gap: 0px;
     justify-items: center;
     overflow: hidden;
