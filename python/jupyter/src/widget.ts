@@ -113,7 +113,14 @@ class ChemiscopeBaseView {
      * a shadow root, as marimo does.
      */
     private _adoptStyles(): void {
-        const root = this.el.getRootNode() as Document | ShadowRoot;
+        // Only Document and ShadowRoot support `adoptedStyleSheets`. Some hosts
+        // (e.g. JupyterLab) call render before the element is attached, so
+        // getRootNode() returns a detached node without that property; fall back
+        // to the document in that case.
+        const rootNode = this.el.getRootNode();
+        const root =
+            rootNode instanceof ShadowRoot || rootNode instanceof Document ? rootNode : document;
+
         if (!ChemiscopeBaseView._styledRoots.has(root)) {
             root.adoptedStyleSheets = [...root.adoptedStyleSheets, widgetStyles];
             ChemiscopeBaseView._styledRoots.add(root);
@@ -725,13 +732,13 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         element.innerHTML = `
         <div>
             <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
             <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
@@ -810,13 +817,13 @@ export class StructureView extends ChemiscopeBaseView {
         element.innerHTML = `
         <div>
             <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
             <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
@@ -890,13 +897,13 @@ export class MapView extends ChemiscopeBaseView {
         element.innerHTML = `
         <div>
             <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-warning-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>
             </div>
             <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="document.getElementById('${this.guid}-error-display').style.display = 'none';">
+                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <p></p>

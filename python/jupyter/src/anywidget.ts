@@ -3,8 +3,7 @@ import * as jquery from 'jquery';
 
 import { ChemiscopeView, MapView, StructureView } from './widget';
 
-// Defensively expose jQuery as a global, as some hosts/plugins expect `window.$`
-// to exist; ESM imports do not set it automatically.
+// Some hosts/plugins expect `window.$` to exist; ESM imports do not set it.
 (window as unknown as { $: unknown }).$ = jquery;
 
 /**
