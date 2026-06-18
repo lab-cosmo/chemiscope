@@ -111,6 +111,12 @@ export class PropertiesMap {
     private _mouseupHandler?: () => void;
     // last event data received from plotly_relayouting
     private _lastRelayoutingEvent: Plotly.PlotRelayoutEvent | null = null;
+    // pending axis-range relayout, coalesced to one relayout per tick
+    private _pendingRangeUpdate: Record<string, unknown> = {};
+    private _rangeFlushScheduled = false;
+    // observes the container so the plot reflows on non-window resizes
+    private _resizeObserver?: ResizeObserver;
+    private _resizePending = false;
 
     /**
      * Create a new {@link PropertiesMap} inside the DOM element with the given HTML
@@ -217,12 +223,26 @@ export class PropertiesMap {
             plotlyStyles.globalStyleSheet,
             plotlyStyles.getPlotStyleSheet(this._plot),
         ];
+
+        // Plotly's `responsive` config only reacts to window resizes; observe the
+        // container so the plot also reflows when its size changes for other reasons
+        // (e.g. toggling a Jupyter sidebar).
+        this._resizeObserver = new ResizeObserver(() => {
+            if (this._resizePending) {
+                return;
+            }
+            this._resizePending = true;
+            window.requestAnimationFrame(() => {
+                this._resizePending = false;
+                Plotly.Plots.resize(this._plot);
+            });
+        });
+        this._resizeObserver.observe(this._plot);
     }
 
-    /**
-     * Remove all HTML added by this {@link PropertiesMap} in the current document
-     */
     public remove(): void {
+        this._resizeObserver?.disconnect();
+
         // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
         this._shadow.host.remove();
 
@@ -449,7 +469,6 @@ export class PropertiesMap {
         // Get config
         const config = this._getConfig();
 
-        // Create an empty plot and fill it below
         Plotly.newPlot(this._plot, traces, layout, config)
             .then(() => {
                 // In some cases (e.g. in Jupyter notebooks) plotly does not comply
@@ -669,7 +688,7 @@ export class PropertiesMap {
             this._computeLOD(bounds);
             // Force a full restyle. Since _lodIndices will be null if disabled,
             // this will render all points.
-            this._restyleFull();
+            void this._restyleFull();
         });
 
         // ======= camera state update
@@ -732,6 +751,10 @@ export class PropertiesMap {
                 if (this._internalUpdate) {
                     return;
                 }
+                // the z axis only exists in 3D; relaying it out in 2D makes Plotly throw
+                if (name === 'zaxis' && !this._is3D()) {
+                    return;
+                }
                 const min = axis.min.value;
                 const max = axis.max.value;
                 if (min > max) {
@@ -751,14 +774,18 @@ export class PropertiesMap {
 
                 negativeLogWarning(axis);
 
-                if (this._is3D()) {
-                    this._relayout({
-                        [`scene.${name}.range`]: [min, max],
-                        [`scene.${name}.autorange`]: false,
-                    } as unknown as Layout);
+                const key = this._is3D() ? `scene.${name}` : name;
+                let update: Record<string, unknown>;
+                if (isNaN(min) && isNaN(max)) {
+                    // both bounds cleared: turn autorange on. A `[NaN, NaN]` range is
+                    // read by Plotly as autorange-off with default bounds
+                    update = { [`${key}.autorange`]: true };
+                } else if (this._is3D()) {
+                    update = { [`${key}.range`]: [min, max], [`${key}.autorange`]: false };
                 } else {
-                    this._relayout({ [`${name}.range`]: [min, max] });
+                    update = { [`${key}.range`]: [min, max] };
                 }
+                this._scheduleRangeRelayout(update);
             };
         };
 
@@ -804,27 +831,37 @@ export class PropertiesMap {
 
             const was3D = this._plot._fullData[0].type === 'scatter3d';
 
-            // If no z property selected -> switch to 2D
+            // If no z property selected -> switch back to 2D
             if (this._options.z.property.value === '') {
                 if (was3D) {
-                    this._switch2D();
-                    // ... and re-update LOD in 2D
-                    this._updateLOD(this._getBounds());
+                    // autoscale only once the 2D react has settled, so the gl scene
+                    // repaints (a relayout racing the react leaves it stale)
+                    void this._switch2D()
+                        .then(() => this._autoscaleAxes())
+                        .then(() => this._updateLOD(this._getBounds()))
+                        .catch((e: unknown) =>
+                            setTimeout(() => {
+                                throw e;
+                            })
+                        );
                 }
                 return;
-            } else {
-                if (!was3D) {
-                    this._switch3D();
-                }
             }
+
+            // entering (or staying in) 3D. When entering, autoscale only after the
+            // switch react has settled so the gl scene repaints with the new ranges
+            const ready = was3D ? Promise.resolve() : this._switch3D();
 
             // LOD: Z changed, compute a first downsampling if necessary
             this._computeLOD();
 
-            Plotly.relayout(this._plot, {
-                'scene.zaxis.title.text': this._title(this._options.z.property.value),
-                'scene.zaxis.autorange': true,
-            } as unknown as Layout)
+            void ready
+                .then(() =>
+                    Plotly.relayout(this._plot, {
+                        'scene.zaxis.title.text': this._title(this._options.z.property.value),
+                    } as unknown as Layout)
+                )
+                .then(() => this._autoscaleAxes())
                 .then(() => {
                     // The zrange is now known, and we can trigger a proper subsampling
                     const zRange = this._plot._fullLayout.scene.zaxis.range as number[];
@@ -956,7 +993,7 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
 
-            this._restyleFull();
+            void this._restyleFull();
         });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
@@ -1053,7 +1090,7 @@ export class PropertiesMap {
                     'coloraxis.showscale': true,
                 } as unknown as Layout);
 
-                this._restyleFull();
+                void this._restyleFull();
             }
         });
 
@@ -1096,7 +1133,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
-            this._restyleFull();
+            void this._restyleFull();
         });
 
         // ======= opacity
@@ -1117,7 +1154,7 @@ export class PropertiesMap {
             // recompute LOD at the current view bounds so the foreground keeps
             // the same density as the visible region
             this._computeLOD(this._getBounds());
-            this._restyleFull();
+            void this._restyleFull();
         };
 
         this._options.color.select.mode.onchange.push(updateColors);
@@ -1256,7 +1293,7 @@ export class PropertiesMap {
      * Helper to trigger a full update of the plot traces (main, selected, dummy)
      * when data, styling, or selection changes.
      */
-    private _restyleFull(layoutUpdate?: Partial<Layout>): void {
+    private _restyleFull(layoutUpdate?: Partial<Layout>): Promise<unknown> {
         const fullUpdate: Record<string, unknown> = {
             x: this._coordinates(this._options.x),
             y: this._coordinates(this._options.y),
@@ -1285,7 +1322,7 @@ export class PropertiesMap {
                 }
             }
 
-            void Plotly.update(
+            return Plotly.update(
                 this._plot,
                 fullUpdate as unknown as Data,
                 layout as Layout,
@@ -1293,7 +1330,7 @@ export class PropertiesMap {
             );
         } else {
             // Update main (0), selected (1) and dummy (2) traces
-            void Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
+            return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
         }
     }
 
@@ -1309,6 +1346,56 @@ export class PropertiesMap {
                 throw e;
             })
         );
+    }
+
+    /**
+     * Coalesce axis-range relayouts issued in the same tick into a single relayout.
+     * Applying settings clears every axis min/max in quick succession, which would
+     * otherwise trigger a separate relayout per bound.
+     */
+    private _scheduleRangeRelayout(update: Record<string, unknown>): void {
+        Object.assign(this._pendingRangeUpdate, update);
+        if (this._rangeFlushScheduled) {
+            return;
+        }
+        this._rangeFlushScheduled = true;
+        queueMicrotask(() => {
+            this._rangeFlushScheduled = false;
+            const pending = this._pendingRangeUpdate;
+            this._pendingRangeUpdate = {};
+            if (Object.keys(pending).length > 0) {
+                this._relayout(pending as Partial<Layout>);
+            }
+        });
+    }
+
+    /**
+     * Autoscale the axes of the current mode with a standalone autorange relayout,
+     * returning its promise. This is the only update that reliably repaints the gl
+     * scene with the new range, so it must run on its own once the operation that
+     * changed the data or trace type has settled (e.g. from a `.then`), not folded
+     * into a react/update. With `force`, pinned axes are autoscaled too.
+     */
+    private _autoscaleAxes(force = false): Promise<unknown> {
+        const update: Record<string, unknown> = {};
+        if (this._is3D()) {
+            update['scene.xaxis.autorange'] = true;
+            update['scene.yaxis.autorange'] = true;
+            update['scene.zaxis.autorange'] = true;
+        } else {
+            // `force` autoscales regardless of pinned min/max (used by the reset),
+            // otherwise only axes the user has not pinned are autoscaled
+            if (force || getAxisAutoRange(this._options.x.min.value, this._options.x.max.value)) {
+                update['xaxis.autorange'] = true;
+            }
+            if (force || getAxisAutoRange(this._options.y.min.value, this._options.y.max.value)) {
+                update['yaxis.autorange'] = true;
+            }
+        }
+        if (Object.keys(update).length === 0) {
+            return Promise.resolve();
+        }
+        return Plotly.relayout(this._plot, update as unknown as Layout);
     }
 
     // ======================================================================
@@ -2028,19 +2115,18 @@ export class PropertiesMap {
         // Recompute LOD since axis property changed
         this._computeLOD();
 
-        // Request a full restyle of traces
-        this._restyleFull();
-
-        this._relayout({
+        // update the data and the axis title, then autoscale once that has settled
+        // (see _autoscaleAxes)
+        void this._restyleFull({
             [`scene.${axis}axis.title.text`]: this._title(axisOptions.property.value),
             [`${axis}axis.title.text`]: this._title(axisOptions.property.value),
-        } as unknown as Layout);
-
-        if (this._is3D()) {
-            this._relayout({ [`scene.${axis}axis.autorange`]: true } as unknown as Layout);
-        } else {
-            this._relayout({ [`${axis}axis.autorange`]: true } as unknown as Layout);
-        }
+        } as unknown as Partial<Layout>)
+            .then(() => this._autoscaleAxes())
+            .catch((e: unknown) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
 
         const bounds = this._getBounds();
         this._setScaleStep(bounds[axis], axis);
@@ -2160,21 +2246,13 @@ export class PropertiesMap {
             this._options.z.max.value = NaN;
         });
 
-        // 1. Force global LOD computation
+        // recompute the global LOD so autorange uses the full dataset
         this._computeLOD();
 
-        // 2. Update data traces first (re-render points with global LOD)
-        // We do this BEFORE relayout so that 'autorange' calculates bounds
-        // based on the full dataset, not the sliced one.
-        //
-        // 3. Prepare Layout Update
+        // restyle the data first (and, in 3D, reset the camera/aspect ratio), then
+        // autoscale once that has settled (see _autoscaleAxes)
         const layoutUpdate: Record<string, unknown> = {};
-
         if (this._is3D()) {
-            // In 3D, 'autorange: true' resets camera AND axes.
-            layoutUpdate['scene.xaxis.autorange'] = true;
-            layoutUpdate['scene.yaxis.autorange'] = true;
-            layoutUpdate['scene.zaxis.autorange'] = true;
             layoutUpdate['scene.aspectratio'] = { x: 1, y: 1, z: 1 };
             layoutUpdate['scene.camera'] = {
                 center: { x: 0, y: 0, z: 0 },
@@ -2182,26 +2260,34 @@ export class PropertiesMap {
                 projection: { type: 'orthographic' },
                 up: { x: 0, y: 0, z: 1 },
             };
-        } else {
-            // In 2D, we trigger autorange on standard axes
-            layoutUpdate['xaxis.autorange'] = true;
-            layoutUpdate['yaxis.autorange'] = true;
         }
 
-        // 4. Force the view reset
-        this._restyleFull(layoutUpdate as unknown as Partial<Layout>);
-        // Manually trigger marker update for 2D mode
-        if (!this._is3D()) {
-            this._updateMarkers();
-        }
-
-        // Release lock
+        // Release the lock before the async chain so `_afterplot` (which bails while
+        // `_lodBusy`) can run once the autoscale has settled.
         this._lodBusy = false;
-        this._afterplot();
+
+        void this._restyleFull(
+            this._is3D() ? (layoutUpdate as unknown as Partial<Layout>) : undefined
+        )
+            // force: the reset always autoscales, even if the axes were pinned
+            .then(() => this._autoscaleAxes(true))
+            .then(() => {
+                if (!this._is3D()) {
+                    this._updateMarkers();
+                }
+                // sync the settings UI to the freshly autoscaled ranges (must run
+                // after the autoscale, otherwise it would write the old range back)
+                this._afterplot();
+            })
+            .catch((e: unknown) =>
+                setTimeout(() => {
+                    throw e;
+                })
+            );
     }
 
     /** Switch current plot from 2D to 3D */
-    private _switch3D(): void {
+    private _switch3D(): Promise<unknown> {
         assert(this._is3D());
         this._options.z.enable();
 
@@ -2218,11 +2304,11 @@ export class PropertiesMap {
         // Settings (like markers) are applied in _getTraces/_getLayout
         // which rely on _options and internal state. _options.z is enabled above.
 
-        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+        return this._react(this._getTraces(), this._getLayout(), this._getConfig());
     }
 
     /** Switch current plot from 3D back to 2D */
-    private _switch2D(): void {
+    private _switch2D(): Promise<unknown> {
         assert(!this._is3D());
         this._options.z.disable();
 
@@ -2235,7 +2321,7 @@ export class PropertiesMap {
         // _getTraces uses _sizes() and options to set marker line width and size
         // consistently in 2D and 3D
 
-        void this._react(this._getTraces(), this._getLayout(), this._getConfig());
+        return this._react(this._getTraces(), this._getLayout(), this._getConfig());
     }
 
     // ======================================================================
@@ -2450,7 +2536,7 @@ export class PropertiesMap {
 
         this._computeLOD(bounds);
 
-        this._restyleFull();
+        void this._restyleFull();
         this._lodBusy = false;
     }
 
