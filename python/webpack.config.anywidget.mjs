@@ -12,7 +12,7 @@ const config = {
     mode: mode,
     target: 'web',
     entry: {
-        'chemiscope-widget': './python/jupyter/src/anywidget.ts',
+        'chemiscope-widget': './python/widget/src/anywidget.ts',
     },
     experiments: {
         outputModule: true,

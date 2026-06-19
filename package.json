@@ -23,7 +23,7 @@
     "url": "git+https://github.com/lab-cosmo/chemiscope.git"
   },
   "scripts": {
-    "test": "eslint src python/jupyter/src python/streamlit/src && prettier --check src python/jupyter/src python/streamlit/src",
+    "test": "eslint src python/widget/src python/streamlit/src && prettier --check src python/widget/src python/streamlit/src",
     "build": "rimraf dist && webpack --config webpack.config.mjs && npm run merge-dts",
     "build:anywidget": "webpack --config python/webpack.config.anywidget.mjs",
     "build:streamlit": "webpack --config python/webpack.config.streamlit.mjs",

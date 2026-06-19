@@ -4,7 +4,7 @@ Python module
 =============
 
 The ``chemiscope`` package provides utilities to prepare JSON input files, and
-to visualize them in a :ref:`jupyter environment <jupyter>`. The package 
+to visualize them as an :ref:`interactive notebook widget <widget>`. The package
 supports multiple structure formats including `ase.Atoms`_, `stk.BuildingBlock`_,
 and `MDAnalysis.AtomGroup`_ objects.
 
@@ -13,7 +13,7 @@ and `MDAnalysis.AtomGroup`_ objects.
 
     cli
     reference
-    jupyter
+    widget
     streamlit
     sphinx
     gallery

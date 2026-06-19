@@ -1,15 +1,23 @@
-.. _jupyter:
+.. _widget:
 
-Jupyter notebooks
-=================
+Notebook widget
+===============
 
-Chemiscope can be used as a widget in Jupyter notebooks, that should work in
-both Jupyter classic and JupyterLab. The widget can be created in ``default``
-mode (showing both a structure and a map panel), or used to display only
-structures or only properties.
+Chemiscope can be used as an interactive widget directly inside a notebook. The
+widget can be created in ``default`` mode (showing both a structure and a map
+panel), or used to display only structures or only properties.
 
 Once created, it is possible to interact with the widget using a traitlet
 interface, modeled after `Jupyter widgets <http://ipywidgets.readthedocs.io>`_.
+
+Supported environments
+----------------------
+
+The widget is built with `anywidget <https://anywidget.dev>`_ and works in every
+major notebook environment: Jupyter notebook, JupyterLab, `marimo
+<https://marimo.io>`_, Google Colab, and the VS Code notebook interface. No
+separate Jupyter or JupyterLab extension has to be installed — the frontend is
+bundled with the package and loaded automatically.
 
 Creating a chemiscope widget
 ----------------------------
@@ -81,7 +89,7 @@ The "save" method allows exporting the current state of the widget
 as a standalone JSON file that can be opened in the web app 
 (or loaded with :func:`chemiscope.show_input`).
 
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.save
 
 
 Exporting images
@@ -129,10 +137,10 @@ Basic usage example:
     img_data = img_future.result()
     display(Image(img_data))
 
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_map_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_map_image
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_image
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.save_map_image
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.save_structure_image
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.get_map_image
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.get_structure_image
 
 Capturing sequences
 ~~~~~~~~~~~~~~~~~~~
@@ -151,13 +159,13 @@ settings to each frame.
     # Capture and save a sequence of frames
     widget.save_structure_sequence(indices, paths)
 
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.save_structure_sequence
-.. automethod:: chemiscope.jupyter.ChemiscopeWidgetBase.get_structure_sequence
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.save_structure_sequence
+.. automethod:: chemiscope.widget.ChemiscopeWidgetBase.get_structure_sequence
 
 Headless widget
 ---------------
 
-If you want to use chemiscope to generate screenshots or inspect datasets programmatically without running a Jupyter notebook, you can use the headless widget. This widget uses a headless browser (Playwright) to render the chemiscope interface, which you can fetch installing the optional dependency ``chemiscope[headless]``.
+If you want to use chemiscope to generate screenshots or inspect datasets programmatically without running a notebook, you can use the headless widget. This widget uses a headless browser (Playwright) to render the chemiscope interface, which you can fetch installing the optional dependency ``chemiscope[headless]``.
 
 .. autofunction:: chemiscope.headless
 

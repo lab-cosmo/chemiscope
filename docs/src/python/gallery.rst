@@ -19,7 +19,7 @@ Using widgets in the examples
 
 Showing a widget in an example file is as simple as using
 :py:func:`chemiscope.show` in the example file. The widgets will be shown in a
-similar style as that shown in the :ref:`jupyter interface <jupyter>`, including
+similar style as that shown in the :ref:`notebook widget <widget>`, including
 the possibility of showing only the structure or map viewers. In practice, this
 relies on the same custom RST directive used for the :ref:`sphinx extension
 <sphinx>`.
