@@ -49,9 +49,10 @@ issue](https://github.com/lab-cosmo/chemiscope/issues/new) with your question;
 or send an email to the developers (you can find these emails on the lab
 webpage: https://www.epfl.ch/labs/cosmo/people/)
 
-## Getting the python package and using chemiscope in Jupyter notebooks
+## Getting the python package and using chemiscope as a notebook widget
 
-Using chemiscope in a Jupyter notebook should be as easy as
+Using chemiscope as an interactive widget — in Jupyter, JupyterLab, marimo, or
+Google Colab — should be as easy as
 
 ```bash
 pip install chemiscope

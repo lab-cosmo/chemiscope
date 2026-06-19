@@ -7,7 +7,6 @@ from .input import (  # noqa: F401
     write_external_structures,
     write_input,
 )
-from .jupyter import show, show_input  # noqa
 from .structures import (  # noqa: F401
     all_atomic_environments,
     arrow_from_vector,
@@ -17,3 +16,4 @@ from .structures import (  # noqa: F401
     extract_properties,
 )
 from .version import __version__  # noqa: F401
+from .widget import show, show_input  # noqa

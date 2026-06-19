@@ -18,7 +18,7 @@ function builds the Chemiscope JSON with :py:func:`chemiscope.create_input` that
 used to create the input file and to manipulate the data structure before saving.
 
 For quick interactive visualization, :py:func:`chemiscope.show` displays a dataset
-directly in a Jupyter notebook without creating any files. If you already have a saved
+directly in a notebook without creating any files. If you already have a saved
 chemiscope JSON file, :py:func:`chemiscope.show_input` loads and displays it in the same
 way. It is also possible to display the saved Chemiscope files in
 https://chemiscope.org/.

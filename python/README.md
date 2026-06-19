@@ -2,7 +2,8 @@
 
 This package contains Python code to help generate input files for the
 [chemiscope](https://chemiscope.org) default visualizer, and integrate
-chemiscope with jupyter notebooks.
+chemiscope as an interactive widget in notebook environments (Jupyter,
+JupyterLab, marimo, and Google Colab).
 
 ## Installation
 
@@ -40,7 +41,7 @@ chemiscope.write_input(
 )
 ```
 
-To display a chemiscope widget inside a jupyter notebook:
+To display a chemiscope widget inside a notebook:
 
 ```python
 import chemiscope

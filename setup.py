@@ -28,7 +28,7 @@ class bdist_egg_disabled(bdist_egg):
 NPM_BUILD_INPUT = [
     # source files
     *glob.glob("src/**/*", recursive=True),
-    *glob.glob("python/jupyter/src/**/*", recursive=True),
+    *glob.glob("python/widget/src/**/*", recursive=True),
     # dependencies
     "package.json",
     "package-lock.json",
@@ -40,7 +40,7 @@ NPM_BUILD_INPUT = [
 ]
 
 NPM_BUILD_OUTPUT = [
-    # anywidget ES module for the jupyter widget
+    # anywidget ES module for the notebook widget
     "python/chemiscope/static/chemiscope-widget.mjs",
     # sphinx extension
     "python/chemiscope/sphinx/static/chemiscope.min.js",
@@ -78,7 +78,7 @@ def needs_npm_build():
 
 
 def run_npm_build():
-    """Build the JavaScript code required by the jupyter widget using npm"""
+    """Build the JavaScript code required by the notebook widget using npm"""
     root = os.path.dirname(os.path.realpath(__file__))
 
     # This file does not exist when building a wheel (for pip installation)
@@ -94,7 +94,7 @@ def run_npm_build():
             dst="python/chemiscope/sphinx/static/chemiscope.min.js",
         )
 
-        # build the anywidget ES module for the jupyter widget
+        # build the anywidget ES module for the notebook widget
         subprocess.run("npm run build:anywidget", check=True, shell=True)
 
         subprocess.run("npm run build:streamlit", check=True, shell=True)
@@ -118,8 +118,8 @@ if __name__ == "__main__":
         run_npm_build()
 
     # The anywidget ES module is loaded directly by anywidget through the `_esm`
-    # trait, so it only needs to be installed as package data (no jupyter
-    # nbextension/labextension data_files registration is required anymore).
+    # trait, so it only needs to be installed as package data (no notebook
+    # frontend-extension registration is required).
     setup(
         cmdclass={
             "bdist_egg": bdist_egg if "bdist_egg" in sys.argv else bdist_egg_disabled,

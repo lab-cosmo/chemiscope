@@ -14,7 +14,7 @@ from .input import create_input
 
 
 # Single ES module loaded by anywidget for all three widget modes. It is built by
-# `npm run build:anywidget` from python/jupyter/src/anywidget.ts.
+# `npm run build:anywidget` from python/widget/src/anywidget.ts.
 _ESM_PATH = Path(__file__).parent / "static" / "chemiscope-widget.mjs"
 
 
@@ -86,7 +86,7 @@ class ChemiscopeWidgetBase(anywidget.AnyWidget):
         Request a snapshot of the map. Returns a Future that resolves to the
         image data (PNG formatted).
 
-        This method is asynchronous. In a Jupyter notebook, you should ``await``
+        This method is asynchronous. In a notebook, you should ``await``
         it to get the data.
 
         .. code-block:: python
@@ -114,7 +114,7 @@ class ChemiscopeWidgetBase(anywidget.AnyWidget):
         Request a snapshot of the active structure viewer.
         Returns a Future that resolves to the image data (PNG formatted).
 
-        This method is asynchronous. In a Jupyter notebook,
+        This method is asynchronous. In a notebook,
         you should ``await`` it to get the data.
 
         .. code-block:: python
@@ -613,7 +613,7 @@ def show(
     """
     Show the dataset defined by the given ``structures`` and ``properties`` (optionally
     ``metadata``, ``environments`` and ``shapes`` as well) using an embedded chemiscope
-    visualizer inside a Jupyter notebook. These parameters have the same meaning as in
+    visualizer inside a notebook. These parameters have the same meaning as in
     the :py:func:`chemiscope.create_input` function.
 
     The ``mode`` keyword also allows overriding the default two-panels visualization to
@@ -659,8 +659,9 @@ def show(
     :param bool cache_structures: whether to cache structure data on the Python side
         to reduce the JavaScript memory footprint
 
-    When inside a jupyter notebook, the returned object will create a new chemiscope
-    visualizer displaying the dataset. The object exposes a ``settings`` traitlet, that
+    When inside a notebook (Jupyter, JupyterLab, marimo or Google Colab), the returned
+    object will create a new chemiscope visualizer displaying the dataset. The object
+    exposes a ``settings`` traitlet, that
     allows to modify the visualization options (possibly even linking the parameters to
     another widget). Printing the value of the ``settings`` property is also a good way
     to see a full list of the available options.
@@ -719,7 +720,8 @@ def show(
 
     if not (_is_running_in_notebook() or _is_running_in_sphinx_gallery()):
         warnings.warn(
-            "chemiscope.show only works in a jupyter notebook or a sphinx build",
+            "chemiscope.show only displays a widget in an interactive notebook such "
+            "as Jupyter, JupyterLab, marimo or Google Colab, or in a sphinx build",
             stacklevel=2,
         )
 
@@ -780,9 +782,17 @@ def show(
 
 def _is_running_in_notebook():
     """
-    Check whether the python interpreter is running for a jupyter notebook or
-    not. Taken from https://stackoverflow.com/a/39662359/4692076.
+    Check whether the python interpreter is running inside an interactive notebook
+    environment that can display the widget (Jupyter, JupyterLab, marimo, Google
+    Colab, …), as opposed to a plain script or terminal.
     """
+
+    import sys
+
+    # marimo and Google Colab do not use a standard IPython kernel, detect them
+    # from their imported modules instead
+    if "marimo" in sys.modules or "google.colab" in sys.modules:
+        return True
 
     # apparently get_ipython is lost when this gets called from a callback of
     # an ipython widget. See https://github.com/jupyter/jupyter/issues/299
@@ -793,14 +803,9 @@ def _is_running_in_notebook():
 
     try:
         shell = get_ipython().__class__.__name__
-        # ZMQInteractiveShell is the standard Jupyter Kernel
-        # Interpreter is used by pyiodide
-        if shell in ["ZMQInteractiveShell", "Interpreter"]:
-            return True
-        elif shell == "TerminalInteractiveShell":
-            return False
-        else:
-            return False
+        # ZMQInteractiveShell is the standard Jupyter kernel, Interpreter is used
+        # by pyodide; TerminalInteractiveShell and the rest are not notebooks
+        return shell in ["ZMQInteractiveShell", "Interpreter"]
     except NameError:
         return False
 

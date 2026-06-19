@@ -1,7 +1,7 @@
 import os
 import warnings
 
-from chemiscope.jupyter import ChemiscopeWidget, MapWidget, StructureWidget
+from chemiscope.widget import ChemiscopeWidget, MapWidget, StructureWidget
 
 from ._file_path_iterator import FilePathIterator
 from ._utils import copy_external_structures
@@ -9,7 +9,10 @@ from ._utils import copy_external_structures
 
 warnings.filterwarnings(
     "ignore",
-    message="chemiscope.show only works in a jupyter notebook or a sphinx build",
+    message=(
+        "chemiscope.show only displays a widget in an interactive notebook such as "
+        "Jupyter, JupyterLab, marimo or Google Colab, or in a sphinx build"
+    ),
 )
 
 
