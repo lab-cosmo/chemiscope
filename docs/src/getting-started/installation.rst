@@ -8,9 +8,11 @@ the Python package index, using
 
     pip install chemiscope
 
-This installs the core package, which includes utilities for creating a Jupyter widget
-and  generating JSON input files. For advanced features, such as automatic dataset
-exploration, install the optional dependencies:
+This installs the core package, which includes utilities for creating an interactive
+notebook widget and generating JSON input files. The widget works in Jupyter,
+JupyterLab, vscode, marimo and Google Colab with no separate frontend-extension install
+needed. For advanced features, such as automatic dataset exploration, install the
+optional dependencies:
 
 .. code-block::
 

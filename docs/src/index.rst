@@ -10,7 +10,7 @@ being visualized with chemiscope.
 The :ref:`first part of this documentation <getting-started>`
 describes the default interface of chemiscope and how to use it with your own database,
 both using the stand-alone viewer or through the :ref:`python module <python-module>`
-and/or the :ref:`jupyter widget <jupyter>`.
+and/or the :ref:`notebook widget <widget>`.
 
 .. figure:: img/screenshot.png
     :align: center
@@ -50,11 +50,11 @@ initial loading time, and the scatter plot rendering is optimized to handle
 large numbers of points, dynamically resampling the data to provide fast interaction
 at different levels of detail.
 
-Chemiscope can be used as a web-based application, as a 
-:ref:`jupyter widget <jupyter>`, as 
-a visualization component embedded in 
+Chemiscope can be used as a web-based application, as an interactive
+:ref:`notebook widget <widget>` (in Jupyter, JupyterLab, marimo and Google Colab),
+as a visualization component embedded in
 :ref:`sphinx <sphinx>` or :ref:`sphinx-gallery <gallery>` documentation,
-as well as a :ref:`streamlit component <streamlit>`. 
+as well as a :ref:`streamlit component <streamlit>`.
 
 
 Getting and citing chemiscope

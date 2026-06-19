@@ -708,8 +708,7 @@ class ChemiscopeBaseView {
 
 /**
  * The {@link ChemiscopeView} class renders the Chemiscope App as a widget in the
- * Jupyter Notebook output window when instantiated from the Chemiscope Python
- * package.
+ * notebook output when instantiated from the Chemiscope Python package.
  */
 export class ChemiscopeView extends ChemiscopeBaseView {
     protected visualizer?: DefaultVisualizer;
@@ -793,8 +792,8 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 }
 
 /**
- * The {@link StructureView} class renders a structure-only widget in the Jupyter
- * Notebook output window when instantiated from the Chemiscope Python package.
+ * The {@link StructureView} class renders a structure-only widget in the notebook
+ * output when instantiated from the Chemiscope Python package.
  */
 export class StructureView extends ChemiscopeBaseView {
     protected visualizer?: StructureVisualizer;
@@ -873,8 +872,8 @@ export class StructureView extends ChemiscopeBaseView {
 }
 
 /**
- * The {@link MapView} class renders a map-only widget in the Jupyter Notebook
- * output window when instantiated from the Chemiscope Python package.
+ * The {@link MapView} class renders a map-only widget in the notebook output
+ * when instantiated from the Chemiscope Python package.
  */
 export class MapView extends ChemiscopeBaseView {
     protected visualizer?: MapVisualizer;
