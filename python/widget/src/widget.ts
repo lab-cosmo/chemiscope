@@ -729,18 +729,14 @@ export class ChemiscopeView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div>
-            <div class="alert alert-warning alert-dismissible pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="chemiscope-widget">
+            <div class="chemiscope-alert chemiscope-alert-warning pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
-            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="chemiscope-alert chemiscope-alert-danger pop-on-top" role="alert" id="${this.guid}-error-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
 
             <div class="chemiscope-viewer-two-col">
@@ -814,18 +810,14 @@ export class StructureView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div>
-            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="chemiscope-widget">
+            <div class="chemiscope-alert chemiscope-alert-warning pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
-            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="chemiscope-alert chemiscope-alert-danger pop-on-top" role="alert" id="${this.guid}-error-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
 
             <div class="chemiscope-viewer-one-col">
@@ -894,18 +886,14 @@ export class MapView extends ChemiscopeBaseView {
         });
 
         element.innerHTML = `
-        <div>
-            <div class="alert alert-warning" role="alert" id="${this.guid}-warning-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="chemiscope-widget">
+            <div class="chemiscope-alert chemiscope-alert-warning pop-on-top" role="alert" id="${this.guid}-warning-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
-            <div class="alert alert-danger" role="alert" id="${this.guid}-error-display" style="display: none; font-size: 1.5em;">
-                <button type="button" class="close" onclick="this.closest('.alert').style.display = 'none';">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="chemiscope-alert chemiscope-alert-danger pop-on-top" role="alert" id="${this.guid}-error-display" style="display: none;">
                 <p></p>
+                <button type="button" class="chemiscope-alert-close" aria-label="Close" onclick="this.closest('.chemiscope-alert').style.display = 'none';">&times;</button>
             </div>
 
             <div class="chemiscope-viewer-one-col">
