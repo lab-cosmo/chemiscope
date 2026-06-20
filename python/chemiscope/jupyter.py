@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Deprecated alias for :mod:`chemiscope.widget`.
 
-The widget module was renamed from ``jupyter`` to ``widget`` because the widget now
-works in Jupyter, JupyterLab, marimo and Google Colab. Import from
+The widget module was renamed from ``jupyter`` to ``widget``. Import from
 ``chemiscope.widget`` (or use the top-level ``chemiscope.show``) instead.
 """
 

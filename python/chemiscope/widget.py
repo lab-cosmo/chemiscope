@@ -87,7 +87,8 @@ class ChemiscopeWidgetBase(anywidget.AnyWidget):
         image data (PNG formatted).
 
         This method is asynchronous. In a notebook, you should ``await``
-        it to get the data.
+        it to get the data - typically in a different cell after the widget
+        is displayed, to let the JS side time to process the
 
         .. code-block:: python
 
