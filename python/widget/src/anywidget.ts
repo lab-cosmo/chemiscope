@@ -14,12 +14,14 @@ import { ChemiscopeView, MapView, StructureView } from './widget';
 function render({ model, el }: RenderProps): () => void {
     const mode = model.get('mode') as string;
 
-    const view =
-        mode === 'structure'
-            ? new StructureView(model, el)
-            : mode === 'map'
-              ? new MapView(model, el)
-              : new ChemiscopeView(model, el);
+    let view: ChemiscopeView | StructureView | MapView;
+    if (mode === 'structure') {
+        view = new StructureView(model, el);
+    } else if (mode === 'map') {
+        view = new MapView(model, el);
+    } else {
+        view = new ChemiscopeView(model, el);
+    }
 
     view.render();
 
