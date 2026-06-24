@@ -23,10 +23,9 @@
     "url": "git+https://github.com/lab-cosmo/chemiscope.git"
   },
   "scripts": {
-    "test": "eslint src python/jupyter/src python/streamlit/src && prettier --check src python/jupyter/src python/streamlit/src",
+    "test": "eslint src python/widget/src python/streamlit/src && prettier --check src python/widget/src python/streamlit/src",
     "build": "rimraf dist && webpack --config webpack.config.mjs && npm run merge-dts",
-    "build:nbextension": "webpack --config python/webpack.config.nbextension.js",
-    "build:labextension": "npm run build && jupyter labextension build .",
+    "build:anywidget": "webpack --config python/webpack.config.anywidget.mjs",
     "build:streamlit": "webpack --config python/webpack.config.streamlit.mjs",
     "download-examples": "ts-node ./utils/download-examples.ts",
     "api-docs": "typedoc",
@@ -36,25 +35,24 @@
     "pretty": "prettier --write src"
   },
   "devDependencies": {
+    "@anywidget/types": "^0.4.0",
     "@eslint/js": "^9.12.0",
-    "@jupyter-widgets/base": "^2 || ^3 || ^4 || ^5 || ^6",
-    "@jupyterlab/builder": "^4",
     "@popperjs/core": "^2.11.2",
     "@types/jquery": "^3.5",
     "@types/markdown-it": "^14",
     "@types/node": "^22",
-    "@types/webpack": "^5",
     "@types/pako": "^2",
     "@types/plotly.js": "^2.12",
     "@types/tmp": "^0.2.1",
+    "@types/webpack": "^5",
     "3dmol": "2.4.2",
     "assert": "^2",
     "bootstrap": "5.2.3",
     "bubleify": "^2.0",
     "buffer": "^6",
+    "color-parse": "^1",
     "construct-style-sheets-polyfill": "^3.1",
     "css-loader": "^7",
-    "color-parse": "^1",
     "dts-bundle-generator": "^9",
     "eslint": "^9.12",
     "eslint-config-prettier": "^9",
@@ -68,10 +66,11 @@
     "plausible-tracker": "^0.3",
     "plotly.js": "3.3.0",
     "prettier": "3.3.3",
+    "process": "^0.11.10",
     "raw-loader": "^4",
     "rimraf": "^6",
-    "style-loader": "^4",
     "streamlit-component-lib": "^2",
+    "style-loader": "^4",
     "tmp": "^0.2",
     "ts-loader": "^9",
     "ts-node": "^10",
@@ -81,17 +80,5 @@
     "webpack": "^5.76",
     "webpack-cli": "^5",
     "webpack-dev-server": "^5"
-  },
-  "dependencies": {},
-  "jupyterlab": {
-    "extension": "python/jupyter/src/labextension.ts",
-    "webpackConfig": "python/webpack.config.labextension.js",
-    "outputDir": "python/jupyter/labextension",
-    "sharedPackages": {
-      "@jupyter-widgets/base": {
-        "bundled": false,
-        "singleton": true
-      }
-    }
   }
 }

@@ -44,7 +44,9 @@ function parse<T extends OptionsType>(type: T, value: string): OptionsValue<T> {
         }
         return result;
     } else if (type === 'number') {
-        if (value === 'NaN') {
+        // accept any capitalisation of NaN (e.g. a stringified numpy `nan` in an
+        // externally-created file); for min/max settings NaN means "autoscale"
+        if (value.toLowerCase() === 'nan') {
             return NaN;
         }
         const result = Number(value);

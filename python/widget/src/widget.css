@@ -2,10 +2,74 @@ html {
     font-size: unset;
 }
 
+/* Warning/error popups. Styled here (rather than relying on Bootstrap, which is
+   not adopted at the widget level) so they look the same in every host, and
+   scoped with the `chemiscope-alert` class so they do not affect other alerts on
+   the page when this stylesheet is adopted at document level. */
+
+/* positioning context so the absolute pop-on-top alerts overlay this widget
+   rather than the page/viewport */
+.chemiscope-widget {
+    position: relative;
+}
+
+/* overlay the content instead of pushing it down, centered like the web app.
+   z-index is above the metadata title (.chemiscope-meta, z-index 100) so the
+   alert is not covered by it. */
+.pop-on-top {
+    z-index: 200;
+    position: absolute;
+    width: 80%;
+    left: 50%;
+    margin-left: -40%;
+}
+
+.chemiscope-alert {
+    padding: 0.6rem 2.2rem 0.6rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+}
+
+.chemiscope-alert p {
+    margin: 0;
+}
+
+.chemiscope-alert-warning {
+    color: #664d03;
+    background-color: #fff3cd;
+    border-color: #ffe69c;
+}
+
+.chemiscope-alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f1aeb5;
+}
+
+/* dismiss button, pinned to the top-right corner */
+.chemiscope-alert-close {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.6rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.chemiscope-alert-close:hover {
+    opacity: 1;
+}
+
 .chemiscope-viewer-two-col {
     display: grid;
     grid-template-columns: 59% 39%;
     grid-template-rows: 480px;
+    height: 480px;
     grid-column-gap: 0px;
     justify-items: center;
     overflow: hidden;

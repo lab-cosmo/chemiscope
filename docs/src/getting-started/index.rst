@@ -4,7 +4,7 @@ Getting started
 ===============
 
 This manual presents an overview of how to use the Chemiscope viewer in its standard
-implementations, including the web tool and the Jupyter widget. It does not discuss in
+implementations, including the web tool and the notebook widget. It does not discuss in
 detail how to build a low-dimensional representation of a chemical dataset - chemiscope
 is primarily a visualization tool, but it also offers functionality to for dataset
 exploration based on automatically computed structural representations.
@@ -14,7 +14,7 @@ before describing how to use the different panels in the standard visualization.
 continues by presenting how you can generate a chemiscope input file to load on
 https://chemiscope.org, as well as within a standalone HTML viewer that works offline.
 See the :ref:`Python module documentation <python-module>` for how to interact with
-chemiscope in a script, or to explore a dataset directly inside a Jupyter notebook.
+chemiscope in a script, or to explore a dataset directly inside a notebook.
 
 .. _chemiscope: https://chemiscope.org
 

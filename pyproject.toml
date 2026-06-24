@@ -4,6 +4,7 @@ dynamic = ["version"]
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
+    "anywidget",
     "ipywidgets>=7,<9",
 ]
 
@@ -43,7 +44,6 @@ chemiscope-input = "chemiscope.main:main"
 requires = [
     "setuptools",
     "wheel",
-    "jupyterlab >=4.0",
 ]
 build-backend = "setuptools.build_meta"
 
