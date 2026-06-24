@@ -88,7 +88,7 @@ class ChemiscopeWidgetBase(anywidget.AnyWidget):
 
         This method is asynchronous. In a notebook, you should ``await``
         it to get the data - typically in a different cell after the widget
-        is displayed, to let the JS side time to process the
+        is displayed, to let the JS side time to process the request.
 
         .. code-block:: python
 

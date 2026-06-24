@@ -127,6 +127,30 @@ class ChemiscopeBaseView {
         }
     }
 
+    /**
+     * Read the dataset from the `value` traitlet and pass it to `load`. Some hosts
+     * (notably VSCode) populate the model traits *after* the initial `render()` call,
+     * so `value` may still be the default empty string at that point. In that case we
+     * wait for the `change:value` event and load as soon as the dataset arrives.
+     */
+    protected _loadWhenValueReady(load: (data: Dataset) => void): void {
+        const attempt = () => {
+            const raw = this.model.get('value') as string;
+            if (!raw) {
+                return;
+            }
+            this.model.off('change:value', attempt);
+            load(parseJsonWithNaN(raw) as Dataset);
+        };
+
+        const raw = this.model.get('value') as string;
+        if (raw) {
+            load(parseJsonWithNaN(raw) as Dataset);
+        } else {
+            this._listen('change:value', attempt);
+        }
+    }
+
     /** Tear down the visualizer and remove all model event handlers */
     public dispose(): void {
         for (const { event, handler } of this._modelListeners) {
@@ -761,25 +785,25 @@ export class ChemiscopeView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
+        this._loadWhenValueReady((data) => {
+            // If `data.structures` is an array of `UserStructure`, this
+            // will wrap the structure config with a loader that calls Python.
+            this._attachStructureLoaderToConfig(config, data);
 
-        // If `data.structures` is an array of `UserStructure`, this
-        // will wrap the structure config with a loader that calls Python.
-        this._attachStructureLoaderToConfig(config, data);
+            void DefaultVisualizer.load(config, data, this.warnings)
+                .then((visualizer) => {
+                    this._initializeVisualizer(visualizer);
+                })
+                // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+                .catch((e: Error) => {
+                    // eslint-disable-next-line no-console
+                    console.error(e);
 
-        void DefaultVisualizer.load(config, data, this.warnings)
-            .then((visualizer) => {
-                this._initializeVisualizer(visualizer);
-            })
-            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
-            .catch((e: Error) => {
-                // eslint-disable-next-line no-console
-                console.error(e);
-
-                const display = getByID(`${this.guid}-error-display`, element);
-                display.style.display = 'block';
-                display.getElementsByTagName('p')[0].innerText = e.toString();
-            });
+                    const display = getByID(`${this.guid}-error-display`, element);
+                    display.style.display = 'block';
+                    display.getElementsByTagName('p')[0].innerText = e.toString();
+                });
+        });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
@@ -837,25 +861,25 @@ export class StructureView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
+        this._loadWhenValueReady((data) => {
+            // If `data.structures` is an array of `UserStructure`, this
+            // will wrap the structure config with a loader that calls Python.
+            this._attachStructureLoaderToConfig(config, data);
 
-        // If `data.structures` is an array of `UserStructure`, this
-        // will wrap the structure config with a loader that calls Python.
-        this._attachStructureLoaderToConfig(config, data);
+            void StructureVisualizer.load(config, data, this.warnings)
+                .then((visualizer) => {
+                    this._initializeVisualizer(visualizer);
+                })
+                // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+                .catch((e: Error) => {
+                    // eslint-disable-next-line no-console
+                    console.error(e);
 
-        void StructureVisualizer.load(config, data, this.warnings)
-            .then((visualizer) => {
-                this._initializeVisualizer(visualizer);
-            })
-            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
-            .catch((e: Error) => {
-                // eslint-disable-next-line no-console
-                console.error(e);
-
-                const display = getByID(`${this.guid}-error-display`, element);
-                display.style.display = 'block';
-                display.getElementsByTagName('p')[0].innerText = e.toString();
-            });
+                    const display = getByID(`${this.guid}-error-display`, element);
+                    display.style.display = 'block';
+                    display.getElementsByTagName('p')[0].innerText = e.toString();
+                });
+        });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
@@ -913,20 +937,21 @@ export class MapView extends ChemiscopeBaseView {
 
         this._bindPythonSettings();
 
-        const data = parseJsonWithNaN(this.model.get('value') as string) as Dataset;
-        void MapVisualizer.load(config, data, this.warnings)
-            .then((visualizer) => {
-                this._initializeVisualizer(visualizer);
-            })
-            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
-            .catch((e: Error) => {
-                // eslint-disable-next-line no-console
-                console.error(e);
+        this._loadWhenValueReady((data) => {
+            void MapVisualizer.load(config, data, this.warnings)
+                .then((visualizer) => {
+                    this._initializeVisualizer(visualizer);
+                })
+                // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+                .catch((e: Error) => {
+                    // eslint-disable-next-line no-console
+                    console.error(e);
 
-                const display = getByID(`${this.guid}-error-display`, element);
-                display.style.display = 'block';
-                display.getElementsByTagName('p')[0].innerText = e.toString();
-            });
+                    const display = getByID(`${this.guid}-error-display`, element);
+                    display.style.display = 'block';
+                    display.getElementsByTagName('p')[0].innerText = e.toString();
+                });
+        });
 
         if (!this.model.get('has_metadata')) {
             getByID(`${this.guid}-chemiscope-meta`, element).style.display = 'none';
