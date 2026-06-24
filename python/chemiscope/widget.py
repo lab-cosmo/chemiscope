@@ -347,7 +347,7 @@ class ChemiscopeWidgetBase(anywidget.AnyWidget):
 
             {"type": "save-structure-sequence",
              "requestId": int,
-             "indices": [{"structure": id1[, "atom": id2]}, ...],
+             "indices": [int | {"structure": id1[, "atom": id2]}, ...],
              ["settings": [settings_1_dict, ...]]
              }
 
