@@ -18,6 +18,17 @@ and `MDAnalysis.AtomGroup`_ objects.
     sphinx
     gallery
 
+.. tip::
+
+    If you work with an AI coding assistant, the chemiscope repository ships a
+    `Claude Code <https://www.claude.com/product/claude-code>`_ skill under
+    ``.claude/skills/chemiscope-python/``. It teaches the assistant the
+    ``chemiscope`` Python API, the input format, the visualization settings and
+    the custom shapes. Copy the ``chemiscope-python`` folder into your
+    ``~/.claude/skills/`` (or a project's ``.claude/skills/``) to get help writing
+    chemiscope visualizations for your own data, including forces, atom-centered
+    properties and custom shapes.
+
 
 .. _ase.Atoms: https://ase-lib.org/ase/atoms.html
 .. _stk.BuildingBlock: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html
