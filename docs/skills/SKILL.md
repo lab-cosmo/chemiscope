@@ -341,9 +341,20 @@ await w.save_structure_sequence([0, 1, 2], ["a.png", "b.png", "c.png"])
 - `frames=` / `meta=` are deprecated aliases for `structures=` / `metadata=`.
 - `extract_properties` drops properties not present in *every* structure (with a warning).
 
-## Installing this skill elsewhere
+## Using this skill elsewhere
 
-This skill is self-contained and portable. Copy the whole `chemiscope-python/` folder
-(this `SKILL.md` plus the two reference files) into either `~/.claude/skills/` (available
-in every project) or `<project>/.claude/skills/` (scoped to one project), then
-`pip install chemiscope` (plus a backend like `ase`) in the working environment.
+This skill is self-contained, portable, and harness-agnostic Markdown. In the chemiscope
+repository the canonical copy lives at `docs/skills/` (this `SKILL.md` plus the two
+reference files); Claude Code also picks it up via the symlink
+`.claude/skills/chemiscope-python -> ../../docs/skills`.
+
+To reuse it in another project or agent:
+- **Claude Code** — copy (or symlink) the three files into a named folder under
+  `~/.claude/skills/<name>/` (available in every project) or
+  `<project>/.claude/skills/<name>/` (scoped to one project).
+- **Other agents** — point the agent at these files, e.g. from an `AGENTS.md` pointer or
+  by referencing the path directly. The YAML frontmatter is Claude-specific metadata and
+  is harmless to other tools.
+
+Either way, `pip install chemiscope` (plus a backend like `ase`) in the working
+environment.
