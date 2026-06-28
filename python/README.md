@@ -5,6 +5,10 @@ This package contains Python code to help generate input files for the
 chemiscope as an interactive widget in notebook environments (Jupyter,
 JupyterLab, marimo, and Google Colab).
 
+Want to try it without installing anything? Run the example notebook in your browser:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-cosmo/chemiscope/blob/main/python/examples/chemiscope-colab.ipynb)
+
 ## Installation
 
 You should use pip to install this package:

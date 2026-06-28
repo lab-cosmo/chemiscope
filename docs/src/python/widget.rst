@@ -19,6 +19,17 @@ major notebook environment: Jupyter notebook, JupyterLab, `marimo
 separate Jupyter or JupyterLab extension has to be installed — the frontend is
 bundled with the package and loaded automatically.
 
+Try it on Google Colab
+----------------------
+
+You can try chemiscope in your browser, without installing anything locally, using
+the example notebook on Google Colab. It installs chemiscope, loads a ready-made
+dataset, and rebuilds one from a structure file:
+
+.. image:: https://colab.research.google.com/assets/colab-badge.svg
+    :target: https://colab.research.google.com/github/lab-cosmo/chemiscope/blob/main/python/examples/chemiscope-colab.ipynb
+    :alt: Open the chemiscope example notebook in Google Colab
+
 Creating a chemiscope widget
 ----------------------------
 
