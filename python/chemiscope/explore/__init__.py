@@ -29,7 +29,7 @@ def get_featurizer(name):
     """
     try:
         import torch
-        from pet_mad.explore import PETMADFeaturizer
+        from upet.explore import PETMADFeaturizer
     except ImportError as e:
         raise ImportError(
             "Required package not found. Please install the dependencies with "
@@ -117,7 +117,7 @@ def explore(
 
     :return: a chemiscope widget for interactive visualization
 
-    To use this function, additional dependencies are required, specifically, `pet-mad`_
+    To use this function, additional dependencies are required, specifically, `upet`_
     used for the default dimensionality reduction. They can be installed with the
     following command:
 
@@ -175,7 +175,7 @@ def explore(
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
-    .. _pet_mad: https://github.com/lab-cosmo/pet-mad
+    .. _upet: https://github.com/lab-cosmo/upet
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
     .. _chemiscope-explore: https://chemiscope.org/docs/examples/6-explore.html

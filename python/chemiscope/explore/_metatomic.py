@@ -112,11 +112,12 @@ class metatomic_featurizer:
 
     def __call__(self, structures, environments):
         systems = mta.systems_to_torch(structures)
-        vesin_metatomic.compute_requested_neighbors(
-            systems,
+        calculators = vesin_metatomic.neighbor_lists_for_model(
             self.length_unit,
             self.model,
         )
+        for calculator in calculators:
+            calculator.add_neighbor_list(systems)
 
         systems = [s.to(self.dtype, self.device) for s in systems]
 
