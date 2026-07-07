@@ -31,6 +31,16 @@ import * as styles from '../styles';
 
 import { DEFAULT_CONFIG, DEFAULT_LAYOUT, getAxisAutoRange, getAxisRange } from './utils';
 
+const LEGEND_TRUNCATION_MARK = '...';
+
+function truncateLegendName(name: string): string {
+    const MAX_LEGEND_NAME_LENGTH = 25;
+    if (name.length > MAX_LEGEND_NAME_LENGTH) {
+        return name.slice(0, MAX_LEGEND_NAME_LENGTH - 1) + LEGEND_TRUNCATION_MARK;
+    }
+    return name;
+}
+
 /**
  * The {@link PropertiesMap} class displays a 2D or 3D map (scatter plot) of
  * properties in the dataset, using [plotly.js](https://plot.ly/javascript/)
@@ -214,6 +224,7 @@ export class PropertiesMap {
 
         // Create the Plotly plot within the plot element
         this._createPlot();
+        this._setupLegendTooltips();
 
         // Adopt styles with the plot stylesheets as last one because the plot
         // needs to be created to obtain it
@@ -2073,9 +2084,54 @@ export class PropertiesMap {
         const names =
             symbolValue !== '' ? (this._property(symbolValue).string?.strings() ?? []) : [];
         for (let i = 0; i < this._data.maxSymbols; i++) {
-            result.push(names[i] ?? '');
+            result.push(truncateLegendName(names[i] ?? ''));
         }
         return result;
+    }
+
+    /**
+     * Show a tooltip with the full name when hovering truncated legend
+     * entries
+     */
+    private _setupLegendTooltips(): void {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'chsp-legend-tooltip';
+        this._root.appendChild(tooltip);
+
+        this._plot.addEventListener('mouseover', (event) => {
+            const item = (event.target as Element).closest('g.traces');
+            const label = item?.querySelector('.legendtext')?.getAttribute('data-unformatted');
+            const noSymbol = this._options.symbol.value === '';
+            if (!item || !label || !label.endsWith(LEGEND_TRUNCATION_MARK) || noSymbol) {
+                return;
+            }
+
+            const names = this._property(this._options.symbol.value).string?.strings() ?? [];
+            const fullName = names.find((name) => truncateLegendName(name) === label);
+            if (fullName === undefined) {
+                return;
+            }
+
+            tooltip.textContent = fullName;
+            tooltip.style.display = 'block';
+
+            const rootRect = this._root.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+            tooltip.style.top = `${itemRect.bottom - rootRect.top + 4}px`;
+
+            const left = Math.min(
+                itemRect.left - rootRect.left,
+                rootRect.width - tooltip.offsetWidth - 8
+            );
+            tooltip.style.left = `${Math.max(0, left)}px`;
+        });
+
+        this._plot.addEventListener('mouseout', (event) => {
+            const item = (event.target as Element).closest('g.traces');
+            if (item && !item.contains(event.relatedTarget as Node)) {
+                tooltip.style.display = 'none';
+            }
+        });
     }
 
     /** How many symbols are on this plot?*/
