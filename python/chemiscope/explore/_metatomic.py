@@ -110,6 +110,15 @@ class metatomic_featurizer:
 
         self.device = _find_best_device(capabilities.supported_devices, device)
 
+        extra_inputs = self.model.requested_inputs(use_new_names=True)
+        if len(extra_inputs) > 0:
+            raise ValueError(
+                (
+                    "this model requires additional inputs that can not be provided by"
+                    f"chemiscope: {', '.join(extra_inputs)}"
+                )
+            )
+
     def __call__(self, structures, environments):
         systems = mta.systems_to_torch(structures)
         calculators = vesin_metatomic.neighbor_lists_for_model(
