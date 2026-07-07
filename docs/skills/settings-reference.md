@@ -82,7 +82,7 @@ Shared by `map.color.palette` and `structure[].color.palette`:
 
 `inferno`, `magma`, `plasma`, `viridis`, `cividis`, `seismic`, `brg`, `bwr`, `rwg`,
 `twilight` (periodic), `twilight dark` (periodic), `hsv` (periodic), `tab10`, `tab20`,
-`tab20b`, `tab20bc` (the `tab*` ones are categorical).
+`tab20b` (the `tab*` ones are categorical).
 
 ## Notes & legacy quirks
 
