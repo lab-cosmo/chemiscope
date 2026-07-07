@@ -64,7 +64,7 @@ Build single parameter dicts (use `None` for a param to leave it for `global`):
 ```python
 chemiscope.arrow_from_vector([1, 0, 0], scale=1.0, radius=0.1,
                              head_radius_scale=1.75, head_length_scale=2.0)
-# -> {"vector": [...], "baseRadius": ..., "headRadius": ..., "headLength": ...}
+# -> {"position": [...], "baseRadius": ..., "headRadius": ..., "headLength": ...}
 
 chemiscope.ellipsoid_from_tensor(tensor, scale=1.0, force_positive=False)
 # tensor: 3x3 or 6-array [xx, yy, zz, xy, xz, yz]; needs scipy
