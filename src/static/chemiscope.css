@@ -80,6 +80,19 @@
     visibility: visible;
 }
 
+.chsp-legend-tooltip {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+    background: #69738a;
+    color: white;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
 .chsp-pin-marker {
     border-radius: 50%;
     border: solid 1px black;
