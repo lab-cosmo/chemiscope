@@ -10,7 +10,7 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, JSOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, Warnings, getByID, makeDraggable } from '../utils';
+import { PositioningCallback, Warnings, clampToViewport, getByID, makeDraggable } from '../utils';
 import { CameraState, validateCamera } from '../utils/camera';
 
 // share colormaps with the map widget
@@ -275,6 +275,8 @@ export class StructureOptions extends OptionsGroup {
                 modalDialog.style.left = `${left}px`;
             }
             modal.open();
+
+            clampToViewport(modalDialog);
         });
 
         // make the settings modal draggable

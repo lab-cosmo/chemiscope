@@ -10,7 +10,14 @@ import Modal from '../modal';
 import { Settings } from '../dataset';
 import { HTMLOption, JSOption, OptionsGroup } from '../options';
 import { optionValidator } from '../options';
-import { PositioningCallback, Warnings, arrayMaxMin, getByID, makeDraggable } from '../utils';
+import {
+    PositioningCallback,
+    Warnings,
+    arrayMaxMin,
+    clampToViewport,
+    getByID,
+    makeDraggable,
+} from '../utils';
 import { CameraState, validateCamera } from '../utils/camera';
 import { NumericProperties, NumericProperty } from './data';
 import * as styles from '../styles';
@@ -587,6 +594,8 @@ export class MapOptions extends OptionsGroup {
             }
 
             modal.open();
+
+            clampToViewport(modalDialog);
         });
 
         // Stop propagation of keydown events. This is required for the Jupyter integration,

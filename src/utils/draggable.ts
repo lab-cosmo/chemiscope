@@ -12,6 +12,32 @@ interface DraggableElement extends HTMLElement {
     };
 }
 
+function clampPosition(
+    element: HTMLElement,
+    left: number,
+    top: number
+): { left: number; top: number } {
+    const MIN_VISIBLE = 60;
+    const minLeft = MIN_VISIBLE - element.offsetWidth;
+    const maxLeft = window.innerWidth - MIN_VISIBLE;
+    const maxTop = window.innerHeight - MIN_VISIBLE;
+
+    return {
+        left: Math.min(Math.max(left, minLeft), maxLeft),
+        top: Math.min(Math.max(top, 0), maxTop),
+    };
+}
+
+/**
+ * Move `element` back inside the viewport if it was left out of reach
+ * @param element DOM element to move back into view
+ */
+export function clampToViewport(element: HTMLElement): void {
+    const { left, top } = clampPosition(element, element.offsetLeft, element.offsetTop);
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+}
+
 /** @hidden
  * Make `element` draggable, using `handle_query` as the drag handle.
  * @param  element      DOM element that should be draggable
@@ -29,8 +55,7 @@ export function makeDraggable(element: DraggableElement, handle_query: string): 
     const mousemove = (e: MouseEvent) => {
         const offset = element.dragOffset;
         assert(offset !== undefined);
-        const left = e.clientX - offset.x;
-        const top = e.clientY - offset.y;
+        const { left, top } = clampPosition(element, e.clientX - offset.x, e.clientY - offset.y);
 
         element.style.left = `${left}px`;
         element.style.top = `${top}px`;
@@ -55,7 +80,7 @@ export function makeDraggable(element: DraggableElement, handle_query: string): 
             element.style.top = `${element.offsetTop}px`;
             element.style.width = `${element.offsetWidth}px`;
             element.style.margin = '0';
-            element.style.position = 'absolute';
+            element.style.position = 'fixed';
 
             document.addEventListener('mousemove', mousemove, false);
             document.addEventListener('mouseup', mouseup, false);
