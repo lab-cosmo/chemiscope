@@ -40,9 +40,7 @@ properties = {
     }
 }
 
-chemiscope.write_input(
-    "my-input.json.gz", structures=structures, properties=properties
-)
+chemiscope.write_input("my-input.json.gz", structures=structures, properties=properties)
 ```
 
 To display a chemiscope widget inside a notebook:
