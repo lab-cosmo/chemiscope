@@ -28,6 +28,34 @@ import { COLOR_MAPS } from '../map/colorscales';
 
 import { ColorBar, LabeledArrow, LoadOptions, defaultOpacity, setup3DmolStructure } from './utils';
 
+/// Whether we already checked that the browser can create WebGL contexts
+let WEBGL_AVAILABLE = false;
+
+/**
+ * Check once that the browser can create a WebGL context, throwing a
+ * descriptive error if it can not (e.g. hardware acceleration is disabled).
+ */
+function checkWebGLSupport(): void {
+    if (WEBGL_AVAILABLE) {
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (gl === null) {
+        throw new Error(
+            'WebGL is not available in this browser, but chemiscope requires it ' +
+                'to display structures. Make sure hardware acceleration is enabled ' +
+                'in the browser settings (check chrome://gpu in Chrome, or ' +
+                'about:support in Firefox), or try a different browser.'
+        );
+    }
+
+    // release the probe context so it does not count toward the browser limit
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    WEBGL_AVAILABLE = true;
+}
+
 /** */
 export class MoleculeViewer {
     /** callback called when a new atom is clicked on */
@@ -153,6 +181,7 @@ export class MoleculeViewer {
         this._root.style.width = '100%';
         this._root.style.height = '100%';
 
+        checkWebGLSupport();
         const viewer = $3Dmol.createViewer(this._root, {
             antialias: true,
             defaultcolors: $3Dmol.elementColors.Jmol,
