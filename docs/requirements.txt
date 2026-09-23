@@ -13,7 +13,6 @@ MDAnalysis
 MDAnalysisTests
 
 # required for the examples of chemiscope.explore
-mace-torch
 scikit-learn
 
 # required for chemiscope.headless
