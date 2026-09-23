@@ -9,6 +9,10 @@ import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
 import { Warnings } from '../utils';
 
+/** Colorbar length & gap to the legend in an exported image as fractions of the plot */
+const EXPORT_COLORBAR_LEN = 0.1;
+const EXPORT_COLORBAR_GAP = 0.025;
+
 /**
  * Export the plot as a PNG or SVG image, hiding the "selected" trace (index 1)
  * during the export.
@@ -17,14 +21,35 @@ import { Warnings } from '../utils';
  * @param format format of the image
  */
 export function exportImage(gd: PlotlyScatterElement, format: 'png' | 'svg') {
-    const width = Math.max(gd._fullLayout.width, 600);
+    let width = Math.max(gd._fullLayout.width, 600);
     const ratio = gd._fullLayout.height / gd._fullLayout.width;
+    let height = format === 'png' ? width * ratio : Math.max(gd._fullLayout.height, 600);
+
+    const hasLegend = gd.data.some((trace) => (trace as { showlegend?: boolean }).showlegend);
+    const legendHeight = hasLegend ? (gd._fullLayout.legend?._height ?? 0) : 0;
+    const hasColorbar = gd._fullLayout.coloraxis?.showscale === true;
+
+    // fraction of the plot left to the legend, the rest is for the colorbar
+    const spaceForLegend = hasColorbar ? 1 - EXPORT_COLORBAR_LEN - EXPORT_COLORBAR_GAP : 1;
+
+    const margins = gd._fullLayout.height - gd._fullLayout._size.h;
+    let plotHeight = height - margins;
+
+    // resize the height and grow the width too to keep the proportions of the map
+    if (plotHeight > 0 && legendHeight > plotHeight * spaceForLegend) {
+        const spaceNeeded = legendHeight / spaceForLegend;
+        const sideMargins = gd._fullLayout.width - gd._fullLayout._size.w;
+
+        width = Math.round(((width - sideMargins) * spaceNeeded) / plotHeight + sideMargins);
+        height = Math.round(spaceNeeded + margins);
+        plotHeight = spaceNeeded;
+    }
 
     const opts: Plotly.DownloadImgopts = {
         filename: 'chemiscope-map',
         format: format,
         width: width,
-        height: format === 'png' ? width * ratio : Math.max(gd._fullLayout.height, 600),
+        height: height,
     };
 
     if (format === 'png') {
@@ -36,20 +61,29 @@ export function exportImage(gd: PlotlyScatterElement, format: 'png' | 'svg') {
     // Hide the "selected" trace (index 1) for the export.
     // In 2D mode, this trace is already empty (using NaNs), but in 3D mode
     // it contains the markers for selected environments.
-    Plotly.restyle(gd, { visible: false }, [1])
-        .then(() => {
-            return Plotly.downloadImage(gd, opts);
-        })
-        .then(() => {
-            return Plotly.restyle(gd, { visible: true }, [1]);
-        })
-        .catch((e: unknown) => {
-            // make sure we show the trace again even if download failed
-            void Plotly.restyle(gd, { visible: true }, [1]);
-            setTimeout(() => {
-                throw e;
-            });
+    const traces = gd.data.map((trace, i) => (i === 1 ? { ...trace, visible: false } : trace));
+
+    // the image to export is built from a copy so the displayed plot left untouched
+    const layout: Record<string, unknown> = { ...gd.layout };
+    layout.legend = { ...gd.layout.legend, maxheight: height };
+
+    // the colorbar gets the plot height left below the legend
+    if (hasColorbar && legendHeight > 0 && plotHeight > 0) {
+        const coloraxis = layout.coloraxis as { colorbar?: object } | undefined;
+        const len = 1 - legendHeight / plotHeight - EXPORT_COLORBAR_GAP;
+        layout.coloraxis = {
+            ...coloraxis,
+            colorbar: { ...coloraxis?.colorbar, len: Math.max(EXPORT_COLORBAR_LEN, len) },
+        };
+    }
+
+    // download
+    const graph = { data: traces, layout: layout } as Plotly.PlotlyDataLayoutConfig;
+    Plotly.downloadImage(graph, opts).catch((e: unknown) => {
+        setTimeout(() => {
+            throw e;
         });
+    });
 }
 
 /** Extract the data associated with the first `path` element in an SVG string */
@@ -108,6 +142,10 @@ export const DEFAULT_LAYOUT = {
                     size: 15,
                 },
             },
+            // Ticks for numeric values are automatic, for string not
+            tickmode: 'auto' as 'auto' | 'array',
+            tickvals: undefined as number[] | undefined,
+            ticktext: undefined as string[] | undefined,
             y: 0,
             yanchor: 'bottom',
         },
@@ -119,6 +157,7 @@ export const DEFAULT_LAYOUT = {
     legend: {
         itemclick: false,
         itemdoubleclick: false,
+        maxheight: 0.5, // legend scrolls above half the plot, the rest is for the colorbar
         tracegroupgap: 5,
         y: 1,
         yanchor: 'top',

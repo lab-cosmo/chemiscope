@@ -246,6 +246,14 @@ export class PropertiesMap {
             window.requestAnimationFrame(() => {
                 this._resizePending = false;
                 Plotly.Plots.resize(this._plot);
+
+                // the room left for the colorbar changes with the plot height
+                const len = this._colorbarLen();
+
+                // this runs on every frame of a resize, only redraw if it changed
+                if (len !== this._plot._fullLayout.coloraxis?.colorbar?.len) {
+                    this._relayout({ 'coloraxis.colorbar.len': len } as unknown as Layout);
+                }
             });
         });
         this._resizeObserver.observe(this._plot);
@@ -976,13 +984,16 @@ export class PropertiesMap {
                     this._options.color.min.value = min;
                     this._setScaleStep([min, max], 'color');
 
+                    const colorbar = this._colorbarSettings();
                     this._relayout({
-                        'coloraxis.colorbar.title.text': transformedAxisLabel(
-                            this._title(this._options.color.property.value),
-                            this._options.color.mode.value,
-                            true
-                        ),
-                        'coloraxis.showscale': true,
+                        'coloraxis.colorbar.title.text': colorbar.title,
+                        'coloraxis.showscale': this._showColorbar(),
+                        'legend.maxheight': this._legendMaxHeight(),
+
+                        // null clears old category labels when switching to numeric colors
+                        'coloraxis.colorbar.tickmode': colorbar.tickmode,
+                        'coloraxis.colorbar.tickvals': colorbar.tickvals ?? null,
+                        'coloraxis.colorbar.ticktext': colorbar.ticktext ?? null,
                     } as unknown as Layout);
 
                     // refill the selection range with the new property's bounds
@@ -1001,9 +1012,11 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
+                    'legend.maxheight': this._legendMaxHeight(),
                 } as unknown as Layout);
             }
 
+            this._restyleLegendColors();
             void this._restyleFull();
         });
 
@@ -1039,6 +1052,8 @@ export class PropertiesMap {
             if (this._options.color.select.mode.value !== 'all') {
                 this._restyle({ 'marker.color': this._colors() } as Data, [0, 1]);
             }
+
+            this._restyleLegendColors();
         };
 
         const canChangeColors = (values: number[], changed: string): boolean => {
@@ -1092,13 +1107,13 @@ export class PropertiesMap {
                 this._options.color.min.value = min;
                 this._setScaleStep([min, max], 'color');
 
+                const colorbar = this._colorbarSettings();
                 this._relayout({
-                    'coloraxis.colorbar.title.text': transformedAxisLabel(
-                        this._title(this._options.color.property.value),
-                        this._options.color.mode.value,
-                        true
-                    ),
-                    'coloraxis.showscale': true,
+                    'coloraxis.colorbar.title.text': colorbar.title,
+                    'coloraxis.showscale': this._showColorbar(),
+                    'coloraxis.colorbar.tickmode': colorbar.tickmode,
+                    'coloraxis.colorbar.tickvals': colorbar.tickvals ?? null,
+                    'coloraxis.colorbar.ticktext': colorbar.ticktext ?? null,
                 } as unknown as Layout);
 
                 void this._restyleFull();
@@ -1144,6 +1159,7 @@ export class PropertiesMap {
             this._relayout({
                 'coloraxis.colorscale': this._options.colorScale(),
             } as unknown as Layout);
+            this._restyleLegendColors();
             void this._restyleFull();
         });
 
@@ -1184,9 +1200,12 @@ export class PropertiesMap {
                 name: this._legendNames(),
                 showlegend: this._showlegend(),
             } as unknown as Data);
+            this._restyleLegendColors();
 
             this._relayout({
                 'coloraxis.colorbar.len': this._colorbarLen(),
+                'coloraxis.showscale': this._showColorbar(),
+                'legend.maxheight': this._legendMaxHeight(),
             } as unknown as Layout);
         });
     }
@@ -1518,6 +1537,8 @@ export class PropertiesMap {
 
         // add empty traces to be able to display the symbols legend
         // one trace for each possible symbol
+        const legendColors = this._legendColors();
+
         for (let s = 0; s < this._data.maxSymbols; s++) {
             const data = {
                 name: legendNames[s],
@@ -1531,7 +1552,7 @@ export class PropertiesMap {
                 z: [NaN],
 
                 marker: {
-                    color: 'black',
+                    color: legendColors[s],
                     size: 10,
                     symbol: this._is3D() ? get3DSymbol(s) : s,
                 },
@@ -1560,16 +1581,21 @@ export class PropertiesMap {
         layout.scene.xaxis.type = this._options.x.scale.value;
         layout.scene.yaxis.type = this._options.y.scale.value;
         layout.scene.zaxis.type = this._options.z.scale.value;
+
         layout.coloraxis.colorscale = this._options.colorScale();
         layout.coloraxis.cmin = this._options.color.min.value;
         layout.coloraxis.cmax = this._options.color.max.value;
-        layout.coloraxis.colorbar.title.text = transformedAxisLabel(
-            this._title(this._options.color.property.value),
-            this._options.color.mode.value,
-            true
-        );
+
         layout.coloraxis.colorbar.len = this._colorbarLen();
-        layout.coloraxis.showscale = this._options.hasColors();
+
+        const colorbar = this._colorbarSettings();
+        layout.coloraxis.colorbar.title.text = colorbar.title;
+        layout.coloraxis.colorbar.tickmode = colorbar.tickmode;
+        layout.coloraxis.colorbar.tickvals = colorbar.tickvals;
+        layout.coloraxis.colorbar.ticktext = colorbar.ticktext;
+
+        layout.coloraxis.showscale = this._showColorbar();
+        layout.legend.maxheight = this._legendMaxHeight();
 
         // Set ranges for the axes
         layout.xaxis.range = getAxisRange(
@@ -1973,6 +1999,7 @@ export class PropertiesMap {
         return values.filter((v): v is number => typeof v === 'number');
     }
 
+    /** Range used to assign colors to points and legend markers */
     private _getColorRange(): { min: number; max: number } {
         let min = this._options.color.min.value;
         let max = this._options.color.max.value;
@@ -2059,12 +2086,66 @@ export class PropertiesMap {
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
         const count = this._symbolsCount();
-        if (count === 0) {
+
+        const margins = DEFAULT_LAYOUT.margin.t + DEFAULT_LAYOUT.margin.b;
+        const plotHeight = this._plot.clientHeight - margins;
+
+        // no height yet, the resize observer will recompute this
+        if (count === 0 || plotHeight <= 0) {
             return 1;
         }
-        const LEGEND_ITEM_HEIGH = 0.045;
+
+        const LEGEND_ITEM_HEIGHT_PX = 19;
+        const legendHeight = (count * LEGEND_ITEM_HEIGHT_PX + 10) / plotHeight;
         const PADDING = 0.025;
-        return Math.max(0.2, 1 - LEGEND_ITEM_HEIGH * count - PADDING);
+
+        // a longer legend gets a scrollbar instead of taking more room
+        return 1 - Math.min(legendHeight, DEFAULT_LAYOUT.legend.maxheight) - PADDING;
+    }
+
+    /** Colorbar title and ticks for the current property and color transform */
+    private _colorbarSettings(): {
+        title: string;
+        tickmode: 'auto' | 'array';
+        tickvals: number[] | undefined;
+        ticktext: string[] | undefined;
+    } {
+        if (this._options.hasColors()) {
+            const property = this._property(this._options.color.property.value);
+
+            if (property.string !== undefined) {
+                const names = property.string.strings();
+
+                // Category indices transform them like point colors
+                const values = this._options.calculateColors(names.map((_, i) => i));
+                const tickvals: number[] = [];
+                const ticktext: string[] = [];
+
+                values.forEach((value, i) => {
+                    // invalid transformed values have no position on the colorbar
+                    if (typeof value === 'number' && isFinite(value)) {
+                        tickvals.push(value);
+                        ticktext.push(truncateLegendName(names[i]));
+                    }
+                });
+
+                // Omit the title to leave room for the category names
+                return { title: '', tickmode: 'array', tickvals, ticktext };
+            }
+        }
+
+        const title = transformedAxisLabel(
+            this._title(this._options.color.property.value),
+            this._options.color.mode.value,
+            true
+        );
+
+        return { title, tickmode: 'auto', tickvals: undefined, ticktext: undefined };
+    }
+
+    /** Max height of the legend which can use the whole plot without a colorbar */
+    private _legendMaxHeight(): number {
+        return this._showColorbar() ? DEFAULT_LAYOUT.legend.maxheight : 1;
     }
 
     /** Should we show the legend for the various symbols used? */
@@ -2087,6 +2168,49 @@ export class PropertiesMap {
             result.push(truncateLegendName(names[i] ?? ''));
         }
         return result;
+    }
+
+    /** Check whether the same property controls symbol and color */
+    private _legendCarriesColors(): boolean {
+        const symbol = this._options.symbol.value;
+        return symbol !== '' && this._options.color.property.value === symbol;
+    }
+
+    /** Show a colorbar */
+    private _showColorbar(): boolean {
+        return this._options.hasColors() && !this._legendCarriesColors();
+    }
+
+    /** Use category colors in the legend */
+    private _legendColors(): string[] {
+        const colors = new Array<string>(Math.max(this._data.maxSymbols, 0)).fill('black');
+
+        if (this._legendCarriesColors()) {
+            // Use the same transform and color range as the plotted points
+            const { min, max } = this._getColorRange();
+            const values = this._options.calculateColors(
+                Array.from({ length: this._symbolsCount() }, (_, i) => i)
+            );
+
+            values.forEach((value, i) => {
+                colors[i] =
+                    typeof value === 'number' ? this._options.valueToColor(value, min, max) : value;
+            });
+        }
+
+        return colors;
+    }
+
+    /** Refresh legend colors */
+    private _restyleLegendColors(): void {
+        const colors = this._legendColors();
+        if (colors.length === 0) {
+            return;
+        }
+
+        // The first three traces hold the points, selection and invisible colorbar points
+        const traces = colors.map((_, i) => 3 + i);
+        this._restyle({ 'marker.color': colors } as unknown as Data, traces);
     }
 
     /**
