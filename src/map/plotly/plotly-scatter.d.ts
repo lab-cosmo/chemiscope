@@ -29,6 +29,12 @@ interface ScatterLayout {
         };
         aspectratio: { x: number; y: number; z: number };
     };
+    _size: { w: number; h: number };
+    legend?: { _height?: number };
+    coloraxis?: {
+        showscale?: boolean;
+        colorbar?: { len?: number };
+    };
     width: number;
     height: number;
 }
