@@ -142,6 +142,10 @@ export const DEFAULT_LAYOUT = {
                     size: 15,
                 },
             },
+            // Ticks for numeric values are automatic, for string not
+            tickmode: 'auto' as 'auto' | 'array',
+            tickvals: undefined as number[] | undefined,
+            ticktext: undefined as string[] | undefined,
             y: 0,
             yanchor: 'bottom',
         },
