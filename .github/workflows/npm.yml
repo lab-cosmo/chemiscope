@@ -1,0 +1,35 @@
+name: Publish npm package
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  npm-package:
+    # skip forks and pre-release tags such as v1.2.0-rc1
+    if: github.repository == 'lab-cosmo/chemiscope' && !contains(github.ref_name, '-')
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: check that tag matches package.json version
+        run: test "${{ github.ref_name }}" = "v$(node -p 'require("./package.json").version')"
+
+      - name: configure access to git repositories in package-lock.json
+        run: git config --global url."https://github.com/".insteadOf ssh://git@github.com
+      - name: install npm dependencies
+        run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: publish to npm
+        run: npm publish --ignore-scripts --access public

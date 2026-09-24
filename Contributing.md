@@ -112,6 +112,12 @@ git commit  # ask for help if you don't know how to use git
 git push -u origin <new-branch>
 ```
 
+### Releasing
+
+Bump the version in both `package.json` and `python/chemiscope/version.py`, merge, then
+push a `vX.Y.Z` tag on `main`. The tag triggers the npm publication and the upload of
+Python wheels to the GitHub release.
+
 [pr]: https://help.github.com/articles/using-pull-requests/
 [easy-issues]: https://github.com/lab-cosmo/chemiscope/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [fork]: https://help.github.com/articles/fork-a-repo/
