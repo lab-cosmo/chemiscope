@@ -246,6 +246,14 @@ export class PropertiesMap {
             window.requestAnimationFrame(() => {
                 this._resizePending = false;
                 Plotly.Plots.resize(this._plot);
+
+                // the room left for the colorbar changes with the plot height
+                const len = this._colorbarLen();
+
+                // this runs on every frame of a resize, only redraw if it changed
+                if (len !== this._plot._fullLayout.coloraxis?.colorbar?.len) {
+                    this._relayout({ 'coloraxis.colorbar.len': len } as unknown as Layout);
+                }
             });
         });
         this._resizeObserver.observe(this._plot);
@@ -983,6 +991,7 @@ export class PropertiesMap {
                             true
                         ),
                         'coloraxis.showscale': true,
+                        'legend.maxheight': this._legendMaxHeight(),
                     } as unknown as Layout);
 
                     // refill the selection range with the new property's bounds
@@ -1001,6 +1010,7 @@ export class PropertiesMap {
                 this._relayout({
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
+                    'legend.maxheight': this._legendMaxHeight(),
                 } as unknown as Layout);
             }
 
@@ -1570,6 +1580,7 @@ export class PropertiesMap {
         );
         layout.coloraxis.colorbar.len = this._colorbarLen();
         layout.coloraxis.showscale = this._options.hasColors();
+        layout.legend.maxheight = this._legendMaxHeight();
 
         // Set ranges for the axes
         layout.xaxis.range = getAxisRange(
@@ -2059,12 +2070,26 @@ export class PropertiesMap {
     private _colorbarLen(): number {
         /// Heigh of a legend item in plot unit
         const count = this._symbolsCount();
-        if (count === 0) {
+
+        const margins = DEFAULT_LAYOUT.margin.t + DEFAULT_LAYOUT.margin.b;
+        const plotHeight = this._plot.clientHeight - margins;
+
+        // no height yet, the resize observer will recompute this
+        if (count === 0 || plotHeight <= 0) {
             return 1;
         }
-        const LEGEND_ITEM_HEIGH = 0.045;
+
+        const LEGEND_ITEM_HEIGHT_PX = 19;
+        const legendHeight = (count * LEGEND_ITEM_HEIGHT_PX + 10) / plotHeight;
         const PADDING = 0.025;
-        return Math.max(0.2, 1 - LEGEND_ITEM_HEIGH * count - PADDING);
+
+        // a longer legend gets a scrollbar instead of taking more room
+        return 1 - Math.min(legendHeight, DEFAULT_LAYOUT.legend.maxheight) - PADDING;
+    }
+
+    /** Max height of the legend which can use the whole plot without a colorbar */
+    private _legendMaxHeight(): number {
+        return this._options.hasColors() ? DEFAULT_LAYOUT.legend.maxheight : 1;
     }
 
     /** Should we show the legend for the various symbols used? */
