@@ -20,6 +20,8 @@ const scatter3d = require('plotly.js/lib/scatter3d');
 for (const [k, v] of Object.entries(markers3d.default)) {
     scatter3d.markerSymbols[k] = v;
 }
+// plotly only accepts the symbols it knew when the module was loaded
+scatter3d.attributes.marker.symbol.values = Object.keys(scatter3d.markerSymbols);
 
 const Plotly = require('plotly.js/lib/core');
 
