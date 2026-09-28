@@ -6,6 +6,15 @@
 import { Bounds, arrayMaxMin } from '../utils';
 import { CameraState, projectPoints } from '../utils/camera';
 
+function hasFinitePoint(x: number[], y: number[], z: number[] | null): boolean {
+    return x.some((value, i) => {
+        const validX = Number.isFinite(value);
+        const validY = Number.isFinite(y[i]);
+        const validZ = z === null || Number.isFinite(z[i]);
+        return validX && validY && validZ;
+    });
+}
+
 /**
  * Computes LOD based on 2D screen-space projection from 3D
  *
@@ -32,6 +41,10 @@ export function computeScreenSpaceLOD(
     priorityMask?: boolean[]
 ): number[] {
     if (bounds === undefined) {
+        // a log axis can leave no points to sample
+        if (!hasFinitePoint(xValues, yValues, zValues)) {
+            return [];
+        }
         const xRange = arrayMaxMin(xValues);
         const yRange = arrayMaxMin(yValues);
         const zRange = arrayMaxMin(zValues);
@@ -147,6 +160,10 @@ export function computeLODIndices(
             [zMin, zMax] = bounds.z;
         }
     } else {
+        // check before asking for ranges, which require finite values
+        if (!hasFinitePoint(xValues, yValues, zValues)) {
+            return [];
+        }
         // STATIC: Use the full data range (calculate from data)
         const xRange = arrayMaxMin(xValues);
         xMin = xRange.min;
@@ -168,6 +185,11 @@ export function computeLODIndices(
     for (let i = 0; i < xValues.length; i++) {
         const x = xValues[i];
         const y = yValues[i];
+
+        // skip points without coordinates (e.g. log scale of negative values)
+        if (!isFinite(x) || !isFinite(y) || (is3D && zValues && !isFinite(zValues[i]))) {
+            continue;
+        }
 
         if (bounds) {
             if (x < xMin || x > xMax || y < yMin || y > yMax) {
@@ -233,12 +255,35 @@ export function computeLODIndices(
         }
     }
 
-    const result: number[] = [];
+    // avoid adding the same point twice
+    const result = new Set<number>();
     for (let i = 0; i < grid.length; i++) {
         if (grid[i] !== -1) {
-            result.push(grid[i]);
+            result.add(grid[i]);
         }
     }
-    result.sort((a, b) => a - b);
-    return result;
+
+    // keep each axis's minimum and maximum for autorange
+    if (!bounds) {
+        const axes = [xValues, yValues];
+        if (zValues !== null) {
+            axes.push(zValues);
+        }
+
+        for (const values of axes) {
+            let minIndex = visibleIds[0];
+            let maxIndex = visibleIds[0];
+            for (const id of visibleIds) {
+                if (values[id] < values[minIndex]) {
+                    minIndex = id;
+                }
+                if (values[id] > values[maxIndex]) {
+                    maxIndex = id;
+                }
+            }
+            result.add(minIndex);
+            result.add(maxIndex);
+        }
+    }
+    return Array.from(result).sort((a, b) => a - b);
 }

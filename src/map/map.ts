@@ -518,6 +518,13 @@ export class PropertiesMap {
                 // In 2D, we use this to update the html markers
                 this._updateMarkers();
             }
+
+            // wait for the gesture to commit before restyling
+            // stale ranges here would make the view jump
+            if (this._afterplotRequest !== null) {
+                window.clearTimeout(this._afterplotRequest);
+                this._afterplotRequest = null;
+            }
         });
 
         if (this._mouseupHandler !== undefined) {
@@ -621,6 +628,7 @@ export class PropertiesMap {
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
             }
+            // refine after plotly commits the view
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
@@ -639,7 +647,7 @@ export class PropertiesMap {
                 if (lodEnabled && viewChanged) {
                     this._updateLOD(this._getBounds());
                 }
-            }, 50);
+            }, 0);
         });
 
         // Handle double-click to reset view (global LOD)
@@ -734,7 +742,7 @@ export class PropertiesMap {
 
             if (
                 axis.scale.value === 'log' &&
-                arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
+                this._property(axis.property.value).values.some((value) => value < 0) &&
                 axis.min.value <= 0
             ) {
                 this.warnings.sendMessage(
@@ -893,8 +901,9 @@ export class PropertiesMap {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
                     }
 
-                    // re-update LOD based on known ranges
-                    this._updateLOD(this._getBounds());
+                    // the new z property needs fresh coordinates on every trace
+                    this._computeLOD(this._getBounds());
+                    void this._restyleFull();
                 })
                 .catch((e: unknown) => {
                     setTimeout(() => {
@@ -1344,7 +1353,6 @@ export class PropertiesMap {
             if (this._is3D() && !('scene.camera' in layout)) {
                 // explicitely preserve the camera position when updating the plot
                 // to prevent it from snapping back to the default position
-                // see https://github.com/lab-cosmo/chemiscope/issues/310
                 const currentLayout = this._plot._fullLayout;
                 if (currentLayout.scene !== undefined) {
                     // @ts-expect-error scene is defined in the layout
@@ -2344,6 +2352,17 @@ export class PropertiesMap {
         if (this._is3D()) {
             // HACK: `_fullLayout` is not public, so it might break
             const layout = this._plot._fullLayout.scene;
+            // camera updates can leave layout ranges stale
+            const scene = layout._scene;
+            if (scene !== undefined && scene.glplot !== undefined) {
+                // undo plotly's internal coordinate scaling
+                const bounds = scene.glplot.bounds;
+                const range = (i: number): [number, number] => [
+                    bounds[0][i] / scene.dataScale[i],
+                    bounds[1][i] / scene.dataScale[i],
+                ];
+                return { x: range(0), y: range(1), z: range(2) };
+            }
             return {
                 x: layout.xaxis.range as [number, number],
                 y: layout.yaxis.range as [number, number],
@@ -2616,7 +2635,6 @@ export class PropertiesMap {
         }
 
         const xProp = this._options.x.property.value;
-        const yProp = this._options.y.property.value;
         const zProp = this._options.z.property.value;
 
         const xValues = this._property(xProp).values;
@@ -2627,9 +2645,16 @@ export class PropertiesMap {
             return;
         }
 
-        const yValues = this._property(yProp).values;
         const is3D = this._is3D() && zProp !== '';
-        const zValues = is3D ? this._property(zProp).values : null;
+
+        // bin in plot coordinates, so that log axes match the view bounds
+        const coordinates = (axis: AxisOptions) => {
+            const values = this._property(axis.property.value).values;
+            return axis.scale.value === 'log' ? values.map((v) => Math.log10(v)) : values;
+        };
+        const xCoords = coordinates(this._options.x);
+        const yCoords = coordinates(this._options.y);
+        const zCoords = is3D ? coordinates(this._options.z) : null;
 
         // When a selection filter is active, prefer foreground points: pass the
         // mask as a priority signal to the LOD functions. If hide mode is on
@@ -2660,9 +2685,9 @@ export class PropertiesMap {
         // to show "something" when we rotate, pan or zoom
 
         const lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
+            xCoords,
+            yCoords,
+            zCoords,
             undefined,
             PropertiesMap.LOD_THRESHOLD / 10,
             priorityMask
@@ -2675,11 +2700,11 @@ export class PropertiesMap {
         // Fine pass
         // Do a higher resolution subsampling for the points that are actually visible
         const fineIndices =
-            is3D && zValues && this._options.camera.value && bounds
+            is3D && zCoords && this._options.camera.value && bounds
                 ? computeScreenSpaceLOD(
-                      xValues,
-                      yValues,
-                      zValues,
+                      xCoords,
+                      yCoords,
+                      zCoords,
                       this._options.camera.value,
                       bounds,
                       PropertiesMap.LOD_THRESHOLD / 2,
@@ -2687,9 +2712,9 @@ export class PropertiesMap {
                       priorityMask
                   )
                 : computeLODIndices(
-                      xValues,
-                      yValues,
-                      zValues,
+                      xCoords,
+                      yCoords,
+                      zCoords,
                       bounds,
                       PropertiesMap.LOD_THRESHOLD,
                       priorityMask
@@ -2713,11 +2738,63 @@ export class PropertiesMap {
         }
 
         this._lodBusy = true;
+        try {
+            this._computeLOD(bounds);
+            void this._restyleLOD();
+        } finally {
+            this._lodBusy = false;
+        }
+    }
 
-        this._computeLOD(bounds);
+    /** Update the sampled trace after a view change */
+    private _restyleLOD(): Promise<unknown> {
+        const update: Record<string, unknown> = {
+            x: this._coordinates(this._options.x, 0),
+            y: this._coordinates(this._options.y, 0),
+            z: this._coordinates(this._options.z, 0),
+            'marker.color': this._colors(0),
+            'marker.size': this._sizes(0),
+            'marker.symbol': this._symbols(0),
+            'marker.line.color': this._lineColors(0),
+            // keep hover values aligned with the sampled points
+            customdata: this._colorValues(0),
+        };
+        const lineColors = (update['marker.line.color'] as string[][])[0];
 
-        void this._restyleFull();
-        this._lodBusy = false;
+        // send a shared outline color once
+        if (Array.isArray(lineColors) && lineColors.every((c) => c === lineColors[0])) {
+            update['marker.line.color'] = [lineColors[0]];
+        }
+
+        // keep the zoom and camera position when redrawing
+        let layout: Record<string, unknown>;
+        if (this._is3D()) {
+            const { camera, aspectratio } = this._liveScene();
+            layout = { 'scene.camera': camera, 'scene.aspectratio': aspectratio };
+        } else {
+            const bounds = this._getBounds();
+            layout = { 'xaxis.range': bounds.x, 'yaxis.range': bounds.y };
+        }
+        return Plotly.update(this._plot, update as unknown as Data, layout as unknown as Layout, [
+            0,
+        ]);
+    }
+
+    /** Current camera and aspect ratio of the 3D scene */
+    private _liveScene(): {
+        camera: PlotlyScatterElement['_fullLayout']['scene']['camera'];
+        aspectratio: { x: number; y: number; z: number };
+    } {
+        const scene = this._plot._fullLayout.scene;
+        const rendered = scene._scene;
+        if (rendered === undefined || rendered.glplot === undefined) {
+            return { camera: scene.camera, aspectratio: scene.aspectratio };
+        }
+        const aspect = rendered.glplot.aspect;
+        return {
+            camera: rendered.getCamera(),
+            aspectratio: { x: aspect[0], y: aspect[1], z: aspect[2] },
+        };
     }
 
     /**
