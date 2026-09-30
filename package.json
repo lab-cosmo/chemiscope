@@ -64,7 +64,7 @@
     "node-loader": "^2",
     "pako": "^2",
     "plausible-tracker": "^0.3",
-    "plotly.js": "3.3.0",
+    "plotly.js": "4.1.1",
     "prettier": "3.3.3",
     "process": "^0.11.10",
     "raw-loader": "^4",
