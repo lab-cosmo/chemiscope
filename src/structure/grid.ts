@@ -630,10 +630,10 @@ export class ViewersGrid {
     ): Record<string, (number | undefined)[]> | undefined {
         const properties: Record<string, (number | undefined)[]> = {};
 
-        // Use _calculatedEnvironments instead of _environments.
-        // _environments is undefined when target is 'structure' (to disable environment UI),
-        // but we still want to be able to access atomic properties for coloring.
         if (this._calculatedEnvironments !== undefined) {
+            // Atomic properties are indexed by environment when environments are
+            // explicitly provided. Re-expand sparse environments to one value per
+            // atom in the structure.
             const environments = this._calculatedEnvironments[structure];
             for (const name in this._properties) {
                 const values = this._properties[name];
@@ -647,11 +647,21 @@ export class ViewersGrid {
                     }
                 }
             }
-
-            return properties;
         } else {
-            return undefined;
+            // Without explicit environments, atom properties are dense and follow
+            // the concatenated atom order of the structures (see validateDataset).
+            let offset = 0;
+            for (let i = 0; i < structure; i++) {
+                offset += this._structures[i].size;
+            }
+            const size = this._structures[structure].size;
+
+            for (const name in this._properties) {
+                properties[name] = this._properties[name].slice(offset, offset + size);
+            }
         }
+
+        return properties;
     }
 
     /**
