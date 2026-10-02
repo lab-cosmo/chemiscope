@@ -210,8 +210,16 @@ def _():
             ]
         )
         symbols = list(atoms.symbols)
-        per_atom = [
-            {
+        pair_samples = system.get_neighbor_list(model.requested_nl).samples.values
+        pair_center = pair_samples[:, 0].detach().cpu().long()
+        pair_neighbor = pair_samples[:, 1].detach().cpu().long()
+        pair_distance = distances.detach().reshape(-1).cpu()
+        if pair_distance.shape[0] != pair_center.shape[0]:
+            pair_center = pair_center[:0]
+        per_atom = []
+        for i in range(len(atoms)):
+            mask = pair_center == i
+            row = {
                 "atom": i,
                 "symbol": symbols[i],
                 "sr_energy": float(sr[i]),
@@ -219,9 +227,23 @@ def _():
                 "final_energy": float(atomic[i]),
                 "scalar_charge": float(charge[i]),
                 "scalar_feature_l2": float(scalar_norm[i]),
+                "min_pair": None,
+                "min_distance": None,
+                "max_pair": None,
+                "max_distance": None,
             }
-            for i in range(len(atoms))
-        ]
+            if int(mask.sum()) > 0:
+                chosen = pair_distance[mask]
+                partners = pair_neighbor[mask]
+                near = int(torch.argmin(chosen))
+                far = int(torch.argmax(chosen))
+                near_atom = int(partners[near])
+                far_atom = int(partners[far])
+                row["min_pair"] = f"{symbols[near_atom]} {near_atom}"
+                row["min_distance"] = float(chosen[near])
+                row["max_pair"] = f"{symbols[far_atom]} {far_atom}"
+                row["max_distance"] = float(chosen[far])
+            per_atom.append(row)
         return {
             "formula": atoms.get_chemical_formula(),
             "n_atoms": len(atoms),
