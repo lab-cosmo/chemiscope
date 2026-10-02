@@ -122,31 +122,179 @@ def dataset_summaries(log_text: str) -> list[dict]:
     return rows
 
 
-def build_map(structures_path: str, predictions_path: str, n_show: int) -> dict:
-    """Sample structures and the properties drawn on the parity map."""
-    frames = read_frames(structures_path)
-    reference = [
-        float(value) for value in comment_values(structures_path, "ecumetric_energy")
-    ]
-    groups = comment_values(structures_path, "dataset_group")
-    predicted = []
-    prediction_note = "No predictions file."
-    pred_path = predictions_path.strip()
-    if pred_path:
-        predicted_text = comment_values(pred_path, "energy")
-        if len(predicted_text) == len(frames):
-            predicted = [float(value) for value in predicted_text]
-            prediction_note = f"Predictions aligned with {len(predicted)} structures."
-        else:
-            prediction_note = (
-                f"Predictions file has {len(predicted_text)} frames, "
-                f"structures file has {len(frames)}. Error column omitted."
-            )
+def split_paths(value) -> list[str]:
+    """One path per line, or a sequence of paths. Blank lines are ignored."""
+    if value is None:
+        return []
+    if isinstance(value, (str, Path)):
+        return [line.strip() for line in str(value).splitlines() if line.strip()]
+    return [str(item).strip() for item in value if str(item).strip()]
 
-    take = min(int(n_show), len(frames))
-    chosen = np.linspace(0, len(frames) - 1, take, dtype=int)
-    shown = [frames[int(i)] for i in chosen]
-    energies = [reference[int(i)] for i in chosen]
+
+def _unique_label(path: Path, paths: list[Path], *, qualify: bool = False) -> str:
+    name = path.name
+    if not qualify and sum(item.name == name for item in paths) == 1:
+        return name
+    short = f"{path.parent.name}/{name}"
+    if sum(f"{item.parent.name}/{item.name}" == short for item in paths) == 1:
+        return short
+    return f"{path.parent.parent.name}/{short}"
+
+
+def _checkpoint_epoch(path: Path) -> int:
+    suffix = path.stem.split("_")[-1]
+    return int(suffix) if suffix.isdigit() else 0
+
+
+def discover_checkpoints(run_dirs, extra_paths=None) -> dict:
+    """Checkpoints from every run directory, plus any extra ``.ckpt`` paths.
+
+    ``model_*.ckpt`` in each directory is included. Labels stay unique when
+    several runs contain ``model_60.ckpt``. ``runs`` is the directories that
+    exist, in the order they were given.
+    """
+    directories = [Path(item).expanduser() for item in split_paths(run_dirs)]
+    extras = [Path(item).expanduser() for item in split_paths(extra_paths)]
+    missing = []
+    runs = []
+    found: list[Path] = []
+    for directory in directories:
+        if not directory.is_dir():
+            missing.append(str(directory))
+            continue
+        runs.append(directory)
+        found.extend(sorted(directory.glob("model_*.ckpt"), key=_checkpoint_epoch))
+    for path in extras:
+        if path.is_file():
+            found.append(path)
+        else:
+            missing.append(str(path))
+    def _identity(path: Path) -> str:
+        return str(path.resolve()) if path.exists() else str(path)
+
+    unique: list[Path] = []
+    seen = set()
+    for path in found:
+        key = _identity(path)
+        if key not in seen:
+            seen.add(key)
+            unique.append(path)
+    rank = {_identity(path): index for index, path in enumerate(unique)}
+    unique.sort(key=lambda path: (str(path.parent), _checkpoint_epoch(path), path.name))
+    qualify = len({path.parent for path in unique}) > 1
+    labels = [_unique_label(path, unique, qualify=qualify) for path in unique]
+    options = {label: str(path) for label, path in zip(labels, unique, strict=True)}
+    if not options:
+        return {
+            "options": {"(none)": ""},
+            "runs": runs,
+            "missing": missing,
+            "default": "(none)",
+            "compare": None,
+        }
+    best = max(
+        unique,
+        key=lambda path: (
+            _checkpoint_epoch(path),
+            rank[_identity(path)],
+        ),
+    )
+    earlier = [
+        path
+        for path in unique
+        if path.parent == best.parent
+        and _checkpoint_epoch(path) < _checkpoint_epoch(best)
+    ]
+    compare = (
+        _unique_label(max(earlier, key=_checkpoint_epoch), unique, qualify=qualify)
+        if earlier
+        else None
+    )
+    return {
+        "options": options,
+        "runs": runs,
+        "missing": missing,
+        "default": _unique_label(best, unique, qualify=qualify),
+        "compare": compare,
+    }
+
+
+def build_map(structures, predictions, n_show: int) -> dict:
+    """Sample structures from one or more files for the parity map.
+
+    ``structures`` and ``predictions`` are a path, a newline-separated list,
+    or a sequence of paths. Prediction files pair with structure files in
+    order. One structure file keeps the previous single-file behavior.
+    """
+    structure_paths = [Path(item).expanduser() for item in split_paths(structures)]
+    prediction_paths = [Path(item).expanduser() for item in split_paths(predictions)]
+    if not structure_paths:
+        raise ValueError("Add at least one structure file, one path per line.")
+    notes = []
+    paired: list[Path | None] = [None] * len(structure_paths)
+    if prediction_paths and len(prediction_paths) != len(structure_paths):
+        notes.append(
+            f"{len(prediction_paths)} prediction files for "
+            f"{len(structure_paths)} structure files. "
+            "List them in the same order, one path per line."
+        )
+    elif prediction_paths:
+        paired = list(prediction_paths)
+
+    labels = [_unique_label(path, structure_paths) for path in structure_paths]
+    records = []
+    for label, path, pred_path in zip(labels, structure_paths, paired, strict=True):
+        if not path.is_file():
+            notes.append(f"Missing structure file: {path}")
+            continue
+        frames = read_frames(str(path))
+        reference = comment_values(str(path), "ecumetric_energy")
+        groups = comment_values(str(path), "dataset_group")
+        predicted: list[float | None] = [None] * len(frames)
+        if pred_path is not None and not pred_path.is_file():
+            notes.append(f"Missing predictions file: {pred_path}")
+        elif pred_path is not None:
+            text = comment_values(str(pred_path), "energy")
+            if len(text) == len(frames):
+                predicted = [float(value) for value in text]
+                if len(structure_paths) == 1:
+                    notes.append(
+                        f"Predictions aligned with {len(predicted)} structures."
+                    )
+                else:
+                    notes.append(f"{label}: predictions aligned ({len(frames)}).")
+            else:
+                notes.append(
+                    f"{label}: predictions have {len(text)} frames, "
+                    f"structures have {len(frames)}. Error omitted for this file."
+                )
+        if len(reference) != len(frames):
+            notes.append(
+                f"{label}: ecumetric_energy has {len(reference)} values "
+                f"for {len(frames)} frames."
+            )
+        for index, frame in enumerate(frames):
+            energy = float(reference[index]) if index < len(reference) else float("nan")
+            records.append(
+                {
+                    "frame": frame,
+                    "energy": energy,
+                    "group": groups[index] if index < len(groups) else "",
+                    "predicted": predicted[index],
+                    "source": label,
+                    "index": index,
+                }
+            )
+    if not records:
+        detail = "\n".join(notes) or "No structures could be read."
+        raise ValueError(detail)
+
+    take = min(int(n_show), len(records))
+    chosen = [
+        records[int(i)] for i in np.linspace(0, len(records) - 1, take, dtype=int)
+    ]
+    energies = [row["energy"] for row in chosen]
+    shown = [row["frame"] for row in chosen]
     per_atom = [
         energy / max(len(frame), 1)
         for energy, frame in zip(energies, shown, strict=True)
@@ -170,14 +318,21 @@ def build_map(structures_path: str, predictions_path: str, n_show: int) -> dict:
             "description": "Number of atoms",
         },
     }
-    if groups:
+    sources = [row["source"] for row in chosen]
+    if len(set(sources)) > 1:
+        properties["input_file"] = {
+            "target": "structure",
+            "values": sources,
+            "description": "Structure file this frame was read from",
+        }
+    if any(row["group"] for row in chosen):
         properties["dataset_group"] = {
             "target": "structure",
-            "values": [groups[int(i)] if groups else "" for i in chosen],
+            "values": [row["group"] for row in chosen],
             "description": "MAD dataset_group",
         }
-    if predicted:
-        pred = [predicted[int(i)] for i in chosen]
+    if chosen and all(row["predicted"] is not None for row in chosen):
+        pred = [float(row["predicted"]) for row in chosen]
         properties["predicted_energy"] = {
             "target": "structure",
             "values": pred,
@@ -192,18 +347,24 @@ def build_map(structures_path: str, predictions_path: str, n_show: int) -> dict:
             "units": "eV",
             "description": "predicted_energy - ecumetric_energy",
         }
+    if not notes:
+        notes.append("No predictions file.")
     return {
         "shown": shown,
         "properties": properties,
         "property_names": list(properties),
-        "prediction_note": prediction_note,
-        "indices": [int(i) for i in chosen],
-        "n_frames": len(frames),
+        "prediction_note": " ".join(notes),
+        "indices": [row["index"] for row in chosen],
+        "sources": sources,
+        "n_frames": len(records),
     }
 
 
+_STRING_PROPERTIES = {"dataset_group", "input_file"}
+
+
 def axis_defaults(property_names: list[str]):
-    numeric = [name for name in property_names if name != "dataset_group"]
+    numeric = [name for name in property_names if name not in _STRING_PROPERTIES]
     x_default = "energy" if "energy" in numeric else numeric[0]
     if "predicted_energy" in numeric:
         y_default = "predicted_energy"
@@ -885,6 +1046,65 @@ def hidden_caption(result: dict) -> str:
         "forces and stress; eval mode also adds the composition "
         "baseline and the output scale inside `forward`."
     )
+
+
+def training_series(runs: list[Path]) -> list[tuple[str, list[dict]]]:
+    labels = [_unique_label(run, list(runs)) for run in runs]
+    series = []
+    for label, run in zip(labels, runs, strict=True):
+        metrics = read_metrics(run)
+        if metrics:
+            series.append((label, metrics))
+    return series
+
+
+def training_overlay(series: list[tuple[str, list[dict]]]):
+    """Validation curves, one line per run. A single run keeps train and val."""
+    if len(series) == 1:
+        return training_figure(series[0][1])
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.1))
+    for name, metrics in series:
+        epochs = [row["epoch"] for row in metrics]
+        axes[0].plot(epochs, [row["val_loss"] for row in metrics], "o-", label=name)
+        axes[1].plot(epochs, [row["val_rmse_meV"] for row in metrics], "o-", label=name)
+        axes[2].plot(
+            epochs, [row["learning_rate"] for row in metrics], "o-", label=name
+        )
+    axes[0].set_title("Validation loss")
+    axes[1].set_title("Validation RMSE (meV/atom)")
+    axes[2].set_title("Learning rate")
+    for axis in axes:
+        axis.set_xlabel("epoch")
+        axis.legend(fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def metrics_rows(series: list[tuple[str, list[dict]]]) -> list[dict]:
+    rows = []
+    for name, metrics in series:
+        for row in metrics:
+            item = {"run": name, **row}
+            rows.append(item)
+    return rows
+
+
+def run_logs(runs: list[Path]) -> list[dict]:
+    sections = []
+    labels = [_unique_label(run, list(runs)) for run in runs]
+    for label, run in zip(labels, runs, strict=True):
+        log_path = run / "train.log"
+        options_path = run / "options_restart.yaml"
+        log_text = log_path.read_text() if log_path.is_file() else ""
+        sections.append(
+            {
+                "name": label,
+                "log": log_text,
+                "options": (options_path.read_text() if options_path.is_file() else ""),
+                "summaries": dataset_summaries(log_text),
+            }
+        )
+    return sections
 
 
 def training_figure(metrics: list[dict]):

@@ -9,13 +9,14 @@ The cells wire inputs, the viewer, and the section layout. Checkpoint
 loading, inference, and the matplotlib figures live in ``dashboard.py``
 next to this file.
 
-The sidebar takes a training-run directory, the structure file, and an optional
-predictions file. Checkpoints in that directory can be reloaded from the
-dropdown. The viewer is the default two-panel layout: a parity plot (reference
-energy against the checkpoint prediction) on the left, the structure on the
-right. Axis and structure settings sit above it. Training curves come from
+The sidebar takes run directories, structure files, and optional prediction
+files, one path per line. Every ``model_*.ckpt`` in those directories, plus
+any extra checkpoint paths, can be reloaded from the dropdown. The viewer is
+the default two-panel layout: a parity plot (reference energy against the
+checkpoint prediction) on the left, the structure on the right. Axis and
+structure settings sit above it. Training curves come from each run's
 ``train.csv`` / ``train.log``. Weight norms and the parameter distribution
-come from the selected ``model_*.ckpt``.
+come from the selected checkpoint.
 
 The defaults point at the MAD subset and the experimental.lorem run under
 ``test-lorem``.
@@ -56,24 +57,34 @@ def _():
 
 @app.cell
 def _(mo):
-    run_dir = mo.ui.text(
+    run_dirs = mo.ui.text_area(
         value="/Users/ericboittier/metawork/test-lorem/outputs/2026-10-02/08-05-45",
-        label="Training run directory",
+        label="Run directories (one per line)",
+        rows=4,
         full_width=True,
     )
-    structures_path = mo.ui.text(
+    extra_checkpoints = mo.ui.text_area(
+        value="",
+        label="Extra checkpoints (one .ckpt per line)",
+        placeholder="/path/to/model.ckpt",
+        rows=3,
+        full_width=True,
+    )
+    structures_paths = mo.ui.text_area(
         value="/Users/ericboittier/metawork/test-lorem/mad_subset.xyz",
-        label="Structures (.xyz)",
+        label="Structure files (one .xyz per line)",
+        rows=4,
         full_width=True,
     )
-    predictions_path = mo.ui.text(
+    predictions_paths = mo.ui.text_area(
         value="/Users/ericboittier/metawork/test-lorem/lorem_predictions.xyz",
-        label="Predictions (.xyz, optional)",
+        label="Prediction files (one per line, same order)",
+        rows=3,
         full_width=True,
     )
     n_show = mo.ui.slider(
         start=100,
-        stop=4709,
+        stop=20000,
         step=100,
         value=400,
         label="Structures on the map",
@@ -86,55 +97,66 @@ def _(mo):
             {
                 "Metatrain run": mo.vstack(
                     [
-                        mo.md("Changing a path re-runs the cells that read it."),
-                        run_dir,
-                        structures_path,
-                        predictions_path,
+                        mo.md(
+                            "One path per line. Prediction files pair with "
+                            "structure files in that order. Each run directory "
+                            "contributes its `model_*.ckpt` files."
+                        ),
+                        run_dirs,
+                        extra_checkpoints,
+                        structures_paths,
+                        predictions_paths,
                         n_show,
                     ]
                 )
             }
         )
     )
-    return n_show, predictions_path, run_dir, structures_path
+    return (
+        extra_checkpoints,
+        n_show,
+        predictions_paths,
+        run_dirs,
+        structures_paths,
+    )
 
 
 @app.cell
-def _(Path, mo, run_dir):
-    run = Path(run_dir.value).expanduser()
-
-    def _epoch(path: Path) -> int:
-        suffix = path.stem.split("_")[-1]
-        return int(suffix) if suffix.isdigit() else 0
-
-    checkpoints = sorted(run.glob("model_*.ckpt"), key=_epoch)
-    checkpoint_options = {path.name: str(path) for path in checkpoints} or {
-        "(none)": ""
-    }
-    names = list(checkpoint_options)
-    checkpoint = mo.ui.dropdown(checkpoint_options, value=names[-1], label="Checkpoint")
+def _(dash, extra_checkpoints, mo, run_dirs):
+    _found = dash.discover_checkpoints(run_dirs.value, extra_checkpoints.value)
+    checkpoint = mo.ui.dropdown(
+        _found["options"],
+        value=_found["default"],
+        label="Checkpoint",
+    )
     compare = mo.ui.dropdown(
-        checkpoint_options,
-        value=names[-2] if len(checkpoints) > 1 else None,
+        _found["options"],
+        value=_found["compare"],
         allow_select_none=True,
         label="Compare weights with",
     )
-    mo.accordion(
-        {"Checkpoint": mo.hstack([checkpoint, compare], widths="equal", gap=1)}
-    )
-    return checkpoint, compare, run
+    runs = _found["runs"]
+    _checkpoint_rows = [
+        mo.hstack([checkpoint, compare], widths="equal", gap=1),
+    ]
+    if _found["missing"]:
+        _missing = "\n".join(f"- `{path}`" for path in _found["missing"])
+        _checkpoint_rows.append(mo.md(f"Missing paths:\n\n{_missing}"))
+    mo.accordion({"Checkpoint": mo.vstack(_checkpoint_rows)})
+    return checkpoint, compare, runs
 
 
 @app.cell
-def _(dash, n_show, predictions_path, state, structures_path):
+def _(dash, n_show, predictions_paths, state, structures_paths):
     _loaded = dash.build_map(
-        structures_path.value,
-        predictions_path.value,
+        structures_paths.value,
+        predictions_paths.value,
         int(n_show.value),
     )
     state["frames"] = _loaded["shown"]
     state["properties"] = _loaded["properties"]
     state["indices"] = _loaded["indices"]
+    state["sources"] = _loaded["sources"]
     state["prediction_note"] = _loaded["prediction_note"]
     state["n_frames"] = _loaded["n_frames"]
     prediction_note = _loaded["prediction_note"]
@@ -273,9 +295,10 @@ def _(mo, state, viewer):
             name: spec["values"][index] for name, spec in state["properties"].items()
         }
         source_index = state["indices"][index]
+        source_name = state.get("sources", [""])[index]
         lines = [
             f"**{frame.get_chemical_formula()}** — map index `{index}`, "
-            f"file index `{source_index}`",
+            f"`{source_name}` frame `{source_index}`",
             "",
         ]
         for name, value in props.items():
@@ -505,11 +528,12 @@ def _(
 
 
 @app.cell
-def _(dash, mo, run):
-    metrics = dash.read_metrics(run)
-    if not metrics:
-        training = mo.md(f"No `train.csv` in `{run}`.")
-    else:
+def _(dash, mo, runs):
+    _series = dash.training_series(runs)
+    if not _series:
+        training = mo.md("No `train.csv` in the run directories.")
+    elif len(_series) == 1:
+        metrics = _series[0][1]
         _cards = dash.training_headline(metrics)
         training = mo.vstack(
             [
@@ -543,6 +567,28 @@ def _(dash, mo, run):
                 ),
                 mo.ui.table(metrics),
                 dash.training_figure(metrics),
+            ]
+        )
+    else:
+        training = mo.vstack(
+            [
+                mo.md("## Training"),
+                mo.hstack(
+                    [
+                        mo.stat(
+                            f"{dash.training_headline(rows)['val_rmse']:.0f}",
+                            label=f"{name} val RMSE",
+                            caption=f"epoch {dash.training_headline(rows)['epoch']}",
+                            bordered=True,
+                        )
+                        for name, rows in _series
+                    ],
+                    gap=1,
+                    wrap=True,
+                ),
+                mo.md("Validation curves for each run directory."),
+                dash.training_overlay(_series),
+                mo.ui.table(dash.metrics_rows(_series)),
             ]
         )
     training
@@ -600,37 +646,47 @@ def _(checkpoint, compare, dash, mo, state):
 
 
 @app.cell
-def _(dash, mo, run):
-    _log_path = run / "train.log"
-    _log_text = _log_path.read_text() if _log_path.is_file() else ""
-    _blocks = [
-        mo.stat(
-            row["count"],
-            label=f"{row['split'].lower()} structures",
-            caption=f"energy {row['mean']:.2f} ± {row['std']:.1f} eV",
-            bordered=True,
+def _(dash, mo, runs):
+    _sections = dash.run_logs(runs)
+    if not _sections:
+        log_view = mo.md("## Run log\n\nNo run directory.")
+    else:
+        _blocks = []
+        _pages = {}
+        for _section in _sections:
+            _prefix = "" if len(_sections) == 1 else f"{_section['name']} "
+            for _row in _section["summaries"]:
+                _blocks.append(
+                    mo.stat(
+                        _row["count"],
+                        label=f"{_prefix}{_row['split'].lower()} structures",
+                        caption=(f"energy {_row['mean']:.2f} ± {_row['std']:.1f} eV"),
+                        bordered=True,
+                    )
+                )
+            _log_key = (
+                "train.log" if len(_sections) == 1 else f"{_section['name']}/train.log"
+            )
+            _options_key = (
+                "options_restart.yaml"
+                if len(_sections) == 1
+                else f"{_section['name']}/options_restart.yaml"
+            )
+            _pages[_log_key] = mo.md(f"```\n{_section['log'][-4000:]}\n```")
+            _pages[_options_key] = mo.md(f"```yaml\n{_section['options']}\n```")
+        _summary = (
+            mo.hstack(_blocks, gap=1, wrap=True)
+            if _blocks
+            else mo.md("No dataset summary in the log.")
         )
-        for row in dash.dataset_summaries(_log_text)
-    ]
-    _options_path = run / "options_restart.yaml"
-    _options_text = _options_path.read_text() if _options_path.is_file() else ""
-    _summary = (
-        mo.hstack(_blocks, gap=1)
-        if _blocks
-        else mo.md("No dataset summary in the log.")
-    )
-    mo.vstack(
-        [
-            mo.md("## Run log"),
-            _summary,
-            mo.accordion(
-                {
-                    "train.log": mo.md(f"```\n{_log_text[-4000:]}\n```"),
-                    "options_restart.yaml": mo.md(f"```yaml\n{_options_text}\n```"),
-                }
-            ),
-        ]
-    )
+        log_view = mo.vstack(
+            [
+                mo.md("## Run log"),
+                _summary,
+                mo.accordion(_pages),
+            ]
+        )
+    log_view
     return
 
 
@@ -663,7 +719,7 @@ def _(dash, infer, io, mo, run_scratch, scratch, state, traceback):
         "Every cell in this notebook is Python. `infer(atoms)` evaluates the "
         "selected checkpoint. `dash` is the helper module (figures, checkpoint "
         "loading, the map sample). `state` holds `frames`, `properties`, "
-        "`indices`, `checkpoint`, `checkpoint_path`, `weight_rows`, and "
+        "`indices`, `sources`, `checkpoint`, `checkpoint_path`, `weight_rows`, and "
         "`inference`."
     )
     if run_scratch.value:
