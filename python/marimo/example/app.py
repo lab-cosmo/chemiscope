@@ -82,20 +82,18 @@ def _(mo):
         full_width=True,
     )
     mo.sidebar(
-        mo.vstack(
-            [
-                mo.md(
-                    """
-                    ## Metatrain run
-
-                    Changing a path re-runs the cells that read it.
-                    """
-                ),
-                run_dir,
-                structures_path,
-                predictions_path,
-                n_show,
-            ]
+        mo.accordion(
+            {
+                "Metatrain run": mo.vstack(
+                    [
+                        mo.md("Changing a path re-runs the cells that read it."),
+                        run_dir,
+                        structures_path,
+                        predictions_path,
+                        n_show,
+                    ]
+                )
+            }
         )
     )
     return n_show, predictions_path, run_dir, structures_path
@@ -121,7 +119,9 @@ def _(Path, mo, run_dir):
         allow_select_none=True,
         label="Compare weights with",
     )
-    mo.hstack([checkpoint, compare], widths="equal", gap=1)
+    mo.accordion(
+        {"Checkpoint": mo.hstack([checkpoint, compare], widths="equal", gap=1)}
+    )
     return checkpoint, compare, run
 
 
@@ -252,7 +252,7 @@ def _(
     )
     mo.vstack(
         [
-            controls,
+            mo.accordion({"Display": controls}),
             mo.md(f"_{prediction_note}_"),
             viewer,
         ]
@@ -490,7 +490,7 @@ def _(
         shapes_view = mo.vstack(
             [
                 mo.md(dash.shapes_intro(_hypers)),
-                matrix_controls,
+                mo.accordion({"Aspect and transform": matrix_controls}),
                 mo.ui.table(dash.shape_ledger(_hypers, _result), selection=None),
                 mo.md("### Parameters"),
                 _shape_fig,
