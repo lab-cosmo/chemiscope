@@ -19,6 +19,7 @@ The defaults point at the MAD subset and the experimental.lorem run under
 
 import marimo
 
+
 __generated_with = "0.25.1"
 app = marimo.App(width="full")
 
@@ -104,10 +105,151 @@ def _():
             )
         return parsed
 
+    _lorem_models = {}
+
+    def _load_lorem(path: str):
+        cached = _lorem_models.get(path)
+        if cached is not None:
+            return cached
+        loaded, _, _ = read_checkpoint(path)
+        from metatrain.experimental.lorem.model import LOREM
+
+        model = LOREM.load_checkpoint(loaded, context="restart")
+        model.eval()
+        model._lorem_epoch = loaded.get("epoch")
+        _lorem_models[path] = model
+        return model
+
+    def infer(atoms, checkpoint_path=None):
+        """Run the selected checkpoint on one ASE structure.
+
+        Returns the final energy plus the short-range and long-range
+        contributions, feature norms, and per-atom values. ``checkpoint_path``
+        defaults to the checkpoint chosen in the dashboard.
+        """
+        import torch
+        from metatomic.torch import System
+        from metatrain.utils.neighbor_lists import get_system_with_neighbor_lists
+
+        path = checkpoint_path or state.get("checkpoint_path")
+        if not path:
+            raise ValueError("Select a checkpoint before running inference.")
+        model = _load_lorem(str(path))
+        dtype = next(
+            parameter.dtype
+            for parameter in model.parameters()
+            if parameter.is_floating_point()
+        )
+        system = System(
+            positions=torch.tensor(atoms.positions, dtype=dtype),
+            types=torch.tensor(atoms.numbers, dtype=torch.int32),
+            cell=torch.tensor(atoms.cell.array, dtype=dtype),
+            pbc=torch.tensor(list(atoms.pbc)),
+        )
+        system = get_system_with_neighbor_lists(
+            system, model.requested_neighbor_lists()
+        )
+        with torch.no_grad():
+            (
+                nodes_scalar,
+                distances,
+                nodes_spherical,
+                sr_energy,
+                snapshots,
+            ) = model.sr([system])
+            lr_energy, spherical_updates = model.lr(
+                [system], nodes_scalar, distances, nodes_spherical
+            )
+            predicted = model([system], model.outputs)
+            charges = model.lr.charges(nodes_scalar, nodes_spherical)
+
+        target = next(iter(predicted))
+        atomic = predicted[target].block().values.detach().reshape(-1).cpu()
+        sr = sr_energy.detach().reshape(-1).cpu()
+        lr = lr_energy.detach().reshape(-1).cpu()
+        charge = charges[:, 0].detach().cpu()
+        scalar_norm = torch.linalg.vector_norm(nodes_scalar.detach(), dim=-1).cpu()
+        spherical_norm = torch.linalg.vector_norm(
+            nodes_spherical.detach().flatten(1), dim=-1
+        ).cpu()
+        final = float(atomic.sum())
+        sr_total = float(sr.sum())
+        lr_total = float(lr.sum())
+        reference = atoms.info.get("ecumetric_energy")
+        reference = None if reference is None else float(reference)
+        intermediates = [
+            {"name": "short-range energy (eV)", "value": sr_total},
+            {"name": "long-range energy (eV)", "value": lr_total},
+            {"name": "raw energy, sr + lr (eV)", "value": sr_total + lr_total},
+            {"name": "final energy (eV)", "value": final},
+        ]
+        if reference is not None:
+            intermediates.append(
+                {"name": "reference energy (eV)", "value": reference}
+            )
+            intermediates.append(
+                {"name": "final − reference (eV)", "value": final - reference}
+            )
+        intermediates.extend(
+            [
+                {"name": "atoms", "value": int(len(atoms))},
+                {"name": "neighbor pairs", "value": int(distances.shape[0])},
+                {
+                    "name": "message-passing steps",
+                    "value": int(snapshots.shape[0] - 1),
+                },
+                {
+                    "name": "mean scalar-feature L2",
+                    "value": float(scalar_norm.mean()),
+                },
+                {
+                    "name": "mean spherical-feature L2",
+                    "value": float(spherical_norm.mean()),
+                },
+                {"name": "scalar charge sum", "value": float(charge.sum())},
+            ]
+        )
+        symbols = list(atoms.symbols)
+        per_atom = [
+            {
+                "atom": i,
+                "symbol": symbols[i],
+                "sr_energy": float(sr[i]),
+                "lr_energy": float(lr[i]),
+                "final_energy": float(atomic[i]),
+                "scalar_charge": float(charge[i]),
+                "scalar_feature_l2": float(scalar_norm[i]),
+            }
+            for i in range(len(atoms))
+        ]
+        return {
+            "formula": atoms.get_chemical_formula(),
+            "n_atoms": len(atoms),
+            "n_pairs": int(distances.shape[0]),
+            "energy": final,
+            "sr_energy": sr_total,
+            "lr_energy": lr_total,
+            "reference": reference,
+            "target": target,
+            "epoch": getattr(model, "_lorem_epoch", None),
+            "intermediates": intermediates,
+            "per_atom": per_atom,
+            "hidden": {
+                "nodes_scalar": nodes_scalar.detach().cpu().numpy(),
+                "nodes_spherical": nodes_spherical.detach().cpu().numpy(),
+                "charges": charges.detach().cpu().numpy(),
+                "spherical_updates": spherical_updates.detach().cpu().numpy(),
+                "snapshots": snapshots.detach().cpu().numpy(),
+            },
+        }
+
+    state["infer"] = infer
+
     return (
         Path,
         chemiscope,
         comment_values,
+        infer,
         io,
         mo,
         np,
@@ -424,6 +566,7 @@ def _(
 def _(mo, state, viewer):
     selected = viewer.selected_ids or {}
     index = selected.get("structure")
+    state["selected_index"] = index
     if index is None or "frames" not in state:
         detail = mo.md("Click a point to inspect that structure.")
     else:
@@ -448,9 +591,511 @@ def _(mo, state, viewer):
 
 
 @app.cell
-def _():
-    # evaluate the model on the selected structure, and print intermediates, and final energy, etc
+def _(checkpoint, infer, mo, np, plt, properties, state, traceback, viewer):
+    _reference = np.asarray(properties["energy"]["values"], dtype=float)
+    _counts = np.asarray(properties["n_atoms"]["values"], dtype=float)
+    _predicted_spec = properties.get("predicted_energy")
+    _pieces = [mo.md("## Inference")]
+    if _predicted_spec is None:
+        _pieces.append(
+            mo.md(
+                "No predictions file is aligned with the structures, so the "
+                "map plots are empty. Click a point to run the checkpoint."
+            )
+        )
+    else:
+        _predicted = np.asarray(_predicted_spec["values"], dtype=float)
+        _error = _predicted - _reference
+        _per_atom_mev = _error / np.maximum(_counts, 1.0) * 1000.0
+        _rmse = float(np.sqrt(np.mean(_error**2)))
+        _mae = float(np.mean(np.abs(_error)))
+        _rmse_atom = float(np.sqrt(np.mean(_per_atom_mev**2)))
+        _bias = float(np.mean(_error))
+        output_fig, output_axes = plt.subplots(
+            2, 2, figsize=(11.2, 6.6), layout="constrained"
+        )
+        _span = float(
+            max(
+                abs(_reference.min()),
+                abs(_reference.max()),
+                abs(_predicted.min()),
+                abs(_predicted.max()),
+            )
+        )
+        _limit = max(_span, 1.0)
+        _color_limit = float(np.percentile(np.abs(_per_atom_mev), 95))
+        _color_limit = max(_color_limit, 1.0)
+        _scatter = output_axes[0, 0].scatter(
+            _reference,
+            _predicted,
+            c=_per_atom_mev,
+            cmap="coolwarm",
+            vmin=-_color_limit,
+            vmax=_color_limit,
+            s=16,
+            alpha=0.85,
+        )
+        output_axes[0, 0].plot(
+            [-_limit, _limit], [-_limit, _limit], color="0.35", lw=1
+        )
+        output_axes[0, 0].set_xlim(-_limit, _limit)
+        output_axes[0, 0].set_ylim(-_limit, _limit)
+        output_axes[0, 0].set_xlabel("reference energy (eV)")
+        output_axes[0, 0].set_ylabel("predicted energy (eV)")
+        output_axes[0, 0].set_title("Parity")
+        output_fig.colorbar(
+            _scatter, ax=output_axes[0, 0], label="error (meV/atom)", fraction=0.046
+        )
+        output_axes[0, 1].hist(_error, bins=40, color="#4c1d95", alpha=0.9)
+        output_axes[0, 1].axvline(0.0, color="0.3", lw=1)
+        output_axes[0, 1].axvline(_bias, color="#b45309", lw=1, ls="--")
+        output_axes[0, 1].set_xlabel("predicted − reference (eV)")
+        output_axes[0, 1].set_ylabel("structures")
+        output_axes[0, 1].set_title("Energy error")
+        output_axes[1, 0].scatter(_reference, _error, s=16, alpha=0.8, c="#1d4ed8")
+        output_axes[1, 0].axhline(0.0, color="0.3", lw=1)
+        output_axes[1, 0].set_xlabel("reference energy (eV)")
+        output_axes[1, 0].set_ylabel("error (eV)")
+        output_axes[1, 0].set_title("Error against reference")
+        _groups = properties.get("dataset_group")
+        if _groups:
+            _labels = np.asarray(_groups["values"])
+            _order = []
+            for _name in _labels:
+                if _name not in _order:
+                    _order.append(_name)
+            _order.sort(key=lambda name: int(np.sum(_labels == name)), reverse=True)
+            _keep = _order[:8]
+            output_axes[1, 1].boxplot(
+                [_per_atom_mev[_labels == name] for name in _keep],
+                showfliers=False,
+            )
+            output_axes[1, 1].set_xticks(
+                range(1, len(_keep) + 1),
+                [name.replace("_", " ")[:18] for name in _keep],
+                rotation=30,
+                ha="right",
+            )
+            output_axes[1, 1].axhline(0.0, color="0.3", lw=1)
+            output_axes[1, 1].set_ylabel("error (meV/atom)")
+            output_axes[1, 1].set_title("Error by dataset group")
+        else:
+            output_axes[1, 1].scatter(
+                _counts, _per_atom_mev, s=16, alpha=0.8, c="#b45309"
+            )
+            output_axes[1, 1].axhline(0.0, color="0.3", lw=1)
+            output_axes[1, 1].set_xlabel("atoms")
+            output_axes[1, 1].set_ylabel("error (meV/atom)")
+            output_axes[1, 1].set_title("Per-atom error")
+        _pieces.extend(
+            [
+                mo.hstack(
+                    [
+                        mo.stat(
+                            f"{_rmse:.3g}",
+                            label="energy RMSE (eV)",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_mae:.3g}",
+                            label="energy MAE (eV)",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_rmse_atom:.0f}",
+                            label="RMSE (meV/atom)",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_bias:+.3g}",
+                            label="mean error (eV)",
+                            bordered=True,
+                        ),
+                    ],
+                    gap=1,
+                ),
+                mo.md(
+                    f"{len(_reference)} structures from the predictions file. "
+                    "The dashed line on the histogram is the mean error."
+                ),
+                output_fig,
+            ]
+        )
 
+    _map_index = (viewer.selected_ids or {}).get("structure")
+    if not checkpoint.value:
+        _pieces.append(mo.md("Select a checkpoint to evaluate a structure."))
+    elif _map_index is None or "frames" not in state:
+        _pieces.append(
+            mo.md(
+                "Click a point for the short-range, long-range, and per-atom "
+                "breakdown. `infer(atoms)` runs the same checkpoint from the "
+                "Python cell."
+            )
+        )
+    else:
+        try:
+            _result = infer(state["frames"][_map_index], checkpoint.value)
+        except Exception:
+            _pieces.append(mo.md(f"```\n{traceback.format_exc()}\n```"))
+        else:
+            state["inference"] = _result
+            _atoms = np.arange(_result["n_atoms"])
+            _sr = np.array([row["sr_energy"] for row in _result["per_atom"]])
+            _lr = np.array([row["lr_energy"] for row in _result["per_atom"]])
+            _final = np.array([row["final_energy"] for row in _result["per_atom"]])
+            _charge = np.array([row["scalar_charge"] for row in _result["per_atom"]])
+            _features = np.array(
+                [row["scalar_feature_l2"] for row in _result["per_atom"]]
+            )
+            atom_fig, atom_axes = plt.subplots(
+                2, 2, figsize=(11.2, 6.4), layout="constrained"
+            )
+            atom_axes[0, 0].plot(_atoms, _sr, "o-", ms=3, label="short-range")
+            atom_axes[0, 0].plot(_atoms, _lr, "o-", ms=3, label="long-range")
+            atom_axes[0, 0].plot(_atoms, _final, "o-", ms=3, label="final")
+            atom_axes[0, 0].set_xlabel("atom")
+            atom_axes[0, 0].set_ylabel("energy (eV)")
+            atom_axes[0, 0].set_title("Per-atom energy")
+            atom_axes[0, 0].legend()
+            atom_axes[0, 1].axhline(0.0, color="0.75", lw=1)
+            atom_axes[0, 1].bar(
+                ["short-range", "long-range", "raw", "final"],
+                [
+                    _result["sr_energy"],
+                    _result["lr_energy"],
+                    _result["sr_energy"] + _result["lr_energy"],
+                    _result["energy"],
+                ],
+                color=["#1d4ed8", "#b45309", "#6d28d9", "#111827"],
+            )
+            if _result["reference"] is not None:
+                atom_axes[0, 1].axhline(
+                    _result["reference"], color="#dc2626", lw=1, ls="--"
+                )
+            atom_axes[0, 1].set_ylabel("energy (eV)")
+            atom_axes[0, 1].set_title("Structure total")
+            atom_axes[1, 0].plot(_atoms, _charge, "o-", ms=3, color="#0f766e")
+            atom_axes[1, 0].axhline(0.0, color="0.75", lw=1)
+            atom_axes[1, 0].set_xlabel("atom")
+            atom_axes[1, 0].set_ylabel("scalar charge")
+            atom_axes[1, 0].set_title("Long-range charges")
+            atom_axes[1, 1].plot(_atoms, _features, "o-", ms=3, color="#4c1d95")
+            atom_axes[1, 1].set_xlabel("atom")
+            atom_axes[1, 1].set_ylabel("L2")
+            atom_axes[1, 1].set_title("Scalar feature norm")
+            _reference_energy = _result["reference"]
+            _signed = (
+                None
+                if _reference_energy is None
+                else _result["energy"] - _reference_energy
+            )
+            _cards = [
+                mo.stat(
+                    f"{_result['energy']:.6g}",
+                    label="final energy (eV)",
+                    caption=f"epoch {_result['epoch']}",
+                    bordered=True,
+                ),
+                mo.stat(
+                    f"{_result['sr_energy']:.6g}",
+                    label="short-range (eV)",
+                    bordered=True,
+                ),
+                mo.stat(
+                    f"{_result['lr_energy']:.6g}",
+                    label="long-range (eV)",
+                    bordered=True,
+                ),
+            ]
+            if _signed is not None:
+                _cards.append(
+                    mo.stat(
+                        f"{_signed:+.6g}",
+                        label="final − reference (eV)",
+                        bordered=True,
+                    )
+                )
+            _pieces.extend(
+                [
+                    mo.md(
+                        f"### {_result['formula']}\n\n"
+                        f"Checkpoint epoch {_result['epoch']}. The red dashed "
+                        "line is the reference energy. Final energy includes "
+                        "the composition baseline and the output scale."
+                    ),
+                    mo.hstack(_cards, gap=1),
+                    atom_fig,
+                    mo.ui.table(_result["intermediates"], selection=None),
+                    mo.ui.table(_result["per_atom"], page_size=8, selection=None),
+                ]
+            )
+    inference_view = mo.vstack(_pieces)
+    inference_view
+    return
+
+
+@app.cell
+def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer):
+    def _as_tiles(values):
+        array = np.asarray(values, dtype=float)
+        if array.ndim <= 1:
+            return array.reshape(1, -1)
+        if array.ndim == 2:
+            return array
+        blocks = array.reshape(-1, *array.shape[-2:])
+        count, height, width = blocks.shape
+        columns = int(np.ceil(np.sqrt(count)))
+        rows = int(np.ceil(count / columns))
+        canvas = np.full(
+            (rows * (height + 1) - 1, columns * (width + 1) - 1),
+            np.nan,
+        )
+        for index, block in enumerate(blocks):
+            row, column = divmod(index, columns)
+            top = row * (height + 1)
+            left = column * (width + 1)
+            canvas[top : top + height, left : left + width] = block
+        return canvas
+
+    def _show_matrix(ax, values, title):
+        image = _as_tiles(values)
+        finite = image[np.isfinite(image)]
+        limit = 1.0 if finite.size == 0 else float(np.percentile(np.abs(finite), 99))
+        limit = max(limit, 1e-8)
+        cmap = plt.get_cmap("coolwarm").copy()
+        cmap.set_bad("#f4f4f5")
+        ax.imshow(
+            np.ma.masked_invalid(image),
+            cmap=cmap,
+            vmin=-limit,
+            vmax=limit,
+            aspect="auto",
+            interpolation="nearest",
+        )
+        ax.set_title(title, fontsize=8)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    if not checkpoint.value:
+        shapes_view = mo.md("## Shapes\n\nSelect a checkpoint.")
+    else:
+        _loaded, _, _ = read_checkpoint(checkpoint.value)
+        _hypers = _loaded["model_data"]["model_hypers"]
+        _features = int(_hypers["num_features"])
+        _spherical = int(_hypers["num_spherical_features"])
+        _species = int(_hypers["num_species"])
+        _radial = int(_hypers["num_radial"])
+        _degree = int(_hypers["max_degree"])
+        _degree_lr = int(_hypers["max_degree_lr"])
+        _components = (_degree + 1) ** 2
+        _components_lr = (_degree_lr + 1) ** 2
+        _stages = int(_hypers["num_message_passing"]) + 1
+        _weights = _loaded["model_state_dict"]
+        _panels = []
+        _radial_out = _weights.get("sr.radial_coefficients.2.weight")
+        if _radial_out is not None and tuple(_radial_out.shape) == (
+            _radial * _features,
+            _features,
+        ):
+            _radial_out = _radial_out.reshape(_radial, _features, _features)
+        for _title, _values in (
+            (
+                f"embedding ({_species} species)",
+                _weights.get("sr.chemical_embedding.weight"),
+            ),
+            (
+                "scalar map, species to features",
+                _weights.get("sr.dense0.0.weight"),
+            ),
+            (
+                "scalar message, features x features",
+                _weights.get("sr.dense1.weight"),
+            ),
+            (
+                "features to spherical channels",
+                _weights.get("sr.dense2.weight"),
+            ),
+            (
+                "radial MLP, in",
+                _weights.get("sr.radial_coefficients.0.weight"),
+            ),
+            (
+                f"radial MLP, {_radial} feature blocks",
+                _radial_out,
+            ),
+            (
+                "spherical tensor product",
+                _weights.get("sr.tensor_dense.tensor_weight"),
+            ),
+            (
+                "short-range energy readout",
+                _weights.get("sr.energy_mlp.4.weight"),
+            ),
+            (
+                "scalar charge MLP",
+                _weights.get("lr.scalar_charge_mlp.0.weight"),
+            ),
+            (
+                "spherical charges",
+                _weights.get("lr.spherical_charge_dense.dense.weight"),
+            ),
+            (
+                "potential to features",
+                _weights.get("lr.potential_to_features.weight"),
+            ),
+            (
+                "long-range energy readout",
+                _weights.get("lr.energy_mlp.4.weight"),
+            ),
+        ):
+            if _values is not None:
+                _panels.append((_title, _values.detach().cpu().numpy()))
+        _columns = 4
+        _rows = int(np.ceil(len(_panels) / _columns))
+        shape_fig, shape_axes = plt.subplots(
+            _rows,
+            _columns,
+            figsize=(11.4, 2.15 * _rows),
+            layout="constrained",
+        )
+        _flat_axes = np.atleast_1d(shape_axes).ravel()
+        for _ax, (_title, _values) in zip(_flat_axes, _panels, strict=False):
+            _show_matrix(_ax, _values, _title)
+        for _ax in _flat_axes[len(_panels) :]:
+            _ax.axis("off")
+        _ledger = [
+            {
+                "tensor": "nodes_scalar",
+                "shape": f"(n_atoms, {_features})",
+                "role": "invariant hidden state",
+            },
+            {
+                "tensor": "nodes_spherical",
+                "shape": f"(n_atoms, {_components}, {_spherical})",
+                "role": f"(max_degree+1)^2 = {_components} equivariant channels",
+            },
+            {
+                "tensor": "snapshots",
+                "shape": f"({_stages}, n_atoms, {_components}, {_spherical})",
+                "role": "spherical state after each message-passing stage",
+            },
+            {
+                "tensor": "radial basis",
+                "shape": f"(n_pairs, {_radial})",
+                "role": f"Bernstein basis inside the {_hypers['cutoff']} A cutoff",
+            },
+            {
+                "tensor": "charges",
+                "shape": f"(n_atoms, {1 + _components_lr})",
+                "role": "scalar charge plus one long-range (l, m) channel",
+            },
+            {
+                "tensor": "atomic energy",
+                "shape": "(n_atoms,)",
+                "role": "short-range plus long-range, before the structure sum",
+            },
+            {
+                "tensor": "structure energy",
+                "shape": "(n_structures,)",
+                "role": "sum of atomic energies; this is the training target",
+            },
+            {
+                "tensor": "forces",
+                "shape": "(n_atoms, 3)",
+                "role": "gradient of the structure energy w.r.t. positions",
+            },
+            {
+                "tensor": "stress",
+                "shape": "(n_structures, 3, 3)",
+                "role": "gradient of the structure energy w.r.t. strain",
+            },
+        ]
+        _map_index = (viewer.selected_ids or {}).get("structure")
+        _hidden_note = (
+            "Click a point to draw the hidden state of that structure. "
+            "A training batch uses the same tensors with `n_atoms` equal to "
+            "every atom in the batch concatenated, not a padded "
+            "`(batch, max_atoms, features)` array."
+        )
+        _hidden_fig = None
+        if _map_index is not None and "frames" in state:
+            try:
+                _result = infer(state["frames"][_map_index], checkpoint.value)
+            except Exception:
+                _hidden_note = f"```\n{traceback.format_exc()}\n```"
+            else:
+                state["inference"] = _result
+                _hidden = _result["hidden"]
+                _scalar = _hidden["nodes_scalar"]
+                _equivariant = _hidden["nodes_spherical"]
+                _charges = _hidden["charges"]
+                _updates = _hidden["spherical_updates"]
+                for _row, _array in (
+                    (_ledger[0], _scalar),
+                    (_ledger[1], _equivariant),
+                    (_ledger[2], _hidden["snapshots"]),
+                    (_ledger[4], _charges),
+                ):
+                    _row["this structure"] = "×".join(
+                        str(size) for size in _array.shape
+                    )
+                _ledger[3]["this structure"] = str(_result["n_pairs"])
+                _ledger[5]["this structure"] = str(_result["n_atoms"])
+                hidden_fig, hidden_axes = plt.subplots(
+                    2, 2, figsize=(11.2, 6.2), layout="constrained"
+                )
+                _show_matrix(
+                    hidden_axes[0, 0],
+                    _scalar,
+                    f"scalar features {_scalar.shape}",
+                )
+                _show_matrix(
+                    hidden_axes[0, 1],
+                    np.transpose(_equivariant, (1, 0, 2)),
+                    f"spherical features, {_components} (l, m) blocks",
+                )
+                _show_matrix(
+                    hidden_axes[1, 0],
+                    _charges,
+                    f"charges {_charges.shape}",
+                )
+                _show_matrix(
+                    hidden_axes[1, 1],
+                    np.transpose(_updates, (1, 0, 2)),
+                    f"long-range spherical update {_updates.shape}",
+                )
+                _hidden_fig = hidden_fig
+                _hidden_note = (
+                    f"**{_result['formula']}**, {_result['n_atoms']} atoms, "
+                    f"{_result['n_pairs']} neighbor pairs. "
+                    "Spherical panels are stacked by (l, m). "
+                    "Training sums the atomic energies and backpropagates "
+                    "forces and stress; eval mode also adds the composition "
+                    "baseline and the output scale inside `forward`."
+                )
+        shapes_view = mo.vstack(
+            [
+                mo.md(
+                    "## Shapes\n\n"
+                    "Each atom carries one scalar vector and one spherical "
+                    f"tensor. Here that is `{_features}` features and "
+                    f"`{_components}` × `{_spherical}` equivariant channels "
+                    f"(`max_degree={_degree}`). "
+                    f"`num_message_passing` is "
+                    f"{_hypers['num_message_passing']}, so the spherical "
+                    f"state has `{_stages}` stage. "
+                    "Color scales are independent and clipped to the 99th "
+                    "percentile of each matrix."
+                ),
+                mo.ui.table(_ledger, selection=None),
+                mo.md("### Parameters"),
+                shape_fig,
+                mo.md("### Hidden state\n\n" + _hidden_note),
+                *([_hidden_fig] if _hidden_fig is not None else []),
+            ]
+        )
+    shapes_view
     return
 
 
@@ -551,6 +1196,7 @@ def _(checkpoint, compare, mo, np, plt, read_checkpoint, state):
         n_params = sum(row["numel"] for row in weight_rows)
         best_metric = loaded.get("best_metric")
         state["checkpoint"] = loaded
+        state["checkpoint_path"] = checkpoint.value
         state["weight_rows"] = weight_rows
         weights = mo.vstack(
             [
@@ -631,12 +1277,13 @@ def _(mo, re, run):
 def _(mo):
     scratch = mo.ui.code_editor(
         value=(
-            "import numpy as np\n"
-            "energies = state['properties']['energy']['values']\n"
-            "print(len(state['frames']), 'structures on the map')\n"
-            "print('energy mean', float(np.mean(energies)))\n"
-            "print('checkpoint epoch', state['checkpoint'].get('epoch'))\n"
-            "print(state['weight_rows'][0]['name'], state['weight_rows'][0]['l2'])\n"
+            "index = state.get('selected_index')\n"
+            "frame = state['frames'][0 if index is None else index]\n"
+            "result = infer(frame)  # or infer(some_atoms, checkpoint_path)\n"
+            "print(result['formula'], result['n_atoms'], 'atoms')\n"
+            "print('final energy', result['energy'])\n"
+            "for row in result['intermediates']:\n"
+            "    print(f\"{row['name']}: {row['value']}\")\n"
         ),
         language="python",
         min_height=180,
@@ -648,33 +1295,25 @@ def _(mo):
 
 
 @app.cell
-def _(io, mo, run_scratch, scratch, state, traceback):
+def _(infer, io, mo, run_scratch, scratch, state, traceback):
+    import contextlib
+
     output = mo.md(
-        "Every cell in this notebook is Python. Edit them directly in "
-        "`marimo edit`. The box below runs extra code against `state` "
-        "(`frames`, `properties`, `indices`, `checkpoint`, `weight_rows`)."
+        "Every cell in this notebook is Python. `infer(atoms)` evaluates the "
+        "selected checkpoint. `state` holds `frames`, `properties`, `indices`, "
+        "`checkpoint`, `checkpoint_path`, `weight_rows`, and `inference`."
     )
     if run_scratch.value:
         buffer = io.StringIO()
-        namespace = {"state": state, "mo": mo}
+        namespace = {"state": state, "mo": mo, "infer": infer}
         try:
-            with mo.redirect_stdout(buffer):
+            with contextlib.redirect_stdout(buffer):
                 exec(compile(scratch.value, "<scratch>", "exec"), namespace)
             printed = buffer.getvalue() or "(no output)"
             output = mo.md(f"```\n{printed}\n```")
         except Exception:
             output = mo.md(f"```\n{traceback.format_exc()}\n```")
     mo.vstack([mo.md("## Python"), scratch, run_scratch, output])
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 
