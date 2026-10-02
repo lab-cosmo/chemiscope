@@ -54,7 +54,7 @@ Chemiscope can be used as a web-based application, as an interactive
 :ref:`notebook widget <widget>` (in Jupyter, JupyterLab, marimo and Google Colab),
 as a visualization component embedded in
 :ref:`sphinx <sphinx>` or :ref:`sphinx-gallery <gallery>` documentation,
-as well as a :ref:`streamlit component <streamlit>`.
+as well as a :ref:`streamlit component <streamlit>` and a :ref:`marimo viewer <marimo>`.
 
 
 Getting and citing chemiscope

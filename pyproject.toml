@@ -80,4 +80,5 @@ explore = [
     "vesin >=0.5.4,<0.6",
 ]
 streamlit = ["streamlit>=1.25"]
+marimo = ["marimo>=0.14"]
 headless = ["playwright>=1.52"]

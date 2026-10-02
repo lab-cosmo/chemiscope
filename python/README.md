@@ -57,3 +57,7 @@ properties = {
 
 chemiscope.show(structures=structures, properties=properties)
 ```
+
+In a [marimo](https://marimo.io) notebook, wrap the same widget with
+`chemiscope.marimo.viewer` (`pip install chemiscope[marimo]`). Marimo only
+renders anywidgets passed through its UI layer. See `python/marimo/example/app.py`.

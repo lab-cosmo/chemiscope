@@ -5,8 +5,9 @@ description: >-
   explorers for molecules and materials. Use when creating chemiscope.show() /
   write_input() datasets, visualizing forces or vectors as arrows, atom-centered
   (per-environment) properties, custom shapes (spheres, ellipsoids, arrows, meshes),
-  configuring map/structure display settings, or embedding chemiscope in Sphinx docs or
-  a Streamlit app. Covers ASE / chemfiles / MDAnalysis / stk inputs and the JSON format.
+  configuring map/structure display settings, or embedding chemiscope in Sphinx docs,
+  a marimo notebook, or a Streamlit app. Covers ASE / chemfiles / MDAnalysis / stk
+  inputs and the JSON format.
 ---
 
 # Chemiscope in Python
@@ -34,7 +35,8 @@ Pick the delivery mechanism before writing code:
 
 | Goal | Use |
 |---|---|
-| Interactive view in a Jupyter / marimo / Colab notebook | `chemiscope.show(...)` (or `show_input(file)`) |
+| Interactive view in a Jupyter / Colab notebook | `chemiscope.show(...)` (or `show_input(file)`) |
+| Interactive view in a marimo notebook | `chemiscope.marimo.viewer(...)` (or `viewer_input(file)`) |
 | Shareable file, open online | `chemiscope.write_input("data.json.gz", ...)` → load at chemiscope.org |
 | Single offline HTML file, no server | `write_input("data.json", ...)` (uncompressed!) then `cat chemiscope_standalone.html data.json > out.html` |
 | Embed in Sphinx documentation | `chemiscope.sphinx` extension + `.. chemiscope::` directive |
@@ -46,8 +48,9 @@ There is **no** one-call Python API that emits a self-contained HTML; the standa
 route is "JSON + prebuilt `chemiscope_standalone.html`" (concatenation, uncompressed JSON
 only). See "Other delivery mechanisms" at the bottom for Sphinx/Streamlit/headless detail.
 
-`show` / `show_input` / `streamlit.viewer` / the `.. chemiscope::` directive all accept
-`mode=` `"default"` (map + structure) | `"structure"` (3D only) | `"map"` (map only).
+`show` / `show_input` / `marimo.viewer` / `streamlit.viewer` / the `.. chemiscope::`
+directive all accept `mode=` `"default"` (map + structure) | `"structure"` (3D only) |
+`"map"` (map only).
 
 ## Minimal recipe
 
@@ -307,6 +310,23 @@ dynamically, so **serve the built docs over HTTP** (e.g. `python3 -m http.server
 `build/html`); opening the raw file won't work. (For sphinx-gallery examples, assigning a
 `show()` widget to a variable named `___` auto-generates the directive via the bundled
 `ChemiscopeScraper`.)
+
+### marimo notebook (`pip install chemiscope[marimo]`)
+```python
+import chemiscope, ase.io
+structures = ase.io.read("structures.xyz", ":")
+viewer = chemiscope.marimo.viewer(
+    structures,
+    properties=chemiscope.extract_properties(structures),
+    settings=chemiscope.quick_settings(x="energy", y="volume"),
+)
+viewer
+```
+Run with `marimo edit app.py`. `viewer` is a marimo UI element; another cell that
+reads `viewer.selected_ids` or `viewer.settings` re-runs when the user changes the
+view. Assign a complete dict to `viewer.settings` (in-place nested edits are ignored).
+`chemiscope.show(...)` returns the raw anywidget and does not render in marimo until
+it is passed to `mo.ui.anywidget`.
 
 ### Streamlit app (`pip install chemiscope[streamlit]`)
 ```python

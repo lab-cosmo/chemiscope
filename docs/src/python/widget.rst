@@ -19,6 +19,10 @@ major notebook environment: Jupyter notebook, JupyterLab, `marimo
 separate Jupyter or JupyterLab extension has to be installed — the frontend is
 bundled with the package and loaded automatically.
 
+In marimo, display the widget with :py:func:`chemiscope.marimo.viewer` (see
+:ref:`marimo`). ``chemiscope.show`` returns the raw anywidget, which marimo does
+not render on its own.
+
 Try it on Google Colab
 ----------------------
 

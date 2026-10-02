@@ -15,6 +15,7 @@ and `MDAnalysis.AtomGroup`_ objects.
     reference
     widget
     streamlit
+    marimo
     sphinx
     gallery
 

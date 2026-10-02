@@ -18,6 +18,10 @@ optional dependencies:
 
     pip install chemiscope[explore]
 
+The notebook widget also embeds in marimo (`pip install chemiscope[marimo]`,
+then :py:func:`chemiscope.marimo.viewer`) and Streamlit
+(`pip install chemiscope[streamlit]`).
+
 To install a development version, first ensure you have Node.js and npm installed (for
 compiling the TypeScript library). Then, clone the GitHub repository and install
 locally:
