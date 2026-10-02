@@ -42,8 +42,10 @@ Run the notebook with:
 
     marimo edit app.py
 
-An example that loads the showcase dataset lives at
-``python/marimo/example/app.py``.
+``python/marimo/example/app.py`` is a metatrain dashboard: it reads a run
+directory (``train.csv``, ``train.log``, ``model_*.ckpt``), plots the MAD
+structures, and puts the map and structure settings on the page. Open it with
+``marimo edit`` so the cells stay editable.
 
 
 Reading the selection
