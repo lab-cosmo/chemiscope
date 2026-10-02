@@ -836,7 +836,53 @@ def _(checkpoint, infer, mo, np, plt, properties, state, traceback, viewer):
 
 
 @app.cell
-def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer):
+def _(mo):
+    matrix_aspect = mo.ui.dropdown(
+        {
+            "fit": "auto",
+            "square cells": "equal",
+            "wide cells": 0.5,
+            "tall cells": 2.0,
+        },
+        value="fit",
+        label="Aspect",
+    )
+    matrix_transform = mo.ui.dropdown(
+        {
+            "linear": "linear",
+            "absolute value": "abs",
+            "log10(1+|x|)": "log10",
+            "signed log": "signed_log",
+            "asinh": "asinh",
+            "signed square root": "sqrt",
+        },
+        value="linear",
+        label="Transform",
+    )
+    matrix_controls = mo.hstack(
+        [matrix_aspect, matrix_transform],
+        wrap=True,
+        gap=1,
+        align="end",
+    )
+    return matrix_aspect, matrix_controls, matrix_transform
+
+
+@app.cell
+def _(
+    checkpoint,
+    infer,
+    matrix_aspect,
+    matrix_controls,
+    matrix_transform,
+    mo,
+    np,
+    plt,
+    read_checkpoint,
+    state,
+    traceback,
+    viewer,
+):
     def _as_tiles(values):
         array = np.asarray(values, dtype=float)
         if array.ndim <= 1:
@@ -860,17 +906,43 @@ def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer)
 
     def _show_matrix(ax, values, title):
         image = _as_tiles(values)
+        kind = matrix_transform.value
+        if kind == "abs":
+            image = np.abs(image)
+            diverging = False
+        elif kind == "log10":
+            image = np.log10(1.0 + np.abs(image))
+            diverging = False
+        elif kind == "signed_log":
+            image = np.sign(image) * np.log10(1.0 + np.abs(image))
+            diverging = True
+        elif kind == "asinh":
+            image = np.arcsinh(image)
+            diverging = True
+        elif kind == "sqrt":
+            image = np.sign(image) * np.sqrt(np.abs(image))
+            diverging = True
+        else:
+            diverging = True
         finite = image[np.isfinite(image)]
-        limit = 1.0 if finite.size == 0 else float(np.percentile(np.abs(finite), 99))
-        limit = max(limit, 1e-8)
-        cmap = plt.get_cmap("coolwarm").copy()
+        if finite.size == 0:
+            low, high = -1.0, 1.0
+        elif diverging:
+            limit = max(float(np.percentile(np.abs(finite), 99)), 1e-8)
+            low, high = -limit, limit
+        else:
+            low = float(np.percentile(finite, 1))
+            high = float(np.percentile(finite, 99))
+            if high <= low:
+                high = low + 1e-8
+        cmap = plt.get_cmap("coolwarm" if diverging else "magma").copy()
         cmap.set_bad("#f4f4f5")
         ax.imshow(
             np.ma.masked_invalid(image),
             cmap=cmap,
-            vmin=-limit,
-            vmax=limit,
-            aspect="auto",
+            vmin=low,
+            vmax=high,
+            aspect=matrix_aspect.value,
             interpolation="nearest",
         )
         ax.set_title(title, fontsize=8)
@@ -899,58 +971,70 @@ def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer)
             _features,
         ):
             _radial_out = _radial_out.reshape(_radial, _features, _features)
-        for _title, _values in (
+        for _title, _key, _values in (
             (
                 f"embedding ({_species} species)",
+                "sr.chemical_embedding.weight",
                 _weights.get("sr.chemical_embedding.weight"),
             ),
             (
                 "scalar map, species to features",
+                "sr.dense0.0.weight",
                 _weights.get("sr.dense0.0.weight"),
             ),
             (
                 "scalar message, features x features",
+                "sr.dense1.weight",
                 _weights.get("sr.dense1.weight"),
             ),
             (
                 "features to spherical channels",
+                "sr.dense2.weight",
                 _weights.get("sr.dense2.weight"),
             ),
             (
                 "radial MLP, in",
+                "sr.radial_coefficients.0.weight",
                 _weights.get("sr.radial_coefficients.0.weight"),
             ),
             (
                 f"radial MLP, {_radial} feature blocks",
+                "sr.radial_coefficients.2.weight",
                 _radial_out,
             ),
             (
                 "spherical tensor product",
+                "sr.tensor_dense.tensor_weight",
                 _weights.get("sr.tensor_dense.tensor_weight"),
             ),
             (
                 "short-range energy readout",
+                "sr.energy_mlp.4.weight",
                 _weights.get("sr.energy_mlp.4.weight"),
             ),
             (
                 "scalar charge MLP",
+                "lr.scalar_charge_mlp.0.weight",
                 _weights.get("lr.scalar_charge_mlp.0.weight"),
             ),
             (
                 "spherical charges",
+                "lr.spherical_charge_dense.dense.weight",
                 _weights.get("lr.spherical_charge_dense.dense.weight"),
             ),
             (
                 "potential to features",
+                "lr.potential_to_features.weight",
                 _weights.get("lr.potential_to_features.weight"),
             ),
             (
                 "long-range energy readout",
+                "lr.energy_mlp.4.weight",
                 _weights.get("lr.energy_mlp.4.weight"),
             ),
         ):
             if _values is not None:
-                _panels.append((_title, _values.detach().cpu().numpy()))
+                _panels.append((_title, _key, _values.detach().cpu().numpy()))
         _columns = 4
         _rows = int(np.ceil(len(_panels) / _columns))
         shape_fig, shape_axes = plt.subplots(
@@ -960,10 +1044,82 @@ def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer)
             layout="constrained",
         )
         _flat_axes = np.atleast_1d(shape_axes).ravel()
-        for _ax, (_title, _values) in zip(_flat_axes, _panels, strict=False):
-            _show_matrix(_ax, _values, _title)
+        for _ax, _panel in zip(_flat_axes, _panels, strict=False):
+            _show_matrix(_ax, _panel[2], _panel[0])
         for _ax in _flat_axes[len(_panels) :]:
             _ax.axis("off")
+        _optimizer = _loaded.get("optimizer_state_dict") or {}
+        _adam_state = _optimizer.get("state") or {}
+        _buffer_marks = (
+            "buffer",
+            "bernstein_coeff",
+            "type_to_index",
+            "smearing",
+            "prefactor",
+        )
+        _param_names = [
+            name
+            for name in _weights
+            if not any(mark in name for mark in _buffer_marks)
+        ]
+        _adam_by_name = {}
+        if len(_param_names) == len(_adam_state):
+            for _index, _name in enumerate(_param_names):
+                _adam_by_name[_name] = _adam_state[_index]
+        _group = (_optimizer.get("param_groups") or [{}])[0]
+        _betas = _group.get("betas", (0.9, 0.999))
+        _adam_lr = _group.get("lr")
+        _adam_step = None
+        if _adam_state:
+            _adam_step = int(next(iter(_adam_state.values()))["step"])
+        adam_fig = None
+        if _adam_by_name:
+            adam_fig, adam_axes = plt.subplots(
+                len(_panels),
+                3,
+                figsize=(11.2, 1.2 * len(_panels)),
+                layout="constrained",
+            )
+            adam_axes = np.atleast_2d(adam_axes)
+            for _row, (_title, _key, _view) in enumerate(_panels):
+                _moment = _adam_by_name.get(_key)
+                _show_matrix(
+                    adam_axes[_row, 0],
+                    _view,
+                    "parameter" if _row == 0 else "",
+                )
+                adam_axes[_row, 0].set_ylabel(_title, fontsize=7)
+                if _moment is None:
+                    adam_axes[_row, 1].axis("off")
+                    adam_axes[_row, 2].axis("off")
+                    continue
+                _first = _moment["exp_avg"].detach().cpu().numpy()
+                _second = _moment["exp_avg_sq"].detach().cpu().numpy()
+                if _first.size == _view.size:
+                    _first = _first.reshape(_view.shape)
+                    _second = _second.reshape(_view.shape)
+                _show_matrix(
+                    adam_axes[_row, 1],
+                    _first,
+                    "first moment m" if _row == 0 else "",
+                )
+                _show_matrix(
+                    adam_axes[_row, 2],
+                    np.sqrt(np.maximum(_second, 0.0)),
+                    "root second moment" if _row == 0 else "",
+                )
+            _lr_text = f"{_adam_lr:.4g}" if isinstance(_adam_lr, float) else "—"
+            _adam_note = (
+                f"Adam keeps `exp_avg` and `exp_avg_sq` for each of "
+                f"{len(_adam_by_name)} parameters, at step {_adam_step}. "
+                f"betas are {_betas[0]} and {_betas[1]}, learning rate {_lr_text}. "
+                "Each row is the parameter, its first moment, and the root of "
+                "its second moment, tiled the same way. "
+                "`best_optimizer_state_dict` stores the moments from the best "
+                "epoch; these are the moments saved with the weights above."
+            )
+        else:
+            _adam_note = "This checkpoint has no Adam state."
         _ledger = [
             {
                 "tensor": "nodes_scalar",
@@ -1086,11 +1242,15 @@ def _(checkpoint, infer, mo, np, plt, read_checkpoint, state, traceback, viewer)
                     f"{_hypers['num_message_passing']}, so the spherical "
                     f"state has `{_stages}` stage. "
                     "Color scales are independent and clipped to the 99th "
-                    "percentile of each matrix."
+                    "percentile after the transform. Aspect and transform "
+                    "apply to the parameter, Adam, and hidden-state matrices."
                 ),
+                matrix_controls,
                 mo.ui.table(_ledger, selection=None),
                 mo.md("### Parameters"),
                 shape_fig,
+                mo.md("### Adam\n\n" + _adam_note),
+                *([adam_fig] if adam_fig is not None else []),
                 mo.md("### Hidden state\n\n" + _hidden_note),
                 *([_hidden_fig] if _hidden_fig is not None else []),
             ]
