@@ -7,9 +7,11 @@ Open it in edit mode so the cells themselves are the Python interpreter:
 
 The sidebar takes a training-run directory, the structure file, and an optional
 predictions file. Checkpoints in that directory can be reloaded from the
-dropdown. Map and structure settings sit next to the viewer. Training curves
-come from ``train.csv`` / ``train.log``. Weight norms and the parameter
-distribution come from the selected ``model_*.ckpt``.
+dropdown. The viewer is the default two-panel layout: a parity plot (reference
+energy against the checkpoint prediction) on the left, the structure on the
+right. Axis and structure settings sit above it. Training curves come from
+``train.csv`` / ``train.log``. Weight norms and the parameter distribution
+come from the selected ``model_*.ckpt``.
 
 The defaults point at the MAD subset and the experimental.lorem run under
 ``test-lorem``.
@@ -146,12 +148,6 @@ def _(mo):
         debounce=True,
         full_width=True,
     )
-    panels = mo.ui.radio(
-        options=["default", "structure", "map"],
-        value="default",
-        label="Viewer panels",
-        inline=True,
-    )
     mo.sidebar(
         mo.vstack(
             [
@@ -166,11 +162,10 @@ def _(mo):
                 structures_path,
                 predictions_path,
                 n_show,
-                panels,
             ]
         )
     )
-    return n_show, panels, predictions_path, run_dir, structures_path
+    return n_show, predictions_path, run_dir, structures_path
 
 
 @app.cell
@@ -292,39 +287,31 @@ def _(
 @app.cell
 def _(mo, property_names):
     numeric = [name for name in property_names if name != "dataset_group"]
-    x_axis = mo.ui.dropdown(numeric, value="energy_per_atom", label="Map x")
-    y_axis = mo.ui.dropdown(
-        numeric,
-        value="error" if "error" in numeric else "energy",
-        label="Map y",
-    )
-    color_by = mo.ui.dropdown(
-        numeric,
-        value="error" if "error" in numeric else "energy",
-        label="Map color",
-    )
+    x_default = "energy" if "energy" in numeric else numeric[0]
+    if "predicted_energy" in numeric:
+        y_default = "predicted_energy"
+    elif "error" in numeric:
+        y_default = "error"
+    else:
+        y_default = numeric[min(1, len(numeric) - 1)]
+    color_default = "error" if "error" in numeric else x_default
+    x_axis = mo.ui.dropdown(numeric, value=x_default, label="Parity x")
+    y_axis = mo.ui.dropdown(numeric, value=y_default, label="Parity y")
+    color_by = mo.ui.dropdown(numeric, value=color_default, label="Color")
     palette = mo.ui.dropdown(
         [
+            "bwr",
+            "seismic",
             "inferno",
             "magma",
             "plasma",
             "viridis",
             "cividis",
-            "seismic",
-            "bwr",
             "twilight (periodic)",
             "tab10",
         ],
-        value="inferno",
+        value="bwr",
         label="Palette",
-    )
-    symbol_options = {"none": ""}
-    if "dataset_group" in property_names:
-        symbol_options["dataset_group"] = "dataset_group"
-    symbol = mo.ui.dropdown(
-        symbol_options,
-        value="dataset_group" if "dataset_group" in property_names else "none",
-        label="Symbol",
     )
     marker_size = mo.ui.slider(
         10,
@@ -333,7 +320,6 @@ def _(mo, property_names):
         label="Marker size",
         show_value=True,
         debounce=True,
-        full_width=True,
     )
     opacity = mo.ui.slider(
         10,
@@ -342,27 +328,24 @@ def _(mo, property_names):
         label="Opacity",
         show_value=True,
         debounce=True,
-        full_width=True,
     )
     bonds = mo.ui.checkbox(value=True, label="Bonds")
     space_filling = mo.ui.checkbox(value=False, label="Space filling")
     atom_labels = mo.ui.checkbox(value=False, label="Atom labels")
-    link_points = mo.ui.checkbox(value=False, label="Link points")
     controls = mo.vstack(
         [
-            mo.md("### Map"),
-            x_axis,
-            y_axis,
-            color_by,
-            palette,
-            symbol,
-            marker_size,
-            opacity,
-            link_points,
-            mo.md("### Structure"),
-            bonds,
-            space_filling,
-            atom_labels,
+            mo.hstack(
+                [x_axis, y_axis, color_by, palette],
+                wrap=True,
+                gap=1,
+                align="end",
+            ),
+            mo.hstack(
+                [marker_size, opacity, bonds, space_filling, atom_labels],
+                wrap=True,
+                gap=1,
+                align="center",
+            ),
         ]
     )
     return (
@@ -370,12 +353,10 @@ def _(mo, property_names):
         bonds,
         color_by,
         controls,
-        link_points,
         marker_size,
         opacity,
         palette,
         space_filling,
-        symbol,
         x_axis,
         y_axis,
     )
@@ -388,17 +369,14 @@ def _(
     chemiscope,
     color_by,
     controls,
-    link_points,
     marker_size,
     mo,
     opacity,
     palette,
-    panels,
     prediction_note,
     properties,
     shown,
     space_filling,
-    symbol,
     x_axis,
     y_axis,
 ):
@@ -406,7 +384,6 @@ def _(
         x=x_axis.value,
         y=y_axis.value,
         map_color=color_by.value,
-        symbol=symbol.value or None,
         structure_settings={
             "bonds": bool(bonds.value),
             "spaceFilling": bool(space_filling.value),
@@ -420,7 +397,6 @@ def _(
                 "opacity": int(opacity.value),
             },
             "size": {"property": "", "factor": int(marker_size.value)},
-            "joinPoints": bool(link_points.value),
         },
     )
     viewer = chemiscope.marimo.viewer(
@@ -431,14 +407,15 @@ def _(
             "description": prediction_note,
         },
         settings=settings,
-        mode=panels.value,
+        mode="default",
         warning_timeout=-1,
     )
-    mo.hstack(
-        [controls, mo.vstack([mo.md(f"_{prediction_note}_"), viewer])],
-        widths=[1, 3],
-        gap=1,
-        align="start",
+    mo.vstack(
+        [
+            controls,
+            mo.md(f"_{prediction_note}_"),
+            viewer,
+        ]
     )
     return (viewer,)
 
@@ -467,6 +444,13 @@ def _(mo, state, viewer):
                 lines.append(f"- `{name}`: {value}")
         detail = mo.md("\n".join(lines))
     detail
+    return
+
+
+@app.cell
+def _():
+    # evaluate the model on the selected structure, and print intermediates, and final energy, etc
+
     return
 
 
@@ -681,21 +665,6 @@ def _(io, mo, run_scratch, scratch, state, traceback):
         except Exception:
             output = mo.md(f"```\n{traceback.format_exc()}\n```")
     mo.vstack([mo.md("## Python"), scratch, run_scratch, output])
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 
