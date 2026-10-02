@@ -7,91 +7,105 @@
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": null,
-      "outputs": [],
+      "code_hash": "30b0b106a2cda224f0c07e7e0138b01a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "MJUe",
-      "code_hash": null,
-      "outputs": [],
+      "code_hash": "fabc9d0bc800441ba4639eb6bff54d9d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-sidebar ><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"metatrain-run\">Metatrain run</h2>\n<span class=\"paragraph\">Changing a path re-runs the cells that read it.</span></span><marimo-ui-element object-id='MJUe-0' random-id='76e4d1e5-32a7-1bf5-96e6-977bee5012da'><marimo-text data-initial-value='&quot;/Users/ericboittier/metawork/test-lorem/outputs/2026-10-02/08-05-45&quot;' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eTraining run directory&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-placeholder='&quot;&quot;' data-kind='&quot;text&quot;' data-full-width='true' data-disabled='false' data-debounce='true'></marimo-text></marimo-ui-element><marimo-ui-element object-id='MJUe-1' random-id='f32a0714-9b82-2f82-34b6-f4ece88963c1'><marimo-text data-initial-value='&quot;/Users/ericboittier/metawork/test-lorem/mad_subset.xyz&quot;' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eStructures (.xyz)&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-placeholder='&quot;&quot;' data-kind='&quot;text&quot;' data-full-width='true' data-disabled='false' data-debounce='true'></marimo-text></marimo-ui-element><marimo-ui-element object-id='MJUe-2' random-id='c6a5f047-33d9-e091-0062-ac202b4318f5'><marimo-text data-initial-value='&quot;/Users/ericboittier/metawork/test-lorem/lorem_predictions.xyz&quot;' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003ePredictions (.xyz, optional)&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-placeholder='&quot;&quot;' data-kind='&quot;text&quot;' data-full-width='true' data-disabled='false' data-debounce='true'></marimo-text></marimo-ui-element><marimo-ui-element object-id='MJUe-3' random-id='7d8977e7-cb83-6135-48f2-55a831c00742'><marimo-slider data-initial-value='400' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eStructures on the map&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-start='100' data-stop='4709' data-step='100' data-steps='[]' data-debounce='true' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='true' data-include-input='false' data-full-width='true'></marimo-slider></marimo-ui-element></div></marimo-sidebar>"
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "vblA",
-      "code_hash": null,
+      "code_hash": "ccc6991d2a6627aa8394f5178b9337a1",
       "outputs": [],
       "console": []
     },
     {
       "id": "bkHC",
-      "code_hash": null,
+      "code_hash": "8c8bc61a196fe64eb2cb1689680073b3",
       "outputs": [],
       "console": []
     },
     {
       "id": "lEQa",
-      "code_hash": null,
+      "code_hash": "7ed974febf14f91cdd1911eaf95ec5cc",
       "outputs": [],
       "console": []
     },
     {
       "id": "PKri",
-      "code_hash": null,
+      "code_hash": "9fabe377b32e6dcbe9bc4da572541848",
       "outputs": [],
       "console": []
     },
     {
       "id": "Xref",
-      "code_hash": null,
+      "code_hash": "459374611b334c0983dece051392169c",
       "outputs": [],
       "console": []
     },
     {
       "id": "SFPL",
-      "code_hash": null,
+      "code_hash": "9e0dfcead535ae0912c34064e008a115",
       "outputs": [],
       "console": []
     },
     {
       "id": "BYtC",
-      "code_hash": null,
+      "code_hash": "c21b26f9d575675d06b7c555a56dbb8e",
       "outputs": [],
       "console": []
     },
     {
       "id": "RGSE",
-      "code_hash": null,
+      "code_hash": "7ea860bccf224e06b37e216b2aad220e",
       "outputs": [],
       "console": []
     },
     {
       "id": "Kclp",
-      "code_hash": null,
+      "code_hash": "5101696d099e905d9925c19ee7bf59f8",
       "outputs": [],
       "console": []
     },
     {
       "id": "emfo",
-      "code_hash": null,
+      "code_hash": "ef598c9eb048fc2f6fa086e0d1c9bcb1",
       "outputs": [],
       "console": []
     },
     {
       "id": "Hstk",
-      "code_hash": null,
+      "code_hash": "3dec575a079a4393c41776cfd4894e1c",
       "outputs": [],
       "console": []
     },
     {
       "id": "nWHF",
-      "code_hash": null,
+      "code_hash": "e278110d828184cf3627defc3bfac491",
       "outputs": [],
       "console": []
     },
     {
       "id": "iLit",
-      "code_hash": null,
+      "code_hash": "50d4fb062ce9dd1f872c386482c53821",
       "outputs": [],
       "console": []
     }
