@@ -33,6 +33,8 @@ _BUFFER_MARKS = (
     "smearing",
     "prefactor",
 )
+# Float32 weights below this are counted as numerically zero.
+_SMALL = 1e-8
 
 
 @functools.lru_cache(maxsize=2)
@@ -65,16 +67,26 @@ def read_checkpoint(path: str):
     flats = []
     for name, tensor in checkpoint["model_state_dict"].items():
         flat = tensor.detach().float().reshape(-1).cpu()
+        numel = int(flat.numel())
+        l2 = float(torch.linalg.vector_norm(flat))
+        n_zero = int(torch.count_nonzero(flat == 0))
+        n_small = int(torch.count_nonzero(flat.abs() < _SMALL))
         rows.append(
             {
                 "name": name,
                 "shape": "×".join(str(size) for size in tensor.shape) or "scalar",
-                "numel": int(flat.numel()),
+                "numel": numel,
                 "mean": float(flat.mean()),
                 "std": float(flat.std(unbiased=False)),
                 "min": float(flat.min()),
                 "max": float(flat.max()),
-                "l2": float(torch.linalg.vector_norm(flat)),
+                "l1": float(flat.abs().sum()),
+                "l2": l2,
+                "rms": l2 / (numel**0.5) if numel else 0.0,
+                "n_zero": n_zero,
+                "zero_fraction": n_zero / numel if numel else 0.0,
+                "n_small": n_small,
+                "small_fraction": n_small / numel if numel else 0.0,
             }
         )
         flats.append(flat.numpy())
@@ -169,6 +181,7 @@ def discover_checkpoints(run_dirs, extra_paths=None) -> dict:
             found.append(path)
         else:
             missing.append(str(path))
+
     def _identity(path: Path) -> str:
         return str(path.resolve()) if path.exists() else str(path)
 
@@ -205,6 +218,10 @@ def discover_checkpoints(run_dirs, extra_paths=None) -> dict:
         if path.parent == best.parent
         and _checkpoint_epoch(path) < _checkpoint_epoch(best)
     ]
+    if not earlier:
+        earlier = [
+            path for path in unique if _checkpoint_epoch(path) < _checkpoint_epoch(best)
+        ]
     compare = (
         _unique_label(max(earlier, key=_checkpoint_epoch), unique, qualify=qualify)
         if earlier
@@ -1156,6 +1173,195 @@ def with_l2_delta(weight_rows, other_rows):
         row["l2_other"] = baseline
         row["l2_delta"] = None if baseline is None else row["l2"] - baseline
     return rows
+
+
+def _learned(name: str) -> bool:
+    return not any(mark in name for mark in _BUFFER_MARKS)
+
+
+def _layer_name(name: str) -> str:
+    for suffix in (".weight", ".bias"):
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
+def learned_totals(rows: list[dict]) -> dict:
+    """L2, RMS, and zero counts for trained tensors, buffers excluded."""
+    group = [row for row in rows if _learned(row["name"])]
+    numel = sum(row["numel"] for row in group)
+    l2 = sum(row["l2"] ** 2 for row in group) ** 0.5
+    n_zero = sum(row["n_zero"] for row in group)
+    n_small = sum(row["n_small"] for row in group)
+    return {
+        "numel": numel,
+        "l2": l2,
+        "rms": l2 / (numel**0.5) if numel else 0.0,
+        "n_zero": n_zero,
+        "zero_fraction": n_zero / numel if numel else 0.0,
+        "n_small": n_small,
+        "small_fraction": n_small / numel if numel else 0.0,
+    }
+
+
+def _layer_pack(rows: list[dict]) -> dict:
+    numel = sum(row["numel"] for row in rows)
+    l2 = sum(row["l2"] ** 2 for row in rows) ** 0.5
+    n_zero = sum(row["n_zero"] for row in rows)
+    return {
+        "numel": numel,
+        "l2": l2,
+        "rms": l2 / (numel**0.5) if numel else 0.0,
+        "n_zero": n_zero,
+        "zero_fraction": n_zero / numel if numel else 0.0,
+    }
+
+
+def _adam_update(loaded) -> tuple[int | None, float | None]:
+    weights = loaded["model_state_dict"]
+    optimizer = loaded.get("optimizer_state_dict") or {}
+    by_name = _adam_by_name(weights, optimizer)
+    state = optimizer.get("state") or {}
+    if not by_name or not state:
+        return None, None
+    step = int(next(iter(state.values()))["step"])
+    total = 0.0
+    count = 0
+    for moment in by_name.values():
+        first = moment["exp_avg"].detach().float().reshape(-1)
+        total += float(first.abs().sum())
+        count += int(first.numel())
+    return step, (total / count if count else None)
+
+
+def _trajectory_figure(records: list[dict]):
+    epochs = [record["epoch"] for record in records]
+    fig, axes = plt.subplots(2, 2, figsize=(11.2, 6.6), layout="constrained")
+    axes[0, 0].plot(epochs, [record["l2"] for record in records], "o-", color="#1d4ed8")
+    axes[0, 0].set_title("Learned-parameter L2")
+    axes[0, 0].set_xlabel("epoch")
+    axes[0, 1].plot(
+        epochs,
+        [100.0 * record["zero_fraction"] for record in records],
+        "o-",
+        color="#b45309",
+        label="exact zero",
+    )
+    axes[0, 1].plot(
+        epochs,
+        [100.0 * record["small_fraction"] for record in records],
+        "s--",
+        color="#0f766e",
+        label=f"|x| < {_SMALL:g}",
+    )
+    axes[0, 1].set_title("Sparsity")
+    axes[0, 1].set_xlabel("epoch")
+    axes[0, 1].set_ylabel("percent of learned parameters")
+    axes[0, 1].legend(fontsize=8)
+    last_layers = records[-1]["layers"]
+    largest = sorted(
+        last_layers, key=lambda name: last_layers[name]["rms"], reverse=True
+    )
+    for name in largest[:8]:
+        xs = []
+        ys = []
+        for record in records:
+            layer = record["layers"].get(name)
+            if layer is None:
+                continue
+            xs.append(record["epoch"])
+            ys.append(layer["rms"])
+        axes[1, 0].plot(xs, ys, "o-", label=name.replace("_", " "))
+    axes[1, 0].set_title("Largest layer RMS")
+    axes[1, 0].set_xlabel("epoch")
+    axes[1, 0].legend(fontsize=7)
+    if len(records) < 2:
+        axes[1, 1].axis("off")
+        return fig
+    previous = records[-2]["layers"]
+    deltas = []
+    for name, layer in last_layers.items():
+        before = previous.get(name)
+        if before is None or before["l2"] == 0.0:
+            continue
+        deltas.append((name, (layer["l2"] - before["l2"]) / before["l2"]))
+    deltas.sort(key=lambda item: abs(item[1]), reverse=True)
+    deltas = deltas[:12]
+    axes[1, 1].barh(
+        [name.replace("_", " ") for name, _value in deltas][::-1],
+        [100.0 * value for _name, value in deltas][::-1],
+        color="#4c1d95",
+    )
+    axes[1, 1].axvline(0.0, color="0.35", lw=1)
+    axes[1, 1].set_xlabel(
+        f"L2 change, epoch {records[-2]['epoch']} → {records[-1]['epoch']} (%)"
+    )
+    axes[1, 1].set_title("Where the weights moved")
+    return fig
+
+
+def parameter_trajectory(options: dict[str, str]) -> dict:
+    """Learned-parameter norms, sparsity, and per-layer RMS at each checkpoint.
+
+    Buffers (Bernstein coefficients, composition, scaler) are left out of the
+    totals. ``bernstein_l2`` is reported on its own so a fixed basis stays visible.
+    """
+    records = []
+    for label, path in options.items():
+        if not path:
+            continue
+        loaded, rows, _ = read_checkpoint(path)
+        learned = [row for row in rows if _learned(row["name"])]
+        totals = learned_totals(rows)
+        grouped: dict[str, list[dict]] = {}
+        for row in learned:
+            grouped.setdefault(_layer_name(row["name"]), []).append(row)
+        layers = {name: _layer_pack(group) for name, group in grouped.items()}
+        bernstein = next(
+            (row["l2"] for row in rows if row["name"].endswith("bernstein_coeff")),
+            None,
+        )
+        step, mean_abs = _adam_update(loaded)
+        records.append(
+            {
+                "label": label,
+                "epoch": int(loaded.get("epoch") or _checkpoint_epoch(Path(path))),
+                **totals,
+                "bernstein_l2": bernstein,
+                "adam_step": step,
+                "mean_abs_update": mean_abs,
+                "layers": layers,
+            }
+        )
+    records.sort(key=lambda record: (record["epoch"], record["label"]))
+    epochs = [
+        {key: value for key, value in record.items() if key != "layers"}
+        for record in records
+    ]
+    layers = []
+    if records:
+        previous = records[-2]["layers"] if len(records) > 1 else {}
+        for name, layer in records[-1]["layers"].items():
+            before = previous.get(name)
+            layers.append(
+                {
+                    "layer": name,
+                    "numel": layer["numel"],
+                    "l2": layer["l2"],
+                    "rms": layer["rms"],
+                    "exact_zeros": layer["n_zero"],
+                    "zero_fraction": layer["zero_fraction"],
+                    "l2_previous": None if before is None else before["l2"],
+                    "l2_delta": None if before is None else layer["l2"] - before["l2"],
+                    "rms_previous": None if before is None else before["rms"],
+                    "rms_delta": None
+                    if before is None
+                    else layer["rms"] - before["rms"],
+                }
+            )
+        layers.sort(key=lambda row: abs(row["l2_delta"] or 0.0), reverse=True)
+    figure = _trajectory_figure(records) if records else None
+    return {"epochs": epochs, "layers": layers, "figure": figure}
 
 
 def weight_figure(weight_rows, flats):

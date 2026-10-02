@@ -58,7 +58,10 @@ def _():
 @app.cell
 def _(mo):
     run_dirs = mo.ui.text_area(
-        value="/Users/ericboittier/metawork/test-lorem/outputs/2026-10-02/08-05-45",
+        value=(
+            "/Users/ericboittier/metawork/test-lorem/outputs/2026-10-02/11-59-23\n"
+            "/Users/ericboittier/metawork/test-lorem/outputs/2026-10-02/08-05-45"
+        ),
         label="Run directories (one per line)",
         rows=4,
         full_width=True,
@@ -606,6 +609,7 @@ def _(checkpoint, compare, dash, mo, state):
             _, _other_rows, _ = dash.read_checkpoint(compare.value)
             _weight_rows = dash.with_l2_delta(_weight_rows, _other_rows)
         _best = _loaded.get("best_metric")
+        _totals = dash.learned_totals(_weight_rows)
         state["checkpoint"] = _loaded
         state["checkpoint_path"] = checkpoint.value
         state["weight_rows"] = _weight_rows
@@ -615,8 +619,8 @@ def _(checkpoint, compare, dash, mo, state):
                 mo.hstack(
                     [
                         mo.stat(
-                            f"{sum(row['numel'] for row in _weight_rows):,}",
-                            label="parameters",
+                            f"{_totals['numel']:,}",
+                            label="learned parameters",
                             bordered=True,
                         ),
                         mo.stat(
@@ -630,18 +634,103 @@ def _(checkpoint, compare, dash, mo, state):
                             bordered=True,
                         ),
                         mo.stat(
-                            str(_loaded.get("architecture_name", "—")),
-                            label="architecture",
+                            f"{_totals['rms']:.3g}",
+                            label="parameter RMS",
+                            caption=f"L2 {_totals['l2']:.3g}",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_totals['n_zero']:,}",
+                            label="exact zeros",
+                            caption=f"{100 * _totals['zero_fraction']:.2f}%",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_totals['n_small']:,}",
+                            label="|x| < 1e-8",
+                            caption=f"{100 * _totals['small_fraction']:.2f}%",
                             bordered=True,
                         ),
                     ],
                     gap=1,
+                    wrap=True,
                 ),
                 dash.weight_figure(_weight_rows, _flats),
                 mo.ui.table(_weight_rows, page_size=12, selection=None),
             ]
         )
     weights
+    return
+
+
+@app.cell
+def _(dash, extra_checkpoints, mo, run_dirs):
+    _found = dash.discover_checkpoints(run_dirs.value, extra_checkpoints.value)
+    _report = dash.parameter_trajectory(_found["options"])
+    if not _report["epochs"]:
+        trajectory = mo.md("## Parameters across epochs\n\nNo checkpoints.")
+    else:
+        _latest = _report["epochs"][-1]
+        _previous = _report["epochs"][-2] if len(_report["epochs"]) > 1 else None
+        _delta = None if _previous is None else _latest["l2"] - _previous["l2"]
+        trajectory = mo.vstack(
+            [
+                mo.md(
+                    "## Parameters across epochs\n\n"
+                    "Totals cover learned tensors only. Bernstein coefficients, "
+                    "the composition baseline, and the output scaler are buffers, "
+                    "so they stay out of the L2 and the zero count. "
+                    "`bernstein_l2` is that fixed basis. Layer RMS is "
+                    "`||W|| / sqrt(n)` for each module, bias included. "
+                    "The bars are the relative L2 change from the previous checkpoint."
+                ),
+                mo.hstack(
+                    [
+                        mo.stat(
+                            str(_latest["epoch"]),
+                            label=_latest["label"],
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{_latest['rms']:.3g}",
+                            label="RMS",
+                            caption=(
+                                "first checkpoint"
+                                if _delta is None
+                                else f"L2 {_delta:+.3g} vs epoch {_previous['epoch']}"
+                            ),
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            f"{100 * _latest['zero_fraction']:.2f}%",
+                            label="exact zeros",
+                            bordered=True,
+                        ),
+                        mo.stat(
+                            (
+                                "—"
+                                if _latest["mean_abs_update"] is None
+                                else f"{_latest['mean_abs_update']:.3g}"
+                            ),
+                            label="mean |Adam m|",
+                            caption=(
+                                None
+                                if _latest["adam_step"] is None
+                                else f"step {_latest['adam_step']}"
+                            ),
+                            bordered=True,
+                        ),
+                    ],
+                    gap=1,
+                    wrap=True,
+                ),
+                _report["figure"],
+                mo.ui.table(_report["epochs"], selection=None),
+                mo.md("### Layers at the latest checkpoint"),
+                mo.ui.table(_report["layers"], page_size=12, selection=None),
+            ]
+        )
+    trajectory
     return
 
 
