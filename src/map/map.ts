@@ -26,7 +26,7 @@ import { enumerate, getElement, getFirstKey } from '../utils';
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices, computeScreenSpaceLOD } from './lod';
+import { LODSampler } from './lod';
 import * as styles from '../styles';
 
 import { DEFAULT_CONFIG, DEFAULT_LAYOUT, getAxisAutoRange, getAxisRange } from './utils';
@@ -104,6 +104,10 @@ export class PropertiesMap {
      * when zoomed out.
      */
     private static readonly LOD_THRESHOLD = 50000;
+    /// point budget for the current view, halved in 3d
+    private static readonly LOD_MAX_POINTS = 20000;
+    /// cached ranking for the current axes and selection
+    private _lod: LODSampler | null = null;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// True while writing derived option values programmatically; the reactive
@@ -669,11 +673,7 @@ export class PropertiesMap {
                 // wait 100 ms for a pause, then choose points for the latest view
                 this._lodRequest = window.setTimeout(() => {
                     this._lodRequest = null;
-                    const lodEnabled =
-                        this._options.useLOD.value &&
-                        this._property(this._options.x.property.value).values.length >
-                            PropertiesMap.LOD_THRESHOLD;
-                    if (lodEnabled) {
+                    if (this._options.useLOD.value && this._lod !== null) {
                         this._updateLOD(this._getBounds());
                     }
                 }, 100);
@@ -770,9 +770,11 @@ export class PropertiesMap {
                 return;
             }
 
+            // sampling on log axes excludes negative values, so it cannot drive this warning
+            // check the original property even when the displayed sample is empty
             if (
                 axis.scale.value === 'log' &&
-                arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
+                this._property(axis.property.value).values.some((value) => value < 0) &&
                 axis.min.value <= 0
             ) {
                 this.warnings.sendMessage(
@@ -791,6 +793,7 @@ export class PropertiesMap {
         this._options.x.scale.onchange.push(() => {
             negativeLogWarning(this._options.x);
             this._options.setLogLabel(this._options.x, 'x');
+            this._rescaleLOD();
             if (this._is3D()) {
                 this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
@@ -858,6 +861,7 @@ export class PropertiesMap {
         this._options.y.scale.onchange.push(() => {
             negativeLogWarning(this._options.y);
             this._options.setLogLabel(this._options.y, 'y');
+            this._rescaleLOD();
             if (this._is3D()) {
                 this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
@@ -947,6 +951,7 @@ export class PropertiesMap {
             negativeLogWarning(this._options.z);
             this._options.setLogLabel(this._options.z, 'z');
             if (this._options.z.property.value !== '') {
+                this._rescaleLOD();
                 this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,
                 } as unknown as Layout);
@@ -2660,107 +2665,117 @@ export class PropertiesMap {
     // Level of Detail (LOD)
     // ======================================================================
 
-    /**
-     * Computes the subset of points to display based on spatial grid binning (LOD).
-     */
+    // axes or filters change => _computeLOD builds a new ranking and chooses points
+    // zoom, pan or rotation =>  _updateLOD calls _selectLOD to reuse that ranking
+    // linear/log switch => _rescaleLOD rebuilds the ranking and redraws
+
+    /** Build a new sampler for the current axes and filters, then choose points to show */
     private _computeLOD(bounds?: Bounds): void {
-        // check if LOD is enabled
+        // clear the old sample even if this update no longer needs LOD
+        this._lod = null;
+        this._lodIndices = null;
+
         if (!this._options.useLOD.value) {
-            this._lodIndices = null;
             return;
         }
 
-        const xProp = this._options.x.property.value;
-        const yProp = this._options.y.property.value;
-        const zProp = this._options.z.property.value;
+        const xValues = this._property(this._options.x.property.value).values;
 
-        const xValues = this._property(xProp).values;
-
-        // Check threshold
+        // small datasets can display every point
         if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
-            this._lodIndices = null;
             return;
         }
 
-        const yValues = this._property(yProp).values;
-        const is3D = this._is3D() && zProp !== '';
-        const zValues = is3D ? this._property(zProp).values : null;
-
-        // When a selection filter is active, prefer foreground points: pass the
-        // mask as a priority signal to the LOD functions. If hide mode is on
-        // and the foreground subset fits under the threshold, skip LOD entirely
-        // for that subset so every foreground point is shown.
+        // hide mode excludes background points, other filters give foreground priority
         const selectMode = this._options.color.select.mode.value;
-        let priorityMask: boolean[] | undefined;
+
+        let priority: boolean[] | undefined;
+        let visible: boolean[] | undefined;
+
         if (selectMode !== 'all') {
-            priorityMask = this._getSelectionMask();
+            const mask = this._getSelectionMask();
+
             if (selectMode.endsWith('hide')) {
+                visible = mask;
                 const foreground: number[] = [];
-                for (let i = 0; i < priorityMask.length; i++) {
-                    if (priorityMask[i]) {
+                for (let i = 0; i < mask.length; i++) {
+                    if (mask[i]) {
                         foreground.push(i);
                     }
                 }
+
                 if (foreground.length <= PropertiesMap.LOD_THRESHOLD) {
+                    // show every remaining point when filtering makes sampling unnecessary
                     this._lodIndices = foreground;
                     return;
                 }
+            } else {
+                // prefer matching points within each cell, but still allow the others
+                priority = mask;
             }
         }
 
-        const lodSet = new Set<number>();
-
-        // Coarse pass
-        // Compute a sparser "global" grid of points for the full range of the dataset
-        // to show "something" when we rotate, pan or zoom
-
-        const lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
-            undefined,
-            PropertiesMap.LOD_THRESHOLD / 10,
-            priorityMask
-        );
-
-        for (const id of lodIndices) {
-            lodSet.add(id);
+        // rank in plot coordinates, so that log axes match the view bounds
+        const axes = [this._options.x, this._options.y];
+        if (this._is3D() && this._options.z.property.value !== '') {
+            axes.push(this._options.z);
         }
 
-        // Fine pass
-        // Do a higher resolution subsampling for the points that are actually visible
-        const fineIndices =
-            is3D && zValues && this._options.camera.value && bounds
-                ? computeScreenSpaceLOD(
-                      xValues,
-                      yValues,
-                      zValues,
-                      this._options.camera.value,
-                      bounds,
-                      PropertiesMap.LOD_THRESHOLD / 2,
-                      this._plot.clientWidth / this._plot.clientHeight || 1.0,
-                      priorityMask
-                  )
-                : computeLODIndices(
-                      xValues,
-                      yValues,
-                      zValues,
-                      bounds,
-                      PropertiesMap.LOD_THRESHOLD,
-                      priorityMask
-                  );
+        const coordinates = axes.map((axis) => {
+            const values = this._property(axis.property.value).values;
+            // zero and negative inputs have no finite log coordinate
+            return axis.scale.value === 'log' ? values.map((v) => Math.log10(v)) : values;
+        });
 
-        for (const id of fineIndices) {
-            lodSet.add(id);
+        const maxPoints = PropertiesMap.LOD_MAX_POINTS / (this._is3D() ? 2 : 1);
+
+        // the sampler owns the ranking, the map uses its selected point ids
+        this._lod = new LODSampler(coordinates, maxPoints, priority, visible);
+        this._selectLOD(bounds);
+    }
+
+    /** Rebuild and redraw because switching linear/log changes the sampling coordinates */
+    private _rescaleLOD(): void {
+        if (this._lod === null) {
+            return;
         }
 
-        this._lodIndices = Array.from(lodSet).sort((a, b) => a - b);
+        // changing axis scale makes the cached coordinates obsolete
+        this._computeLOD();
+        void this._restyleFull();
     }
 
     /**
-     * Recomputes LOD indices based on current bounds and updates the plot.
-     * Called when the view changes (zoom/pan/rotate).
+     * Choose point ids from the existing ranking without redrawing the plot
+     * Return whether the ids changed, so the caller knows if a redraw is needed
      */
+    private _selectLOD(bounds?: Bounds): boolean {
+        if (this._lod === null) {
+            return false;
+        }
+
+        let changed;
+
+        // without view bounds, start with a sample of the full dataset
+        if (bounds === undefined) {
+            changed = this._lod.select();
+        } else if (this._is3D()) {
+            // rotations change screen visibility even when axis bounds stay fixed
+            const size = this._plot._fullLayout._size;
+
+            // plotly saves the camera and zoom before emitting relayout
+            const { camera, aspectratio } = this._plot._fullLayout.scene;
+            changed = this._lod.selectCamera(bounds, camera, aspectratio, size.w / size.h);
+        } else {
+            changed = this._lod.select([bounds.x, bounds.y]);
+        }
+
+        // all trace arrays use these same ids to stay aligned
+        this._lodIndices = this._lod.indices;
+        return changed;
+    }
+
+    /** After zoom or pan, redraw only if the selected points changed */
     private _updateLOD(bounds: Bounds): void {
         // Early exit if another LOD update is already in progress
         if (this._lodBusy) {
@@ -2768,11 +2783,14 @@ export class PropertiesMap {
         }
 
         this._lodBusy = true;
-
-        this._computeLOD(bounds);
-
-        void this._restyleFull();
-        this._lodBusy = false;
+        try {
+            if (this._selectLOD(bounds)) {
+                // new ids also need matching colors, sizes and hover data
+                void this._restyleFull();
+            }
+        } finally {
+            this._lodBusy = false;
+        }
     }
 
     /**

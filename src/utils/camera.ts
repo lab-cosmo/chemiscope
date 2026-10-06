@@ -1,5 +1,3 @@
-import assert from 'assert';
-
 /**
  * This module contains utility functions to handle the camera settings
  * for Plotly.js and 3dmol.js viewers, including conversions between their
@@ -10,7 +8,6 @@ import assert from 'assert';
  */
 
 import { Vector3D, norm } from '../structure/linalg';
-import { Bounds } from '../utils';
 
 export interface CameraState {
     eye: { x: number; y: number; z: number };
@@ -240,50 +237,6 @@ export function getLookAtMatrix(camera: Pick<CameraState, 'eye' | 'center' | 'up
 
     // Matrix 4x4
     return [x0, y0, z0, 0, x1, y1, z1, 0, x2, y2, z2, 0, dotX, dotY, dotZ, 1];
-}
-
-/**
- * Projects a 3D point to 2D screen space coordinates [-1, 1].
- * Uses orthographic projection based on camera state.
- */
-export function projectPoints(
-    xValues: number[],
-    yValues: number[],
-    zValues: number[],
-    camera: CameraState,
-    bounds: Bounds
-): { x: number[]; y: number[] } {
-    assert(bounds.z !== undefined);
-
-    const viewMatrix = getLookAtMatrix(camera);
-    const zoomFactor = camera.zoom;
-
-    // Get constants to determine the scaled coordinates of the points
-    const mx = (bounds.x[0] + bounds.x[1]) / 2;
-    const my = (bounds.y[0] + bounds.y[1]) / 2;
-    const mz = (bounds.z[0] + bounds.z[1]) / 2;
-    const dx = (bounds.x[1] - bounds.x[0]) / 2 / zoomFactor;
-    const dy = (bounds.y[1] - bounds.y[0]) / 2 / zoomFactor;
-    const dz = (bounds.z[1] - bounds.z[0]) / 2 / zoomFactor;
-
-    const xProj: number[] = [];
-    const yProj: number[] = [];
-
-    for (let i = 0; i < xValues.length; i++) {
-        // Scale and refer to camera center
-        const x = (xValues[i] - mx) / dx - camera.center.x;
-        const y = (yValues[i] - my) / dy - camera.center.y;
-        const z = (zValues[i] - mz) / dz - camera.center.z;
-
-        // Apply view matrix (vZ is not needed)
-        const vX = viewMatrix[0] * x + viewMatrix[4] * y + viewMatrix[8] * z + viewMatrix[12];
-        const vY = viewMatrix[1] * x + viewMatrix[5] * y + viewMatrix[9] * z + viewMatrix[13];
-
-        xProj.push(vX);
-        yProj.push(vY);
-    }
-
-    return { x: xProj, y: yProj };
 }
 
 /** Convert internal camera settings to Plotly format */
