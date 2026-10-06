@@ -112,8 +112,10 @@ export class PropertiesMap {
     /// Guard to skip concurrent LOD updates. When set, other callers simply
     // return early instead of waiting
     private _lodBusy = false;
-    // Timeout id used to batch plotly afterplot events
+    // timer for copying plot ranges and camera back into map settings
     private _afterplotRequest: number | null = null;
+    // separate timer for choosing points after the view changes
+    private _lodRequest: number | null = null;
 
     // flag used to track whether the user is currently dragging the 3D plot
     private _isDragging3D = false;
@@ -261,6 +263,18 @@ export class PropertiesMap {
 
     public remove(): void {
         this._resizeObserver?.disconnect();
+
+        // cancel the pending settings sync before removing its inputs
+        if (this._afterplotRequest !== null) {
+            window.clearTimeout(this._afterplotRequest);
+            this._afterplotRequest = null;
+        }
+
+        // cancel the pending point redraw before removing the plot
+        if (this._lodRequest !== null) {
+            window.clearTimeout(this._lodRequest);
+            this._lodRequest = null;
+        }
 
         // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
         this._shadow.host.remove();
@@ -518,6 +532,13 @@ export class PropertiesMap {
                 // In 2D, we use this to update the html markers
                 this._updateMarkers();
             }
+
+            // cancel the point redraw while the user is still zooming or dragging
+            // redrawing could make plotly jump back to the previous view
+            if (this._lodRequest !== null) {
+                window.clearTimeout(this._lodRequest);
+                this._lodRequest = null;
+            }
         });
 
         if (this._mouseupHandler !== undefined) {
@@ -621,25 +642,42 @@ export class PropertiesMap {
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
             }
+
+            // copy the plot's axis limits and camera into map settings
+            // this timer must not replace the pending point update below
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
-
-                // Check if LOD update is needed based on relayout event
-                const lodEnabled =
-                    this._options.useLOD.value &&
-                    this._property(this._options.x.property.value).values.length >
-                        PropertiesMap.LOD_THRESHOLD;
-                const viewChanged = Object.keys(event).some(
-                    (key) =>
-                        key.match(/^(xaxis|yaxis)\.range/) ||
-                        key.match(/^scene\.(camera|aspectratio)/) ||
-                        key.includes('autorange')
-                );
-                if (lodEnabled && viewChanged) {
-                    this._updateLOD(this._getBounds());
-                }
             }, 50);
+
+            // colorbar or title changes must not restart the point-update delay
+            const viewChanged = Object.keys(event).some(
+                (key) =>
+                    /^(scene\.)?[xyz]axis\.(range|autorange|type)/.test(key) ||
+                    /^scene\.(camera|aspectratio)/.test(key) ||
+                    key === 'autosize' ||
+                    key === 'width' ||
+                    key === 'height'
+            );
+
+            if (viewChanged) {
+                // replace the previous request so a burst of events causes one update
+                if (this._lodRequest !== null) {
+                    window.clearTimeout(this._lodRequest);
+                }
+
+                // wait 100 ms for a pause, then choose points for the latest view
+                this._lodRequest = window.setTimeout(() => {
+                    this._lodRequest = null;
+                    const lodEnabled =
+                        this._options.useLOD.value &&
+                        this._property(this._options.x.property.value).values.length >
+                            PropertiesMap.LOD_THRESHOLD;
+                    if (lodEnabled) {
+                        this._updateLOD(this._getBounds());
+                    }
+                }, 100);
+            }
         });
 
         // Handle double-click to reset view (global LOD)
