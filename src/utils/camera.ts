@@ -203,7 +203,7 @@ export type Matrix4 = [
  * (Column-major format for WebGL compatibility, though we calculate row-major logic above)
  * We'll use standard math: M = Translation * Rotation
  */
-export function getLookAtMatrix(camera: CameraState): Matrix4 {
+export function getLookAtMatrix(camera: Pick<CameraState, 'eye' | 'center' | 'up'>): Matrix4 {
     const { eye, center, up } = camera;
 
     // Z = normalize(eye - center)
