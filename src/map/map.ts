@@ -891,6 +891,8 @@ export class PropertiesMap {
             // If no z property selected -> switch back to 2D
             if (this._options.z.property.value === '') {
                 if (was3D) {
+                    // discard the 3d sample before switching traces
+                    this._computeLOD();
                     // autoscale only once the 2D react has settled, so the gl scene
                     // repaints (a relayout racing the react leaves it stale)
                     void this._switch2D()
@@ -905,12 +907,12 @@ export class PropertiesMap {
                 return;
             }
 
-            // entering (or staying in) 3D. When entering, autoscale only after the
-            // switch react has settled so the gl scene repaints with the new ranges
-            const ready = was3D ? Promise.resolve() : this._switch3D();
-
-            // LOD: Z changed, compute a first downsampling if necessary
+            // sample the new z coordinates before autoscaling
             this._computeLOD();
+
+            // autoscale must see the new z values, even when already in 3d
+            // wait for the restyle or scene switch to finish first
+            const ready = was3D ? this._restyleFull() : this._switch3D();
 
             void ready
                 .then(() =>
@@ -931,7 +933,7 @@ export class PropertiesMap {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
                     }
 
-                    // re-update LOD based on known ranges
+                    // refine the sample once the new axis ranges are known
                     this._updateLOD(this._getBounds());
                 })
                 .catch((e: unknown) => {
@@ -1054,6 +1056,10 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
 
+            // the new property's range can reveal previously hidden points
+            if (this._options.color.select.mode.value.startsWith('range')) {
+                this._computeLOD(this._getBounds());
+            }
             this._restyleLegendColors();
             void this._restyleFull();
         });
