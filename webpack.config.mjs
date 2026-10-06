@@ -38,6 +38,11 @@ export const WEBPACK_CONFIG = {
             },
             { test: /\.html\.in$/, loader: 'raw-loader' },
             { test: /\.svg$/, loader: 'raw-loader' },
+            // patch plotly 2d renderer to submit only the points for each symbol
+            {
+                test: /node_modules[\\/]regl-scatter2d[\\/]bundle\.js$/,
+                use: ['./utils/webpack-symbols.js'],
+            },
             // this is required by plotly, since we are building our own bundle
             { test: /\.js$/, use: ['ify-loader'] },
         ],
