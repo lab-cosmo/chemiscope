@@ -114,6 +114,8 @@ export class PropertiesMap {
     private _lodBusy = false;
     // Timeout id used to batch plotly afterplot events
     private _afterplotRequest: number | null = null;
+    // keep view refinement independent of other redraws
+    private _lodRequest: number | null = null;
 
     // flag used to track whether the user is currently dragging the 3D plot
     private _isDragging3D = false;
@@ -261,6 +263,14 @@ export class PropertiesMap {
 
     public remove(): void {
         this._resizeObserver?.disconnect();
+        if (this._afterplotRequest !== null) {
+            window.clearTimeout(this._afterplotRequest);
+            this._afterplotRequest = null;
+        }
+        if (this._lodRequest !== null) {
+            window.clearTimeout(this._lodRequest);
+            this._lodRequest = null;
+        }
 
         // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
         this._shadow.host.remove();
@@ -525,6 +535,10 @@ export class PropertiesMap {
                 window.clearTimeout(this._afterplotRequest);
                 this._afterplotRequest = null;
             }
+            if (this._lodRequest !== null) {
+                window.clearTimeout(this._lodRequest);
+                this._lodRequest = null;
+            }
         });
 
         if (this._mouseupHandler !== undefined) {
@@ -632,22 +646,32 @@ export class PropertiesMap {
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
+            }, 50);
 
-                // Check if LOD update is needed based on relayout event
-                const lodEnabled =
-                    this._options.useLOD.value &&
-                    this._property(this._options.x.property.value).values.length >
-                        PropertiesMap.LOD_THRESHOLD;
-                const viewChanged = Object.keys(event).some(
-                    (key) =>
-                        key.match(/^(xaxis|yaxis)\.range/) ||
-                        key.match(/^scene\.(camera|aspectratio)/) ||
-                        key.includes('autorange')
-                );
-                if (lodEnabled && viewChanged) {
-                    this._updateLOD(this._getBounds());
+            // Check if LOD update is needed based on relayout event
+            const viewChanged = Object.keys(event).some(
+                (key) =>
+                    /^(scene\.)?[xyz]axis\.(range|autorange|type)/.test(key) ||
+                    /^scene\.(camera|aspectratio)/.test(key) ||
+                    key === 'autosize' ||
+                    key === 'width' ||
+                    key === 'height'
+            );
+            if (viewChanged) {
+                if (this._lodRequest !== null) {
+                    window.clearTimeout(this._lodRequest);
                 }
-            }, 0);
+                this._lodRequest = window.setTimeout(() => {
+                    this._lodRequest = null;
+                    const lodEnabled =
+                        this._options.useLOD.value &&
+                        this._property(this._options.x.property.value).values.length >
+                            PropertiesMap.LOD_THRESHOLD;
+                    if (lodEnabled) {
+                        this._updateLOD(this._getBounds());
+                    }
+                }, 100);
+            }
         });
 
         // Handle double-click to reset view (global LOD)
