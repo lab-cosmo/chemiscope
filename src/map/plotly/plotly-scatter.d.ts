@@ -28,6 +28,10 @@ interface ScatterLayout {
             projection: { type: string };
         };
         aspectratio: { x: number; y: number; z: number };
+        _scene?: {
+            dataScale: number[];
+            glplot?: { bounds: number[][] }; // missing if the WebGL context could not be created
+        };
     };
     _size: { w: number; h: number };
     legend?: { _height?: number };

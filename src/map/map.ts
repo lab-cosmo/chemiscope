@@ -2344,6 +2344,17 @@ export class PropertiesMap {
         if (this._is3D()) {
             // HACK: `_fullLayout` is not public, so it might break
             const layout = this._plot._fullLayout.scene;
+            // camera-only updates can leave layout ranges stale
+            const scene = layout._scene;
+            if (scene !== undefined && scene.glplot !== undefined) {
+                // undo plotly's internal coordinate scaling
+                const bounds = scene.glplot.bounds;
+                const range = (i: number): [number, number] => [
+                    bounds[0][i] / scene.dataScale[i],
+                    bounds[1][i] / scene.dataScale[i],
+                ];
+                return { x: range(0), y: range(1), z: range(2) };
+            }
             return {
                 x: layout.xaxis.range as [number, number],
                 y: layout.yaxis.range as [number, number],
