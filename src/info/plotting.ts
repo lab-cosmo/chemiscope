@@ -23,9 +23,9 @@ export function plotMultiDimensionalProperties(
         xref: 'paper',
         yref: 'paper',
         xaxis: {
-            title: xlabel,
-            titlefont: {
-                size: 12,
+            title: {
+                text: xlabel,
+                font: { size: 12 },
             },
             showgrid: false,
             zeroline: false,
@@ -33,9 +33,9 @@ export function plotMultiDimensionalProperties(
             nticks: 5,
         },
         yaxis: {
-            title: ylabel,
-            titlefont: {
-                size: 12,
+            title: {
+                text: ylabel,
+                font: { size: 12 },
             },
             showgrid: false,
             showline: true,
