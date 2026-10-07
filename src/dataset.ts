@@ -355,9 +355,17 @@ export function getTarget(dataset: Dataset): DisplayTarget {
         }
         return target;
     }
-    // Default to atom properties if there are environments AND atomic properties
+    // Default to atom properties if there are environments AND atomic properties,
+    // unless there are not enough atomic properties to display a map while there
+    // are enough structure properties
     const atomProperties = getTargetProps('atom');
-    return dataset.environments !== undefined && atomProperties.length > 0 ? 'atom' : 'structure';
+    if (dataset.environments === undefined || atomProperties.length === 0) {
+        return 'structure';
+    }
+    if (atomProperties.length < 2 && getTargetProps('structure').length >= 2) {
+        return 'structure';
+    }
+    return 'atom';
 }
 
 function checkMetadata(o: JsObject) {
