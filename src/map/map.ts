@@ -193,6 +193,32 @@ export class PropertiesMap {
         this._plot.style.height = '100%';
         this._root.appendChild(this._plot);
 
+        // plotly treats ctrl+click as a right click, but still starts a 2D pan that
+        // ends with an invalid relayout and a rejected promise. Replace it with a
+        // shift+click, which pans in zoom mode like ctrl+click pans in 3D
+        this._plot.addEventListener(
+            'mousedown',
+            (event) => {
+                if (!event.ctrlKey || this._is3D()) {
+                    return;
+                }
+                event.stopPropagation();
+                event.preventDefault();
+                event.target?.dispatchEvent(
+                    new MouseEvent('mousedown', {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: event.clientX,
+                        clientY: event.clientY,
+                        button: event.button,
+                        buttons: event.buttons,
+                        shiftKey: this._plot._fullLayout.dragmode === 'zoom',
+                    })
+                );
+            },
+            true
+        );
+
         // Initialize data with the given properties
         this._data = new MapData(properties, this.warnings);
 

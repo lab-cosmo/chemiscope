@@ -501,7 +501,8 @@
 
         // display uncaught Errors from async code
         window.onunhandledrejection = (error) => {
-            displayError(error.reason);
+            // some libraries reject promises without a reason
+            displayError(error.reason ?? new Error('unknown promise rejection reason'));
         };
 
         // store the app instance globally, and use it to load examples with

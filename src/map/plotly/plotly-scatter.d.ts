@@ -11,6 +11,7 @@ interface SceneAxis extends LayoutAxis {
 }
 
 interface ScatterLayout {
+    dragmode: string;
     _modeBar: {
         _uid: string;
     };
