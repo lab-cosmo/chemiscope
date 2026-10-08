@@ -103,9 +103,8 @@ export class PropertiesMap {
      * Speeds up rendering of large datasets by downsampling points
      * when zoomed out.
      */
-    private static readonly LOD_THRESHOLD = 50000;
-    /// point budget for the current view, halved in 3d
-    private static readonly LOD_MAX_POINTS = 20000;
+    /// start sampling above this count and keep this many points in view
+    private static readonly LOD_MAX_POINTS = 50000;
     /// cached ranking for the current axes and selection
     private _lod: LODSampler | null = null;
     /// Stores the subset of point indices to display when LOD is active
@@ -208,7 +207,7 @@ export class PropertiesMap {
 
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
-        if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+        if (nPoints > PropertiesMap.LOD_MAX_POINTS) {
             this._options.showLODOption(true);
         }
 
@@ -1313,7 +1312,7 @@ export class PropertiesMap {
 
                 // Update LOD toggle visibility based on the new target's dataset size.
                 const nPoints = Object.values(properties)[0].values.length;
-                if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+                if (nPoints > PropertiesMap.LOD_MAX_POINTS) {
                     this._options.showLODOption(true);
                 }
             }
@@ -2682,7 +2681,7 @@ export class PropertiesMap {
         const xValues = this._property(this._options.x.property.value).values;
 
         // small datasets can display every point
-        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
+        if (xValues.length <= PropertiesMap.LOD_MAX_POINTS) {
             return;
         }
 
@@ -2704,7 +2703,7 @@ export class PropertiesMap {
                     }
                 }
 
-                if (foreground.length <= PropertiesMap.LOD_THRESHOLD) {
+                if (foreground.length <= PropertiesMap.LOD_MAX_POINTS) {
                     // show every remaining point when filtering makes sampling unnecessary
                     this._lodIndices = foreground;
                     return;
@@ -2727,10 +2726,8 @@ export class PropertiesMap {
             return axis.scale.value === 'log' ? values.map((v) => Math.log10(v)) : values;
         });
 
-        const maxPoints = PropertiesMap.LOD_MAX_POINTS / (this._is3D() ? 2 : 1);
-
         // the sampler owns the ranking, the map uses its selected point ids
-        this._lod = new LODSampler(coordinates, maxPoints, priority, visible);
+        this._lod = new LODSampler(coordinates, PropertiesMap.LOD_MAX_POINTS, priority, visible);
         this._selectLOD(bounds);
     }
 
