@@ -11,7 +11,7 @@ const LEVELS: Record<number, number> = { 2: 10, 3: 7 };
 // keep some points outside the current view
 const GLOBAL_FRACTION = 0.2;
 // cover small view changes while waiting for the next update
-const WINDOW_PADDING = 0.15;
+const WINDOW_PADDING = 0.1;
 
 // axis limits: [[xMin, xMax], [yMin, yMax]], plus [zMin, zMax] in 3d
 type Box = [number, number][];
