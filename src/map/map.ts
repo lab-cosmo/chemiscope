@@ -26,7 +26,7 @@ import { enumerate, getElement, getFirstKey } from '../utils';
 import { MapData, NumericProperties, NumericProperty } from './data';
 import { MarkerData } from './marker';
 import { AxisOptions, MapOptions, get3DSymbol } from './options';
-import { computeLODIndices, computeScreenSpaceLOD } from './lod';
+import { LODSampler } from './lod';
 import * as styles from '../styles';
 
 import { DEFAULT_CONFIG, DEFAULT_LAYOUT, getAxisAutoRange, getAxisRange } from './utils';
@@ -105,7 +105,10 @@ export class PropertiesMap {
      * Speeds up rendering of large datasets by downsampling points
      * when zoomed out.
      */
-    private static readonly LOD_THRESHOLD = 50000;
+    /// start sampling above this count and keep this many points in view
+    private static readonly LOD_MAX_POINTS = 50000;
+    /// cached ranking for the current axes and selection
+    private _lod: LODSampler | null = null;
     /// Stores the subset of point indices to display when LOD is active
     private _lodIndices: number[] | null = null;
     /// True while writing derived option values programmatically; the reactive
@@ -114,8 +117,10 @@ export class PropertiesMap {
     /// Guard to skip concurrent LOD updates. When set, other callers simply
     // return early instead of waiting
     private _lodBusy = false;
-    // Timeout id used to batch plotly afterplot events
+    // timer for copying plot ranges and camera back into map settings
     private _afterplotRequest: number | null = null;
+    // separate timer for choosing points after the view changes
+    private _lodRequest: number | null = null;
 
     // flag used to track whether the user is currently dragging the 3D plot
     private _isDragging3D = false;
@@ -204,7 +209,7 @@ export class PropertiesMap {
 
         // Determine whether to show the LOD option based on dataset size
         const nPoints = Object.values(currentProperties)[0].values.length;
-        if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+        if (nPoints > PropertiesMap.LOD_MAX_POINTS) {
             this._options.showLODOption(true);
         }
 
@@ -263,6 +268,18 @@ export class PropertiesMap {
 
     public remove(): void {
         this._resizeObserver?.disconnect();
+
+        // cancel the pending settings sync before removing its inputs
+        if (this._afterplotRequest !== null) {
+            window.clearTimeout(this._afterplotRequest);
+            this._afterplotRequest = null;
+        }
+
+        // cancel the pending point redraw before removing the plot
+        if (this._lodRequest !== null) {
+            window.clearTimeout(this._lodRequest);
+            this._lodRequest = null;
+        }
 
         // Remove the the shadow root's host. It is not possible to remove the shadow root directly.
         this._shadow.host.remove();
@@ -520,6 +537,13 @@ export class PropertiesMap {
                 // In 2D, we use this to update the html markers
                 this._updateMarkers();
             }
+
+            // cancel the point redraw while the user is still zooming or dragging
+            // redrawing could make plotly jump back to the previous view
+            if (this._lodRequest !== null) {
+                window.clearTimeout(this._lodRequest);
+                this._lodRequest = null;
+            }
         });
 
         if (this._mouseupHandler !== undefined) {
@@ -623,25 +647,38 @@ export class PropertiesMap {
             if (this._afterplotRequest !== null) {
                 window.clearTimeout(this._afterplotRequest);
             }
+
+            // copy the plot's axis limits and camera into map settings
+            // this timer must not replace the pending point update below
             this._afterplotRequest = window.setTimeout(() => {
                 this._afterplotRequest = null;
                 this._afterplot();
-
-                // Check if LOD update is needed based on relayout event
-                const lodEnabled =
-                    this._options.useLOD.value &&
-                    this._property(this._options.x.property.value).values.length >
-                        PropertiesMap.LOD_THRESHOLD;
-                const viewChanged = Object.keys(event).some(
-                    (key) =>
-                        key.match(/^(xaxis|yaxis)\.range/) ||
-                        key.match(/^scene\.(camera|aspectratio)/) ||
-                        key.includes('autorange')
-                );
-                if (lodEnabled && viewChanged) {
-                    this._updateLOD(this._getBounds());
-                }
             }, 50);
+
+            // colorbar or title changes must not restart the point-update delay
+            const viewChanged = Object.keys(event).some(
+                (key) =>
+                    /^(scene\.)?[xyz]axis\.(range|autorange|type)/.test(key) ||
+                    /^scene\.(camera|aspectratio)/.test(key) ||
+                    key === 'autosize' ||
+                    key === 'width' ||
+                    key === 'height'
+            );
+
+            if (viewChanged) {
+                // replace the previous request so a burst of events causes one update
+                if (this._lodRequest !== null) {
+                    window.clearTimeout(this._lodRequest);
+                }
+
+                // wait 100 ms for a pause, then choose points for the latest view
+                this._lodRequest = window.setTimeout(() => {
+                    this._lodRequest = null;
+                    if (this._options.useLOD.value && this._lod !== null) {
+                        this._updateLOD(this._getBounds());
+                    }
+                }, 100);
+            }
         });
 
         // Handle double-click to reset view (global LOD)
@@ -734,9 +771,11 @@ export class PropertiesMap {
                 return;
             }
 
+            // sampling on log axes excludes negative values, so it cannot drive this warning
+            // check the original property even when the displayed sample is empty
             if (
                 axis.scale.value === 'log' &&
-                arrayMaxMin(this._coordinates(axis, 0)[0] as number[])['min'] < 0 &&
+                this._property(axis.property.value).values.some((value) => value < 0) &&
                 axis.min.value <= 0
             ) {
                 this.warnings.sendMessage(
@@ -755,6 +794,7 @@ export class PropertiesMap {
         this._options.x.scale.onchange.push(() => {
             negativeLogWarning(this._options.x);
             this._options.setLogLabel(this._options.x, 'x');
+            this._rescaleLOD();
             if (this._is3D()) {
                 this._relayout({
                     'scene.xaxis.type': this._options.x.scale.value,
@@ -822,6 +862,7 @@ export class PropertiesMap {
         this._options.y.scale.onchange.push(() => {
             negativeLogWarning(this._options.y);
             this._options.setLogLabel(this._options.y, 'y');
+            this._rescaleLOD();
             if (this._is3D()) {
                 this._relayout({
                     'scene.yaxis.type': this._options.y.scale.value,
@@ -855,6 +896,8 @@ export class PropertiesMap {
             // If no z property selected -> switch back to 2D
             if (this._options.z.property.value === '') {
                 if (was3D) {
+                    // discard the 3d sample before switching traces
+                    this._computeLOD();
                     // autoscale only once the 2D react has settled, so the gl scene
                     // repaints (a relayout racing the react leaves it stale)
                     void this._switch2D()
@@ -869,12 +912,12 @@ export class PropertiesMap {
                 return;
             }
 
-            // entering (or staying in) 3D. When entering, autoscale only after the
-            // switch react has settled so the gl scene repaints with the new ranges
-            const ready = was3D ? Promise.resolve() : this._switch3D();
-
-            // LOD: Z changed, compute a first downsampling if necessary
+            // sample the new z coordinates before autoscaling
             this._computeLOD();
+
+            // autoscale must see the new z values, even when already in 3d
+            // wait for the restyle or scene switch to finish first
+            const ready = was3D ? this._restyleFull() : this._switch3D();
 
             void ready
                 .then(() =>
@@ -895,7 +938,7 @@ export class PropertiesMap {
                         this._setScaleStep(this._getBounds().z as number[], 'z');
                     }
 
-                    // re-update LOD based on known ranges
+                    // refine the sample once the new axis ranges are known
                     this._updateLOD(this._getBounds());
                 })
                 .catch((e: unknown) => {
@@ -909,6 +952,7 @@ export class PropertiesMap {
             negativeLogWarning(this._options.z);
             this._options.setLogLabel(this._options.z, 'z');
             if (this._options.z.property.value !== '') {
+                this._rescaleLOD();
                 this._relayout({
                     'scene.zaxis.type': this._options.z.scale.value,
                 } as unknown as Layout);
@@ -1018,6 +1062,10 @@ export class PropertiesMap {
                 } as unknown as Layout);
             }
 
+            // the new property's range can reveal previously hidden points
+            if (this._options.color.select.mode.value.startsWith('range')) {
+                this._computeLOD(this._getBounds());
+            }
             this._restyleLegendColors();
             void this._restyleFull();
         });
@@ -1266,7 +1314,7 @@ export class PropertiesMap {
 
                 // Update LOD toggle visibility based on the new target's dataset size.
                 const nPoints = Object.values(properties)[0].values.length;
-                if (nPoints > PropertiesMap.LOD_THRESHOLD) {
+                if (nPoints > PropertiesMap.LOD_MAX_POINTS) {
                     this._options.showLODOption(true);
                 }
             }
@@ -2346,6 +2394,17 @@ export class PropertiesMap {
         if (this._is3D()) {
             // HACK: `_fullLayout` is not public, so it might break
             const layout = this._plot._fullLayout.scene;
+            // camera-only updates can leave layout ranges stale
+            const scene = layout._scene;
+            if (scene !== undefined && scene.glplot !== undefined) {
+                // undo plotly's internal coordinate scaling
+                const bounds = scene.glplot.bounds;
+                const range = (i: number): [number, number] => [
+                    bounds[0][i] / scene.dataScale[i],
+                    bounds[1][i] / scene.dataScale[i],
+                ];
+                return { x: range(0), y: range(1), z: range(2) };
+            }
             return {
                 x: layout.xaxis.range as [number, number],
                 y: layout.yaxis.range as [number, number],
@@ -2607,107 +2666,115 @@ export class PropertiesMap {
     // Level of Detail (LOD)
     // ======================================================================
 
-    /**
-     * Computes the subset of points to display based on spatial grid binning (LOD).
-     */
+    // axes or filters change => _computeLOD builds a new ranking and chooses points
+    // zoom, pan or rotation =>  _updateLOD calls _selectLOD to reuse that ranking
+    // linear/log switch => _rescaleLOD rebuilds the ranking and redraws
+
+    /** Build a new sampler for the current axes and filters, then choose points to show */
     private _computeLOD(bounds?: Bounds): void {
-        // check if LOD is enabled
+        // clear the old sample even if this update no longer needs LOD
+        this._lod = null;
+        this._lodIndices = null;
+
         if (!this._options.useLOD.value) {
-            this._lodIndices = null;
             return;
         }
 
-        const xProp = this._options.x.property.value;
-        const yProp = this._options.y.property.value;
-        const zProp = this._options.z.property.value;
+        const xValues = this._property(this._options.x.property.value).values;
 
-        const xValues = this._property(xProp).values;
-
-        // Check threshold
-        if (xValues.length <= PropertiesMap.LOD_THRESHOLD) {
-            this._lodIndices = null;
+        // small datasets can display every point
+        if (xValues.length <= PropertiesMap.LOD_MAX_POINTS) {
             return;
         }
 
-        const yValues = this._property(yProp).values;
-        const is3D = this._is3D() && zProp !== '';
-        const zValues = is3D ? this._property(zProp).values : null;
-
-        // When a selection filter is active, prefer foreground points: pass the
-        // mask as a priority signal to the LOD functions. If hide mode is on
-        // and the foreground subset fits under the threshold, skip LOD entirely
-        // for that subset so every foreground point is shown.
+        // hide mode excludes background points, other filters give foreground priority
         const selectMode = this._options.color.select.mode.value;
-        let priorityMask: boolean[] | undefined;
+
+        let priority: boolean[] | undefined;
+        let visible: boolean[] | undefined;
+
         if (selectMode !== 'all') {
-            priorityMask = this._getSelectionMask();
+            const mask = this._getSelectionMask();
+
             if (selectMode.endsWith('hide')) {
+                visible = mask;
                 const foreground: number[] = [];
-                for (let i = 0; i < priorityMask.length; i++) {
-                    if (priorityMask[i]) {
+                for (let i = 0; i < mask.length; i++) {
+                    if (mask[i]) {
                         foreground.push(i);
                     }
                 }
-                if (foreground.length <= PropertiesMap.LOD_THRESHOLD) {
+
+                if (foreground.length <= PropertiesMap.LOD_MAX_POINTS) {
+                    // show every remaining point when filtering makes sampling unnecessary
                     this._lodIndices = foreground;
                     return;
                 }
+            } else {
+                // prefer matching points within each cell, but still allow the others
+                priority = mask;
             }
         }
 
-        const lodSet = new Set<number>();
-
-        // Coarse pass
-        // Compute a sparser "global" grid of points for the full range of the dataset
-        // to show "something" when we rotate, pan or zoom
-
-        const lodIndices = computeLODIndices(
-            xValues,
-            yValues,
-            zValues,
-            undefined,
-            PropertiesMap.LOD_THRESHOLD / 10,
-            priorityMask
-        );
-
-        for (const id of lodIndices) {
-            lodSet.add(id);
+        // rank in plot coordinates, so that log axes match the view bounds
+        const axes = [this._options.x, this._options.y];
+        if (this._is3D() && this._options.z.property.value !== '') {
+            axes.push(this._options.z);
         }
 
-        // Fine pass
-        // Do a higher resolution subsampling for the points that are actually visible
-        const fineIndices =
-            is3D && zValues && this._options.camera.value && bounds
-                ? computeScreenSpaceLOD(
-                      xValues,
-                      yValues,
-                      zValues,
-                      this._options.camera.value,
-                      bounds,
-                      PropertiesMap.LOD_THRESHOLD / 2,
-                      this._plot.clientWidth / this._plot.clientHeight || 1.0,
-                      priorityMask
-                  )
-                : computeLODIndices(
-                      xValues,
-                      yValues,
-                      zValues,
-                      bounds,
-                      PropertiesMap.LOD_THRESHOLD,
-                      priorityMask
-                  );
+        const coordinates = axes.map((axis) => {
+            const values = this._property(axis.property.value).values;
+            // zero and negative inputs have no finite log coordinate
+            return axis.scale.value === 'log' ? values.map((v) => Math.log10(v)) : values;
+        });
 
-        for (const id of fineIndices) {
-            lodSet.add(id);
+        // the sampler owns the ranking, the map uses its selected point ids
+        this._lod = new LODSampler(coordinates, PropertiesMap.LOD_MAX_POINTS, priority, visible);
+        this._selectLOD(bounds);
+    }
+
+    /** Rebuild and redraw because switching linear/log changes the sampling coordinates */
+    private _rescaleLOD(): void {
+        if (this._lod === null) {
+            return;
         }
 
-        this._lodIndices = Array.from(lodSet).sort((a, b) => a - b);
+        // changing axis scale makes the cached coordinates obsolete
+        this._computeLOD();
+        void this._restyleFull();
     }
 
     /**
-     * Recomputes LOD indices based on current bounds and updates the plot.
-     * Called when the view changes (zoom/pan/rotate).
+     * Choose point ids from the existing ranking without redrawing the plot
+     * Return whether the ids changed, so the caller knows if a redraw is needed
      */
+    private _selectLOD(bounds?: Bounds): boolean {
+        if (this._lod === null) {
+            return false;
+        }
+
+        let changed;
+
+        // without view bounds, start with a sample of the full dataset
+        if (bounds === undefined) {
+            changed = this._lod.select();
+        } else if (this._is3D()) {
+            // rotations change screen visibility even when axis bounds stay fixed
+            const size = this._plot._fullLayout._size;
+
+            // plotly saves the camera and zoom before emitting relayout
+            const { camera, aspectratio } = this._plot._fullLayout.scene;
+            changed = this._lod.selectCamera(bounds, camera, aspectratio, size.w / size.h);
+        } else {
+            changed = this._lod.select([bounds.x, bounds.y]);
+        }
+
+        // all trace arrays use these same ids to stay aligned
+        this._lodIndices = this._lod.indices;
+        return changed;
+    }
+
+    /** After zoom or pan, redraw only if the selected points changed */
     private _updateLOD(bounds: Bounds): void {
         // Early exit if another LOD update is already in progress
         if (this._lodBusy) {
@@ -2715,11 +2782,14 @@ export class PropertiesMap {
         }
 
         this._lodBusy = true;
-
-        this._computeLOD(bounds);
-
-        void this._restyleFull();
-        this._lodBusy = false;
+        try {
+            if (this._selectLOD(bounds)) {
+                // new ids also need matching colors, sizes and hover data
+                void this._restyleFull();
+            }
+        } finally {
+            this._lodBusy = false;
+        }
     }
 
     /**
