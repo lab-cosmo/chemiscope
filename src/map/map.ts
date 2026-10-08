@@ -31,6 +31,8 @@ import * as styles from '../styles';
 
 import { DEFAULT_CONFIG, DEFAULT_LAYOUT, getAxisAutoRange, getAxisRange } from './utils';
 
+type NestedAttributes = Record<`${string}.${string}`, unknown>;
+
 const LEGEND_TRUNCATION_MARK = '...';
 
 function truncateLegendName(name: string): string {
@@ -1359,7 +1361,7 @@ export class PropertiesMap {
      * @param data properties to update
      * @param traces optional, indices of traces or a single trace index to update
      */
-    private _restyle(data: Partial<Data>, traces?: number | number[]) {
+    private _restyle(data: Partial<Data> | NestedAttributes, traces?: number | number[]) {
         Plotly.restyle(this._plot, data, traces).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
@@ -1418,7 +1420,7 @@ export class PropertiesMap {
      *
      * @param layout layout properties to update
      */
-    private _relayout(layout: Partial<Layout>) {
+    private _relayout(layout: Partial<Layout> | NestedAttributes) {
         Plotly.relayout(this._plot, layout).catch((e: unknown) =>
             setTimeout(() => {
                 throw e;
