@@ -7,17 +7,21 @@ from ._metatomic import metatomic_featurizer
 
 __all__ = ["explore", "metatomic_featurizer", "get_featurizer"]
 
-KNOWN_FEATURIZERS = ["pet-mad-1.0"]
+KNOWN_FEATURIZERS = ["ecumetric-1.0", "pet-mad-1.0"]
 
 
 def get_featurizer(name):
     """
-    Get a featurizer by name for feature extraction. Currently available version is:
-    "pet-mad-1.0", which returns an instance of `PETMADFeaturizer
-    <https://arxiv.org/abs/2506.19674>`_.
+    Get a featurizer by name for feature extraction. Currently available versions are:
 
-    :param str name: name of the featurizer. Must match one of the known versions.
-        Currently available is "pet-mad-1.0"
+    - "ecumetric-1.0", which returns a featurizer computing the ecumetric SPACE
+      descriptors of MAD-CORE and their 8-dimensional sketch-map projection, one feature
+      vector per structure
+    - "pet-mad-1.0", which returns an instance of `PETMADFeaturizer
+      <https://arxiv.org/abs/2506.19674>`_.
+
+    :param str name: name of the featurizer. Must match one of the known versions:
+        "ecumetric-1.0" or "pet-mad-1.0"
 
     .. warning::
 
@@ -27,19 +31,37 @@ def get_featurizer(name):
 
             pip install chemiscope[explore]
     """
-    try:
-        import torch
-        from upet.explore import PETMADFeaturizer
-    except ImportError as e:
-        raise ImportError(
-            "Required package not found. Please install the dependencies with "
-            "`pip install chemiscope[explore]`."
-        ) from e
-
     if not isinstance(name, str):
         raise TypeError(f"featurizer name must be a string, not {type(name)}")
 
-    if name == "pet-mad-1.0":
+    if name == "ecumetric-1.0":
+        try:
+            import torch
+            from huggingface_hub import hf_hub_download
+        except ImportError as e:
+            raise ImportError(
+                "Required package not found. Please install the dependencies with "
+                "`pip install chemiscope[explore]`."
+            ) from e
+
+        path = hf_hub_download(
+            repo_id="lab-cosmo/ecumetric",
+            filename="ecumetric_explorer.pt",
+            revision="v1.0.0",
+        )
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        return metatomic_featurizer(path, device=device, batch_size=16)
+    elif name == "pet-mad-1.0":
+        try:
+            import torch
+            from upet.explore import PETMADFeaturizer
+        except ImportError as e:
+            raise ImportError(
+                "Required package not found. Please install the dependencies with "
+                "`pip install chemiscope[explore]`."
+            ) from e
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = PETMADFeaturizer(version="1.0.0", device=device, batch_size=1)
         return model
@@ -66,12 +88,14 @@ def explore(
 
     This function creates a low-dimensional representation of the input ``structures``
     and displays them using a Chemiscope widget. It supports automatic featurization
-    with `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ or a custom
-    featurization function.
+    with the ecumetric featurizer, with `PETMADFeaturizer
+    <https://arxiv.org/abs/2506.19674>`_, or with a custom featurization function.
 
-    The default ``PETMADFeaturizer`` computes `PET-MAD
-    <https://arxiv.org/abs/2503.14118>`_ features from the structures and projects them
-    into the 3D MAD latent space.
+    The default ecumetric featurizer (``"ecumetric-1.0"``) computes the SPACE descriptor
+    of each structure, the representation used to build MAD-CORE, and projects it to 8
+    dimensions with sketch-map. The ``"pet-mad-1.0"`` featurizer computes `PET-MAD
+    <https://arxiv.org/abs/2503.14118>`_ features from the structures
+    and projects them into the 3D MAD latent space.
 
     If available, all properties are extracted automatically from the structures.
 
@@ -80,19 +104,22 @@ def explore(
     them.
 
     Overall, the visualization can include: properties extracted from the structures,
-    additional user-provided properties, features from either the built-in PET-MAD
-    featurizer, with dimensionality reduction, or a custom user-provided featurization
-    functions.
+    additional user-provided properties, features from either the built-in ecumetric or
+    PET-MAD featurizers, with dimensionality reduction, or a custom user-provided
+    featurization functions.
 
     :param list structures: list of structures
 
-    :param featurizer: either string specifying a featurizer version (currently only
+    :param featurizer: either string specifying a featurizer version ('ecumetric-1.0' or
         'pet-mad-1.0'), a custom callable function, or None. Used to compute features
         and perform dimensionality reduction on the ``structures``. For automatic
-        default option, use ``pet-mad-1.0``. The callable should take ``structures`` as
-        the first argument and ``environments`` as the second argument. The return value
-        must be a features array of shape ``(n_structures, n_features)`` if
-        ``environments`` is ``None``, or ``(n_environments, n_features)`` otherwise.
+        default option, use ``ecumetric-1.0``. Both built-in featurizers compute one
+        feature vector per structure, so atom-centered ``environments`` need a custom
+        featurizer, for example :py:func:`metatomic_featurizer` with a model computing
+        per-atom features. The callable should take ``structures`` as the first argument
+        and ``environments`` as the second argument. The return value must be a features
+        array of shape ``(n_structures, n_features)`` if ``environments`` is ``None``,
+        or ``(n_environments, n_features)`` otherwise.
 
     :param dict properties: optional. Additional properties to be included in the
         visualization. This dictionary can contain any other relevant data associated
@@ -117,9 +144,10 @@ def explore(
 
     :return: a chemiscope widget for interactive visualization
 
-    To use this function, additional dependencies are required, specifically, `upet`_
-    used for the default dimensionality reduction. They can be installed with the
-    following command:
+    To use this function, additional dependencies are required, specifically,
+    `metatomic`_ and `huggingface_hub`_ for the default ecumetric featurizer, and
+    `upet`_ for the PET-MAD featurizer. They can be installed with the following
+    command:
 
     .. code:: bash
 
@@ -140,8 +168,8 @@ def explore(
         # Read the structures from the dataset
         structures = ase.io.read("trajectory.xyz", ":")
 
-        # 1) Basic usage with default featurizer (PET-MAD featurization + Sketch-Map)
-        chemiscope.explore(structures, featurizer="pet-mad-1.0")
+        # 1) Basic usage with default featurizer (ecumetric descriptor + Sketch-Map)
+        chemiscope.explore(structures, featurizer="ecumetric-1.0")
 
         # or
         featurizer = chemiscope.get_featurizer("pet-mad-1.0")
@@ -175,6 +203,8 @@ def explore(
     For more examples, see the related `documentation <chemiscope-explore_>`_.
 
     .. _ase-io: https://ase-lib.org/ase/ase/io/io.html
+    .. _metatomic: https://docs.metatensor.org/metatomic/
+    .. _huggingface_hub: https://huggingface.co/docs/huggingface_hub/
     .. _upet: https://github.com/lab-cosmo/upet
     .. _sklearn: https://scikit-learn.org/
     .. _dscribe: https://singroup.github.io/dscribe/latest/
