@@ -88,8 +88,8 @@ def explore(
 
     This function creates a low-dimensional representation of the input ``structures``
     and displays them using a Chemiscope widget. It supports automatic featurization
-    with the ecumetric featurizer, with `PETMADFeaturizer
-    <https://arxiv.org/abs/2506.19674>`_, or with a custom featurization function.
+    with the ecumetric featurizer, `PETMADFeaturizer
+    <https://arxiv.org/abs/2506.19674>`_, or a custom featurization function.
 
     The default ecumetric featurizer (``"ecumetric-1.0"``) computes the SPACE descriptor
     of each structure, the representation used to build MAD-CORE, and projects it to 8
