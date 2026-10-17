@@ -275,11 +275,12 @@ metadata = {"name": "Dataset title",          # required (bare minimum)
 ## Automatic dimensionality reduction
 
 ```python
-chemiscope.explore(structures, featurizer="pet-mad-1.0",
-                   properties=chemiscope.extract_properties(structures),
-                   environments=chemiscope.all_atomic_environments(structures))
+chemiscope.explore(structures, featurizer="ecumetric-1.0",
+                   properties=chemiscope.extract_properties(structures))
 # write straight to a file: explore(..., write_input="out.json.gz")
 # custom model: featurizer = chemiscope.metatomic_featurizer(model="model.pt")
+# "ecumetric-1.0" and "pet-mad-1.0" give one vector per structure. For atom-centered
+# environments, use a model with per-atom features and pass environments=...
 ```
 
 ## Other delivery mechanisms
