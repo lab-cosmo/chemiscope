@@ -265,6 +265,15 @@ def _remove_invalid_properties(properties, origin):
         ):
             continue
 
+        if np.ndim(values[0]) > 1:
+            to_remove.add(name)
+            warnings.warn(
+                f"values of the property '{name}' have more than one dimension, "
+                "it will be ignored",
+                stacklevel=2,
+            )
+            continue
+
         # check length consistency
         lengths = [len(v) for v in property["values"]]
         if len(set(lengths)) != 1:
