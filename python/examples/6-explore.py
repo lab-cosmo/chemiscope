@@ -16,12 +16,12 @@ By passing a list of `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_ objec
 possible to generate a chemiscope widget, providing an immediate and intuitive
 visualization of the dataset.
 
-By default, the method uses the ecumetric featurizer, which computes the ecumetric
-descriptor of each structure, the representation used to build MAD-CORE, and maps it to
-an 8-dimensional sketch-map space. The `PETMADFeaturizer
-<https://arxiv.org/abs/2506.19674>`_ is also available, which computes representations
-as the `PET-MAD <https://arxiv.org/abs/2503.14118>`_ features and maps them a
-low-dimensional MAD dataset latent space.
+By default, the method uses the `ecumetric featurizer
+<https://arxiv.org/abs/2610.21771>`_, which computes the ecumetric descriptor of each
+structure, the representation used to build MAD-CORE, and maps it to an 8-dimensional
+sketch-map space. The `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_ is also
+available, and it instead computes the `PET-MAD <https://arxiv.org/abs/2503.14118>`_
+features and maps them a three-dimensional MAD dataset latent space.
 
 For more advanced use cases, :py:func:`chemiscope.explore` allows to provide a custom
 function for representation and dimensionality reduction.
