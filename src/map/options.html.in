@@ -169,34 +169,43 @@
 
                   <button class="btn btn-sm btn-secondary" type="button" id="map-color-reset" style="width: 100%; grid-column: span 3;">reset min/max</button>
 
-                  <div class="input-group input-group-sm" id="map-color-select-container" style="grid-column: auto / span 3;">
-                     <label class="input-group-text" for="map-color-select-mode">mark:</label>
-                     <select id="map-color-select-mode" class="form-select">
-                        <option value="all">show all</option>
-                        <option value="range-gray">range (gray bg.)</option>
-                        <option value="category-gray">class (gray bg.)</option>
-                        <option value="range-hide">range (hide bg.)</option>
-                        <option value="category-hide">class (hide bg.)</option>
-                     </select>
+                  <div class="input-group input-group-sm" style="grid-column: span 6">
+                     <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
+                     <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
+                  </div>
+               </div>
+
+               <div class="input-group input-group-sm">
+                  <label class="input-group-text" for="map-color-select-mode" title="Highlight a subset of the points">highlight:</label>
+                  <select id="map-color-select-mode" class="form-select">
+                     <option value="all">none</option>
+                     <option value="range-gray">range (gray bg.)</option>
+                     <option value="category-gray">class (gray bg.)</option>
+                     <option value="range-hide">range (hide bg.)</option>
+                     <option value="category-hide">class (hide bg.)</option>
+                  </select>
+               </div>
+
+               <!-- the inputs matching the highlight mode are shown automatically -->
+               <div class="chsp-map-extra-options" id="map-select-extra" style="grid-template-columns: repeat(6, 1fr);">
+                  <div class="input-group input-group-sm" id="map-color-select-property-container" style="display: none; grid-column: span 2;">
+                     <label class="input-group-text" for="map-color-select-property">property:</label>
+                     <select id="map-color-select-property" class="form-select"></select>
                   </div>
 
-                  <div class="input-group input-group-sm" id="map-color-select-category-container" style="display: none;">
+                  <div class="input-group input-group-sm" id="map-color-select-category-container" style="display: none; grid-column: span 6;">
+                     <label class="input-group-text" for="map-color-select-category">class:</label>
                      <select id="map-color-select-category" class="form-select"></select>
                   </div>
 
-                  <div class="input-group input-group-sm" id="map-color-select-min-container" style="display: none;">
+                  <div class="input-group input-group-sm" id="map-color-select-min-container" style="display: none; grid-column: span 2;">
                      <label class="input-group-text" for="map-color-select-min">min:</label>
                      <input id="map-color-select-min" class="form-control" type="number" step="any" />
                   </div>
 
-                  <div class="input-group input-group-sm" id="map-color-select-max-container" style="display: none;">
+                  <div class="input-group input-group-sm" id="map-color-select-max-container" style="display: none; grid-column: span 2;">
                      <label class="input-group-text" for="map-color-select-max">max:</label>
                      <input id="map-color-select-max" class="form-control" type="number" step="any" />
-                  </div>
-               
-                  <div class="input-group input-group-sm" style="grid-column: span 6">
-                     <label class="input-group-text" for="map-opacity" style="min-width: 6em"> opacity: </label>
-                     <input type="range" min="1" max="100" step="1" class="form-control form-range" id="map-opacity" style="height: 2rem" />
                   </div>
                </div>
 

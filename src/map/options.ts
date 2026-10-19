@@ -84,6 +84,7 @@ export class MapOptions extends OptionsGroup {
         opacity: HTMLOption<'number'>;
         select: {
             mode: HTMLOption<'string'>;
+            property: HTMLOption<'string'>;
             category: HTMLOption<'string'>;
             min: HTMLOption<'number'>;
             max: HTMLOption<'number'>;
@@ -146,6 +147,8 @@ export class MapOptions extends OptionsGroup {
             opacity: new HTMLOption('number', 100),
             select: {
                 mode: new HTMLOption('string', 'all'),
+                // property used in range mode, '' means the color property
+                property: new HTMLOption('string', ''),
                 category: new HTMLOption('string', ''),
                 min: new HTMLOption('number', NaN),
                 max: new HTMLOption('number', NaN),
@@ -162,6 +165,10 @@ export class MapOptions extends OptionsGroup {
         this.color.select.mode.validate = optionValidator(
             ['all', 'range-gray', 'category-gray', 'range-hide', 'category-hide'],
             'selection mode'
+        );
+        this.color.select.property.validate = optionValidator(
+            propertiesNames.concat(['']),
+            'selection property'
         );
         // Initialise size
         this.size = {
@@ -271,23 +278,6 @@ export class MapOptions extends OptionsGroup {
         };
         this.color.select.min.onchange.push(validateSelectRange('min'));
         this.color.select.max.onchange.push(validateSelectRange('max'));
-
-        this.color.property.onchange.push(() => {
-            // the selection range is repopulated with the new property's data
-            // bounds by PropertiesMap (see _resetSelectionRange)
-
-            // disable range selection if color is fixed
-            const selectMode = this.getModalElement<HTMLSelectElement>('map-color-select-mode');
-            const rangeOptions = selectMode.querySelectorAll('option[value^="range"]');
-            if (this.color.property.value === '') {
-                if (this.color.select.mode.value.startsWith('range')) {
-                    this.color.select.mode.value = 'all';
-                }
-                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
-            } else {
-                rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = false));
-            }
-        });
 
         // Apply new settings to the modal options
         this.applySettings(settings);
@@ -694,11 +684,18 @@ export class MapOptions extends OptionsGroup {
             categoryOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
         }
 
-        // disable range selection if color is fixed
-        const rangeOptions = selectSelectMode.querySelectorAll('option[value^="range"]');
-        if (this.color.property.value === '') {
-            rangeOptions.forEach((opt) => ((opt as HTMLOptionElement).disabled = true));
+        // numeric properties for range selection, '' follows the color property
+        const selectSelectProperty = this.getModalElement<HTMLSelectElement>(
+            'map-color-select-property'
+        );
+        selectSelectProperty.options.length = 0;
+        selectSelectProperty.options.add(new Option('(color)', ''));
+        for (const key in properties) {
+            if (properties[key].string === undefined) {
+                selectSelectProperty.options.add(new Option(key, key));
+            }
         }
+        this.color.select.property.bind(selectSelectProperty, 'value');
 
         if (selectSelectCategory.options.length > 0) {
             this.color.select.category.value = selectSelectCategory.options[0].value;
@@ -710,30 +707,16 @@ export class MapOptions extends OptionsGroup {
 
         const updateSelectVisibility = () => {
             const mode = this.color.select.mode.value;
-            const containerMode = this.getModalElement('map-color-select-container');
+            const containerProperty = this.getModalElement('map-color-select-property-container');
             const containerCategory = this.getModalElement('map-color-select-category-container');
             const containerMin = this.getModalElement('map-color-select-min-container');
             const containerMax = this.getModalElement('map-color-select-max-container');
 
-            if (mode.startsWith('range')) {
-                containerMode.style.gridColumn = 'auto / span 2';
-                containerCategory.style.display = 'none';
-                containerMin.style.display = 'flex';
-                containerMin.style.gridColumn = 'span 2';
-                containerMax.style.display = 'flex';
-                containerMax.style.gridColumn = 'span 2';
-            } else if (mode.startsWith('category')) {
-                containerMode.style.gridColumn = 'span 3';
-                containerCategory.style.display = 'flex';
-                containerCategory.style.gridColumn = 'span 3';
-                containerMin.style.display = 'none';
-                containerMax.style.display = 'none';
-            } else {
-                containerMode.style.gridColumn = 'span 3';
-                containerCategory.style.display = 'none';
-                containerMin.style.display = 'none';
-                containerMax.style.display = 'none';
-            }
+            const range = mode.startsWith('range') ? 'flex' : 'none';
+            containerProperty.style.display = range;
+            containerMin.style.display = range;
+            containerMax.style.display = range;
+            containerCategory.style.display = mode.startsWith('category') ? 'flex' : 'none';
         };
         this.color.select.mode.onchange.push(updateSelectVisibility);
         // Call it once to set initial state (e.g. if settings loaded 'range')
@@ -805,7 +788,7 @@ export class MapOptions extends OptionsGroup {
     /**
      * Get a mask of selected points based on the current selection mode
      *
-     * @param values values of the property used for coloring (for range mode)
+     * @param values values of the property used for range selection
      * @param categoryValues values of the property used for categorization (property/value string)
      */
     public getFilterMask(values: number[], categoryValues?: string[]): boolean[] {
