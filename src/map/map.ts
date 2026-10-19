@@ -1022,21 +1022,23 @@ export class PropertiesMap {
             this._options.color.min.value = min;
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
-
-            // fill the selection range with the data bounds, unless it was
-            // restored from saved settings
-            if (
-                isNaN(this._options.color.select.min.value) &&
-                isNaN(this._options.color.select.max.value)
-            ) {
-                this._resetSelectionRange();
-            }
         } else {
             this._options.color.min.value = 0;
             this._options.color.max.value = 0;
         }
 
+        // fill the selection range with the data bounds, unless it was
+        // restored from saved settings
+        if (
+            isNaN(this._options.color.select.min.value) &&
+            isNaN(this._options.color.select.max.value)
+        ) {
+            this._resetSelectionRange();
+        }
+
         this._options.color.property.onchange.push(() => {
+            // the selection range follows the color property unless another one is set
+            const rangeFollowsColor = this._options.color.select.property.value === '';
             if (this._options.hasColors()) {
                 this._options.color.mode.enable();
                 this._options.color.min.enable();
@@ -1069,7 +1071,9 @@ export class PropertiesMap {
                     } as unknown as Layout);
 
                     // refill the selection range with the new property's bounds
-                    this._resetSelectionRange();
+                    if (rangeFollowsColor) {
+                        this._resetSelectionRange();
+                    }
                 }
             } else {
                 this._options.color.mode.disable();
@@ -1089,7 +1093,7 @@ export class PropertiesMap {
             }
 
             // the new property's range can reveal previously hidden points
-            if (this._options.color.select.mode.value.startsWith('range')) {
+            if (rangeFollowsColor && this._options.color.select.mode.value.startsWith('range')) {
                 this._computeLOD(this._getBounds());
             }
             this._restyleLegendColors();
@@ -1241,8 +1245,12 @@ export class PropertiesMap {
 
         // ======= opacity
         this._options.color.opacity.onchange.push(() => {
+            const opacity = this._options.color.opacity.value / 100;
             this._restyle({
-                'marker.opacity': this._options.color.opacity.value / 100,
+                'marker.opacity': opacity,
+                // plotly dims unselected points by default
+                'selected.marker.opacity': opacity,
+                'unselected.marker.opacity': opacity,
             });
         });
 
@@ -1261,6 +1269,11 @@ export class PropertiesMap {
         };
 
         this._options.color.select.mode.onchange.push(updateColors);
+        this._options.color.select.property.onchange.push(() => {
+            // refill the selection range with the new property's bounds
+            this._resetSelectionRange();
+            updateColors();
+        });
         this._options.color.select.category.onchange.push(updateColors);
         this._options.color.select.min.onchange.push(updateColors);
         this._options.color.select.max.onchange.push(updateColors);
@@ -1411,6 +1424,7 @@ export class PropertiesMap {
             hovertemplate: this._options.hovertemplate(this._colorType()),
             customdata: this._colorValues(),
             'marker.opacity': this._options.color.opacity.value / 100,
+            selectedpoints: this._selectTrace(this._highlightedPoints(), null, null),
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
 
@@ -1537,6 +1551,11 @@ export class PropertiesMap {
                 sizemode: 'area',
                 symbol: this._symbols(0)[0],
             },
+            // highlighted points are "selected", which plotly draws on top
+            selectedpoints: this._highlightedPoints(),
+            // plotly dims unselected points by default
+            selected: { marker: { opacity: this._options.color.opacity.value / 100 } },
+            unselected: { marker: { opacity: this._options.color.opacity.value / 100 } },
             line: {
                 color: 'black',
                 width: 0.5,
@@ -2103,16 +2122,22 @@ export class PropertiesMap {
         }
     }
 
+    /** Property used for range selection, '' if there is none */
+    private _rangeProperty(): string {
+        return this._options.color.select.property.value || this._options.color.property.value;
+    }
+
     /**
-     * Set the selection range (mark: range) bounds to the color property's raw
-     * data min/max — the values the filter compares against (see
+     * Set the selection range (highlight: range) bounds to the range property's
+     * raw data min/max — the values the filter compares against (see
      * `_getSelectionMask`).
      */
     private _resetSelectionRange(): void {
-        if (!this._options.hasColors()) {
+        const name = this._rangeProperty();
+        if (name === '') {
             return;
         }
-        const values = this._property(this._options.color.property.value).values;
+        const values = this._property(name).values;
         const finite = values.filter((v): v is number => typeof v === 'number' && isFinite(v));
         if (finite.length === 0) {
             return;
@@ -2129,6 +2154,27 @@ export class PropertiesMap {
     }
 
     /**
+     * In gray highlight modes, positions of the highlighted points in the main
+     * trace. Plotly draws these "selected" points on top of the others, which
+     * array order alone cannot ensure (markers are drawn by symbol, and large
+     * traces are clustered).
+     */
+    private _highlightedPoints(): number[] | null {
+        if (!this._options.color.select.mode.value.endsWith('gray')) {
+            return null;
+        }
+        const mask = this._getSelectionMask();
+        const indices = this._lodIndices ?? mask.map((_, i) => i);
+        const points = [];
+        for (let i = 0; i < indices.length; i++) {
+            if (mask[indices[i]]) {
+                points.push(i);
+            }
+        }
+        return points;
+    }
+
+    /**
      * Get the mask of selected points based on the current selection mode
      */
     private _getSelectionMask(): boolean[] {
@@ -2137,14 +2183,9 @@ export class PropertiesMap {
             return new Array<boolean>(n).fill(true);
         }
 
-        let colors;
-        if (this._options.hasColors()) {
-            colors = this._property(this._options.color.property.value).values;
-        } else {
-            // "Fixed" color corresponds to a constant value
-            // (should not be used for filtering but should never happen)
-            colors = new Array<number>(n).fill(0.5);
-        }
+        // without a range property, NaN values pass any range test
+        const name = this._rangeProperty();
+        const values = name !== '' ? this._property(name).values : new Array<number>(n).fill(NaN);
 
         let categoryValues: string[] | undefined;
         const catProp = this._options.getCategorySelectionProperty();
@@ -2155,7 +2196,7 @@ export class PropertiesMap {
                 categoryValues = prop.values.map((v) => interner.string(v));
             }
         }
-        return this._options.getFilterMask(colors, categoryValues);
+        return this._options.getFilterMask(values, categoryValues);
     }
 
     /** Get the length of the colorbar to accommodate for the legend */

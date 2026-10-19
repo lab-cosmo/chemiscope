@@ -839,17 +839,22 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
    * - ``color``
      - object
      - Color config: like axis, plus ``"palette"`` option for colormap selection,
-       ``"opacity"`` to make traces transparent, and ``"select"`` to filter points.
-       Unselected points are shown in gray.
+       ``"opacity"`` to make traces transparent, and ``"select"`` to highlight a
+       subset of the points. Points outside the subset are shown in gray (and
+       drawn below the highlighted ones) or hidden.
        Supported palettes: ``"inferno"``, ``"magma"``, ``"plasma"``, ``"viridis"``,
        ``"cividis"``, ``"seismic"``, ``"brg"``, ``"bwr"``, ``"rwg"``,  ``"twilight
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
-       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100. 
+       ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100.
        The ``select`` property supports:
-       - ``mode``: ``"all"`` (default), ``"range"``, or ``"category"``.
-       - ``min``/``max``: range values (for ``mode="range"``).
-       - ``category``: ``property/value`` string (for ``mode="category"``).
-     - ``{"property": "energy", "palette": "viridis", "opacity": 100, "select": {"mode": "range", "min": -5, "max": 0}}``
+       - ``mode``: ``"all"`` (default), ``"range-gray"``, ``"category-gray"``,
+         ``"range-hide"`` or ``"category-hide"`` (``"range"`` and ``"category"``
+         are accepted as aliases of the gray variants).
+       - ``property``: numeric property used in range modes; defaults to the
+         color property.
+       - ``min``/``max``: range values (for range modes).
+       - ``category``: ``property/value`` string (for category modes).
+     - ``{"property": "energy", "palette": "viridis", "opacity": 100, "select": {"mode": "range-gray", "property": "volume", "min": 10, "max": 20}}``
    * - ``size``
      - object
      - Size config: ``{"property": "<name>", "mode":
