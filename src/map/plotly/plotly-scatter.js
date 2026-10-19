@@ -23,6 +23,20 @@ for (const [k, v] of Object.entries(markers3d.default)) {
 // plotly only accepts the symbols it knew when the module was loaded
 scatter3d.attributes.marker.symbol.values = Object.keys(scatter3d.markerSymbols);
 
+// below 1e5 points, plotly pads the axes range using the marker size of every
+// point. This is quadratic when the size correlates with the position (e.g.
+// when using the same property for size and x axis), taking tens of seconds for
+// a few 10k points. Use the largest marker size as padding for all points
+// instead (plotly itself uses the average size above 1e5 points).
+const Axes = require('plotly.js/src/plots/cartesian/axes');
+const findExtremes = Axes.findExtremes;
+Axes.findExtremes = function (ax, data, opts) {
+    if (opts && Array.isArray(opts.ppad) && opts.ppad.length > 1000) {
+        opts = Object.assign({}, opts, { ppad: opts.ppad.reduce((a, b) => Math.max(a, b), 0) });
+    }
+    return findExtremes(ax, data, opts);
+};
+
 const Plotly = require('plotly.js/lib/core');
 
 Plotly.register([require('plotly.js/lib/scattergl'), scatter3d]);

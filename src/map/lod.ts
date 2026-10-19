@@ -239,11 +239,16 @@ export class LODSampler {
         const dims = this._dims;
         const levels = LEVELS[dims];
 
-        // a hash avoids favoring points that happen to be first in the input
+        // a hash avoids favoring points that happen to be first in the input.
+        // Multiplying by an odd number permutes [0, 2^bits), and can be undone:
+        // the hash of point i is `imul(i, 244002641) & mask`, and the point with
+        // hash h is `imul(h, 2654435761) & mask`, since the product of these
+        // two numbers is 1 modulo 2^32.
         // leave the high bit free for foreground priority
+        const mask = 2 ** Math.ceil(Math.log2(n)) - 1;
         const hash = new Uint32Array(n);
         for (let i = 0; i < n; i++) {
-            const h = Math.imul(i, 2654435761) >>> 1;
+            const h = Math.imul(i, 244002641) & mask;
 
             // setting the high bit makes background points lose within their cell
             hash[i] = priority && !priority[i] ? (h | 0x80000000) >>> 0 : h;
@@ -251,6 +256,7 @@ export class LODSampler {
 
         // a point needs valid coordinates on every axis to enter the ranking
         const eligible: number[] = [];
+        const isEligible = new Uint8Array(n);
         for (let i = 0; i < n; i++) {
             if (visible && !visible[i]) {
                 continue;
@@ -266,6 +272,7 @@ export class LODSampler {
 
             if (valid) {
                 eligible.push(i);
+                isEligible[i] = 1;
             }
         }
 
@@ -343,8 +350,25 @@ export class LODSampler {
         }
 
         // coarse-grid winners come first so sparse regions stay represented
-        // within each level, prefer foreground points
-        eligible.sort((a, b) => level[a] - level[b] || hash[a] - hash[b] || a - b);
-        return Uint32Array.from(eligible);
+        // within each level, prefer foreground points, then follow the hash.
+        // Instead of sorting millions of points, count them in each (level,
+        // foreground) group, and fill the groups visiting points in hash order
+        const group = (i: number) => 2 * level[i] + (hash[i] >>> 31);
+        const start = new Uint32Array(2 * (levels + 3) + 1);
+        for (const i of eligible) {
+            start[group(i) + 1] += 1;
+        }
+        for (let g = 1; g < start.length; g++) {
+            start[g] += start[g - 1];
+        }
+
+        const order = new Uint32Array(eligible.length);
+        for (let h = 0; h <= mask; h++) {
+            const i = Math.imul(h, 2654435761) & mask;
+            if (i < n && isEligible[i]) {
+                order[start[group(i)]++] = i;
+            }
+        }
+        return order;
     }
 }

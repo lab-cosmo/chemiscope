@@ -143,13 +143,14 @@ export class ViewersGrid {
         if (properties === undefined) {
             this._properties = {};
         } else {
-            // Calculate properties
-            const numberProperties = filter(properties, (p) =>
-                Object.values(p.values).every((v) => typeof v === 'number')
+            // Calculate properties, checking the target first since checking
+            // the values is slow for large datasets
+            const atomProperties = filter(properties, (p) => p.target === 'atom');
+            const numberProperties = filter(atomProperties, (p) =>
+                p.values.every((v) => typeof v === 'number')
             );
-            const atomProperties = filter(numberProperties, (p) => p.target === 'atom');
             this._properties = Object.fromEntries(
-                Object.entries(atomProperties).map(([key, value]) => [
+                Object.entries(numberProperties).map(([key, value]) => [
                     key,
                     value.values as number[],
                 ])

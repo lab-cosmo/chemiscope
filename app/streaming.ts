@@ -142,8 +142,14 @@ function endOfString(buf: string, openQuoteIndex: number): number {
 }
 
 export function parseJsonWithNaN(text: string): unknown {
-    if (!text.includes('NaN')) {
+    // strings can contain "NaN" (e.g. the chemical formula "NaNO3"), so only use
+    // the much slower NaN-aware parsing below if the text is not valid JSON
+    try {
         return JSON.parse(text) as unknown;
+    } catch (error) {
+        if (!text.includes('NaN')) {
+            throw error;
+        }
     }
 
     let out = '';
@@ -378,6 +384,18 @@ class StreamingJSONParser {
         this.pos++;
     }
 
+    /**
+     * Like `peek`, but return undefined instead of waiting when the buffer is
+     * exhausted. This and `tryCaptureValue` avoid the overhead of async calls
+     * for the many small values that are already in the buffer.
+     */
+    public peekBuffered(): string | undefined {
+        while (this.pos < this.buf.length && WHITESPACE.has(this.buf[this.pos])) {
+            this.pos++;
+        }
+        return this.pos < this.buf.length ? this.buf[this.pos] : undefined;
+    }
+
     /** return the next non-whitespace character without advancing past it */
     public async peek(): Promise<string | undefined> {
         if (this.pos > COMPACT_THRESHOLD) {
@@ -425,6 +443,20 @@ class StreamingJSONParser {
         const raw = this.buf.slice(this.pos, end + 1);
         this.pos = end + 1;
         return JSON.parse(raw) as string;
+    }
+
+    /**
+     * Capture the next value if it is complete in the buffer, and return
+     * undefined without consuming anything otherwise
+     */
+    public tryCaptureValue(): string | undefined {
+        const end = makeDepthScanner()(this.buf, this.pos);
+        if (end < 0) {
+            return undefined;
+        }
+        const value = this.buf.slice(this.pos, end);
+        this.pos = end;
+        return value;
     }
 
     public async captureValue(): Promise<string> {
@@ -627,7 +659,7 @@ export async function loadDatasetStreaming(
         parser.consume();
 
         while (true) {
-            const char = await parser.peek();
+            const char = parser.peekBuffered() ?? (await parser.peek());
             if (char === undefined) {
                 throw new Error('unexpected EOF in "structures"');
             }
@@ -640,7 +672,7 @@ export async function loadDatasetStreaming(
                 continue;
             }
 
-            const raw = await parser.captureValue();
+            const raw = parser.tryCaptureValue() ?? (await parser.captureValue());
             const size = extractSize(raw, placeholders.length);
             placeholders.push({ size, data: placeholders.length });
             batch.push(raw);
