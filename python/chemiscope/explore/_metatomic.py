@@ -1,6 +1,8 @@
 import warnings
 from pathlib import Path
 
+import numpy as np
+
 
 mta = None
 mts = None
@@ -26,6 +28,8 @@ class metatomic_featurizer:
         ``"feature"`` output is used. To choose another variant, provide its name
         (e.g., ``"cos_sin"``), which will select the corresponding
         ``"feature/<variant>"`` output.
+    :param batch_size: number of structures evaluated together when computing
+        per-structure features. If ``None``, all the structures are evaluated at once.
 
     :returns: a function that takes a list of structures and returns the features.
 
@@ -71,6 +75,7 @@ class metatomic_featurizer:
         device=None,
         length_unit="Angstrom",
         variant=None,
+        batch_size=None,
     ):
         # Check if dependencies were installed
         global mta, mts, torch, vesin_metatomic
@@ -95,6 +100,7 @@ class metatomic_featurizer:
 
         self.length_unit = length_unit
         self.check_consistency = check_consistency
+        self.batch_size = batch_size
 
         capabilities = self.model.capabilities()
 
@@ -109,6 +115,7 @@ class metatomic_featurizer:
             self.dtype = torch.float64
 
         self.device = _find_best_device(capabilities.supported_devices, device)
+        self.model = self.model.to(self.device)
 
         extra_inputs = self.model.requested_inputs(use_new_names=True)
         if len(extra_inputs) > 0:
@@ -120,6 +127,17 @@ class metatomic_featurizer:
             )
 
     def __call__(self, structures, environments):
+        if environments is not None or self.batch_size is None:
+            return self._compute(structures, environments)
+
+        features = []
+        for start in range(0, len(structures), self.batch_size):
+            batch = structures[start : start + self.batch_size]
+            features.append(self._compute(batch, None))
+
+        return np.concatenate(features)
+
+    def _compute(self, structures, environments):
         systems = mta.systems_to_torch(structures)
         calculators = vesin_metatomic.neighbor_lists_for_model(
             self.length_unit,
