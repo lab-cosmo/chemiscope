@@ -41,6 +41,9 @@ const MAX_PENDING_WRITES = 32;
 const COMPACT_THRESHOLD = 1 << 16;
 // progress updates are throttled to keep the displayed numbers readable
 const PROGRESS_THROTTLE_MS = 100;
+// how often the structure loop lets the browser render; each pause takes about
+// a frame, so pausing too often slows down loading
+const YIELD_INTERVAL_MS = 250;
 
 const WHITESPACE = new Set([' ', '\t', '\n', '\r']);
 
@@ -658,6 +661,7 @@ export async function loadDatasetStreaming(
         }
         parser.consume();
 
+        let lastYield = Date.now();
         while (true) {
             const char = parser.peekBuffered() ?? (await parser.peek());
             if (char === undefined) {
@@ -680,9 +684,10 @@ export async function loadDatasetStreaming(
             if (batch.length >= BATCH_SIZE) {
                 await flushBatch();
             }
-            if (placeholders.length % 5000 === 0) {
+            if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
                 reportProgress();
                 await new Promise<void>((resolve) => setTimeout(resolve, 0));
+                lastYield = Date.now();
             }
         }
 
