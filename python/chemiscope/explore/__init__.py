@@ -14,9 +14,9 @@ def get_featurizer(name):
     """
     Get a featurizer by name for feature extraction. Currently available versions are:
 
-    - "ecumetric-1.0", which returns a featurizer computing the ecumetric SPACE
-      descriptors of MAD-CORE and their 8-dimensional sketch-map projection, one feature
-      vector per structure
+    - "ecumetric-1.0", which returns a featurizer computing the `ecumetric
+      <https://arxiv.org/abs/2610.21771>`_ SPACE descriptors and their 8-dimensional
+      sketch-map projection trained on MAD-CORE, one feature vector per structure
     - "pet-mad-1.0", which returns an instance of `PETMADFeaturizer
       <https://arxiv.org/abs/2506.19674>`_.
 
@@ -88,8 +88,9 @@ def explore(
 
     This function creates a low-dimensional representation of the input ``structures``
     and displays them using a Chemiscope widget. It supports automatic featurization
-    with the ecumetric featurizer, `PETMADFeaturizer
-    <https://arxiv.org/abs/2506.19674>`_, or a custom featurization function.
+    with the `ecumetric featurizer <https://arxiv.org/abs/2610.21771>`_,
+    `PETMADFeaturizer <https://arxiv.org/abs/2506.19674>`_, or a custom featurization
+    function.
 
     The default ecumetric featurizer (``"ecumetric-1.0"``) computes the SPACE descriptor
     of each structure, the representation used to build MAD-CORE, and projects it to 8
