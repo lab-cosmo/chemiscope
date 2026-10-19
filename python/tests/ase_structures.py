@@ -145,6 +145,31 @@ class TestExtractProperties(unittest.TestCase):
 
         self.assertEqual(len(properties.keys()), 0)
 
+    def test_multidimensional_values(self):
+        atoms_1 = BASE_ATOMS.copy()
+        atoms_1.info["virial"] = np.ones((3, 3))
+        atoms_1.info["valid_prop"] = [1, 2]
+        atoms_1.arrays["tensor"] = np.ones((3, 3, 3))
+
+        atoms_2 = BASE_ATOMS.copy()
+        atoms_2.info["virial"] = np.ones((3, 3))
+        atoms_2.info["valid_prop"] = [3, 4]
+        atoms_2.arrays["tensor"] = np.ones((3, 3, 3))
+
+        with self.assertWarns(UserWarning) as cm:
+            properties = chemiscope.extract_properties([atoms_1, atoms_2])
+
+        self.assertEqual(
+            [str(w.message) for w in cm.warnings],
+            [
+                "values of the property 'virial' have more than one dimension, "
+                "it will be ignored",
+                "values of the property 'tensor' have more than one dimension, "
+                "it will be ignored",
+            ],
+        )
+        self.assertEqual(set(properties.keys()), {"valid_prop"})
+
     def test_different_lengths(self):
         atoms_1 = BASE_ATOMS.copy()
         atoms_1.info["valid_prop"] = [1, 2]
