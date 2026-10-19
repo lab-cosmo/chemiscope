@@ -847,6 +847,7 @@ Configures the scatter plot. Sub-keys for axes (x/y/z), color, size, etc.
        (periodic)"``, ``"twilight dark (periodic)"``, ``"hsv (periodic)"``, ``"tab10"``,
        ``"tab20"``, ``"tab20b"``, ``"tab20bc"``. Opacity range: 1-100.
        The ``select`` property supports:
+
        - ``mode``: ``"all"`` (default), ``"range-gray"``, ``"category-gray"``,
          ``"range-hide"`` or ``"category-hide"`` (``"range"`` and ``"category"``
          are accepted as aliases of the gray variants).
