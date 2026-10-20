@@ -848,11 +848,7 @@ function isPositiveInteger(number: number): boolean {
 
 function isMultidimensional(array: number[][]): boolean {
     // check if an array is 2D
-    let result = true;
-    for (const value of array) {
-        result = Array.isArray(value) && result;
-    }
-    return result;
+    return array.every((value) => Array.isArray(value));
 }
 
 function isConsistent2DArray(array: number[][]): boolean {

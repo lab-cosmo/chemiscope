@@ -41,6 +41,9 @@ const MAX_PENDING_WRITES = 32;
 const COMPACT_THRESHOLD = 1 << 16;
 // progress updates are throttled to keep the displayed numbers readable
 const PROGRESS_THROTTLE_MS = 100;
+// how often the structure loop lets the browser render; each pause takes about
+// a frame, so pausing too often slows down loading
+const YIELD_INTERVAL_MS = 250;
 
 const WHITESPACE = new Set([' ', '\t', '\n', '\r']);
 
@@ -142,8 +145,14 @@ function endOfString(buf: string, openQuoteIndex: number): number {
 }
 
 export function parseJsonWithNaN(text: string): unknown {
-    if (!text.includes('NaN')) {
+    // strings can contain "NaN" (e.g. the chemical formula "NaNO3"), so only use
+    // the much slower NaN-aware parsing below if the text is not valid JSON
+    try {
         return JSON.parse(text) as unknown;
+    } catch (error) {
+        if (!text.includes('NaN')) {
+            throw error;
+        }
     }
 
     let out = '';
@@ -378,6 +387,18 @@ class StreamingJSONParser {
         this.pos++;
     }
 
+    /**
+     * Like `peek`, but return undefined instead of waiting when the buffer is
+     * exhausted. This and `tryCaptureValue` avoid the overhead of async calls
+     * for the many small values that are already in the buffer.
+     */
+    public peekBuffered(): string | undefined {
+        while (this.pos < this.buf.length && WHITESPACE.has(this.buf[this.pos])) {
+            this.pos++;
+        }
+        return this.pos < this.buf.length ? this.buf[this.pos] : undefined;
+    }
+
     /** return the next non-whitespace character without advancing past it */
     public async peek(): Promise<string | undefined> {
         if (this.pos > COMPACT_THRESHOLD) {
@@ -425,6 +446,20 @@ class StreamingJSONParser {
         const raw = this.buf.slice(this.pos, end + 1);
         this.pos = end + 1;
         return JSON.parse(raw) as string;
+    }
+
+    /**
+     * Capture the next value if it is complete in the buffer, and return
+     * undefined without consuming anything otherwise
+     */
+    public tryCaptureValue(): string | undefined {
+        const end = makeDepthScanner()(this.buf, this.pos);
+        if (end < 0) {
+            return undefined;
+        }
+        const value = this.buf.slice(this.pos, end);
+        this.pos = end;
+        return value;
     }
 
     public async captureValue(): Promise<string> {
@@ -626,8 +661,9 @@ export async function loadDatasetStreaming(
         }
         parser.consume();
 
+        let lastYield = Date.now();
         while (true) {
-            const char = await parser.peek();
+            const char = parser.peekBuffered() ?? (await parser.peek());
             if (char === undefined) {
                 throw new Error('unexpected EOF in "structures"');
             }
@@ -640,7 +676,7 @@ export async function loadDatasetStreaming(
                 continue;
             }
 
-            const raw = await parser.captureValue();
+            const raw = parser.tryCaptureValue() ?? (await parser.captureValue());
             const size = extractSize(raw, placeholders.length);
             placeholders.push({ size, data: placeholders.length });
             batch.push(raw);
@@ -648,9 +684,10 @@ export async function loadDatasetStreaming(
             if (batch.length >= BATCH_SIZE) {
                 await flushBatch();
             }
-            if (placeholders.length % 5000 === 0) {
+            if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
                 reportProgress();
                 await new Promise<void>((resolve) => setTimeout(resolve, 0));
+                lastYield = Date.now();
             }
         }
 

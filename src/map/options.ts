@@ -27,6 +27,20 @@ import { COLOR_MAPS } from './colorscales';
 import BARS_SVG from '../static/bars.svg';
 import HTML_OPTIONS from './options.html.in';
 
+/// RGB components of palette colors, cached since point colors are computed one by one
+const PARSED_RGB = new Map<string, number[]>();
+
+/** Get the RGB components of a "rgb(r, g, b)" color string */
+function parseRgb(color: string): number[] {
+    let rgb = PARSED_RGB.get(color);
+    if (rgb === undefined) {
+        const m = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        rgb = m ? [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)] : [0, 0, 0];
+        PARSED_RGB.set(color, rgb);
+    }
+    return rgb;
+}
+
 // in 3D mode, only strings are supported for 'marker.symbol'.
 /* eslint-disable */
 const markers3d = require('./plotly/markers3d');
@@ -855,12 +869,6 @@ export class MapOptions extends OptionsGroup {
         if (t1 === t0) return c0;
 
         const f = (t - t0) / (t1 - t0);
-
-        const parseRgb = (s: string) => {
-            const m = s.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-            if (m) return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
-            return [0, 0, 0];
-        };
 
         const rgb0 = parseRgb(c0);
         const rgb1 = parseRgb(c1);

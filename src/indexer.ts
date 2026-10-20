@@ -47,9 +47,10 @@ export class EnvironmentIndexer {
     private _structures: Structure[] | UserStructure[];
     private _environments?: Environment[];
     /// List of active structures (structures with at least one active atom)
-    /// and active atom for each structure
+    /// and active atom for each structure. Without environments, all atoms are
+    /// active and `_activeAtoms` is not stored, see `activeAtoms()`
     private _activeStructures: number[];
-    private _activeAtoms: number[][];
+    private _activeAtoms?: number[][];
 
     /**
      * Create a new {@link EnvironmentIndexer} for the given set of structures and
@@ -63,12 +64,12 @@ export class EnvironmentIndexer {
         this._environments = environments;
 
         this._activeStructures = [];
-        this._activeAtoms = Array.from({ length: this._structures.length }).map(
-            () => []
-        ) as number[][];
 
         // Initialize active atoms and structures from the environments
         if (this._environments !== undefined) {
+            this._activeAtoms = Array.from({ length: this._structures.length }).map(
+                () => []
+            ) as number[][];
             for (const environment of this._environments) {
                 this._activeAtoms[environment.structure].push(environment.center);
             }
@@ -81,16 +82,12 @@ export class EnvironmentIndexer {
             }
         }
 
-        // Initialize active atoms and structures from the structures themselves
+        // Initialize active structures from the structures themselves
         else {
             for (let structure = 0; structure < this._structures.length; structure++) {
                 // Add structure to active structures if it has atoms
-                const atomsCount = this.atomsCount(structure);
-                if (atomsCount > 0) {
+                if (this.atomsCount(structure) > 0) {
                     this._activeStructures.push(structure);
-                    for (let atom = 0; atom < atomsCount; atom++) {
-                        this._activeAtoms[structure].push(atom);
-                    }
                 }
             }
         }
@@ -102,8 +99,8 @@ export class EnvironmentIndexer {
         // arrays using the string representation of elements, giving [1, 11, 2,
         // 22, ...]
         this._activeStructures.sort((a, b) => a - b);
-        for (let structure = 0; structure < this._structures.length; structure++) {
-            this._activeAtoms[structure].sort((a, b) => a - b);
+        for (const atoms of this._activeAtoms ?? []) {
+            atoms.sort((a, b) => a - b);
         }
     }
 
@@ -223,6 +220,9 @@ export class EnvironmentIndexer {
 
     /** Get the indexes of atoms actually part of the environments for this `structure` */
     public activeAtoms(structure: number): number[] {
+        if (this._activeAtoms === undefined) {
+            return Array.from({ length: this.atomsCount(structure) }, (_, atom) => atom);
+        }
         return this._activeAtoms[structure];
     }
 }

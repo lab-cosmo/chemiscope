@@ -114,6 +114,10 @@ export class PropertiesMap {
     /// True while writing derived option values programmatically; the reactive
     /// onchange handlers (updateColors, axis rangeChange) skip while it is set.
     private _internalUpdate = false;
+    /// Per-point values (colors, sizes, selection mask, ...) of all points, with
+    /// the options they were computed from, so that view changes (zoom, pan,
+    /// LOD) do not recompute them
+    private _pointValues = new Map<string, { key: string; values: unknown[] }>();
     /// Guard to skip concurrent LOD updates. When set, other callers simply
     // return early instead of waiting
     private _lodBusy = false;
@@ -1023,8 +1027,9 @@ export class PropertiesMap {
             this._options.color.max.value = max;
             this._setScaleStep([min, max], 'color');
         } else {
+            // fixed colors use the value 0.5, i.e. the middle of the palette
             this._options.color.min.value = 0;
-            this._options.color.max.value = 0;
+            this._options.color.max.value = 1;
         }
 
         // fill the selection range with the data bounds, unless it was
@@ -1039,6 +1044,8 @@ export class PropertiesMap {
         this._options.color.property.onchange.push(() => {
             // the selection range follows the color property unless another one is set
             const rangeFollowsColor = this._options.color.select.property.value === '';
+            // layout changes, applied together with the new colors in a single update
+            let layout: Record<string, unknown> | undefined;
             if (this._options.hasColors()) {
                 this._options.color.mode.enable();
                 this._options.color.min.enable();
@@ -1050,16 +1057,16 @@ export class PropertiesMap {
                 // Color mode warning needs to be called before setting min and max to avoid isFinite error
                 if (canChangeColors(numericValues, 'property')) {
                     const { min, max } = arrayMaxMin(numericValues);
-                    // We have to set max first and min second here to avoid sending
-                    // a spurious warning in `colorRangeChange` below in case the
-                    // new min is bigger than the old max.
-                    this._options.color.min.value = Number.NEGATIVE_INFINITY;
-                    this._options.color.max.value = max;
-                    this._options.color.min.value = min;
+                    // the plot is updated once below, instead of in `colorRangeChange`
+                    this.withInternalUpdate(() => {
+                        this._options.color.min.value = min;
+                        this._options.color.max.value = max;
+                    });
                     this._setScaleStep([min, max], 'color');
 
                     const colorbar = this._colorbarSettings();
-                    this._relayout({
+                    layout = {
+                        ...this._colorRangeLayout(),
                         'coloraxis.colorbar.title.text': colorbar.title,
                         'coloraxis.showscale': this._showColorbar(),
                         'legend.maxheight': this._legendMaxHeight(),
@@ -1068,7 +1075,7 @@ export class PropertiesMap {
                         'coloraxis.colorbar.tickmode': colorbar.tickmode,
                         'coloraxis.colorbar.tickvals': colorbar.tickvals ?? null,
                         'coloraxis.colorbar.ticktext': colorbar.ticktext ?? null,
-                    } as unknown as Layout);
+                    };
 
                     // refill the selection range with the new property's bounds
                     if (rangeFollowsColor) {
@@ -1082,14 +1089,18 @@ export class PropertiesMap {
 
                 this._colorReset.disabled = true;
 
-                this._options.color.min.value = 0;
-                this._options.color.max.value = 0;
+                // fixed colors use the value 0.5, i.e. the middle of the palette
+                this.withInternalUpdate(() => {
+                    this._options.color.min.value = 0;
+                    this._options.color.max.value = 1;
+                });
 
-                this._relayout({
+                layout = {
+                    ...this._colorRangeLayout(),
                     'coloraxis.colorbar.title.text': undefined,
                     'coloraxis.showscale': false,
                     'legend.maxheight': this._legendMaxHeight(),
-                } as unknown as Layout);
+                };
             }
 
             // the new property's range can reveal previously hidden points
@@ -1097,10 +1108,15 @@ export class PropertiesMap {
                 this._computeLOD(this._getBounds());
             }
             this._restyleLegendColors();
-            void this._restyleFull();
+            void this._restyleFull(layout as Partial<Layout>);
         });
 
         const colorRangeChange = (minOrMax: 'min' | 'max') => {
+            // the code doing internal writes updates the plot itself
+            if (this._internalUpdate) {
+                return;
+            }
+
             const min = this._options.color.min.value;
             const max = this._options.color.max.value;
             if (min > max) {
@@ -1115,25 +1131,11 @@ export class PropertiesMap {
                 return;
             }
 
-            this._relayout({
-                'coloraxis.cmax': max,
-                'coloraxis.cmin': min,
-                // looks like changing only 'coloraxis.cmax'/'coloraxis.cmin' do
-                // not update the color of the points (although it does change
-                // the colorbar). Asking for an update of 'coloraxis.colorscale'
-                // seems to do the trick. This is possibly a Plotly bug, we
-                // would need to investigate a bit more.
-                'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown as Layout);
-
-            // with a subset selection active the points use explicit colors
-            // (valueToColor / grey), which the coloraxis relayout does not touch,
-            // so restyle the marker colors directly
-            if (this._options.color.select.mode.value !== 'all') {
-                this._restyle({ 'marker.color': this._colors() } as Data, [0, 1]);
-            }
-
             this._restyleLegendColors();
+            void this._update(
+                { 'marker.color': this._colors() },
+                this._colorRangeLayout() as Partial<Layout>
+            );
         };
 
         const canChangeColors = (values: number[], changed: string): boolean => {
@@ -1179,24 +1181,23 @@ export class PropertiesMap {
             // Color mode warning needs to be called before setting min and max to avoid isFinite error
             if (canChangeColors(numericValues, 'color scale')) {
                 const { min, max } = arrayMaxMin(numericValues);
-                // We have to set min to infinity first, then max, and then min here
-                // to avoid sending a spurious warning in `colorRangeChange` below
-                // in case the new min is bigger than the old max.
-                this._options.color.min.value = Number.NEGATIVE_INFINITY;
-                this._options.color.max.value = max;
-                this._options.color.min.value = min;
+                // the plot is updated once below, instead of in `colorRangeChange`
+                this.withInternalUpdate(() => {
+                    this._options.color.min.value = min;
+                    this._options.color.max.value = max;
+                });
                 this._setScaleStep([min, max], 'color');
 
                 const colorbar = this._colorbarSettings();
-                this._relayout({
+                this._restyleLegendColors();
+                void this._restyleFull({
+                    ...this._colorRangeLayout(),
                     'coloraxis.colorbar.title.text': colorbar.title,
                     'coloraxis.showscale': this._showColorbar(),
                     'coloraxis.colorbar.tickmode': colorbar.tickmode,
                     'coloraxis.colorbar.tickvals': colorbar.tickvals ?? null,
                     'coloraxis.colorbar.ticktext': colorbar.ticktext ?? null,
-                } as unknown as Layout);
-
-                void this._restyleFull();
+                } as unknown as Partial<Layout>);
             }
         });
 
@@ -1210,14 +1211,12 @@ export class PropertiesMap {
         this._colorReset.onclick = () => {
             const numericValues = this._getNumericColors();
             const { min, max } = arrayMaxMin(numericValues);
-            this._options.color.min.value = min;
-            this._options.color.max.value = max;
-            this._relayout({
-                'coloraxis.cmax': max,
-                'coloraxis.cmin': min,
-                // same as above regarding update of the points color
-                'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown as Layout);
+            this.withInternalUpdate(() => {
+                this._options.color.min.value = min;
+                this._options.color.max.value = max;
+            });
+            // update the plot once for both values
+            colorRangeChange('max');
         };
 
         // setup initial state of the color GUI
@@ -1236,11 +1235,10 @@ export class PropertiesMap {
 
         // ======= color palette
         this._options.color.palette.onchange.push(() => {
-            this._relayout({
-                'coloraxis.colorscale': this._options.colorScale(),
-            } as unknown as Layout);
             this._restyleLegendColors();
-            void this._restyleFull();
+            void this._restyleFull({
+                'coloraxis.colorscale': this._options.colorScale(),
+            } as unknown as Partial<Layout>);
         });
 
         // ======= opacity
@@ -1427,7 +1425,17 @@ export class PropertiesMap {
             selectedpoints: this._selectTrace(this._highlightedPoints(), null, null),
             visible: this._selectTrace(true, true, this._options.hasColors()),
         };
+        return this._update(fullUpdate, layoutUpdate);
+    }
 
+    /**
+     * Update the main (0), selected (1) and dummy (2) traces with `data`, and
+     * the layout with `layoutUpdate`
+     */
+    private _update(
+        data: Record<string, unknown>,
+        layoutUpdate?: Partial<Layout>
+    ): Promise<unknown> {
         const layout = layoutUpdate || {};
 
         if (layoutUpdate || this._is3D()) {
@@ -1442,15 +1450,9 @@ export class PropertiesMap {
                 }
             }
 
-            return Plotly.update(
-                this._plot,
-                fullUpdate as unknown as Data,
-                layout as Layout,
-                [0, 1, 2]
-            );
+            return Plotly.update(this._plot, data as unknown as Data, layout as Layout, [0, 1, 2]);
         } else {
-            // Update main (0), selected (1) and dummy (2) traces
-            return Plotly.restyle(this._plot, fullUpdate as unknown as Data, [0, 1, 2]);
+            return Plotly.restyle(this._plot, data as unknown as Data, [0, 1, 2]);
         }
     }
 
@@ -1846,6 +1848,39 @@ export class PropertiesMap {
      * them if `trace === undefined`
      */
     private _colors(trace?: number): Array<Array<string | number>> {
+        const color = this._options.color;
+        const inputs: unknown[] = [
+            this._target,
+            color.property.value,
+            color.mode.value,
+            this._selectionKey(),
+        ];
+        if (color.select.mode.value !== 'all') {
+            // only the explicit colors used to highlight points depend on these
+            inputs.push(color.palette.value, color.min.value, color.max.value);
+        }
+        const finalValues = this._cachedPointValues('colors', inputs, () => this._computeColors());
+
+        // LOD: Apply filter to main trace values
+        const mainValues =
+            trace === 0 || trace === undefined ? this._applyLOD(finalValues) : finalValues;
+
+        const selected = [];
+        for (const data of this._selected.values()) {
+            selected.push(data.color);
+        }
+
+        let dummy = [0.5, 0.5];
+        if (this._options.hasColors()) {
+            const range = this._getColorRange();
+            dummy = [range.min, range.max];
+        }
+
+        return this._selectTrace<Array<string | number>>(mainValues, selected, dummy, trace);
+    }
+
+    /** Compute the colors of all points, see `_colors` */
+    private _computeColors(): Array<string | number> {
         let colors;
         if (this._options.hasColors()) {
             colors = this._property(this._options.color.property.value).values;
@@ -1880,23 +1915,7 @@ export class PropertiesMap {
                 });
             }
         }
-
-        // LOD: Apply filter to main trace values
-        const mainValues =
-            trace === 0 || trace === undefined ? this._applyLOD(finalValues) : finalValues;
-
-        const selected = [];
-        for (const data of this._selected.values()) {
-            selected.push(data.color);
-        }
-
-        let dummy = [0.5, 0.5];
-        if (this._options.hasColors()) {
-            const range = this._getColorRange();
-            dummy = [range.min, range.max];
-        }
-
-        return this._selectTrace<Array<string | number>>(mainValues, selected, dummy, trace);
+        return finalValues;
     }
 
     /** Get the type of the current color property values */
@@ -1920,9 +1939,12 @@ export class PropertiesMap {
     private _colorValues(trace?: number): Array<Array<number | string>> {
         if (this._options.hasColors()) {
             const prop = this._property(this._options.color.property.value);
+            const inputs = [this._target, this._options.color.property.value];
             if (prop.string) {
                 const interner = prop.string;
-                const values = prop.values.map((v) => interner.string(v));
+                const values = this._cachedPointValues('colorValues', inputs, () =>
+                    prop.values.map((v) => interner.string(v))
+                );
 
                 const mainValues =
                     trace === 0 || trace === undefined ? this._applyLOD(values) : values;
@@ -1935,8 +1957,11 @@ export class PropertiesMap {
                 const dummy = [val0, val0];
                 return this._selectTrace(mainValues, selected, dummy, trace);
             } else {
-                const rawValues = prop.values;
-                const values = this._options.calculateColors(rawValues);
+                const values = this._cachedPointValues(
+                    'colorValues',
+                    [...inputs, this._options.color.mode.value],
+                    () => this._options.calculateColors(prop.values)
+                );
 
                 const mainValues =
                     trace === 0 || trace === undefined ? this._applyLOD(values) : values;
@@ -1962,19 +1987,30 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _sizes(trace?: number): Array<number | number[]> {
-        let sizes;
-        if (this._options.size.property.value !== '') {
-            sizes = this._property(this._options.size.property.value).values;
-        } else {
-            sizes = new Array(this._property(this._options.x.property.value).values.length).fill(
-                1.0
-            ) as number[];
-        }
-        let values = this._options.calculateSizes(sizes);
-        const mask = this._getSelectionMask();
-        if (mask.some((v) => !v)) {
-            values = values.map((v, i) => (mask[i] ? v : v * 0.25));
-        }
+        const size = this._options.size;
+        const inputs = [
+            this._target,
+            size.property.value,
+            size.mode.value,
+            size.factor.value,
+            this._is3D(),
+            this._selectionKey(),
+        ];
+        const values = this._cachedPointValues('sizes', inputs, () => {
+            let sizes;
+            if (size.property.value !== '') {
+                sizes = this._property(size.property.value).values;
+            } else {
+                const n = this._property(this._options.x.property.value).values.length;
+                sizes = new Array(n).fill(1.0) as number[];
+            }
+            const all = this._options.calculateSizes(sizes);
+            const mask = this._getSelectionMask();
+            if (mask.some((v) => !v)) {
+                return all.map((v, i) => (mask[i] ? v : v * 0.25));
+            }
+            return all;
+        });
 
         // LOD: Apply filter to main trace values
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
@@ -2005,15 +2041,11 @@ export class PropertiesMap {
      * all of them if `trace === undefined`.
      */
     private _lineColors(trace?: number): Array<string | string[]> {
-        const n = this._property(this._options.x.property.value).values.length;
-        // dafault to black outline
-        let values = new Array(n).fill('black') as string[];
-
-        const mask = this._getSelectionMask();
-        // unselected points have transparent outline
-        if (mask.some((v) => !v)) {
-            values = values.map((v, i) => (mask[i] ? v : 'rgba(0,0,0,0)'));
-        }
+        const values = this._cachedPointValues('lineColors', [this._selectionKey()], () => {
+            // default to black outline, unselected points have transparent outline
+            const mask = this._getSelectionMask();
+            return mask.map((v) => (v ? 'black' : 'rgba(0,0,0,0)'));
+        });
 
         // LOD: Apply filter to main trace values
         const mainValues = trace === 0 || trace === undefined ? this._applyLOD(values) : values;
@@ -2178,6 +2210,41 @@ export class PropertiesMap {
      * Get the mask of selected points based on the current selection mode
      */
     private _getSelectionMask(): boolean[] {
+        return this._cachedPointValues('selectionMask', [this._selectionKey()], () =>
+            this._computeSelectionMask()
+        );
+    }
+
+    /** Key identifying the current selection mask, from the options it depends on */
+    private _selectionKey(): string {
+        const select = this._options.color.select;
+        return [
+            this._target,
+            select.mode.value,
+            this._rangeProperty(),
+            select.category.value,
+            select.min.value,
+            select.max.value,
+        ].join('\n');
+    }
+
+    /**
+     * Get the per-point values called `name`, only calling `compute` if some of
+     * the `inputs` they depend on changed since the last call
+     */
+    private _cachedPointValues<T>(name: string, inputs: unknown[], compute: () => T[]): T[] {
+        const key = inputs.map(String).join('\n');
+        const cached = this._pointValues.get(name);
+        if (cached?.key === key) {
+            return cached.values as T[];
+        }
+        const values = compute();
+        this._pointValues.set(name, { key, values });
+        return values;
+    }
+
+    /** Compute the mask of selected points, see `_getSelectionMask` */
+    private _computeSelectionMask(): boolean[] {
         const n = this._property(this._options.x.property.value).values.length;
         if (this._options.color.select.mode.value === 'all') {
             return new Array<boolean>(n).fill(true);
@@ -2318,16 +2385,37 @@ export class PropertiesMap {
         return colors;
     }
 
+    /**
+     * Layout update for the current color range. Plotly computes the colors of
+     * WebGL points when processing the trace data, not when the range changes,
+     * so this must be applied together with the point colors.
+     */
+    private _colorRangeLayout(): Record<string, unknown> {
+        return {
+            'coloraxis.cmin': this._options.color.min.value,
+            'coloraxis.cmax': this._options.color.max.value,
+        };
+    }
+
     /** Refresh legend colors */
     private _restyleLegendColors(): void {
-        const colors = this._legendColors();
-        if (colors.length === 0) {
-            return;
-        }
+        // The first three traces hold the points, selection and invisible
+        // colorbar points. Restyling replots everything, so only update the
+        // legend traces which colors changed
+        const colors: string[] = [];
+        const traces: number[] = [];
+        const data = (this._plot.data ?? []) as { marker?: { color?: unknown } }[];
+        this._legendColors().forEach((color, i) => {
+            const trace = data[3 + i];
+            if (trace?.marker?.color !== color) {
+                colors.push(color);
+                traces.push(3 + i);
+            }
+        });
 
-        // The first three traces hold the points, selection and invisible colorbar points
-        const traces = colors.map((_, i) => 3 + i);
-        this._restyle({ 'marker.color': colors } as unknown as Data, traces);
+        if (traces.length !== 0) {
+            this._restyle({ 'marker.color': colors } as unknown as Data, traces);
+        }
     }
 
     /**
