@@ -6,7 +6,8 @@ import struct
 import tempfile
 import unittest
 
-from chemiscope.headless import headless
+from chemiscope import write_external_structures
+from chemiscope.headless import headless, headless_input
 
 
 class TestHeadless(unittest.TestCase):
@@ -108,6 +109,43 @@ class TestHeadless(unittest.TestCase):
             data = json.load(f)
 
         self.assertIn("meta", data)
+
+    def test_headless_input(self):
+        path = os.path.join(self.tmp_dir, "data.json.gz")
+        self.widget.save(path)
+
+        settings = {"map": {"x": {"property": "energy"}}}
+        widget = headless_input(path, settings=settings)
+        try:
+            self.assertEqual(widget.settings["map"]["x"]["property"], "energy")
+            image = widget.get_structure_image()
+            self.assertTrue(image.startswith(b"\x89PNG\r\n\x1a\n"))
+        finally:
+            widget.close()
+
+    def test_non_finite_values(self):
+        properties = {
+            "index": {"target": "structure", "values": [0, 1]},
+            "energy": {"target": "structure", "values": [float("nan"), float("inf")]},
+        }
+        widget = headless(structures=self.structures, properties=properties)
+        try:
+            script = "() => visualizer._dataset.properties.energy.values.map(String)"
+            values = widget._run_sync(widget._page.evaluate(script))
+            self.assertEqual(values, ["NaN", "Infinity"])
+        finally:
+            widget.close()
+
+    def test_external_structures(self):
+        prefix = os.path.join(self.tmp_dir, "structure")
+        structures = write_external_structures(self.structures, prefix=prefix)
+        widget = headless(structures=structures, mode="structure")
+        try:
+            images = widget.get_structure_sequence([0, 1])
+            self.assertEqual(len(images), 2)
+            self.assertNotEqual(images[0], images[1])
+        finally:
+            widget.close()
 
     def test_missing_visualizer_errors(self):
         # Test structure-only mode

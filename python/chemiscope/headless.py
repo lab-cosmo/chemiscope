@@ -2,16 +2,18 @@ import asyncio
 import atexit
 import base64
 import gzip
+import http.server
 import json
+import math
 import os
-import tempfile
+import secrets
 import threading
 import warnings
 from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
 
-from .input import create_input
+from .input import _read_input, create_input
 
 
 try:
@@ -240,39 +242,67 @@ class ChemiscopeHeadless(HasTraits):
 
         config = {key: f"chemiscope-{key}" for key in config_keys}
 
-        # Write dataset to a temp JS file and load via add_script_tag(path=...)
-        # which reads the file directly into the browser. This is orders of
-        # magnitude faster than page.evaluate(script, data) for large datasets,
-        # because evaluate() serializes data through CDP which is extremely slow
-        # (e.g. 300s for 50MB vs 15s with script tag).
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".js", delete=False, prefix="chemiscope_"
-        ) as f:
-            f.write("window.__chsp_data = ")
-            json.dump(data, f)
-            f.write(";")
-            tmp_path = f.name
+        # Keep the structures in Python and send them to the browser when they
+        # are displayed, instead of sending the whole dataset upfront, which
+        # would fail for large datasets
+        self._structures = data["structures"]
+        dataset = dict(data)
+        dataset["structures"] = [
+            {"size": structure["size"], "data": i}
+            for i, structure in enumerate(self._structures)
+        ]
+        self._run_sync(
+            self._page.expose_function("__chsp_load_structure", self._load_structure)
+        )
 
-        try:
-            # use a large timeout as it might take some time to load the dataset
-            self._run_sync(self._page.add_script_tag(path=tmp_path), timeout=300)
-        finally:
-            os.unlink(tmp_path)
+        # Send the rest of the dataset as JSON, which is much faster to parse in
+        # the browser than the equivalent JavaScript code
+        dataset_json, has_non_finite = _to_json(dataset)
+        server, url = _serve(dataset_json.encode("utf8"))
 
         script = f"""
             async () => {{
-                const dataset = window.__chsp_data;
-                delete window.__chsp_data;
+                const response = await fetch({json.dumps(url)});
+                // non-finite values are sent as strings, see `_to_json`
+                const nonFinite = new Map([
+                    ['__chemiscope_nan__', NaN],
+                    ['__chemiscope_inf__', Infinity],
+                    ['__chemiscope_-inf__', -Infinity],
+                ]);
+                const reviver = (_, value) =>
+                    nonFinite.has(value) ? nonFinite.get(value) : value;
+                const dataset = JSON.parse(
+                    await response.text(),
+                    {json.dumps(has_non_finite)} ? reviver : undefined
+                );
+
                 const config = {json.dumps(config)};
+                if (config.structure !== undefined) {{
+                    config.loadStructure = (_, structure) =>
+                        window.__chsp_load_structure(structure.data);
+                }}
                 window.visualizer = await Chemiscope.{vis_class}.load(config, dataset);
                 return 'loaded';
             }}
         """
 
-        self._run_sync(self._page.evaluate(script))
+        try:
+            # use a large timeout as it might take some time to load the dataset
+            self._run_sync(self._page.evaluate(script), timeout=300)
+        finally:
+            server.shutdown()
+            server.server_close()
+
         # ensure initial settings are applied
         if self.settings:
             self._apply_settings(self.settings)
+
+    def _load_structure(self, index):
+        structure = self._structures[index]
+        if "data" in structure:
+            # structure stored in an external file, see `write_external_structures`
+            return _read_input(structure["data"], "chemiscope.headless")
+        return structure
 
     # connect traitlets
     @observe("settings")
@@ -528,3 +558,77 @@ def headless(
     )
 
     return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
+
+
+def headless_input(
+    path, *, settings=None, mode="default", width=None, height=None, **kwargs
+):
+    """
+    Create a headless Chemiscope instance from the chemiscope input in ``path``,
+    which can be a ``.json`` or ``.json.gz`` file, or a file-like object.
+
+    :param dict settings: override the default settings in the input, as in
+        :py:func:`chemiscope.show_input`
+
+    The other parameters match those of :py:func:`chemiscope.headless`.
+    """
+    data = _read_input(path, "chemiscope.headless_input")
+
+    if settings is not None:
+        if not isinstance(settings, dict):
+            raise ValueError(
+                f"expected 'settings' to be a dict, got {type(settings)} instead"
+            )
+        data.setdefault("settings", {}).update(settings)
+
+    return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
+
+
+def _serve(body):
+    """
+    Serve ``body`` from a local HTTP server, and return the server and the URL
+    of the data. This is much faster than sending large data to the browser
+    through Playwright, e.g. with ``page.route``.
+    """
+    path = "/" + secrets.token_urlsafe(16)
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path != path:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, f"http://127.0.0.1:{server.server_address[1]}{path}"
+
+
+def _to_json(data):
+    """
+    Convert ``data`` to JSON. NaN and infinite values are not valid JSON, and are
+    replaced by strings. The second returned value is ``True`` if this happened.
+    """
+    try:
+        return json.dumps(data, allow_nan=False), False
+    except ValueError:
+        return json.dumps(_replace_non_finite(data), allow_nan=False), True
+
+
+def _replace_non_finite(value):
+    if isinstance(value, float) and not math.isfinite(value):
+        # "nan", "inf" or "-inf"
+        return f"__chemiscope_{value}__"
+    elif isinstance(value, dict):
+        return {key: _replace_non_finite(v) for key, v in value.items()}
+    elif isinstance(value, (list, tuple)):
+        return [_replace_non_finite(v) for v in value]
+    return value

@@ -681,6 +681,30 @@ def write_input(
         json.dump(data, path, indent=2)
 
 
+def _read_input(path, function):
+    """
+    Read the chemiscope input in ``path``, which can be a path to a ``.json`` or
+    ``.json.gz`` file, or a file-like object. ``function`` is the name of the
+    public function calling this one, used in error messages.
+    """
+    if isinstance(path, Path):
+        path = str(path)
+
+    if isinstance(path, str):
+        if path.endswith(".gz"):
+            with gzip.open(path, "rt") as f:
+                return json.load(f)
+        elif path.endswith(".json"):
+            with open(path, "rt") as f:
+                return json.load(f)
+        else:
+            raise ValueError(
+                f"invalid file format in {function}, expected .json or .json.gz"
+            )
+    else:
+        return json.load(path)
+
+
 def _normalize_environments(environments, structures):
     cleaned = []
     for environment in environments:
