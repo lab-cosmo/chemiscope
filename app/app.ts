@@ -6,12 +6,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Warnings, getByID } from '../src/utils';
 import { Dataset } from '../src/dataset';
 import { version, DefaultVisualizer, Settings } from '../src/index';
+import { parseJsonWithNaN } from '../src/reader';
 
 import { inflate } from 'pako';
 
 import {
     loadDatasetStreaming,
-    parseJsonWithNaN,
     progressMessage,
     releaseActiveStream,
     shouldUseStreaming,

@@ -2,11 +2,9 @@ import asyncio
 import atexit
 import base64
 import gzip
-import http.server
 import json
-import math
 import os
-import secrets
+import tempfile
 import threading
 import warnings
 from pathlib import Path
@@ -219,6 +217,7 @@ class ChemiscopeHeadless(HasTraits):
     <div id="chemiscope-map"></div>
     <div id="chemiscope-structure"></div>
     <div id="chemiscope-info"></div>
+    <input type="file" id="chemiscope-dataset" style="display: none">
 </body>
 </html>"""
         self._run_sync(self._page.set_content(html))
@@ -255,26 +254,21 @@ class ChemiscopeHeadless(HasTraits):
             self._page.expose_function("__chsp_load_structure", self._load_structure)
         )
 
-        # Send the rest of the dataset as JSON, which is much faster to parse in
-        # the browser than the equivalent JavaScript code
-        dataset_json, has_non_finite = _to_json(dataset)
-        server, url = _serve(dataset_json.encode("utf8"))
+        # Send the rest of the dataset through a temporary file, which the browser
+        # reads directly and parses incrementally (see `Chemiscope.readDataset`).
+        # This is much faster than going through Playwright for large datasets.
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, prefix="chemiscope_"
+        ) as f:
+            # `json.dumps` is much faster than `json.dump`, which does not use
+            # the C implementation of the encoder
+            f.write(json.dumps(dataset))
+            tmp_path = f.name
 
         script = f"""
             async () => {{
-                const response = await fetch({json.dumps(url)});
-                // non-finite values are sent as strings, see `_to_json`
-                const nonFinite = new Map([
-                    ['__chemiscope_nan__', NaN],
-                    ['__chemiscope_inf__', Infinity],
-                    ['__chemiscope_-inf__', -Infinity],
-                ]);
-                const reviver = (_, value) =>
-                    nonFinite.has(value) ? nonFinite.get(value) : value;
-                const dataset = JSON.parse(
-                    await response.text(),
-                    {json.dumps(has_non_finite)} ? reviver : undefined
-                );
+                const file = document.getElementById('chemiscope-dataset').files[0];
+                const dataset = await Chemiscope.readDataset(file);
 
                 const config = {json.dumps(config)};
                 if (config.structure !== undefined) {{
@@ -287,11 +281,11 @@ class ChemiscopeHeadless(HasTraits):
         """
 
         try:
+            self._run_sync(self._page.set_input_files("#chemiscope-dataset", tmp_path))
             # use a large timeout as it might take some time to load the dataset
             self._run_sync(self._page.evaluate(script), timeout=300)
         finally:
-            server.shutdown()
-            server.server_close()
+            os.unlink(tmp_path)
 
         # ensure initial settings are applied
         if self.settings:
@@ -582,53 +576,3 @@ def headless_input(
         data.setdefault("settings", {}).update(settings)
 
     return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
-
-
-def _serve(body):
-    """
-    Serve ``body`` from a local HTTP server, and return the server and the URL
-    of the data. This is much faster than sending large data to the browser
-    through Playwright, e.g. with ``page.route``.
-    """
-    path = "/" + secrets.token_urlsafe(16)
-
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self):
-            if self.path != path:
-                self.send_error(404)
-                return
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(body)
-
-        def log_message(self, *args):
-            pass
-
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    return server, f"http://127.0.0.1:{server.server_address[1]}{path}"
-
-
-def _to_json(data):
-    """
-    Convert ``data`` to JSON. NaN and infinite values are not valid JSON, and are
-    replaced by strings. The second returned value is ``True`` if this happened.
-    """
-    try:
-        return json.dumps(data, allow_nan=False), False
-    except ValueError:
-        return json.dumps(_replace_non_finite(data), allow_nan=False), True
-
-
-def _replace_non_finite(value):
-    if isinstance(value, float) and not math.isfinite(value):
-        # "nan", "inf" or "-inf"
-        return f"__chemiscope_{value}__"
-    elif isinstance(value, dict):
-        return {key: _replace_non_finite(v) for key, v in value.items()}
-    elif isinstance(value, (list, tuple)):
-        return [_replace_non_finite(v) for v in value]
-    return value
