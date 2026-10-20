@@ -180,6 +180,8 @@ If you want to use chemiscope to generate screenshots or inspect datasets progra
 
 .. autofunction:: chemiscope.headless
 
+.. autofunction:: chemiscope.headless_input
+
 The headless widget provides the same ``settings`` and ``selected_ids`` traitlets as the main widget, and exposes the same methods for saving screenshots and sequences.
 
 .. code-block:: python

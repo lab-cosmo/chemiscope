@@ -10,7 +10,7 @@ from pathlib import Path
 import anywidget
 from traitlets import Bool, Dict, Int, Unicode
 
-from .input import create_input
+from .input import _read_input, create_input
 
 
 # Single ES module loaded by anywidget for all three widget modes. It is built by
@@ -549,23 +549,7 @@ def show_input(
     elif mode == "map":
         widget_class = MapWidget
 
-    if isinstance(path, Path):
-        path = str(path)
-
-    if isinstance(path, str):
-        if path.endswith(".gz"):
-            with gzip.open(path, "rt") as f:
-                dict_input = json.load(f)
-        elif path.endswith(".json"):
-            with open(path, "rt") as f:
-                dict_input = json.load(f)
-        else:
-            raise ValueError(
-                "invalid file format in chemiscope.show_input, expected .json or "
-                ".json.gz"
-            )
-    else:
-        dict_input = json.load(path)
+    dict_input = _read_input(path, "chemiscope.show_input")
 
     try:
         metadata = dict_input["meta"]

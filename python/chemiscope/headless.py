@@ -11,7 +11,7 @@ from pathlib import Path
 
 from traitlets import Dict, HasTraits, observe
 
-from .input import create_input
+from .input import _read_input, create_input
 
 
 try:
@@ -217,6 +217,7 @@ class ChemiscopeHeadless(HasTraits):
     <div id="chemiscope-map"></div>
     <div id="chemiscope-structure"></div>
     <div id="chemiscope-info"></div>
+    <input type="file" id="chemiscope-dataset" style="display: none">
 </body>
 </html>"""
         self._run_sync(self._page.set_content(html))
@@ -240,39 +241,62 @@ class ChemiscopeHeadless(HasTraits):
 
         config = {key: f"chemiscope-{key}" for key in config_keys}
 
-        # Write dataset to a temp JS file and load via add_script_tag(path=...)
-        # which reads the file directly into the browser. This is orders of
-        # magnitude faster than page.evaluate(script, data) for large datasets,
-        # because evaluate() serializes data through CDP which is extremely slow
-        # (e.g. 300s for 50MB vs 15s with script tag).
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".js", delete=False, prefix="chemiscope_"
-        ) as f:
-            f.write("window.__chsp_data = ")
-            json.dump(data, f)
-            f.write(";")
-            tmp_path = f.name
+        # Keep the structures in Python and send them to the browser when they
+        # are displayed, instead of sending the whole dataset upfront, which
+        # would fail for large datasets
+        self._structures = data["structures"]
+        dataset = dict(data)
+        dataset["structures"] = [
+            {"size": structure["size"], "data": i}
+            for i, structure in enumerate(self._structures)
+        ]
+        self._run_sync(
+            self._page.expose_function("__chsp_load_structure", self._load_structure)
+        )
 
-        try:
-            # use a large timeout as it might take some time to load the dataset
-            self._run_sync(self._page.add_script_tag(path=tmp_path), timeout=300)
-        finally:
-            os.unlink(tmp_path)
+        # Send the rest of the dataset through a temporary file, which the browser
+        # reads directly and parses incrementally (see `Chemiscope.readDataset`).
+        # This is much faster than going through Playwright for large datasets.
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, prefix="chemiscope_"
+        ) as f:
+            # `json.dumps` is much faster than `json.dump`, which does not use
+            # the C implementation of the encoder
+            f.write(json.dumps(dataset))
+            tmp_path = f.name
 
         script = f"""
             async () => {{
-                const dataset = window.__chsp_data;
-                delete window.__chsp_data;
+                const file = document.getElementById('chemiscope-dataset').files[0];
+                const dataset = await Chemiscope.readDataset(file);
+
                 const config = {json.dumps(config)};
+                if (config.structure !== undefined) {{
+                    config.loadStructure = (_, structure) =>
+                        window.__chsp_load_structure(structure.data);
+                }}
                 window.visualizer = await Chemiscope.{vis_class}.load(config, dataset);
                 return 'loaded';
             }}
         """
 
-        self._run_sync(self._page.evaluate(script))
+        try:
+            self._run_sync(self._page.set_input_files("#chemiscope-dataset", tmp_path))
+            # use a large timeout as it might take some time to load the dataset
+            self._run_sync(self._page.evaluate(script), timeout=300)
+        finally:
+            os.unlink(tmp_path)
+
         # ensure initial settings are applied
         if self.settings:
             self._apply_settings(self.settings)
+
+    def _load_structure(self, index):
+        structure = self._structures[index]
+        if "data" in structure:
+            # structure stored in an external file, see `write_external_structures`
+            return _read_input(structure["data"], "chemiscope.headless")
+        return structure
 
     # connect traitlets
     @observe("settings")
@@ -526,5 +550,29 @@ def headless(
         settings=settings,
         parameters=parameters,
     )
+
+    return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)
+
+
+def headless_input(
+    path, *, settings=None, mode="default", width=None, height=None, **kwargs
+):
+    """
+    Create a headless Chemiscope instance from the chemiscope input in ``path``,
+    which can be a ``.json`` or ``.json.gz`` file, or a file-like object.
+
+    :param dict settings: override the default settings in the input, as in
+        :py:func:`chemiscope.show_input`
+
+    The other parameters match those of :py:func:`chemiscope.headless`.
+    """
+    data = _read_input(path, "chemiscope.headless_input")
+
+    if settings is not None:
+        if not isinstance(settings, dict):
+            raise ValueError(
+                f"expected 'settings' to be a dict, got {type(settings)} instead"
+            )
+        data.setdefault("settings", {}).update(settings)
 
     return ChemiscopeHeadless(data, mode=mode, width=width, height=height, **kwargs)

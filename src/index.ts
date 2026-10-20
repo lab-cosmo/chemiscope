@@ -20,6 +20,7 @@ import {
     UserStructure,
 } from './dataset';
 import { JsObject, getTarget, validateDataset } from './dataset';
+import { ReadOptions, ReadProgress, parseJsonWithNaN, readDataset } from './reader';
 import { GUID, PositioningCallback, WarningHandler, Warnings, getNextColor } from './utils';
 import {
     AnyShapeParameters,
@@ -989,6 +990,10 @@ function getMapSettings(settings: Partial<Settings> | undefined): Settings {
 export {
     // free functions
     version,
+    readDataset,
+    parseJsonWithNaN,
+    ReadOptions,
+    ReadProgress,
     // dataset definitions
     Dataset,
     Metadata,
