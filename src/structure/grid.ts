@@ -863,7 +863,7 @@ export class ViewersGrid {
             return newGUID;
         } else if (nViewers > this._maxViewers) {
             this.warnings.sendMessage(
-                `Viewer grid cannot contain more than ${this._maxViewers} viewers.`
+                `Viewer grid cannot contain more than ${this._maxViewers} viewer${this._maxViewers === 1 ? '' : 's'}.`
             );
             return newGUID;
         }
