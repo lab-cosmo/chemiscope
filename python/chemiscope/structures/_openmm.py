@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import numpy as np
 
 from ._chemfiles import STANDARD_RESIDUES
@@ -26,13 +28,13 @@ def _openmm_valid_structures(structures):
         # deal with the user passing a single structure
         return [structures], True
     elif (
-        isinstance(structures, list)
+        isinstance(structures, Sequence)
         and len(structures) > 0
         and _is_openmm(structures[0])
     ):
         for structure in structures:
             assert _is_openmm(structure)
-        return structures, True
+        return list(structures), True
     else:
         return structures, False
 

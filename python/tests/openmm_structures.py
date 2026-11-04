@@ -76,6 +76,12 @@ class TestStructures(unittest.TestCase):
             np.allclose(data["structures"][0]["cell"], [23, 0, 0, 5, 22, 0, 0, 1, 11])
         )
 
+    def test_sequences(self):
+        modeller = create_test_modeller()
+        for structures in ([modeller, modeller], (modeller, modeller)):
+            data = chemiscope.create_input(structures)
+            self.assertEqual(len(data["structures"]), 2)
+
     def test_pdbfile(self):
         modeller = create_test_modeller()
         expected = chemiscope.create_input(modeller)["structures"][0]
