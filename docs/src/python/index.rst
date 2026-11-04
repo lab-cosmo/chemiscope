@@ -13,6 +13,7 @@ and `MDAnalysis.AtomGroup`_ objects.
 
     cli
     reference
+    metatomic
     widget
     streamlit
     sphinx

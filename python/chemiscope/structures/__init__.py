@@ -22,6 +22,11 @@ from ._mda import (  # noqa: F401
     _mda_to_json,
     _mda_valid_structures,
 )
+from ._metatomic import (  # noqa: F401
+    _metatomic_all_atomic_environments,
+    _metatomic_to_json,
+    _metatomic_valid_structures,
+)
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
     ellipsoid_from_tensor,
@@ -33,7 +38,7 @@ from ._stk import (  # noqa: F401
 )
 
 
-def _chemiscope_valid_structures(structures):
+def _chemiscope_valid_structures(structures: Sequence) -> tuple[list, bool]:
     """
     Check if the given structures are already in chemiscope format.
 
@@ -68,11 +73,15 @@ def _chemiscope_valid_structures(structures):
     return structures, True
 
 
-def _guess_adapter(structures):
+def _guess_adapter(structures: Sequence) -> tuple[list, str]:
     """
     Guess which adapter to use for the given structures. This function return the
     structures as a list and a string describing which adapter should be used.
     """
+
+    metatomic_structures, use_metatomic = _metatomic_valid_structures(structures)
+    if use_metatomic:
+        return metatomic_structures, "metatomic"
 
     chemiscope_structures, use_chemiscope = _chemiscope_valid_structures(structures)
     if use_chemiscope:
@@ -100,14 +109,14 @@ def _guess_adapter(structures):
         raise Exception(f"unknown structure type: '{structures.__class__.__name__}'")
 
 
-def structures_to_json(structures):
+def structures_to_json(structures: Sequence) -> list:
     """
     Convert the given ``structures`` to the JSON structure used by chemiscope.
 
     This function is a shim calling specialized implementations for all the
     supported structure types. Currently supported structures types include
-    chemiscope-compatible dicts, ``ase.Atoms``, ``stk.BuildingBlocks``, and
-    ``MDAnalysis.AtomGroup`` objects.
+    chemiscope-compatible dicts, ``metatomic.System``, ``ase.Atoms``,
+    ``stk.BuildingBlocks``, and ``MDAnalysis.AtomGroup`` objects.
 
     :param structures: iterable over structures
     """
@@ -117,6 +126,8 @@ def structures_to_json(structures):
         json_data = structures
     elif adapter == "ASE":
         json_data = [_ase_to_json(s) for s in structures]
+    elif adapter == "metatomic":
+        json_data = [_metatomic_to_json(s) for s in structures]
     elif adapter == "chemfiles":
         json_data = [_chemfiles_to_json(s) for s in structures]
     elif adapter == "mda":
@@ -131,7 +142,9 @@ def structures_to_json(structures):
     return json_data
 
 
-def extract_properties(structures=None, only=None, *, environments=None, frames=None):
+def extract_properties(
+    structures=None, only=None, *, environments=None, frames=None
+) -> dict:
     """
     Extract properties defined in the ``structures`` in a chemiscope-compatible format.
 
@@ -153,6 +166,8 @@ def extract_properties(structures=None, only=None, *, environments=None, frames=
 
     structures, adapter = _guess_adapter(structures)
 
+    if adapter == "metatomic":
+        return {}
     if adapter == "ASE":
         return _ase_extract_properties(structures, only, environments)
     elif adapter == "chemfiles":
@@ -168,7 +183,7 @@ def extract_properties(structures=None, only=None, *, environments=None, frames=
         raise Exception("reached unreachable code")
 
 
-def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None):
+def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None) -> list:
     """
     Generate a list of environments containing all the atoms in the given
     ``structures``. The optional spherical ``cutoff`` radius is used to display the
@@ -194,6 +209,8 @@ def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None):
 
     if adapter == "ASE":
         return _ase_all_atomic_environments(structures, cutoff)
+    elif adapter == "metatomic":
+        return _metatomic_all_atomic_environments(structures, cutoff)
     elif adapter == "chemfiles":
         return _chemfiles_all_atomic_environments(structures, cutoff)
     elif adapter == "mda":

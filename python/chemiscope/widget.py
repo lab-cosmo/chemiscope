@@ -616,7 +616,7 @@ def show(
     levels, pass ``settings={"map": {"useLOD": False}}``.
 
     :param structures: list of atomic structures. These can be `chemiscope` compatible
-        dictionaries, `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_,
+        dictionaries, ``metatomic.System``, `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_,
         `stk.BuildingBlock
         <https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html>`_,
         or `MDAnalysis.AtomGroup

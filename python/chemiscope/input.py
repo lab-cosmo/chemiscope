@@ -33,8 +33,8 @@ def create_input(
     chemiscope visualizer.
 
     :param list structures: list of atomic structures. These can be either `chemiscope`
-        compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
-        `MDAnalysis.AtomGroup`_ objects.
+        compatible dictionaries, ``metatomic.System``, `ase.Atoms`_,
+        `stk.BuildingBlocks`_, and `MDAnalysis.AtomGroup`_ objects.
 
     :param dict metadata: optional metadata of the dataset, see below
 
