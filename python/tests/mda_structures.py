@@ -84,6 +84,21 @@ class TestStructures(unittest.TestCase):
         ]
         self.assertTrue(np.allclose(data["structures"][0]["cell"], cell))
 
+    def test_nucleotide_residues(self):
+        # MDAnalysis' `nucleic` selection misses some force-field names
+        names = ["G5", "C3", "RA5", "DA", "NAG", "HOH"]
+        u = mda.Universe.empty(
+            n_atoms=6, n_residues=6, atom_resindex=range(6), trajectory=True
+        )
+        u.add_TopologyAttr("type", ["C"] * 6)
+        u.add_TopologyAttr("resname", names)
+        u.add_TopologyAttr("resid", range(1, 7))
+        u.add_TopologyAttr("chainID", ["A"] * 6)
+
+        structure = chemiscope.create_input(u.atoms)["structures"][0]
+        self.assertEqual(structure["resnames"], names)
+        self.assertEqual(structure["hetatom"], [False, False, False, False, True, True])
+
 
 class TestExtractProperties(unittest.TestCase):
     """Properties extraction"""

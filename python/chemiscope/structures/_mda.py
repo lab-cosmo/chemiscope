@@ -2,6 +2,8 @@ import warnings
 
 import numpy as np
 
+from ._chemfiles import STANDARD_RESIDUES
+
 
 try:
     import MDAnalysis as mda
@@ -58,6 +60,8 @@ def _mda_to_json(ag):
         ]
         # atom selection requires the `resname`
         hetatom[ag.select_atoms("protein or nucleic").indices] = False
+        # MDAnalysis does not know all force-field names of nucleotides
+        hetatom[np.isin(data["resnames"], list(STANDARD_RESIDUES))] = False
 
     if hasattr(ag, "resids") and ag.resids is not None:
         data["resids"] = ag.resids.view(dtype=int).tolist()
