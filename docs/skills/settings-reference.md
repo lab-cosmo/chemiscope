@@ -57,7 +57,8 @@ covers) or when you need exact field names, defaults, and accepted values.
     "keepOrientation": False,             # keep camera across frames (trajectories)
     "playbackDelay": 700,                 # ms between frames
     "rotation": False,                    # auto-spin
-    "cartoon": False,                     # cartoon representation (biomolecules)
+    "cartoon": False,                     # cartoon for proteins and nucleic acids
+    "snfg": True,                         # carbohydrates as 3D-SNFG symbols
     "shape": "",                          # shape name(s) to display, comma-separated
     "color": {                            # color atoms by a property
         "property": "element",
@@ -86,6 +87,13 @@ Shared by `map.color.palette` and `structure[].color.palette`:
 
 ## Notes & legacy quirks
 
+- `cartoon` and `snfg` need the residue fields (`resnames`, `resids`, `chains`,
+  `hetatom`); `cartoon` is switched on when they are present and `snfg` is on by
+  default. `cartoon` draws
+  nucleobases as filled rings (A red, C yellow, G green, T blue, U cyan) and accepts PDB
+  (`DA`, `A`), Amber (`DA5`, `RA3`, `A5`) and CHARMM (`ADE`) nucleotide names. `snfg`
+  replaces the atoms of known monosaccharides (PDB codes such as `NAG`, `MAN`, `FUC`,
+  `SIA`, CHARMM and GLYCAM names such as `4YB`) with SNFG symbols linked by sticks.
 - The TypeScript validators are the source of truth for accepted values. Some older docs
   show values the current code rewrites: `color.scale` → `color.mode`; a top-level
   `settings.palette` → `color.palette`; size `mode: "constant"` → `property: ""`;

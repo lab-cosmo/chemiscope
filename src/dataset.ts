@@ -162,7 +162,8 @@ export interface Structure {
     chains?: string[];
     /**
      * Wether an atom is a heteroatom, i.e. not part of a biomolecule (protein, dna, …).
-     * If this is not provided, it is assumed to be true for all atoms.
+     * If this is not provided, it is assumed to be true for all atoms. Carbohydrates
+     * are always treated as heteroatoms.
      *
      * This is only used for secondary structure assignment and cartoon representation.
      */

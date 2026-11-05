@@ -262,6 +262,7 @@ import MDAnalysis as mda
 u = mda.Universe("protein.pdb")
 chemiscope.show(structures=u.atoms, mode="structure",
                 settings=chemiscope.quick_settings(structure_settings={"cartoon": True}))
+# nucleic acids get cartoons too, and glycans 3D-SNFG symbols ("snfg": False for atoms)
 ```
 
 ## Metadata
