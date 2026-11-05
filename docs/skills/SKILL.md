@@ -6,7 +6,8 @@ description: >-
   write_input() datasets, visualizing forces or vectors as arrows, atom-centered
   (per-environment) properties, custom shapes (spheres, ellipsoids, arrows, meshes),
   configuring map/structure display settings, or embedding chemiscope in Sphinx docs or
-  a Streamlit app. Covers ASE / chemfiles / MDAnalysis / stk inputs and the JSON format.
+  a Streamlit app. Covers ASE / chemfiles / MDAnalysis / stk / OpenMM inputs and the
+  JSON format.
 ---
 
 # Chemiscope in Python
@@ -18,7 +19,7 @@ sync: a 2D **property map** (Plotly scatter), a 3D **structure viewer** (3Dmol),
 **info** panel.
 
 > Requires `pip install chemiscope`. Reading structures needs a backend such as `ase`
-> (`pip install ase`), or `chemfiles` / `MDAnalysis` / `stk`.
+> (`pip install ase`), or `chemfiles` / `MDAnalysis` / `stk` / `openmm`.
 
 ## Reference files (load on demand)
 
@@ -78,6 +79,7 @@ Swap `show(...)` for `write_input("out.json.gz", ...)` (same args) to save inste
 | `MDAnalysis.AtomGroup` | `MDAnalysis` | Each trajectory frame → one structure; good for biomolecules. |
 | chemfiles `Frame` / `Trajectory` | `chemfiles` (>=0.10,<0.11) | PDB, trajectories, biomolecule metadata. |
 | `stk.Molecule` | `stk` | Bonds included; **no cell, no stored properties**. |
+| `openmm.app.Modeller` / `PDBFile` / `PDBxFile` | `openmm` | Anything with `.topology` + `.positions`; bonds and residue info included; **no stored properties**. |
 | chemiscope structure `dict` | — | Hand-built (schema below). |
 
 ASE emits a `cell` only for periodic systems (non-zero lattice).

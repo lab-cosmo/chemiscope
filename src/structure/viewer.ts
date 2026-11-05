@@ -861,13 +861,15 @@ export class MoleculeViewer {
     private _connectEnvironmentSettings(): void {
         this._options.environments.bgColor.onchange.push(() => this._restyleAndRender());
         this._options.environments.bgStyle.onchange.push(() => this._restyleAndRender());
-        this._options.environments.cutoff.onchange.push(() => {
+        const rehighlight = () => {
             if (this._highlighted !== undefined) {
                 const previousDefaultCutoff = this._defaultCutoff(this._highlighted.center);
                 this._changeHighlighted(this._highlighted.center, previousDefaultCutoff);
             }
             this._restyleAndRender();
-        });
+        };
+        this._options.environments.cutoff.onchange.push(rehighlight);
+        this._options.environments.byResidue.onchange.push(rehighlight);
         this._options.environments.center.onchange.push((center) => {
             if (!this._options.keepOrientation.value) {
                 this._resetView();
@@ -889,21 +891,14 @@ export class MoleculeViewer {
                     // If we already have a highlighted environment, recreate the model
                     // to ensure that 3Dmol updates the transparency correctly
                     const center = this._highlighted.center;
-                    const cutoff = this._options.environments.cutoff.value;
 
                     this._viewer.removeModel(this._highlighted.model);
 
                     // We need to create a separate model to have different opacity
                     // for the background & highlighted atoms
                     // https://github.com/3dmol/3Dmol.js/issues/166
-                    const selection = {
-                        or: [
-                            { index: center },
-                            { within: { distance: cutoff, sel: { index: center } } },
-                        ],
-                    };
                     this._highlighted = {
-                        model: this._viewer.createModelFrom(selection),
+                        model: this._viewer.createModelFrom(this._environmentSelection(center)),
                         center: center,
                     };
                     // initialize with main style
@@ -2187,6 +2182,7 @@ export class MoleculeViewer {
             moreOptionsBtn.style.display = '';
 
             this._options.environments.cutoff.enable();
+            this._options.environments.byResidue.enable();
             this._options.environments.bgStyle.enable();
             this._options.environments.bgColor.enable();
             this._options.environments.center.enable();
@@ -2203,10 +2199,26 @@ export class MoleculeViewer {
             moreOptionsBtn.style.display = 'none';
 
             this._options.environments.cutoff.disable();
+            this._options.environments.byResidue.disable();
             this._options.environments.bgStyle.disable();
             this._options.environments.bgColor.disable();
             this._options.environments.center.disable();
         }
+    }
+
+    /**
+     * Atoms of the environment around `center`: the central atom and every
+     * atom inside the cutoff, extended to whole residues if requested
+     */
+    private _environmentSelection(center: number): $3Dmol.AtomSelectionSpec {
+        const within: $3Dmol.AtomSelectionSpec = {
+            within: { distance: this._options.environments.cutoff.value, sel: { index: center } },
+        };
+        if (this._options.environments.byResidue.value) {
+            // 3Dmol follows bonds to collect every atom with the same chain & resi
+            within.byres = true;
+        }
+        return { or: [{ index: center }, within] };
     }
 
     /**
@@ -2249,15 +2261,8 @@ export class MoleculeViewer {
             // We need to create a separate model to have different opacity
             // for the background & highlighted atoms
             // https://github.com/3dmol/3Dmol.js/issues/166
-            // prettier-ignore
-            const selection = {
-                or: [
-                    { index: center },
-                    { within: { distance: this._options.environments.cutoff.value, sel: { index: center } } },
-                ],
-            };
             this._highlighted = {
-                model: this._viewer.createModelFrom(selection),
+                model: this._viewer.createModelFrom(this._environmentSelection(center)),
                 center: center,
             };
             // initialize with main style

@@ -33,8 +33,9 @@ def create_input(
     chemiscope visualizer.
 
     :param list structures: list of atomic structures. These can be either `chemiscope`
-        compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_, and
-        `MDAnalysis.AtomGroup`_ objects.
+        compatible dictionaries, or `ase.Atoms`_, `stk.BuildingBlocks`_,
+        `MDAnalysis.AtomGroup`_, and OpenMM objects with ``topology`` and
+        ``positions`` (e.g. `openmm.app.Modeller`_ or ``openmm.app.PDBFile``).
 
     :param dict metadata: optional metadata of the dataset, see below
 
@@ -303,6 +304,7 @@ def create_input(
     .. _`ase.Atoms`: https://ase-lib.org/ase/ase/atoms.html
     .. _`stk.BuildingBlocks`: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html#stk.BuildingBlock
     .. _`MDAnalysis.AtomGroup`: https://docs.mdanalysis.org/2.9.0/documentation_pages/core/groups.html#MDAnalysis.core.groups.AtomGroup
+    .. _`openmm.app.Modeller`: https://docs.openmm.org/latest/api-python/generated/openmm.app.modeller.Modeller.html
     """
 
     if frames is not None:
