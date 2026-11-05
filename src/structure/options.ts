@@ -52,6 +52,8 @@ export class StructureOptions extends OptionsGroup {
         center: HTMLOption<'boolean'>;
         // the cutoff value for spherical environments
         cutoff: HTMLOption<'number'>;
+        // extend the environment to every residue with an atom inside the cutoff
+        byResidue: HTMLOption<'boolean'>;
         // which style for atoms not in the environment
         bgStyle: HTMLOption<'string'>;
         // which colors for atoms not in the environment
@@ -117,6 +119,7 @@ export class StructureOptions extends OptionsGroup {
             activated: new HTMLOption('boolean', true),
             bgColor: new HTMLOption('string', 'grey'),
             bgStyle: new HTMLOption('string', 'ball-stick'),
+            byResidue: new HTMLOption('boolean', false),
             center: new HTMLOption('boolean', false),
             cutoff: new HTMLOption('number', 4.0),
         };
@@ -355,6 +358,7 @@ export class StructureOptions extends OptionsGroup {
         this.environments.bgColor.bind(this.getModalElement('env-bg-color'), 'value');
         this.environments.bgStyle.bind(this.getModalElement('env-bg-style'), 'value');
         this.environments.cutoff.bind(this.getModalElement('env-cutoff'), 'value');
+        this.environments.byResidue.bind(this.getModalElement('env-by-residue'), 'checked');
         this.environments.center.bind(this.getModalElement('env-center'), 'checked');
     }
 }

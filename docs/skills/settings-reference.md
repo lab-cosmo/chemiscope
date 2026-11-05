@@ -69,6 +69,7 @@ covers) or when you need exact field names, defaults, and accepted values.
         "activated": True,
         "center": False,                  # auto-center the environment
         "cutoff": 4.0,                    # >= 0
+        "byResidue": False,               # whole residues with an atom inside the cutoff
         "bgStyle": "ball-stick",          # "ball-stick" | "licorice" | "cartoon" | "hide"
         "bgColor": "grey",                # "grey" | "CPK" | "property"
     },
