@@ -173,7 +173,9 @@ represented as an object with the following fields:
      - ``["A", "A", "B"]``
    * - ``hetatom``
      - bool[]
-     - Marks heteroatoms (non-standard or non-biopolymer atoms)
+     - Marks heteroatoms (non-standard or non-biopolymer atoms). Standard
+       amino acids and nucleotides should be ``false`` to be drawn as cartoon,
+       carbohydrates are always drawn as heteroatoms
      - No
      - ``[false, false, true]``
 
@@ -936,8 +938,14 @@ Array of objects (one per viewer).
      - false
    * - ``cartoon``
      - bool
-     - Show cartoon representation (for biomolecules)
+     - Show cartoon representation for proteins and nucleic acids, with
+       nucleobases drawn as filled rings
      - false
+   * - ``snfg``
+     - bool
+     - Show carbohydrates as 3D-SNFG symbols (`Symbol Nomenclature for Glycans
+       <https://www.ncbi.nlm.nih.gov/glycans/snfg.html>`_), linked by sticks
+     - true
    * - ``axes``
      - string
      - Axis system: ``"off"|"xyz"|"abc"``

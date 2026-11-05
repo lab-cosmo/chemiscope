@@ -7,6 +7,7 @@ import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './topology';
+import { biomolDecorations, nucleobase } from './biomol';
 
 import {
     arrayMaxMin,
@@ -100,6 +101,8 @@ export class MoleculeViewer {
     };
     /// Axes shown, if any
     private _axes?: [LabeledArrow, LabeledArrow, LabeledArrow];
+    /// Nucleobase rings and carbohydrate symbols currently shown
+    private _biomolShapes: $3Dmol.GLShape[] = [];
     /// Color bar shown, if any
     private _colorBar?: ColorBar;
 
@@ -510,6 +513,7 @@ export class MoleculeViewer {
             this._viewer.removeAllShapes();
             this._viewer.removeUnitCell(this._current.model);
             this._axes = undefined;
+            this._biomolShapes = [];
         }
 
         if (this._highlighted !== undefined) {
@@ -759,6 +763,7 @@ export class MoleculeViewer {
 
     private _connectRepresentationSettings(): void {
         this._options.cartoon.onchange.push(() => this._restyleAndRender());
+        this._options.snfg.onchange.push(() => this._restyleAndRender());
         this._options.spaceFilling.onchange.push(() => this._restyleAndRender());
         this._options.bonds.onchange.push(() => this._restyleAndRender());
         this._options.atoms.onchange.push(() => this._restyleAndRender());
@@ -1180,6 +1185,7 @@ export class MoleculeViewer {
             this._current.model.setStyle({ hetflag: true }, this._mainStyle(false));
             // render non-hetero atoms with protein mode (e.g. cartoon)
             this._current.model.setStyle({ hetflag: false }, this._mainStyle(true));
+            this._updateBiomolShapes();
             // if there is a selected atom, render it larger and in green
             if (this._highlighted !== undefined) {
                 // hide all atoms in the highlighted model
@@ -1203,10 +1209,43 @@ export class MoleculeViewer {
 
             // and the environment around the central atom with main style
             this._highlighted.model.setStyle({}, this._mainStyle());
+            this._removeBiomolShapes();
         }
 
         // update atom labels as well, as they depend on atom styling
         this._updateAtomLabels();
+    }
+
+    private _removeBiomolShapes(): void {
+        this._biomolShapes.forEach((shape) => this._viewer.removeShape(shape));
+        this._biomolShapes = [];
+    }
+
+    /**
+     * Draw nucleobases as rings in cartoon mode, and carbohydrates as SNFG
+     * symbols, hiding the corresponding atoms
+     */
+    private _updateBiomolShapes(): void {
+        this._removeBiomolShapes();
+        const cartoon = this._options.cartoon.value;
+        const snfg = this._options.snfg.value;
+        if (this._current?.structure.resnames === undefined || !(cartoon || snfg)) {
+            return;
+        }
+
+        const model = this._current.model;
+        const { meshes, hidden } = biomolDecorations(model.selectedAtoms({}), cartoon, snfg);
+        // N1/N3 are the end of 3Dmol's own base cylinders, which we replace
+        const baseEnd = (atom: $3Dmol.AtomSpec) =>
+            cartoon &&
+            !atom.hetflag &&
+            ['N1', 'N3'].includes(atom.atom ?? '') &&
+            nucleobase(atom.resn ?? '') !== undefined;
+        model.setStyle(
+            { predicate: (atom: $3Dmol.AtomSpec) => hidden.has(atom.index ?? -1) || baseEnd(atom) },
+            {}
+        );
+        this._biomolShapes = meshes.map((mesh) => this._viewer.addCustom(mesh));
     }
 
     private _addAxes(value: string): void {
@@ -1254,6 +1293,7 @@ export class MoleculeViewer {
 
         this._viewer.removeAllShapes();
         this._axes = undefined;
+        this._biomolShapes = [];
 
         // removeAllShapes also removes the unit cell, so let's add it back
         if (this._options.unitCell.value) {
