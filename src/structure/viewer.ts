@@ -7,7 +7,7 @@ import assert from 'assert';
 
 import * as $3Dmol from '3dmol';
 import { assignBonds } from './topology';
-import { biomolDecorations, nucleobase } from './biomol';
+import { biomolDecorations, meshBounds, nucleobase } from './biomol';
 
 import {
     arrayMaxMin,
@@ -1240,7 +1240,17 @@ export class MoleculeViewer {
             { predicate: (atom: $3Dmol.AtomSpec) => hidden.has(atom.index ?? -1) || baseEnd(atom) },
             {}
         );
-        this._biomolShapes = meshes.map((mesh) => this._viewer.addCustom(mesh));
+        this._biomolShapes = meshes.map((mesh) => {
+            const shape = this._viewer.addCustom(mesh);
+            // give the shape its bounding sphere, or `zoomTo` would frame the
+            // structure together with a point at the origin
+            const { center, radius } = meshBounds(mesh.vertexArr ?? []);
+            shape.boundingSphere = new $3Dmol.Sphere(
+                { x: center[0], y: center[1], z: center[2] },
+                radius
+            );
+            return shape;
+        });
     }
 
     private _addAxes(value: string): void {

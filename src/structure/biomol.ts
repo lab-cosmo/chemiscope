@@ -522,6 +522,24 @@ const IMIDAZOLE_RING = ['C4', 'C5', 'N7', 'C8', 'N9'];
 /** Thickness of the base slabs and radius of the links, in Angstrom */
 const [BASE_THICKNESS, LINK_RADIUS, LINK_COLOR] = [0.5, 0.3, 0xaaaaaa];
 
+/**
+ * Bounding sphere of a mesh, which 3Dmol only works out for shapes that are
+ * clickable. `zoomTo` reads it for every shape, and an unset one sits at the
+ * origin with a radius of zero, dragging the whole view towards it.
+ */
+export function meshBounds(vertices: $3Dmol.XYZ[]): { center: Vec; radius: number } {
+    const points = vertices.map((v): Vec => [v.x, v.y, v.z]);
+    const center = scale(
+        points.reduce<Vec>((sum, p) => add(sum, p), [0, 0, 0]),
+        1 / (points.length || 1)
+    );
+    const radius = points.reduce((max, p) => {
+        const d = sub(p, center);
+        return Math.max(max, Math.sqrt(dot(d, d)));
+    }, 0);
+    return { center, radius };
+}
+
 export interface Decorations {
     /** meshes for base rings, saccharide symbols and the links between them */
     meshes: $3Dmol.CustomShapeSpec[];
