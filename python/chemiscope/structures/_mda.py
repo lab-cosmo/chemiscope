@@ -76,7 +76,19 @@ def _mda_to_json(ag):
         local[ag.indices] = np.arange(ag.n_atoms)
         pairs = local[ag.bonds.indices] if len(ag.bonds) > 0 else np.empty((0, 2), int)
         pairs = pairs[(pairs >= 0).all(axis=1)]
-        data["bonds"] = np.hstack((pairs, np.full((len(pairs), 1), 1))).tolist()
+        # a PDB only has to CONECT its non-standard residues, so MDAnalysis
+        # often ends up knowing the bonds of a ligand and nothing else. The
+        # viewer works bonds out from the geometry when it is given none, but
+        # trusts the list when there is one, and would then draw the rest of
+        # the structure as loose atoms. So only pass the bonds on when every
+        # residue that could have one does.
+        bonded = np.zeros(ag.n_atoms, dtype=bool)
+        bonded[pairs.ravel()] = True
+        residue = getattr(ag, "resindices", np.zeros(ag.n_atoms, dtype=int))
+        _, residue = np.unique(residue, return_inverse=True)
+        sizes = np.bincount(residue)
+        if len(pairs) > 0 and np.all((sizes == 1) | (np.bincount(residue, bonded) > 0)):
+            data["bonds"] = np.hstack((pairs, np.full((len(pairs), 1), 1))).tolist()
 
     data["hetatom"] = hetatom.tolist()
 
