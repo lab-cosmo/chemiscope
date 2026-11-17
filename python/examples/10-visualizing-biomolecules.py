@@ -1,11 +1,11 @@
 """
-Visualize biomolecules with MDAnalysis or chemfiles
-===================================================
+Visualize biomolecules with MDAnalysis, chemfiles or OpenMM
+===========================================================
 
 This example shows how to visualize biomolecules in chemiscope with `MDAnalysis
-<https://www.mdanalysis.org/>`_ or `chemfiles <https://chemfiles.org/>`_, and
-how to leverage the selection capabilities of these libraries to show only a
-subset of the atoms.
+<https://www.mdanalysis.org/>`_, `chemfiles <https://chemfiles.org/>`_ or `OpenMM
+<https://openmm.org/>`_, and how to leverage the selection capabilities of these
+libraries to show only a subset of the atoms.
 
 Biomolecules often contain a large number of atoms, which makes the classical
 ball-and-stick representation of molecules hard to be understand.
@@ -18,6 +18,8 @@ import urllib.request
 import chemfiles
 import MDAnalysis as mda
 import numpy as np
+import openmm.app
+import openmm.unit
 from MDAnalysis.analysis.rms import RMSD
 from MDAnalysis.tests.datafiles import GRO_MEMPROT, XTC_MEMPROT
 
@@ -116,6 +118,93 @@ chemiscope.show(
     structures=frame,
     mode="structure",
     settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
+)
+
+
+# %%
+#
+# Using OpenMM
+# ++++++++++++
+#
+# `OpenMM <https://openmm.org/>`_ keeps a structure as a topology plus a set of
+# positions, and chemiscope accepts anything carrying those two attributes:
+# ``openmm.app.PDBFile``, ``openmm.app.PDBxFile``, ``openmm.app.Modeller``, and
+# whatever else is built on top of them.
+
+pdb = openmm.app.PDBFile(f"./{pdb_id}.pdb")
+
+chemiscope.show(
+    structures=pdb,
+    mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
+)
+
+# %%
+#
+# Selecting atoms of interest
+# ---------------------------
+#
+# OpenMM edits a structure through ``openmm.app.Modeller``, so dropping the
+# crystallographic water means deleting those residues. The modeller itself is a
+# valid chemiscope structure, so there is nothing to convert afterwards.
+
+modeller = openmm.app.Modeller(pdb.topology, pdb.positions)
+modeller.delete(
+    [residue for residue in modeller.topology.residues() if residue.name == "HOH"]
+)
+
+chemiscope.show(
+    structures=modeller,
+    mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
+)
+
+# %%
+#
+# Showing a binding site as whole residues
+# ----------------------------------------
+#
+# 10MH is a methyltransferase caught with its cofactor, S-adenosyl-homocysteine
+# (residue ``SAH``). To look at the pocket around it, we put an environment on every
+# cofactor atom and let chemiscope draw the surroundings within a cutoff.
+#
+# A spherical cutoff slices through whatever it meets, which leaves half-drawn side
+# chains at the edge of the pocket. The ``byResidue`` environment setting keeps every
+# residue that has at least one atom inside the cutoff whole, so the pocket is made of
+# complete amino acids. The switch is in the hamburger menu, under "environments", and
+# only appears for structures that carry residue information.
+
+topology = modeller.topology
+cofactor = [atom.index for atom in topology.atoms() if atom.residue.name == "SAH"]
+
+# one environment per cofactor atom, each with a 5 A cutoff
+environments = [(0, atom_index, 5.0) for atom_index in cofactor]
+
+# environments need a property for each of them: here, the distance of each cofactor
+# atom to the centre of the cofactor
+positions = np.asarray(
+    modeller.positions.value_in_unit(openmm.unit.angstrom), dtype=float
+)
+cofactor_positions = positions[cofactor]
+distances = np.linalg.norm(cofactor_positions - cofactor_positions.mean(axis=0), axis=1)
+
+chemiscope.show(
+    structures=modeller,
+    mode="structure",
+    properties={
+        "distance to cofactor centre": {
+            "target": "atom",
+            "values": distances,
+            "units": "A",
+        }
+    },
+    environments=environments,
+    settings=chemiscope.quick_settings(
+        structure_settings={
+            "cartoon": True,
+            "environments": {"cutoff": 5.0, "byResidue": True, "bgStyle": "cartoon"},
+        }
+    ),
 )
 
 

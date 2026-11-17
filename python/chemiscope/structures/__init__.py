@@ -22,6 +22,11 @@ from ._mda import (  # noqa: F401
     _mda_to_json,
     _mda_valid_structures,
 )
+from ._openmm import (  # noqa: F401
+    _openmm_all_atomic_environments,
+    _openmm_to_json,
+    _openmm_valid_structures,
+)
 from ._shapes import (  # noqa: F401
     arrow_from_vector,
     ellipsoid_from_tensor,
@@ -94,6 +99,10 @@ def _guess_adapter(structures):
     if use_stk:
         return stk_structures, "stk"
 
+    openmm_structures, use_openmm = _openmm_valid_structures(structures)
+    if use_openmm:
+        return openmm_structures, "openmm"
+
     if isinstance(structures, Sequence):
         raise Exception(f"unknown structure type: '{structures[0].__class__.__name__}'")
     else:
@@ -106,8 +115,10 @@ def structures_to_json(structures):
 
     This function is a shim calling specialized implementations for all the
     supported structure types. Currently supported structures types include
-    chemiscope-compatible dicts, ``ase.Atoms``, ``stk.BuildingBlocks``, and
-    ``MDAnalysis.AtomGroup`` objects.
+    chemiscope-compatible dicts, ``ase.Atoms``, ``stk.BuildingBlocks``,
+    ``MDAnalysis.AtomGroup`` objects, and OpenMM objects with ``topology`` and
+    ``positions`` attributes (e.g. ``openmm.app.Modeller`` or
+    ``openmm.app.PDBFile``).
 
     :param structures: iterable over structures
     """
@@ -125,6 +136,8 @@ def structures_to_json(structures):
         json_data = [_mda_to_json(structures) for _ in structures.universe.trajectory]
     elif adapter == "stk":
         json_data = [_stk_to_json(s) for s in structures]
+    elif adapter == "openmm":
+        json_data = [_openmm_to_json(s) for s in structures]
     else:
         raise Exception("reached unreachable code")
 
@@ -163,6 +176,11 @@ def extract_properties(structures=None, only=None, *, environments=None, frames=
         raise RuntimeError(
             "stk structures do not contain properties, you must manually provide them"
         )
+    elif adapter == "openmm":
+        raise RuntimeError(
+            "OpenMM structures do not contain properties, you must manually provide "
+            "them"
+        )
 
     else:
         raise Exception("reached unreachable code")
@@ -200,5 +218,7 @@ def all_atomic_environments(structures=None, cutoff=3.5, *, frames=None):
         return _mda_all_atomic_environments(structures, cutoff)
     elif adapter == "stk":
         return _stk_all_atomic_environments(structures, cutoff)
+    elif adapter == "openmm":
+        return _openmm_all_atomic_environments(structures, cutoff)
     else:
         raise Exception("reached unreachable code")

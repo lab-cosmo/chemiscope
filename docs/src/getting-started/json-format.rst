@@ -958,8 +958,9 @@ Array of objects (one per viewer).
    * - ``environments``
      - object
      - Environment options: ``{"activated": bool, "center": bool, "cutoff": number,
-       "bgStyle": "licorice"|"ball-stick"|"cartoon"|"hide", "bgColor":
-       "grey"|"CPK"|"property"}``
+       "byResidue": bool, "bgStyle": "licorice"|"ball-stick"|"cartoon"|"hide",
+       "bgColor": "grey"|"CPK"|"property"}``. With ``byResidue``, the environment
+       includes every residue with an atom inside the cutoff.
      - ``{"activated": true, "cutoff": 3.5}``
    * - ``color``
      - object

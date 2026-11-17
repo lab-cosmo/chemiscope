@@ -6,7 +6,8 @@ Python module
 The ``chemiscope`` package provides utilities to prepare JSON input files, and
 to visualize them as an :ref:`interactive notebook widget <widget>`. The package
 supports multiple structure formats including `ase.Atoms`_, `stk.BuildingBlock`_,
-and `MDAnalysis.AtomGroup`_ objects.
+`MDAnalysis.AtomGroup`_, and OpenMM objects with ``topology`` and ``positions``
+(e.g. `openmm.app.Modeller`_ or ``openmm.app.PDBFile``).
 
 .. toctree::
     :maxdepth: 2
@@ -36,3 +37,4 @@ and `MDAnalysis.AtomGroup`_ objects.
 .. _ase.Atoms: https://ase-lib.org/ase/atoms.html
 .. _stk.BuildingBlock: https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html
 .. _MDAnalysis.AtomGroup: https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html
+.. _openmm.app.Modeller: https://docs.openmm.org/latest/api-python/generated/openmm.app.modeller.Modeller.html

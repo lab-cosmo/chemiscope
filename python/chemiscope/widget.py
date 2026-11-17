@@ -619,9 +619,11 @@ def show(
         dictionaries, `ase.Atoms <https://ase-lib.org/ase/ase/atoms.html>`_,
         `stk.BuildingBlock
         <https://stk.readthedocs.io/en/stable/_autosummary/stk.BuildingBlock.html>`_,
-        or `MDAnalysis.AtomGroup
-        <https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html>`_
-        objects. See :py:func:`chemiscope.create_input` for more details.
+        `MDAnalysis.AtomGroup
+        <https://docs.mdanalysis.org/stable/documentation_pages/core/groups.html>`_,
+        or OpenMM objects with ``topology`` and ``positions`` (e.g.
+        ``openmm.app.Modeller``). See :py:func:`chemiscope.create_input` for more
+        details.
     :param dict properties: dictionary of properties (see
         :py:func:`chemiscope.create_input`)
     :param dict metadata: optional metadata (see :py:func:`chemiscope.create_input`)

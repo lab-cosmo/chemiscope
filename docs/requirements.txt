@@ -11,6 +11,7 @@ chemfiles
 rdkit>=2025
 MDAnalysis
 MDAnalysisTests
+openmm
 
 # required for the examples of chemiscope.explore
 scikit-learn
