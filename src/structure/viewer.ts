@@ -507,8 +507,8 @@ export class MoleculeViewer {
         this._viewer.removeAllModels();
         if (this._current !== undefined) {
             this._viewer.removeAllLabels();
-            this._viewer.removeAllShapes();
             this._viewer.removeUnitCell(this._current.model);
+            this._viewer.removeAllShapes();
             this._axes = undefined;
         }
 
@@ -1247,6 +1247,9 @@ export class MoleculeViewer {
             return;
         }
 
+        // 3Dmol finds the shapes of the unit cell from their position in the
+        // list of shapes, so remove them while these positions are valid
+        this._viewer.removeUnitCell(this._current.model);
         this._viewer.removeAllShapes();
         this._axes = undefined;
 
