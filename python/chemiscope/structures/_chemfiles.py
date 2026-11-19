@@ -61,11 +61,15 @@ ELEMENTS = [
 ]
 
 # Standard protein and nucleic acid residues (non-hetatoms), including
-# canonical aminoacitds in various protonationstates, and nucleic acids
+# canonical aminoacitds in various protonationstates, and nucleotides with PDB
+# (DA, A), Amber (DA5, RA3, A5, ...) and CHARMM (ADE, ...) names
 STANDARD_RESIDUES = {
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", 
-    "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "HID", "HIE", "HIP", "CYX", 
-    "ASH", "GLH", "LYN", "DA", "DC", "DG", "DT", "DI", "A", "C", "G", "U", "I",
+    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS",
+    "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "HID", "HIE", "HIP", "CYX",
+    "ASH", "GLH", "LYN", "ADE", "CYT", "GUA", "THY", "URA",
+} | {
+    prefix + base + suffix
+    for prefix in ("", "D", "R") for base in "ACGTUI" for suffix in ("", "5", "3", "N")
 }
 # fmt: on
 

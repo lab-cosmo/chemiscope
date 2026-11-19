@@ -84,6 +84,60 @@ class TestStructures(unittest.TestCase):
         ]
         self.assertTrue(np.allclose(data["structures"][0]["cell"], cell))
 
+    def test_nucleotide_residues(self):
+        # MDAnalysis' `nucleic` selection misses some force-field names
+        names = ["G5", "C3", "RA5", "DA", "NAG", "HOH"]
+        u = mda.Universe.empty(
+            n_atoms=6, n_residues=6, atom_resindex=range(6), trajectory=True
+        )
+        u.add_TopologyAttr("type", ["C"] * 6)
+        u.add_TopologyAttr("resname", names)
+        u.add_TopologyAttr("resid", range(1, 7))
+        u.add_TopologyAttr("chainID", ["A"] * 6)
+
+        structure = chemiscope.create_input(u.atoms)["structures"][0]
+        self.assertEqual(structure["resnames"], names)
+        self.assertEqual(structure["hetatom"], [False, False, False, False, True, True])
+
+    def test_bonds(self):
+        # four atoms per residue, bonded in a chain inside each residue
+        u = mda.Universe.empty(
+            n_atoms=8, n_residues=2, atom_resindex=[0] * 4 + [1] * 4, trajectory=True
+        )
+        u.add_TopologyAttr("type", ["C"] * 8)
+        u.add_TopologyAttr("bonds", [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (6, 7)])
+
+        structure = chemiscope.create_input(u.atoms)["structures"][0]
+        self.assertEqual(
+            structure["bonds"],
+            [[0, 1, 1], [1, 2, 1], [2, 3, 1], [4, 5, 1], [5, 6, 1], [6, 7, 1]],
+        )
+
+        # a selection is numbered in the universe, the bonds have to follow it
+        structure = chemiscope.create_input(u.atoms[4:])["structures"][0]
+        self.assertEqual(structure["bonds"], [[0, 1, 1], [1, 2, 1], [2, 3, 1]])
+
+    def test_partial_bonds_are_left_to_the_viewer(self):
+        # a PDB with CONECT records for one residue only ends up like this
+        u = mda.Universe.empty(
+            n_atoms=8, n_residues=2, atom_resindex=[0] * 4 + [1] * 4, trajectory=True
+        )
+        u.add_TopologyAttr("type", ["C"] * 8)
+        u.add_TopologyAttr("bonds", [(0, 1), (1, 2), (2, 3)])
+
+        structure = chemiscope.create_input(u.atoms)["structures"][0]
+        self.assertNotIn("bonds", structure)
+
+        # a lone atom, an ion or a water oxygen, does not make them partial
+        u = mda.Universe.empty(
+            n_atoms=5, n_residues=2, atom_resindex=[0] * 4 + [1], trajectory=True
+        )
+        u.add_TopologyAttr("type", ["C"] * 4 + ["Na"])
+        u.add_TopologyAttr("bonds", [(0, 1), (1, 2), (2, 3)])
+
+        structure = chemiscope.create_input(u.atoms)["structures"][0]
+        self.assertEqual(structure["bonds"], [[0, 1, 1], [1, 2, 1], [2, 3, 1]])
+
 
 class TestExtractProperties(unittest.TestCase):
     """Properties extraction"""

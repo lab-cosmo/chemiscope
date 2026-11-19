@@ -320,3 +320,61 @@ chemiscope.show(
         },
     },
 )
+
+
+# %%
+#
+# Nucleic acids and glycans
+# +++++++++++++++++++++++++
+#
+# The cartoon representation is not limited to protein secondary structure. The DNA
+# bound to the methyltransferase above is drawn as a backbone ribbon with the
+# nucleobases as filled rings, coloured by base (A red, C yellow, G green, T blue,
+# U cyan). Nucleotide names are recognised in the PDB (``DA``, ``A``), Amber
+# (``DA5``, ``RA3``) and CHARMM (``ADE``) conventions.
+#
+# Showing the DNA on its own makes the rings easier to see than in the full complex.
+
+dna = universe.select_atoms("nucleic")
+chemiscope.show(
+    structures=dna,
+    mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"cartoon": True}),
+)
+
+# %%
+#
+# Carbohydrates are drawn with the `Symbol Nomenclature for Glycans
+# <https://www.ncbi.nlm.nih.gov/glycans/snfg.html>`_ instead: each monosaccharide
+# becomes its SNFG symbol (blue cube for GlcNAc, green sphere for mannose, yellow
+# sphere for galactose, red cone for fucose, ...) and the symbols are linked by
+# sticks following the glycosidic bonds. This is on by default, under ``snfg``.
+#
+# 1IGY is an intact antibody, which carries the N-glycan of the Fc region, so it
+# shows both representations at once: protein cartoon plus the glycan symbols.
+
+pdb_id = "1IGY"
+urllib.request.urlretrieve(
+    f"https://files.rcsb.org/view/{pdb_id}.pdb", f"./{pdb_id}.pdb"
+)
+
+antibody = mda.Universe(f"./{pdb_id}.pdb")
+chemiscope.show(
+    structures=antibody.select_atoms("not water"),
+    mode="structure",
+    settings=chemiscope.quick_settings(
+        structure_settings={"cartoon": True, "snfg": True}
+    ),
+)
+
+# %%
+#
+# The glycan alone, with the protein removed, is a small tree of four to eight
+# symbols; this is the view used to compare glycoforms.
+
+glycan = antibody.select_atoms("resname NAG NDG BMA MAN GAL FUC")
+chemiscope.show(
+    structures=glycan,
+    mode="structure",
+    settings=chemiscope.quick_settings(structure_settings={"snfg": True}),
+)
