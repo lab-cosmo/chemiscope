@@ -7,6 +7,7 @@ import Plotly from './plotly/plotly-scatter';
 import { PlotlyScatterElement } from './plotly/plotly-scatter';
 import PNG_SVG from '../static/download-png.svg';
 import SVG_SVG from '../static/download-svg.svg';
+import CITE_SVG from '../static/cite.svg';
 import { Warnings } from '../utils';
 
 /** Colorbar length & gap to the legend in an exported image as fractions of the plot */
@@ -220,6 +221,7 @@ export const DEFAULT_LAYOUT = {
 export const DEFAULT_CONFIG = {
     displayModeBar: true,
     displaylogo: false,
+    showSendToCloud: false,
     responsive: true,
     doubleClick: false as const,
     doubleClickDelay: 600,
@@ -266,6 +268,19 @@ export const DEFAULT_CONFIG = {
                 },
                 click: function (gd: PlotlyScatterElement) {
                     exportImage(gd, 'svg');
+                },
+            },
+        ],
+        [
+            {
+                name: 'Cite chemiscope',
+                icon: {
+                    width: 512,
+                    height: 512,
+                    path: extractSvgPath(CITE_SVG),
+                },
+                click: function () {
+                    window.open('https://doi.org/10.21105/joss.10380', '_blank', 'noopener');
                 },
             },
         ],
