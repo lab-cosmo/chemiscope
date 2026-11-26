@@ -21,6 +21,19 @@ If you find it useful, we would appreciate a citation to the chemiscope
 > 1.0: interactive exploration of atomistic data from analysis to
 > dissemination._ **Journal of Open Source Software** 11 (122), 10380 (2026)
 
+```bibtex
+@article{chorna2026chemiscope,
+  title = {Chemiscope 1.0: interactive exploration of atomistic data from analysis to dissemination},
+  author = {Chorna, Sofiia and Lála, Jakub and Xu, Qianjun and Cersonsky, Rose K. and Fraux, Guillaume and Ceriotti, Michele},
+  journal = {Journal of Open Source Software},
+  volume = {11},
+  number = {122},
+  pages = {10380},
+  year = {2026},
+  doi = {10.21105/joss.10380}
+}
+```
+
 If you used a version of chemiscope older than 1.0, please cite the original
 paper instead:
 

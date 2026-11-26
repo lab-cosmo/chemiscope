@@ -23,3 +23,16 @@ visualization is used in a manuscript or supplement, cite:
 S. Chorna, J. Lála, Q. Xu, R. K. Cersonsky, G. Fraux, M. Ceriotti, Chemiscope
 1.0: interactive exploration of atomistic data from analysis to dissemination,
 Journal of Open Source Software 11 (122), 10380 (2026), DOI 10.21105/joss.10380
+
+```bibtex
+@article{chorna2026chemiscope,
+  title = {Chemiscope 1.0: interactive exploration of atomistic data from analysis to dissemination},
+  author = {Chorna, Sofiia and Lála, Jakub and Xu, Qianjun and Cersonsky, Rose K. and Fraux, Guillaume and Ceriotti, Michele},
+  journal = {Journal of Open Source Software},
+  volume = {11},
+  number = {122},
+  pages = {10380},
+  year = {2026},
+  doi = {10.21105/joss.10380}
+}
+```
