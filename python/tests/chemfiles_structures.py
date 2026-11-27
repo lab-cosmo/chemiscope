@@ -2,7 +2,7 @@ import copy
 import unittest
 
 import numpy as np
-from chemfiles import Atom, Frame, MemoryTrajectory, UnitCell
+from chemfiles import Atom, Frame, MemoryTrajectory, Residue, UnitCell
 
 import chemiscope
 
@@ -82,6 +82,20 @@ O 12 12 15
 
         self.assertEqual(data["structures"][1]["size"], 3)
         self.assertEqual(data["structures"][1]["names"], ["C", "O", "O"])
+
+    def test_nucleotide_residues(self):
+        # force-field names of nucleotides are standard residues, even without
+        # PDB ATOM/HETATM records
+        frame = Frame()
+        for i, name in enumerate(["RA5", "DT3", "G5", "ADE", "NAG", "HOH"]):
+            frame.add_atom(Atom("C"), [i, 0, 0])
+            residue = Residue(name, i + 1)
+            residue.atoms.append(i)
+            frame.add_residue(residue)
+
+        structure = chemiscope.create_input(frame)["structures"][0]
+        self.assertEqual(structure["resnames"][0], "RA5")
+        self.assertEqual(structure["hetatom"], [False, False, False, False, True, True])
 
 
 class TestExtractProperties(unittest.TestCase):

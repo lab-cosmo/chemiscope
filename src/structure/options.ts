@@ -38,6 +38,8 @@ export class StructureOptions extends OptionsGroup {
     public rotation: HTMLOption<'boolean'>;
     // should we show the cartoon representation
     public cartoon: HTMLOption<'boolean'>;
+    // should we show carbohydrates as 3D-SNFG symbols
+    public snfg: HTMLOption<'boolean'>;
     // which axis system to use (none, xyz, abc)
     public axes: HTMLOption<'string'>;
     // keep the orientation constant when loading a new structure
@@ -94,6 +96,7 @@ export class StructureOptions extends OptionsGroup {
         this.unitCell = new HTMLOption('boolean', false);
         this.rotation = new HTMLOption('boolean', false);
         this.cartoon = new HTMLOption('boolean', false);
+        this.snfg = new HTMLOption('boolean', true);
 
         this.supercell = [
             new HTMLOption('int', 1),
@@ -310,6 +313,7 @@ export class StructureOptions extends OptionsGroup {
         this.unitCell.bind(this.getModalElement('unit-cell'), 'checked');
 
         this.cartoon.bind(this.getModalElement('cartoon'), 'checked');
+        this.snfg.bind(this.getModalElement('snfg'), 'checked');
 
         this.supercell[0].bind(this.getModalElement('supercell-a'), 'value');
         this.supercell[1].bind(this.getModalElement('supercell-b'), 'value');

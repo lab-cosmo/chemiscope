@@ -5,6 +5,7 @@
 
 import * as $3Dmol from '3dmol';
 import { Environment, Structure, UserStructure } from '../dataset';
+import { cartoonResname, residues, saccharideRing } from './biomol';
 import { computeSecondaryStructure } from './topology';
 import { MoleculeViewer } from './viewer';
 import { DisplayTarget, Indexes } from '../indexer';
@@ -52,7 +53,7 @@ export function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure)
         } as unknown as $3Dmol.AtomSpec;
 
         if (structure.resnames !== undefined) {
-            atom.resn = structure.resnames[i];
+            atom.resn = cartoonResname(structure.resnames[i]);
         }
 
         if (structure.chains !== undefined) {
@@ -68,6 +69,16 @@ export function setup3DmolStructure(model: $3Dmol.GLModel, structure: Structure)
         }
 
         atoms.push(atom);
+    }
+
+    // carbohydrates are never part of the cartoon, even when written with
+    // `ATOM` records in PDB files
+    if (structure.resnames !== undefined) {
+        for (const residue of residues(atoms)) {
+            if (saccharideRing(residue) !== undefined) {
+                residue.forEach((atom) => (atom.hetflag = true));
+            }
+        }
     }
 
     computeSecondaryStructure(atoms, /*hbondCutoff=*/ 3.2);

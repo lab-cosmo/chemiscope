@@ -34,6 +34,10 @@
                   <input class="form-check-input" id="unit-cell" type="checkbox" />
                   <label class="form-check-label" for="unit-cell" title="show the unit cell">unit cell</label>
                </div>
+               <div class="form-check form-switch chsp-hide-if-not-biomol">
+                  <input class="form-check-input" id="snfg" type="checkbox" />
+                  <label class="form-check-label" for="snfg" title="show carbohydrates as 3D-SNFG symbols">SNFG glycans</label>
+               </div>
             </div>
             <div class="chsp-atom-labels-property chsp-hide-if-no-atom-properties chsp-hide-if-no-atom-labels">
                <div class="input-group input-group-sm">
